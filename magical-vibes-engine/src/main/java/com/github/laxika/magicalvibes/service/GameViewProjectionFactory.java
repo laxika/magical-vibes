@@ -742,7 +742,7 @@ public class GameViewProjectionFactory {
                             gameData, playerId, card.getId())
                             && gameData.getLife(playerId) >= card.getManaValue()
                             && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                            && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                            && gameQueryService.canPayLifeForCosts(gameData);
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 boolean canPayManaValueLifeAlternative = !foretellPermission
@@ -750,7 +750,7 @@ public class GameViewProjectionFactory {
                         gameData, playerId, card.getId())
                         && gameData.getLife(playerId) >= card.getManaValue()
                         && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                        && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                        && gameQueryService.canPayLifeForCosts(gameData);
                 if (canPayManaValueLifeAlternative) {
                     playable.add(exileCardView(gameData, playerId, card));
                     continue;
@@ -896,7 +896,8 @@ public class GameViewProjectionFactory {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId))
+            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandFromTopOfLibrary(
+                    gameData, playerId, topCard))
                     && isActivePlayer
                     && isMainPhase
                     && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
@@ -951,7 +952,7 @@ public class GameViewProjectionFactory {
                 .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, topCard)
                 && gameData.getLife(playerId) >= topCard.getManaValue()
                 && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                && gameQueryService.canPayLifeForCosts(gameData);
         boolean alternativeZeroCost = castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY);
         CardView topCardView = cardViewFactory.create(topCard);

@@ -197,6 +197,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.WordOfCommandCardChoice.class,
+                this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
@@ -1052,8 +1054,11 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 interaction.maxCount() == 1
-                        ? "Choose an Aura to attach to " + interaction.sourceName() + "."
-                        : "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
+                        ? "Choose " + (interaction.includeEquipment() ? "an Aura or Equipment" : "an Aura")
+                        + " to attach to " + interaction.sourceName() + "."
+                        : "Choose any number of "
+                        + (interaction.includeEquipment() ? "Auras or Equipment" : "Auras")
+                        + " to attach to " + interaction.sourceName() + ".");
     }
 
     private InteractionPromptMessage projectReturnAurasFromGraveyardChoice(
@@ -1145,6 +1150,13 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(),
                 interaction.prompt(),
                 interaction.optional());
+    }
+
+    private InteractionPromptMessage projectWordOfCommandCardChoice(
+            GameData gameData, PendingInteraction.WordOfCommandCardChoice interaction) {
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of())),
+                interaction.validIndices(), interaction.prompt(), false);
     }
 
     private InteractionPromptMessage projectTargetedHandBattlefieldChoice(

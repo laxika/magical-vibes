@@ -110,6 +110,9 @@ public sealed interface TriggerContext {
     /** Context for cycling triggers. */
     record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
 
+    /** Context for opponent-mill triggers. */
+    record Mill(UUID milledPlayerId, int milledCount) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
@@ -325,6 +328,9 @@ public sealed interface TriggerContext {
 
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
+
+    /** Context for a lore counter placed on a Saga the placing player controls. */
+    record LoreCounterPlaced(Permanent saga, UUID placingPlayerId) implements TriggerContext {}
 
     /** Context for a controller untapping one or more permanents during their untap step. */
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
@@ -680,6 +686,9 @@ public sealed interface TriggerContext {
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}
 
+    /** Context for ON_ANY_CARDS_PUT_INTO_LIBRARY triggers. */
+    record CardsPutIntoLibrary(UUID libraryOwnerId, int cardCount) implements TriggerContext {}
+
     /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
     record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,
                                          UUID causeControllerId) implements TriggerContext {}
@@ -825,6 +834,10 @@ public sealed interface TriggerContext {
     record Crime(UUID committingPlayerId) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
-    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
-            implements TriggerContext {}
+    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
+                                              boolean enlistment) implements TriggerContext {
+        public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility) {
+            this(attackingCreature, triggeredAbility, false);
+        }
+    }
 }

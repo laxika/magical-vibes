@@ -72,6 +72,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Islandwalk", Keyword.ISLANDWALK);
         KEYWORD_MAP.put("Swampwalk", Keyword.SWAMPWALK);
         KEYWORD_MAP.put("Plainswalk", Keyword.PLAINSWALK);
+        KEYWORD_MAP.put("Desertwalk", Keyword.DESERTWALK);
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
         KEYWORD_MAP.put("Ward", Keyword.WARD);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
@@ -79,6 +80,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
         KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
+        KEYWORD_MAP.put("Enlist", Keyword.ENLIST);
         KEYWORD_MAP.put("Dethrone", Keyword.DETHRONE);
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
@@ -165,6 +167,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Disguise", Keyword.DISGUISE);
         KEYWORD_MAP.put("Alliance", Keyword.ALLIANCE);
         KEYWORD_MAP.put("Station", Keyword.STATION);
+        KEYWORD_MAP.put("Freerunning", Keyword.FREERUNNING);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

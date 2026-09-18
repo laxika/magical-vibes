@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "100")
 @CardRegistration(set = "LEG", collectorNumber = "280")
+@CardRegistration(set = "ME4", collectorNumber = "205")
 public class HornOfDeafening extends Card {
 
     public HornOfDeafening() {

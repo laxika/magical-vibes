@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CommandersSphereTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Produces mana in the commander's color identity")
+    @DisplayName("Produces mana only from the commander's color identity")
     void producesManaInCommandersColorIdentity() {
         gd.playerCommanders.put(player1.getId(), List.of(new EdgarMarkov()));
         harness.addToBattlefield(player1, new CommandersSphere());
@@ -31,6 +31,26 @@ class CommandersSphereTest extends BaseCardTest {
         harness.handleListChoice(player1, ManaColor.RED.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the sphere draws a card without requiring it to be untapped")
+    void sacrificingDrawsACardWithoutTapCost() {
+        gd.playerCommanders.put(player1.getId(), List.of(new EdgarMarkov()));
+        harness.addToBattlefield(player1, new CommandersSphere());
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertInGraveyard(player1, "Commander's Sphere");
     }
 
     @Test

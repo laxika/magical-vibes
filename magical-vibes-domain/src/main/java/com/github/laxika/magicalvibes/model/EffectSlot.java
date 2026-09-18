@@ -337,6 +337,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a creature card is put into any player's graveyard from a library. */
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
+    /** Triggers once whenever one or more cards are put into any library from anywhere. */
+    ON_ANY_CARDS_PUT_INTO_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a nonblack card is put into any player's graveyard from anywhere. */
@@ -621,6 +623,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+    /** Triggers once whenever an opponent mills one or more cards. */
+    ON_OPPONENT_MILLS,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
@@ -803,6 +807,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  while this card is in the controller's graveyard.  The attacker count is passed via
      *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+    /** Triggers once per unblocked creature the controller controls while this card is in exile. */
+    EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
     /** Triggers when a creature the controller controls (matching the trigger's dealer predicate)
      *  deals combat damage to a player, while this card is in the controller's graveyard. Holds an
      *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in
@@ -814,6 +820,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers from a graveyard when a creature is put into an opponent's graveyard from the
      *  battlefield. Used by Bridge from Below. */
     GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers from any graveyard whenever a land card is put into any graveyard from anywhere.
+     *  Used by Centaur Vinecrasher. */
+    GRAVEYARD_ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers when combat damage is dealt to the controller or to a planeswalker they control,
      *  while this card is in the controller's graveyard. Fired once per combat damage step per
      *  damaged player in {@code CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers}.
@@ -896,6 +905,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
+    /** Triggers once for each lore counter put on a Saga the controller controls. */
+    ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
     /** Triggers once for each counter put on a creature the controller controls. */
     ON_ALLY_COUNTER_PUT_ON_CREATURE,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
@@ -923,6 +934,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Gatherer ruling the ability triggers once for each individual -1/-1 counter, so the firing
      *  pushes a separate trigger per counter. Used by Flourishing Defenses. */
     ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE,
+    /** Global watcher: triggers once whenever one or more -1/-1 counters are put on a creature.
+     *  Unlike {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, this fires once per placement
+     *  event regardless of how many counters were placed. */
+    ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE,
     /** Controller-restricted watcher: triggers only when the permanent's controller is the player who
      *  puts one or more -1/-1 counters on a creature (any creature, on any battlefield). Unlike the
      *  global {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, a counter an opponent puts (e.g.
@@ -1001,6 +1016,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers whenever another creature controlled by the same player becomes the target of any
+     *  spell or ability. Fires on all permanents with this slot on that player's battlefield. The
+     *  targeted creature is stored as the triggered entry's non-targeting {@code targetId}. */
+    ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      * controlled by an opponent. Activated and triggered abilities do not trigger this slot. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL,

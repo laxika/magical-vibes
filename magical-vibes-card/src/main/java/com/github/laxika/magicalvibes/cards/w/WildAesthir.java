@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "21a")
 @CardRegistration(set = "ALL", collectorNumber = "21b")
+@CardRegistration(set = "ME4", collectorNumber = "34")
 public class WildAesthir extends Card {
 
     public WildAesthir() {

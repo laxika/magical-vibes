@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -311,6 +312,16 @@ public class ValidTargetService {
                     List<UUID> trialTargets = new ArrayList<>(alreadySelectedIds);
                     trialTargets.add(id);
                     return !targetLegalityService.fitsAtMostOneArtifactCreatureEnchantmentAndPlaneswalker(
+                            gameData, trialTargets);
+                });
+            }
+            if (card.getMultiTargetConstraint()
+                    == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                validPermanentIds.removeIf(id -> {
+                    List<UUID> trialTargets = new ArrayList<>(alreadySelectedIds);
+                    trialTargets.add(id);
+                    return !targetLegalityService.fitsAtMostOneArtifactCreatureEnchantmentPlaneswalkerAndLand(
                             gameData, trialTargets);
                 });
             }
@@ -636,6 +647,17 @@ public class ValidTargetService {
                 restrictToSharedGraveyard(gameData, ability, positionIndex, alreadySelectedIds,
                         validGraveyardCardIds);
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
+                        ability.getEffectiveMinTargets(effectiveTargetScalingValue),
+                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        "Select targets for " + sourceCard.getName() + " ability");
+            }
+
+            if (positionFilter instanceof ExiledCardPredicateTargetFilter exiledFilter) {
+                List<UUID> validExiledCardIds = computeValidExiledTargetsForFilter(
+                        gameData, ability, sourceCard, controllerId, abilitySourcePermanentId,
+                        exiledFilter, excludeIds, effectiveTargetScalingValue);
+                return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
+                        validGraveyardCardIds, validExiledCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
                         ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
                         "Select targets for " + sourceCard.getName() + " ability");
@@ -1048,6 +1070,26 @@ public class ValidTargetService {
             }
         }
         return List.copyOf(validIds);
+    }
+
+    private List<UUID> computeValidExiledTargetsForFilter(GameData gameData, ActivatedAbility ability,
+                                                           Card sourceCard, UUID controllerId,
+                                                           UUID sourcePermanentId,
+                                                           ExiledCardPredicateTargetFilter filter,
+                                                           Set<UUID> excludeIds, int xValue) {
+        List<UUID> validIds = computeValidExiledTargetsForAbility(
+                gameData, ability, sourceCard, controllerId, sourcePermanentId, excludeIds, xValue);
+        if (filter.predicate() == null) {
+            return validIds;
+        }
+        return validIds.stream()
+                .filter(id -> {
+                    var entry = gameData.findExiledCard(id);
+                    return entry != null && predicateEvaluationService.matchesCardPredicate(
+                            entry.card(), filter.predicate(), sourceCard.getId(), gameData,
+                            entry.ownerId(), sourcePermanentId, null, xValue);
+                })
+                .toList();
     }
 
     /**

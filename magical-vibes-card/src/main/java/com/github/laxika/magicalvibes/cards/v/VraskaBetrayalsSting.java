@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "115")
+@CardRegistration(set = "ECC", collectorNumber = "88")
 public class VraskaBetrayalsSting extends Card {
 
     public VraskaBetrayalsSting() {

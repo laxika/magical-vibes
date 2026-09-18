@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -41,6 +42,15 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s imprint ability resolves but no card was imprinted."));
             return;
         }
+
+        var exiled = gameData.findExiledCard(imprintedCard.getId());
+        if (exiled == null) {
+            return;
+        }
+        gameData.exiledCards.replaceAll(card -> card.card().getId().equals(imprintedCard.getId())
+                ? new ExiledCardEntry(card.card(), card.ownerId(),
+                        card.sourcePermanentId(), false, card.exilerId(), card.exiledTurnNumber())
+                : card);
 
         gameLogService.append(gameData, GameLog.textCardText(playerName + " turns the exiled card face up: " , imprintedCard, "."));
 

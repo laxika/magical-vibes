@@ -76,5 +76,10 @@ class KrosanDroverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreatureWithMorph(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreatureWithMorph(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

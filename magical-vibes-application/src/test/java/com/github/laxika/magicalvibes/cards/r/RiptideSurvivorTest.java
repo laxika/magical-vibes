@@ -31,8 +31,6 @@ class RiptideSurvivorTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
         Permanent survivor = findPermanentForCard(card);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -62,8 +60,6 @@ class RiptideSurvivorTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
         Permanent survivor = findPermanentForCard(card);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -90,8 +86,6 @@ class RiptideSurvivorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent survivor = findPermanentForCard(card);

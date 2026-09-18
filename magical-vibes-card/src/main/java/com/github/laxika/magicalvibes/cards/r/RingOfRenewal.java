@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "89")
 @CardRegistration(set = "FEM", collectorNumber = "174")
+@CardRegistration(set = "ME4", collectorNumber = "224")
 public class RingOfRenewal extends Card {
 
     public RingOfRenewal() {

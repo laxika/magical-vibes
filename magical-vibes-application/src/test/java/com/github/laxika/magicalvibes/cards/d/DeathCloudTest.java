@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Death Cloud")
+@CardUsed({DeathCloud.class, Peek.class, Forest.class, GrizzlyBears.class})
 class DeathCloudTest extends BaseCardTest {
 
     private List<UUID> permanentIds(Player player, CardType type, int limit) {
@@ -95,6 +97,34 @@ class DeathCloudTest extends BaseCardTest {
                 permanentIds(player2, CardType.LAND, 2));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(permanentCount(player2, CardType.LAND)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X=0 does not make players lose life, discard, or sacrifice")
+    void xZeroDoesNothing() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 15);
+        harness.setHand(player1, new ArrayList<>(List.of(new DeathCloud(), new Peek())));
+        harness.setHand(player2, new ArrayList<>(List.of(new Peek())));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(permanentCount(player1, CardType.CREATURE)).isEqualTo(1);
+        assertThat(permanentCount(player1, CardType.LAND)).isEqualTo(1);
+        assertThat(permanentCount(player2, CardType.CREATURE)).isEqualTo(1);
         assertThat(permanentCount(player2, CardType.LAND)).isEqualTo(1);
     }
 }

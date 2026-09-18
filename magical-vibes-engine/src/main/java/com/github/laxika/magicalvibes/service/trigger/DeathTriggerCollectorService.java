@@ -471,7 +471,9 @@ public class DeathTriggerCollectorService {
         }
         // Snapshot the counter count at death — the permanent is already off the battlefield by the
         // time this resolves, so resolve into a plain draw for that fixed amount.
-        int counters = dyingPermanent.getCounterCount(effect.counterType());
+        int counters = effect.counterType() == null
+                ? dyingPermanent.getTotalCounterCount()
+                : dyingPermanent.getCounterCount(effect.counterType());
         if (counters < 1) {
             return false;
         }
@@ -481,7 +483,7 @@ public class DeathTriggerCollectorService {
                 sd.dyingCard(),
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DrawCardEffect(counters)))
+                new ArrayList<>(List.of(drawThen(counters, effect.thenEffect())))
         ));
         return true;
     }
@@ -2734,6 +2736,41 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DrawCardForEachDyingSourceCounterEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathDrawCardForEachDyingSourceCounter(TriggerMatchContext match,
+            DrawCardForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        Permanent dyingPermanent = death.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        int counters = effect.counterType() == null
+                ? dyingPermanent.getTotalCounterCount()
+                : dyingPermanent.getCounterCount(effect.counterType());
+        if (counters < 1) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(drawThen(counters, effect.thenEffect()))),
+                null,
+                match.permanent().getId()
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    private CardEffect drawThen(int counters, CardEffect thenEffect) {
+        return thenEffect == null
+                ? new DrawCardEffect(counters)
+                : SequenceEffect.of(new DrawCardEffect(counters), thenEffect);
+    }
+
     @CollectsTrigger(value = ExileTriggeringCreatureAndReturnSourceToHandEffect.class,
             slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathExileLinkedCreature(TriggerMatchContext match,
@@ -3289,7 +3326,9 @@ public class DeathTriggerCollectorService {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         Permanent dyingPermanent = cd.dyingPermanent();
         if (dyingPermanent == null
-                || dyingPermanent.getCounterCount(effect.counterType()) < 1) {
+                || (effect.counterType() == CounterType.ANY
+                ? dyingPermanent.getTotalCounterCount()
+                : dyingPermanent.getCounterCount(effect.counterType())) < 1) {
             return false;
         }
         return handleOpponentCreatureDeathDefault(match, effect.tokenTemplate(), ctx);

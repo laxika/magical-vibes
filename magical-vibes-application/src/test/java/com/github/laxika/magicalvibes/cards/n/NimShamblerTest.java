@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrossProwler;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NimShambler.class, Ornithopter.class, DrossProwler.class})
 class NimShamblerTest extends BaseCardTest {
 
     @Test
@@ -30,14 +31,14 @@ class NimShamblerTest extends BaseCardTest {
     @DisplayName("Sacrificing a creature grants Nim Shambler a regeneration shield")
     void sacrificingCreatureRegenerates() {
         Permanent nim = addCreatureReady(player1, new NimShambler());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new DrossProwler());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
         assertThat(nim.getRegenerationShield()).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dross Prowler");
         harness.assertOnBattlefield(player1, "Nim Shambler");
     }
 
@@ -49,15 +50,10 @@ class NimShamblerTest extends BaseCardTest {
         nim.setBlocking(true);
         nim.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new DrossProwler());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Nim Shambler");
         assertThat(findPermanent(player1, "Nim Shambler").getRegenerationShield()).isZero();

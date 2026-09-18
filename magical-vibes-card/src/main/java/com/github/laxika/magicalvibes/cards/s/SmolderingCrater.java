@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "DMR", collectorNumber = "257")
 @CardRegistration(set = "C13", collectorNumber = "325")
 @CardRegistration(set = "C14", collectorNumber = "312")
+@CardRegistration(set = "C15", collectorNumber = "308")
 public class SmolderingCrater extends Card {
 
     public SmolderingCrater() {

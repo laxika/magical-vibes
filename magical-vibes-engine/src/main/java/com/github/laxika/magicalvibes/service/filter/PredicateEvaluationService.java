@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
@@ -47,6 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
@@ -135,6 +137,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastAttachedAurasPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
@@ -194,6 +197,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCrea
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
@@ -251,9 +255,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCo
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanActivePlayerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanBasePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
@@ -268,6 +272,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostControlledSubtypeCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanBasicLandTypesAmongControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostXWhenMadnessOtherwisePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
@@ -471,11 +476,13 @@ public class PredicateEvaluationService {
                 if (gameData == null || cardOwnerId == null || !card.hasType(CardType.CREATURE)) {
                     yield false;
                 }
+                UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId;
                 yield gameData.playerCommanders.getOrDefault(cardOwnerId, List.of()).stream()
+                        .filter(commander -> gameQueryService.cardHasType(
+                                commander, CardType.CREATURE, gameData, commander.getOwnerId()))
                         .anyMatch(commander -> sharesCreatureType(
-                                gameData, card, cardOwnerId,
-                                commander, commander.getOwnerId() != null
-                                        ? commander.getOwnerId() : cardOwnerId));
+                                gameData, card, ownerId, commander,
+                                commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId));
             }
             case CardHasSourceChosenCardTypePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -485,6 +492,14 @@ public class PredicateEvaluationService {
                 CardType chosenType = source == null ? null : source.getChosenCardType();
                 yield chosenType != null
                         && gameQueryService.cardHasType(card, chosenType, gameData, cardOwnerId);
+            }
+            case CardHasSourceChosenNamePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                String chosenName = source == null ? null : source.getChosenName();
+                yield chosenName != null && chosenName.equals(card.getName());
             }
             case CardHasSourceChosenColorPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -673,7 +688,9 @@ public class PredicateEvaluationService {
             case CardManaValueLessThanXPredicate ignored ->
                     xValue != null && card.getManaValue() < xValue;
             case CardMinManaValuePredicate p ->
-                    card.getManaValue() + (p.includeXValue() && xValue != null ? xValue : 0)
+                    card.getManaValue() + (p.includeXValue() && xValue != null
+                            && card.getParsedManaCost() != null
+                            ? xValue * card.getParsedManaCost().getXSymbolCount() : 0)
                             >= p.minManaValue();
             case CardPowerAtLeastPredicate p ->
                     card.getPower() != null && card.getPower() >= p.minPower();
@@ -943,6 +960,14 @@ public class PredicateEvaluationService {
             }
             case PermanentHasAdventurePredicate ignored ->
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
+            case PermanentHasAttachedPermanentPredicate p -> {
+                if (gameData == null || p.predicate() == null) {
+                    yield false;
+                }
+                yield gameData.anyPermanentMatches(attached -> attached.isAttached()
+                        && permanent.getId().equals(attached.getAttachedTo())
+                        && matchesPermanentPredicate(attached, p.predicate(), filterContext));
+            }
             case PermanentHasNonManaActivatedAbilityPredicate hasNonManaAbilityPredicate ->
                     hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
             case PermanentHasTapActivatedAbilityPredicate ignored ->
@@ -964,6 +989,8 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isCreature(gameData, permanent);
             }
+            case PermanentIsCommanderPredicate ignored ->
+                    gameData != null && gameData.isCommander(permanent.getOriginalCard().getId());
             case PermanentIsLandPredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.LAND);
@@ -1247,13 +1274,14 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
             }
-            case PermanentPowerToughnessTotalAtMostPredicate totalAtMostPredicate -> {
-                int total = gameData == null
+            case PermanentPowerToughnessTotalAtMostPredicate totalPredicate -> {
+                int power = gameData == null
                         ? gameQueryService.powerForStaticFilter(permanent)
-                                + gameQueryService.toughnessForStaticFilter(permanent)
-                        : gameQueryService.getEffectivePower(gameData, permanent)
-                                + gameQueryService.getEffectiveToughness(gameData, permanent);
-                yield total <= totalAtMostPredicate.maxTotal();
+                        : gameQueryService.getEffectivePower(gameData, permanent);
+                int toughness = gameData == null
+                        ? gameQueryService.toughnessForStaticFilter(permanent)
+                        : gameQueryService.getEffectiveToughness(gameData, permanent);
+                yield power + toughness <= totalPredicate.maxTotal();
             }
             case PermanentPowerAtMostXPredicate ignored -> {
                 int xVal = filterContext != null && filterContext.xValue() != null ? filterContext.xValue() : 0;
@@ -1397,6 +1425,22 @@ public class PredicateEvaluationService {
                     }
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) <= subtypeCount;
+            }
+            case PermanentToughnessLessThanBasicLandTypesAmongControlledLandsPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                Set<CardSubtype> basicLandTypes = EnumSet.noneOf(CardSubtype.class);
+                if (controllerBattlefield != null) {
+                    for (Permanent controlledPermanent : controllerBattlefield) {
+                        if (controlledPermanent.getCard().hasType(CardType.LAND)) {
+                            basicLandTypes.addAll(gameQueryService.effectiveBasicLandTypes(
+                                    gameData, controlledPermanent));
+                        }
+                    }
+                }
+                yield gameQueryService.getEffectiveToughness(gameData, permanent) < basicLandTypes.size();
             }
             case PermanentManaValueAtMostControlledCountPredicate countPredicate -> {
                 if (gameData == null || sourceControllerId == null) {
@@ -1927,10 +1971,12 @@ public class PredicateEvaluationService {
                 if (sourcePermanent == null && filterContext != null) {
                     sourcePermanent = filterContext.sourcePermanentSnapshot();
                 }
-                if (sourcePermanent == null) {
+                Integer sourcePower = sourcePermanent != null
+                        ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        : basePowerOfCardInAnyZone(gameData, sourceCardId);
+                if (sourcePower == null) {
                     yield false;
                 }
-                int sourcePower = gameQueryService.getEffectivePower(gameData, sourcePermanent);
                 int targetPower = gameQueryService.getEffectivePower(gameData, permanent);
                 yield targetPower < sourcePower;
             }
@@ -2313,7 +2359,9 @@ public class PredicateEvaluationService {
     public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
         if (predicate instanceof PermanentOwnedBySourceControllerPredicate
                 || predicate instanceof PermanentSharesCreatureTypeWithEquippedCreaturePredicate
-                || predicate instanceof PermanentHasSupertypePredicate) {
+                || predicate instanceof PermanentHasSupertypePredicate
+                || predicate instanceof PermanentIsCommanderPredicate
+                || predicate instanceof PermanentHasAttachedPermanentPredicate) {
             return true;
         }
         if (predicate instanceof PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate) {
@@ -2469,6 +2517,13 @@ public class PredicateEvaluationService {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && countAttachedAuras(gameData, permanent) >= p.minimum();
             }
+            case PermanentHasAttachedPermanentPredicate p -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && p.predicate() != null
+                        && gameData.anyPermanentMatches(attached -> attached.isAttached()
+                        && permanent.getId().equals(attached.getAttachedTo())
+                        && matchesStaticFilter(attached, p.predicate(), context));
+            }
             case PermanentAttachedToCreatureControlledBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
@@ -2496,6 +2551,10 @@ public class PredicateEvaluationService {
                     controllerControlsMatchingStatic(permanent, p, context);
             case PermanentControllerControlsPermanentCountAtMostPredicate p ->
                     controllerControlsAtMostMatchingStatic(permanent, p, context);
+            case PermanentIsCommanderPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && gameData.isCommander(permanent.getOriginalCard().getId());
+            }
             case PermanentSharesNameWithAnotherControlledPermanentPredicate ignored ->
                     sharesNameWithAnotherControlledPermanentStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
@@ -3764,6 +3823,8 @@ public class PredicateEvaluationService {
             case PlayerPredicateTargetFilter ignored -> false;
             // A graveyard-card group never matches a permanent target.
             case GraveyardCardPredicateTargetFilter ignored -> false;
+            // An exiled-card group never matches a permanent target.
+            case ExiledCardPredicateTargetFilter ignored -> false;
             // Stack-entry filters never restrict a permanent target.
             case StackEntryPredicateTargetFilter ignored -> true;
         };
@@ -3777,6 +3838,7 @@ public class PredicateEvaluationService {
             case AnyTargetPredicateTargetFilter f -> f.errorMessage();
             case PlayerPredicateTargetFilter f -> f.errorMessage();
             case GraveyardCardPredicateTargetFilter ignored -> "Target must be a card in a graveyard";
+            case ExiledCardPredicateTargetFilter f -> f.errorMessage();
             case StackEntryPredicateTargetFilter f -> f.errorMessage();
         };
     }

@@ -11,16 +11,18 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "54")
+@CardRegistration(set = "ECC", collectorNumber = "139")
 public class CommandersSphere extends Card {
 
     public CommandersSphere() {
+        // {T}: Add one mana of any color in your commander's color identity.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.COMMANDER_COLOR_IDENTITY)),
                 "{T}: Add one mana of any color in your commander's color identity."
         ));
-
+        // Sacrifice this artifact: Draw a card.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

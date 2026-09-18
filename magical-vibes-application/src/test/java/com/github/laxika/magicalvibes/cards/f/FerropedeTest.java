@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Ferropede.class, Forest.class})
 class FerropedeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Ferropede cannot be blocked")
     void cannotBeBlocked() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = new Permanent(new Ferropede());
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
@@ -42,7 +43,7 @@ class FerropedeTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage trigger may remove a counter from target permanent")
     void mayRemoveCounterFromTargetPermanent() {
-        Permanent ferropede = addFerropedeReady();
+        Permanent ferropede = addCreatureReady(player1, new Ferropede());
         ferropede.setAttacking(true);
 
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -62,10 +63,10 @@ class FerropedeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the combat damage trigger leaves the target counter unchanged")
     void decliningLeavesCounterUnchanged() {
-        Permanent ferropede = addFerropedeReady();
+        Permanent ferropede = addCreatureReady(player1, new Ferropede());
         ferropede.setAttacking(true);
 
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ferropede());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         resolveCombat();
@@ -82,10 +83,10 @@ class FerropedeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving against a target with no counters is a harmless no-op")
     void noCountersIsNoOp() {
-        Permanent ferropede = addFerropedeReady();
+        Permanent ferropede = addCreatureReady(player1, new Ferropede());
         ferropede.setAttacking(true);
 
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ferropede());
 
         resolveCombat();
         harness.passBothPriorities();
@@ -97,12 +98,5 @@ class FerropedeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-    }
-
-    private Permanent addFerropedeReady() {
-        Permanent ferropede = new Permanent(new Ferropede());
-        ferropede.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(ferropede);
-        return ferropede;
     }
 }

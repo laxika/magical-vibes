@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "122")
+@CardRegistration(set = "ME4", collectorNumber = "79")
 public class DreadWight extends Card {
 
     public DreadWight() {

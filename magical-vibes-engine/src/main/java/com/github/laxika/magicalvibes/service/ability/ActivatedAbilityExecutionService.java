@@ -707,7 +707,8 @@ public class ActivatedAbilityExecutionService {
                 activatedPermanentControllerId);
         snapshotEffects = snapshotActivationCountConditions(gameData, permanent, snapshotEffects);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
-        // and its cost and effect don't move cards to or from a library.
+        // and its cost and effect don't move cards to or from a library, except for a
+        // controller-only MillEffect used as an inline reflexive mana-ability rider.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
@@ -1317,8 +1318,9 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int multiplier = MaroGoneNutsSupport.apply(gameData, effect, 2);
+                var manaBeforeDoubling = pool.getAllManaTotals();
                 for (ManaColor color : ManaColor.values()) {
-                    int current = pool.get(color);
+                    int current = manaBeforeDoubling.getOrDefault(color, 0);
                     for (int i = 1; i < multiplier; i++) {
                         pool.add(color, current);
                     }
@@ -1672,7 +1674,9 @@ public class ActivatedAbilityExecutionService {
                         delayed.sourceMustRemainOnBattlefield(),
                         delayed.targetFilter(),
                         new Permanent(permanent),
-                        null));
+                        null,
+                        delayed.untilNextTurn(),
+                        gameData.turnNumber));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));

@@ -1713,10 +1713,35 @@ public class CastingCostService {
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
+            var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
+            if (grantedEvoke.isPresent()) {
+                AlternateHandCast altCast = grantedEvoke.get();
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
             var grantedProwl = gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card);
             if (grantedProwl.isPresent()) {
                 AlternateHandCast altCast = grantedProwl.get();
                 if (!prowlConditionMet(gameData, playerId, altCast.prowlDamageSubtypes())) {
+                    return false;
+                }
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
+            var grantedFreerunning = gameQueryService.findGrantedFreerunningAlternateCast(gameData, playerId, card);
+            if (grantedFreerunning.isPresent()) {
+                AlternateHandCast altCast = grantedFreerunning.get();
+                if (altCast.availabilityCondition() != null
+                        && !conditionEvaluationService.isMet(gameData, altCast.availabilityCondition(),
+                        ConditionContext.forCasting(playerId))) {
                     return false;
                 }
                 return altCast.getCost(ManaCastingCost.class)
@@ -1766,7 +1791,7 @@ public class CastingCostService {
 
         var lifeCost = altCast.getCost(LifeCastingCost.class);
         if (lifeCost.isPresent()
-                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && (!gameQueryService.canPayLifeForCosts(gameData)
                 || !gameQueryService.canPlayerLifeChange(gameData, playerId)
                 || gameData.getLife(playerId) < lifeCost.get().amount())) {
             return false;
@@ -1892,7 +1917,13 @@ public class CastingCostService {
         if (costs.isEmpty()) return true;
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null) return false;
-        return canMatchDiscardCosts(hand, sourceCard, costs, 0, new HashSet<>());
+        List<DiscardCardCastingCost> individualCosts = new ArrayList<>();
+        for (DiscardCardCastingCost cost : costs) {
+            for (int i = 0; i < cost.count(); i++) {
+                individualCosts.add(cost);
+            }
+        }
+        return canMatchDiscardCosts(hand, sourceCard, individualCosts, 0, new HashSet<>());
     }
 
     private boolean canMatchDiscardCosts(List<Card> hand, Card sourceCard,
@@ -2261,7 +2292,7 @@ public class CastingCostService {
     public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
         var lifeCost = flashback.getCost(LifeCastingCost.class);
         return lifeCost.isEmpty()
-                || (gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || (gameQueryService.canPayLifeForCosts(gameData)
                 && gameData.getLife(playerId) >= lifeCost.get().amount());
     }
 
@@ -2401,7 +2432,7 @@ public class CastingCostService {
                 continue;
             } else if (cost instanceof LifeCastingCost lifeCost) {
                 if (gameData.getLife(playerId) < lifeCost.amount()
-                        || !gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+                        || !gameQueryService.canPayLifeForCosts(gameData)) {
                     return false;
                 }
             } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {

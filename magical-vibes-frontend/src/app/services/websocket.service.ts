@@ -200,6 +200,7 @@ export interface Card {
   alternateCostDiscardsHandCard?: boolean;
   alternateCostRevealsHandCard?: boolean;
   graveyardCastRequiresDiscard?: boolean;
+  graveyardCastDiscardCount?: number;
   graveyardCastExileCount?: number;
   graveyardCastExileLabel?: string | null;
   additionalBeholdSubtype: string | null;

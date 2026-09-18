@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 @CardRegistration(set = "MUL", collectorNumber = "63")
 @CardRegistration(set = "MUL", collectorNumber = "128")
 @CardRegistration(set = "MUL", collectorNumber = "193")
+@CardRegistration(set = "ECC", collectorNumber = "136")
 public class YarokTheDesecrated extends Card {
 
     public YarokTheDesecrated() {

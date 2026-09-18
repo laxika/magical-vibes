@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -154,6 +155,41 @@ public class CardChoiceHandlerService {
     }
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
+    public void handleWordOfCommandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.WordOfCommandCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.WordOfCommandCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> targetHand = gameData.playerHands.get(choice.targetPlayerId());
+        if (targetHand == null || cardIndex >= targetHand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = targetHand.get(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        gameData.wordOfCommandPendingResolutionEntry = gameData.pendingEffectResolutionEntry;
+        gameData.wordOfCommandPendingResolutionIndex = gameData.pendingEffectResolutionIndex;
+        gameData.pendingEffectResolutionEntry = null;
+        gameData.pendingEffectResolutionIndex = 0;
+        gameData.wordOfCommandCardId = selectedCard.getId();
+        gameData.wordOfCommandCastingCard = true;
+        gameData.wordOfCommandAwaitingCardResolution = false;
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses ", selectedCard, " from "
+                        + gameData.playerIdToName.getOrDefault(choice.targetPlayerId(), "that player") + "'s hand."));
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                selectedCard, choice.targetPlayerId(),
+                List.of(new PlayCardFromHandByWordOfCommandEffect()),
+                "Play " + selectedCard.getName() + " from hand.", null, selectedCard.getManaCost()));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction active = gameData.interaction.activeInteraction();
         UUID choicePlayerId;
@@ -2017,6 +2053,10 @@ public class CardChoiceHandlerService {
             permanent.setFaceDownAsCloaked();
         } else if (faceDown) {
             permanent.setFaceDown(faceDownPower, faceDownToughness, faceDownCardTypes);
+        }
+        if (!cloaked && !faceDown && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+            permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+            permanent.setSummoningSick(false);
         }
         if (enterTapped) {
             permanent.tap();

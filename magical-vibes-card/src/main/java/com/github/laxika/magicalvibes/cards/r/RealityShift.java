@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureThenManife
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FRF", collectorNumber = "46")
+@CardRegistration(set = "ECC", collectorNumber = "68")
 public class RealityShift extends Card {
 
     public RealityShift() {

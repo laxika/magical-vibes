@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.f.Frogmite;
+import com.github.laxika.magicalvibes.cards.p.PlatedSlagwurm;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LivingHive.class, Frogmite.class, PlatedSlagwurm.class})
 class LivingHiveTest extends BaseCardTest {
 
     @Test
@@ -29,8 +32,12 @@ class LivingHiveTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Insect");
         assertThat(tokens).hasSize(6);
         assertThat(tokens).allSatisfy(token -> {
+            assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.INSECT);
             assertThat(token.getCard().getPower()).isEqualTo(1);
             assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.getCard().isToken()).isTrue();
         });
     }
 
@@ -39,11 +46,11 @@ class LivingHiveTest extends BaseCardTest {
     void createsTokensFromTrampleDamage() {
         Permanent hive = addCreatureReady(player1, new LivingHive());
         hive.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new Frogmite());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        advanceToCombatDamageAssignment();
+        resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 2,
                 player2.getId(), 4));
@@ -51,7 +58,7 @@ class LivingHiveTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(findPermanents(player1, "Insect")).hasSize(4);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Frogmite");
     }
 
     @Test
@@ -59,32 +66,16 @@ class LivingHiveTest extends BaseCardTest {
     void doesNotTriggerWithoutCombatDamageToPlayer() {
         Permanent hive = addCreatureReady(player1, new LivingHive());
         hive.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, creature("Great Wall", 0, 6));
+        Permanent blocker = addCreatureReady(player2, new PlatedSlagwurm());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        advanceToCombatDamageAssignment();
+        resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 6));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(findPermanents(player1, "Insect")).isEmpty();
-    }
-
-    private static Card creature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private void advanceToCombatDamageAssignment() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Plated Slagwurm");
     }
 }

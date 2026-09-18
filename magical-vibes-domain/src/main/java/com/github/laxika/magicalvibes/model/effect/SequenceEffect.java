@@ -134,6 +134,16 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     }
 
     @Override
+    public boolean hasOptionalTarget() {
+        for (CardEffect step : steps) {
+            if (step.targetSpec().declaredTarget() != null) {
+                return step.hasOptionalTarget();
+            }
+        }
+        return false;
+    }
+
+    @Override
     public boolean referencesCombatOpponent() {
         return steps.stream()
                 .filter(effect -> effect instanceof CombatOpponentReferencingEffect)

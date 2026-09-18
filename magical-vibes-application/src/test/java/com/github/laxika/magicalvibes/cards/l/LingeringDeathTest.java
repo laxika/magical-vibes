@@ -93,7 +93,7 @@ class LingeringDeathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);

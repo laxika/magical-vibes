@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "ECC", collectorNumber = "156")
 @CardRegistration(set = "C13", collectorNumber = "310")
 public class OpalPalace extends Card {
 

@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "179")
 @CardRegistration(set = "AKR", collectorNumber = "302")
+@CardRegistration(set = "ECC", collectorNumber = "153")
 public class IfnirDeadlands extends Card {
 
     public IfnirDeadlands() {

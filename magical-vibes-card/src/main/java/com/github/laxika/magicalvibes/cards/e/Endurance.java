@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPG", collectorNumber = "48")
 @CardRegistration(set = "SPG", collectorNumber = "53")
+@CardRegistration(set = "ECC", collectorNumber = "51")
 public class Endurance extends Card {
 
     public Endurance() {

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentTo
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1071,6 +1072,35 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = SacrificePermanentsOrLoseGameEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    private boolean handleControllerDealtDamageSacrificeOrLose(TriggerMatchContext match,
+            SacrificePermanentsOrLoseGameEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        if (dc.amount() <= 0) {
+            return false;
+        }
+
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                perm.getId());
+        entry.setEventValue(dc.amount());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE sacrifice-or-lose trigger fires ({} damage)",
+                gameData.id, perm.getCard().getName(), dc.amount());
+        return true;
+    }
+
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageMay(TriggerMatchContext match,
             MayEffect effect, TriggerContext ctx) {
@@ -1469,6 +1499,12 @@ public class DamageTriggerCollectorService {
     private boolean handleControllerDealtDamageByOpponentMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         return queueControllerDealtDamageByOpponentTrigger(match, may, ctx);
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    private boolean handleControllerDealtDamageByOpponentDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        return queueControllerDealtDamageByOpponentTrigger(match, effect, ctx);
     }
 
     private boolean queueControllerDealtDamageByOpponentTrigger(TriggerMatchContext match,

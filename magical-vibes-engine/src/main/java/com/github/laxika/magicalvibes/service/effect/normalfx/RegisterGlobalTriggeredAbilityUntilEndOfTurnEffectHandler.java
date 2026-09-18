@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +31,12 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var registration = (RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect) effect;
+        CardEffect triggeredEffect = registration.triggeredEffect();
+        if (triggeredEffect instanceof TemporaryGlobalTriggerEffect temporary) {
+            triggeredEffect = temporary.bindTo(entry.getSourcePermanentId(), entry.getTargetId());
+        }
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                entry.getControllerId(), entry.getCard(), registration.slot(), registration.triggeredEffect()));
+                entry.getControllerId(), entry.getCard(), registration.slot(), triggeredEffect));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until end of turn."));
         log.info("Game {} - {} registers a global {} trigger until end of turn",

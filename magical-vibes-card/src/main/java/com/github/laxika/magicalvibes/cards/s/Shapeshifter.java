@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 @CardRegistration(set = "5ED", collectorNumber = "398")
 @CardRegistration(set = "4ED", collectorNumber = "345")
 @CardRegistration(set = "ATQ", collectorNumber = "64")
+@CardRegistration(set = "ME4", collectorNumber = "226")
 public class Shapeshifter extends Card {
 
     public Shapeshifter() {

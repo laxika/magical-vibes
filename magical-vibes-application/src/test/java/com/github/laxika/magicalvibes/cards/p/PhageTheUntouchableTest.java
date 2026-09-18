@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -35,15 +34,14 @@ class PhageTheUntouchableTest extends BaseCardTest {
     @Test
     @DisplayName("Entering from graveyard causes controller to lose the game")
     void enteringWithoutCastingFromHandLosesGame() {
-        harness.setGraveyard(player1, List.of(new PhageTheUntouchable()));
+        PhageTheUntouchable target = new PhageTheUntouchable();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);

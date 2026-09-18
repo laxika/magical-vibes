@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "133")
+@CardRegistration(set = "ACR", collectorNumber = "89")
 public class CoverOfDarkness extends Card {
 
     public CoverOfDarkness() {

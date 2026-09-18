@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "7ED", collectorNumber = "181")
 @CardRegistration(set = "M13", collectorNumber = "129")
 @CardRegistration(set = "WTH", collectorNumber = "99")
+@CardRegistration(set = "TLE", collectorNumber = "29")
 public class Fervor extends Card {
 
     public Fervor() {

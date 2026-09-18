@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "4ED", collectorNumber = "30")
 @CardRegistration(set = "SUM", collectorNumber = "24")
 @CardRegistration(set = "3ED", collectorNumber = "24")
+@CardRegistration(set = "2ED", collectorNumber = "25")
 public class HolyStrength extends Card {
 
     public HolyStrength() {

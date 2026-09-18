@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "65")
+@CardRegistration(set = "ME4", collectorNumber = "229")
 public class StaffOfZegon extends Card {
 
     public StaffOfZegon() {

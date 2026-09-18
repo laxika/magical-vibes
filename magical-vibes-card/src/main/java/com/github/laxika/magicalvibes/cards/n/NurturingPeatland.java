@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "243")
 @CardRegistration(set = "HA7", collectorNumber = "23")
+@CardRegistration(set = "ACR", collectorNumber = "114")
 public class NurturingPeatland extends Card {
 
     public NurturingPeatland() {

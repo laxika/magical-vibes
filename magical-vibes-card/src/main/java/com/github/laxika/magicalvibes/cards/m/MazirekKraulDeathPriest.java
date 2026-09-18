@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "2XM", collectorNumber = "209")
+@CardRegistration(set = "C15", collectorNumber = "48")
 public class MazirekKraulDeathPriest extends Card {
 
     public MazirekKraulDeathPriest() {

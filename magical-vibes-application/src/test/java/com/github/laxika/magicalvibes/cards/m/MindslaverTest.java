@@ -1,35 +1,26 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mindslaver.class, Ornithopter.class})
 class MindslaverTest extends BaseCardTest {
 
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        stops1.add(TurnStep.POSTCOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        stops2.add(TurnStep.POSTCOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
-    }
-
-    private void advanceTurn() {
+    private void advanceTurn(Player activePlayer) {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.PRECOMBAT_MAIN);
     }
 
     // ===== Activation and delayed effect =====
@@ -47,6 +38,7 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.pendingTurnControl).containsEntry(opponentId, player1.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -70,7 +62,6 @@ class MindslaverTest extends BaseCardTest {
     @Test
     @DisplayName("Mind control activates when controlled player's turn begins")
     void turnControlActivatesOnOpponentTurn() {
-        enableAutoStop();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new Mindslaver());
@@ -81,7 +72,7 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Advance to opponent's turn
-        advanceTurn();
+        advanceTurn(player2);
 
         assertThat(gd.activePlayerId).isEqualTo(opponentId);
         assertThat(gd.mindControlledPlayerId).isEqualTo(opponentId);
@@ -95,7 +86,6 @@ class MindslaverTest extends BaseCardTest {
     @Test
     @DisplayName("Controller can pass priority on behalf of controlled player")
     void controllerCanPassPriority() {
-        enableAutoStop();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new Mindslaver());
@@ -105,7 +95,7 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Advance to opponent's turn
-        advanceTurn();
+        advanceTurn(player2);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
@@ -121,7 +111,6 @@ class MindslaverTest extends BaseCardTest {
     @Test
     @DisplayName("Controller can play cards from controlled player's hand")
     void controllerCanPlayControlledPlayerCards() {
-        enableAutoStop();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new Mindslaver());
@@ -131,22 +120,22 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Advance to player2's turn
-        advanceTurn();
+        advanceTurn(player2);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
 
         // Set player2's hand AFTER turn advancement (draw step adds cards)
-        Card testCard = new com.github.laxika.magicalvibes.cards.m.Memnite();
+        Card testCard = new Ornithopter();
         harness.setHand(player2, List.of(testCard));
 
         // Controller (player1) casts from controlled player's hand
-        // Memnite costs {0}, so no mana needed
+        // Ornithopter costs {0}, so no mana needed
         gs.playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         // The creature should be on player2's battlefield (controlled player's resources)
-        harness.assertOnBattlefield(player2, "Memnite");
+        harness.assertOnBattlefield(player2, "Ornithopter");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
@@ -155,7 +144,6 @@ class MindslaverTest extends BaseCardTest {
     @Test
     @DisplayName("Mind control ends when controlled turn ends")
     void turnControlEndsAtTurnEnd() {
-        enableAutoStop();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new Mindslaver());
@@ -165,11 +153,11 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Advance to player2's turn (mind control activates)
-        advanceTurn();
+        advanceTurn(player2);
         assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
 
         // Advance past the controlled turn to player1's turn
-        advanceTurn();
+        advanceTurn(player1);
 
         // Mind control should be cleared
         assertThat(gd.mindControlledPlayerId).isNull();

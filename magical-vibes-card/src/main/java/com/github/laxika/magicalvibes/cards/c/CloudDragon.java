@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "45")
+@CardRegistration(set = "ME4", collectorNumber = "41")
 public class CloudDragon extends Card {
 
     public CloudDragon() {

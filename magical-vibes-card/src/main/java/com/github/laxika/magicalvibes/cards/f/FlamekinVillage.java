@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "60")
+@CardRegistration(set = "ECC", collectorNumber = "149")
 public class FlamekinVillage extends Card {
 
     public FlamekinVillage() {
