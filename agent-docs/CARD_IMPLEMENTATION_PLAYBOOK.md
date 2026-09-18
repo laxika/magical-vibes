@@ -170,6 +170,7 @@ public class ExampleCard extends Card {
   - Like evoke, it is a pure-mana alternate cost forced through a dedicated entry point (`GameService.playCardWithProwl` / harness `castWithProwl`); the availability gate runs in `SpellCastingService`.
   - A static "[filter] spells you cast have prowl {cost}" grant uses `GrantProwlToSpellsEffect`; the engine synthesizes the alternate cast from the spell's effective creature types.
   - "When this creature enters, if its prowl cost was paid, [effect]": wrap the ETB effect in `ConditionalEffect(new CastForProwlCost(), innerEffect)` on `ON_ENTER_BATTLEFIELD` (Latchkey Faerie = `DrawCardEffect`). The prowl flag is stamped on the `StackEntry`/`Permanent` at cast/resolution and gated by `EtbEffectResolver` (unwrap when paid, drop otherwise — CR 603.4).
+- Freerunning ("Freerunning {cost}" — an alternate hand cost gated on combat damage with an Assassin or commander): use `new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), new Freerunning(), false)`. The condition reads the existing combat-damage source history and designated commander identities; cast it through `GameService.playCardWithAlternateCost` / harness `castWithAlternateCost`.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
 
 - Overload ("Overload {cost}" — CR 702.96, RTR/GTC/GRN, e.g. Blustersquall, Vandalblast, Cyclonic Rift):

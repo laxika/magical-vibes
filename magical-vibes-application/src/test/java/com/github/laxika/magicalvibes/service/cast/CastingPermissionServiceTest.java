@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
+import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -113,6 +114,32 @@ class CastingPermissionServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+    }
+
+    @Test
+    @DisplayName("filtered top-library land permission only allows matching lands")
+    void filteredTopLibraryLandPermission() {
+        Card source = new Card();
+        CardIsHistoricPredicate filter = new CardIsHistoricPredicate();
+        source.addEffect(EffectSlot.STATIC, new PlayLandsFromTopOfLibraryEffect(filter));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+        when(gameQueryService.getMaxLandsThisTurn(gd, player1Id)).thenReturn(1);
+
+        Card historicLand = new Card();
+        historicLand.setType(CardType.LAND);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(historicLand)));
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(historicLand), eq(filter), any(UUID.class), eq(gd), eq(player1Id))).thenReturn(true);
+
+        assertThat(svc.canPlayLandFromTopOfLibrary(gd, player1Id, historicLand)).isTrue();
+
+        Card ordinaryLand = new Card();
+        ordinaryLand.setType(CardType.LAND);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(ordinaryLand)));
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(ordinaryLand), eq(filter), any(UUID.class), eq(gd), eq(player1Id))).thenReturn(false);
+
+        assertThat(svc.canPlayLandFromTopOfLibrary(gd, player1Id, ordinaryLand)).isFalse();
     }
 
     @Test

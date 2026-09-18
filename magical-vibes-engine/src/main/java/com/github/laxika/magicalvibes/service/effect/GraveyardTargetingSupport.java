@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
@@ -26,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
@@ -34,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import org.springframework.stereotype.Component;
 
@@ -110,6 +115,10 @@ public class GraveyardTargetingSupport {
     }
 
     private Target targetOf(CardEffect effect) {
+        if (effect instanceof ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect) {
+            return new Target(new CardSubtypePredicate(CardSubtype.EQUIPMENT),
+                    GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to the battlefield attached to the token", 1, 1);
+        }
         if (effect instanceof ExileCardsFromGraveyardEffect exile) {
             return new Target(null, GraveyardSearchScope.ALL_GRAVEYARDS, "to exile",
                     exile.maxTargets(), 0);
@@ -134,6 +143,14 @@ public class GraveyardTargetingSupport {
                 int maxTargets = anyNumber ? Integer.MAX_VALUE : exile.count();
                 return new Target(exile.filter(), scope, "to exile", maxTargets, minTargets);
             }
+        }
+        if (effect instanceof ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect) {
+            return new Target(ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect.targetFilter(),
+                    GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to exile", 1, 0);
+        }
+        if (effect instanceof ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect) {
+            return new Target(ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect.targetFilter(),
+                    GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 0);
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
             return new Target(imprint.filter(), imprint.scope(), "to exile", 1, 1);

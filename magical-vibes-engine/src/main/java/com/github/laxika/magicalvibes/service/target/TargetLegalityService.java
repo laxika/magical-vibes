@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedThisTurnPredicate;
@@ -898,6 +900,12 @@ public class TargetLegalityService {
 
             if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                 validateGraveyardCardTarget(gameData, sourceCard, graveyardFilter, targetId, playerId, xValue);
+                continue;
+            }
+
+            if (positionFilter instanceof ExiledCardPredicateTargetFilter exiledFilter) {
+                validateExiledCardTarget(gameData, sourceCard, abilityEffects, exiledFilter,
+                        targetId, playerId, xValue);
                 continue;
             }
 
@@ -2353,6 +2361,35 @@ public class TargetLegalityService {
         }
     }
 
+    private void validateExiledCardTarget(GameData gameData, Card sourceCard,
+                                          List<CardEffect> abilityEffects,
+                                          ExiledCardPredicateTargetFilter filter,
+                                          UUID targetId, UUID controllerId, int xValue) {
+        ExiledCardEntry exiled = gameData.findExiledCard(targetId);
+        if (exiled == null || exiled.faceDown()) {
+            throw new IllegalStateException("Target card not found face up in exile");
+        }
+        UUID sourcePermanentId = findSourcePermanentIdByCardId(gameData, sourceCard.getId());
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (filter.predicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                exiled.card(), filter.predicate(), sourceCard.getId(), gameData,
+                exiled.ownerId(), sourcePermanentId, null, xValue)) {
+            throw new IllegalStateException(filter.errorMessage());
+        }
+
+        List<CardEffect> exiledEffects = abilityEffects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                .toList();
+        if (exiledEffects.isEmpty()
+                || targetValidationService.checkEffectTargets(exiledEffects,
+                new TargetValidationContext(gameData, targetId, Zone.EXILE, sourceCard, xValue,
+                        controllerId, sourcePermanent, sourcePermanentId, null)).isPresent()) {
+            throw new IllegalStateException(filter.errorMessage());
+        }
+    }
+
     /**
      * Enforces a spell's cross-target restriction on the whole chosen set beyond the per-position
      * filters.
@@ -2931,7 +2968,17 @@ public class TargetLegalityService {
                 List<CardEffect> exiledTargetEffects = exiledCardTargetEffectsForDeclaredPosition(
                         gameData, entry, i);
                 boolean legal;
-                if (!exiledTargetEffects.isEmpty()
+                if (targetFilter instanceof ExiledCardPredicateTargetFilter exiledFilter) {
+                    ExiledCardEntry exiled = gameData.findExiledCard(targetId);
+                    legal = exiled != null && !exiled.faceDown()
+                            && (exiledFilter.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            exiled.card(), exiledFilter.predicate(), entry.getCard().getId(), gameData,
+                            exiled.ownerId(), entry.getSourcePermanentId(),
+                            entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue()))
+                            && !exiledTargetEffects.isEmpty()
+                            && isExiledCardLegalOnResolution(gameData, entry, targetId, exiledTargetEffects);
+                } else if (!exiledTargetEffects.isEmpty()
                         && gameQueryService.findCardInExileById(gameData, targetId) != null) {
                     legal = isExiledCardLegalOnResolution(gameData, entry, targetId, exiledTargetEffects);
                 } else if (!exiledTargetEffects.isEmpty()

@@ -82,6 +82,20 @@ public class PermanentCounterSupport {
         }
     }
 
+    public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
+                                     CounterType counterType, int amount) {
+        if (triggerCollectionService != null && target != null && amount > 0) {
+            UUID placingPlayerId = placingPlayerId(gameData, entry, target);
+            if (counterType == CounterType.LORE) {
+                for (int i = 0; i < amount; i++) {
+                    triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(
+                            gameData, target, placingPlayerId);
+                }
+            }
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        }
+    }
+
     public void notifySelfCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
                                          CounterType counterType, int previousCount, int amount) {
         if (target != null && amount > 0) {
@@ -611,7 +625,7 @@ public class PermanentCounterSupport {
         };
         if (counterName == null || count <= 0) return 0;
 
-        notifyCountersPlaced(gameData, entry, target, count);
+        notifyCountersPlaced(gameData, entry, target, counterType, count);
         notifySelfCountersPlaced(gameData, entry, target, counterType, previousCount, count);
         recordCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {

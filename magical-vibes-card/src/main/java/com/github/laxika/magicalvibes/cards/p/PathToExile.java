@@ -36,6 +36,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "249")
 @CardRegistration(set = "OMB", collectorNumber = "4")
 @CardRegistration(set = "PZA", collectorNumber = "1")
+@CardRegistration(set = "ACR", collectorNumber = "81")
 @CardRegistration(set = "CMD", collectorNumber = "25")
 public class PathToExile extends Card {
 

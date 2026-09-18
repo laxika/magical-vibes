@@ -707,7 +707,8 @@ public class ActivatedAbilityExecutionService {
                 activatedPermanentControllerId);
         snapshotEffects = snapshotActivationCountConditions(gameData, permanent, snapshotEffects);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
-        // and its cost and effect don't move cards to or from a library.
+        // and its cost and effect don't move cards to or from a library, except for a
+        // controller-only MillEffect used as an inline reflexive mana-ability rider.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
