@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -51,12 +52,23 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             targetId = groupTargets.getFirst();
         }
 
+        // Optional hand-ability targets can be omitted (e.g. Decree of Silence cycling).
+        // Skip that optional effect while continuing the ability's remaining effects.
+        if (targetId == null && entry.isCyclingAbility()
+                && e.wrapped() instanceof CounterSpellEffect) {
+            return;
+        }
+
         // CR 603.5 — "you may" choice happens at resolution time.
         // Set flag so the resolution loop re-runs this effect after the player responds.
         gameData.resolvingMayEffectFromStack = true;
         UUID choicePlayerId = switch (e.choicePlayer()) {
             case CONTROLLER -> entry.getControllerId();
-            case ACTIVE_PLAYER -> entry.getActivePlayerId();
+            // Triggered abilities snapshot the active player on their stack entry. Activated
+            // abilities do not need that trigger snapshot, so use the current active player for
+            // effects such as Obeka's "the player whose turn it is may ...".
+            case ACTIVE_PLAYER -> entry.getActivePlayerId() != null
+                    ? entry.getActivePlayerId() : gameData.activePlayerId;
             case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry.getAttackedTargetId());
             case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
             case TARGET_PERMANENT_CONTROLLER -> targetId == null

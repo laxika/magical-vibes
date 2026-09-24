@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
 
 @CardRegistration(set = "SNC", collectorNumber = "231")
+@CardRegistration(set = "SLD", collectorNumber = "2238")
 public class ZiatoraTheIncinerator extends Card {
 
     public ZiatoraTheIncinerator() {

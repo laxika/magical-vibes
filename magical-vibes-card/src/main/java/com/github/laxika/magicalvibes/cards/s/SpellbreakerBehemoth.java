@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "60")
+@CardRegistration(set = "C13", collectorNumber = "216")
 public class SpellbreakerBehemoth extends Card {
 
     public SpellbreakerBehemoth() {

@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
@@ -197,7 +198,21 @@ public abstract class AiDecisionEngine {
     // ===== Internal Decision Dispatch =====
 
     public void handleEvent(AiDecisionKind kind) {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData current = gameRegistry.getActive(gameId);
+        if (current == null) return;
+        var session = current.session;
+        session.lock.lock();
+        try {
+            gameActions.beginDecision(session.context());
+            handleCurrentEvent(kind);
+        } finally {
+            gameActions.endDecision();
+            session.lock.unlock();
+        }
+    }
+
+    private void handleCurrentEvent(AiDecisionKind kind) {
+        GameData gameData = gameRegistry.getActive(gameId);
         if (gameData == null || gameData.status == GameStatus.FINISHED) {
             return;
         }
@@ -499,7 +514,7 @@ public abstract class AiDecisionEngine {
     // ===== Mulligan =====
 
     public void handleInitialMulligan() {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         if (gameData == null) return;
         if (shouldKeepHand(gameData)) {
             log.info("AI: Keeping hand in game {}", gameId);
@@ -1180,7 +1195,7 @@ public abstract class AiDecisionEngine {
      * the all-in fallback never has a cost left to float.
      */
     protected void sendAttackerDeclaration(DeclareAttackersRequest request) {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         DeclareAttackersRequest combatLimitLegalRequest = gameData == null
                 ? request
                 : gameQueryService.withQueryScope(
@@ -1563,7 +1578,7 @@ public abstract class AiDecisionEngine {
 
     /** Returns the rejection reason, or null when the declaration was accepted or the game is over. */
     private String attemptAttackerDeclaration(DeclareAttackersRequest request) {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         if (gameData == null || gameData.status == GameStatus.FINISHED) {
             return null;
         }
@@ -1581,7 +1596,7 @@ public abstract class AiDecisionEngine {
      * additional cost for are dropped, and their mana floated, before sending.
      */
     protected void sendBlockerDeclaration(DeclareBlockersRequest request) {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         DeclareBlockersRequest requirementLegal = gameData == null
                 ? request
                 : new DeclareBlockersRequest(enforceBlockRequirements(gameData, request.blockerAssignments()));
@@ -1625,7 +1640,7 @@ public abstract class AiDecisionEngine {
     }
 
     private void sendBlockerFallback() {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         List<BlockerAssignment> fallbackAssignments = gameData == null
                 ? List.of()
                 : enforceBlockRequirements(gameData, List.of());
@@ -2960,6 +2975,7 @@ public abstract class AiDecisionEngine {
             // Multi-permanent costs ride on additionalCostSacrificePermanentIds — see
             // selectMultiPermanentCostIds.
             if (effect instanceof SacrificeMultiplePermanentsCost
+                    || effect instanceof SacrificeFractionRoundedUpCost
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
@@ -3066,6 +3082,18 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == cost.count() ? chosen : List.of();
+            }
+            if (effect instanceof SacrificeFractionRoundedUpCost cost) {
+                List<Permanent> matching = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .toList();
+                int required = (matching.size() + cost.divisor() - 1) / cost.divisor();
+                return matching.stream()
+                        .sorted(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
+                                + gameQueryService.getEffectiveToughness(gameData, p)))
+                        .limit(required)
+                        .map(Permanent::getId)
+                        .toList();
             }
             if (effect instanceof TapMultiplePermanentsCost cost
                     && cost.count() instanceof Fixed fixed) {
@@ -3770,7 +3798,7 @@ public abstract class AiDecisionEngine {
                         gameQueryService.getEffectivePower(gameData, permanent)
                                 + gameQueryService.getEffectiveToughness(gameData, permanent)))
                 .toList();
-        boolean sacrificeAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+        boolean sacrificeAllowed = gameQueryService.canSacrificeCreaturesForCosts(gameData);
         int effectiveXValue = xValue != null ? xValue : 0;
         for (int count = 0; count <= creatures.size(); count++) {
             int reduction = count * reductionEffect.reductionPerCreature();
@@ -4063,7 +4091,7 @@ public abstract class AiDecisionEngine {
     }
 
     protected void send(MessageHandlerAction action) {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         if (gameData == null || gameData.status == GameStatus.FINISHED) {
             return;
         }

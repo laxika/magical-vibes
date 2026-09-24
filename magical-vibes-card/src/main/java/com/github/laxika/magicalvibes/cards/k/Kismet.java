@@ -12,6 +12,7 @@ import java.util.Set;
 @CardRegistration(set = "5ED", collectorNumber = "43")
 @CardRegistration(set = "4ED", collectorNumber = "33")
 @CardRegistration(set = "LEG", collectorNumber = "25")
+@CardRegistration(set = "ME4", collectorNumber = "17")
 public class Kismet extends Card {
 
     public Kismet() {

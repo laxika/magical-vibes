@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "248")
+@CardRegistration(set = "DBL", collectorNumber = "248")
 public class VadrikAstralArchmage extends Card {
 
     public VadrikAstralArchmage() {

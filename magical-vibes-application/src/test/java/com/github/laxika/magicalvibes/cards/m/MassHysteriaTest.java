@@ -1,55 +1,57 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MassHysteria.class, AlphaMyr.class})
 class MassHysteriaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creatures you control have haste")
     void ownCreaturesHaveHaste() {
-        Permanent bears = addPermanent(player1, new GrizzlyBears());
-        addPermanent(player1, new MassHysteria());
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.addToBattlefield(player1, new MassHysteria());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.HASTE)).isTrue();
     }
 
     @Test
     @DisplayName("Opponent creatures have haste")
     void opponentCreaturesHaveHaste() {
-        Permanent opponentBears = addPermanent(player2, new GrizzlyBears());
-        addPermanent(player1, new MassHysteria());
+        Permanent opponentMyr = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.addToBattlefield(player1, new MassHysteria());
 
-        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentMyr, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after Mass Hysteria has entered have haste")
+    void creaturesEnteringAfterSourceHaveHaste() {
+        harness.addToBattlefield(player1, new MassHysteria());
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.HASTE)).isTrue();
     }
 
     @Test
     @DisplayName("Haste is removed when Mass Hysteria leaves the battlefield")
     void hasteRemovedWhenSourceLeaves() {
-        Permanent bears = addPermanent(player1, new GrizzlyBears());
-        Permanent opponentBears = addPermanent(player2, new GrizzlyBears());
-        addPermanent(player1, new MassHysteria());
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
-        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HASTE)).isTrue();
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent opponentMyr = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        Permanent massHysteria = harness.addToBattlefieldAndReturn(player1, new MassHysteria());
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentMyr, Keyword.HASTE)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Mass Hysteria"));
+        gd.playerBattlefields.get(player1.getId()).remove(massHysteria);
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
-        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HASTE)).isFalse();
-    }
-
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentMyr, Keyword.HASTE)).isFalse();
     }
 }

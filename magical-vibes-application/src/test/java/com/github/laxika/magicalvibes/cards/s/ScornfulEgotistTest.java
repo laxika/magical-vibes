@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(ScornfulEgotist.class)
 class ScornfulEgotistTest extends BaseCardTest {
@@ -29,6 +30,32 @@ class ScornfulEgotistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         int egotistIndex = gd.playerBattlefields.get(player1.getId()).indexOf(egotist);
         harness.turnFaceUp(player1, egotistIndex);
+        harness.passBothPriorities();
+
+        assertThat(egotist.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void requiresBlueManaToTurnFaceUp() {
+        harness.setHand(player1, List.of(new ScornfulEgotist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent egotist = findPermanent(player1, "Scornful Egotist");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(egotist)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(egotist.isFaceDown()).isTrue();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(egotist));
         harness.passBothPriorities();
 
         assertThat(egotist.isFaceDown()).isFalse();

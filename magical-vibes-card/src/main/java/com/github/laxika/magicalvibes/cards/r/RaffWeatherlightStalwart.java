@@ -22,26 +22,27 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "56")
 @CardRegistration(set = "MUL", collectorNumber = "121")
 @CardRegistration(set = "MUL", collectorNumber = "186")
+@CardRegistration(set = "DMU", collectorNumber = "212")
 public class RaffWeatherlightStalwart extends Card {
 
     public RaffWeatherlightStalwart() {
+        CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
+                new CardTypePredicate(CardType.INSTANT),
+                new CardTypePredicate(CardType.SORCERY)));
+
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
+                instantOrSorcery,
                 List.of(new MayPayTapPermanentsEffect(
                         new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
                         new DrawCardEffect(1),
-                        "Tap two untapped creatures you control?"))));
+                        "Tap two untapped creatures you control to draw a card?"))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}{W}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)
-                ),
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)),
                 "{3}{W}{W}: Creatures you control get +1/+1 and gain vigilance until end of turn."
         ));
     }

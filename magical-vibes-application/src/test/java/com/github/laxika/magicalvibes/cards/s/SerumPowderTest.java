@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SerumPowder.class, com.github.laxika.magicalvibes.cards.g.GrizzlyBears.class})
+@CardUsed({SerumPowder.class, DarksteelCitadel.class})
 class SerumPowderTest extends BaseCardTest {
 
     @Test
@@ -40,9 +41,9 @@ class SerumPowderTest extends BaseCardTest {
         UUID previousDecisionId = gameData.playerMulliganDecisionIds.get(player.getId());
         List<GameEventFact> emittedFacts = new ArrayList<>();
         SerumPowder serumPowder = new SerumPowder();
-        Card handCard = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
-        Card libraryCardOne = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
-        Card libraryCardTwo = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
+        Card handCard = new DarksteelCitadel();
+        Card libraryCardOne = new DarksteelCitadel();
+        Card libraryCardTwo = new DarksteelCitadel();
 
         mulliganHarness.setHand(player, List.of(serumPowder, handCard));
         mulliganHarness.setLibrary(player, List.of(libraryCardOne, libraryCardTwo));
@@ -79,15 +80,15 @@ class SerumPowderTest extends BaseCardTest {
         GameData gameData = mulliganHarness.getGameData();
 
         mulliganHarness.setHand(player, List.of(new SerumPowder(),
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears()));
+                new DarksteelCitadel()));
         mulliganHarness.setLibrary(player, List.of(
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears(),
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears(),
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears(),
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears(),
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears(),
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears(),
-                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears()));
+                new DarksteelCitadel(),
+                new DarksteelCitadel(),
+                new DarksteelCitadel(),
+                new DarksteelCitadel(),
+                new DarksteelCitadel(),
+                new DarksteelCitadel(),
+                new DarksteelCitadel()));
 
         mulliganHarness.getGameService().mulligan(gameData, player);
         mulliganHarness.handleMayAbilityChosen(player, false);
@@ -96,5 +97,83 @@ class SerumPowderTest extends BaseCardTest {
         assertThat(gameData.playerHands.get(player.getId())).hasSize(7);
         assertThat(gameData.mulliganCounts).containsEntry(player.getId(), 1);
         assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("using Serum Powder does not consume a mulligan")
+    void usingSerumPowderStillAllowsNormalMulligan() {
+        GameTestHarness mulliganHarness = new GameTestHarness();
+        Player player = mulliganHarness.getPlayer1();
+        GameData gameData = mulliganHarness.getGameData();
+        SerumPowder serumPowder = new SerumPowder();
+        DarksteelCitadel handCard = new DarksteelCitadel();
+        List<Card> library = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            library.add(new DarksteelCitadel());
+        }
+
+        mulliganHarness.setHand(player, List.of(serumPowder, handCard));
+        mulliganHarness.setLibrary(player, library);
+
+        mulliganHarness.getGameService().mulligan(gameData, player);
+        mulliganHarness.handleMayAbilityChosen(player, true);
+
+        assertThat(gameData.mulliganCounts).containsEntry(player.getId(), 0);
+        mulliganHarness.getGameService().mulligan(gameData, player);
+
+        assertThat(gameData.getPlayerExiledCards(player.getId())).containsExactly(serumPowder, handCard);
+        assertThat(gameData.playerHands.get(player.getId())).hasSize(7);
+        assertThat(gameData.playerDecks.get(player.getId())).isEmpty();
+        assertThat(gameData.mulliganCounts).containsEntry(player.getId(), 1);
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("a Serum Powder drawn after using one can be used as well")
+    void drawnSerumPowderCanBeUsedAfterAnEarlierPowder() {
+        GameTestHarness mulliganHarness = new GameTestHarness();
+        Player player = mulliganHarness.getPlayer1();
+        GameData gameData = mulliganHarness.getGameData();
+        SerumPowder firstSerumPowder = new SerumPowder();
+        SerumPowder secondSerumPowder = new SerumPowder();
+        DarksteelCitadel firstHandCard = new DarksteelCitadel();
+        DarksteelCitadel firstDrawnCard = new DarksteelCitadel();
+        DarksteelCitadel secondDrawnCard = new DarksteelCitadel();
+        DarksteelCitadel thirdDrawnCard = new DarksteelCitadel();
+        List<Card> library = new ArrayList<>(List.of(
+                secondSerumPowder, firstDrawnCard, secondDrawnCard, thirdDrawnCard));
+        for (int i = 0; i < 7; i++) {
+            library.add(new DarksteelCitadel());
+        }
+
+        mulliganHarness.setHand(player, List.of(firstSerumPowder, firstHandCard));
+        mulliganHarness.setLibrary(player, library);
+
+        mulliganHarness.getGameService().mulligan(gameData, player);
+        mulliganHarness.handleMayAbilityChosen(player, true);
+        mulliganHarness.getGameService().mulligan(gameData, player);
+        mulliganHarness.handleMayAbilityChosen(player, true);
+
+        assertThat(gameData.getPlayerExiledCards(player.getId()))
+                .containsExactly(firstSerumPowder, firstHandCard, secondSerumPowder, firstDrawnCard);
+        assertThat(gameData.playerHands.get(player.getId()))
+                .containsExactly(secondDrawnCard, thirdDrawnCard);
+        assertThat(gameData.mulliganCounts).containsEntry(player.getId(), 0);
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void anEmptyLibraryDuringPregameDrawDefersTheLossUntilPlayBegins() {
+        GameTestHarness mulliganHarness = new GameTestHarness();
+        Player player = mulliganHarness.getPlayer1();
+        GameData game = mulliganHarness.getGameData();
+        mulliganHarness.setHand(player, List.of(new SerumPowder()));
+        mulliganHarness.setLibrary(player, List.of());
+        mulliganHarness.getGameService().mulligan(game, player);
+        mulliganHarness.handleMayAbilityChosen(player, true);
+        assertThat(game.status).isEqualTo(GameStatus.MULLIGAN);
+        assertThat(game.gameResult).isNull();
+        assertThat(game.playersAttemptedDrawFromEmptyLibrary).contains(player.getId());
+        assertThat(game.playerHands.get(player.getId())).isEmpty();
     }
 }

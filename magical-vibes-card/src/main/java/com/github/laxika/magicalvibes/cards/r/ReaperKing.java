@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "260")
+@CardRegistration(set = "SLD", collectorNumber = "9")
+@CardRegistration(set = "SLD", collectorNumber = "2170")
 public class ReaperKing extends Card {
 
     public ReaperKing() {

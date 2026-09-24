@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "220")
+@CardRegistration(set = "DBL", collectorNumber = "220")
 public class DiregrafRebirth extends Card {
 
     public DiregrafRebirth() {

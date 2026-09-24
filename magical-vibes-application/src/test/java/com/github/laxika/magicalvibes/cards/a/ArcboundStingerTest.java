@@ -1,19 +1,21 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.b.BronzeSable;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.o.Oxidize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArcboundStinger.class, AuriokGlaivemaster.class, DarksteelGargoyle.class, Oxidize.class})
 class ArcboundStingerTest extends BaseCardTest {
 
     @Test
@@ -32,51 +34,88 @@ class ArcboundStingerTest extends BaseCardTest {
     void modularMayPutItsCounterOnTargetArtifactCreatureWhenItDies() {
         Permanent stinger = addCreatureReady(player1, new ArcboundStinger());
         stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        stinger.tap();
-        Permanent bronzeSable = addCreatureReady(player1, new BronzeSable());
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
 
         destroyStinger(stinger);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).contains(bronzeSable.getId());
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId());
 
-        harness.handlePermanentChosen(player1, bronzeSable.getId());
+        harness.handlePermanentChosen(player1, gargoyle.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     void modularCannotTargetNonArtifactCreature() {
         Permanent stinger = addCreatureReady(player1, new ArcboundStinger());
         stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        stinger.tap();
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent bronzeSable = addCreatureReady(player1, new BronzeSable());
+        Permanent nonArtifactCreature = addCreatureReady(player1, new AuriokGlaivemaster());
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
 
         destroyStinger(stinger);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).contains(bronzeSable.getId()).doesNotContain(bears.getId());
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId())
+                .doesNotContain(nonArtifactCreature.getId());
 
-        harness.handlePermanentChosen(player1, bronzeSable.getId());
+        harness.handlePermanentChosen(player1, gargoyle.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modularCanPutItsCounterOnOpponentsArtifactCreature() {
+        Permanent stinger = addCreatureReady(player1, new ArcboundStinger());
+        stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent gargoyle = addCreatureReady(player2, new DarksteelGargoyle());
+
+        destroyStinger(stinger);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId());
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void modularTriggersWhenItHasNoCounters() {
+        addCreatureReady(player1, new ArcboundStinger());
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId());
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void destroyStinger(Permanent stinger) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new Assassinate()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Oxidize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player2, 0, 0, stinger.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, stinger.getId());
     }
 }

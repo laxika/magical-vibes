@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 
 @CardRegistration(set = "2XM", collectorNumber = "75")
+@CardRegistration(set = "C14", collectorNumber = "20")
 public class WellOfIdeas extends Card {
 
     public WellOfIdeas() {

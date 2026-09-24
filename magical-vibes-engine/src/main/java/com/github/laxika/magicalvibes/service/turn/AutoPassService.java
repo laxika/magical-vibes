@@ -83,6 +83,7 @@ public class AutoPassService {
      * @param advanceStep callback to advance to the next turn step
      */
     public void resolveAutoPass(GameData gameData, Consumer<GameData> advanceStep) {
+        if (gameData.waitingForSubgame) return;
         if (gameData.status != GameStatus.RUNNING) return;
         if (gameData.interaction.isAwaitingInput()) {
             invalidateForAllPlayers(gameData);
@@ -233,12 +234,23 @@ public class AutoPassService {
             stepTriggerService.processNextPhasesInTriggerTarget(gameData);
         }
 
+        boolean checkAfterStepAdvance = false;
         for (int safety = 0; safety < 100; safety++) {
+            if (gameData.status != GameStatus.RUNNING || gameData.waitingForSubgame) return;
             if (gameData.interaction.isAwaitingInput()) {
                 invalidateForAllPlayers(gameData);
                 return;
             }
-            if (gameData.status == GameStatus.FINISHED) return;
+            // A step advance can create a new loss condition before the next priority window.
+            if (checkAfterStepAdvance) {
+                stateBasedActionService.performStateBasedActions(gameData);
+                checkAfterStepAdvance = false;
+                if (gameData.status != GameStatus.RUNNING) return;
+                if (gameData.interaction.isAwaitingInput()) {
+                    invalidateForAllPlayers(gameData);
+                    return;
+                }
+            }
 
             // When stack is non-empty, never auto-pass — players must explicitly pass
             if (!gameData.stack.isEmpty()) {
@@ -251,6 +263,7 @@ public class AutoPassService {
             // If no one holds priority (both already passed), advance the step
             if (priorityHolder == null) {
                 advanceStep.accept(gameData);
+                checkAfterStepAdvance = true;
                 continue;
             }
 
@@ -278,6 +291,7 @@ public class AutoPassService {
 
             if (gameData.priorityPassedBy.size() >= 2) {
                 advanceStep.accept(gameData);
+                checkAfterStepAdvance = true;
             }
             // When only one player auto-passed, skip the intermediate broadcast.
             // The next loop iteration will either broadcast (other player can act)
@@ -309,6 +323,7 @@ public class AutoPassService {
             if (stackPriorityHolder == null) {
                 // Both passed — resolve top of stack
                 stackResolutionService.resolveTopOfStack(gameData);
+                if (gameData.waitingForSubgame) return;
                 // After resolution, if user interaction is needed (e.g. multi-permanent choice), stop
                 if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                     return;

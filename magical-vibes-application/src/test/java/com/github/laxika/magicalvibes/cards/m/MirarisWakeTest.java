@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MirarisWake.class, SuntailHawk.class, KrosanVerge.class})
+@CardUsed({CrystalQuarry.class, KrosanVerge.class, MirarisWake.class, MossfireValley.class, SuntailHawk.class})
 class MirarisWakeTest extends BaseCardTest {
 
     @Test
@@ -75,5 +75,19 @@ class MirarisWakeTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(6);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Adds only one additional mana when a land produces multiple types")
+    void addsOnlyOneManaForLandProducingMultipleTypes() {
+        harness.addToBattlefield(player1, new MirarisWake());
+        harness.addToBattlefield(player1, new MossfireValley());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        var manaPool = gd.playerManaPools.get(player1.getId());
+        assertThat(manaPool.get(ManaColor.COLORLESS)).isZero();
+        assertThat(manaPool.get(ManaColor.RED) + manaPool.get(ManaColor.GREEN)).isEqualTo(3);
     }
 }

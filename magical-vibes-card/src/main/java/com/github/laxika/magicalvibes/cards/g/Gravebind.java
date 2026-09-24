@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenera
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "129")
+@CardRegistration(set = "ME4", collectorNumber = "84")
 public class Gravebind extends Card {
 
     public Gravebind() {

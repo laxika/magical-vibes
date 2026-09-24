@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "78")
 @CardRegistration(set = "SUM", collectorNumber = "61")
 @CardRegistration(set = "3ED", collectorNumber = "61")
+@CardRegistration(set = "ARN", collectorNumber = "16")
 public class IslandFishJasconius extends Card {
 
     public IslandFishJasconius() {

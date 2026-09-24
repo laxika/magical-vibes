@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "48")
 @CardRegistration(set = "LCI", collectorNumber = "48")
+@CardRegistration(set = "SLD", collectorNumber = "2150")
 public class ChartACourse extends Card {
 
     public ChartACourse() {

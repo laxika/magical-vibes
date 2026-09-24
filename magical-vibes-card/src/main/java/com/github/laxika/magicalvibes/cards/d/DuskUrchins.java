@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCou
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "65")
+@CardRegistration(set = "ECC", collectorNumber = "73")
 public class DuskUrchins extends Card {
 
     public DuskUrchins() {

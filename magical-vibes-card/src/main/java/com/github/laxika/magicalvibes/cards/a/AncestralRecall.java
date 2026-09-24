@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
  * Ancestral Recall, the prepare spell of Emeritus of Ideation.
  */
 @CardRegistration(set = "VMA", collectorNumber = "1")
+@CardRegistration(set = "2ED", collectorNumber = "48")
 public class AncestralRecall extends Card {
 
     public AncestralRecall() {

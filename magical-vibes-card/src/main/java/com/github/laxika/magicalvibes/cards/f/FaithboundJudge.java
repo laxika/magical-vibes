@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "12")
+@CardRegistration(set = "DBL", collectorNumber = "279")
 public class FaithboundJudge extends Card {
 
     public FaithboundJudge() {

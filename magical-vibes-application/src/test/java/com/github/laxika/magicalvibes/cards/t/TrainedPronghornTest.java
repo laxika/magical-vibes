@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TrainedPronghorn.class, BorderPatrol.class, EmberShot.class})
+@CardUsed({BorderPatrol.class, EmberShot.class, TrainedPronghorn.class})
 class TrainedPronghornTest extends BaseCardTest {
 
     @Test

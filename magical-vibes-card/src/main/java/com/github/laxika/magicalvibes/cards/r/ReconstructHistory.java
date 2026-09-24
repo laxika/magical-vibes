@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "222")
+@CardRegistration(set = "ACR", collectorNumber = "97")
 public class ReconstructHistory extends Card {
 
     public ReconstructHistory() {

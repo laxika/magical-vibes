@@ -23,6 +23,10 @@ import java.util.Set;
 @CardRegistration(set = "LRW", collectorNumber = "213")
 @CardRegistration(set = "DDD", collectorNumber = "1")
 @CardRegistration(set = "GVL", collectorNumber = "1")
+@CardRegistration(set = "SLD", collectorNumber = "749")
+@CardRegistration(set = "SLD", collectorNumber = "1142")
+@CardRegistration(set = "SLD", collectorNumber = "1457")
+@CardRegistration(set = "CMD", collectorNumber = "157")
 public class GarrukWildspeaker extends Card {
 
     public GarrukWildspeaker() {

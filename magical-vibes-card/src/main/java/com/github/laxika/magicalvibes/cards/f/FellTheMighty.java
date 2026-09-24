@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesWithPowerGreaterThanTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "SLD", collectorNumber = "1778")
 @CardRegistration(set = "OTP", collectorNumber = "1")
+@CardRegistration(set = "C14", collectorNumber = "7")
 public class FellTheMighty extends Card {
 
     public FellTheMighty() {

@@ -22,6 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Order(-100)
 public class AiDecisionEventSubscriber implements GameEventSubscriber {
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.github.laxika.magicalvibes.service.GameRegistry registry;
+
     private final Map<UUID, Map<UUID, AiDecisionScheduler>> schedulersByGame =
             new ConcurrentHashMap<>();
 
@@ -40,14 +43,18 @@ public class AiDecisionEventSubscriber implements GameEventSubscriber {
 
     @Override
     public void onGameEvents(GameEventBatch batch) {
-        Map<UUID, AiDecisionScheduler> schedulers = schedulersByGame.get(batch.gameId());
+        var game = registry == null ? null : registry.get(batch.gameId());
+        boolean sessionEnded = batch.events().stream().anyMatch(event -> event.fact() instanceof GameEventFact.GameEnded);
+        if (!sessionEnded && game != null && (game.waitingForSubgame || game.session.active() != game)) return;
+        UUID sessionId = game == null ? batch.gameId() : game.session.root().id;
+        Map<UUID, AiDecisionScheduler> schedulers = schedulersByGame.get(sessionId);
         if (schedulers == null || schedulers.isEmpty()) {
             return;
         }
 
         for (GameEventEnvelope envelope : batch.events()) {
             if (envelope.fact() instanceof GameEventFact.GameEnded) {
-                closeGame(batch.gameId(), schedulers);
+                closeGame(sessionId, schedulers);
                 return;
             }
 

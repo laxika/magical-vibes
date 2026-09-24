@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "251")
+@CardRegistration(set = "DBL", collectorNumber = "251")
 public class WinterthornBlessing extends Card {
 
     public WinterthornBlessing() {

@@ -32,6 +32,8 @@ public class DrawCardForTriggeringPlayerEffectHandler implements NormalEffectHan
         var e = (DrawCardForTriggeringPlayerEffect) effect;
         UUID playerId = entry.getTriggeringPermanentControllerId() != null
                 ? entry.getTriggeringPermanentControllerId()
+                : entry.getSourcePermanentId() != null
+                        ? gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId())
                 : entry.getTargetId();
         if (playerId == null || !gameData.playerIds.contains(playerId)) {
             return;

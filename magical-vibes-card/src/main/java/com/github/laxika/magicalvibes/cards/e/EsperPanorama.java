@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "223")
+@CardRegistration(set = "C13", collectorNumber = "286")
 public class EsperPanorama extends Card {
 
     public EsperPanorama() {

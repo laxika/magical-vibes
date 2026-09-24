@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ITP", collectorNumber = "52")
 @CardRegistration(set = "RQS", collectorNumber = "51")
 @CardRegistration(set = "SUM", collectorNumber = "273")
+@CardRegistration(set = "2ED", collectorNumber = "269")
 public class RodOfRuin extends Card {
 
     public RodOfRuin() {

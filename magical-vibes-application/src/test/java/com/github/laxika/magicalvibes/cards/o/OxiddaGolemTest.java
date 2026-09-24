@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OxiddaGolem.class, Forest.class, Mountain.class})
 class OxiddaGolemTest extends BaseCardTest {
 
     @Test
@@ -20,6 +22,20 @@ class OxiddaGolemTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new OxiddaGolem()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Affinity counts every Mountain controlled by the spell's controller")
+    void affinityCountsEachControlledMountain() {
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+        harness.setHand(player1, List.of(new OxiddaGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
 

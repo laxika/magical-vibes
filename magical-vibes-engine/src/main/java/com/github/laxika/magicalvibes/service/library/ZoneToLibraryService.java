@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,7 @@ public class ZoneToLibraryService {
 
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /** How many cards each zone contributed, for the caller's game log. */
     public record MovedCounts(int hand, int graveyard) {}
@@ -53,6 +55,8 @@ public class ZoneToLibraryService {
         if (graveyardCount > 0) {
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId, leavingGraveyardCards);
         }
+        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId,
+                handCount + graveyardCount);
         return new MovedCounts(handCount, graveyardCount);
     }
 
@@ -67,7 +71,9 @@ public class ZoneToLibraryService {
         if (library == null) {
             return 0;
          }
-         return drainInto(gameData.playerHands.get(playerId), library);
+         int moved = drainInto(gameData.playerHands.get(playerId), library);
+         triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moved);
+         return moved;
     }
 
     /**

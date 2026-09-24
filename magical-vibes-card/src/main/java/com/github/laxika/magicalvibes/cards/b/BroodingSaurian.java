@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "106")
+@CardRegistration(set = "C13", collectorNumber = "138")
 public class BroodingSaurian extends Card {
 
     public BroodingSaurian() {

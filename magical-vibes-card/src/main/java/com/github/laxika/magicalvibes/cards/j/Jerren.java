@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "109")
+@CardRegistration(set = "DBL", collectorNumber = "109")
 public class Jerren extends Card {
 
     private static final CreateTokenEffect CREATE_HUMAN = new CreateTokenEffect(

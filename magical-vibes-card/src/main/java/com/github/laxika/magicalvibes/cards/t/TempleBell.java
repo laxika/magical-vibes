@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "217")
+@CardRegistration(set = "C13", collectorNumber = "265")
 public class TempleBell extends Card {
 
     public TempleBell() {

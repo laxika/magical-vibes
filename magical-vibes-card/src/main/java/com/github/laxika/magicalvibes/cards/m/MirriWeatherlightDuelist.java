@@ -4,12 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackTargetScope;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitOpposingBlockersThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "26")
 @CardRegistration(set = "SPG", collectorNumber = "15")
+@CardRegistration(set = "CMM", collectorNumber = "347")
+@CardRegistration(set = "CMM", collectorNumber = "585")
 public class MirriWeatherlightDuelist extends Card {
 
     public MirriWeatherlightDuelist() {

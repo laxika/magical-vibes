@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ZNE", collectorNumber = "20")
+@CardRegistration(set = "MSC", collectorNumber = "226")
+@CardRegistration(set = "MSC", collectorNumber = "461")
 public class BountifulPromenade extends Card {
 
     public BountifulPromenade() {

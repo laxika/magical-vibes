@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "31")
+@CardRegistration(set = "DBL", collectorNumber = "31")
 public class RitualOfHope extends Card {
 
     public RitualOfHope() {

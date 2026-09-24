@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "167")
+@CardRegistration(set = "ECC", collectorNumber = "100")
 public class CavalierOfThorns extends Card {
 
     public CavalierOfThorns() {

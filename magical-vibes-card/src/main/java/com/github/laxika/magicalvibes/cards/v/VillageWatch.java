@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "MID", collectorNumber = "165")
+@CardRegistration(set = "DBL", collectorNumber = "165")
 public class VillageWatch extends Card {
 
     public VillageWatch() {

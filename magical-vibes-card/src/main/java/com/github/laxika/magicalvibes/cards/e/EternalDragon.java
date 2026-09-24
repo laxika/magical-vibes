@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "12")
 @CardRegistration(set = "VMA", collectorNumber = "26")
+@CardRegistration(set = "C13", collectorNumber = "10")
 public class EternalDragon extends Card {
 
     public EternalDragon() {

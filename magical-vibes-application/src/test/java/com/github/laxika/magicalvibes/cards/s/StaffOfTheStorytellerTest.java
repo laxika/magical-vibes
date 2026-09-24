@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CallTheCavalry;
 import com.github.laxika.magicalvibes.cards.c.CuriousInquiry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,14 +9,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StaffOfTheStoryteller.class, Forest.class, GrizzlyBears.class})
+@CardUsed({StaffOfTheStoryteller.class, Forest.class, CallTheCavalry.class, GrizzlyBears.class, CuriousInquiry.class})
 class StaffOfTheStorytellerTest extends BaseCardTest {
 
     @Test
@@ -58,7 +59,6 @@ class StaffOfTheStorytellerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Does not get a story counter for a noncreature token")
-    @CardUsed(CuriousInquiry.class)
     void ignoresNoncreatureTokenCreation() {
         Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfTheStoryteller());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());

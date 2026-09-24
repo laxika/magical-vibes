@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "431")
 @CardRegistration(set = "SLX", collectorNumber = "13")
 public class TheHowlingAbomination extends Card {
 

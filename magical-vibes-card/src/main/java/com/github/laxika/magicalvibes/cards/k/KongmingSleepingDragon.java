@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "VMA", collectorNumber = "33")
 @CardRegistration(set = "ME3", collectorNumber = "16")
 @CardRegistration(set = "A25", collectorNumber = "20")
+@CardRegistration(set = "C13", collectorNumber = "16")
 public class KongmingSleepingDragon extends Card {
 
     public KongmingSleepingDragon() {

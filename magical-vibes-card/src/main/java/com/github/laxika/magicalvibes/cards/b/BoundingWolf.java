@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "MID", collectorNumber = "170")
+@CardRegistration(set = "DBL", collectorNumber = "170")
 public class BoundingWolf extends Card {
 }

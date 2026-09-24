@@ -153,8 +153,12 @@ class CastingCostServiceTest {
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
+                .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
+                        .toStaticBonus(0, 0, false));
     }
 
     /**
@@ -882,6 +886,23 @@ class CastingCostServiceTest {
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
             assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot)).isEqualTo(1);
+        }
+
+        @Test
+        void minimumSpellCostIsAppliedAfterColoredReductions() {
+            evaluateCardTypePredicates();
+            Card artifact = new Card();
+            artifact.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
+            artifact.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect(
+                            new CardTypePredicate(CardType.CREATURE),
+                            new com.github.laxika.magicalvibes.model.ManaCost("{B}"), CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(artifact));
+            Card spell = new Card();
+            spell.setType(CardType.CREATURE);
+            spell.setManaCost("{1}{B}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isEqualTo(2);
         }
 
         @Test
@@ -1873,7 +1894,7 @@ class CastingCostServiceTest {
             Card spell = spellWith(new SacrificePermanentCost(filter, "a creature"));
             Permanent creature = new Permanent(graveyardCard("Land creature", CardType.CREATURE));
             gd.playerBattlefields.get(player1Id).add(creature);
-            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gd)).thenReturn(false);
+            lenient().when(gameQueryService.canPayLifeForCosts(gd)).thenReturn(false);
             when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
             when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(true);
 

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "167")
+@CardRegistration(set = "C13", collectorNumber = "98")
 public class VileRequiem extends Card {
 
     public VileRequiem() {

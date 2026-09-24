@@ -8,11 +8,18 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "369")
+@CardRegistration(set = "SLD", collectorNumber = "2088")
 @CardRegistration(set = "MH1", collectorNumber = "11")
+@CardRegistration(set = "SLZ", collectorNumber = "4")
+@CardRegistration(set = "SLZ", collectorNumber = "125")
+@CardRegistration(set = "SLZ", collectorNumber = "246")
+@CardRegistration(set = "MSC", collectorNumber = "133")
+@CardRegistration(set = "CMM", collectorNumber = "26")
+@CardRegistration(set = "CMM", collectorNumber = "624")
 public class GenerousGift extends Card {
 
     public GenerousGift() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "STX", collectorNumber = "26")
+@CardRegistration(set = "SLD", collectorNumber = "1892")
 public class SecretRendezvous extends Card {
 
     public SecretRendezvous() {

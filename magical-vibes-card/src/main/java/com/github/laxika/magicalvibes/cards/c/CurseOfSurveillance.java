@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqu
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "46")
+@CardRegistration(set = "DBL", collectorNumber = "46")
 public class CurseOfSurveillance extends Card {
 
     public CurseOfSurveillance() {

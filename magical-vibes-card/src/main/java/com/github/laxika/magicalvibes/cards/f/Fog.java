@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SUM", collectorNumber = "195")
+@CardRegistration(set = "ME4", collectorNumber = "153")
 @CardRegistration(set = "M14", collectorNumber = "171")
 @CardRegistration(set = "M10", collectorNumber = "182")
 @CardRegistration(set = "M13", collectorNumber = "172")
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MIR", collectorNumber = "216")
 @CardRegistration(set = "BTD", collectorNumber = "55")
 @CardRegistration(set = "3ED", collectorNumber = "195")
+@CardRegistration(set = "2ED", collectorNumber = "194")
 @CardRegistration(set = "EMA", collectorNumber = "167")
 @CardRegistration(set = "PIO", collectorNumber = "346")
 public class Fog extends Card {

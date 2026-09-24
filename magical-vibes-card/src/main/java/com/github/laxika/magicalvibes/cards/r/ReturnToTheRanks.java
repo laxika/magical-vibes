@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "29")
+@CardRegistration(set = "MAR", collectorNumber = "48")
 @CardRegistration(set = "SOA", collectorNumber = "11")
 public class ReturnToTheRanks extends Card {
 

@@ -6,17 +6,20 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1563")
 @CardRegistration(set = "2X2", collectorNumber = "235")
 @CardRegistration(set = "2XM", collectorNumber = "204")
+@CardRegistration(set = "CMD", collectorNumber = "206")
 public class KaaliaOfTheVast extends Card {
 
     public KaaliaOfTheVast() {

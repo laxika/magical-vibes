@@ -231,8 +231,7 @@ public class GameSetupService {
                 gameData.startingDeckSizes.put(playerId, deck.size() + 1);
             }
 
-            List<Card> hand = new ArrayList<>(deck.subList(0, 7));
-            deck.subList(0, 7).clear();
+            List<Card> hand = drawOpeningHand(gameData, playerId, deck);
             gameData.playerDecks.put(playerId, deck);
             gameData.playerHands.put(playerId, hand);
             gameData.playerMulliganDecisionIds.put(playerId, UUID.randomUUID());
@@ -284,6 +283,43 @@ public class GameSetupService {
         }
 
         log.info("Game {} - Mulligan phase begins. Starting player: {}", gameData.id, startingPlayerName);
+    }
+
+    /** Initializes pregame play from transferred libraries rather than submitted decks. */
+    public void initializeSubgame(GameData game, java.util.Map<UUID, List<Card>> decks) {
+        game.setCardsExiledListener(triggerCollectionService::checkControllerCardsExiledDuringTurnTriggers);
+        for (UUID player : game.orderedPlayerIds) {
+            List<Card> deck = new ArrayList<>(decks.get(player));
+            deck.forEach(card -> game.subgameCards.put(card.getId(), card));
+            Collections.shuffle(deck, random);
+            game.startingDeckSizes.put(player, deck.size());
+            game.playerBattlefields.put(player, game.newBattlefieldList());
+            game.playerGraveyards.put(player, new ArrayList<>());
+            game.playerCommandZones.put(player, new ArrayList<>());
+            game.playerCommanders.put(player, new ArrayList<>());
+            game.playerManaPools.put(player, new com.github.laxika.magicalvibes.model.ManaPool());
+            game.playerLifeTotals.put(player, game.startingLife());
+            game.mulliganCounts.put(player, 0);
+            game.playerHands.put(player, drawOpeningHand(game, player, deck));
+            game.playerDecks.put(player, deck);
+            game.playerMulliganDecisionIds.put(player, UUID.randomUUID());
+        }
+        game.startingPlayerId = game.orderedPlayerIds.get(random.nextInt(game.orderedPlayerIds.size()));
+        game.status = GameStatus.MULLIGAN;
+        gameLogService.append(game, GameLogEntry.text("Subgame started. Decide whether to keep your opening hand."));
+        for (UUID player : game.orderedPlayerIds) {
+            mutationCoordinator.emit(game, new GameEventFact.DecisionRequested(
+                    game.playerMulliganDecisionIds.get(player), player, GameEventFact.DecisionKind.MULLIGAN),
+                    GameEventAudience.player(player));
+        }
+    }
+
+    private List<Card> drawOpeningHand(GameData game, UUID player, List<Card> deck) {
+        int count = Math.min(7, deck.size());
+        if (count < 7) game.playersAttemptedDrawFromEmptyLibrary.add(player);
+        List<Card> hand = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+        return hand;
     }
 
     public com.github.laxika.magicalvibes.model.DeckDefinition validatedDeck(String deckId, com.github.laxika.magicalvibes.model.DeckFormat format) {

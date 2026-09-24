@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,24 +13,37 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LethalVapors.class, GrizzlyBears.class})
+@CardUsed({LethalVapors.class, GoblinBrigand.class})
 class LethalVaporsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys every creature as it enters")
     void destroysEnteringCreature() {
         harness.addToBattlefield(player1, new LethalVapors());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GoblinBrigand(), "{1}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Goblin Brigand");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a noncreature permanent as it enters")
+    void leavesEnteringNoncreaturePermanentAlone() {
+        harness.addToBattlefield(player1, new LethalVapors());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new LethalVapors(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Lethal Vapors");
     }
 
     @Test

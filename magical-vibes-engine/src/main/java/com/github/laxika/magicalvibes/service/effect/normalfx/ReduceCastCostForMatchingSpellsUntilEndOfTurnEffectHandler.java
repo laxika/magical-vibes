@@ -49,7 +49,7 @@ public class ReduceCastCostForMatchingSpellsUntilEndOfTurnEffectHandler
                 entry.getControllerId(),
                 new ReduceCastCostForMatchingSpellsEffect(
                         reduction.predicate(), reduction.amount(), CostModificationScope.SELF,
-                        java.util.Set.of(), false, reduction.faceDownOnly()),
+                        reduction.sourceZones(), false, reduction.faceDownOnly()),
                 null,
                 null,
                 null,

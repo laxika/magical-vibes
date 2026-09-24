@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({CrestingMosasaurus.class, BeaconOfUnrest.class, GloriousAnthem.class,
         GrizzlyBears.class, ThrashOfRaptors.class})
 class CrestingMosasaurusTest extends BaseCardTest {
@@ -62,15 +64,15 @@ class CrestingMosasaurusTest extends BaseCardTest {
     @Test
     void enteringWithoutBeingCastDoesNotReturnCreatures() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new CrestingMosasaurus()));
+        CrestingMosasaurus target = new CrestingMosasaurus();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Cresting Mosasaurus");
     }

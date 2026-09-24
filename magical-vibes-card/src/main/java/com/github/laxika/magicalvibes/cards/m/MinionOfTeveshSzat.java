@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "151")
+@CardRegistration(set = "ME4", collectorNumber = "91")
 public class MinionOfTeveshSzat extends Card {
 
     public MinionOfTeveshSzat() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "123")
+@CardRegistration(set = "DBL", collectorNumber = "390")
 public class ParasiticGrasp extends Card {
 
     public ParasiticGrasp() {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "160")
+@CardRegistration(set = "CMM", collectorNumber = "291")
 public class FungalPlots extends Card {
 
     public FungalPlots() {

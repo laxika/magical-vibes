@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ME1", collectorNumber = "176")
+@CardRegistration(set = "ARN", collectorNumber = "75")
 public class IslandOfWakWak extends Card {
 
     public IslandOfWakWak() {

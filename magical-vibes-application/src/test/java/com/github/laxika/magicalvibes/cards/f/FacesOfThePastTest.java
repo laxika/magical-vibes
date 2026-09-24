@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
+import com.github.laxika.magicalvibes.cards.s.SparkSpray;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,17 +13,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FacesOfThePast.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
+@CardUsed({FacesOfThePast.class, GoblinBrigand.class, ScornfulEgotist.class, SparkSpray.class})
 class FacesOfThePastTest extends BaseCardTest {
 
     @Test
     void tapsMatchingCreaturesWhenThatModeIsChosen() {
         harness.addToBattlefield(player1, new FacesOfThePast());
-        Permanent matchingCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent nonmatchingCreature = addCreatureReady(player1, new LlanowarElves());
-        Permanent dyingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent matchingCreature = addCreatureReady(player1, new ScornfulEgotist());
+        Permanent nonmatchingCreature = addCreatureReady(player1, new GoblinBrigand());
+        Permanent dyingCreature = addCreatureReady(player2, new ScornfulEgotist());
 
-        killWithShock(dyingCreature);
+        killWithSparkSpray(dyingCreature);
         harness.handleListChoice(player1,
                 "Tap all untapped creatures that share a creature type with it");
         harness.passBothPriorities();
@@ -35,13 +35,13 @@ class FacesOfThePastTest extends BaseCardTest {
     @Test
     void untapsMatchingCreaturesWhenThatModeIsChosen() {
         harness.addToBattlefield(player1, new FacesOfThePast());
-        Permanent matchingCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent nonmatchingCreature = addCreatureReady(player1, new LlanowarElves());
+        Permanent matchingCreature = addCreatureReady(player1, new ScornfulEgotist());
+        Permanent nonmatchingCreature = addCreatureReady(player1, new GoblinBrigand());
         matchingCreature.tap();
         nonmatchingCreature.tap();
-        Permanent dyingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent dyingCreature = addCreatureReady(player2, new ScornfulEgotist());
 
-        killWithShock(dyingCreature);
+        killWithSparkSpray(dyingCreature);
         harness.handleListChoice(player1,
                 "Untap all tapped creatures that share a creature type with it");
         harness.passBothPriorities();
@@ -50,8 +50,26 @@ class FacesOfThePastTest extends BaseCardTest {
         assertThat(nonmatchingCreature.isTapped()).isTrue();
     }
 
-    private void killWithShock(Permanent creature) {
-        harness.setHand(player1, List.of(new Shock()));
+    @Test
+    void affectsMatchingCreaturesOnBothBattlefields() {
+        harness.addToBattlefield(player1, new FacesOfThePast());
+        Permanent ownMatchingCreature = addCreatureReady(player1, new ScornfulEgotist());
+        Permanent opponentMatchingCreature = addCreatureReady(player2, new ScornfulEgotist());
+        Permanent opponentNonmatchingCreature = addCreatureReady(player2, new GoblinBrigand());
+        Permanent dyingCreature = addCreatureReady(player2, new ScornfulEgotist());
+
+        killWithSparkSpray(dyingCreature);
+        harness.handleListChoice(player1,
+                "Tap all untapped creatures that share a creature type with it");
+        harness.passBothPriorities();
+
+        assertThat(ownMatchingCreature.isTapped()).isTrue();
+        assertThat(opponentMatchingCreature.isTapped()).isTrue();
+        assertThat(opponentNonmatchingCreature.isTapped()).isFalse();
+    }
+
+    private void killWithSparkSpray(Permanent creature) {
+        harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();

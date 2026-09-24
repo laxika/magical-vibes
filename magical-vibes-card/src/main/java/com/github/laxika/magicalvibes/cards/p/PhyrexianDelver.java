@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INV", collectorNumber = "115")
+@CardRegistration(set = "C13", collectorNumber = "86")
 public class PhyrexianDelver extends Card {
 
     public PhyrexianDelver() {

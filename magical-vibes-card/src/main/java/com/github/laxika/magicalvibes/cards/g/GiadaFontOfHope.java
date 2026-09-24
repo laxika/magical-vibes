@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "FDN", collectorNumber = "367")
 @CardRegistration(set = "FDN", collectorNumber = "298")
 @CardRegistration(set = "SNC", collectorNumber = "14")
+@CardRegistration(set = "SLD", collectorNumber = "1586")
 public class GiadaFontOfHope extends Card {
 
     public GiadaFontOfHope() {

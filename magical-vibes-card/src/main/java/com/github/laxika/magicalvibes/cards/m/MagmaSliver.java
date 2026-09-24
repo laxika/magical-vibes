@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "107")
+@CardRegistration(set = "SLD", collectorNumber = "641")
 public class MagmaSliver extends Card {
 
     public MagmaSliver() {

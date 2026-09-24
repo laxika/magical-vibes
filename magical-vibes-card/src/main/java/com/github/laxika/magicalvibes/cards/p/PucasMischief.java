@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "47")
+@CardRegistration(set = "SLD", collectorNumber = "923")
 public class PucasMischief extends Card {
 
     public PucasMischief() {

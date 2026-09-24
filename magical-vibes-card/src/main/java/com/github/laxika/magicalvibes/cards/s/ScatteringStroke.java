@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaEqualToTargetSpellManaValueEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "82")
+@CardRegistration(set = "CMD", collectorNumber = "60")
 public class ScatteringStroke extends Card {
 
     public ScatteringStroke() {

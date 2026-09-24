@@ -37,7 +37,7 @@ public class ChosenNameSpellCastTriggerEffectHandler implements NormalEffectHand
         gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
                 entry.getControllerId(), entry.getSourcePermanentId(), entry.getCard(),
                 new CardNamedPredicate(source.getChosenName()), null, trigger.resolvedEffects(), true, false,
-                null, new Permanent(source), null));
+                null, new Permanent(source), null, false, false, -1));
         log.info("Game {} - {} registers a first chosen-name spell-cast trigger for this turn",
                 gameData.id, entry.getCard().getName());
     }

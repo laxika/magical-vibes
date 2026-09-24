@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SparkElemental.class, GrizzlyBears.class})
 class SparkElementalTest extends BaseCardTest {
 
     
@@ -24,15 +25,11 @@ class SparkElementalTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new SparkElemental()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SparkElemental(), "{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Spark Elemental");
     }
 
     @Test
@@ -50,16 +47,9 @@ class SparkElementalTest extends BaseCardTest {
     void canAttackImmediatelyDueToHaste() {
         harness.setLife(player2, 20);
 
-        Permanent spark = new Permanent(new SparkElemental());
+        Permanent spark = addCreatureReady(player1, new SparkElemental());
         spark.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(spark);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -69,19 +59,12 @@ class SparkElementalTest extends BaseCardTest {
     void trampleAssignsExcessDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent spark = new Permanent(new SparkElemental());
-        spark.setSummoningSick(false);
+        Permanent spark = addCreatureReady(player1, new SparkElemental());
         spark.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(spark);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -100,8 +83,7 @@ class SparkElementalTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers at end step and sacrifices itself on resolution")
     void triggersAtEndStepAndSacrificesItself() {
-        Permanent spark = new Permanent(new SparkElemental());
-        gd.playerBattlefields.get(player1.getId()).add(spark);
+        Permanent spark = addCreatureReady(player1, new SparkElemental());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -113,8 +95,28 @@ class SparkElementalTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Spark Elemental");
         assertThat(trigger.getSourcePermanentId()).isEqualTo(spark.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+        harness.assertInGraveyard(player1, "Spark Elemental");
+    }
+
+    @Test
+    @DisplayName("Triggers at the beginning of an opponent's end step")
+    void triggersAtOpponentsEndStep() {
+        Permanent spark = addCreatureReady(player1, new SparkElemental());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(spark.getId());
 
         harness.passBothPriorities();
 

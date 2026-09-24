@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MAR", collectorNumber = "39")
 @CardRegistration(set = "OMB", collectorNumber = "39")
 public class AlibouAncientWitness extends Card {
 

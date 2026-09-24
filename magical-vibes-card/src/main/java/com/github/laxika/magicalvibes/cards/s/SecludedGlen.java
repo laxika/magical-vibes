@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 
 
 @CardRegistration(set = "LRW", collectorNumber = "271")
+@CardRegistration(set = "SLD", collectorNumber = "1323")
 public class SecludedGlen extends Card {
 
     public SecludedGlen() {

@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "218")
+@CardRegistration(set = "SLD", collectorNumber = "592")
+@CardRegistration(set = "SLD", collectorNumber = "1269")
+@CardRegistration(set = "SLD", collectorNumber = "1972")
 @CardRegistration(set = "PIO", collectorNumber = "218")
 public class DragonlordKolaghan extends Card {
 

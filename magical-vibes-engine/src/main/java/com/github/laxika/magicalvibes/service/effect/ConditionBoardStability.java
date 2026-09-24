@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 
 import java.util.List;
 
@@ -45,6 +46,8 @@ public final class ConditionBoardStability {
             case Metalcraft ignored -> true;
             // Counter quantities are part of the structural board fingerprint.
             case SourceCounterThreshold ignored -> true;
+            // Persistent card intensity is included in the board fingerprint below.
+            case SourceIntensityThreshold ignored -> true;
             // Devotion reads the mana costs of battlefield permanents, whose identities and
             // current mana-cost strings are included in the board fingerprint.
             case DevotionToColorAtLeast ignored -> true;

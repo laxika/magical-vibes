@@ -95,6 +95,28 @@ class GameEventProjectionSubscriberTest {
     }
 
     @Test
+    void returningToParentReplacesBothClientBoardsBeforeSendingGameOver() {
+        GameData child = new GameData(UUID.randomUUID(), "child", player1Id, "Player 1");
+        gameData.session.push(child);
+        gameData.session.pop();
+        GameMutationCoordinator coordinator = new GameMutationCoordinator(new GameEventDispatcher(List.of(subscriber)));
+        coordinator.mutate(gameData, () -> {
+            coordinator.emit(gameData, new GameEventFact.GameEnded(GameEventFact.GameResult.DRAW, null),
+                    GameEventAudience.allPlayers());
+            coordinator.emit(gameData, new GameEventFact.ActiveGameChanged(gameData.id, gameData.id, 2, 0),
+                    GameEventAudience.allPlayers());
+        });
+        assertThat(sessions.deliveries).hasSize(4);
+        assertThat(sessions.deliveries.subList(0, 2)).allSatisfy(delivery -> {
+            assertThat(delivery.message()).isInstanceOf(
+                    com.github.laxika.magicalvibes.networking.message.ActiveGameChangedMessage.class);
+        });
+        assertThat(sessions.deliveries.subList(2, 4)).allSatisfy(delivery -> {
+            assertThat(delivery.message()).isInstanceOf(GameOverMessage.class);
+        });
+    }
+
+    @Test
     void stateEventProducesPlayerSpecificMessagesAfterMutationAndUnlock() {
         GameStateMessage player1Message = stateMessage(player1Id, List.of(0));
         GameStateMessage player2Message = stateMessage(player2Id, List.of(1));

@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +19,7 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final DiceRollService diceRollService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,7 +29,7 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RollD6Effect rollEffect = (RollD6Effect) effect;
-        int result = ThreadLocalRandom.current().nextInt(1, 7);
+        int result = diceRollService.roll(6);
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls a d6 for " + entry.getCard().getName() + ": " + result + "."));
         triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(

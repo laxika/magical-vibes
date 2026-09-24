@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "4ED", collectorNumber = "81")
 @CardRegistration(set = "SUM", collectorNumber = "63")
 @CardRegistration(set = "3ED", collectorNumber = "63")
+@CardRegistration(set = "2ED", collectorNumber = "62")
 public class Lifetap extends Card {
 
     public Lifetap() {

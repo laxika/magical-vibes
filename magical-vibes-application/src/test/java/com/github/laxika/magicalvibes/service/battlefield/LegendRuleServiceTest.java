@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -35,6 +36,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LegendRuleServiceTest {
@@ -52,9 +54,6 @@ class LegendRuleServiceTest {
     private UUID player1Id;
     private UUID player2Id;
 
-    private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
-            0, 0, java.util.Set.of(), java.util.Set.of(), false, List.of(), List.of(), java.util.Set.of(), List.of(), java.util.Set.of(), java.util.Set.of(), false, false, false, false, java.util.Set.of(), false, 0, 0, false, false);
-
     @BeforeEach
     void setUp() {
         player1Id = UUID.randomUUID();
@@ -71,8 +70,9 @@ class LegendRuleServiceTest {
         gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
-        // Default: computeStaticBonus returns EMPTY_BONUS (no granted supertypes)
-        lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(EMPTY_BONUS);
+        lenient().when(gameQueryService.hasEffectiveSupertype(any(), any(), any()))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard()
+                        .getSupertypes().contains(invocation.getArgument(2)));
     }
 
     // ===== Helper methods =====
@@ -241,6 +241,25 @@ class LegendRuleServiceTest {
             gd.playerBattlefields.get(player1Id).remove(gallery);
 
             assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("Controlled creature legend rule exemption")
+    class ControlledCreatureExemption {
+
+        @Test
+        @DisplayName("Protects duplicate legendary creatures")
+        void protectsDuplicateLegendaryCreatures() {
+            Card source = createCreature("Council of Reeds");
+            source.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledCreaturesEffect());
+            addPermanent(player1Id, source);
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
     }
 

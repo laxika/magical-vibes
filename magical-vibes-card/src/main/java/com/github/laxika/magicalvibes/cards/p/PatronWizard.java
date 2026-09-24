@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "89")
+@CardRegistration(set = "SLD", collectorNumber = "1002")
 public class PatronWizard extends Card {
 
     public PatronWizard() {

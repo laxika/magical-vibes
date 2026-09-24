@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ZNE", collectorNumber = "18")
+@CardRegistration(set = "MSC", collectorNumber = "252")
+@CardRegistration(set = "MSC", collectorNumber = "482")
 public class LuxurySuite extends Card {
 
     public LuxurySuite() {

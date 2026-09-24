@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -40,8 +42,11 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
                              InteractionAnswer answer) {
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (chosenIds == null || chosenIds.size() > 1
+                || (interaction.mandatory() && chosenIds.size() != 1)
                 || (chosenIds.size() == 1 && !interaction.validCardIds().contains(chosenIds.getFirst()))) {
-            throw new IllegalStateException("Choose at most one " + interaction.cardLabel());
+            throw new IllegalStateException(interaction.mandatory()
+                    ? "Choose exactly one " + interaction.cardLabel()
+                    : "Choose at most one " + interaction.cardLabel());
         }
 
         UUID playerId = interaction.playerId();
@@ -56,8 +61,20 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " chooses not to put a "
                             + interaction.cardLabel() + " into their hand."));
+        } else if (interaction.leaveOutsideGame()) {
+            CardEffect followUp = interaction.followUpEffect();
+            if (followUp instanceof ChosenCardAwareEffect chosenCardAwareEffect) {
+                followUp = chosenCardAwareEffect.withChosenCard(chosenCard);
+            }
+            if (followUp != null && gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                        gameData.pendingEffectResolutionIndex, List.of(followUp));
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(playerId) + " chooses ", chosenCard,
+                    " from outside the game."));
         } else {
-            List<Card> sideboard = gameData.playerSideboards.get(playerId);
+            List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
             boolean fromSideboard = sideboard != null && sideboard.removeIf(
                     card -> card.getId().equals(chosenCard.getId()));
             if (fromSideboard) {
@@ -83,7 +100,7 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
 
     private Card findEligibleCard(GameData gameData, UUID playerId, UUID cardId,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate filter) {
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
         for (Card card : sideboard) {
             if (card.getId().equals(cardId)
                     && predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, playerId)) {

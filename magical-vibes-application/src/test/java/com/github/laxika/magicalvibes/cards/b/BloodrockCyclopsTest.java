@@ -171,6 +171,10 @@ class BloodrockCyclopsTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+
+        gs.declareAttackers(gd, player1, List.of(0), java.util.Map.of(0, planeswalker.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getAttackTarget())
+                .isEqualTo(planeswalker.getId());
     }
 
     // ===== Combat damage =====

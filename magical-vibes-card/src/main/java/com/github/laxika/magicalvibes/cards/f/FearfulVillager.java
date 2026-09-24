@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.FearsomeWerewolf;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "VOW", collectorNumber = "157")
+@CardRegistration(set = "DBL", collectorNumber = "424")
 public class FearfulVillager extends Card {
 
     public FearfulVillager() {

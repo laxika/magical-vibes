@@ -19,15 +19,16 @@ import java.util.Set;
 @CardRegistration(set = "2XM", collectorNumber = "297")
 @CardRegistration(set = "HA7", collectorNumber = "20")
 @CardRegistration(set = "SPG", collectorNumber = "62")
+@CardRegistration(set = "MAR", collectorNumber = "100")
 public class SwordOfFireAndIce extends Card {
 
     public SwordOfFireAndIce() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
                 Set.of(CardColor.RED, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new DrawCardEffect(1));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

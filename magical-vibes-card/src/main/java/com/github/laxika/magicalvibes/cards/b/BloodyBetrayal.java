@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "147")
+@CardRegistration(set = "DBL", collectorNumber = "414")
 public class BloodyBetrayal extends Card {
 
     public BloodyBetrayal() {

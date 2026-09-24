@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AngelsFeather.class, GrizzlyBears.class, SuntailHawk.class})
 class AngelsFeatherTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -129,8 +131,7 @@ class AngelsFeatherTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Resolve the triggered ability and then the creature spell
-        harness.passBothPriorities(); // resolve triggered ability
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -181,9 +182,7 @@ class AngelsFeatherTest extends BaseCardTest {
         assertThat(triggeredCount).isEqualTo(2);
 
         // Resolve all
-        harness.passBothPriorities(); // resolve second triggered ability
-        harness.passBothPriorities(); // resolve first triggered ability
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }

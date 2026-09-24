@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 @CardRegistration(set = "V09", collectorNumber = "11")
 @CardRegistration(set = "EMA", collectorNumber = "70")
 @CardRegistration(set = "VMA", collectorNumber = "93")
+@CardRegistration(set = "ARN", collectorNumber = "20")
 public class SerendibEfreet extends Card {
 
     public SerendibEfreet() {

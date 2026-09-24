@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AvenFogbringer.class, KrosanVerge.class, SuntailHawk.class})
@@ -62,5 +63,17 @@ class AvenFogbringerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AvenFogbringer()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castCreature(player1, 0, List.of(targetId));
+    }
+
+    @Test
+    @DisplayName("ETB has no effect when no land is available")
+    void etbHasNoEffectWithoutLandTarget() {
+        harness.castFromHand(player1, new AvenFogbringer(), "{3}{U}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aven Fogbringer");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "129")
+@CardRegistration(set = "CMM", collectorNumber = "199")
 public class WitchsCauldron extends Card {
 
     public WitchsCauldron() {

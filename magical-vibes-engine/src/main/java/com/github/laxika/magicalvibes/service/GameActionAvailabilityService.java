@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -22,7 +23,6 @@ import java.util.*;
  * engine action validation, AI planning, and the human player-view projector.
  */
 @Service
-@RequiredArgsConstructor
 public class GameActionAvailabilityService {
 
     private final GameQueryService gameQueryService;
@@ -30,7 +30,37 @@ public class GameActionAvailabilityService {
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
     private final PotentialManaService potentialManaService;
+    private final AdditionalSpellCostService additionalSpellCostService;
     private final PredicateEvaluationService predicateEvaluationService;
+
+    @Autowired
+    public GameActionAvailabilityService(GameQueryService gameQueryService,
+                                         ValidTargetService validTargetService,
+                                         CastingCostService castingCostService,
+                                         CastingPermissionService castingPermissionService,
+                                         PotentialManaService potentialManaService,
+                                         AdditionalSpellCostService additionalSpellCostService,
+                                         PredicateEvaluationService predicateEvaluationService) {
+        this.gameQueryService = gameQueryService;
+        this.validTargetService = validTargetService;
+        this.castingCostService = castingCostService;
+        this.castingPermissionService = castingPermissionService;
+        this.potentialManaService = potentialManaService;
+        this.additionalSpellCostService = additionalSpellCostService;
+        this.predicateEvaluationService = predicateEvaluationService;
+    }
+
+    /** Compatibility constructor for focused service tests that predate additional-cost queries. */
+    public GameActionAvailabilityService(GameQueryService gameQueryService,
+                                         ValidTargetService validTargetService,
+                                         CastingCostService castingCostService,
+                                         CastingPermissionService castingPermissionService,
+                                         PotentialManaService potentialManaService,
+                                         PredicateEvaluationService predicateEvaluationService) {
+        this(gameQueryService, validTargetService, castingCostService, castingPermissionService,
+                potentialManaService, new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
+                predicateEvaluationService);
+    }
 
     /**
      * The potential-mana model this service answers playability with. Exposed so AI planning shares
@@ -339,11 +369,15 @@ public class GameActionAvailabilityService {
                                           int extraConvokeMana, int additionalGenericCost,
                                           SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
         if (card.getType() != null && card.getType().isPlanar()) return false;
-        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                && !pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()) {
+        boolean instantOrSorcery = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
+        if (instantOrSorcery
+                && (!pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()
+                || pool.getKickedOrInstantSorceryOnlyManaTotal() > 0)) {
             pool = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(true);
+            pool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(false);
+            pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(true);
         }
         if (card.getCastingOption(ForetellCast.class).isPresent()
                 && pool.getForetellSpellOnlyManaTotal() > 0) {
@@ -373,6 +407,11 @@ public class GameActionAvailabilityService {
             pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteNonHandSpellOnlyMana();
         }
+        if (gameData.playerCommanders.getOrDefault(playerId, List.of()).stream()
+                .anyMatch(commander -> commander.getId().equals(card.getId()))) {
+            pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteCommanderOnlyMana();
+        }
         // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
         // mutating the caller's pool. Only copy when the player actually has the permission (rare).
         if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {
@@ -394,7 +433,8 @@ public class GameActionAvailabilityService {
             flagged.setWhiteSpendableAsAnyColorWithoutRestriction(true);
             pool = flagged;
         }
-        if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId) && !pool.isAllManaSpendableAsAnyColor()) {
+        if (gameQueryService.canSpendManaAsAnyColorToCastCard(gameData, playerId, card)
+                && !pool.isAllManaSpendableAsAnyColor()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             flagged.setAllManaSpendableAsAnyColor(true);
@@ -598,7 +638,7 @@ public class GameActionAvailabilityService {
             return false;
         }
         if (kicker.hasLifeCost()
-                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && (!gameQueryService.canPayLifeForCosts(gameData)
                 || gameData.getLife(playerId) < kicker.lifeCost().effectiveAmount(gameData.getLife(playerId)))) {
             return false;
         }
@@ -615,6 +655,11 @@ public class GameActionAvailabilityService {
                         gameData, permanent, kicker.returnPredicate()))) {
             return false;
         }
+        if (kicker.hasForageCost()
+                && !additionalSpellCostService.canPayForageOrPayManaCost(
+                gameData, playerId, card, kicker.forageCost())) {
+            return false;
+        }
         if (!kicker.hasManaCost()) {
             return true;
         }
@@ -623,9 +668,17 @@ public class GameActionAvailabilityService {
         }
 
         ManaPool paymentPool = pool;
-        if (isColoredSpellWithoutX(gameData, card) && pool.getColoredSpellWithoutXOnlyColorless() > 0) {
+        boolean hasKickedOrInstantSorceryMana = pool.getKickedOrInstantSorceryOnlyManaTotal() > 0;
+        if ((isColoredSpellWithoutX(gameData, card) && pool.getColoredSpellWithoutXOnlyColorless() > 0)
+                || hasKickedOrInstantSorceryMana) {
             paymentPool = new ManaPool(pool);
-            paymentPool.promoteColoredSpellWithoutXOnlyMana();
+            if (isColoredSpellWithoutX(gameData, card) && pool.getColoredSpellWithoutXOnlyColorless() > 0) {
+                paymentPool.promoteColoredSpellWithoutXOnlyMana();
+            }
+            if (hasKickedOrInstantSorceryMana) {
+                paymentPool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(false);
+                paymentPool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(true);
+            }
         }
 
         String combinedManaCost = card.getManaCost() + kicker.cost();
@@ -651,7 +704,7 @@ public class GameActionAvailabilityService {
         boolean powerstoneContext = isArtifact && paymentPool.getPowerstoneOnlyColorless() > 0;
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
-        boolean kickedOnlyGreen = pool.getKickedOnlyManaTotal() > 0;
+        boolean kickedOnlyGreen = paymentPool.getKickedOnlyManaTotal() > 0;
         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE)
@@ -663,6 +716,10 @@ public class GameActionAvailabilityService {
                 : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || card.hasKeyword(Keyword.FREERUNNING)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -872,6 +929,10 @@ public class GameActionAvailabilityService {
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || card.hasKeyword(Keyword.FREERUNNING)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -1658,7 +1719,7 @@ public class GameActionAvailabilityService {
                                                             List<CastingCost> costs) {
         for (CastingCost cost : costs) {
             if (cost instanceof LifeCastingCost lifeCost) {
-                if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                if (!gameQueryService.canPayLifeForCosts(gameData)
                         || gameData.getLife(playerId) < lifeCost.amount()) {
                     return false;
                 }

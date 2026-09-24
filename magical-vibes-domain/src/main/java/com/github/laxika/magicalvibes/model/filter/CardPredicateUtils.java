@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.filter;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -40,8 +39,14 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesCreatureTypeWithSourcePredicate) {
             return "card sharing a creature type with this creature";
         }
+        if (predicate instanceof CardSharesCreatureTypeWithCommanderPredicate) {
+            return "creature card sharing a creature type with your commander";
+        }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
+        }
+        if (predicate instanceof CardHasSourceChosenNamePredicate) {
+            return "card with the chosen name";
         }
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
@@ -81,6 +86,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
+        }
+        if (predicate instanceof CardHasUnearthPredicate) {
+            return "card with unearth";
         }
         if (predicate instanceof CardHasXInManaCostPredicate) {
             return "card with {X} in its mana cost";

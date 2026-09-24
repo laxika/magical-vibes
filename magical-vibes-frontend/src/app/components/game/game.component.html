@@ -81,6 +81,9 @@
   </svg>
   <div class="game-layout">
     <div class="game-area">
+  @if (game()?.status !== GameStatus.WAITING) {
+    <div class="game-context" role="status">{{ subgameDepth() ? "Subgame depth " + subgameDepth() : "Main game" }}</div>
+  }
   @if (game()?.status === GameStatus.MULLIGAN) {
     <app-mulligan-modal
       [hand]="hand"
@@ -404,7 +407,7 @@
               [class.needs-more-damage]="choice.damage.isTargetMissingLethalDamage(target)">
               <span class="target-name">{{ target.name }}</span>
               @if (!target.isPlayer) {
-                <span class="target-toughness">({{ target.toughness - target.currentDamage }} remaining toughness)</span>
+                <span class="target-toughness">({{ target.lethalDamageThreshold - target.currentDamage }} damage to lethal)</span>
               }
               @if (choice.damage.combatDamageIsTrample && !target.isPlayer) {
                 <span class="target-min-damage">min: {{ choice.damage.getLethalRequiredForTarget(target) }}</span>
@@ -758,7 +761,7 @@
     <div class="game-over-overlay">
       <div class="game-over-card surrender-confirm-card">
         <h2>Surrender</h2>
-        <p class="winner-text">Do you want to surrender?</p>
+        <p class="winner-text">{{ subgameDepth() ? "Concede this subgame and return to its parent?" : "Do you want to surrender?" }}</p>
         <div class="surrender-confirm-buttons">
           <button class="btn-surrender-yes" (click)="confirmSurrender()">Yes</button>
           <button class="btn-keep" (click)="cancelSurrender()">No</button>

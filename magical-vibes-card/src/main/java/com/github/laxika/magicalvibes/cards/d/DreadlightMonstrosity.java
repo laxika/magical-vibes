@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "57")
+@CardRegistration(set = "DBL", collectorNumber = "324")
 public class DreadlightMonstrosity extends Card {
 
     public DreadlightMonstrosity() {

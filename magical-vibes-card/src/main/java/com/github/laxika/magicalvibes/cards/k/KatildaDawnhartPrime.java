@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "230")
+@CardRegistration(set = "DBL", collectorNumber = "230")
 public class KatildaDawnhartPrime extends Card {
 
     public KatildaDawnhartPrime() {

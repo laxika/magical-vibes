@@ -2,30 +2,26 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThoughtCourier.class, DrossCrocodile.class})
 class ThoughtCourierTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability taps Thought Courier and goes on the stack")
     void activatingTapsAndStacks() {
-        Permanent courier = addReadyCourier(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        Permanent courier = addCreatureReady(player1, new ThoughtCourier());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -37,10 +33,8 @@ class ThoughtCourierTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when tapped")
     void cannotActivateWhenTapped() {
-        Permanent courier = addReadyCourier(player1);
+        Permanent courier = addCreatureReady(player1, new ThoughtCourier());
         courier.tap();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -50,9 +44,9 @@ class ThoughtCourierTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving draws a card then prompts for discard")
     void resolvingDrawsThenPromptsDiscard() {
-        addReadyCourier(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        addCreatureReady(player1, new ThoughtCourier());
+        harness.setHand(player1, List.of(new DrossCrocodile()));
+        harness.setLibrary(player1, List.of(new DrossCrocodile()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -64,42 +58,53 @@ class ThoughtCourierTest extends BaseCardTest {
     @Test
     @DisplayName("Completing discard moves card to graveyard, net hand size unchanged")
     void completingDiscard() {
-        addReadyCourier(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        addCreatureReady(player1, new ThoughtCourier());
+        DrossCrocodile discarded = new DrossCrocodile();
+        DrossCrocodile drawn = new DrossCrocodile();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With an empty starting hand, draws and then discards the drawn card")
+    void drawsThenDiscardsDrawnCardWithEmptyStartingHand() {
+        addCreatureReady(player1, new ThoughtCourier());
+        DrossCrocodile drawn = new DrossCrocodile();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("Looting with empty deck and empty hand skips discard")
     void emptyDeckAndHandSkipsDiscard() {
-        addReadyCourier(player1);
-        harness.setHand(player1, new ArrayList<>());
-        gd.playerDecks.get(player1.getId()).clear();
+        addCreatureReady(player1, new ThoughtCourier());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-    }
-
-    private Permanent addReadyCourier(Player player) {
-        Permanent perm = new Permanent(new ThoughtCourier());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }
