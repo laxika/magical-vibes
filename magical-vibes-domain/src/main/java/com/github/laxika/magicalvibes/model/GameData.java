@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
@@ -399,6 +400,8 @@ public class GameData {
     public final Map<UUID, List<Card>> playerCommanders = new ConcurrentHashMap<>();
     /** Commander tax by card identity. */
     public final Map<UUID, Integer> commanderTaxByCardId = new ConcurrentHashMap<>();
+    /** Number of times each player has cast a commander from the command zone this game. */
+    public final Map<UUID, Integer> commanderCastsFromCommandZoneThisGame = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs (any type) put into each player's graveyard from the battlefield this turn (e.g. Twilight Shepherd). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
@@ -441,6 +444,8 @@ public class GameData {
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
     /** Last-known battlefield names of creatures that died this turn, including tokens. */
     public final Set<String> creatureNamesDiedThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who controlled a modified creature when it died this turn. */
+    public final Set<UUID> playersWhoControlledModifiedCreatureDiedThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> creaturesPutIntoOwnGraveyardThisTurnCount = new ConcurrentHashMap<>();
     /** Counts nontoken creatures put into each owner's graveyard from the battlefield this turn. */
     public final Map<UUID, Integer> nontokenCreaturesPutIntoOwnGraveyardThisTurnCount = new ConcurrentHashMap<>();
@@ -550,6 +555,9 @@ public class GameData {
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → remaining combat-damage-only prevention shields for this turn. */
     public final Map<UUID, Integer> playerCombatDamagePreventionShields = new ConcurrentHashMap<>();
+    /** Turn-scoped combat-damage prevention riders that create tokens for each damage prevented. */
+    public final List<CombatDamagePreventionTokenShield> combatDamagePreventionTokenShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
     /** Subset of queued combat skips that expires during this turn's cleanup. */
@@ -1625,6 +1633,9 @@ public class GameData {
     /** Pending mana-value-limited one-shot spell copy triggers for the current turn. */
     public final Map<UUID, List<Integer>> pendingNextInstantSorceryCopyThisTurnMaxManaValues =
             new ConcurrentHashMap<>();
+    /** Pending one-shot spell-copy counts evaluated when the next instant or sorcery is cast. */
+    public final Map<UUID, List<DynamicAmount>> pendingNextInstantSorceryCopyThisTurnDynamicCounts =
+            new ConcurrentHashMap<>();
     /** Pending one-shot "when you next cast a spell this turn, copy that spell" delayed triggers. */
     public final Map<UUID, Integer> pendingNextSpellCopyThisTurnCount = new ConcurrentHashMap<>();
     /** Pending one-shot filtered spell-copy triggers for the current turn. */
@@ -1815,12 +1826,17 @@ public class GameData {
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
+    /** Cards captured for the corresponding general graveyard-leave batch. */
+    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingCards = new ConcurrentHashMap<>();
     /** Owners whose graveyards had creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Counts creature cards leaving each owner's graveyard during a suppressed batch. */
     public final Map<UUID, Integer> graveyardLeaveNotificationPendingCreatureCardCounts = new ConcurrentHashMap<>();
     /** Owners whose graveyards had artifact or creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingArtifactOrCreatureOwners = ConcurrentHashMap.newKeySet();
+    /** Artifact and creature cards captured for the corresponding suppressed leave batch. */
+    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingArtifactOrCreatureCards =
+            new ConcurrentHashMap<>();
     /** Number of cards exiled from each owner's graveyard during a suppressed batch. */
     public final Map<UUID, Integer> graveyardExileNotificationPendingCounts = new ConcurrentHashMap<>();
     /** Creature cards captured for Kaya's exile trigger during a suppressed batch. */
@@ -5726,6 +5742,9 @@ public class GameData {
         this.pendingNextInstantSorceryCopyThisTurnMaxManaValues.forEach((playerId, maxManaValues) ->
                 copy.pendingNextInstantSorceryCopyThisTurnMaxManaValues.put(
                         playerId, new ArrayList<>(maxManaValues)));
+        this.pendingNextInstantSorceryCopyThisTurnDynamicCounts.forEach((playerId, counts) ->
+                copy.pendingNextInstantSorceryCopyThisTurnDynamicCounts.put(
+                        playerId, new ArrayList<>(counts)));
         copy.pendingNextSpellCopyThisTurnCount.putAll(this.pendingNextSpellCopyThisTurnCount);
         this.pendingNextFilteredSpellCopiesThisTurn.forEach((playerId, effects) ->
                 copy.pendingNextFilteredSpellCopiesThisTurn.put(playerId, new ArrayList<>(effects)));
@@ -5816,6 +5835,7 @@ public class GameData {
         copy.playersWhoseSpeedIncreasedThisTurn.addAll(this.playersWhoseSpeedIncreasedThisTurn);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
+        copy.combatDamagePreventionTokenShields.addAll(this.combatDamagePreventionTokenShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
                 copy.controlLossUnattachTriggers.put(equipmentId,
@@ -5979,6 +5999,7 @@ public class GameData {
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         this.playerCommanders.forEach((k, v) -> copy.playerCommanders.put(k, new ArrayList<>(v)));
         copy.commanderTaxByCardId.putAll(this.commanderTaxByCardId);
+        copy.commanderCastsFromCommandZoneThisGame.putAll(this.commanderCastsFromCommandZoneThisGame);
         copy.commanderReturnCandidates.addAll(this.commanderReturnCandidates);
         copy.pendingCommanderZoneMoves.addAll(this.pendingCommanderZoneMoves);
         this.commanderBounceContexts.forEach((id, context) -> copy.commanderBounceContexts.put(id,
@@ -6063,6 +6084,8 @@ public class GameData {
         copy.nonlandPermanentLeftBattlefieldThisTurn = this.nonlandPermanentLeftBattlefieldThisTurn;
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         copy.creatureNamesDiedThisTurn.addAll(this.creatureNamesDiedThisTurn);
+        copy.playersWhoControlledModifiedCreatureDiedThisTurn
+                .addAll(this.playersWhoControlledModifiedCreatureDiedThisTurn);
         copy.creaturesPutIntoOwnGraveyardThisTurnCount.putAll(this.creaturesPutIntoOwnGraveyardThisTurnCount);
         copy.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.putAll(
                 this.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount);
@@ -6181,6 +6204,8 @@ public class GameData {
                 new ArrayList<>(this.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds);
         copy.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume =
                 this.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
+        copy.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard =
+                this.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard;
         copy.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume =
                 this.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
         copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume =
@@ -6285,6 +6310,7 @@ public class GameData {
         copy.cloneOperation.removedSupertypesOverride = this.cloneOperation.removedSupertypesOverride;
         copy.cloneOperation.addTypeAppropriateCounters = this.cloneOperation.addTypeAppropriateCounters;
         copy.cloneOperation.entersTapped = this.cloneOperation.entersTapped;
+        copy.cloneOperation.copyUntilEndOfTurn = this.cloneOperation.copyUntilEndOfTurn;
         copy.cloneOperation.ninjutsuEntry = this.cloneOperation.ninjutsuEntry;
         copy.cloneOperation.ninjutsuAttackTargetId = this.cloneOperation.ninjutsuAttackTargetId;
         copy.cloneOperation.landPlay = this.cloneOperation.landPlay;
@@ -6508,9 +6534,13 @@ public class GameData {
                 .addAll(this.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
+        this.graveyardLeaveNotificationPendingCards.forEach((playerId, cards) ->
+                copy.graveyardLeaveNotificationPendingCards.put(playerId, new ArrayList<>(cards)));
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
         copy.graveyardLeaveNotificationPendingCreatureCardCounts.putAll(this.graveyardLeaveNotificationPendingCreatureCardCounts);
         copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
+        this.graveyardLeaveNotificationPendingArtifactOrCreatureCards.forEach((playerId, cards) ->
+                copy.graveyardLeaveNotificationPendingArtifactOrCreatureCards.put(playerId, new ArrayList<>(cards)));
         copy.graveyardExileNotificationPendingCounts.putAll(this.graveyardExileNotificationPendingCounts);
         this.kayaExileNotificationPendingCreatureCards.forEach((playerId, cards) ->
                 copy.kayaExileNotificationPendingCreatureCards.put(playerId, new ArrayList<>(cards)));

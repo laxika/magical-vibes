@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "204")
+@CardRegistration(set = "SOC", collectorNumber = "312")
 public class TheGooseMother extends Card {
 
     public TheGooseMother() {

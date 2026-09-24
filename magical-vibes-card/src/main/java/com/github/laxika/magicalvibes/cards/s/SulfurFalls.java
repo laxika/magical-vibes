@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "ISD", collectorNumber = "248")
 @CardRegistration(set = "DOM", collectorNumber = "247")
 @CardRegistration(set = "DMR", collectorNumber = "258")
+@CardRegistration(set = "SOC", collectorNumber = "408")
 public class SulfurFalls extends Card {
 
     public SulfurFalls() {

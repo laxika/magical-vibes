@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "83")
 @CardRegistration(set = "RVR", collectorNumber = "90")
+@CardRegistration(set = "SOC", collectorNumber = "225")
 public class PriestOfForgottenGods extends Card {
 
     public PriestOfForgottenGods() {

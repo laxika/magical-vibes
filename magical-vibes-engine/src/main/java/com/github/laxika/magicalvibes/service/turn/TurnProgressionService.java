@@ -828,6 +828,7 @@ public class TurnProgressionService {
         gameData.nonlandPermanentLeftBattlefieldThisTurn = false;
         gameData.creatureDeathCountThisTurn.clear();
         gameData.creatureNamesDiedThisTurn.clear();
+        gameData.playersWhoControlledModifiedCreatureDiedThisTurn.clear();
         gameData.creaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();

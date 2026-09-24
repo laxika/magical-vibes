@@ -42,6 +42,8 @@ public class CloneOperationState {
     public boolean copyColor = true;
     // Vesuva: applied only to the chosen copy entry, not retained by the resulting copy.
     public boolean entersTapped;
+    // Cursed Mirror: the copy reverts during cleanup at end of turn.
+    public boolean copyUntilEndOfTurn;
     public boolean ninjutsuEntry;
     public UUID ninjutsuAttackTargetId;
     public boolean landPlay;

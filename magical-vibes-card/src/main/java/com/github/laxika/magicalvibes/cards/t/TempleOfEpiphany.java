@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "JOU", collectorNumber = "164")
 @CardRegistration(set = "M21", collectorNumber = "252")
 @CardRegistration(set = "DDU", collectorNumber = "72")
+@CardRegistration(set = "SOC", collectorNumber = "412")
 public class TempleOfEpiphany extends Card {
 
     public TempleOfEpiphany() {

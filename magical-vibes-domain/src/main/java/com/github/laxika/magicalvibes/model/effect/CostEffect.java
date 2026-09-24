@@ -137,6 +137,11 @@ public interface CostEffect extends CardEffect {
         return 0;
     }
 
+    /** True when this cost pays one life for each color in the payer's commander color identity. */
+    default boolean paysLifeForEachCommanderColorIdentity() {
+        return false;
+    }
+
     /**
      * The number of counters removed from the source permanent to pay this cost, or {@code 0}
      * when this cost removes none from the source.

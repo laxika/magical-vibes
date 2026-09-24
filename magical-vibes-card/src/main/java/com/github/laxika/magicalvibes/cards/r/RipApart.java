@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "225")
+@CardRegistration(set = "SOC", collectorNumber = "328")
 public class RipApart extends Card {
 
     public RipApart() {

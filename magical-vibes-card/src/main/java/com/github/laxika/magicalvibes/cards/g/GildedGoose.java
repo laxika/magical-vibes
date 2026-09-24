@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "160")
+@CardRegistration(set = "SOC", collectorNumber = "269")
 public class GildedGoose extends Card {
 
     public GildedGoose() {

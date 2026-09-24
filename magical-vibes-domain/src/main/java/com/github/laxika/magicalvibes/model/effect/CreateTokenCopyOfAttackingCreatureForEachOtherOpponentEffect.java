@@ -7,10 +7,20 @@ import java.util.UUID;
  * opponent. A null opponent is the authored planar trigger; a non-null opponent is one accepted
  * resolution-time choice from that trigger.
  */
-public record CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(UUID opponentId)
+public record CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
+        UUID opponentId,
+        boolean exileAtEndOfCombat)
         implements CardEffect {
 
     public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect() {
-        this(null);
+        this(null, false);
+    }
+
+    public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(UUID opponentId) {
+        this(opponentId, false);
+    }
+
+    public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(boolean exileAtEndOfCombat) {
+        this(null, exileAtEndOfCombat);
     }
 }

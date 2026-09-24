@@ -1,0 +1,26 @@
+package com.github.laxika.magicalvibes.cards.r;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+
+@CardRegistration(set = "SOC", collectorNumber = "397")
+public class RainSlickedCopse extends Card {
+
+    public RainSlickedCopse() {
+        // This land enters tapped.
+        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+
+        // {T}: Add {G}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
+
+        // {T}: Add {U}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
+
+        // Cycling {2} ({2}, Discard this card: Draw a card.) — discard cost is intrinsic.
+        addCycling("{2}");
+    }
+}

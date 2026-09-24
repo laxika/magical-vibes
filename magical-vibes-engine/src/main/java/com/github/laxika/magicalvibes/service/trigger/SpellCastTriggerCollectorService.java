@@ -2223,6 +2223,8 @@ public class SpellCastTriggerCollectorService {
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        int copiedSpellManaValue = spellCopy.copiedSpell().getCard().getManaValue()
+                + spellCopy.copiedSpell().getXValue();
         if (trigger.targetFilter() == null
                 && resolved.size() == 1
                 && resolved.getFirst() instanceof LoseLifeEffect loseLife
@@ -2236,6 +2238,7 @@ public class SpellCastTriggerCollectorService {
                     spellCopy.copyingPlayerId(),
                     match.permanent().getId());
             entry.setTriggeringCardId(spellCopy.copiedSpell().getCard().getId());
+            entry.setEventValue(copiedSpellManaValue);
             entry.setNonTargeting(true);
             match.gameData().stack.add(entry);
             return true;
@@ -2248,7 +2251,8 @@ public class SpellCastTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), resolved,
                     needsPlayerTarget && !needsPermanentTarget, trigger.targetFilter(), 0,
-                    match.permanent().getId()));
+                    match.permanent().getId(), null, false, null, null,
+                    match.controllerId(), copiedSpellManaValue, null));
             gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
             return true;
@@ -2271,6 +2275,7 @@ public class SpellCastTriggerCollectorService {
                 spellCopy.copyingPlayerId(),
                 match.permanent().getId());
         entry.setTriggeringCardId(spellCopy.copiedSpell().getCard().getId());
+        entry.setEventValue(copiedSpellManaValue);
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
 import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
@@ -977,6 +978,10 @@ public class DamagePreventionService {
     private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage,
                                             boolean combatDamage, Permanent damageSource) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
+        if (combatDamage) {
+            int prevented = applyCombatDamagePreventionTokenShield(gameData, playerId, damage);
+            if (prevented > 0) return damage - prevented;
+        }
         if (combatDamage && gameData.preventAllCombatDamageToPlayers) return 0;
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
         // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)
@@ -1022,6 +1027,19 @@ public class DamagePreventionService {
         if (damage <= 0) return 0;
         if (!combatDamage && hasControllerAndPermanentsNoncombatDamagePrevention(gameData, playerId)) return 0;
         return damage;
+    }
+
+    private int applyCombatDamagePreventionTokenShield(GameData gameData, UUID playerId, int damage) {
+        if (damage <= 0 || gameData.combatDamagePreventionTokenShields.isEmpty()) return 0;
+
+        for (CombatDamagePreventionTokenShield shield : gameData.combatDamagePreventionTokenShields) {
+            if (!shield.protectedPlayerId().equals(playerId)) continue;
+            permanentControlSupportProvider.getObject().applyCreateToken(
+                    gameData, shield.tokenControllerId(), shield.token(), damage,
+                    shield.tokenSourceSetCode());
+            return damage;
+        }
+        return 0;
     }
 
     /** Applies target-specific shields that gain life for their resolving controller. */

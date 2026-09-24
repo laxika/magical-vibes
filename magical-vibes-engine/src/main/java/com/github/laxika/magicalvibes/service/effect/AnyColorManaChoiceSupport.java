@@ -211,7 +211,8 @@ public final class AnyColorManaChoiceSupport {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
             case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
-            case COMMANDER_COLOR_IDENTITY -> ManaProductionSupport.commanderColorIdentity(gameData, playerId);
+            case COMMANDER_COLOR_IDENTITY, COMMANDER_CAST_COUNTERS, SOURCE_SPELL_CAST_TRIGGER ->
+                    ManaProductionSupport.commanderColorIdentity(gameData, playerId);
             default -> effect.allowedColors();
         };
         if (allowedColors.isEmpty()) {
@@ -223,6 +224,9 @@ public final class AnyColorManaChoiceSupport {
                 || effect.restriction() == ManaSpendRestriction.SOURCE_PERMANENT_COLORS
                 || effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES
                 || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTERS
+                || effect.restriction() == ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER
+                || effect.restriction() == ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER_ANY_COLOR
                 || effect.restriction() == ManaSpendRestriction.KICKED_SPELLS
                 || effect.restriction() == ManaSpendRestriction.CREATURE_ABILITIES)) {
             UUID manaRecipientId = recipientPlayerId != null ? recipientPlayerId : playerId;
@@ -243,6 +247,14 @@ public final class AnyColorManaChoiceSupport {
                 }
                 if (fromCreature) {
                     manaPool.addCreatureMana(effectiveColor, amount);
+                }
+                if (effect.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTERS) {
+                    manaPool.addCommanderCastCounterGrantingMana(effectiveColor, amount);
+                }
+                if ((effect.restriction() == ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER
+                        || effect.restriction() == ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER_ANY_COLOR)
+                        && sourcePermanentId != null) {
+                    manaPool.addSpellCastTriggerMana(sourcePermanentId, effectiveColor, amount);
                 }
             }
             if (fromTreasureSource) {
@@ -326,6 +338,14 @@ public final class AnyColorManaChoiceSupport {
             case COMMANDER_COLOR_IDENTITY -> ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount,
                     ManaProductionSupport.commanderColorIdentity(gameData, playerId));
+            case COMMANDER_CAST_COUNTERS -> new ChoiceContext.CommanderCastCounterManaColorChoice(
+                    playerId, fromCreature, amount, sourcePermanentId,
+                    ManaProductionSupport.commanderColorIdentity(gameData, playerId));
+            case SOURCE_SPELL_CAST_TRIGGER -> new ChoiceContext.SourceTrackedManaColorChoice(
+                    playerId, fromCreature, amount, sourcePermanentId,
+                    ManaProductionSupport.commanderColorIdentity(gameData, playerId));
+            case SOURCE_SPELL_CAST_TRIGGER_ANY_COLOR -> new ChoiceContext.SourceTrackedManaColorChoice(
+                    playerId, fromCreature, amount, sourcePermanentId, ManaColor.COLORS);
             case SPELL_ONLY ->
                     new ChoiceContext.SpellOnlyManaColorChoice(playerId, fromCreature, amount, false);
             case MULTICOLORED_SPELLS ->
@@ -450,7 +470,8 @@ public final class AnyColorManaChoiceSupport {
 
     private static String prompt(ManaSpendRestriction restriction) {
         return switch (restriction) {
-            case COMMANDER_COLOR_IDENTITY -> "Choose a color in your commander's color identity.";
+            case COMMANDER_COLOR_IDENTITY, COMMANDER_CAST_COUNTERS, SOURCE_SPELL_CAST_TRIGGER ->
+                    "Choose a color in your commander's color identity.";
             case LEGENDARY_SPELLS -> "Choose a color of mana to add (legendary spells only).";
             case SPELL_ONLY -> "Choose a color of mana to add (spells only).";
             case MULTICOLORED_SPELLS -> "Choose a color of mana to add (multicolored spells only).";

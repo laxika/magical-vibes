@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OMB", collectorNumber = "37")
+@CardRegistration(set = "SOC", collectorNumber = "286")
 public class Silkguard extends Card {
 
     public Silkguard() {

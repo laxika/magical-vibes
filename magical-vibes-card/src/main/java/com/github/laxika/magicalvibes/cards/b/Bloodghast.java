@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 @CardRegistration(set = "DFT", collectorNumber = "77")
 @CardRegistration(set = "IMA", collectorNumber = "82")
 @CardRegistration(set = "HA7", collectorNumber = "9")
+@CardRegistration(set = "SOC", collectorNumber = "210")
 public class Bloodghast extends Card {
 
     public Bloodghast() {

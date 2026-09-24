@@ -8293,6 +8293,8 @@ public class SpellCastingService {
                     stackEntry.setEnteringCounterCount(permission.enterWithCounter(),
                             permission.enterWithCounterCount());
                 }
+                permission.grantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
+                        effects.forEach(effect -> stackEntry.addGrantedTriggeredEffectOnEntry(slot, effect)));
             }
             stackEntry.setEntersTapped(stackEntry.isEntersTapped()
                     || gameData.graveyardCardsEnterTapped.remove(card.getId()));
@@ -8742,7 +8744,11 @@ public class SpellCastingService {
         Card landFace = selectedModalDoubleFacedLandFace(graveyardCard, xValue);
         boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
         UUID graveyardOwnerId = resolveGraveyardOwner(gameData, graveyard, graveyardCard.getId());
+        Optional<CastingPermissionService.FilteredGraveyardPermission> landPermission =
+                castingPermissionService.findGraveyardLandPermission(gameData, playerId);
         permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
+        landPermission.ifPresent(permission -> castingPermissionService.markFilteredGraveyardPermissionUsed(
+                gameData, playerId, permission.sourcePermanentId()));
         gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
         gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
         if (landCopyOnEnterService.prepare(gameData, playerId, graveyardCard, landFace,
@@ -8752,6 +8758,8 @@ public class SpellCastingService {
         Permanent permanent = new Permanent(graveyardCard);
         permanent.setCard(landFace);
         permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+        landPermission.ifPresent(permission -> permission.permission().grantedTriggeredEffectsOnEntry()
+                .forEach((slot, effects) -> effects.forEach(effect -> permanent.addTemporaryTriggeredEffect(slot, effect))));
         if (entersTapped) {
             permanent.tap();
         }
@@ -10068,6 +10076,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int commanderCastCounterGrantingBefore = commanderCastCounterGrantingManaAvailable(gameData, playerId);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
         boolean previousClassLevelManaPermission = pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery();
         if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
@@ -10094,6 +10103,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyCommanderCastCounterGrantingMana(gameData, playerId, card, commanderCastCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
@@ -10134,6 +10144,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int commanderCastCounterGrantingBefore = commanderCastCounterGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         null, false, 0, 0, 0, "", "", sourceZone, anyManaType, false);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
@@ -10150,6 +10161,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyCommanderCastCounterGrantingMana(gameData, playerId, card, commanderCastCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
@@ -10227,6 +10239,11 @@ public class SpellCastingService {
     private int additionalCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         return pool != null ? pool.getAdditionalCounterGrantingManaTotal() : 0;
+    }
+
+    private int commanderCastCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        return pool != null ? pool.getCommanderCastCounterGrantingManaTotal() : 0;
     }
 
     private int riotGrantingManaAvailable(GameData gameData, UUID playerId) {
@@ -11699,6 +11716,20 @@ public class SpellCastingService {
         }
     }
 
+    /** Opal Palace: each tagged mana spent on a commander cast grants counters equal to this cast's count. */
+    private void applyCommanderCastCounterGrantingMana(GameData gameData, UUID playerId, Card card,
+                                                       int commanderCastCounterGrantingBefore) {
+        if (!playerId.equals(gameData.commandCastPlayerId)) {
+            return;
+        }
+        int spent = commanderCastCounterGrantingBefore
+                - commanderCastCounterGrantingManaAvailable(gameData, playerId);
+        if (spent > 0) {
+            int castCount = gameData.commanderCastsFromCommandZoneThisGame.getOrDefault(playerId, 0) + 1;
+            gameData.spellAdditionalEnterCounters.merge(card.getId(), spent * castCount, Integer::sum);
+        }
+    }
+
     private void addCreatureSpellAdditionalCounters(GameData gameData, Card card,
                                                     List<String> repeatedAdditionalCosts,
                                                     boolean applies) {
@@ -13092,6 +13123,7 @@ public class SpellCastingService {
         if (commandCast) {
             if (castEntry != null) castEntry.setSourceZone(Zone.COMMAND);
             gameData.commanderTaxByCardId.merge(commanderId, 2, Integer::sum);
+            gameData.commanderCastsFromCommandZoneThisGame.merge(playerId, 1, Integer::sum);
         }
         stampLatestCastDuringMainPhase(gameData, playerId, card);
         recordSpellCastPreservingEntryCounters(gameData, playerId, castCharacteristics,

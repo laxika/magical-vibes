@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "183")
 @CardRegistration(set = "2X2", collectorNumber = "228")
+@CardRegistration(set = "SOC", collectorNumber = "315")
 public class HydroidKrasis extends Card {
 
     public HydroidKrasis() {

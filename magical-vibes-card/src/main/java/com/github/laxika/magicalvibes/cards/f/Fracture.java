@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "188")
 @CardRegistration(set = "SOA", collectorNumber = "65")
+@CardRegistration(set = "SOC", collectorNumber = "310")
 public class Fracture extends Card {
 
     public Fracture() {

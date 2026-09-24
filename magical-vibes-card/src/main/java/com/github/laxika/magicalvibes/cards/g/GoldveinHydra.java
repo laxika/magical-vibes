@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "OTJ", collectorNumber = "167")
+@CardRegistration(set = "SOC", collectorNumber = "270")
 public class GoldveinHydra extends Card {
 
     public GoldveinHydra() {

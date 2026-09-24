@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
+import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
@@ -114,6 +115,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMo
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureCountAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureTypeCountAmongControlled;
@@ -132,6 +134,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSo
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellXValue;
 import com.github.laxika.magicalvibes.model.amount.UnspentMana;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
@@ -280,6 +283,8 @@ public class AmountEvaluationService {
                     targetPlayerControlsMoreLands(gameData, ctx) ? a.amount() : a.otherwise();
             case XValue ignored ->
                     ctx.xValue();
+            case TriggeringSpellXValue ignored ->
+                    ctx.xValue();
             case WebSlingingReturnedCreatureManaValue ignored ->
                     ctx.sourcePermanent() == null || ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue() == null
                             ? 0 : ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue();
@@ -321,6 +326,8 @@ public class AmountEvaluationService {
                             ? evaluate(gameData, d.amount(), ctx) : 0;
             case CompletedDungeonsCount ignored ->
                     gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of()).size();
+            case CommanderCastsFromCommandZoneThisGame c ->
+                    countCommanderCastsFromCommandZoneThisGame(gameData, c, ctx);
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
             case UnlockedRoomDoorsCount c ->
@@ -512,6 +519,8 @@ public class AmountEvaluationService {
                     greatestManaValueAmongCardsInGraveyard(gameData, a, ctx);
             case GreatestManaValueAmongControlled a ->
                     greatestManaValueAmongControlled(gameData, a, ctx);
+            case GreatestManaValueAmongSpellsCastThisTurn a ->
+                    greatestManaValueAmongSpellsCastThisTurn(gameData, a, ctx);
             case GreatestStackSourceCountThisTurn ignored ->
                     gameData.getGreatestStackSourceCountThisTurn();
             case GreatestCreatureCountAmongPlayers ignored ->
@@ -924,6 +933,7 @@ public class AmountEvaluationService {
     public boolean referencesXValue(DynamicAmount amount) {
         return switch (amount) {
             case XValue ignored -> true;
+            case TriggeringSpellXValue ignored -> false;
             case ManaSpentToCast ignored -> true;
             case ChosenCreatureOrRevealedCardPower ignored -> true;
             case SnowManaSpentToCast ignored -> false;
@@ -987,11 +997,22 @@ public class AmountEvaluationService {
     }
 
     private int targetCardsManaValueSum(GameData gameData, AmountContext ctx) {
-        if (ctx.targetCardIds() == null) {
+        List<java.util.UUID> targetCardIds = ctx.targetCardIds();
+        if (targetCardIds == null || targetCardIds.isEmpty()) {
+            targetCardIds = ctx.targetPermanentId() == null ? List.of() : List.of(ctx.targetPermanentId());
+        }
+        if (targetCardIds.isEmpty()) {
             return 0;
         }
-        return ctx.targetCardIds().stream()
-                .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+        return targetCardIds.stream()
+                .map(id -> {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, id);
+                    if (card == null) {
+                        var exiledCard = gameData.findExiledCard(id);
+                        card = exiledCard == null ? null : exiledCard.card();
+                    }
+                    return card;
+                })
                 .filter(java.util.Objects::nonNull)
                 .mapToInt(Card::getManaValue)
                 .sum();
@@ -2195,6 +2216,21 @@ public class AmountEvaluationService {
         return total;
     }
 
+    private int greatestManaValueAmongSpellsCastThisTurn(
+            GameData gameData, GreatestManaValueAmongSpellsCastThisTurn amount, AmountContext ctx) {
+        int greatestManaValue = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            for (Card spell : gameData.getSpellsCastThisTurn(playerId)) {
+                if (predicateEvaluationService.matchesCardPredicate(
+                        spell, amount.filter(), spell.getId(), gameData, playerId)) {
+                    greatestManaValue = Math.max(greatestManaValue, spell.getManaValue());
+                }
+            }
+        }
+        return greatestManaValue;
+    }
+
     private int countCreaturesThatCrewedSourceThisTurn(GameData gameData, AmountContext ctx) {
         if (gameData == null || ctx.sourcePermanent() == null) {
             return 0;
@@ -2218,6 +2254,17 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
+    }
+
+    private int countCommanderCastsFromCommandZoneThisGame(GameData gameData,
+                                                            CommanderCastsFromCommandZoneThisGame count,
+                                                            AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += gameData.commanderCastsFromCommandZoneThisGame.getOrDefault(playerId, 0);
         }
         return total;
     }

@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermane
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
@@ -122,6 +123,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerOwnsCardInExile;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActivePlayer;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
@@ -290,6 +292,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFr
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ModifiedCreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
@@ -543,6 +546,10 @@ public class ConditionEvaluationService {
             case CreatureDiedUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
+            case ModifiedCreatureDiedUnderYourControlThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoControlledModifiedCreatureDiedThisTurn
+                            .contains(ctx.controllerId());
             case CreatureDiedUnderOpponentControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.orderedPlayerIds.stream()
@@ -856,6 +863,11 @@ public class ConditionEvaluationService {
                             > countCardsInHand(gameData, ctx.controllerId());
             case TargetPlayerControlsPermanent c ->
                     targetPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
+            case TargetPlayerControlsMoreLandsThanController ignored ->
+                    ctx.targetId() != null
+                            && ctx.controllerId() != null
+                            && !ctx.targetId().equals(ctx.controllerId())
+                            && gameQueryService.controlsMoreLandsThan(gameData, ctx.targetId(), ctx.controllerId());
             case TargetPlayerIsActivePlayer ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerLifeTotalEquals c ->
@@ -904,6 +916,8 @@ public class ConditionEvaluationService {
             case AttackedTargetIsOpponent ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
+            case AttackedOpponentHasMoreLifeThanAnotherOpponent ignored ->
+                    attackedOpponentHasMoreLifeThanAnotherOpponent(gameData, ctx);
             case TargetPermanentAttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 Permanent attackedTarget = target == null || target.getAttackTarget() == null
@@ -1595,6 +1609,24 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private boolean attackedOpponentHasMoreLifeThanAnotherOpponent(GameData gameData,
+                                                                    ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackedOpponentId = ctx.targetId();
+        if (controllerId == null
+                || attackedOpponentId == null
+                || !gameData.playerIds.contains(attackedOpponentId)
+                || controllerId.equals(attackedOpponentId)) {
+            return false;
+        }
+
+        int attackedOpponentLife = gameData.getLife(attackedOpponentId);
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId)
+                        && !playerId.equals(attackedOpponentId))
+                .anyMatch(playerId -> attackedOpponentLife > gameData.getLife(playerId));
     }
 
     private boolean anOpponentHasMoreCardsInHandThanController(GameData gameData, UUID controllerId) {

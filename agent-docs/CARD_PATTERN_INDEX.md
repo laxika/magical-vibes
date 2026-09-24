@@ -58,11 +58,13 @@ This index has been split into smaller files for faster lookup. Each file is und
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
+| demonstrate a spell copy for you and one chosen opponent | `MayEffect(new DemonstrateEffect(), "Copy [spell name]?")` in `ON_SELF_CAST` + the spell's normal effects |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | damage prevention into counters | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| damage prevention into tokens | `i/Inkshield.java` — `PreventAllCombatDamageToControllerAndCreateTokensEffect(CreateTokenEffect token)` |
 | aura, enchant creature, pacifism | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | curse, enchant player | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | metalcraft, morbid, conditional | CARD_PATTERNS_PERMANENTS_STATIC.md |

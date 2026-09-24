@@ -146,6 +146,8 @@ public class ChoiceHandlerService {
             pleaForPowerEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
             expropriateEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.FatefulTempestEffectHandler
+            fatefulTempestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
             voteForDenialOrDuplicationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
@@ -302,6 +304,16 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.EnchantedManaCostChoice ctx) {
             handleEnchantedManaCostColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.CommanderCastCounterManaColorChoice ctx) {
+            handleCommanderCastCounterManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.SourceTrackedManaColorChoice ctx) {
+            handleSourceTrackedManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
             return;
         }
 
@@ -745,6 +757,17 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             expropriateEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.FatefulTempestChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Fateful Tempest vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            fatefulTempestEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -1483,6 +1506,66 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCommanderCastCounterManaColorChosen(
+            GameData gameData, Player player, String colorName, List<String> options,
+            ChoiceContext.CommanderCastCounterManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, ctx.amount());
+        manaPool.addCommanderCastCounterGrantingMana(manaColor, ctx.amount());
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, ctx.amount());
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount())) + " "
+                + colorName.toLowerCase() + " mana for a commander cast."));
+        log.info("Game {} - {} adds {} {} commander-counter-granting mana", gameData.id,
+                player.getUsername(), ctx.amount(), colorName.toLowerCase());
+
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSourceTrackedManaColorChosen(
+            GameData gameData, Player player, String colorName, List<String> options,
+            ChoiceContext.SourceTrackedManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, ctx.amount());
+        if (ctx.sourcePermanentId() != null) {
+            manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, ctx.amount());
+        }
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, ctx.amount());
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount())) + " "
+                + colorName.toLowerCase() + " mana for a creature-type spell trigger."));
+        log.info("Game {} - {} adds {} {} source-tracked mana", gameData.id,
+                player.getUsername(), ctx.amount(), colorName.toLowerCase());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

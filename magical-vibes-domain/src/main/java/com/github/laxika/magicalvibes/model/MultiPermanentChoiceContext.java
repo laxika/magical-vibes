@@ -562,6 +562,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put counters on the single chosen permanent on any battlefield. */
+    record AnyPermanentCounterPlacement(CounterType counterType, int count)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Put counters on the chosen permanent and attribute the placement to the choosing player. */
     record OwnPermanentCounterPlacementByPlayer(CounterType counterType, int count, UUID placingPlayerId)
             implements MultiPermanentChoiceContext {
@@ -924,6 +929,17 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
 
         public WinnowingChoice {
+            playerIds = List.copyOf(playerIds);
+            chosenByPlayer = Map.copyOf(chosenByPlayer);
+        }
+    }
+
+    /** Promise of Loyalty: each player chooses the creature that receives a vow counter. */
+    record PromiseOfLoyaltyChoice(List<UUID> playerIds, int playerIndex,
+                                  Map<UUID, UUID> chosenByPlayer, StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+
+        public PromiseOfLoyaltyChoice {
             playerIds = List.copyOf(playerIds);
             chosenByPlayer = Map.copyOf(chosenByPlayer);
         }

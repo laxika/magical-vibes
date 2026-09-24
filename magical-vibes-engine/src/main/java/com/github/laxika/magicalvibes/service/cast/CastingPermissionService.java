@@ -1312,6 +1312,11 @@ public class CastingPermissionService {
                 if (resolved instanceof PlayLandsFromGraveyardEffect) {
                     return true;
                 }
+                if (resolved instanceof CastSpellsFromGraveyardPermission permission
+                        && permission.permitsLandPlayFromGraveyard()
+                        && isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
+                    return true;
+                }
             }
         }
         return gameData.emblems.stream()
@@ -1436,6 +1441,26 @@ public class CastingPermissionService {
                 .map(FilteredGraveyardPermission::sourcePermanentId);
     }
 
+    /** Returns a matching graveyard permission that can be used to play a land. */
+    public Optional<FilteredGraveyardPermission> findGraveyardLandPermission(
+            GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return Optional.empty();
+        }
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof CastSpellsFromGraveyardPermission permission
+                        && permission.permitsLandPlayFromGraveyard()
+                        && isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
+                    return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     /** Returns the matching graveyard-cast permission, including its additional cast costs. */
     public Optional<FilteredGraveyardPermission> findFilteredGraveyardPermission(
             GameData gameData, UUID playerId, Card card) {
@@ -1453,24 +1478,26 @@ public class CastingPermissionService {
                         || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
                     continue;
                 }
-                if (permission.availabilityCondition() != null
-                        && !conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
-                        ConditionContext.forCasting(playerId))) {
-                    continue;
-                }
-                if (permission.onlyDuringControllerTurn()
-                        && !playerId.equals(gameData.activePlayerId)) {
-                    continue;
-                }
-                if (permission.oncePerControllerTurn()
-                        && (!playerId.equals(gameData.activePlayerId)
-                            || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
+                if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
                     continue;
                 }
                 return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
             }
         }
         return Optional.empty();
+    }
+
+    private boolean isGraveyardPermissionAvailable(GameData gameData, UUID playerId,
+                                                     Permanent source,
+                                                     CastSpellsFromGraveyardPermission permission) {
+        return (permission.availabilityCondition() == null
+                || conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
+                ConditionContext.forCasting(playerId)))
+                && (!permission.onlyDuringControllerTurn()
+                || playerId.equals(gameData.activePlayerId))
+                && (!permission.oncePerControllerTurn()
+                || (playerId.equals(gameData.activePlayerId)
+                && !gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(source.getId())));
     }
 
     /**

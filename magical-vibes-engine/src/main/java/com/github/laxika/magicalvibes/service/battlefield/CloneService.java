@@ -17,14 +17,17 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -171,6 +174,7 @@ public class CloneService {
                 copyEffect.shieldCounterIfControllerControlsCopiedPermanent();
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
         gameData.cloneOperation.entersTapped = copyEffect.entersTapped();
+        gameData.cloneOperation.copyUntilEndOfTurn = copyEffect.copyUntilEndOfTurn();
         gameData.cloneOperation.landPlay = landPlay;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = copyEffect.cardFilter();
@@ -224,6 +228,7 @@ public class CloneService {
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
+        gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
@@ -279,6 +284,7 @@ public class CloneService {
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.landPlay = false;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
@@ -393,6 +399,7 @@ public class CloneService {
                 gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         boolean copyColor = gameData.cloneOperation.copyColor;
         boolean entersTapped = gameData.cloneOperation.entersTapped;
+        boolean copyUntilEndOfTurn = gameData.cloneOperation.copyUntilEndOfTurn;
         boolean ninjutsuEntry = gameData.cloneOperation.ninjutsuEntry;
         UUID ninjutsuAttackTargetId = gameData.cloneOperation.ninjutsuAttackTargetId;
         boolean landPlay = gameData.cloneOperation.landPlay;
@@ -425,6 +432,7 @@ public class CloneService {
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.ninjutsuEntry = false;
         gameData.cloneOperation.ninjutsuAttackTargetId = null;
         gameData.cloneOperation.landPlay = false;
@@ -444,6 +452,9 @@ public class CloneService {
         Permanent targetPerm = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
         Card copiedCard = targetCard != null ? targetCard : targetPerm == null ? null : targetPerm.getCard();
         if (copiedCard != null) {
+            if (copyUntilEndOfTurn) {
+                perm.setPreCopyCard(perm.getCard());
+            }
             Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
             Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
             permanentCopierService.applyCloneCopy(
@@ -493,6 +504,13 @@ public class CloneService {
                 }
                 if (entersTapped) {
                     perm.tap();
+                }
+                if (copyUntilEndOfTurn) {
+                    perm.setCopyUntilEndOfTurn(true);
+                    gameData.addFloatingEffect(new FloatingContinuousEffect(
+                            UUID.randomUUID(), card.getName(), null, controllerId,
+                            new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), perm.getId(), null, null,
+                            EffectDuration.UNTIL_END_OF_TURN, 0));
                 }
         }
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "74")
+@CardRegistration(set = "SOC", collectorNumber = "121")
 public class ChainReaction extends Card {
 
     public ChainReaction() {

@@ -157,6 +157,7 @@ class EnterTriggerCollectorServiceTest {
                 targetLegalityService,
                 validTargetService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
+                new AmountEvaluationService(predicateEvaluationService, gameQueryService),
                 gameLogService, etbTokenTargetService,
                 new GrantedTriggeredAbilitySupport(gameQueryService),
                 new GraveyardTargetingSupport());

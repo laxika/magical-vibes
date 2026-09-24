@@ -107,6 +107,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
         List<UUID> destroyedControllerIds = new ArrayList<>();
+        List<UUID> destroyedNontokenPermanentControllerIds = new ArrayList<>();
         List<Integer> destroyedManaValues = new ArrayList<>();
         for (Permanent perm : destroyed) {
             UUID controllerId = controllerByPermanentId.get(perm.getId());
@@ -114,12 +115,18 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 continue;
             }
             destroyedControllerIds.add(controllerId);
+            if (!perm.getCard().isToken()) {
+                destroyedNontokenPermanentControllerIds.add(controllerId);
+            }
             destroyedManaValues.add(manaValueByPermanentId.getOrDefault(perm.getId(), 0));
         }
 
         int destroyedCount = switch (e.destroyedCountScope()) {
             case ALL -> destroyed.size();
             case CONTROLLER -> (int) destroyedControllerIds.stream()
+                    .filter(entry.getControllerId()::equals)
+                    .count();
+            case CONTROLLER_NONTOKEN -> (int) destroyedNontokenPermanentControllerIds.stream()
                     .filter(entry.getControllerId()::equals)
                     .count();
         };

@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -1572,6 +1573,21 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(gd, greaterToughness, predicate)).isTrue();
             assertThat(evaluator.matchesPermanentPredicate(gd, equalPowerToughness, predicate)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(gd, greaterPower, predicate)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentBasePowerEqualsPredicate ignores counters and matches the current base power")
+        void basePowerEqualsPredicateIgnoresPowerModifiers() {
+            Permanent zeroBasePower = addPermanent(player1Id,
+                    createCreature("Zero Base Power", 0, 2, CardColor.GREEN));
+            zeroBasePower.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            Permanent nonzeroBasePower = addPermanent(player1Id,
+                    createCreature("Nonzero Base Power", 2, 2, CardColor.GREEN));
+            nonzeroBasePower.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+            PermanentBasePowerEqualsPredicate predicate = new PermanentBasePowerEqualsPredicate(0);
+            assertThat(evaluator.matchesPermanentPredicate(gd, zeroBasePower, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, nonzeroBasePower, predicate)).isFalse();
         }
 
         @Test

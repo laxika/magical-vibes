@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 
 @CardRegistration(set = "TSP", collectorNumber = "120")
 @CardRegistration(set = "TSR", collectorNumber = "127")
+@CardRegistration(set = "SOC", collectorNumber = "220")
 public class NetherTraitor extends Card {
 
     public NetherTraitor() {

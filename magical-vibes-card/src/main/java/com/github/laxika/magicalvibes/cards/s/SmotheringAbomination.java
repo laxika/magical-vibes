@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "BFZ", collectorNumber = "99")
+@CardRegistration(set = "SOC", collectorNumber = "226")
 public class SmotheringAbomination extends Card {
 
     public SmotheringAbomination() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "36")
+@CardRegistration(set = "SOC", collectorNumber = "180")
 public class TesharAncestorsApostle extends Card {
 
     public TesharAncestorsApostle() {

@@ -110,6 +110,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamuraiTarget attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamuraiTarget(gameData, playerId, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.AttachOneOfEquipmentToCreature attachEquip) {
+            battlefieldHandler.handleAttachOneOfEquipmentToCreature(
+                    gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
         } else if (context instanceof PermanentChoiceContext.AttachAllAurasToAnotherPermanent attachAll) {
@@ -280,6 +283,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {
             triggerHandler.handleCopySpellForOtherControlledCreature(gameData, permanentId, copyChoice);
+        } else if (context instanceof PermanentChoiceContext.DemonstrateOpponentChoice demonstrate) {
+            triggerHandler.handleDemonstrateOpponentChoice(gameData, permanentId, demonstrate);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
             battlefieldHandler.handleSoulbondChoosePartner(gameData, permanentId, soulbondChoose);
         } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {
@@ -415,6 +420,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleCreateTokensAttacking(gameData, permanentId, createTokens);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateTokenCopiesAttacking(gameData, permanentId, tokenCopies);
+        } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesOfEnteredThisTurnAttacking tokenCopies) {
+            triggerHandler.handleCreateTokenCopiesOfEnteredThisTurnAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.RevealUntilCardPredicateAttackTarget revealAttack) {
             triggerHandler.handleRevealUntilCardPredicateAttackTarget(gameData, permanentId, revealAttack);
         } else if (context instanceof PermanentChoiceContext.ChosenPermanentAttackTarget chosenAttackTarget) {

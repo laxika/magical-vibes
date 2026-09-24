@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "AVR", collectorNumber = "86")
 @CardRegistration(set = "EMA", collectorNumber = "81")
 @CardRegistration(set = "2X2", collectorNumber = "70")
+@CardRegistration(set = "SOC", collectorNumber = "209")
 public class BloodArtist extends Card {
 
     public BloodArtist() {

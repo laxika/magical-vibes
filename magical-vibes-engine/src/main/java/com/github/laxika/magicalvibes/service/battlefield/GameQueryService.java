@@ -7189,6 +7189,18 @@ public class GameQueryService {
     public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
                                                         Permanent triggeringPermanent,
                                                         boolean attackTrigger) {
+        return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent,
+                attackTrigger, null);
+    }
+
+    /**
+     * Returns additional copies for a trigger, with the event restriction needed by effects such
+     * as Veyran's spell-cast-or-copy trigger doubler.
+     */
+    public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
+                                                        Permanent triggeringPermanent,
+                                                        boolean attackTrigger,
+                                                        UUID instantOrSorceryCastOrCopyControllerId) {
         if (controllerId == null || triggeringPermanent == null) return 0;
         int count = 0;
         for (UUID staticControllerId : gameData.playerBattlefields.keySet()) {
@@ -7199,6 +7211,8 @@ public class GameQueryService {
                 for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof AdditionalTriggeredAbilityEffect additional)
                             || (additional.attackOnly() && !attackTrigger)
+                            || (additional.onlyForInstantOrSorceryCastOrCopy()
+                            && !staticControllerId.equals(instantOrSorceryCastOrCopyControllerId))
                             || (!additional.allControllers() && !staticControllerId.equals(controllerId))
                             || (!additional.includeSourcePermanent()
                             && staticSource.getId().equals(triggeringPermanent.getId()))) {
@@ -8016,6 +8030,84 @@ public class GameQueryService {
         return gameData.anyPermanentMatches(p ->
                 p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                         && p.isAttached() && p.getAttachedTo().equals(creature.getId()));
+    }
+
+    /**
+     * Returns whether a permanent is modified: it has a counter, is equipped, or is enchanted by
+     * an Aura controlled by its controller. Last-known permanents in a simultaneous death batch
+     * are included so death conditions can inspect the state immediately before the batch moved.
+     */
+    public boolean isModified(GameData gameData, Permanent permanent) {
+        return isModified(gameData, permanent, null);
+    }
+
+    /** Same as {@link #isModified(GameData, Permanent)}, with a controller fallback for a removed permanent. */
+    public boolean isModified(GameData gameData, Permanent permanent, UUID controllerFallbackId) {
+        if (permanent == null) {
+            return false;
+        }
+        for (CounterType type : CounterType.values()) {
+            if (type != CounterType.ANY && type != CounterType.SILVER
+                    && permanent.getCounterCount(type) > 0) {
+                return true;
+            }
+        }
+        if (gameData == null) {
+            return false;
+        }
+
+        if (hasAttachedPermanent(gameData, permanent, CardSubtype.EQUIPMENT, false)) {
+            return true;
+        }
+
+        UUID controllerId = gameData.findControllerOf(permanent);
+        if (controllerId == null) {
+            controllerId = gameData.simultaneousDyingPermanentControllers.get(permanent.getId());
+        }
+        if (controllerId == null) {
+            controllerId = controllerFallbackId;
+        }
+        if (controllerId == null) {
+            return false;
+        }
+        return hasAttachedAuraControlledBy(gameData, permanent, controllerId);
+    }
+
+    private boolean hasAttachedPermanent(GameData gameData, Permanent host,
+                                         CardSubtype subtype, boolean aura) {
+        return gameData.anyPermanentMatches(permanent -> attachedPermanentMatches(permanent, host, subtype, aura))
+                || gameData.simultaneousDyingPermanents.values().stream()
+                .anyMatch(permanent -> attachedPermanentMatches(permanent, host, subtype, aura));
+    }
+
+    private boolean attachedPermanentMatches(Permanent attached, Permanent host,
+                                              CardSubtype subtype, boolean aura) {
+        return attached.isAttached()
+                && host.getId().equals(attached.getAttachedTo())
+                && (aura ? attached.getCard().isAura()
+                : attached.getCard().getSubtypes().contains(subtype));
+    }
+
+    private boolean hasAttachedAuraControlledBy(GameData gameData, Permanent host, UUID controllerId) {
+        return gameData.anyPermanentMatches(permanent ->
+                attachedAuraControlledBy(permanent, host, controllerId, gameData))
+                || gameData.simultaneousDyingPermanents.values().stream()
+                .anyMatch(permanent -> attachedAuraControlledBy(permanent, host, controllerId, gameData));
+    }
+
+    private boolean attachedAuraControlledBy(Permanent aura, Permanent host,
+                                             UUID controllerId, GameData gameData) {
+        return aura.isAttached()
+                && host.getId().equals(aura.getAttachedTo())
+                && aura.getCard().isAura()
+                && controllerId.equals(permanentControllerForModifiedCheck(gameData, aura));
+    }
+
+    private UUID permanentControllerForModifiedCheck(GameData gameData, Permanent permanent) {
+        UUID controllerId = gameData.findControllerOf(permanent);
+        return controllerId != null
+                ? controllerId
+                : gameData.simultaneousDyingPermanentControllers.get(permanent.getId());
     }
 
     /**

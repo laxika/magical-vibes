@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "189")
+@CardRegistration(set = "SOC", collectorNumber = "126")
 public class UnboundFlourishing extends Card {
 
     public UnboundFlourishing() {

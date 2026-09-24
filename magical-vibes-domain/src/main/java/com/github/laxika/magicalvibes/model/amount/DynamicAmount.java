@@ -53,6 +53,7 @@ public sealed interface DynamicAmount permits
         ChosenCreatureOrRevealedCardPower,
         BeheldPower,
         ChosenCreatureOrWarpedCardPower,
+        CommanderCastsFromCommandZoneThisGame,
         ControllerLifeTotal,
         ControllerExperienceCounters,
         ControllerSpeed,
@@ -103,6 +104,7 @@ public sealed interface DynamicAmount permits
         FixedIfTargetMatches,
         FixedIfTargetPlayerControlsMoreLands,
         GreatestManaValueAmongControlled,
+        GreatestManaValueAmongSpellsCastThisTurn,
         GreatestCreatureCountAmongPlayers,
         GreatestManaValueAmongCardsExiledWithSource,
         GreatestManaValueAmongCardsInGraveyard,
@@ -190,6 +192,7 @@ public sealed interface DynamicAmount permits
         UnlockedRoomDoorsCount,
         WebSlingingReturnedCreatureManaValue,
         XValue,
+        TriggeringSpellXValue,
         TriggeringSpellTargetCount,
         CardTypesAmongCardsDiscardedThisResolution {
 

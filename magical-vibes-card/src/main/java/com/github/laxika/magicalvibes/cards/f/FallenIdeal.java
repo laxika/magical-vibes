@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "109")
+@CardRegistration(set = "SOC", collectorNumber = "117")
 public class FallenIdeal extends Card {
 
     public FallenIdeal() {

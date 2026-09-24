@@ -26,7 +26,10 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachTokenEnteredThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -37,7 +40,9 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
 import lombok.RequiredArgsConstructor;
@@ -72,13 +77,21 @@ public class PermanentChoiceTriggerHandlerService {
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
+    private final DemonstrateEffectHandler demonstrateEffectHandler;
     private final TokenCopySupport tokenCopySupport;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
         copySpellHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDemonstrateOpponentChoice(GameData gameData, UUID opponentId,
+                                                 PermanentChoiceContext.DemonstrateOpponentChoice context) {
+        demonstrateEffectHandler.completeOpponentChoice(gameData, opponentId, context);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
@@ -1181,6 +1194,50 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleCreateTokenCopiesOfEnteredThisTurnAttacking(
+            GameData gameData, UUID attackTargetId,
+            PermanentChoiceContext.CreateTokenCopiesOfEnteredThisTurnAttacking context) {
+        List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
+        chosenTargets.add(attackTargetId);
+
+        if (chosenTargets.size() < context.tokenCount()) {
+            beginCreateTokenCopiesOfEnteredThisTurnAttackingTargetChoice(gameData,
+                    new PermanentChoiceContext.CreateTokenCopiesOfEnteredThisTurnAttacking(
+                            context.controllerId(), context.sourceCard(), context.sourcePermanentId(),
+                            context.sourceTokenIds(), context.tokenCount(), chosenTargets));
+            return;
+        }
+
+        PermanentEnteredBattlefieldThisTurnPredicate enteredThisTurn =
+                new PermanentEnteredBattlefieldThisTurnPredicate();
+        List<Card> sourceCards = context.sourceTokenIds().stream()
+                .map(sourceTokenId -> gameQueryService.findPermanentById(gameData, sourceTokenId))
+                .filter(permanent -> permanent != null
+                        && permanent.getCard().isToken()
+                        && gameQueryService.isCreature(gameData, permanent)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, enteredThisTurn))
+                .map(Permanent::getCard)
+                .toList();
+        if (!sourceCards.isEmpty()) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    context.sourceCard(),
+                    context.controllerId(),
+                    context.sourceCard().getName() + "'s ability",
+                    List.of(new CreateTokenCopyOfEachTokenEnteredThisTurnEffect()),
+                    null,
+                    context.sourcePermanentId());
+            Permanent source = context.sourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+            tokenCopySupport.createTokenCopies(
+                    gameData, entry, sourceCards, source, context.controllerId(),
+                    new CreateTokenCopyOfTargetPermanentEffect(false, false, true, true), chosenTargets);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleRevealUntilCardPredicateAttackTarget(
             GameData gameData, UUID attackTargetId,
             PermanentChoiceContext.RevealUntilCardPredicateAttackTarget context) {
@@ -1228,6 +1285,24 @@ public class PermanentChoiceTriggerHandlerService {
         playerInputService.beginAnyTargetChoice(
                 gameData, context.controllerId(), planeswalkerIds, opponentIds,
                 "Choose the player or planeswalker for the token to attack.");
+    }
+
+    private void beginCreateTokenCopiesOfEnteredThisTurnAttackingTargetChoice(
+            GameData gameData,
+            PermanentChoiceContext.CreateTokenCopiesOfEnteredThisTurnAttacking context) {
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(context.controllerId()))
+                .toList();
+        List<UUID> planeswalkerIds = opponentIds.stream()
+                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+
+        gameData.interaction.setPermanentChoiceContext(context);
+        playerInputService.beginAnyTargetChoice(
+                gameData, context.controllerId(), planeswalkerIds, opponentIds,
+                "Choose the player or planeswalker for the next token to attack.");
     }
 
     public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,

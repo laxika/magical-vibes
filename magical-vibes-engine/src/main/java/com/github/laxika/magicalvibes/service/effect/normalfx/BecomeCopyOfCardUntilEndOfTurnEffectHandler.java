@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +19,7 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 import java.util.UUID;
 
-/** Applies Lazav, Familiar Stranger's temporary copy of the exiled creature card. */
+/** Applies a temporary copy of a captured artifact or creature card. */
 @Component
 @RequiredArgsConstructor
 public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
@@ -37,7 +36,7 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Card card = ((BecomeCopyOfCardUntilEndOfTurnEffect) effect).card();
-        if (card == null || !card.hasType(CardType.CREATURE)) {
+        if (card == null) {
             return;
         }
 

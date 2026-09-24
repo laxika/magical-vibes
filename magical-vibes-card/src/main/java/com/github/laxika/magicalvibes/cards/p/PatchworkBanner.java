@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtype
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 
 @CardRegistration(set = "BLB", collectorNumber = "247")
+@CardRegistration(set = "SOC", collectorNumber = "353")
 public class PatchworkBanner extends Card {
 
     public PatchworkBanner() {

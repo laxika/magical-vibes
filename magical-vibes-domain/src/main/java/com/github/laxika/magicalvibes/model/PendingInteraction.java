@@ -2743,9 +2743,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public InteractionOptions legalOptions() {
             // Mirrors the answer handler's decline rule: exile and may-ability targeting are
             // forced, as is anything explicitly marked mandatory.
-            boolean declinable = destination != GraveyardChoiceDestination.EXILE
+                    boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     && destination != GraveyardChoiceDestination.COPY_ON_ENTER
+                    && destination != GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     && !mandatory;
             return new InteractionOptions.GraveyardIndexPick(validIndices, declinable);
         }

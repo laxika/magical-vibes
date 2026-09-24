@@ -656,6 +656,14 @@ public class LayerSystemService {
             h = mix(h, playerId.hashCode());
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
             h = mix(h, gameData.turnsTakenByPlayer.getOrDefault(playerId, 0));
+            h = mix(h, gameData.commanderCastsFromCommandZoneThisGame.getOrDefault(playerId, 0));
+            List<Card> commanders = gameData.playerCommanders.get(playerId);
+            h = mix(h, commanders == null ? -1 : commanders.size());
+            if (commanders != null) {
+                for (Card commander : commanders) {
+                    h = mix(h, commander.getId().hashCode());
+                }
+            }
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());

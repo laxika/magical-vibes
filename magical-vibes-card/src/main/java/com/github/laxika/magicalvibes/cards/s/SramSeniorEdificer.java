@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "71")
 @CardRegistration(set = "MUL", collectorNumber = "136")
 @CardRegistration(set = "FCA", collectorNumber = "3")
+@CardRegistration(set = "SOC", collectorNumber = "176")
 public class SramSeniorEdificer extends Card {
 
     public SramSeniorEdificer() {

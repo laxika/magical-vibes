@@ -84,6 +84,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    record AttachOneOfEquipmentToCreature(List<UUID> equipmentPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachOneOfEquipmentToCreature {
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
     /** Reckless Crew: choose at most one distinct Equipment for each created token. */
     record CreateTokensAndAttachEquipment(Card sourceCard, UUID controllerId, List<UUID> tokenIds,
                                           int tokenIndex, List<UUID> chosenEquipmentIds)
@@ -888,6 +895,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
                                       int tokenCount, List<UUID> chosenAttackTargets)
             implements PermanentChoiceContext {}
+
+    /** Redoubled Stormsinger: choose an attack target for each temporary token copy. */
+    record CreateTokenCopiesOfEnteredThisTurnAttacking(
+            UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+            List<UUID> sourceTokenIds, int tokenCount, List<UUID> chosenAttackTargets)
+            implements PermanentChoiceContext {
+        public CreateTokenCopiesOfEnteredThisTurnAttacking {
+            sourceTokenIds = List.copyOf(sourceTokenIds);
+            chosenAttackTargets = List.copyOf(chosenAttackTargets);
+        }
+    }
     /** Raph & Mikey: choose the player, planeswalker, or battle the revealed creature attacks. */
     record RevealUntilCardPredicateAttackTarget(Card sourceCard, UUID controllerId, Card foundCard,
                                                 List<Card> remainingRevealedCards)
@@ -1173,6 +1191,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record CopySpellForOtherControlledCreatureChoice(CopySpellForEachOtherControlledCreatureEffect effect)
             implements PermanentChoiceContext {}
+
+    /** Demonstrate: choose the opponent who also receives a copy of the spell. */
+    record DemonstrateOpponentChoice(StackEntry spellSnapshot) implements PermanentChoiceContext {}
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
     record Populate(UUID controllerId) implements PermanentChoiceContext {}
@@ -1966,14 +1987,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                        Integer sourcePowerAtTrigger,
                                        boolean sourceAlternateCostAtTrigger,
-                                       UUID triggeringPermanentId)
+                                       UUID triggeringPermanentId,
+                                       UUID sourcePermanentId)
     implements PermanentChoiceContext {
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger,
+                                           boolean sourceAlternateCostAtTrigger,
+                                           UUID triggeringPermanentId) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, null);
+        }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                            Integer sourcePowerAtTrigger) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
-                    sourcePowerAtTrigger, false, null);
+                    sourcePowerAtTrigger, false, null, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

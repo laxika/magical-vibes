@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceC
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "202")
+@CardRegistration(set = "SOC", collectorNumber = "307")
 public class ErietteOfTheCharmedApple extends Card {
 
     public ErietteOfTheCharmedApple() {

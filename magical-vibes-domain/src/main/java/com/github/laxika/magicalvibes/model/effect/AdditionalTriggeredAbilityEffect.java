@@ -11,24 +11,36 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                                boolean attackOnly, boolean includeSourcePermanent,
-                                               boolean allControllers)
+                                               boolean allControllers,
+                                               boolean onlyForInstantOrSorceryCastOrCopy)
         implements CardEffect {
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
-        this(sourcePredicate, null, false, false, false);
+        this(sourcePredicate, null, false, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition) {
-        this(sourcePredicate, condition, false, false, false);
+        this(sourcePredicate, condition, false, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                              boolean includeSourcePermanent, boolean allControllers) {
-        this(sourcePredicate, condition, false, includeSourcePermanent, allControllers);
+        this(sourcePredicate, condition, false, includeSourcePermanent, allControllers, false);
     }
 
     public static AdditionalTriggeredAbilityEffect forAttackTriggers(
             PermanentPredicate sourcePredicate, Condition condition) {
-        return new AdditionalTriggeredAbilityEffect(sourcePredicate, condition, true, false, false);
+        return new AdditionalTriggeredAbilityEffect(sourcePredicate, condition, true, false, false, false);
+    }
+
+    /**
+     * Creates the Veyran-style variant: matching permanents' abilities trigger an additional time
+     * only when casting or copying an instant or sorcery causes them to trigger. The source itself
+     * is included because the printed ability applies to every permanent you control, including
+     * the source permanent.
+     */
+    public static AdditionalTriggeredAbilityEffect forInstantOrSorceryCastOrCopy(
+            PermanentPredicate sourcePredicate) {
+        return new AdditionalTriggeredAbilityEffect(sourcePredicate, null, false, true, false, true);
     }
 }

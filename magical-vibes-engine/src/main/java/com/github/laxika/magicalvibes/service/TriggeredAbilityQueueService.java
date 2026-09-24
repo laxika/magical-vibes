@@ -2204,13 +2204,16 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
                     pending.sourcePowerAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentId = pending.triggeringPermanentId();
-            // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
-            List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());
-            if (bf != null) {
-                for (Permanent p : bf) {
-                    if (p.getCard().getId().equals(pending.sourceCard().getId())) {
-                        gameData.graveyardTargetOperation.sourcePermanentId = p.getId();
-                        break;
+            gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
+            if (gameData.graveyardTargetOperation.sourcePermanentId == null) {
+                // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
+                List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());
+                if (bf != null) {
+                    for (Permanent p : bf) {
+                        if (p.getCard().getId().equals(pending.sourceCard().getId())) {
+                            gameData.graveyardTargetOperation.sourcePermanentId = p.getId();
+                            break;
+                        }
                     }
                 }
             }
@@ -2273,7 +2276,7 @@ public class TriggeredAbilityQueueService {
                 new ArrayList<>(pending.effects()),
                 pending.xValue(),
                 null,
-                null,
+                pending.sourcePermanentId(),
                 java.util.Map.of(),
                 null,
                 List.of(),

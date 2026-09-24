@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "163")
+@CardRegistration(set = "SOC", collectorNumber = "296")
 public class BeledrosWitherbloom extends Card {
 
     public BeledrosWitherbloom() {

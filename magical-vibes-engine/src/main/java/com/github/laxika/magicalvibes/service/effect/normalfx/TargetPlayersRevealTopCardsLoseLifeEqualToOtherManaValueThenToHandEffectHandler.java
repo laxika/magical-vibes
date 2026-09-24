@@ -30,19 +30,32 @@ public class TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targets = entry.getDeclaredTargetIds();
-        if (targets.size() != 2) {
+        TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect revealEffect =
+                (TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect) effect;
+        List<UUID> targets = revealEffect.includeController()
+                ? entry.getDeclaredTargetIds().isEmpty()
+                        ? entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId())
+                        : entry.getDeclaredTargetIds()
+                : entry.getDeclaredTargetIds();
+        if (targets.size() != (revealEffect.includeController() ? 1 : 2)) {
             return;
         }
 
         String sourceName = entry.getCard().getName();
+        List<UUID> playerIds = revealEffect.includeController()
+                ? List.of(entry.getControllerId(), targets.getFirst())
+                : targets;
+        boolean[] legal = revealEffect.includeController()
+                ? new boolean[]{true, entry.getDeclaredTargetIds().isEmpty()
+                        || entry.isTargetLegal(entry.getDeclaredTargetIds().indexOf(targets.getFirst()))}
+                : new boolean[]{entry.isTargetLegal(0), entry.isTargetLegal(1)};
         Card[] revealed = new Card[2];
-        for (int i = 0; i < targets.size(); i++) {
-            if (!entry.isTargetLegal(i)) {
+        for (int i = 0; i < playerIds.size(); i++) {
+            if (!legal[i]) {
                 continue;
             }
 
-            UUID playerId = targets.get(i);
+            UUID playerId = playerIds.get(i);
             List<Card> deck = gameData.playerDecks.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
             if (deck == null || deck.isEmpty()) {
@@ -61,19 +74,19 @@ public class TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandE
                     .build());
         }
 
-        for (int i = 0; i < targets.size(); i++) {
-            if (!entry.isTargetLegal(i) || revealed[1 - i] == null) {
+        for (int i = 0; i < playerIds.size(); i++) {
+            if (!legal[i] || revealed[1 - i] == null) {
                 continue;
             }
             int manaValue = revealed[1 - i].getManaValue();
             if (manaValue > 0) {
-                lifeSupport.applyLifeLoss(gameData, targets.get(i), manaValue, sourceName);
+                lifeSupport.applyLifeLoss(gameData, playerIds.get(i), manaValue, sourceName);
             }
         }
 
-        for (int i = 0; i < targets.size(); i++) {
-            if (entry.isTargetLegal(i) && revealed[i] != null) {
-                gameData.addCardToHand(targets.get(i), revealed[i]);
+        for (int i = 0; i < playerIds.size(); i++) {
+            if (legal[i] && revealed[i] != null) {
+                gameData.addCardToHand(playerIds.get(i), revealed[i]);
             }
         }
 
