@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 @CardRegistration(set = "MMA", collectorNumber = "116")
 @CardRegistration(set = "DDS", collectorNumber = "16")
 @CardRegistration(set = "SLD", collectorNumber = "948")
+@CardRegistration(set = "TSR", collectorNumber = "166")
+@CardRegistration(set = "STA", collectorNumber = "39")
+@CardRegistration(set = "DMR", collectorNumber = "125")
 public class Grapeshot extends Card {
 
     public Grapeshot() {

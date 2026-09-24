@@ -13,6 +13,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BonethornValeskTest extends BaseCardTest {
 
     @Test
+    void dealsDamageWhenItTurnsFaceUp() {
+        Permanent bonethorn = harness.addToBattlefieldAndReturn(player1, new BonethornValesk());
+        bonethorn.setFaceDownAsCloaked();
+        harness.setLife(player2, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, bonethorn);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
     void dealsDamageToTargetPlayerWhenAnyPermanentTurnsFaceUp() {
         harness.addToBattlefield(player1, new BonethornValesk());
         Permanent faceDownForest = harness.addToBattlefieldAndReturn(player2, new Forest());

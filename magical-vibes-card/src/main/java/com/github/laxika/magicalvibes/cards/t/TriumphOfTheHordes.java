@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "NPH", collectorNumber = "123")
 @CardRegistration(set = "TD2", collectorNumber = "78")
 @CardRegistration(set = "SLD", collectorNumber = "445")
+@CardRegistration(set = "SOA", collectorNumber = "59")
 public class TriumphOfTheHordes extends Card {
 
     public TriumphOfTheHordes() {

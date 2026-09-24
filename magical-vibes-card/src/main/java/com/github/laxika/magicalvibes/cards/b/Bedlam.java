@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "174")
 @CardRegistration(set = "USG", collectorNumber = "175")
+@CardRegistration(set = "MAR", collectorNumber = "74")
 public class Bedlam extends Card {
 
     public Bedlam() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "3")
+@CardRegistration(set = "TSR", collectorNumber = "15")
 public class CrovaxAscendantHero extends Card {
 
     public CrovaxAscendantHero() {

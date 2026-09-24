@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "229")
+@CardRegistration(set = "DBL", collectorNumber = "496")
 public class WolfkinOutcast extends Card {
 
     public WolfkinOutcast() {

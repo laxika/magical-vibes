@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "ECL", collectorNumber = "348")
 @CardRegistration(set = "EXP", collectorNumber = "12")
 @CardRegistration(set = "SLD", collectorNumber = "129")
+@CardRegistration(set = "RVR", collectorNumber = "288")
+@CardRegistration(set = "RVR", collectorNumber = "298")
 public class SteamVents extends Card {
 
     public SteamVents() {

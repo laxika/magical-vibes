@@ -15,6 +15,8 @@ import java.util.List;
 @CardRegistration(set = "DD1", collectorNumber = "15")
 @CardRegistration(set = "EVG", collectorNumber = "15")
 @CardRegistration(set = "SLD", collectorNumber = "783")
+@CardRegistration(set = "MB1", collectorNumber = "166")
+@CardRegistration(set = "C14", collectorNumber = "223")
 public class Wellwisher extends Card {
 
     public Wellwisher() {

@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "35")
 @CardRegistration(set = "SLD", collectorNumber = "1307")
 @CardRegistration(set = "SLD", collectorNumber = "1448")
+@CardRegistration(set = "HA2", collectorNumber = "8")
 public class PackRat extends Card {
 
     public PackRat() {

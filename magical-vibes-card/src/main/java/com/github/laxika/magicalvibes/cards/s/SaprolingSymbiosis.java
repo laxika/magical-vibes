@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "209")
+@CardRegistration(set = "DMR", collectorNumber = "175")
 public class SaprolingSymbiosis extends Card {
 
     public SaprolingSymbiosis() {

@@ -17,6 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class UnderworldDreams extends Card {
 
     public UnderworldDreams() {
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

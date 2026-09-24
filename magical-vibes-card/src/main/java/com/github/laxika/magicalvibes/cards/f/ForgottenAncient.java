@@ -15,6 +15,8 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "73")
 @CardRegistration(set = "SLD", collectorNumber = "829")
 @CardRegistration(set = "SLD", collectorNumber = "1890")
+@CardRegistration(set = "DMR", collectorNumber = "161")
+@CardRegistration(set = "C15", collectorNumber = "185")
 public class ForgottenAncient extends Card {
 
     public ForgottenAncient() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "196")
+@CardRegistration(set = "PIO", collectorNumber = "233")
 public class MedomaiTheAgeless extends Card {
 
     public MedomaiTheAgeless() {

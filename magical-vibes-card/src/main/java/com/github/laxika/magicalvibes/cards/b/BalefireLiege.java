@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "132")
 @CardRegistration(set = "HOP", collectorNumber = "97")
+@CardRegistration(set = "2X2", collectorNumber = "180")
 public class BalefireLiege extends Card {
 
     public BalefireLiege() {

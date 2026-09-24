@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "220")
 @CardRegistration(set = "MM3", collectorNumber = "228")
+@CardRegistration(set = "C13", collectorNumber = "273")
 public class ArcaneSanctum extends Card {
 
     public ArcaneSanctum() {

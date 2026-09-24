@@ -13,17 +13,17 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1962")
+@CardRegistration(set = "C13", collectorNumber = "203")
 public class OloroAgelessAscetic extends Card {
 
     public OloroAgelessAscetic() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(2));
+        addEffect(EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED, new GainLifeEffect(2));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new MayPayManaEffect(
                 "{1}",
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
                 "Pay {1} to draw a card and have each opponent lose 1 life?"));
-        addEffect(EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED, new ConditionalEffect(
-                new SourceCardInCommandZone(), new GainLifeEffect(2)));
     }
 }

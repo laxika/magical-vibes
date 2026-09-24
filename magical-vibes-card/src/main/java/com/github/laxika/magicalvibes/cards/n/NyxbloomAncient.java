@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "190")
 @CardRegistration(set = "SLD", collectorNumber = "1275")
+@CardRegistration(set = "FCA", collectorNumber = "16")
 public class NyxbloomAncient extends Card {
 
     public NyxbloomAncient() {

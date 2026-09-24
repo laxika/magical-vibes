@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "105")
+@CardRegistration(set = "C13", collectorNumber = "187")
 public class DromarsCharm extends Card {
 
     public DromarsCharm() {

@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/**
- * Chooses one creature card from an opponent's graveyard, then lets that card's owner choose one
- * creature card from the controller's graveyard. The controller may return the chosen cards under
- * their owners' control.
- */
-public record DawnbreakReclaimerEffect() implements CardEffect {
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import java.util.UUID;
+
+/** Dawnbreak Reclaimer's sequential graveyard choices and optional return. */
+public record DawnbreakReclaimerEffect(CardPredicate filter, UUID opponentCardId, UUID ownCardId)
+        implements CardEffect {
+
+    public DawnbreakReclaimerEffect(CardPredicate filter) {
+        this(filter, null, null);
+    }
 }

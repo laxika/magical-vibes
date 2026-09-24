@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "112")
+@CardRegistration(set = "TSR", collectorNumber = "156")
 public class BoomBust extends Card {
 
     public BoomBust() {

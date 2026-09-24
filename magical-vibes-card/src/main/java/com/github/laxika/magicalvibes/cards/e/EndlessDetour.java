@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 
 @CardRegistration(set = "SNC", collectorNumber = "183")
+@CardRegistration(set = "OTP", collectorNumber = "44")
 public class EndlessDetour extends Card {
 
     public EndlessDetour() {

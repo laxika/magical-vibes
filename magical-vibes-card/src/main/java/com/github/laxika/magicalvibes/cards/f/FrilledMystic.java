@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "174")
 @CardRegistration(set = "SLD", collectorNumber = "786")
+@CardRegistration(set = "RVR", collectorNumber = "183")
 public class FrilledMystic extends Card {
 
     public FrilledMystic() {

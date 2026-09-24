@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -72,23 +74,29 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         // Source-relative amounts use the live source permanent when it is still on the
         // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
-        Permanent source = entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+        UUID sourcePermanentId = e.sourceIsTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId != null
+                ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
                 : null;
         if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
+            source = e.sourceIsTriggeringPermanent() && entry.getAttachedPermanentSnapshot() != null
+                    ? entry.getAttachedPermanentSnapshot() : entry.getSourcePermanentSnapshot();
         }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
 
         StackEntry damageEntry = entry;
         if (e.sourceIsTriggeringPermanent()) {
-            damageEntry = new StackEntry(entry);
+            damageEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+                    entry.getDescription(), entry.getEffectsToResolve(), targetId, sourcePermanentId);
+            damageEntry.setXValue(entry.getXValue());
+            damageEntry.setSourcePermanentSnapshot(source == null ? null : new Permanent(source));
             if (source != null) {
                 damageEntry.setDamageSourceCard(source.getCard());
             }
-            UUID sourceControllerId = entry.getSourcePermanentId() == null ? null
-                    : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+            UUID sourceControllerId = sourcePermanentId == null ? null
+                    : gameQueryService.findPermanentController(gameData, sourcePermanentId);
             if (sourceControllerId == null) {
                 sourceControllerId = entry.getTriggeringPermanentControllerId();
             }
@@ -99,9 +107,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
 
-        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(nextEffect ->
-                nextEffect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look
-                        && amountEvaluationService.referencesEventValue(look.count()));
+        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
         Permanent excessTarget = null;
         boolean targetIsCreature = false;
         boolean targetIsPlaneswalker = false;
@@ -160,5 +166,16 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         }
         gameOutcomeService.checkWinCondition(gameData);
 
+    }
+
+    private boolean referencesExcessDamage(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditional.condition() instanceof EventValueAtLeast
+                    || referencesExcessDamage(conditional.wrapped());
+        }
+        if (effect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look) {
+            return amountEvaluationService.referencesEventValue(look.count());
+        }
+        return false;
     }
 }

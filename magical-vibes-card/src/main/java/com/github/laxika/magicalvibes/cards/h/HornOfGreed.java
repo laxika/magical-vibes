@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 
 @CardRegistration(set = "STH", collectorNumber = "135")
 @CardRegistration(set = "SLD", collectorNumber = "2018")
+@CardRegistration(set = "MAR", collectorNumber = "98")
 public class HornOfGreed extends Card {
 
     public HornOfGreed() {

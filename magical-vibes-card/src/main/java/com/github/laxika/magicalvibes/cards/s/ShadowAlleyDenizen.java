@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "76")
 @CardRegistration(set = "DDM", collectorNumber = "44")
+@CardRegistration(set = "RVR", collectorNumber = "92")
 public class ShadowAlleyDenizen extends Card {
 
     public ShadowAlleyDenizen() {

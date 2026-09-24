@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.model.amount;
 
-/** The current number of experience counters on the resolving controller. */
+/** The number of experience counters on the controller of the resolving effect. */
 public record ControllerExperienceCounters() implements DynamicAmount {
 }

@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SOI", collectorNumber = "131")
 @CardRegistration(set = "SLD", collectorNumber = "850")
 @CardRegistration(set = "SLD", collectorNumber = "950")
+@CardRegistration(set = "SIR", collectorNumber = "130")
 public class RelentlessDead extends Card {
 
     public RelentlessDead() {

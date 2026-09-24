@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Queues an additional beginning phase after the current postcombat main phase. */
+/** Queues one full beginning phase after the current combat phase. */
 public record AdditionalBeginningPhaseEffect() implements CardEffect {
 }

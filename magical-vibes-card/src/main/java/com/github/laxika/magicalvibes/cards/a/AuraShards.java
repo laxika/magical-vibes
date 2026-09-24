@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "233")
 @CardRegistration(set = "SLD", collectorNumber = "1644")
+@CardRegistration(set = "CMD", collectorNumber = "182")
 public class AuraShards extends Card {
 
     public AuraShards() {

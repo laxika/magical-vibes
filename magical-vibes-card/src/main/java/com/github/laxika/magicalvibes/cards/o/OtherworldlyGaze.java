@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "67")
 @CardRegistration(set = "SLD", collectorNumber = "2069")
+@CardRegistration(set = "DBL", collectorNumber = "67")
 public class OtherworldlyGaze extends Card {
 
     public OtherworldlyGaze() {

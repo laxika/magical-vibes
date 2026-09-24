@@ -23,6 +23,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
     /** "Whenever a creature or enchantment enters under your control" for a turn-scoped global trigger. */
     ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD,
+    /** "Whenever another permanent you control enters"; excludes the watcher's own entry. */
+    ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
     /** "Whenever this creature or another creature you control enters, …" — like
      *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
      *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})
@@ -38,6 +40,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CreateTokenCopyOfTargetPermanentEffect}) knows which creature to copy. Checked in
      *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. Used by Minion Reflector. */
     ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever a nontoken creature enters under your control" for an Eminence ability whose
+     *  source card is in the controller's command zone. Checked in
+     *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. */
+    COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
     /** "Whenever one or more tokens you control enter the battlefield." */
     ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
@@ -53,7 +59,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
-    /** Triggers at the beginning of its controller's upkeep while this card is in the command zone. */
+    /** Triggers at the beginning of its controller's upkeep while the source card is in the command zone. */
     COMMAND_ZONE_UPKEEP_TRIGGERED,
     GRAVEYARD_UPKEEP_TRIGGERED,
     EACH_UPKEEP_TRIGGERED,
@@ -76,6 +82,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_COUNTERS_SPELL,
     /** "Whenever a spell you've cast is countered, ..." */
     ON_CONTROLLER_SPELL_COUNTERED,
+    /** Triggers when this spell is countered or fizzles. */
+    ON_SELF_SPELL_COUNTERED_OR_FIZZLED,
     /**
      * "Whenever you play a land" — fired at the actual land-play sites (from hand, from graveyard,
      * from exile, and the may-cast/free-play paths), NOT when a land merely enters the battlefield.
@@ -333,6 +341,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a creature card is put into any player's graveyard from a library. */
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
+    /** Triggers once whenever one or more cards are put into any library from anywhere. */
+    ON_ANY_CARDS_PUT_INTO_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a nonblack card is put into any player's graveyard from anywhere. */
@@ -490,6 +500,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_EQUIPPED_CREATURE_DIES,
     /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+    ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers on an Equipment whenever the creature it is attached to transforms, in either
      *  direction. Fired by {@code AnimationSupport.fireEquipmentTransformTriggers} right after the
      *  equipped creature's own transform triggers. Used by Neglected Heirloom. */
@@ -509,6 +520,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_LAND_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_DIES,
     ON_DEALT_DAMAGE,
+    /** Triggers whenever this permanent is dealt noncombat damage. The amount is snapshotted onto
+     *  the triggered ability's event value. */
+    ON_NONCOMBAT_DAMAGE_TO_SELF,
     /** Triggers whenever this creature is dealt combat damage. The amount of combat damage dealt
      *  is snapshotted onto the triggered ability's event value. */
     ON_COMBAT_DAMAGE_TO_SELF,
@@ -517,6 +531,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     MULLIGAN_ACTION,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
+    ON_ANY_PLAYER_SHUFFLES_LIBRARY,
     /** Triggers whenever an opponent of this permanent's controller searches their own library
      *  ("Whenever an opponent searches their library"). Fired from the unified library-search choke
      *  point ({@code LibrarySearchSupport.performLibrarySearch}) by
@@ -595,6 +610,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever any player gains one or more life. */
     ON_ANY_PLAYER_GAINS_LIFE,
     ON_CONTROLLER_GAINS_LIFE,
+    /** Triggers whenever this permanent's controller becomes the monarch. */
+    ON_CONTROLLER_BECOMES_MONARCH,
+    /** Triggers whenever this permanent's controller is tempted by the Ring. */
+    ON_RING_TEMPTS_YOU,
     /** Triggers whenever an opponent of this permanent's controller gains life. */
     ON_OPPONENT_GAINS_LIFE,
     /** Triggers whenever this permanent's controller gets one or more energy counters. */
@@ -612,6 +631,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+    /** Triggers once whenever an opponent mills one or more cards. */
+    ON_OPPONENT_MILLS,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
@@ -649,6 +670,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_IV,
     /** Saga chapter V ability. Triggers when the fifth lore counter is placed. */
     SAGA_CHAPTER_V,
+    /** Triggers when the final chapter ability of a Saga finishes resolving. */
+    ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,
@@ -736,14 +759,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if
      *  {@code SourceCardInCommandZone} so the ability fails if the card left the command zone. */
     COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL,
-    /** Creature ETB trigger for an Eminence ability whose source card is in the command zone. */
-    COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     /** Static effects that remain active while this card is in its controller's command zone. */
     COMMAND_ZONE_STATIC,
     /** Triggers whenever the controller of this permanent loses life (damage or direct life loss).
      *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
      *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
     ON_CONTROLLER_LOSES_LIFE,
+    /** Triggers when this controller places counters on a creature they do not control. */
+    ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
     /** Triggers whenever this permanent's controller pays life. */
     ON_CONTROLLER_PAYS_LIFE,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
@@ -780,9 +803,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  exile from the battlefield. Checked after the permanent has been removed and its card has
      *  entered exile. */
     ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD,
-    /** Triggers whenever a creature is put into exile from the battlefield. Checked after the
-     *  permanent has been removed and its card has entered exile. */
-    ON_CREATURE_EXILED_FROM_BATTLEFIELD,
+    /** Triggers whenever a creature is put into exile from the battlefield, regardless of its
+     *  controller. Checked after the permanent has been removed and its card has entered exile. */
+    ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD,
     ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     ON_SELF_OR_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
@@ -796,6 +819,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  while this card is in the controller's graveyard.  The attacker count is passed via
      *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+    /** Triggers once per unblocked creature the controller controls while this card is in exile. */
+    EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
     /** Triggers when a creature the controller controls (matching the trigger's dealer predicate)
      *  deals combat damage to a player, while this card is in the controller's graveyard. Holds an
      *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in
@@ -807,6 +832,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers from a graveyard when a creature is put into an opponent's graveyard from the
      *  battlefield. Used by Bridge from Below. */
     GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers from any graveyard whenever a land card is put into any graveyard from anywhere.
+     *  Used by Centaur Vinecrasher. */
+    GRAVEYARD_ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers when combat damage is dealt to the controller or to a planeswalker they control,
      *  while this card is in the controller's graveyard. Fired once per combat damage step per
      *  damaged player in {@code CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers}.
@@ -889,8 +917,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
-    /** Triggers whenever the controller puts one or more counters on a creature they don't control. */
-    ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
+    /** Triggers once for each lore counter put on a Saga the controller controls. */
+    ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
     /** Triggers once for each counter put on a creature the controller controls. */
     ON_ALLY_COUNTER_PUT_ON_CREATURE,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
@@ -918,6 +946,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Gatherer ruling the ability triggers once for each individual -1/-1 counter, so the firing
      *  pushes a separate trigger per counter. Used by Flourishing Defenses. */
     ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE,
+    /** Global watcher: triggers once whenever one or more -1/-1 counters are put on a creature.
+     *  Unlike {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, this fires once per placement
+     *  event regardless of how many counters were placed. */
+    ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE,
     /** Controller-restricted watcher: triggers only when the permanent's controller is the player who
      *  puts one or more -1/-1 counters on a creature (any creature, on any battlefield). Unlike the
      *  global {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, a counter an opponent puts (e.g.
@@ -973,6 +1005,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  on the battlefield at the start of that resolution (sacrificing itself still counts).
      *  Fired from the exploit sacrifice completion path. Used by Overcharged Amalgam. */
     ON_EXPLOIT,
+    /** Triggers whenever a creature controlled by this permanent's controller exploits a creature. */
+    ON_ALLY_CREATURE_EXPLOITS,
     /** Triggers whenever a creature controlled by this permanent's controller exploits a nontoken
      *  creature. Fired after the exploit sacrifice completes. */
     ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
@@ -1000,6 +1034,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers whenever another creature controlled by the same player becomes the target of any
+     *  spell or ability. Fires on all permanents with this slot on that player's battlefield. The
+     *  targeted creature is stored as the triggered entry's non-targeting {@code targetId}. */
+    ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      * controlled by an opponent. Activated and triggered abilities do not trigger this slot. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL,
@@ -1117,9 +1155,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
      *  instant or sorcery is cast from hand. */
     GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
-    /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect}; detected
-     *  by presence on the casting player's battlefield when a Sliver spell is cast. */
-    GRANT_CASCADE_TO_SLIVER_SPELLS,
+    /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
+     *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
+    GRANT_CASCADE_TO_SLIVER_SPELL,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
@@ -1318,6 +1356,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
     /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
     ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
+    /** Triggers whenever one or more creatures the controller controls deal damage to an opponent. */
+    ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT,
     /** Triggers whenever a source the controller controls deals noncombat damage to another player. */
     ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a
@@ -1373,5 +1413,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_BECOMES_SADDLED,
     ON_ALLY_CREATURE_MUTATES,
     ON_SELF_MUTATES,
-    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE
+    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
+    /** Global temporary trigger for any creature becoming tapped. */
+    ON_ANY_CREATURE_BECOMES_TAPPED
 }

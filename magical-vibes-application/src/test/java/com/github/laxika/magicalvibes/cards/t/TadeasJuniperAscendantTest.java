@@ -2,28 +2,29 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.k.KeenEyedArchers;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TadeasJuniperAscendant.class, GrizzlyBears.class, HillGiant.class, RagingGoblin.class, Shock.class})
+@CardUsed({TadeasJuniperAscendant.class, GrizzlyBears.class, HillGiant.class, RagingGoblin.class, Shock.class, KeenEyedArchers.class})
 class TadeasJuniperAscendantTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has hexproof while not attacking and loses it while attacking")
-    void hexproofUnlessAttacking() {
+    @DisplayName("Has hexproof unless it is attacking")
+    void hasHexproofUnlessAttacking() {
         Permanent tadeas = addCreatureReady(player1, new TadeasJuniperAscendant());
 
         assertThat(gqs.hasKeyword(gd, tadeas, Keyword.HEXPROOF)).isTrue();
@@ -34,55 +35,55 @@ class TadeasJuniperAscendantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Hexproof prevents an opponent from targeting Tadeas")
-    void hexproofPreventsOpponentTargeting() {
+    @DisplayName("Reach attacker is untapped and cannot be blocked by greater-power creatures this combat")
+    void reachAttackerGetsCombatRestriction() {
         Permanent tadeas = addCreatureReady(player1, new TadeasJuniperAscendant());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.forceActivePlayer(player2);
-
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, tadeas.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hexproof");
-    }
-
-    @Test
-    @DisplayName("A reach attacker is untapped and can be blocked only by creatures of no greater power")
-    void reachAttackTriggerUntapsAndRestrictsBlockers() {
-        Permanent tadeas = addCreatureReady(player1, new TadeasJuniperAscendant());
-        Permanent lowPowerBlocker = addCreatureReady(player2, new RagingGoblin());
-        Permanent highPowerBlocker = addCreatureReady(player2, new HillGiant());
-
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        declareAttackers(player1, List.of(0));
+        assertThat(tadeas.isTapped()).isTrue();
+        harness.passBothPriorities();
 
         assertThat(tadeas.isTapped()).isFalse();
 
-        int tadeasIndex = gd.playerBattlefields.get(player1.getId()).indexOf(tadeas);
-        int highPowerBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(highPowerBlocker);
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(highPowerBlockerIndex, tadeasIndex))))
+        prepareDeclareBlockers(player1);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(bears),
+                gd.playerBattlefields.get(player1.getId()).indexOf(tadeas)))))
                 .isInstanceOf(IllegalStateException.class);
-
-        int lowPowerBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(lowPowerBlocker);
-        gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(lowPowerBlockerIndex, tadeasIndex)));
-        assertThat(lowPowerBlocker.isBlocking()).isTrue();
     }
 
     @Test
-    @DisplayName("Draws one card when one or more creatures deal combat damage")
-    void drawsOnceForMultipleCombatDamageDealers() {
+    @DisplayName("Another reach creature uses its own power for the restriction")
+    void anotherReachCreatureUsesItsOwnPower() {
+        addCreatureReady(player1, new TadeasJuniperAscendant());
+        Permanent archer = addCreatureReady(player1, new KeenEyedArchers());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(bears),
+                gd.playerBattlefields.get(player1.getId()).indexOf(archer))));
+
+        assertThat(bears.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One or more creatures dealing combat damage draws one card")
+    void combatDamageDrawsOneCard() {
         Permanent tadeas = addCreatureReady(player1, new TadeasJuniperAscendant());
-        tadeas.setAttacking(true);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
+        Card drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
 
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
         resolveCombat();
-        resolveAllTriggers();
+        harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 }

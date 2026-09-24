@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
-import java.util.List;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -191,6 +190,27 @@ public class GraveyardTargetOperationState {
     public UUID opponentChoosesCardToHandChosenOpponentId;
     /** Card selected by the opponent for the resolution-time graveyard choice. */
     public UUID opponentChoosesCardToHandChosenCardId;
+    /** Whether Dawnbreak Reclaimer is awaiting the controller's opponent-graveyard card choice. */
+    public boolean resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume;
+    /** Whether Dawnbreak Reclaimer is awaiting the chosen opponent's own-graveyard card choice. */
+    public boolean resolutionTimeDawnbreakReclaimerOwnCardChoiceResume;
+    /** Opponent chosen to make the second Dawnbreak Reclaimer choice. */
+    public UUID dawnbreakReclaimerChosenOpponentId;
+    /** Creature card chosen from an opponent's graveyard by Dawnbreak Reclaimer. */
+    public UUID dawnbreakReclaimerChosenOpponentCardId;
+    /** Creature card chosen from the controller's graveyard by Dawnbreak Reclaimer. */
+    public UUID dawnbreakReclaimerChosenOwnCardId;
+
+    public enum DawnbreakReclaimerChoiceStage {
+        OPPONENT_CARD,
+        CONTROLLER_CARD,
+        READY
+    }
+
+    public record DawnbreakReclaimerContext(UUID opponentCardId, UUID opponentPlayerId,
+                                             UUID controllerCardId,
+                                             DawnbreakReclaimerChoiceStage stage) {
+    }
     /**
      * As-enters graveyard exile choice. When set,
      * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen cards
@@ -202,7 +222,10 @@ public class GraveyardTargetOperationState {
     /** As-enters choice that moves two opponent-owned exiled cards to their owners' graveyards. */
     public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
+    public MilledCreatureExileContext milledCreatureExile;
     public MilledCreaturesToHandContext milledCreaturesToHand;
+    /** Resolution-time choice state for cards milled by Eivor, Wolf-Kissed. */
+    public MilledSagaAndLandReturnContext milledSagaAndLandReturn;
 
     /**
      * The entry context needed to resume {@code BattlefieldEntryService.processCreatureETBEffects}
@@ -250,20 +273,26 @@ public class GraveyardTargetOperationState {
         }
     }
 
+    public record MilledCreatureExileContext(List<UUID> eligibleCardIds, List<UUID> chosenCardIds) {
+        public MilledCreatureExileContext {
+            eligibleCardIds = List.copyOf(eligibleCardIds);
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
     public record MilledCreaturesToHandContext(List<UUID> chosenCardIds) {
         public MilledCreaturesToHandContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }
 
-    public enum DawnbreakReclaimerChoiceStage {
-        OPPONENT_CARD,
-        CONTROLLER_CARD,
-        READY
-    }
-
-    public record DawnbreakReclaimerContext(UUID opponentCardId, UUID opponentPlayerId,
-                                             UUID controllerCardId,
-                                             DawnbreakReclaimerChoiceStage stage) {
+    public record MilledSagaAndLandReturnContext(List<UUID> sagaCardIds, List<UUID> landCardIds,
+                                                  int categoryIndex, List<UUID> selectedCardIds,
+                                                  boolean awaitingChoice) {
+        public MilledSagaAndLandReturnContext {
+            sagaCardIds = List.copyOf(sagaCardIds);
+            landCardIds = List.copyOf(landCardIds);
+            selectedCardIds = List.copyOf(selectedCardIds);
+        }
     }
 }

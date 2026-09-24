@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 
 @CardRegistration(set = "INR", collectorNumber = "80")
 @CardRegistration(set = "VOW", collectorNumber = "71")
+@CardRegistration(set = "DBL", collectorNumber = "338")
 public class OverchargedAmalgam extends Card {
 
     public OverchargedAmalgam() {

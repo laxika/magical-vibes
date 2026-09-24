@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "346")
+@CardRegistration(set = "SLX", collectorNumber = "6")
 public class OthelmSigardianOutcast extends Card {
 
     public OthelmSigardianOutcast() {
@@ -26,7 +26,7 @@ public class OthelmSigardianOutcast extends Card {
                         .targetPutIntoGraveyardFromBattlefieldThisTurn(true)
                         .enterTapped(true)
                         .build()),
-                "{2}, {T}: Return target creature card in your graveyard that was put there from the battlefield this turn to the battlefield tapped."
+                "{2}, {T}: Choose target creature card in your graveyard that was put there from the battlefield this turn. Return it to the battlefield tapped."
         ));
     }
 }

@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlanarChaos.class, Shock.class})
+@CardUsed({FlaringPain.class, PlanarChaos.class})
 class PlanarChaosTest extends BaseCardTest {
 
     @Test
@@ -20,20 +16,22 @@ class PlanarChaosTest extends BaseCardTest {
     void flipsOnAnySpellCastAndCountersOnLoss() {
         harness.addToBattlefield(player1, new PlanarChaos());
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castFromHand(player2, new FlaringPain(), "{1}{R}");
 
-        harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        boolean won = coinFlipWasWon();
+        boolean won = gameLogContains(player2.getUsername() + " wins the coin flip for Planar Chaos");
+        boolean lost = gameLogContains(player2.getUsername() + " loses the coin flip for Planar Chaos");
+        assertThat(won ^ lost)
+                .as("Planar Chaos's spell-cast flip must be attributed to the spell's caster")
+                .isTrue();
         if (won) {
-            harness.assertLife(player1, 18);
+            assertThat(gqs.isDamagePreventable(gd)).isFalse();
         } else {
-            harness.assertLife(player1, 20);
+            assertThat(gqs.isDamagePreventable(gd)).isTrue();
         }
-        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInGraveyard(player2, "Flaring Pain");
     }
 
     @Test
@@ -43,15 +41,36 @@ class PlanarChaosTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        if (coinFlipWasWon()) {
+        boolean won = gameLogContains("wins the coin flip for Planar Chaos");
+        boolean lost = gameLogContains("loses the coin flip for Planar Chaos");
+        assertThat(won ^ lost).isTrue();
+        if (won) {
             harness.assertOnBattlefield(player1, "Planar Chaos");
         } else {
             harness.assertInGraveyard(player1, "Planar Chaos");
         }
     }
 
-    private boolean coinFlipWasWon() {
-        return gd.gameLog.stream().map(GameLogEntry::plainText)
-                .anyMatch(log -> log.contains("wins the coin flip for Planar Chaos"));
+    @Test
+    @DisplayName("Does not flip a coin during an opponent's upkeep")
+    void onlyFlipsDuringItsControllersUpkeep() {
+        harness.addToBattlefield(player1, new PlanarChaos());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("coin flip for Planar Chaos")).isFalse();
+        harness.assertOnBattlefield(player1, "Planar Chaos");
+    }
+
+    @Test
+    @DisplayName("Planar Chaos does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new PlanarChaos());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Planar Chaos");
+        assertThat(gameLogContains("coin flip for Planar Chaos")).isFalse();
     }
 }

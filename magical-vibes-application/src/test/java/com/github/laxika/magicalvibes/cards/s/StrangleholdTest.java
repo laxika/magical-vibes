@@ -10,10 +10,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class StrangleholdTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Opponents cannot search their libraries")
-    void opponentsCannotSearchTheirLibraries() {
+    @DisplayName("Opponents cannot search libraries")
+    void opponentsCannotSearchLibraries() {
         harness.addToBattlefield(player1, new Stranglehold());
         harness.setHand(player2, List.of(new DiabolicTutor()));
         harness.addMana(player2, ManaColor.BLACK, 4);
@@ -40,8 +39,8 @@ class StrangleholdTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A controller can search their library")
-    void controllerCanSearchTheirLibrary() {
+    @DisplayName("The controller can search a library")
+    void controllerCanSearchLibrary() {
         harness.addToBattlefield(player1, new Stranglehold());
         harness.setHand(player1, List.of(new DiabolicTutor()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -57,40 +56,42 @@ class StrangleholdTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An extra turn is skipped while Stranglehold remains on the battlefield")
-    void skipsExtraTurnWhileOnBattlefield() {
+    @DisplayName("Skips an opponent's extra turn")
+    void skipsOpponentExtraTurn() {
         harness.addToBattlefield(player1, new Stranglehold());
         harness.setHand(player2, List.of(new CaptureOfJingzhou()));
         harness.addMana(player2, ManaColor.BLUE, 5);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castAndResolveSorcery(player2, 0, 0);
 
-        int turnBefore = gd.turnNumber;
+        harness.castAndResolveSorcery(player2, 0, 0);
+        assertThat(gd.extraTurns).containsExactly(player2.getId());
+
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
         assertThat(gd.extraTurns).isEmpty();
     }
 
     @Test
-    @DisplayName("The controller's extra turn is not skipped")
-    void doesNotSkipControllersExtraTurn() {
+    @DisplayName("Does not skip the controller's extra turn")
+    void doesNotSkipControllerExtraTurn() {
         harness.addToBattlefield(player1, new Stranglehold());
         harness.setHand(player1, List.of(new CaptureOfJingzhou()));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castAndResolveSorcery(player1, 0, 0);
 
-        int turnBefore = gd.turnNumber;
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
-        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
     }
 }

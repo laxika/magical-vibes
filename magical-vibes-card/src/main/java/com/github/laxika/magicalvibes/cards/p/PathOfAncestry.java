@@ -7,24 +7,28 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "250")
 @CardRegistration(set = "SLD", collectorNumber = "914")
+@CardRegistration(set = "ECC", collectorNumber = "158")
+@CardRegistration(set = "TMC", collectorNumber = "70")
 public class PathOfAncestry extends Card {
 
     public PathOfAncestry() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(AwardAnyColorManaEffect.forCommanderColorIdentity()),
+                List.of(new AwardAnyColorManaEffect(
+                        1, ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY)),
                 "{T}: Add one mana of any color in your commander's color identity."
         ));
 

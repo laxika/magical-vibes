@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "7")
+@CardRegistration(set = "AA4", collectorNumber = "2")
 public class BringerOfTheWhiteDawn extends Card {
 
     public BringerOfTheWhiteDawn() {

@@ -27,6 +27,7 @@ import java.util.Set;
 @CardRegistration(set = "DDT", collectorNumber = "46")
 @CardRegistration(set = "SLD", collectorNumber = "215")
 @CardRegistration(set = "SLD", collectorNumber = "924")
+@CardRegistration(set = "PIO", collectorNumber = "139")
 public class GoblinRabblemaster extends Card {
 
     public GoblinRabblemaster() {

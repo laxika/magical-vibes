@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,8 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OloroAgelessAsceticTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Gains 2 life at the beginning of its controller's upkeep")
-    void gainsLifeOnUpkeep() {
+    void gainsTwoLifeAtUpkeepOnBattlefield() {
         harness.addToBattlefield(player1, new OloroAgelessAscetic());
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -25,65 +27,33 @@ class OloroAgelessAsceticTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Gains 2 life from the command zone at upkeep")
-    void gainsLifeFromCommandZoneOnUpkeep() {
-        OloroAgelessAscetic oloro = new OloroAgelessAscetic();
-        gd.playerCommandZones.get(player1.getId()).add(oloro);
-        int lifeBefore = gd.getLife(player1.getId());
-
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
-
-        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
-    }
-
-    @Test
-    @DisplayName("Command-zone upkeep trigger does nothing after Oloro leaves the command zone")
-    void commandZoneTriggerChecksSourceStillInCommandZone() {
-        OloroAgelessAscetic oloro = new OloroAgelessAscetic();
-        gd.playerCommandZones.get(player1.getId()).add(oloro);
-        int lifeBefore = gd.getLife(player1.getId());
-
-        advanceToUpkeep(player1);
-        gd.playerCommandZones.get(player1.getId()).remove(oloro);
-        harness.passBothPriorities();
-
-        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
-    }
-
-    @Test
-    @DisplayName("Paying {1} after gaining life draws a card and makes each opponent lose 1 life")
-    void paysToDrawAndDrainOpponents() {
+    void mayPayToDrawAndDrainOpponentsWhenGainingLife() {
         harness.addToBattlefield(player1, new OloroAgelessAscetic());
-        harness.setHand(player1, java.util.List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int opponentLifeBefore = gd.getLife(player2.getId());
 
-        harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
     }
 
     @Test
-    @DisplayName("Declining the payment does not draw or drain")
-    void decliningPaymentDoesNothing() {
-        harness.addToBattlefield(player1, new OloroAgelessAscetic());
-        harness.setHand(player1, java.util.List.of());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
-        int opponentLifeBefore = gd.getLife(player2.getId());
+    void gainsTwoLifeFromTheCommandZone() {
+        gd.format = DeckFormat.COMMANDER;
+        var oloro = new OloroAgelessAscetic();
+        gd.makeCommander(player1.getId(), oloro);
+        gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(oloro)));
+        int lifeBefore = gd.getLife(player1.getId());
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
-
 }

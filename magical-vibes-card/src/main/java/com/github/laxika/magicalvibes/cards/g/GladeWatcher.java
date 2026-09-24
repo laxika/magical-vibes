@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "188")
+@CardRegistration(set = "MB1", collectorNumber = "188")
 public class GladeWatcher extends Card {
 
     public GladeWatcher() {

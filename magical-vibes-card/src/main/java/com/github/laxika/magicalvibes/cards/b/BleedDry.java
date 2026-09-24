@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInstea
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "94")
+@CardRegistration(set = "DBL", collectorNumber = "361")
 public class BleedDry extends Card {
 
     public BleedDry() {

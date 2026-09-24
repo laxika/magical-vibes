@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "33")
+@CardRegistration(set = "PIO", collectorNumber = "36")
 public class StarfieldOfNyx extends Card {
 
     public StarfieldOfNyx() {

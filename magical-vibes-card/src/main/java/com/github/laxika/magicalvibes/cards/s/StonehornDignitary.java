@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "37")
+@CardRegistration(set = "TSR", collectorNumber = "304")
 public class StonehornDignitary extends Card {
 
     public StonehornDignitary() {

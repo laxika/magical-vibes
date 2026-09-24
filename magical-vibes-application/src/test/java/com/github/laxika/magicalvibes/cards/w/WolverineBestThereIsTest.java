@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,89 +12,96 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WolverineBestThereIs.class, GrizzlyBears.class, Shock.class})
+@CardUsed({WolverineBestThereIs.class, GrizzlyBears.class, Shock.class, LlanowarElves.class, HillGiant.class})
 class WolverineBestThereIsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Wolverine deals double combat damage to a player")
-    void doublesCombatDamageToPlayer() {
-        Permanent wolverine = addCreatureReady(player1, new WolverineBestThereIs());
+    @DisplayName("Doubles all damage Wolverine deals, but not damage from another creature")
+    void doublesOnlyWolverinesDamage() {
+        addCreatureReady(player1, new WolverineBestThereIs());
+        addCreatureReady(player1, new LlanowarElves());
         harness.setLife(player2, 20);
 
-        declareAttackers(player1, List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(wolverine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
     }
 
     @Test
-    @DisplayName("Damage to another creature gives Wolverine a +1/+1 counter at end step")
-    void damageToCreatureGivesCounterAtEndStep() {
+    @DisplayName("Puts a +1/+1 counter on Wolverine at end step after it damages a creature")
+    void growsAfterDamagingCreatureThatDies() {
         Permanent wolverine = addCreatureReady(player1, new WolverineBestThereIs());
-        GrizzlyBears blockerCard = new GrizzlyBears();
-        blockerCard.setPower(0);
-        blockerCard.setToughness(2);
-        addCreatureReady(player2, blockerCard);
+        Permanent elves = addCreatureReady(player2, new LlanowarElves());
 
-        declareAttackersAndPrepareBlockers(player1, List.of(0));
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        declareBlock(elves, wolverine);
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
-
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(wolverine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-
-        advanceToEndStep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(wolverine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Damage to a player does not satisfy Wolverine's creature-damage condition")
-    void damageToPlayerDoesNotGiveCounter() {
+    @DisplayName("Does not grow at end step after dealing damage only to a player")
+    void doesNotGrowWithoutDamagingCreature() {
         Permanent wolverine = addCreatureReady(player1, new WolverineBestThereIs());
-        declareAttackers(player1, List.of(0));
 
-        advanceToEndStep(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
 
-        assertThat(gd.stack).isEmpty();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
         assertThat(wolverine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
-    @DisplayName("Regeneration saves Wolverine from lethal damage")
+    @DisplayName("Regeneration ability saves Wolverine from lethal combat damage")
     void regenerationSavesWolverine() {
         Permanent wolverine = addCreatureReady(player1, new WolverineBestThereIs());
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        assertThat(wolverine.getRegenerationShield()).isEqualTo(1);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        wolverine.setBlocking(true);
+        wolverine.addBlockingTarget(0);
+        Permanent attacker = new Permanent(new HillGiant());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.castAndResolveInstant(player2, 0, wolverine.getId());
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Wolverine, Best There Is");
-        Permanent surviving = findPermanent(player1, "Wolverine, Best There Is");
-        assertThat(surviving.getRegenerationShield()).isZero();
-        assertThat(surviving.isTapped()).isTrue();
-        assertThat(surviving.getMarkedDamage()).isZero();
+        assertThat(wolverine.isTapped()).isTrue();
+        assertThat(wolverine.getRegenerationShield()).isZero();
     }
 
-    private void advanceToEndStep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.END_STEP);
+    private void declareBlock(Permanent blocker, Permanent attacker) {
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
     }
 }

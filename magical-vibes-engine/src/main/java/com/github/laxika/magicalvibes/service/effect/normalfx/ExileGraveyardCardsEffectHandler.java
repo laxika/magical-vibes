@@ -134,8 +134,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 exileService.exileCard(gameData, playerId, card);
             } else {
                 exileService.exileCard(gameData, playerId, card, sourcePermanentId);
-                gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
-                        PendingExileReturn.toGraveyard(card, playerId));
+                if (e.returnExiledCardsToGraveyardOnSourceLeave()) {
+                    gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                            PendingExileReturn.toGraveyard(card, playerId));
+                }
             }
         }
 
@@ -235,6 +237,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
         if (exiledCards.isEmpty()) {
             return;
+        }
+
+        if (e.putKickCounters()) {
+            exiledCards.forEach(card -> gameData.exiledCardsWithKickCounters.add(card.getId()));
         }
 
         if (controllerGraveyard) {

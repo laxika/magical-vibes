@@ -432,6 +432,18 @@ public class DamageSupport {
             return 0;
         }
         if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromDesertsToSelfPrevented(
+                gameData, target, entry, damageSource, false)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
+        if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                gameData, target, entry, damageSource, false)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
+        if (!targetDamageUnpreventable
                 && gameQueryService.isDamageFromControlledSourceToControlledCreaturePrevented(
                 gameData, target, sourceControllerId)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
@@ -442,6 +454,12 @@ public class DamageSupport {
                 gameData, target, effectiveDamageSource)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
+        }
+        if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
+            rawDamage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, targetControllerId, rawDamage, sourceCardForBonus,
+                    sourcePermanentForBonus, sourceControllerId, false);
+            processPendingRedirectDamage(gameData);
         }
         if (!targetDamageUnpreventable
                 && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(
@@ -472,6 +490,9 @@ public class DamageSupport {
             graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
         } else if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+        } else {
+            graveyardService.recordCreatureDamagedBySource(
+                    gameData, damageSourceKey(entry, null), target, damage);
         }
 
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
@@ -505,6 +526,10 @@ public class DamageSupport {
             triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
                     gameData, effectiveDamageSource, target, damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                    gameData, target, damage, sourceControllerId,
+                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
+                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
+            triggerCollectionService.checkNoncombatDamageToSelfTriggers(
                     gameData, target, damage, sourceControllerId,
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
@@ -738,6 +763,9 @@ public class DamageSupport {
 
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+        } else {
+            graveyardService.recordCreatureDamagedBySource(
+                    gameData, damageSourceKey(entry, null), target, damage);
         }
 
         if (damage > 0) {
@@ -748,6 +776,9 @@ public class DamageSupport {
             triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
                     gameData, sourcePermanent, target, damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                    gameData, target, damage, entry.getControllerId(), entry.getEffectiveDamageSourceCard(),
+                    entry.getSourcePermanentId());
+            triggerCollectionService.checkNoncombatDamageToSelfTriggers(
                     gameData, target, damage, entry.getControllerId(), entry.getEffectiveDamageSourceCard(),
                     entry.getSourcePermanentId());
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
@@ -1065,7 +1096,7 @@ public class DamageSupport {
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 Set<CardColor> sourceColors = sourcePermanent == null
-                        ? sourceCardColors(source)
+                        ? gameQueryService.getEffectiveCardColors(gameData, source)
                         : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
                 UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
                 loyaltyDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
@@ -1082,6 +1113,13 @@ public class DamageSupport {
                         gameData, targetPermanent, loyaltyDamage);
                 loyaltyDamage = damagePreventionService.applyControllerAndPermanentsNoncombatDamagePrevention(
                         gameData, targetPermanent, loyaltyDamage);
+                loyaltyDamage = damagePreventionService.applyComeuppancePrevention(
+                        gameData, pwControllerId, loyaltyDamage, source, sourcePermanent,
+                        sourceControllerId, false);
+                processPendingRedirectDamage(gameData);
+                if (loyaltyDamage <= 0) {
+                    return 0;
+                }
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 int damageDealt = loyaltyDamage;
@@ -1297,6 +1335,13 @@ public class DamageSupport {
             }
             playerId = redirectedPlayerId;
         }
+        if (gameQueryService.playerHasFlying(gameData, playerId)
+                && gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent)
+                && !gameQueryService.sourceHasKeyword(gameData, entry, sourcePermanent, Keyword.FLYING)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented by flying."));
+            return;
+        }
         if (gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(gameData, entry, playerId)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
@@ -1333,7 +1378,7 @@ public class DamageSupport {
         // Benevolent Unicorn: a spell dealing damage to a player deals that much damage minus N.
         rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
         Set<CardColor> sourceColors = sourcePermanent == null
-                ? sourceCardColors(source)
+                ? gameQueryService.getEffectiveCardColors(gameData, source)
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
         Set<CardColor> damageSourceColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
         UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
@@ -1450,6 +1495,9 @@ public class DamageSupport {
             processEyeForAnEyeReflections(gameData);
             rawDamage = damagePreventionService.applyChannelHarmPrevention(
                     gameData, playerId, sourceControllerId, rawDamage);
+            rawDamage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, playerId, rawDamage, source, sourcePermanent,
+                    sourceControllerId, false);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
@@ -1646,6 +1694,8 @@ public class DamageSupport {
                         gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
                     triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
+                    triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
                             gameData, sourceControllerId, playerId, List.of(sourcePermanent));
                 }
                 triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(

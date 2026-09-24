@@ -10,6 +10,8 @@ import java.util.List;
 @CardRegistration(set = "M14", collectorNumber = "37")
 @CardRegistration(set = "M15", collectorNumber = "35")
 @CardRegistration(set = "M20", collectorNumber = "37")
+@CardRegistration(set = "MB1", collectorNumber = "237")
+@CardRegistration(set = "ANB", collectorNumber = "20")
 public class Soulmender extends Card {
 
     public Soulmender() {

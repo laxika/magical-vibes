@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "159")
+@CardRegistration(set = "GN2", collectorNumber = "43")
 public class SparktongueDragon extends Card {
 
     public SparktongueDragon() {

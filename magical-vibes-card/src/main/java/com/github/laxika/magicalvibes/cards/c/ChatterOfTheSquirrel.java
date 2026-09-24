@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "233")
 @CardRegistration(set = "SLD", collectorNumber = "195")
+@CardRegistration(set = "2XM", collectorNumber = "157")
 public class ChatterOfTheSquirrel extends Card {
 
     public ChatterOfTheSquirrel() {

@@ -15,6 +15,11 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "278")
 @CardRegistration(set = "SLD", collectorNumber = "199")
+@CardRegistration(set = "TSR", collectorNumber = "284")
+@CardRegistration(set = "EOS", collectorNumber = "42")
+@CardRegistration(set = "EOS", collectorNumber = "87")
+@CardRegistration(set = "EOS", collectorNumber = "132")
+@CardRegistration(set = "EOS", collectorNumber = "177")
 public class Swarmyard extends Card {
 
     public Swarmyard() {

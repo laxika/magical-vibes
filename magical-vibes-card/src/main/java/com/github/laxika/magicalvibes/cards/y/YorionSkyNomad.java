@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "232")
+@CardRegistration(set = "MUL", collectorNumber = "64")
+@CardRegistration(set = "MUL", collectorNumber = "129")
+@CardRegistration(set = "MUL", collectorNumber = "194")
 public class YorionSkyNomad extends Card {
 
     public YorionSkyNomad() {

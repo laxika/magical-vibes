@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,4 +53,6 @@ public class CloneOperationState {
     public boolean mimeoplasmGraveyardChoicePending;
     public boolean mimeoplasmCopyChoicePending;
     public List<UUID> mimeoplasmSelectedCardIds = List.of();
+    public boolean exileTwoAndAddOtherPowerCounters;
+    public List<UUID> selectedGraveyardCopyCardIds = List.of();
 }

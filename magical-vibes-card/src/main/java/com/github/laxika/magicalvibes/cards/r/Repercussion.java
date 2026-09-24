@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageE
 
 @CardRegistration(set = "UDS", collectorNumber = "95")
 @CardRegistration(set = "SLD", collectorNumber = "1065")
+@CardRegistration(set = "WOT", collectorNumber = "48")
+@CardRegistration(set = "WOT", collectorNumber = "78")
+@CardRegistration(set = "WOT", collectorNumber = "98")
 public class Repercussion extends Card {
 
     public Repercussion() {

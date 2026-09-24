@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "VOW", collectorNumber = "22")
+@CardRegistration(set = "DBL", collectorNumber = "289")
 public class KindlyAncestor extends Card {
 
     public KindlyAncestor() {

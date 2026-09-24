@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "DDO", collectorNumber = "36")
 @CardRegistration(set = "IMA", collectorNumber = "40")
 @CardRegistration(set = "SLD", collectorNumber = "1667")
+@CardRegistration(set = "C15", collectorNumber = "85")
 public class Aetherize extends Card {
 
     public Aetherize() {

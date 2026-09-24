@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "246")
 @CardRegistration(set = "SLD", collectorNumber = "1772")
+@CardRegistration(set = "OTP", collectorNumber = "64")
 public class UnlicensedHearse extends Card {
 
     public UnlicensedHearse() {

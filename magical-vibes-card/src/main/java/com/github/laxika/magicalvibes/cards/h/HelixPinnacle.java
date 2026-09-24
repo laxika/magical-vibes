@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "68")
 @CardRegistration(set = "SLD", collectorNumber = "1831")
+@CardRegistration(set = "SPG", collectorNumber = "139")
 public class HelixPinnacle extends Card {
 
     public HelixPinnacle() {

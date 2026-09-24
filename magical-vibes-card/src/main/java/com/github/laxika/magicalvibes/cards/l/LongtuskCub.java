@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "161")
+@CardRegistration(set = "KLR", collectorNumber = "167")
 public class LongtuskCub extends Card {
 
     public LongtuskCub() {

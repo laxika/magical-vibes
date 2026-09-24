@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "963")
 @CardRegistration(set = "SLD", collectorNumber = "964")
 @CardRegistration(set = "SLD", collectorNumber = "1569")
+@CardRegistration(set = "TSR", collectorNumber = "378")
 public class GrenzoDungeonWarden extends Card {
 
     public GrenzoDungeonWarden() {

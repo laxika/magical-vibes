@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "213")
 @CardRegistration(set = "SLD", collectorNumber = "1291")
+@CardRegistration(set = "C14", collectorNumber = "293")
 public class EmeriaTheSkyRuin extends Card {
 
     public EmeriaTheSkyRuin() {

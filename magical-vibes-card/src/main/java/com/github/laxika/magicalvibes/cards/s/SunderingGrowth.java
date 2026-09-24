@@ -14,6 +14,8 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "223")
 @CardRegistration(set = "MM3", collectorNumber = "211")
+@CardRegistration(set = "GK1", collectorNumber = "120")
+@CardRegistration(set = "MAR", collectorNumber = "95")
 public class SunderingGrowth extends Card {
 
     public SunderingGrowth() {

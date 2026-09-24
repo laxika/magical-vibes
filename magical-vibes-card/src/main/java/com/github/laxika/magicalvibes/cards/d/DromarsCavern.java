@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "138")
+@CardRegistration(set = "DMR", collectorNumber = "246")
 public class DromarsCavern extends Card {
 
     public DromarsCavern() {

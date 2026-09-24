@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "102")
 @CardRegistration(set = "SLD", collectorNumber = "408")
+@CardRegistration(set = "SPG", collectorNumber = "126")
 public class Burgeoning extends Card {
 
     public Burgeoning() {

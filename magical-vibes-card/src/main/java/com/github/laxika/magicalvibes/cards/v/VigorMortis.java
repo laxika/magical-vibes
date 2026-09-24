@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "111")
 @CardRegistration(set = "DDJ", collectorNumber = "74")
+@CardRegistration(set = "GK1", collectorNumber = "54")
 public class VigorMortis extends Card {
 
     public VigorMortis() {

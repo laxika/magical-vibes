@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "122")
 @CardRegistration(set = "SLD", collectorNumber = "1567")
+@CardRegistration(set = "GN3", collectorNumber = "63")
 public class VilisBrokerOfBlood extends Card {
 
     public VilisBrokerOfBlood() {

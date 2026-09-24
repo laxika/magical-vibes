@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "802")
+@CardRegistration(set = "ACR", collectorNumber = "5")
 public class Haystack extends Card {
 
     public Haystack() {

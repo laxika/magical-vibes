@@ -1,89 +1,91 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
 import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VikyaScorchingStalwart.class, Forest.class, GoliathBeetle.class, SerraAngel.class})
+@CardUsed({VikyaScorchingStalwart.class, Forest.class, GoliathBeetle.class, SerraAngel.class, AirElemental.class, FyndhornElves.class})
 class VikyaScorchingStalwartTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Deals damage equal to its power to a player and untaps as a cost")
-    void dealsPowerDamageToPlayer() {
-        Permanent vikya = addTappedVikya();
+    void trainingPutsACounterOnVikya() {
+        Permanent vikya = addReadyVikya();
+        Permanent airElemental = addCreatureReady(player1, new AirElemental());
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(vikya),
+                gd.playerBattlefields.get(player1.getId()).indexOf(airElemental)));
+        harness.passBothPriorities();
+
+        assertThat(vikya.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void untapSymbolAndDiscardCostDealPowerDamageToAnyTarget() {
+        Permanent vikya = addReadyVikya();
+        vikya.tap();
         harness.setHand(player1, List.of(new Forest()));
         harness.setLife(player2, 20);
-        addMana();
+        addActivationMana();
 
-        activate(vikya, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
+        assertThat(vikya.isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void excessDamageToCreatureDrawsACard() {
+        Permanent vikya = addReadyVikya();
+        Permanent target = addCreatureReady(player2, new FyndhornElves());
+        vikya.tap();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fyndhorn Elves");
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
         assertThat(vikya.isTapped()).isFalse();
     }
 
     @Test
-    @DisplayName("Draws a card when excess damage is dealt to a creature")
-    void drawsForExcessCreatureDamage() {
-        Permanent vikya = addTappedVikya();
-        harness.setHand(player1, List.of(new Forest()));
-        harness.setLibrary(player1, List.of(new Forest()));
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathBeetle());
-        addMana();
+    void cannotActivateWithoutACardToDiscard() {
+        addReadyVikya();
+        harness.setHand(player1, List.of());
+        addActivationMana();
 
-        activate(vikya, target.getId());
-
-        harness.assertInHand(player1, "Forest");
-        harness.assertInGraveyard(player1, "Forest");
-        harness.assertNotOnBattlefield(player2, "Goliath Beetle");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    @Test
-    @DisplayName("Does not draw when creature damage is not excess")
-    void doesNotDrawWithoutExcessDamage() {
-        Permanent vikya = addTappedVikya();
-        harness.setHand(player1, List.of(new Forest()));
-        harness.setLibrary(player1, List.of(new Forest()));
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
-        addMana();
-
-        activate(vikya, target.getId());
-
-        harness.assertInGraveyard(player1, "Forest");
-        harness.assertOnBattlefield(player2, "Serra Angel");
-        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    private Permanent addReadyVikya() {
+        return addCreatureReady(player1, new VikyaScorchingStalwart());
     }
 
-    private Permanent addTappedVikya() {
-        Permanent vikya = harness.addToBattlefieldAndReturn(player1, new VikyaScorchingStalwart());
-        vikya.setSummoningSick(false);
-        vikya.tap();
-        return vikya;
-    }
-
-    private void addMana() {
+    private void addActivationMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-    }
-
-    private void activate(Permanent vikya, java.util.UUID targetId) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vikya), null, targetId);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
-        harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
     }
 }

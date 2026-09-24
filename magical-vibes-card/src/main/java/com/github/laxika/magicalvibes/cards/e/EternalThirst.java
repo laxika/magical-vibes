@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "95")
 @CardRegistration(set = "IMA", collectorNumber = "89")
+@CardRegistration(set = "ANB", collectorNumber = "49")
 public class EternalThirst extends Card {
 
     public EternalThirst() {

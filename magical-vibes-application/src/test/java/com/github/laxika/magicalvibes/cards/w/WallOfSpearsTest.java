@@ -34,6 +34,7 @@ class WallOfSpearsTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
+        assertThat(wall.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
     }
 }

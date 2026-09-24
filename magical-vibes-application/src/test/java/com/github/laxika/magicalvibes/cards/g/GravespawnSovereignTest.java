@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.c.CruelRevival;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GravespawnSovereign.class, ScatheZombies.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({GravespawnSovereign.class, GluttonousZombie.class, CruelRevival.class})
 class GravespawnSovereignTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class GravespawnSovereignTest extends BaseCardTest {
     void reanimatesCreatureFromAnyGraveyardUnderYourControl() {
         Permanent sovereign = addCreatureReady(player1, new GravespawnSovereign());
         addZombies(player1, 4);
-        Card target = new GrizzlyBears();
+        Card target = new GluttonousZombie();
         harness.setGraveyard(player2, List.of(target));
 
         int sovereignIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sovereign);
@@ -31,6 +30,9 @@ class GravespawnSovereignTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sovereign.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count()).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(target.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -44,7 +46,22 @@ class GravespawnSovereignTest extends BaseCardTest {
     void requiresFiveUntappedZombies() {
         Permanent sovereign = addCreatureReady(player1, new GravespawnSovereign());
         addZombies(player1, 3);
-        Card target = new GrizzlyBears();
+        Card target = new GluttonousZombie();
+        harness.setGraveyard(player2, List.of(target));
+
+        int sovereignIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sovereign);
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, sovereignIndex, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Zombie cannot be used to pay the five-Zombie cost")
+    void requiresFiveUntappedZombiesWhenOneZombieIsTapped() {
+        Permanent sovereign = addCreatureReady(player1, new GravespawnSovereign());
+        addZombies(player1, 4);
+        gd.playerBattlefields.get(player1.getId()).get(1).tap();
+        Card target = new GluttonousZombie();
         harness.setGraveyard(player2, List.of(target));
 
         int sovereignIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sovereign);
@@ -58,7 +75,7 @@ class GravespawnSovereignTest extends BaseCardTest {
     void cannotTargetNoncreatureCard() {
         Permanent sovereign = addCreatureReady(player1, new GravespawnSovereign());
         addZombies(player1, 4);
-        Card target = new HolyDay();
+        Card target = new CruelRevival();
         harness.setGraveyard(player2, List.of(target));
 
         int sovereignIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sovereign);
@@ -67,9 +84,28 @@ class GravespawnSovereignTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The ability fizzles if the targeted creature card leaves the graveyard before resolution")
+    void fizzlesWhenTargetLeavesGraveyardBeforeResolution() {
+        Permanent sovereign = addCreatureReady(player1, new GravespawnSovereign());
+        addZombies(player1, 4);
+        Card target = new GluttonousZombie();
+        harness.setGraveyard(player2, List.of(target));
+
+        int sovereignIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sovereign);
+        harness.activateAbility(player1, sovereignIndex, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(target.getId()));
+        assertThat(sovereign.isTapped()).isTrue();
+    }
+
     private void addZombies(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
-            addCreatureReady(player, new ScatheZombies());
+            addCreatureReady(player, new GluttonousZombie());
         }
     }
 }

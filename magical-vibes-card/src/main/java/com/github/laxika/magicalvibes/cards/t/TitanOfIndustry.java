@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "159")
+@CardRegistration(set = "ECC", collectorNumber = "117")
 public class TitanOfIndustry extends Card {
 
     public TitanOfIndustry() {

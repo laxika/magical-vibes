@@ -93,57 +93,39 @@ public class GameOutcomeService {
     }
 
     public boolean checkWinCondition(GameData gameData) {
-        if (gameData.gameResult != null) {
+        if (gameData.gameResult != null) return true;
+        if (gameData.deferPlayerLossCheck) return false;
+        java.util.Map<UUID, LossReason> candidates = new java.util.LinkedHashMap<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            boolean commanderDamage = gameData.format == com.github.laxika.magicalvibes.model.DeckFormat.COMMANDER
+                    && gameData.commanderDamageReceived.getOrDefault(playerId, java.util.Map.of()).values().stream().anyMatch(damage -> damage >= 21);
+            if (commanderDamage) candidates.put(playerId, LossReason.COMMANDER_DAMAGE);
+            else if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) >= 10) candidates.put(playerId, LossReason.POISON);
+            else if (gameData.getLife(playerId) <= 0) candidates.put(playerId, LossReason.LIFE);
+        }
+        List<UUID> losers = new ArrayList<>();
+        candidates.forEach((player, reason) -> {
+            if (resolveLoss(gameData, player, reason) == LossOutcome.LOSES) losers.add(player);
+        });
+        if (losers.isEmpty()) return false;
+        if (losers.size() == gameData.playerIds.size()) {
+            declareDraw(gameData);
             return true;
         }
-        // CR 704.3 / 104.3b — state-based actions (including loss from life <= 0) are only checked
-        // when a player would receive priority, i.e. after a spell or ability finishes resolving.
-        // While a stack entry's effect list is mid-resolution, defer: a controller momentarily at
-        // 0 life between two effects of the same spell survives if a later effect restores them.
-        // EffectResolutionService clears this and re-invokes this method once the resolution ends.
-        if (gameData.deferPlayerLossCheck) {
-            return false;
+        UUID loser = losers.getFirst();
+        UUID winner = gameQueryService.getOpponentId(gameData, loser);
+        firePlayerLosesGameTriggers(gameData, loser);
+        if (!gameData.simulation) {
+            String reason = switch (candidates.get(loser)) {
+                case COMMANDER_DAMAGE -> " loses to commander damage! ";
+                case POISON -> " has 10 poison counters and loses! ";
+                default -> " has been defeated! ";
+            };
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(loser) + reason
+                    + gameData.playerIdToName.get(winner) + " wins!"));
         }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            int life = gameData.getLife(playerId);
-            int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-            if (life <= 0 || poison >= 10) {
-                // Poison is checked first: a player at 0 life AND 10 poison still loses even with
-                // Phyrexian Unlife, because that only prevents the life half (CR 704.5a/704.5c).
-                LossReason reason = poison >= 10 ? LossReason.POISON : LossReason.LIFE;
-                if (resolveLoss(gameData, playerId, reason) != LossOutcome.LOSES) {
-                    continue;
-                }
-
-                // "Whenever a player loses the game" triggers (e.g. Withengar Unbound).
-                firePlayerLosesGameTriggers(gameData, playerId);
-
-                // During MCTS simulation, only set the status — skip all external side effects
-                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
-                String winnerName = gameData.playerIdToName.get(winnerId);
-                if (gameData.simulation) {
-                    finish(gameData, GameEventFact.GameResult.WIN, winnerId,
-                            GameEventAudience.allPlayers());
-                    return true;
-                }
-
-                String logEntry;
-                if (poison >= 10) {
-                    logEntry = gameData.playerIdToName.get(playerId) + " has 10 poison counters and loses! " + winnerName + " wins!";
-                } else {
-                    logEntry = gameData.playerIdToName.get(playerId) + " has been defeated! " + winnerName + " wins!";
-                }
-                gameLogService.append(gameData, GameLog.text(logEntry));
-
-                finish(gameData, GameEventFact.GameResult.WIN, winnerId,
-                        GameEventAudience.allPlayers());
-
-                log.info("Game {} - {} wins! {} is at {} life, {} poison", gameData.id, winnerName,
-                        gameData.playerIdToName.get(playerId), life, poison);
-                return true;
-            }
-        }
-        return false;
+        finish(gameData, GameEventFact.GameResult.WIN, winner, GameEventAudience.allPlayers());
+        return true;
     }
 
     public void declareWinner(GameData gameData, UUID winnerId) {
@@ -251,7 +233,9 @@ public class GameOutcomeService {
 
         if (!gameData.simulation) {
             mutationCoordinator.emit(gameData,
-                    new GameEventFact.GameEnded(result, winnerId),
+                    gameData.session.isRoot(gameData)
+                            ? new GameEventFact.GameEnded(result, winnerId)
+                            : new GameEventFact.SubgameEnded(result, winnerId),
                     audience);
         }
     }

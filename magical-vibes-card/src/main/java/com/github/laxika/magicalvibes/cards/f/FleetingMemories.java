@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "62")
+@CardRegistration(set = "SIR", collectorNumber = "69")
 public class FleetingMemories extends Card {
 
     public FleetingMemories() {

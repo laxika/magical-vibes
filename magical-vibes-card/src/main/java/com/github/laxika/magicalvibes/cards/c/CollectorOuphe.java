@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1077")
+@CardRegistration(set = "MH1", collectorNumber = "158")
 public class CollectorOuphe extends Card {
 
     public CollectorOuphe() {

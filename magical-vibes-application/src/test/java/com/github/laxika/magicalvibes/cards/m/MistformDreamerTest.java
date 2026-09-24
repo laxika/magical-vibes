@@ -18,10 +18,12 @@ class MistformDreamerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability prompts for a creature type without requiring a target")
     void activatingPromptsForCreatureType() {
-        addReadyDreamer();
+        Permanent dreamer = addCreatureReady(player1, new MistformDreamer());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
+        assertThat(dreamer.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -32,7 +34,7 @@ class MistformDreamerTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen creature type replaces the old type until end of turn")
     void chosenCreatureTypeReplacesOldType() {
-        Permanent dreamer = addReadyDreamer();
+        Permanent dreamer = addCreatureReady(player1, new MistformDreamer());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activateAndChoose(CardSubtype.GOBLIN);
@@ -43,7 +45,7 @@ class MistformDreamerTest extends BaseCardTest {
     @Test
     @DisplayName("Wall is a legal creature type choice")
     void wallCanBeChosen() {
-        Permanent dreamer = addReadyDreamer();
+        Permanent dreamer = addCreatureReady(player1, new MistformDreamer());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activateAndChoose(CardSubtype.WALL);
@@ -54,7 +56,7 @@ class MistformDreamerTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen creature type wears off at end of turn")
     void chosenCreatureTypeWearsOff() {
-        Permanent dreamer = addReadyDreamer();
+        Permanent dreamer = addCreatureReady(player1, new MistformDreamer());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activateAndChoose(CardSubtype.GOBLIN);
@@ -63,14 +65,19 @@ class MistformDreamerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dreamer.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, dreamer)).containsExactly(CardSubtype.ILLUSION);
     }
 
-    private Permanent addReadyDreamer() {
-        Permanent dreamer = new Permanent(new MistformDreamer());
-        dreamer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(dreamer);
-        return dreamer;
+    @Test
+    @DisplayName("A second activation replaces the first chosen creature type")
+    void secondActivationReplacesFirstChosenType() {
+        Permanent dreamer = addCreatureReady(player1, new MistformDreamer());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+        activateAndChoose(CardSubtype.WALL);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, dreamer)).containsExactly(CardSubtype.WALL);
     }
 
     private void activateAndChoose(CardSubtype subtype) {

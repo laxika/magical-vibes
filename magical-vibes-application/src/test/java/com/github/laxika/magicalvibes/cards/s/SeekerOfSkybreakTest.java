@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.w.Wasteland;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeekerOfSkybreak.class, HornedTurtle.class, Wasteland.class})
+@CardUsed({SeekerOfSkybreak.class, HornedTurtle.class, Forest.class})
 class SeekerOfSkybreakTest extends BaseCardTest {
 
     @Test
@@ -77,10 +77,22 @@ class SeekerOfSkybreakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature that is already untapped")
+    void canTargetAlreadyUntappedCreature() {
+        addCreatureReady(player1, new SeekerOfSkybreak());
+        Permanent target = addCreatureReady(player2, new HornedTurtle());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new SeekerOfSkybreak());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new Wasteland());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)

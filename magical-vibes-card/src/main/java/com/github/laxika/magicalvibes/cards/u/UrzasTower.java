@@ -31,6 +31,14 @@ import java.util.List;
 @CardRegistration(set = "CHR", collectorNumber = "122")
 @CardRegistration(set = "CHR", collectorNumber = "124")
 @CardRegistration(set = "CHR", collectorNumber = "125")
+@CardRegistration(set = "ME4", collectorNumber = "259a")
+@CardRegistration(set = "ME4", collectorNumber = "259b")
+@CardRegistration(set = "ME4", collectorNumber = "259c")
+@CardRegistration(set = "ME4", collectorNumber = "259d")
+@CardRegistration(set = "ME4", collectorNumber = "265")
+@CardRegistration(set = "ME4", collectorNumber = "266")
+@CardRegistration(set = "ME4", collectorNumber = "268")
+@CardRegistration(set = "2XM", collectorNumber = "331")
 public class UrzasTower extends Card {
 
     public UrzasTower() {

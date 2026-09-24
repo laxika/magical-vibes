@@ -13,14 +13,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2174")
+@CardRegistration(set = "MH1", collectorNumber = "214")
 public class Soulherder extends Card {
 
     public Soulherder() {
-        addEffect(EffectSlot.ON_CREATURE_EXILED_FROM_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         target(new PermanentPredicateTargetFilter(

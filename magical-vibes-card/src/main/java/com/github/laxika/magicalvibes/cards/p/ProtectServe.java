@@ -25,6 +25,7 @@ import java.util.List;
  * targets are allowed because fusing both halves onto one creature is legal.
  */
 @CardRegistration(set = "DGM", collectorNumber = "131")
+@CardRegistration(set = "PIO", collectorNumber = "392")
 public class ProtectServe extends Card {
 
     public ProtectServe() {

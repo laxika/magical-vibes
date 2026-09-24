@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "72")
 @CardRegistration(set = "DDJ", collectorNumber = "20")
+@CardRegistration(set = "GK1", collectorNumber = "33")
 public class Pyromatics extends Card {
 
     public Pyromatics() {

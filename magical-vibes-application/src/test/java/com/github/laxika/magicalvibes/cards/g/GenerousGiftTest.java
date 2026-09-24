@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,13 +20,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GenerousGiftTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Destroys target permanent and gives its controller a 3/3 green Elephant")
-    void destroysPermanentAndCreatesElephantForController() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        castGenerousGift(harness.getPermanentId(player2, "Grizzly Bears"));
+    @DisplayName("Destroys any target permanent and creates an Elephant for its controller")
+    void destroysPermanentAndCreatesElephantForItsController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        castGenerousGift(target);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getName().equals("Elephant")
@@ -35,23 +35,25 @@ class GenerousGiftTest extends BaseCardTest {
                         && permanent.getCard().getPower() == 3
                         && permanent.getCard().getToughness() == 3
                         && permanent.getCard().getSubtypes().contains(CardSubtype.ELEPHANT));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Elephant"));
     }
 
     @Test
-    @DisplayName("Can destroy a land and give its controller an Elephant")
-    void destroysNonCreaturePermanent() {
-        harness.addToBattlefield(player2, new Forest());
-        castGenerousGift(harness.getPermanentId(player2, "Forest"));
+    @DisplayName("Creates the Elephant even when the destruction is regenerated")
+    void createsElephantWhenDestructionIsRegenerated() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setRegenerationShield(1);
+        castGenerousGift(target);
 
-        harness.assertNotOnBattlefield(player2, "Forest");
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Elephant"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player2, "Elephant")).hasSize(1);
     }
 
     @Test
-    @DisplayName("Cannot target a card that is not a permanent")
-    void requiresPermanentTarget() {
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
         harness.setHand(player1, List.of(new GenerousGift()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -59,10 +61,10 @@ class GenerousGiftTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castGenerousGift(java.util.UUID targetId) {
+    private void castGenerousGift(Permanent target) {
         harness.setHand(player1, List.of(new GenerousGift()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
     }
 }

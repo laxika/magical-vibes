@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "4")
 @CardRegistration(set = "SLD", collectorNumber = "493")
+@CardRegistration(set = "EA2", collectorNumber = "1")
 public class KozilekTheGreatDistortion extends Card {
 
     public KozilekTheGreatDistortion() {

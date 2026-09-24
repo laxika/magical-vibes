@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "143")
+@CardRegistration(set = "MB1", collectorNumber = "143")
+@CardRegistration(set = "UMA", collectorNumber = "133")
 public class GeneratorServant extends Card {
 
     public GeneratorServant() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileWithSuspe
 
 @CardRegistration(set = "FUT", collectorNumber = "35")
 @CardRegistration(set = "SLD", collectorNumber = "1788")
+@CardRegistration(set = "TSR", collectorNumber = "61")
 public class Delay extends Card {
 
     public Delay() {

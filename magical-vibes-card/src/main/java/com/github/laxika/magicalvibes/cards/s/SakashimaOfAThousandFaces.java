@@ -10,27 +10,24 @@ import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlled
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1541")
+@CardRegistration(set = "TLE", collectorNumber = "18")
 public class SakashimaOfAThousandFaces extends Card {
 
     public SakashimaOfAThousandFaces() {
+        IgnoreLegendRuleForControlledPermanentsEffect legendRuleExemption =
+                new IgnoreLegendRuleForControlledPermanentsEffect();
+        addEffect(EffectSlot.STATIC, legendRuleExemption);
+        // You may have Sakashima enter as a copy of another creature you control, except it has
+        // Sakashima's other abilities.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate()
-                )),
-                "creature you control",
-                null, null, Set.of(), List.of(), null, null, false, null, Set.of(),
-                Map.of(EffectSlot.STATIC, List.<CardEffect>of(
-                        new IgnoreLegendRuleForControlledPermanentsEffect()
-                )),
-                false, false, null, Set.of(), Set.of(Keyword.PARTNER), false, true, Set.of(), false, false, null, false
-        ));
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledPermanentsEffect());
+                        new PermanentControlledBySourceControllerPredicate())), "creature you control", Set.of(),
+                Map.of(EffectSlot.STATIC, List.<CardEffect>of(legendRuleExemption))));
     }
 }

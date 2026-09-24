@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "86")
 @CardRegistration(set = "SLD", collectorNumber = "1687")
+@CardRegistration(set = "EA1", collectorNumber = "5")
 public class KalitasTraitorOfGhet extends Card {
 
     public KalitasTraitorOfGhet() {

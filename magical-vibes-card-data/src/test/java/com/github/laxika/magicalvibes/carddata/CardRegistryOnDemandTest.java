@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.c.CurseclothWrappings;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HuntmasterOfTheFells;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -73,6 +76,29 @@ class CardRegistryOnDemandTest {
     }
 
     @Test
+    void missingPreferredPrintingFallsBackToAnotherRegisteredSet() {
+        List<CardSet> cardSets = Arrays.stream(CardSet.values())
+                .filter(set -> CardScanner.collectorNumberOf(Pacifism.class, set.getCode()).isPresent())
+                .sorted(Comparator.comparingInt(CardSet::ordinal).reversed())
+                .toList();
+        RecordingLoader loader = new RecordingLoader();
+        loader.omittedPrintings.add(cardSets.getFirst().getCode() + " #"
+                + CardScanner.collectorNumberOf(Pacifism.class, cardSets.getFirst().getCode()).orElseThrow());
+        registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
+        registry.load();
+
+        Pacifism first = new Pacifism();
+        Pacifism second = new Pacifism();
+
+        assertThat(first.getName()).isEqualTo("Pacifism");
+        assertThat(first.getManaCost()).isEqualTo("{1}{W}");
+        assertThat(first.getCardText()).startsWith(cardSets.get(1).getCode() + " #");
+        assertThat(second.getCardText()).isEqualTo(first.getCardText());
+        assertThat(loader.loadedSetCodes)
+                .containsExactly(cardSets.getFirst().getCode(), cardSets.get(1).getCode());
+    }
+
+    @Test
     void explicitModeLoadsOnlyCardsRequestedThroughTheRegistry() {
         RecordingLoader loader = new RecordingLoader();
         registry = new CardRegistry(loader, OracleLoadMode.EXPLICIT);
@@ -121,18 +147,23 @@ class CardRegistryOnDemandTest {
     @Test
     void failedLoadsRemainRetryableAndBackFaceOnlyClassesResolveThroughTheirFrontPrinting() {
         RecordingLoader loader = new RecordingLoader();
-        loader.failNextLoadOf("DKA");
+        // Back-face-only classes use their front's first set in registry order, which can change
+        // when a reprint is added.
+        String frontSet = Arrays.stream(CardSet.values())
+                .filter(set -> CardScanner.collectorNumberOf(HuntmasterOfTheFells.class, set.getCode()).isPresent())
+                .findFirst().orElseThrow().getCode();
+        loader.failNextLoadOf(frontSet);
         registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
         registry.load();
 
         assertThatThrownBy(RavagerOfTheFells::new)
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("DKA");
+                .hasMessageContaining(frontSet);
 
         RavagerOfTheFells ravager = new RavagerOfTheFells();
 
         assertThat(ravager.getName()).isEqualTo("Ravager of the Fells");
-        assertThat(loader.loadedSetCodes).containsExactly("DKA", "DKA");
+        assertThat(loader.loadedSetCodes).containsExactly(frontSet, frontSet);
     }
 
     /**
@@ -143,6 +174,7 @@ class CardRegistryOnDemandTest {
 
         private final List<String> loadedSetCodes = new ArrayList<>();
         private final Set<String> setsFailingNextLoad = new HashSet<>();
+        private final Set<String> omittedPrintings = new HashSet<>();
         private final Map<CardSet, List<CardPrinting>> printings = CardScanner.scan();
 
         void failNextLoadOf(String setCode) {
@@ -157,17 +189,18 @@ class CardRegistryOnDemandTest {
             }
 
             Map<String, OracleData> fronts = new HashMap<>();
+            Map<String, OracleData> backs = new HashMap<>();
             for (CardPrinting printing : printings.get(CardSet.findByCode(setCode))) {
-                if (implementedCollectorNumbers.contains(printing.collectorNumber())) {
+                if (implementedCollectorNumbers.contains(printing.collectorNumber())
+                        && !omittedPrintings.contains(setCode + " #" + printing.collectorNumber())) {
                     fronts.put(printing.collectorNumber(), oracle(printing.simpleCardClassName(),
                             setCode + " #" + printing.collectorNumber()));
+                    if (printing.cardClassName().equals(HuntmasterOfTheFells.class.getName())) {
+                        backs.put(printing.collectorNumber(), oracle("Ravager of the Fells", null));
+                    }
                 }
             }
 
-            Map<String, OracleData> backs = new HashMap<>();
-            if (setCode.equals("DKA") && implementedCollectorNumbers.contains("140")) {
-                backs.put("140", oracle("Ravager of the Fells", null));
-            }
             return new SetOracleData(setCode, implementedCollectorNumbers.size(),
                     Map.of(), fronts, backs, Map.of());
         }

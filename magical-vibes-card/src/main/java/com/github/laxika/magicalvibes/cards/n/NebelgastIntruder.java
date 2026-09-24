@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "64")
+@CardRegistration(set = "DBL", collectorNumber = "64")
 public class NebelgastIntruder extends Card {
 
     public NebelgastIntruder() {

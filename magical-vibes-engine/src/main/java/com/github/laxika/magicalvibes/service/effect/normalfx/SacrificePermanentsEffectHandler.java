@@ -223,8 +223,13 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         if (matching.size() <= count) {
             // Sacrifice all matching — no choice needed
-            for (Permanent perm : matching) {
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+            if (e.simultaneousChoices()) {
+                destructionSupport.performSimultaneousSacrifice(gameData,
+                        matching.stream().map(Permanent::getId).toList());
+            } else {
+                for (Permanent perm : matching) {
+                    destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                }
             }
             if (e.recordSacrificedCount()) {
                 entry.setEventValue(matching.size());

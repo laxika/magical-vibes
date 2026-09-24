@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "71")
+@CardRegistration(set = "UMA", collectorNumber = "60")
 public class JustTheWind extends Card {
 
     public JustTheWind() {

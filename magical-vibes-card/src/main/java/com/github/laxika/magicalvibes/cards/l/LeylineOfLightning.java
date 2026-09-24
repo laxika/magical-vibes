@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "68")
+@CardRegistration(set = "WOT", collectorNumber = "45")
 public class LeylineOfLightning extends Card {
 
     public LeylineOfLightning() {

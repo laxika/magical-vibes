@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "DGM", collectorNumber = "104")
 @CardRegistration(set = "SLD", collectorNumber = "275")
+@CardRegistration(set = "PIO", collectorNumber = "242")
 public class SireOfInsanity extends Card {
 
     public SireOfInsanity() {

@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,58 +32,66 @@ class GisasFavoriteShovelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When the equipped creature attacks, the defender sacrifices a creature and you create a Walker")
+    @DisplayName("Equip ability attaches Gisa's Favorite Shovel")
+    void equipAttachesShovel() {
+        Permanent shovel = addShovelReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(shovel.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Attacking with the equipped creature sacrifices a defending creature and creates a Walker")
     void attackSacrificesDefendingCreatureAndCreatesWalker() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shovel = addShovelReady(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        shovel.setAttachedTo(attacker.getId());
-        addCreatureReady(player2, new SuntailHawk());
-
-        declareAttackers(player1, List.of(1));
-        resolveAllTriggers();
-
-        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
-        assertThat(countPermanents(player1, "Walker")).isOne();
-    }
-
-    @Test
-    @DisplayName("The defending player chooses which creature to sacrifice")
-    void defendingPlayerChoosesCreature() {
-        Permanent shovel = addShovelReady(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        shovel.setAttachedTo(attacker.getId());
+        shovel.setAttachedTo(creature.getId());
         addCreatureReady(player2, new GrizzlyBears());
-        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
 
-        declareAttackers(player1, List.of(1));
-        harness.passBothPriorities();
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.maxCount()).isEqualTo(1);
-        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
-
-        harness.handleMultiplePermanentsChosen(player2, List.of(hawk.getId()));
-
-        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(countPermanents(player1, "Walker")).isOne();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Walker")).hasSize(1);
+        Permanent walker = findPermanents(player1, "Walker").getFirst();
+        assertThat(gqs.getEffectivePower(gd, walker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, walker)).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Attacking a player with no creatures creates no Walker")
-    void noDefendingCreatureCreatesNoWalker() {
+    @DisplayName("Defending player chooses which creature to sacrifice")
+    void defendingPlayerChoosesCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shovel = addShovelReady(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        shovel.setAttachedTo(attacker.getId());
+        shovel.setAttachedTo(creature.getId());
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(1));
-        resolveAllTriggers();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
 
-        assertThat(countPermanents(player1, "Walker")).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(second);
+        assertThat(findPermanents(player1, "Walker")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("No Walker is created when the defending player controls no creatures")
+    void noCreatureMeansNoWalker() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent shovel = addShovelReady(player1);
+        shovel.setAttachedTo(creature.getId());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Walker")).isEmpty();
     }
 
     private Permanent addShovelReady(Player player) {

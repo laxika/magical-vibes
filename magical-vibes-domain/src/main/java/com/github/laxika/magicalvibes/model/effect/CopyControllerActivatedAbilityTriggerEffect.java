@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 /**
- * Trigger descriptor for {@code ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY}: whenever an activated
- * ability that isn't a mana ability is activated, copy that ability. The copy's controller may
- * choose new targets for the copy.
+ * Trigger descriptor for ability-activation slots: copy an activated ability when its trigger
+ * condition matches. The copy's controller may choose new targets for the copy. The normal form is
+ * used in {@code ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY}; the {@code activationCostContainsX}
+ * form is also used in {@code ON_CONTROLLER_ACTIVATES_ABILITY} for triggers that include mana
+ * abilities.
  * <p>
- * At trigger time, {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}
- * snapshots the activated ability on the stack and places a
+ * At trigger time, the relevant trigger collector snapshots the activated ability on the stack and places a
  * {@link CopyControllerActivatedAbilityEffect} on the stack, wrapped in a {@link MayPayManaEffect}
  * when {@code manaCost} is non-null.
  * <p>
@@ -28,8 +29,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  *                             abilities activated by this permanent's controller
  * @param loyaltyAbilityOnly  when {@code true} the trigger fires only for loyalty abilities
  * @param targetPredicate      optional restriction on the activated ability's chosen targets
- * @param requiresXInActivationCost when {@code true} the trigger fires only for abilities whose
- *                                  activation cost contains {X}
+ * @param activationCostContainsX when {@code true}, the trigger fires only when the activated
+ *                                ability's mana activation cost contains {@code X}
  */
 public record CopyControllerActivatedAbilityTriggerEffect(
         String manaCost,
@@ -37,7 +38,7 @@ public record CopyControllerActivatedAbilityTriggerEffect(
         boolean equippedCreatureOnly,
         boolean loyaltyAbilityOnly,
         StackEntryPredicate targetPredicate,
-        boolean requiresXInActivationCost
+        boolean activationCostContainsX
 ) implements CardEffect {
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost) {
@@ -64,7 +65,7 @@ public record CopyControllerActivatedAbilityTriggerEffect(
         this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false);
     }
 
-    public static CopyControllerActivatedAbilityTriggerEffect withXInActivationCost() {
-        return new CopyControllerActivatedAbilityTriggerEffect(null, null, false, false, null, true);
+    public boolean requiresXInActivationCost() {
+        return activationCostContainsX;
     }
 }

@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "989")
 @CardRegistration(set = "SLD", collectorNumber = "1841")
 @CardRegistration(set = "SLD", collectorNumber = "2277")
+@CardRegistration(set = "MAR", collectorNumber = "57")
 public class MechanizedProduction extends Card {
 
     public MechanizedProduction() {

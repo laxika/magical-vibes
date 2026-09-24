@@ -15,6 +15,8 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "232")
 @CardRegistration(set = "A25", collectorNumber = "231")
+@CardRegistration(set = "KLR", collectorNumber = "269")
+@CardRegistration(set = "BRR", collectorNumber = "51")
 public class SelfAssembler extends Card {
 
     public SelfAssembler() {

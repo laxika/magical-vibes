@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "56")
 @CardRegistration(set = "MP2", collectorNumber = "43")
+@CardRegistration(set = "DMR", collectorNumber = "95")
+@CardRegistration(set = "MAR", collectorNumber = "68")
 public class NoMercy extends Card {
 
     public NoMercy() {

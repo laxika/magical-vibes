@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "10")
+@CardRegistration(set = "TSR", collectorNumber = "22")
 public class KnightOfSursi extends Card {
 
     public KnightOfSursi() {

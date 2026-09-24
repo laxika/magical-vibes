@@ -12,14 +12,16 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1571")
+@CardRegistration(set = "2X2", collectorNumber = "302")
+@CardRegistration(set = "PZA", collectorNumber = "15")
 public class ConquerorsFlail extends Card {
 
     public ConquerorsFlail() {
         addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
                 new ColorsAmongControlledPermanents(), new ColorsAmongControlledPermanents(),
                 GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
-                new SourceIsAttached(), new OpponentsCantCastOrActivateDuringYourTurnEffect(false)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceIsAttached(),
+                new OpponentsCantCastOrActivateDuringYourTurnEffect(false)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

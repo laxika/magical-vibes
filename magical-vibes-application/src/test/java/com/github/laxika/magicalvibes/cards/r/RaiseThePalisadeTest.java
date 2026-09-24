@@ -1,47 +1,51 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
+import com.github.laxika.magicalvibes.cards.d.DaruLancer;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RaiseThePalisade.class, AvianChangeling.class, GoblinPiker.class, GrizzlyBears.class})
+@CardUsed({RaiseThePalisade.class, AvianChangeling.class, GoblinPiker.class, GrizzlyBears.class, DaruLancer.class, Plains.class})
 class RaiseThePalisadeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Returns creatures that are not of the chosen type")
-    void returnsCreaturesExceptChosenType() {
+    void returnsCreaturesNotOfChosenTypeFromAllBattlefields() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GoblinPiker());
-        cast();
+        harness.addToBattlefield(player1, new DaruLancer());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DaruLancer());
+        harness.addToBattlefield(player1, new Plains());
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        cast();
         harness.handleListChoice(player1, "BEAR");
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInHand(player2, "Goblin Piker");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Daru Lancer");
+        harness.assertInHand(player2, "Daru Lancer");
+        harness.assertOnBattlefield(player1, "Plains");
     }
 
     @Test
-    @DisplayName("A changeling counts as the chosen creature type")
     void changelingCountsAsChosenType() {
-        harness.addToBattlefield(player2, new AvianChangeling());
-        harness.addToBattlefield(player2, new GoblinPiker());
+        harness.addToBattlefield(player1, new AvianChangeling());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
         cast();
+        harness.handleListChoice(player1, "GOBLIN");
 
-        harness.handleListChoice(player1, "BIRD");
-
-        harness.assertOnBattlefield(player2, "Avian Changeling");
-        harness.assertInHand(player2, "Goblin Piker");
+        harness.assertOnBattlefield(player1, "Avian Changeling");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void cast() {

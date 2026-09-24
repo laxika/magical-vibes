@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoretuskFirebeast.class, GrizzlyBears.class})
+@CardUsed({GoretuskFirebeast.class})
 class GoretuskFirebeastTest extends BaseCardTest {
 
     @Test
@@ -22,6 +22,14 @@ class GoretuskFirebeastTest extends BaseCardTest {
         castAndResolve(player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("ETB damage can target its controller")
+    void etbDealsDamageToController() {
+        castAndResolve(player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
     }
 
     @Test
@@ -37,7 +45,7 @@ class GoretuskFirebeastTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target a creature")
     void etbCannotTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoretuskFirebeast());
         prepareCard();
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, creature.getId()))

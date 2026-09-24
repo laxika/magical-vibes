@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "INR", collectorNumber = "380")
 @CardRegistration(set = "DDQ", collectorNumber = "59")
 @CardRegistration(set = "SLD", collectorNumber = "231")
+@CardRegistration(set = "2X2", collectorNumber = "78")
 public class Gravecrawler extends Card {
 
     public Gravecrawler() {

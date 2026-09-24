@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -17,6 +17,6 @@ public class StoryCircle extends Card {
 
     public StoryCircle() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addActivatedAbility(new ActivatedAbility(false, "{W}", List.of(new PreventNextColorDamageToControllerEffect()), "{W}: The next time a source of the chosen color would deal damage to you this turn, prevent that damage."));
+        addActivatedAbility(new ActivatedAbility(false, "{W}", List.of(PreventDamageFromChosenSourceEffect.nextDamageToYouOfChosenColor()), "{W}: The next time a source of the chosen color would deal damage to you this turn, prevent that damage."));
     }
 }

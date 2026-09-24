@@ -26,9 +26,8 @@ class VaevictisAsmadiTheDireTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, ownTarget.getId());
-        harness.handlePermanentChosen(player1, opponentTarget.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownTarget.getId(), opponentTarget.getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

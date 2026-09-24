@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDra
 
 @CardRegistration(set = "FRF", collectorNumber = "66")
 @CardRegistration(set = "SLD", collectorNumber = "873")
+@CardRegistration(set = "PIO", collectorNumber = "89")
+@CardRegistration(set = "TLE", collectorNumber = "161")
 public class DarkDeal extends Card {
 
     public DarkDeal() {

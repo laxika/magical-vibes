@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -47,6 +48,19 @@ class PlanarGuideTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
     }
 
+    @Test
+    void returnsControlledCreatureToItsOwner() {
+        harness.addToBattlefield(player1, new PlanarGuide());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.stolenCreatures.put(stolen.getId(), player1.getId());
+
+        activateGuide();
+        advanceToEndStep();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void activateGuide() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -58,8 +72,7 @@ class PlanarGuideTest extends BaseCardTest {
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 
     private int indexOnBattlefield(com.github.laxika.magicalvibes.model.Player player, String name) {

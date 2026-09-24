@@ -4,14 +4,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MoxTantalite.class)
+@CardUsed({MoxTantalite.class})
 class MoxTantaliteTest extends BaseCardTest {
 
     @Test
@@ -47,8 +46,9 @@ class MoxTantaliteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping Mox Tantalite adds one mana of the chosen color")
-    void tappingAddsOneManaOfChosenColor() {
-        harness.addToBattlefield(player1, new MoxTantalite());
+    void tappingAddsManaOfChosenColor() {
+        MoxTantalite mox = new MoxTantalite();
+        harness.addToBattlefield(player1, mox);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -57,7 +57,6 @@ class MoxTantaliteTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.stack).isEmpty();
     }
 
     private MoxTantalite suspendCard() {

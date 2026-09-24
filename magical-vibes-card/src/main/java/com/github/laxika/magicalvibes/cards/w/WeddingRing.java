@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActive;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceForTargetPlayerEffect;
@@ -22,23 +23,27 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1883")
 @CardRegistration(set = "SLD", collectorNumber = "2802")
+@CardRegistration(set = "MAR", collectorNumber = "7")
+@CardRegistration(set = "OMB", collectorNumber = "7")
 public class WeddingRing extends Card {
 
-    private static final PermanentAllOfPredicate WEDDING_RING_FILTER = new PermanentAllOfPredicate(List.of(
-            new PermanentIsArtifactPredicate(),
-            new PermanentNamedPredicate("Wedding Ring")));
-    private static final AllConditions OPPONENT_WEDDING_RING_DURING_TURN = new AllConditions(List.of(
-            new TargetPlayerControlsPermanent(WEDDING_RING_FILTER),
-            new TargetPlayerIsActive()));
-
     public WeddingRing() {
+        PermanentAllOfPredicate weddingRing = new PermanentAllOfPredicate(List.of(
+                new PermanentIsArtifactPredicate(),
+                new PermanentNamedPredicate("Wedding Ring")));
+        AllConditions opponentRingDuringTheirTurn = new AllConditions(List.of(
+                new TargetPlayerControlsPermanent(weddingRing),
+                new TargetPlayerTurn()));
+
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent")).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new WasCast(), new CreateTokenCopyOfSourceForTargetPlayerEffect()));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new ConditionalEffect(
-                OPPONENT_WEDDING_RING_DURING_TURN, new DrawCardEffect()));
-        addEffect(EffectSlot.ON_OPPONENT_GAINS_LIFE, new ConditionalEffect(
-                OPPONENT_WEDDING_RING_DURING_TURN, new GainLifeEffect(new EventValue())));
+                "Target must be an opponent"
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ConditionalEffect(new WasCast(),
+                        new CreateTokenCopyOfSourceForTargetPlayerEffect(PlayerRelation.OPPONENT)));
+        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+                new ConditionalEffect(opponentRingDuringTheirTurn, new DrawCardEffect()));
+        addEffect(EffectSlot.ON_OPPONENT_GAINS_LIFE,
+                new ConditionalEffect(opponentRingDuringTheirTurn, new GainLifeEffect(new EventValue())));
     }
 }

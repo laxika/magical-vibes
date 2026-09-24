@@ -24,7 +24,7 @@ import java.util.List;
 public class BalthorTheDefiled extends Card {
 
     public BalthorTheDefiled() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.MINION)));
 
         addActivatedAbility(new ActivatedAbility(

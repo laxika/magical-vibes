@@ -21,6 +21,8 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "62")
 @CardRegistration(set = "MM2", collectorNumber = "188")
+@CardRegistration(set = "UMA", collectorNumber = "209")
+@CardRegistration(set = "CMD", collectorNumber = "233")
 public class VengefulRebirth extends Card {
 
     public VengefulRebirth() {

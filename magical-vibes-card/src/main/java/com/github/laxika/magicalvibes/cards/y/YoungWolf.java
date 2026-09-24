@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "INR", collectorNumber = "425")
 @CardRegistration(set = "SLD", collectorNumber = "885")
 @CardRegistration(set = "SLD", collectorNumber = "1820")
+@CardRegistration(set = "SIS", collectorNumber = "58")
 public class YoungWolf extends Card {
 }

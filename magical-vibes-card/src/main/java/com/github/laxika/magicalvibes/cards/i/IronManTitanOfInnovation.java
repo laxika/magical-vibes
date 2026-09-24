@@ -18,30 +18,26 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1731")
+@CardRegistration(set = "MAR", collectorNumber = "91")
 public class IronManTitanOfInnovation extends Card {
 
     public IronManTitanOfInnovation() {
-        PermanentPredicate noncreatureArtifact = new PermanentAllOfPredicate(List.of(
-                new PermanentIsArtifactPredicate(),
-                new PermanentNotPredicate(new PermanentIsCreaturePredicate())
-        ));
-
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 CreateTokenEffect.ofTreasureToken(1),
                 new MayEffect(
                         new SacrificePermanentThenEffect(
-                                noncreatureArtifact,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsArtifactPredicate(),
+                                        new PermanentNotPredicate(new PermanentIsCreaturePredicate())
+                                )),
                                 new SearchLibraryEffect(
                                         new CardTypePredicate(CardType.ARTIFACT),
                                         LibrarySearchDestination.BATTLEFIELD_TAPPED,
                                         new ManaValueBound(new SacrificedPermanentManaValue(), true, 1)),
-                                "a noncreature artifact",
-                                false,
-                                false),
+                                "a noncreature artifact", false, false),
                         "Sacrifice a noncreature artifact?")));
     }
 }

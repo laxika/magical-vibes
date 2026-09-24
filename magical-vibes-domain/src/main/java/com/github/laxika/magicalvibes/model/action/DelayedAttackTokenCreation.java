@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.action;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
 
@@ -11,6 +12,12 @@ public record DelayedAttackTokenCreation(
         int amount,
         CreateTokenEffect tokenEffect,
         boolean sacrificeAtEndStep,
-        Card sourceCard
+        Card sourceCard,
+        PermanentPredicate attackerPredicate
 ) implements DelayedAction {
+
+    public DelayedAttackTokenCreation(UUID controllerId, int amount, CreateTokenEffect tokenEffect,
+                                      boolean sacrificeAtEndStep, Card sourceCard) {
+        this(controllerId, amount, tokenEffect, sacrificeAtEndStep, sourceCard, null);
+    }
 }

@@ -12,22 +12,24 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1936")
+@CardRegistration(set = "MH1", collectorNumber = "92")
 public class ForceOfDespair extends Card {
 
     public ForceOfDespair() {
         // If it's not your turn, you may exile a black card from your hand rather than pay this
         // spell's mana cost.
-        addCastingOption(new AlternateHandCast(List.of(
-                new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.BLACK), "black")),
-                new NotControllerTurn(), false));
+        addCastingOption(new AlternateHandCast(
+                List.of(new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.BLACK), "black")),
+                new NotControllerTurn(),
+                false));
 
         // Destroy all creatures that entered the battlefield this turn.
         addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentEnteredBattlefieldThisTurnPredicate()))));
+                new PermanentEnteredBattlefieldThisTurnPredicate()
+        ))));
     }
 }

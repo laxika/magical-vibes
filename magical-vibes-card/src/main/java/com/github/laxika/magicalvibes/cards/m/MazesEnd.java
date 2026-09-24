@@ -21,6 +21,8 @@ import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "152")
 @CardRegistration(set = "SLD", collectorNumber = "1834")
+@CardRegistration(set = "HA3", collectorNumber = "27")
+@CardRegistration(set = "PIO", collectorNumber = "269")
 public class MazesEnd extends Card {
 
     public MazesEnd() {

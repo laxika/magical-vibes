@@ -11,11 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "851")
+@CardRegistration(set = "GNT", collectorNumber = "3")
 public class RotHulk extends Card {
 
     public RotHulk() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
-                new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                new Sum(new PlayersInGame(), new Fixed(-1))));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                        new CardSubtypePredicate(CardSubtype.ZOMBIE),
+                        new Sum(new PlayersInGame(), new Fixed(-1))));
     }
 }

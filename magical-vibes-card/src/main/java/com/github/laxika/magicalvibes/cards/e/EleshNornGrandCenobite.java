@@ -8,9 +8,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "NPH", collectorNumber = "9")
 @CardRegistration(set = "MM2", collectorNumber = "16")
+@CardRegistration(set = "MB1", collectorNumber = "88")
 @CardRegistration(set = "IMA", collectorNumber = "18")
 @CardRegistration(set = "SLD", collectorNumber = "209")
 @CardRegistration(set = "SLD", collectorNumber = "811")
+@CardRegistration(set = "HA5", collectorNumber = "2")
+@CardRegistration(set = "MUL", collectorNumber = "3")
+@CardRegistration(set = "MUL", collectorNumber = "68")
+@CardRegistration(set = "MUL", collectorNumber = "133")
 public class EleshNornGrandCenobite extends Card {
 
     public EleshNornGrandCenobite() {

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "177")
 @CardRegistration(set = "SLD", collectorNumber = "642")
+@CardRegistration(set = "TSR", collectorNumber = "187")
 public class SedgeSliver extends Card {
 
     public SedgeSliver() {

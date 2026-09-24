@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 
 @CardRegistration(set = "EMN", collectorNumber = "113")
+@CardRegistration(set = "SIR", collectorNumber = "139")
 public class WeirdedVampire extends Card {
 
     public WeirdedVampire() {

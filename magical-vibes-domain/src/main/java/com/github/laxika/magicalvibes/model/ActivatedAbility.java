@@ -50,6 +50,8 @@ public class ActivatedAbility {
     /** Whether this ability is a boast ability and can use extra boast activation permissions. */
     private boolean boast;
     private final boolean variableLoyaltyCost;
+    /** Whether this loyalty-style ability uses player spark counters instead of loyalty counters. */
+    private boolean sparkAbility;
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
@@ -338,6 +340,7 @@ public class ActivatedAbility {
         copy.requiresXValue = this.requiresXValue;
         copy.minimumXValue = this.minimumXValue;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
+        copy.sparkAbility = this.sparkAbility;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
         copy.xColorRestrictions = this.xColorRestrictions == null
@@ -394,6 +397,12 @@ public class ActivatedAbility {
     public ActivatedAbility withPowerUp() {
         this.powerUpAbility = true;
         this.maxActivationsPerGame = 1;
+        return this;
+    }
+
+    /** Marks this loyalty-style ability as a spark ability. */
+    public ActivatedAbility withSpark() {
+        this.sparkAbility = true;
         return this;
     }
 
@@ -775,7 +784,8 @@ public class ActivatedAbility {
 
     /** Whether this activated ability is an equip ability. */
     public boolean isEquipAbility() {
-        return effects.stream().anyMatch(EquipEffect.class::isInstance);
+        return effects.stream().anyMatch(effect -> effect instanceof EquipEffect equip
+                && !equip.permitsCreatureEquipment());
     }
 
     /**

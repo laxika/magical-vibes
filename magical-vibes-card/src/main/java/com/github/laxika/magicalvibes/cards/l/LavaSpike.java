@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 @CardRegistration(set = "SLD", collectorNumber = "997")
 @CardRegistration(set = "SLD", collectorNumber = "2049")
 @CardRegistration(set = "SLD", collectorNumber = "2054")
+@CardRegistration(set = "UMA", collectorNumber = "136")
+@CardRegistration(set = "TSR", collectorNumber = "347")
 public class LavaSpike extends Card {
 
     public LavaSpike() {

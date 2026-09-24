@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "73")
+@CardRegistration(set = "GN3", collectorNumber = "41")
 public class TalrandsInvocation extends Card {
 
     public TalrandsInvocation() {

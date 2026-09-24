@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "117")
 @CardRegistration(set = "V13", collectorNumber = "14")
+@CardRegistration(set = "GK1", collectorNumber = "28")
 public class Char extends Card {
 
     public Char() {

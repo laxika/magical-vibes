@@ -742,10 +742,7 @@ public class PlayerInteractionSupport {
         }
 
         if (revealHand) {
-            GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals their hand: ");
-            appendCardList(revealBuilder, hand);
-            revealBuilder.text(".");
-            gameLogService.append(gameData, revealBuilder.build());
+            cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
         } else {
             cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
         }
@@ -761,7 +758,7 @@ public class PlayerInteractionSupport {
                 typeMatches = includedTypes.contains(handCard.getType())
                         || handCard.getAdditionalTypes().stream().anyMatch(includedTypes::contains);
             } else {
-                typeMatches = !excludedTypes.contains(handCard.getType());
+                typeMatches = excludedTypes.stream().noneMatch(handCard::hasType);
             }
             if (typeMatches
                     && (filter == null || predicateEvaluationService.matchesCardPredicate(
@@ -1203,6 +1200,9 @@ public class PlayerInteractionSupport {
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
             int amount = variableAmounts ? amounts.remove(0) : followUp.eachPlayerAmount();
+            if (amount <= 0) {
+                continue;
+            }
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
             if (gameData.discardCausedByOpponent
                     && gameQueryService.isDiscardPrevented(gameData, nextPlayerId)) {

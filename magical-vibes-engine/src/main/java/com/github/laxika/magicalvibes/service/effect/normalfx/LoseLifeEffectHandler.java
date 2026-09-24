@@ -87,6 +87,11 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
             case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, false);
             case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, true);
+            case EACH_OTHER_PLAYER -> {
+                UUID owner = entry.getCard().getOwnerId() != null
+                        ? entry.getCard().getOwnerId() : controllerId;
+                eachPlayerLosesLife(gameData, e, entry, owner, amount, sourceName, false);
+            }
         }
     }
 
@@ -187,7 +192,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
         int totalLifeLost = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (opponentsOnly && playerId.equals(controllerId)) {
+            if (playerId.equals(controllerId) && (opponentsOnly || e.recipient() == LoseLifeRecipient.EACH_OTHER_PLAYER)) {
                 continue;
             }
             // "each opponent who doesn't control an Elf" — players controlling a matching

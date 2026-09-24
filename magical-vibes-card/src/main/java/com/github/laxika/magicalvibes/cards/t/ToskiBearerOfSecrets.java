@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "197")
 @CardRegistration(set = "SLD", collectorNumber = "1930")
+@CardRegistration(set = "SPG", collectorNumber = "60")
 public class ToskiBearerOfSecrets extends Card {
 
     public ToskiBearerOfSecrets() {

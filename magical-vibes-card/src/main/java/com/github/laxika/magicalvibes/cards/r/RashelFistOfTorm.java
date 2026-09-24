@@ -12,10 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1237")
+@CardRegistration(set = "SLX", collectorNumber = "24")
 public class RashelFistOfTorm extends Card {
 
     public RashelFistOfTorm() {
-        // Auras you control have exalted.
+        // Auras you control have exalted. Grant the exalted attack trigger to each Aura you
+        // control; the trigger's recorded attacker is boosted when it attacks alone.
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)),

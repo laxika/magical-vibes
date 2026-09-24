@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "176")
+@CardRegistration(set = "TSR", collectorNumber = "362")
 public class EvolutionaryLeap extends Card {
 
     public EvolutionaryLeap() {

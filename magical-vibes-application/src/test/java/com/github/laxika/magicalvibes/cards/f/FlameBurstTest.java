@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FlameBurst.class, DuskImp.class})
 class FlameBurstTest extends BaseCardTest {
 
     @Test
@@ -20,8 +20,7 @@ class FlameBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlameBurst()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -35,8 +34,7 @@ class FlameBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlameBurst()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -44,14 +42,12 @@ class FlameBurstTest extends BaseCardTest {
     @Test
     @DisplayName("Does not count other cards in graveyards")
     void ignoresOtherCards() {
-        Card other = new LlanowarElves();
-        gd.playerGraveyards.get(player1.getId()).add(other);
+        gd.playerGraveyards.get(player1.getId()).add(new DuskImp());
 
         harness.setHand(player1, List.of(new FlameBurst()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -60,15 +56,14 @@ class FlameBurstTest extends BaseCardTest {
     @DisplayName("Can target a creature and kills it with the boosted damage")
     void damagesTargetCreature() {
         gd.playerGraveyards.get(player1.getId()).add(new FlameBurst());
-        var bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var imp = harness.addToBattlefieldAndReturn(player2, new DuskImp());
 
         harness.setHand(player1, List.of(new FlameBurst()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, imp.getId());
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Dusk Imp");
     }
 
     @Test
@@ -77,12 +72,10 @@ class FlameBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlameBurst(), new FlameBurst()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 }

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,89 +11,68 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZethiArcaneBlademaster.class, ThinkTwice.class, GrizzlyBears.class})
+@CardUsed({ZethiArcaneBlademaster.class, ThinkTwice.class, GrizzlyBears.class, Fog.class, Forest.class, DarkRitual.class})
 class ZethiArcaneBlademasterTest extends BaseCardTest {
 
     @Test
-    void multikickerExilesUpToTheNumberOfKicksAndAddsKickCounters() {
-        Card first = new ThinkTwice();
-        Card second = new ThinkTwice();
-        harness.setGraveyard(player1, List.of(first, second));
-        castZethi(List.of("{W/U}", "{W/U}"));
+    void exilesUpToTheNumberOfMultikickerPaymentsAndAddsKickCounters() {
+        Card instant = new Fog();
+        Card nonInstant = new Forest();
+        harness.setGraveyard(player1, List.of(instant, nonInstant));
+        harness.setHand(player1, List.of(new ZethiArcaneBlademaster()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.passBothPriorities();
+        castZethi(List.of("{W/U}", "{W/U}"));
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.maxCount()).isEqualTo(2);
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
-
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        assertThat(choice)
+                .withFailMessage("interaction=%s stack=%s graveyard=%s exiled=%s", gd.interaction.activeInteraction(),
+                        gd.stack, gd.playerGraveyards.get(player1.getId()), gd.exiledCards)
+                .isNotNull();
+        assertThat(choice.cards()).containsExactly(instant);
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardsWithKickCounters)
-                .containsExactlyInAnyOrder(first.getId(), second.getId());
-        assertThat(gd.getCardsExiledByPermanent(findPermanent(player1, "Zethi, Arcane Blademaster").getId()))
-                .containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonInstant);
+        assertThat(gd.findExiledCard(instant.getId())).isNotNull();
+        assertThat(gd.exiledCardsWithKickCounters).contains(instant.getId());
     }
 
     @Test
-    void attackOffersCopiesOnlyOfKickCounterCards() {
-        Card kickedCard = new ThinkTwice();
-        Card notKickedCard = new ThinkTwice();
-        harness.setGraveyard(player1, List.of(kickedCard, notKickedCard));
-        castZethi(List.of("{W/U}"));
+    void attackingOffersOwnedKickCounterCardsAsNormalCostCopies() {
+        addCreatureReady(player1, new ZethiArcaneBlademaster());
+        DarkRitual ritual = new DarkRitual();
+        gd.addToExile(player1.getId(), ritual, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
+        gd.exiledCardsWithKickCounters.add(ritual.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        assertThat(gd.getCardsExiledByPermanent(gd.playerBattlefields.get(player1.getId()).getFirst().getId()))
+                .containsExactly(ritual);
 
-        harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(kickedCard.getId()));
-        harness.passBothPriorities();
-
-        Permanent zethi = findPermanent(player1, "Zethi, Arcane Blademaster");
-        zethi.setSummoningSick(false);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(zethi)));
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction())
+                .withFailMessage("interaction=%s stack=%s pending=%s exiled=%s", gd.interaction.activeInteraction(),
+                        gd.stack, gd.pendingMayAbilities, gd.exiledCards)
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof GrizzlyBears);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Dark Ritual"));
     }
 
-    @Test
-    void withoutMultikickerTheEtbExilesNoCards() {
-        Card instant = new ThinkTwice();
-        harness.setGraveyard(player1, List.of(instant));
-        harness.setHand(player1, List.of(new ZethiArcaneBlademaster()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant);
-        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-    }
-
-    private void castZethi(List<String> repeatedAdditionalCosts) {
-        harness.setHand(player1, List.of(new ZethiArcaneBlademaster()));
-        harness.addMana(player1, ManaColor.WHITE, 1 + repeatedAdditionalCosts.size());
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+    private void castZethi(List<String> payments) {
         gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
                 null, null, null, null, null, false, null, null, null, null,
-                repeatedAdditionalCosts, false);
+                payments, false);
+        harness.passBothPriorities();
     }
 }

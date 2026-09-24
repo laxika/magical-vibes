@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddPlusCountersEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "218")
+@CardRegistration(set = "RVR", collectorNumber = "210")
 public class Phytohydra extends Card {
 
     public Phytohydra() {

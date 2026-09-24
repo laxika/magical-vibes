@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect.CopyCastCost;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -14,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "136")
+@CardRegistration(set = "SLZ", collectorNumber = "110")
+@CardRegistration(set = "SLZ", collectorNumber = "231")
+@CardRegistration(set = "SLZ", collectorNumber = "352")
 public class PanopticMirror extends Card {
 
     public PanopticMirror() {
@@ -26,7 +30,7 @@ public class PanopticMirror extends Card {
                         "You may exile an instant or sorcery card with mana value X from your hand.")),
                 "{X}, {T}: You may exile an instant or sorcery card with mana value X from your hand."));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                new CopyImprintedCardAndMayCastCopyEffect(false),
+                new CopyCardsExiledWithSourceAndMayCastCopiesEffect(false, CopyCastCost.FREE),
                 "Copy a card exiled with Panoptic Mirror?"
         ));
     }

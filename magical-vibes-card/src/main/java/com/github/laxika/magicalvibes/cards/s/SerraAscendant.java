@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "IMA", collectorNumber = "31")
 @CardRegistration(set = "SLD", collectorNumber = "1125")
 @CardRegistration(set = "SLD", collectorNumber = "2291")
+@CardRegistration(set = "HA1", collectorNumber = "1")
 public class SerraAscendant extends Card {
 
     public SerraAscendant() {

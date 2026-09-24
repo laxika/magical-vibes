@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentController
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "193")
+@CardRegistration(set = "KLR", collectorNumber = "219")
 public class AetherworksMarvel extends Card {
 
     public AetherworksMarvel() {

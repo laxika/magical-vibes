@@ -1,23 +1,23 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.EtherealChampion;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GorillaChieftain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KarooMeerkat;
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sunweb.class, PearlDragon.class, GiantGrowth.class, GorillaChieftain.class, GrizzlyBears.class})
+@CardUsed({EtherealChampion.class, GiantGrowth.class, GorillaChieftain.class, GrizzlyBears.class, KarooMeerkat.class, PearlDragon.class, Sunweb.class})
 class SunwebTest extends BaseCardTest {
 
     @Test
@@ -49,6 +49,34 @@ class SunwebTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sunweb can block a creature with power exactly 3")
+    void canBlockPowerExactlyThree() {
+        Permanent sunweb = addCreatureReady(player2, new Sunweb());
+
+        Permanent atkPerm = addCreatureReady(player1, new EtherealChampion()); // 3/4
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sunweb.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sunweb can block a creature with power exactly 3")
+    void canBlockPowerExactlyThreeUpstreamReview() {
+        Permanent sunweb = addCreatureReady(player2, new Sunweb());
+
+        addCreatureReady(player1, new GorillaChieftain()); // 3/3
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sunweb.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Sunweb cannot block a creature with power 2 or less")
     void cannotBlockLowPowerCreature() {
         addCreatureReady(player2, new Sunweb());
@@ -62,16 +90,13 @@ class SunwebTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sunweb can block a creature with power exactly 3")
-    void canBlockPowerExactlyThree() {
-        Permanent sunweb = addCreatureReady(player2, new Sunweb());
+    @DisplayName("Sunweb cannot attack because it has defender")
+    void cannotAttackBecauseOfDefender() {
+        addCreatureReady(player1, new Sunweb());
 
-        addCreatureReady(player1, new GorillaChieftain()); // 3/3
-        declareAttackersAndPrepareBlockers(List.of(0));
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-
-        assertThat(sunweb.isBlocking()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test
@@ -89,15 +114,5 @@ class SunwebTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(sunweb.isBlocking()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Sunweb cannot attack because it has defender")
-    void cannotAttackBecauseOfDefender() {
-        addCreatureReady(player1, new Sunweb());
-
-        assertThatThrownBy(() -> declareAttackers(List.of(0)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid attacker index");
     }
 }

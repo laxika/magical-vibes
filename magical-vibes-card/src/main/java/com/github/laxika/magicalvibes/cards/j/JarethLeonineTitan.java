@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -13,10 +14,11 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "43")
 @CardRegistration(set = "EMA", collectorNumber = "16")
 @CardRegistration(set = "VMA", collectorNumber = "31")
+@CardRegistration(set = "C15", collectorNumber = "71")
 public class JarethLeonineTitan extends Card {
 
     public JarethLeonineTitan() {
-        addEffect(EffectSlot.ON_BLOCK, new BoostSelfEffect(7, 7));
+        addEffect(EffectSlot.ON_BLOCK, new BoostSelfEffect(7, 7), TriggerMode.ONCE_PER_BLOCK);
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",

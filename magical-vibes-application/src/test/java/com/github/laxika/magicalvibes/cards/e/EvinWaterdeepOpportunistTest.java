@@ -1,61 +1,65 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.AshnodsAltar;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Treasure;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EvinWaterdeepOpportunist.class, DiabolicEdict.class, GrizzlyBears.class, Treasure.class})
+@CardUsed({EvinWaterdeepOpportunist.class, DiabolicEdict.class, GrizzlyBears.class, Treasure.class, AshnodsAltar.class})
 class EvinWaterdeepOpportunistTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Gets +2/+0 for each Treasure controlled")
-    void boostsForTreasuresControlled() {
-        harness.addToBattlefield(player1, new EvinWaterdeepOpportunist());
-        harness.addToBattlefield(player1, new Treasure());
-        harness.addToBattlefield(player1, new Treasure());
-        harness.addToBattlefield(player2, new Treasure());
+    @DisplayName("Gets +2/+0 for each Treasure you control")
+    void scalesPowerWithTreasures() {
+        Permanent evin = harness.addToBattlefieldAndReturn(player1, new EvinWaterdeepOpportunist());
+        addTreasureToken(player1);
+        addTreasureToken(player1);
 
-        Permanent evin = findPermanent(player1, "Evin, Waterdeep Opportunist");
         assertThat(gqs.getEffectivePower(gd, evin)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, evin)).isEqualTo(4);
     }
 
     @Test
-    @DisplayName("Creates one Treasure after a creature is sacrificed and does not trigger again that turn")
-    void createsTreasureOnceEachTurn() {
+    @DisplayName("Creates one tapped Treasure when a creature is sacrificed, once each turn")
+    void createsTappedTreasureOnceEachTurn() {
         harness.addToBattlefield(player1, new EvinWaterdeepOpportunist());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        castEdictAt(player2);
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AshnodsAltar());
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(altar), null, null);
+        harness.handlePermanentChosen(player1, firstBear.getId());
+        resolveAllTriggers();
+
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isTrue();
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        castEdictAt(player2);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(altar), null, null);
+        harness.handlePermanentChosen(player1, secondBear.getId());
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 
-    private void castEdictAt(com.github.laxika.magicalvibes.model.Player target) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new DiabolicEdict()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, target.getId());
+    private void addTreasureToken(com.github.laxika.magicalvibes.model.Player player) {
+        Card treasureCard = new Card();
+        treasureCard.setName("Treasure");
+        treasureCard.setType(CardType.ARTIFACT);
+        treasureCard.setToken(true);
+        treasureCard.setSubtypes(List.of(CardSubtype.TREASURE));
+        harness.addToBattlefield(player, treasureCard);
     }
 }

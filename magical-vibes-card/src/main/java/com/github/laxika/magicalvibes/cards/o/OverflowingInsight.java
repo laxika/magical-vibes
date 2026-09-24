@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "66")
+@CardRegistration(set = "ANB", collectorNumber = "30")
 public class OverflowingInsight extends Card {
 
     public OverflowingInsight() {

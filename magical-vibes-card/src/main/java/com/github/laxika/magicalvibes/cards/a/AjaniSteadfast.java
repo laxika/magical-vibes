@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M15", collectorNumber = "1")
 @CardRegistration(set = "SLD", collectorNumber = "87")
+@CardRegistration(set = "PIO", collectorNumber = "319")
 public class AjaniSteadfast extends Card {
 
     public AjaniSteadfast() {

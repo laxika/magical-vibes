@@ -14,6 +14,9 @@ import java.util.List;
 @CardRegistration(set = "AVR", collectorNumber = "57")
 @CardRegistration(set = "MM3", collectorNumber = "39")
 @CardRegistration(set = "SLD", collectorNumber = "2229")
+@CardRegistration(set = "SLZ", collectorNumber = "17")
+@CardRegistration(set = "SLZ", collectorNumber = "138")
+@CardRegistration(set = "SLZ", collectorNumber = "259")
 public class GhostlyFlicker extends Card {
 
     public GhostlyFlicker() {

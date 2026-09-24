@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "ME3", collectorNumber = "114")
 @CardRegistration(set = "SLD", collectorNumber = "467")
 @CardRegistration(set = "SLD", collectorNumber = "2073")
+@CardRegistration(set = "2X2", collectorNumber = "141")
 public class ConcordantCrossroads extends Card {
 
     public ConcordantCrossroads() {

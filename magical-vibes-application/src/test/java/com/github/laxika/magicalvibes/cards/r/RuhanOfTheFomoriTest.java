@@ -5,23 +5,22 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(RuhanOfTheFomori.class)
+@CardUsed({RuhanOfTheFomori.class})
 class RuhanOfTheFomoriTest extends BaseCardTest {
 
     @Test
-    @DisplayName("At the beginning of combat, Ruhan must attack its randomly chosen opponent")
-    void beginningOfCombatChoosesOpponentAndForcesAttack() {
+    @DisplayName("At the beginning of its controller's combat, Ruhan chooses the opponent and must attack this combat")
+    void choosesOpponentAndMustAttackThisCombat() {
         Permanent ruhan = addReadyRuhan(player1);
 
-        advanceToCombat(player1);
+        advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
 
         assertThat(ruhan.isMustAttackThisCombat()).isTrue();
@@ -31,44 +30,41 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
-
-        gs.declareAttackers(gd, player1, List.of(0));
-        assertThat(gd.getLife(player2.getId())).isEqualTo(13);
     }
 
     @Test
-    @DisplayName("The ability does not trigger during an opponent's combat")
-    void doesNotTriggerDuringOpponentsCombat() {
+    @DisplayName("Ruhan's requirement is combat-scoped")
+    void requirementIsCombatScoped() {
         Permanent ruhan = addReadyRuhan(player1);
 
-        advanceToCombat(player2);
+        advanceToBeginningOfCombat(player1);
+        harness.passBothPriorities();
+        assertThat(ruhan.isMustAttackThisCombat()).isTrue();
 
-        assertThat(gd.stack).isEmpty();
+        ruhan.clearCombatState();
+
         assertThat(ruhan.isMustAttackThisCombat()).isFalse();
     }
 
     @Test
-    @DisplayName("The random-opponent attack requirement ends with combat")
-    void requirementEndsWithCombat() {
+    @DisplayName("Ruhan does not trigger on an opponent's combat")
+    void doesNotTriggerOnOpponentsCombat() {
         Permanent ruhan = addReadyRuhan(player1);
 
-        advanceToCombat(player1);
+        advanceToBeginningOfCombat(player2);
         harness.passBothPriorities();
-        assertThat(ruhan.isMustAttackThisCombat()).isTrue();
-
-        beginDeclareAttackers(player1);
-        gs.declareAttackers(gd, player1, List.of(0));
 
         assertThat(ruhan.isMustAttackThisCombat()).isFalse();
     }
 
     private Permanent addReadyRuhan(Player player) {
-        Permanent ruhan = harness.addToBattlefieldAndReturn(player, new RuhanOfTheFomori());
+        Permanent ruhan = new Permanent(new RuhanOfTheFomori());
         ruhan.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(ruhan);
         return ruhan;
     }
 
-    private void advanceToCombat(Player activePlayer) {
+    private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

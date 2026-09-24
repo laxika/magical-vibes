@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryIfPlayerDealtDamageThisWa
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "154")
+@CardRegistration(set = "DBL", collectorNumber = "154")
 public class PlayWithFire extends Card {
 
     public PlayWithFire() {

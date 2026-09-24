@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "EMA", collectorNumber = "64")
 @CardRegistration(set = "PCA", collectorNumber = "22")
 @CardRegistration(set = "SLD", collectorNumber = "1488")
+@CardRegistration(set = "DMR", collectorNumber = "65")
 public class PeregrineDrake extends Card {
 
     public PeregrineDrake() {

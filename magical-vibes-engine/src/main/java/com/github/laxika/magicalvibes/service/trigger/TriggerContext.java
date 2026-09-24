@@ -21,6 +21,9 @@ import java.util.Set;
  */
 public sealed interface TriggerContext {
 
+    /** Context for a Saga's final chapter ability finishing resolution. */
+    record SagaFinalChapterAbilityResolved(UUID sagaControllerId) implements TriggerContext {}
+
     record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {
         public Card spellCard() {
             return copiedSpell.getCard();
@@ -65,6 +68,9 @@ public sealed interface TriggerContext {
     /** Context for "whenever a spell you've cast is countered" triggers. */
     record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
 
+    /** Context for a spell's own "when this spell is countered or fizzles" ability. */
+    record SpellCounteredOrFizzled(StackEntry spellEntry) implements TriggerContext {}
+
     /**
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
      * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
@@ -104,12 +110,18 @@ public sealed interface TriggerContext {
     /** Context for cycling triggers. */
     record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
 
+    /** Context for opponent-mill triggers. */
+    record Mill(UUID milledPlayerId, int milledCount) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
             this(scryingPlayerId, 0);
         }
     }
+
+    /** Context for triggers caused by a player being tempted by the Ring. */
+    record RingTemptsYou(UUID temptedPlayerId) implements TriggerContext {}
 
     /** Context for controller-investigate triggers. */
     record Investigate(UUID investigatingPlayerId) implements TriggerContext {}
@@ -222,8 +234,9 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
-    /** Context for a creature controlled by a player exploiting a nontoken creature. */
-    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard)
+    /** Context for a creature controlled by a player exploiting another creature. */
+    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard,
+                           int exploitedPower)
             implements TriggerContext {}
 
     record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
@@ -255,7 +268,14 @@ public sealed interface TriggerContext {
 
     /** Context for a creature dealing damage to another creature. */
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
-                                          int damageDealt, boolean combatDamage) implements TriggerContext {}
+                                          int damageDealt, boolean combatDamage,
+                                          Permanent damagedCreature, UUID damagedCreatureControllerId)
+            implements TriggerContext {
+        public CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
+                                              int damageDealt, boolean combatDamage) {
+            this(damageSource, damagedCreatureId, damageDealt, combatDamage, null, null);
+        }
+    }
 
     /** Context for a creature fighting another creature. */
     record CreatureFights(Permanent fightingCreature) implements TriggerContext {}
@@ -316,6 +336,9 @@ public sealed interface TriggerContext {
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
 
+    /** Context for a lore counter placed on a Saga the placing player controls. */
+    record LoreCounterPlaced(Permanent saga, UUID placingPlayerId) implements TriggerContext {}
+
     /** Context for a controller untapping one or more permanents during their untap step. */
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
@@ -347,7 +370,8 @@ public sealed interface TriggerContext {
     record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
 
     /**
-     * Context for enter-the-battlefield triggers (ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+     * Context for enter-the-battlefield triggers (ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+     * ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
      * ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD).
      *
@@ -675,6 +699,9 @@ public sealed interface TriggerContext {
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}
 
+    /** Context for ON_ANY_CARDS_PUT_INTO_LIBRARY triggers. */
+    record CardsPutIntoLibrary(UUID libraryOwnerId, int cardCount) implements TriggerContext {}
+
     /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
     record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,
                                          UUID causeControllerId) implements TriggerContext {}
@@ -740,6 +767,10 @@ public sealed interface TriggerContext {
             creatureCards = List.copyOf(creatureCards);
         }
     }
+
+    /** Context for creatures exiled from the battlefield, regardless of controller. */
+    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
+            implements TriggerContext {}
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}
@@ -816,6 +847,10 @@ public sealed interface TriggerContext {
     record Crime(UUID committingPlayerId) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
-    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
-            implements TriggerContext {}
+    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
+                                              boolean enlistment) implements TriggerContext {
+        public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility) {
+            this(attackingCreature, triggeredAbility, false);
+        }
+    }
 }

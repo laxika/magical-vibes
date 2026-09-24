@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacri
 @CardRegistration(set = "AVR", collectorNumber = "210")
 @CardRegistration(set = "INR", collectorNumber = "247")
 @CardRegistration(set = "INR", collectorNumber = "434")
+@CardRegistration(set = "UMA", collectorNumber = "206")
+@CardRegistration(set = "SIS", collectorNumber = "66")
 public class SigardaHostOfHerons extends Card {
 
     public SigardaHostOfHerons() {

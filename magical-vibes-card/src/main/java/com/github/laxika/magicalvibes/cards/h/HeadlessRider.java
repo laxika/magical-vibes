@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "118")
 @CardRegistration(set = "SLD", collectorNumber = "844")
+@CardRegistration(set = "DBL", collectorNumber = "385")
 public class HeadlessRider extends Card {
 
     private static final CreateTokenEffect ZOMBIE_TOKEN = CreateTokenEffect.blackZombie(1);

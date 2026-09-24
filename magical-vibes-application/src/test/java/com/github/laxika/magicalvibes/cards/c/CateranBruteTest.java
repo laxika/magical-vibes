@@ -1,31 +1,32 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RathiFiend;
-import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CateranBrute.class, CateranKidnappers.class, CateranPersuader.class,
+        CateranSummons.class, Swamp.class})
 class CateranBruteTest extends BaseCardTest {
 
     @Test
     void searchesForMercenaryPermanentWithManaValueAtMostTwo() {
-        addCreatureReady(player1, new CateranBrute());
+        Permanent brute = addCreatureReady(player1, new CateranBrute());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new SpinelessThug(), new GrizzlyBears(), new RathiFiend()));
+        harness.setLibrary(player1, List.of(
+                new CateranPersuader(), new Swamp(), new CateranSummons(), new CateranKidnappers()));
 
         harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(brute.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
@@ -33,12 +34,27 @@ class CateranBruteTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards())
                 .extracting(Card::getName)
-                .containsExactly("Spineless Thug");
+                .containsExactly("Cateran Persuader");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertOnBattlefield(player1, "Spineless Thug");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Rathi Fiend");
+        harness.assertOnBattlefield(player1, "Cateran Persuader");
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        harness.assertNotOnBattlefield(player1, "Cateran Summons");
+        harness.assertNotOnBattlefield(player1, "Cateran Kidnappers");
+    }
+
+    @Test
+    void doesNotOpenSearchWhenLibraryHasNoEligibleMercenaryPermanent() {
+        Permanent brute = addCreatureReady(player1, new CateranBrute());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new Swamp(), new CateranSummons(), new CateranKidnappers()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(brute.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

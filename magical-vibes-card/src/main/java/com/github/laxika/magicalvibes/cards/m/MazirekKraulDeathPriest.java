@@ -9,10 +9,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1418")
 @CardRegistration(set = "SLD", collectorNumber = "1766")
+@CardRegistration(set = "2XM", collectorNumber = "209")
+@CardRegistration(set = "C15", collectorNumber = "48")
 public class MazirekKraulDeathPriest extends Card {
 
     public MazirekKraulDeathPriest() {
-        // Whenever a player sacrifices another permanent, put a +1/+1 counter on each creature you control.
         addEffect(EffectSlot.ON_ANY_PERMANENT_SACRIFICED,
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));

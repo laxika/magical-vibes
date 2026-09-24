@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "272")
 @CardRegistration(set = "SLD", collectorNumber = "230")
 @CardRegistration(set = "SLD", collectorNumber = "437")
+@CardRegistration(set = "AA3", collectorNumber = "24")
 public class ShelldockIsle extends Card {
 
     public ShelldockIsle() {

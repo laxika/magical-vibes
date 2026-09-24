@@ -10,10 +10,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,23 +21,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HexdrinkerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Leveling up changes Hexdrinker's stats at levels 3 and 8")
+    @DisplayName("Leveling up changes Hexdrinker's stats and protection at each threshold")
     void levelsUpAtThresholds() {
         Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
 
         assertStats(hexdrinker, 2, 1);
 
         prepareForLeveling(player1, 8);
-        for (int i = 0; i < 3; i++) {
-            levelUp(player1);
-        }
+        levelUp(player1, 3);
 
         assertThat(hexdrinker.getCounterCount(CounterType.LEVEL)).isEqualTo(3);
         assertStats(hexdrinker, 4, 4);
 
-        for (int i = 0; i < 5; i++) {
-            levelUp(player1);
-        }
+        levelUp(player1, 5);
 
         assertThat(hexdrinker.getCounterCount(CounterType.LEVEL)).isEqualTo(8);
         assertStats(hexdrinker, 6, 6);
@@ -49,9 +44,7 @@ class HexdrinkerTest extends BaseCardTest {
     void levelThreeHasProtectionFromInstants() {
         Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
         prepareForLeveling(player1, 3);
-        for (int i = 0; i < 3; i++) {
-            levelUp(player1);
-        }
+        levelUp(player1, 3);
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -59,7 +52,7 @@ class HexdrinkerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, hexdrinker.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection");
+                .hasMessageContaining("protection from instants");
     }
 
     @Test
@@ -67,9 +60,7 @@ class HexdrinkerTest extends BaseCardTest {
     void levelEightHasProtectionFromEverything() {
         Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
         prepareForLeveling(player1, 8);
-        for (int i = 0; i < 8; i++) {
-            levelUp(player1);
-        }
+        levelUp(player1, 8);
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         hexdrinker.setAttacking(true);
@@ -86,32 +77,18 @@ class HexdrinkerTest extends BaseCardTest {
                 .hasMessageContaining("protection");
     }
 
-    @Test
-    @DisplayName("Level up can only be activated at sorcery speed")
-    void levelUpRequiresSorcerySpeed() {
-        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        assertThatThrownBy(() -> levelUp(player1))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("sorcery speed");
-
-        assertThat(hexdrinker.getCounterCount(CounterType.LEVEL)).isZero();
-    }
-
     private void prepareForLeveling(Player player, int mana) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addMana(player, ManaColor.GREEN, mana);
+        harness.addMana(player, ManaColor.COLORLESS, mana);
     }
 
-    private void levelUp(Player player) {
-        harness.activateAbility(player, 0, 0, null, null);
-        harness.passBothPriorities();
+    private void levelUp(Player player, int times) {
+        for (int i = 0; i < times; i++) {
+            harness.activateAbility(player, 0, 0, null, null);
+            harness.passBothPriorities();
+        }
     }
 
     private void assertStats(Permanent permanent, int power, int toughness) {

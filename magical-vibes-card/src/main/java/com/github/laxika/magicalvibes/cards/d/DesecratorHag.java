@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "EVE", collectorNumber = "119")
+@CardRegistration(set = "CMD", collectorNumber = "193")
 public class DesecratorHag extends Card {
 
     public DesecratorHag() {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(SecondSight.class)
 class SecondSightTest extends BaseCardTest {
 
     @Test
@@ -86,6 +88,33 @@ class SecondSightTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Opponent mode reorders all cards when that library has fewer than five")
+    void opponentModeReordersShortLibrary() {
+        List<Card> topCards = cards(2);
+        harness.setLibrary(player2, topCards);
+        cast(new int[]{0}, List.of(player2.getId()), false);
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactlyElementsOf(topCards);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCards.get(1), topCards.get(0));
+    }
+
+    @Test
+    @DisplayName("Own-library mode resolves without a prompt when the library is empty")
+    void ownLibraryModeResolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        cast(new int[]{1}, List.of(), false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Second Sight");
+    }
+
     private void cast(int[] modes, List<java.util.UUID> targetIds, boolean entwined) {
         harness.setHand(player1, List.of(new SecondSight()));
         addMana(entwined);
@@ -100,7 +129,7 @@ class SecondSightTest extends BaseCardTest {
 
     private List<Card> cards(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .mapToObj(index -> new com.github.laxika.magicalvibes.cards.g.GrizzlyBears())
+                .mapToObj(index -> new SecondSight())
                 .map(card -> (Card) card)
                 .toList();
     }

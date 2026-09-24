@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "139")
 @CardRegistration(set = "MM2", collectorNumber = "189")
+@CardRegistration(set = "GK2", collectorNumber = "74")
+@CardRegistration(set = "CMD", collectorNumber = "238")
 public class WreckingBall extends Card {
 
     public WreckingBall() {

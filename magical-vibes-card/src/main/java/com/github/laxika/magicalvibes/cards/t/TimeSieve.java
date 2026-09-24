@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "31")
 @CardRegistration(set = "SLD", collectorNumber = "1671")
+@CardRegistration(set = "2XM", collectorNumber = "223")
 public class TimeSieve extends Card {
 
     public TimeSieve() {

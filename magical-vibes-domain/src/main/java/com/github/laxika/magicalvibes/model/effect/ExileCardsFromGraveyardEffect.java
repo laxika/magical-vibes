@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -133,11 +134,10 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                 trackWithSource, ownGraveyardOnly, false, 1, false);
     }
 
-    /** Creates an ETB exile effect whose target count is the number of multikicker payments. */
-    public static ExileCardsFromGraveyardEffect upToMultikickerCards(CardPredicate filter) {
-        return new ExileCardsFromGraveyardEffect(
-                0, 0, false, filter, false, null, 0, 0,
-                false, false, true, true, false, 1, false, true, true);
+    public static ExileCardsFromGraveyardEffect exactFromSingleGraveyard(
+            int count, CardPredicate filter, boolean trackWithSource) {
+        return new ExileCardsFromGraveyardEffect(count, 0, false, filter, false, null,
+                0, 0, true, false, trackWithSource, false, true, 1, false);
     }
 
     /** Whether the maximum target count is supplied by the ability's X value. */
@@ -152,6 +152,15 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
         }
         long scaled = Math.max(0L, (long) xValue * xTargetMultiplier);
         return (int) Math.min(Integer.MAX_VALUE, scaled);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        if (!exactTargets || !singleGraveyard) return TargetSpec.NONE;
+        GraveyardSearchScope scope = ownGraveyardOnly
+                ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD : GraveyardSearchScope.ALL_GRAVEYARDS;
+        return TargetSpec.benign(filter == null ? TargetPredicates.graveyardCard(scope)
+                : TargetPredicates.graveyardCards(filter, scope));
     }
 
     @Override

@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "863")
+@CardRegistration(set = "2XM", collectorNumber = "271")
+@CardRegistration(set = "C14", collectorNumber = "57")
 public class MasterworkOfIngenuity extends Card {
 
     public MasterworkOfIngenuity() {
-        // You may have this Equipment enter as a copy of any Equipment on the battlefield.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), "Equipment"
         ));

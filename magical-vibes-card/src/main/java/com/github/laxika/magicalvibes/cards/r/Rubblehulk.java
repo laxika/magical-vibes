@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "191")
+@CardRegistration(set = "GK2", collectorNumber = "95")
 public class Rubblehulk extends Card {
 
     public Rubblehulk() {

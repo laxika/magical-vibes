@@ -11,15 +11,18 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1241")
+@CardRegistration(set = "SLX", collectorNumber = "29")
 public class CasalLurkwoodPathfinder extends Card {
 
     public CasalLurkwoodPathfinder() {
         setBackFaceCard(new CasalPathbreakerOwlbear());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryEffect(
-                new CardSubtypePredicate(CardSubtype.FOREST), LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
-                "{1}{G}", new TransformSelfEffect(), "Pay {1}{G} to transform Casal?"));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.FOREST),
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED));
+        addEffect(EffectSlot.ON_ATTACK,
+                new MayPayManaEffect("{1}{G}", new TransformSelfEffect(),
+                        "Pay {1}{G} to transform Casal?"));
     }
 
     @Override

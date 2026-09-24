@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "TSB", collectorNumber = "19")
 @CardRegistration(set = "SLD", collectorNumber = "2138")
 @CardRegistration(set = "SLD", collectorNumber = "2139")
+@CardRegistration(set = "ARN", collectorNumber = "12")
 public class DandN extends Card {
 
     public DandN() {

@@ -12,46 +12,59 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScuttlingSliver.class, WingedSliver.class, GrizzlyBears.class})
+@CardUsed({ScuttlingSliver.class, WingedSliver.class, GrizzlyBears.class, SyphonSliver.class})
 class ScuttlingSliverTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Scuttling Sliver can pay to untap itself")
-    void untapsItself() {
-        Permanent scuttling = addCreatureReady(player1, new ScuttlingSliver());
-        scuttling.tap();
+    @DisplayName("Scuttling Sliver can pay {2} to untap itself")
+    void grantsAbilityToItself() {
+        harness.addToBattlefield(player1, new ScuttlingSliver());
+        Permanent scuttlingSliver = gd.playerBattlefields.get(player1.getId()).getFirst();
+        scuttlingSliver.setSummoningSick(false);
+        scuttlingSliver.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(scuttling.isTapped()).isFalse();
+        assertThat(scuttlingSliver.isTapped()).isFalse();
     }
 
     @Test
-    @DisplayName("Scuttling Sliver grants its ability to other Slivers you control")
-    void grantsAbilityToOtherSliversYouControl() {
-        addCreatureReady(player1, new ScuttlingSliver());
-        Permanent sliver = addCreatureReady(player1, new WingedSliver());
-        sliver.tap();
+    @DisplayName("Scuttling Sliver grants the untap ability to other Slivers you control")
+    void grantsAbilityToOtherSlivers() {
+        harness.addToBattlefield(player1, new ScuttlingSliver());
+        harness.addToBattlefield(player1, new SyphonSliver());
+        Permanent syphonSliver = gd.playerBattlefields.get(player1.getId()).get(1);
+        syphonSliver.setSummoningSick(false);
+        syphonSliver.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(sliver.isTapped()).isFalse();
+        assertThat(syphonSliver.isTapped()).isFalse();
     }
 
     @Test
-    @DisplayName("Only Slivers you control gain Scuttling Sliver's ability")
-    void doesNotGrantAbilityOutsideControlledSlivers() {
-        addCreatureReady(player1, new ScuttlingSliver());
-        Permanent nonSliver = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingSliver = addCreatureReady(player2, new WingedSliver());
+    @DisplayName("Scuttling Sliver does not grant the ability to non-Slivers")
+    void doesNotGrantAbilityToNonSlivers() {
+        harness.addToBattlefield(player1, new ScuttlingSliver());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        assertThat(gs.getEffectiveActivatedAbilities(gd, nonSliver)).isEmpty();
-        assertThat(gs.getEffectiveActivatedAbilities(gd, opposingSliver)).isEmpty();
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("Scuttling Sliver does not grant the ability to an opponent's Slivers")
+    void doesNotGrantAbilityToOpponentSlivers() {
+        harness.addToBattlefield(player1, new ScuttlingSliver());
+        harness.addToBattlefield(player2, new SyphonSliver());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
     }
 }

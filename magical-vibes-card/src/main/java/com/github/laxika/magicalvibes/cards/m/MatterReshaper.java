@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "6")
 @CardRegistration(set = "SLD", collectorNumber = "1048")
+@CardRegistration(set = "EA2", collectorNumber = "2")
 public class MatterReshaper extends Card {
 
     public MatterReshaper() {

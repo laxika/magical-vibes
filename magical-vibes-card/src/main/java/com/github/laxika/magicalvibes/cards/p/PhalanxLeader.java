@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "26")
+@CardRegistration(set = "UMA", collectorNumber = "27")
+@CardRegistration(set = "PIO", collectorNumber = "28")
 public class PhalanxLeader extends Card {
 
     public PhalanxLeader() {

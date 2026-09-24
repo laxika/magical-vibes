@@ -402,6 +402,20 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
+        void creatureWithGrantedLandTypeFiresLandManaTriggers() {
+            Permanent permanent = addReadyPermanent(player1Id, createCard("Creature Land", CardType.CREATURE));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.GREEN, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {G}.");
+            stubIsCreature(permanent, true);
+            when(gameQueryService.isLand(gameData, permanent)).thenReturn(true);
+
+            service.completeActivationAfterCosts(gameData, player1, permanent, ability, effects, 0, null, null, false);
+
+            verify(triggerCollectionService).checkLandTapTriggers(
+                    eq(gameData), eq(player1Id), eq(permanent.getId()), any());
+        }
+
+        @Test
         @DisplayName("Mana ability taps the permanent when tap cost is required")
         void manaAbilityTapsPermanent() {
             Card card = createCard("Test Mana Land", CardType.LAND);
@@ -735,6 +749,20 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("Stack entry preserves the active player")
+        void stackEntryHasCorrectActivePlayer() {
+            gameData.activePlayerId = player2Id;
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.stack.getFirst().getActivePlayerId()).isEqualTo(player2Id);
         }
 
         @Test

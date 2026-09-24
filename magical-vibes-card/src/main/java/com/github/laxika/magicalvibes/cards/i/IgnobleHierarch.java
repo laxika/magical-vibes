@@ -9,16 +9,18 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "906")
+@CardRegistration(set = "AA2", collectorNumber = "14")
+@CardRegistration(set = "ECC", collectorNumber = "52")
 public class IgnobleHierarch extends Card {
 
     public IgnobleHierarch() {
-        // Exalted: whenever a creature you control attacks alone, that creature gets +1/+1 until
-        // end of turn. ON_ALLY_CREATURE_ATTACKS records the lone attacker as the non-targeting
-        // trigger target, and AttacksAlone restricts the boost to solo attacks.
+        // Exalted: whenever a creature you control attacks alone, that creature gets +1/+1 until end
+        // of turn. ON_ALLY_CREATURE_ATTACKS fires per attacking ally and records the attacker as the
+        // trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that creature";
+        // AttacksAlone restricts it to lone attackers.
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
 

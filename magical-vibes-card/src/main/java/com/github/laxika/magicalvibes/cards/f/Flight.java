@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M12", collectorNumber = "53")
 @CardRegistration(set = "SUM", collectorNumber = "59")
 @CardRegistration(set = "3ED", collectorNumber = "59")
+@CardRegistration(set = "2ED", collectorNumber = "59")
 public class Flight extends Card {
 
     public Flight() {

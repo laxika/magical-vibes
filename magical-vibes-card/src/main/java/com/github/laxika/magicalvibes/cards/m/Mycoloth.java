@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "PCA", collectorNumber = "68")
 @CardRegistration(set = "SLD", collectorNumber = "1136")
 @CardRegistration(set = "SLD", collectorNumber = "2205")
+@CardRegistration(set = "C15", collectorNumber = "192")
 public class Mycoloth extends Card {
 
     public Mycoloth() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 
 @CardRegistration(set = "SLD", collectorNumber = "171")
 @CardRegistration(set = "SLD", collectorNumber = "1225")
+@CardRegistration(set = "MH1", collectorNumber = "203")
 public class IceFangCoatl extends Card {
 
     public IceFangCoatl() {

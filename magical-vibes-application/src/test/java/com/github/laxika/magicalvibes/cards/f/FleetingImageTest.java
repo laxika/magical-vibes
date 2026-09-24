@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(FleetingImage.class)
 class FleetingImageTest extends BaseCardTest {
@@ -22,6 +23,18 @@ class FleetingImageTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("Activating the ability requires one blue mana")
+    void activateAbilityRequiresBlueMana() {
+        harness.addToBattlefield(player1, new FleetingImage());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 
     @Test

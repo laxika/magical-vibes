@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "97")
 @CardRegistration(set = "3ED", collectorNumber = "97")
+@CardRegistration(set = "2ED", collectorNumber = "97")
 public class ContractFromBelow extends Card {
 
     public ContractFromBelow() {

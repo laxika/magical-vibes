@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "256")
 @CardRegistration(set = "3ED", collectorNumber = "256")
+@CardRegistration(set = "ARN", collectorNumber = "64")
 public class JandorsRing extends Card {
 
     public JandorsRing() {

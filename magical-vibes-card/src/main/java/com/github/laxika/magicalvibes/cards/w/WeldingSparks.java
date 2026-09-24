@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "140")
 @CardRegistration(set = "DDU", collectorNumber = "49")
+@CardRegistration(set = "KLR", collectorNumber = "150")
 public class WeldingSparks extends Card {
 
     public WeldingSparks() {

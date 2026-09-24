@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "427")
 @CardRegistration(set = "9ED", collectorNumber = "327")
 @CardRegistration(set = "8ED", collectorNumber = "328")
+@CardRegistration(set = "2XM", collectorNumber = "329")
 @CardRegistration(set = "ATQ", collectorNumber = "83a")
 @CardRegistration(set = "ATQ", collectorNumber = "83b")
 @CardRegistration(set = "ATQ", collectorNumber = "83c")
@@ -25,6 +26,10 @@ import java.util.List;
 @CardRegistration(set = "CHR", collectorNumber = "114b")
 @CardRegistration(set = "CHR", collectorNumber = "114c")
 @CardRegistration(set = "CHR", collectorNumber = "114d")
+@CardRegistration(set = "ME4", collectorNumber = "257a")
+@CardRegistration(set = "ME4", collectorNumber = "257b")
+@CardRegistration(set = "ME4", collectorNumber = "257c")
+@CardRegistration(set = "ME4", collectorNumber = "257d")
 public class UrzasMine extends Card {
 
     public UrzasMine() {

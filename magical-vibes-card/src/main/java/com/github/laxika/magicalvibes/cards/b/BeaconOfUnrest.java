@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "10E", collectorNumber = "129")
 @CardRegistration(set = "5DN", collectorNumber = "41")
 @CardRegistration(set = "HOP", collectorNumber = "18")
+@CardRegistration(set = "2XM", collectorNumber = "77")
 public class BeaconOfUnrest extends Card {
 
     public BeaconOfUnrest() {
@@ -26,6 +27,7 @@ public class BeaconOfUnrest extends Card {
                         new CardTypePredicate(CardType.CREATURE)
                 )))
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .targetGraveyard(true)
                 .build());
         addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect());
     }

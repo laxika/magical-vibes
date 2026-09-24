@@ -45,15 +45,15 @@ class ZacamaPrimalCalamityTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.tap();
 
-        harness.setGraveyard(player1, List.of(new ZacamaPrimalCalamity()));
+        ZacamaPrimalCalamity target = new ZacamaPrimalCalamity();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(forest.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Zacama, Primal Calamity");
     }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SLD", collectorNumber = "715")
 @CardRegistration(set = "SLD", collectorNumber = "893")
 @CardRegistration(set = "SLD", collectorNumber = "1857")
+@CardRegistration(set = "2ED", collectorNumber = "115")
 public class LordOfThePit extends Card {
 
     public LordOfThePit() {

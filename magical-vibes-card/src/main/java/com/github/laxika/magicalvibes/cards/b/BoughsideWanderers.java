@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "121")
+@CardRegistration(set = "HOC", collectorNumber = "121")
 public class BoughsideWanderers extends Card {
 
     public BoughsideWanderers() {

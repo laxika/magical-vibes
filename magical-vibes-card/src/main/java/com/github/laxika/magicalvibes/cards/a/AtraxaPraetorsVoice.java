@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "453")
+@CardRegistration(set = "2XM", collectorNumber = "190")
+@CardRegistration(set = "MUL", collectorNumber = "33")
+@CardRegistration(set = "MUL", collectorNumber = "98")
+@CardRegistration(set = "MUL", collectorNumber = "163")
 public class AtraxaPraetorsVoice extends Card {
 
     public AtraxaPraetorsVoice() {
-        // At the beginning of your end step, proliferate.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ProliferateEffect());
     }
 }

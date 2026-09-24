@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromManaValueParityEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "228")
+@CardRegistration(set = "MUL", collectorNumber = "54")
+@CardRegistration(set = "MUL", collectorNumber = "119")
+@CardRegistration(set = "MUL", collectorNumber = "184")
 public class OboshThePreypiercer extends Card {
 
     public OboshThePreypiercer() {

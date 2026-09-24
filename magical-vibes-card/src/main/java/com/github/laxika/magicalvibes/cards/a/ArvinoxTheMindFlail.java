@@ -5,30 +5,39 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "340")
+@CardRegistration(set = "SLX", collectorNumber = "1")
 public class ArvinoxTheMindFlail extends Card {
 
     public ArvinoxTheMindFlail() {
-        // At the beginning of your end step, exile the bottom card of each opponent's library face down.
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new NotCondition(new ControlsPermanentCount(3, new PermanentNotPredicate(
+                        new PermanentOwnedBySourceControllerPredicate()))),
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new ExileBottomCardsToSourceEffect(new Fixed(1), true, true));
-
-        // You may cast nonland permanent spells exiled with Arvinox, spending mana as though it
-        // were mana of any color. Face-down cards exiled with a source are visible to its controller.
+                new ExileBottomCardsToSourceEffect(1, true, LibraryScope.EACH_OPPONENT));
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
                 true,
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),
-                false, false, 0));
+                false, false, 0, null, false, false, false, true));
     }
 }

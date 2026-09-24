@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 // PermanentRemovalService.collectPersistTrigger + PersistReturnEffect.
 @CardRegistration(set = "SHM", collectorNumber = "135")
 @CardRegistration(set = "MMA", collectorNumber = "174")
+@CardRegistration(set = "UMA", collectorNumber = "195")
 public class WoodfallPrimus extends Card {
 
     public WoodfallPrimus() {

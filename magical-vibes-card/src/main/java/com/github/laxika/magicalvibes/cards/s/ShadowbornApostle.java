@@ -30,6 +30,8 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "686")
 @CardRegistration(set = "SLD", collectorNumber = "687")
 @CardRegistration(set = "SLD", collectorNumber = "688")
+@CardRegistration(set = "2X2", collectorNumber = "89")
+@CardRegistration(set = "EA1", collectorNumber = "6")
 public class ShadowbornApostle extends Card {
 
     public ShadowbornApostle() {

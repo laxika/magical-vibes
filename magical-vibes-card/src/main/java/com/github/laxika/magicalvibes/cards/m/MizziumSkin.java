@@ -25,6 +25,7 @@ import java.util.List;
  * the overloaded spell chooses no targets.
  */
 @CardRegistration(set = "RTR", collectorNumber = "45")
+@CardRegistration(set = "PIO", collectorNumber = "64")
 public class MizziumSkin extends Card {
 
     public MizziumSkin() {

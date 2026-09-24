@@ -17,6 +17,8 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "145")
 @CardRegistration(set = "SLD", collectorNumber = "1095")
+@CardRegistration(set = "OTP", collectorNumber = "61")
+@CardRegistration(set = "OTP", collectorNumber = "78")
 public class ContagionEngine extends Card {
 
     public ContagionEngine() {

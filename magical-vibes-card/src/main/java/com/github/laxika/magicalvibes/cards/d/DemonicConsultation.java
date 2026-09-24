@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseNameExileTopRevealUntil
 @CardRegistration(set = "ICE", collectorNumber = "121")
 @CardRegistration(set = "ME2", collectorNumber = "85")
 @CardRegistration(set = "SLD", collectorNumber = "1127")
+@CardRegistration(set = "SLC", collectorNumber = "4")
+@CardRegistration(set = "SLC", collectorNumber = "31")
 public class DemonicConsultation extends Card {
 
     public DemonicConsultation() {

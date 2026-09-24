@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermane
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "1093")
+@CardRegistration(set = "2XM", collectorNumber = "48")
 public class DeepglowSkate extends Card {
 
     public DeepglowSkate() {
-        // When this creature enters, double the number of each kind of counter on any number of target permanents.
+        // When this creature enters, double the number of each kind of counter on any number
+        // of target permanents.
         target(TargetFilters.permanent(), 0, 99)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DoubleCountersOnTargetPermanentEffect());
     }

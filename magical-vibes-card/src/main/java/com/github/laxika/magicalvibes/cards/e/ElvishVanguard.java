@@ -16,7 +16,7 @@ public class ElvishVanguard extends Card {
 
     public ElvishVanguard() {
         // Whenever another Elf enters, put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ELF),
                         new PutCountersOnSourceEffect(1, 1, 1)));

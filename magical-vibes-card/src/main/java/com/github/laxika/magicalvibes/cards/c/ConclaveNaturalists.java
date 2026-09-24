@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "171")
+@CardRegistration(set = "2XM", collectorNumber = "160")
+@CardRegistration(set = "PIO", collectorNumber = "170")
 public class ConclaveNaturalists extends Card {
 
     public ConclaveNaturalists() {

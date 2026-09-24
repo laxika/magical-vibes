@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "76")
+@CardRegistration(set = "TSR", collectorNumber = "126")
 public class MuckDrubb extends Card {
 
     public MuckDrubb() {

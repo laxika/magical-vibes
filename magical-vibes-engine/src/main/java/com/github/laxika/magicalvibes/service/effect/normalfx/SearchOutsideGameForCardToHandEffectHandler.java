@@ -38,7 +38,7 @@ public class SearchOutsideGameForCardToHandEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var search = (SearchOutsideGameForCardToHandEffect) effect;
         UUID controllerId = entry.getControllerId();
-        List<Card> matchingCards = gameData.playerSideboards.getOrDefault(controllerId, List.of()).stream()
+        List<Card> matchingCards = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId).stream()
                 .filter(card -> search.filter() == null
                         || predicateEvaluationService.matchesCardPredicate(
                         card, search.filter(), null, gameData, controllerId))

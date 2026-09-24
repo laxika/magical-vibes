@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.Dodecapod;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,19 +10,17 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SyphonMind.class, GrizzlyBears.class})
+@CardUsed({SyphonMind.class, GlorySeeker.class, Dodecapod.class})
 class SyphonMindTest extends BaseCardTest {
 
     @Test
     void opponentDiscardsAndControllerDraws() {
-        GrizzlyBears drawn = new GrizzlyBears();
-        GrizzlyBears discarded = new GrizzlyBears();
-        harness.setHand(player1, List.of(new SyphonMind()));
+        GlorySeeker drawn = new GlorySeeker();
+        GlorySeeker discarded = new GlorySeeker();
         harness.setHand(player2, List.of(discarded));
         harness.setLibrary(player1, List.of(drawn));
-        addMana();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SyphonMind(), "{3}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -30,18 +28,16 @@ class SyphonMindTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Glory Seeker");
     }
 
     @Test
     void noCardDiscardedMeansNoDraw() {
-        GrizzlyBears drawn = new GrizzlyBears();
-        harness.setHand(player1, List.of(new SyphonMind()));
         harness.setHand(player2, List.of());
+        GlorySeeker drawn = new GlorySeeker();
         harness.setLibrary(player1, List.of(drawn));
-        addMana();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SyphonMind(), "{3}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -49,8 +45,18 @@ class SyphonMindTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
     }
 
-    private void addMana() {
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    void replacedDiscardStillCountsForControllerDraw() {
+        GlorySeeker drawn = new GlorySeeker();
+        harness.setHand(player2, List.of(new Dodecapod()));
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.castFromHand(player1, new SyphonMind(), "{3}{B}");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Dodecapod");
+        harness.assertNotInGraveyard(player2, "Dodecapod");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 }

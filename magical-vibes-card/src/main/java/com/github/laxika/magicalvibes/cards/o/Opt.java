@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FDN", collectorNumber = "512")
 @CardRegistration(set = "SLD", collectorNumber = "111")
 @CardRegistration(set = "SLD", collectorNumber = "2068")
+@CardRegistration(set = "STA", collectorNumber = "19")
 public class Opt extends Card {
 
     public Opt() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "37")
+@CardRegistration(set = "TSR", collectorNumber = "71")
 public class InfiltratorIlKor extends Card {
 
     public InfiltratorIlKor() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "52")
 @CardRegistration(set = "MMA", collectorNumber = "37")
+@CardRegistration(set = "TSR", collectorNumber = "56")
 public class CarefulConsideration extends Card {
 
     public CarefulConsideration() {

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
@@ -50,9 +51,19 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
                 : !reduce.sourceZones().contains(context.sourceZone()))) {
             return 0;
         }
+        Card spellCharacteristics = context.spell();
+        if (context.castFaceDown()) {
+            // CR 702.37: cost modifiers see a nameless, colorless creature with no mana cost.
+            Card faceDown = new Card();
+            faceDown.setName("");
+            faceDown.setType(CardType.CREATURE);
+            faceDown.setPower(2);
+            faceDown.setToughness(2);
+            spellCharacteristics = context.spell().createRuntimeCopyWithFace(faceDown);
+        }
         if (!predicateEvaluationService.matchesCardPredicate(
-                context.spell(), reduce.predicate(),
-                source.sourceCard() == null ? null : source.sourceCard().getId(),
+                spellCharacteristics, reduce.predicate(),
+                source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
                 context.gameData(), context.castingPlayerId(), null, null, context.xValue())) {
             return 0;
         }

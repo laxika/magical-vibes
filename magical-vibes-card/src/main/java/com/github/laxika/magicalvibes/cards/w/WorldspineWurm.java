@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "140")
 @CardRegistration(set = "SLD", collectorNumber = "1305")
+@CardRegistration(set = "EA3", collectorNumber = "7")
 public class WorldspineWurm extends Card {
 
     public WorldspineWurm() {

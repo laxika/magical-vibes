@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,53 +11,52 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BohnBeguilingBalladeer.class, DarkRitual.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BohnBeguilingBalladeer.class, DarkRitual.class, Forest.class, GrizzlyBears.class, LightningBolt.class})
 class BohnBeguilingBalladeerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Grants foretell to nonland cards in hand")
-    void grantsForetellToNonlandCardsInHand() {
+    void grantsForetellToNonlandCardsWithReducedCost() {
         addCreatureReady(player1, new BohnBeguilingBalladeer());
-        DarkRitual ritual = new DarkRitual();
-        harness.setHand(player1, List.of(ritual, new Forest()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears, new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.foretell(player1, 0);
 
-        ExiledCardEntry entry = gd.findExiledCard(ritual.getId());
+        ExiledCardEntry entry = gd.findExiledCard(bears.getId());
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();
-        harness.assertInHand(player1, "Forest");
+        assertThatThrownBy(() -> harness.foretell(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Goads a creature an opponent controls on the second spell")
-    void goadsOpponentCreatureOnSecondSpell() {
+    void secondSpellGoadsTargetCreatureAnOpponentControls() {
         addCreatureReady(player1, new BohnBeguilingBalladeer());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0);
+        harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.castInstant(player1, 0);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(opponentCreature.getId())
-                .doesNotContain(ownCreature.getId());
+        assertThat(choice.validPermanentIds()).contains(target.getId()).doesNotContain(ownCreature.getId());
 
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
-        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

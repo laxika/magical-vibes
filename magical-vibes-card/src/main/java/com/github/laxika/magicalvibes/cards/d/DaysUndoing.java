@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "51")
 @CardRegistration(set = "SLD", collectorNumber = "2153")
+@CardRegistration(set = "PIO", collectorNumber = "53")
 public class DaysUndoing extends Card {
 
     public DaysUndoing() {

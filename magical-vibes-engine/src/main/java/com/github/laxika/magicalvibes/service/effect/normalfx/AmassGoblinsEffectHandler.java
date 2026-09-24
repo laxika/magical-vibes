@@ -56,8 +56,8 @@ public class AmassGoblinsEffectHandler implements NormalEffectHandlerBean {
             permanentControlSupport.applyCreateToken(
                     gameData,
                     entry.getControllerId(),
-                    new CreateTokenEffect("Goblin Army", 0, 0, CardColor.BLACK,
-                            List.of(CardSubtype.GOBLIN, CardSubtype.ARMY), java.util.Set.of(), java.util.Set.of()),
+                    new CreateTokenEffect(amass.subtype().getDisplayName() + " Army", 0, 0, CardColor.BLACK,
+                            List.of(amass.subtype(), CardSubtype.ARMY), java.util.Set.of(), java.util.Set.of()),
                     1,
                     entry.getCard().getSetCode());
         }
@@ -70,7 +70,7 @@ public class AmassGoblinsEffectHandler implements NormalEffectHandlerBean {
             throw new IllegalStateException("Current effect is not present in its stack entry");
         }
         entry.insertEffectsToResolve(index + 1,
-                List.of(new CompleteAmassGoblinsEffect(entry.getControllerId(), count, false)));
+                List.of(new CompleteAmassGoblinsEffect(entry.getControllerId(), count, false, amass.subtype())));
     }
 
     private int findConditionalWrapperIndex(StackEntry entry, CardEffect effect) {

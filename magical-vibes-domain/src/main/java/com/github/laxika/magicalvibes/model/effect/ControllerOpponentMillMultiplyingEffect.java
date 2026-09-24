@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Capability for static effects that multiply mill events affecting an opponent of the
- * permanent's controller.
+ * Capability for a static replacement effect that multiplies mill events affecting an opponent
+ * of the permanent's controller.
  */
 public interface ControllerOpponentMillMultiplyingEffect extends CardEffect {
 

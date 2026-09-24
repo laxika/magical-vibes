@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "55")
+@CardRegistration(set = "ANB", collectorNumber = "28")
 public class Glint extends Card {
 
     public Glint() {

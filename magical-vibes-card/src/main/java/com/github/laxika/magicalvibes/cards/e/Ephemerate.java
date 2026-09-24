@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "1990")
+@CardRegistration(set = "MH1", collectorNumber = "7")
+@CardRegistration(set = "STA", collectorNumber = "5")
+@CardRegistration(set = "MAR", collectorNumber = "44")
 public class Ephemerate extends Card {
 
     public Ephemerate() {

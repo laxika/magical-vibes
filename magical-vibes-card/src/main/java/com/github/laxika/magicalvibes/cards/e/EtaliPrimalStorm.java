@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachLibraryAndM
 @CardRegistration(set = "RIX", collectorNumber = "100")
 @CardRegistration(set = "SLD", collectorNumber = "1123")
 @CardRegistration(set = "SLD", collectorNumber = "1389")
+@CardRegistration(set = "TSR", collectorNumber = "342")
 public class EtaliPrimalStorm extends Card {
 
     public EtaliPrimalStorm() {

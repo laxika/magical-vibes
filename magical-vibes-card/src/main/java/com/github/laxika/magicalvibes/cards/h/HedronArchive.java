@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "691")
+@CardRegistration(set = "TSR", collectorNumber = "395")
 public class HedronArchive extends Card {
 
     public HedronArchive() {
@@ -22,12 +22,12 @@ public class HedronArchive extends Card {
                 "{T}: Add {C}{C}."
         ));
 
-        // {2}, {T}, Sacrifice this artifact: Draw two cards.
+        // {2}, {T}, Sacrifice Hedron Archive: Draw two cards.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
                 List.of(new SacrificeSelfCost(), new DrawCardEffect(2)),
-                "{2}, {T}, Sacrifice this artifact: Draw two cards."
+                "{2}, {T}, Sacrifice Hedron Archive: Draw two cards."
         ));
     }
 }

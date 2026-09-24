@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoL
 
 @CardRegistration(set = "M13", collectorNumber = "32")
 @CardRegistration(set = "USG", collectorNumber = "45")
+@CardRegistration(set = "DMR", collectorNumber = "26")
+@CardRegistration(set = "C13", collectorNumber = "21")
+@CardRegistration(set = "C14", collectorNumber = "87")
 public class SerraAvatar extends Card {
 
     public SerraAvatar() {

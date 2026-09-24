@@ -27,7 +27,12 @@ public class TransformSelfWhenChosenPermanentLeavesEffectHandler implements Norm
         var transformEffect = (TransformSelfWhenChosenPermanentLeavesEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || !transformEffect.leavingPermanentId().equals(source.getChosenPermanentId())) {
+        if (source == null
+                || !transformEffect.leavingPermanentId().equals(source.getChosenPermanentId())) {
+            return;
+        }
+
+        if (gameQueryService.isTransformPrevented(gameData, source)) {
             return;
         }
 

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.c.CanopySpider;
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Gallantry.class, CanopySpider.class, Forest.class})
+@CardUsed({Gallantry.class, AvenFlock.class, Forest.class})
 class GallantryTest extends BaseCardTest {
 
     @Test
@@ -27,8 +27,7 @@ class GallantryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         assertThat(blocker.getPowerModifier()).isEqualTo(4);
         assertThat(blocker.getToughnessModifier()).isEqualTo(4);
@@ -44,11 +43,28 @@ class GallantryTest extends BaseCardTest {
         Permanent blocker = addBlockingCreature(player2);
         setupGallantry();
 
-        harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         assertThat(blocker.getPowerModifier()).isEqualTo(4);
         assertThat(blocker.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Draws for the caster when targeting an opponent's blocker")
+    void drawsForCasterWhenTargetingOpponentsBlockingCreature() {
+        Permanent blocker = addBlockingCreature(player2);
+        setupGallantry();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
 
     @Test
@@ -57,8 +73,7 @@ class GallantryTest extends BaseCardTest {
         Permanent blocker = addBlockingCreature(player1);
         setupGallantry();
 
-        harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -72,7 +87,7 @@ class GallantryTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not blocking")
     void cannotTargetNonBlockingCreature() {
         addBlockingCreature(player1);
-        Permanent bystander = addCreatureReady(player1, new CanopySpider());
+        Permanent bystander = addCreatureReady(player1, new AvenFlock());
         setupGallantry();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bystander.getId()))
@@ -119,7 +134,7 @@ class GallantryTest extends BaseCardTest {
     }
 
     private Permanent addBlockingCreature(Player player) {
-        Permanent creature = addCreatureReady(player, new CanopySpider());
+        Permanent creature = addCreatureReady(player, new AvenFlock());
         creature.setBlocking(true);
         return creature;
     }

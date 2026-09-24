@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1544")
+@CardRegistration(set = "SPG", collectorNumber = "156")
 public class AdrixAndNevTwincasters extends Card {
 
     public AdrixAndNevTwincasters() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(0, 2));
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
         addEffect(EffectSlot.STATIC, new MultiplyTokenCreationEffect(2));
     }
 }

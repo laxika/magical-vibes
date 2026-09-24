@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HarvesterDruid.class, Forest.class, Island.class})
+@CardUsed({Forest.class, HarvesterDruid.class, Island.class})
 class HarvesterDruidTest extends BaseCardTest {
 
     @Test
@@ -34,6 +35,29 @@ class HarvesterDruidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Mana produced by the druid is tracked as creature mana")
+    void tracksSingleColorManaAsCreatureMana() {
+        addCreatureReady(player1, new HarvesterDruid());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureMana(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped land still determines an available color")
+    void tappedLandStillProvidesAvailableColor() {
+        addCreatureReady(player1, new HarvesterDruid());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
@@ -62,6 +86,7 @@ class HarvesterDruidTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureMana(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -75,5 +100,17 @@ class HarvesterDruidTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A tapped land still contributes a color it could produce")
+    void tappedLandStillContributesItsColor() {
+        Permanent druid = addCreatureReady(player1, new HarvesterDruid());
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }

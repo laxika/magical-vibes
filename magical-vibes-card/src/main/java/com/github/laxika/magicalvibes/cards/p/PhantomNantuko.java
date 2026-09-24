@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "128")
+@CardRegistration(set = "C13", collectorNumber = "160")
 public class PhantomNantuko extends Card {
 
     public PhantomNantuko() {

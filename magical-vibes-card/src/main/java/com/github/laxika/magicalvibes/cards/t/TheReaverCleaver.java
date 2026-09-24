@@ -12,13 +12,19 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2095")
+@CardRegistration(set = "HOC", collectorNumber = "94")
 public class TheReaverCleaver extends Card {
 
     public TheReaverCleaver() {
+        // Equipped creature gets +1/+1 and has trample.
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
-                CreateTokenEffect.ofTreasureToken(new EventValue()));
+
+        // Whenever equipped creature deals combat damage to a player or planeswalker, create that
+        // many Treasure tokens.
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, CreateTokenEffect.ofTreasureToken(new EventValue()));
+
+        // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

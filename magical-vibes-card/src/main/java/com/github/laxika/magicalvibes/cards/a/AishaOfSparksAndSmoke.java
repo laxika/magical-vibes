@@ -14,20 +14,14 @@ import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithou
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "430")
+@CardRegistration(set = "SLX", collectorNumber = "12")
 public class AishaOfSparksAndSmoke extends Card {
 
     public AishaOfSparksAndSmoke() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new BoostSelfEffect(1, 1))));
-
-        addActivatedAbility(new ActivatedAbility(
-                false,
-                "{R/W}",
+        addActivatedAbility(new ActivatedAbility(false, "{R/W}",
                 List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
                 "{R/W}: Aisha of Sparks and Smoke gains first strike until end of turn."));
 

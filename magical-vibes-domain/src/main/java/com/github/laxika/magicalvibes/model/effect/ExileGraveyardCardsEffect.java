@@ -37,7 +37,30 @@ public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
         boolean exactTargetCount, boolean trackWithSource, boolean fromBattlefieldThisTurn,
         CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
-        boolean allowZeroTargets) implements GraveyardCardChoosingEffect {
+        boolean allowZeroTargets, boolean putKickCounters,
+        boolean returnExiledCardsToGraveyardOnSourceLeave) implements GraveyardCardChoosingEffect {
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     UUID affectedPlayerId, boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter,
+                                     boolean grantPlayPermissionUntilEndOfTurn,
+                                     boolean allowZeroTargets) {
+        this(count, scope, filter, affectedPlayerId, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn,
+                allowZeroTargets, false, false);
+    }
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     UUID affectedPlayerId, boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter,
+                                     boolean grantPlayPermissionUntilEndOfTurn,
+                                     boolean allowZeroTargets, boolean putKickCounters) {
+        this(count, scope, filter, affectedPlayerId, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn,
+                allowZeroTargets, putKickCounters, false);
+    }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
                                      UUID affectedPlayerId, boolean exactTargetCount,
@@ -95,7 +118,13 @@ public record ExileGraveyardCardsEffect(
 
     public static ExileGraveyardCardsEffect ownAllMatchingUntilSourceLeaves(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(0, GraveyardExileScope.OWN_ALL_MATCHING,
-                filter, null, false, true, false, null, false);
+                filter, null, false, true, false, null, false, false, false, true);
+    }
+
+    /** Exiles matching cards from the controller's graveyard and tracks them with the source. */
+    public static ExileGraveyardCardsEffect ownAllMatchingWithSource(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(0, GraveyardExileScope.OWN_ALL_MATCHING,
+                filter, null, false, true, false, null, false, false, false, false);
     }
 
     public static ExileGraveyardCardsEffect allPlayersMatchingFromBattlefieldThisTurn(CardPredicate filter) {
@@ -116,6 +145,12 @@ public record ExileGraveyardCardsEffect(
     public static ExileGraveyardCardsEffect upToOneTargetFromAnyGraveyard() {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
                 null, null, false, false, false, null, false, true);
+    }
+
+    /** Exiles source-tracked controller-graveyard cards and marks each with a kick counter. */
+    public static ExileGraveyardCardsEffect upToControllerGraveyardWithKickCounters(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(100, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                filter, null, false, true, false, null, false, false, true);
     }
 
     @Override

@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SlipstreamEel.class, Island.class, GrizzlyBears.class})
+@CardUsed({SlipstreamEel.class, Island.class, Mountain.class})
 class SlipstreamEelTest extends BaseCardTest {
 
     @Test
@@ -24,33 +22,38 @@ class SlipstreamEelTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new Island());
 
-        Permanent eel = new Permanent(new SlipstreamEel());
-        eel.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(eel);
+        addCreatureReady(player1, new SlipstreamEel());
+        declareAttackers(List.of(0));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        harness.assertLife(player2, 14);
     }
 
     @Test
     @DisplayName("Slipstream Eel cannot attack when defending player controls no Island")
     void cannotAttackWhenDefenderControlsNoIsland() {
-        Permanent eel = new Permanent(new SlipstreamEel());
-        eel.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(eel);
+        addCreatureReady(player1, new SlipstreamEel());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Slipstream Eel cannot attack when defending player controls a Mountain")
+    void cannotAttackWhenDefenderControlsMountain() {
+        harness.addToBattlefield(player2, new Mountain());
+        addCreatureReady(player1, new SlipstreamEel());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Slipstream Eel cannot attack when only the attacking player controls an Island")
+    void cannotAttackWhenOnlyAttackerControlsIsland() {
+        addCreatureReady(player1, new SlipstreamEel());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -58,7 +61,7 @@ class SlipstreamEelTest extends BaseCardTest {
     @DisplayName("Cycling Slipstream Eel discards it and draws a card")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new SlipstreamEel()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -67,6 +70,16 @@ class SlipstreamEelTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Slipstream Eel");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Cycling Slipstream Eel requires blue mana")
+    void cyclingRequiresBlueMana() {
+        harness.setHand(player1, List.of(new SlipstreamEel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

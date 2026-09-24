@@ -21,6 +21,8 @@ import java.util.List;
 @CardRegistration(set = "IMA", collectorNumber = "28")
 @CardRegistration(set = "MM3", collectorNumber = "20")
 @CardRegistration(set = "SLD", collectorNumber = "1380")
+@CardRegistration(set = "2X2", collectorNumber = "25")
+@CardRegistration(set = "TSR", collectorNumber = "300")
 public class RestorationAngel extends Card {
 
     public RestorationAngel() {

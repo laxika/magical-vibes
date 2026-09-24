@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "7ED", collectorNumber = "30")
 @CardRegistration(set = "USG", collectorNumber = "28")
 @CardRegistration(set = "SLD", collectorNumber = "1839")
+@CardRegistration(set = "OTP", collectorNumber = "5")
 public class Pariah extends Card {
 
     public Pariah() {

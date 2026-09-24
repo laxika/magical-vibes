@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "LEG", collectorNumber = "218")
 @CardRegistration(set = "ME3", collectorNumber = "142")
 @CardRegistration(set = "SLD", collectorNumber = "1067")
+@CardRegistration(set = "DMR", collectorNumber = "187")
 public class ArcadesSabboth extends Card {
 
     public ArcadesSabboth() {

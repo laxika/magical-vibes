@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "130")
+@CardRegistration(set = "DMR", collectorNumber = "168")
 public class KrosanRestorer extends Card {
 
     public KrosanRestorer() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCou
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "25")
+@CardRegistration(set = "DBL", collectorNumber = "25")
 public class IntrepidAdversary extends Card {
 
     public IntrepidAdversary() {

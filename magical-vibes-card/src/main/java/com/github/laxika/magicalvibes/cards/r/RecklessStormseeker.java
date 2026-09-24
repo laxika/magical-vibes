@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "157")
+@CardRegistration(set = "DBL", collectorNumber = "157")
 public class RecklessStormseeker extends Card {
 
     public RecklessStormseeker() {

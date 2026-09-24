@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "172")
+@CardRegistration(set = "SOA", collectorNumber = "62")
 public class CullingRitual extends Card {
 
     public CullingRitual() {

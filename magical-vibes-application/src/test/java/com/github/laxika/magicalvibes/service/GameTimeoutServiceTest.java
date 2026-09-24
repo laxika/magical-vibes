@@ -156,7 +156,7 @@ class GameTimeoutServiceTest {
     @Test
     void singleGoneTimerFiringDeclaresOpponentTheWinner() {
         when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
-        when(gameRegistry.get(gameData.id)).thenReturn(gameData);
+        when(gameRegistry.getActive(gameData.id)).thenReturn(gameData);
         givenOnlyPlayer2Connected();
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
         stubScheduleReturnsFuture();
@@ -170,9 +170,30 @@ class GameTimeoutServiceTest {
     }
 
     @Test
+    void timerScheduledInTheParentAwardsOnlyTheCurrentlyActiveChild() {
+        when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
+        givenOnlyPlayer2Connected();
+        stubScheduleReturnsFuture();
+        ArgumentCaptor<Runnable> timer = ArgumentCaptor.forClass(Runnable.class);
+        svc.onPlayerDisconnect(player1Id);
+        verify(scheduler).schedule(timer.capture(), anyLong(), any());
+        GameData child = new GameData(UUID.randomUUID(), "child", player1Id, "Player1");
+        child.playerIds.addAll(gameData.playerIds);
+        child.orderedPlayerIds.addAll(gameData.orderedPlayerIds);
+        child.status = GameStatus.RUNNING;
+        gameData.session.push(child);
+        when(gameRegistry.getActive(gameData.id)).thenReturn(child);
+
+        timer.getValue().run();
+
+        verify(gameOutcomeService).declareWinner(child, player2Id);
+        verify(gameOutcomeService, never()).declareWinner(gameData, player2Id);
+    }
+
+    @Test
     void singleGoneTimerDoesNotFireIfPlayerReconnectedBeforeFiring() {
         when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
-        when(gameRegistry.get(gameData.id)).thenReturn(gameData);
+        when(gameRegistry.getActive(gameData.id)).thenReturn(gameData);
         givenOnlyPlayer2Connected();
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
         stubScheduleReturnsFuture();
@@ -192,7 +213,7 @@ class GameTimeoutServiceTest {
     @Test
     void bothGoneTimerFiringEndsCasualGameWithoutWinner() {
         when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
-        when(gameRegistry.get(gameData.id)).thenReturn(gameData);
+        when(gameRegistry.getActive(gameData.id)).thenReturn(gameData);
         givenBothDisconnected();
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
         stubScheduleReturnsFuture();
@@ -210,7 +231,7 @@ class GameTimeoutServiceTest {
     void bothGoneTimerFiringInTournamentDeclaresRandomWinner() {
         gameData.draftId = UUID.randomUUID();
         when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
-        when(gameRegistry.get(gameData.id)).thenReturn(gameData);
+        when(gameRegistry.getActive(gameData.id)).thenReturn(gameData);
         givenBothDisconnected();
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
         stubScheduleReturnsFuture();
@@ -327,7 +348,7 @@ class GameTimeoutServiceTest {
                 scheduler);
 
         when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
-        when(gameRegistry.get(gameData.id)).thenReturn(gameData);
+        when(gameRegistry.getActive(gameData.id)).thenReturn(gameData);
         givenOnlyPlayer2Connected();
         ArgumentCaptor<Runnable> timer = ArgumentCaptor.forClass(Runnable.class);
         stubScheduleReturnsFuture();

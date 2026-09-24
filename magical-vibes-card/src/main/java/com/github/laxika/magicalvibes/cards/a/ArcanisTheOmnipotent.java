@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDN", collectorNumber = "42")
 @CardRegistration(set = "EMA", collectorNumber = "39")
 @CardRegistration(set = "SLD", collectorNumber = "498")
+@CardRegistration(set = "DMR", collectorNumber = "39")
 public class ArcanisTheOmnipotent extends Card {
 
     public ArcanisTheOmnipotent() {

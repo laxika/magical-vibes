@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PatronWizard;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.r.RiptideBiologist;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SupremeInquisitor.class, PatronWizard.class, GrizzlyBears.class})
+@CardUsed({SupremeInquisitor.class, RiptideBiologist.class, GlorySeeker.class})
 class SupremeInquisitorTest extends BaseCardTest {
 
     @Test
@@ -24,8 +24,8 @@ class SupremeInquisitorTest extends BaseCardTest {
     void exilesUpToFiveCards() {
         Permanent inquisitor = prepareWithFiveWizards();
         harness.setLibrary(player2, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new GlorySeeker(), new GlorySeeker(), new GlorySeeker(),
+                new GlorySeeker(), new GlorySeeker(), new GlorySeeker()));
 
         activate(inquisitor, player2.getId());
         harness.passBothPriorities();
@@ -44,6 +44,8 @@ class SupremeInquisitorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isTapped)
                 .count()).isEqualTo(5);
+        assertThat(inquisitor.isTapped()).isTrue();
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("Library is shuffled."));
     }
 
     @Test
@@ -51,7 +53,7 @@ class SupremeInquisitorTest extends BaseCardTest {
     void mayStopEarly() {
         Permanent inquisitor = prepareWithFiveWizards();
         harness.setLibrary(player2, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new GlorySeeker(), new GlorySeeker(), new GlorySeeker()));
 
         activate(inquisitor, player2.getId());
         harness.passBothPriorities();
@@ -67,7 +69,20 @@ class SupremeInquisitorTest extends BaseCardTest {
     @DisplayName("Cannot activate without five untapped Wizards")
     void requiresFiveUntappedWizards() {
         Permanent inquisitor = addCreatureReady(player1, new SupremeInquisitor());
-        addReadyPatronWizards(3);
+        addReadyRiptideBiologists(3);
+        addCreatureReady(player1, new GlorySeeker());
+
+        assertThatThrownBy(() -> activate(inquisitor, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when one of five Wizards is tapped")
+    void cannotActivateWithTappedWizard() {
+        Permanent inquisitor = addCreatureReady(player1, new SupremeInquisitor());
+        Permanent tappedWizard = addCreatureReady(player1, new RiptideBiologist());
+        addReadyRiptideBiologists(3);
+        tappedWizard.tap();
 
         assertThatThrownBy(() -> activate(inquisitor, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -77,22 +92,54 @@ class SupremeInquisitorTest extends BaseCardTest {
     @DisplayName("Can target only a player")
     void cannotTargetPermanent() {
         Permanent inquisitor = prepareWithFiveWizards();
-        Permanent permanent = addCreatureReady(player2, new GrizzlyBears());
+        Permanent permanent = addCreatureReady(player2, new GlorySeeker());
 
         assertThatThrownBy(() -> activate(inquisitor, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a player");
     }
 
+    @Test
+    @DisplayName("An empty target library is still shuffled without a search prompt")
+    void emptyTargetLibrary() {
+        prepareWithFiveWizards();
+        harness.setLibrary(player2, List.of());
+
+        activate(gd.playerBattlefields.get(player1.getId()).getFirst(), player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText()
+                .contains("searches " + gd.playerIdToName.get(player2.getId())
+                        + "'s library but it is empty. Library is shuffled."));
+    }
+
+    @Test
+    @DisplayName("Can target its controller's library")
+    void targetsControllersLibrary() {
+        prepareWithFiveWizards();
+        harness.setLibrary(player1, List.of(new GlorySeeker(), new GlorySeeker()));
+
+        activate(gd.playerBattlefields.get(player1.getId()).getFirst(), player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
     private Permanent prepareWithFiveWizards() {
         Permanent inquisitor = addCreatureReady(player1, new SupremeInquisitor());
-        addReadyPatronWizards(5);
+        addReadyRiptideBiologists(5);
         return inquisitor;
     }
 
-    private void addReadyPatronWizards(int count) {
+    private void addReadyRiptideBiologists(int count) {
         for (int i = 0; i < count; i++) {
-            addCreatureReady(player1, new PatronWizard());
+            addCreatureReady(player1, new RiptideBiologist());
         }
     }
 

@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "145")
 @CardRegistration(set = "SLD", collectorNumber = "72")
+@CardRegistration(set = "PIO", collectorNumber = "305")
 public class EpharaGodOfThePolis extends Card {
 
     public EpharaGodOfThePolis() {

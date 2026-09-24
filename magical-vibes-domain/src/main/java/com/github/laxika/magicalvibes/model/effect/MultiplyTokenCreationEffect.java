@@ -11,20 +11,18 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *
  * @param multiplier the factor by which token creation is multiplied (e.g. 2 for doubling)
  * @param affectedSubtype the token subtype this replacement applies to, or {@code null} for all tokens
- * @param global whether the replacement applies to tokens created by any player
+ * @param appliesToAllPlayers whether the replacement applies to every player's token creation
  */
-public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype,
-                                          boolean creatureTokensOnly, boolean global)
-        implements TokenCreationReplacementEffect {
-        public MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype,
-                                           boolean creatureTokensOnly) {
-            this(multiplier, affectedSubtype, creatureTokensOnly, false);
-        }
+public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype, boolean creatureTokensOnly,
+                                          boolean appliesToAllPlayers)
+        implements TokenCreationReplacementEffect, DoublingEffect {
+    public MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype) {
+        this(multiplier, affectedSubtype, false, false);
+    }
 
-        public MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype) {
-            this(multiplier, affectedSubtype, false, false);
-        }
-
+    public MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype, boolean creatureTokensOnly) {
+        this(multiplier, affectedSubtype, creatureTokensOnly, false);
+    }
 
     public MultiplyTokenCreationEffect(int multiplier, boolean creatureTokensOnly) {
         this(multiplier, null, creatureTokensOnly, false);
@@ -34,7 +32,8 @@ public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSu
         this(multiplier, null, false, false);
     }
 
-    public static MultiplyTokenCreationEffect global(int multiplier) {
+    /** Creates an all-player token multiplier such as Primal Vigor's replacement effect. */
+    public static MultiplyTokenCreationEffect forAllPlayers(int multiplier) {
         return new MultiplyTokenCreationEffect(multiplier, null, false, true);
     }
 
@@ -49,7 +48,7 @@ public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSu
     }
 
     @Override
-    public boolean appliesGlobally() {
-        return global;
+    public boolean isDoublingEffect() {
+        return multiplier == 2;
     }
 }

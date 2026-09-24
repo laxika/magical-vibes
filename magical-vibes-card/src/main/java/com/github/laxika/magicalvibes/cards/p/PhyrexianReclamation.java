@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "63")
 @CardRegistration(set = "SLD", collectorNumber = "1808")
+@CardRegistration(set = "C13", collectorNumber = "88")
+@CardRegistration(set = "C15", collectorNumber = "133")
 public class PhyrexianReclamation extends Card {
 
     public PhyrexianReclamation() {

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "17")
 @CardRegistration(set = "SLD", collectorNumber = "1075")
+@CardRegistration(set = "PIO", collectorNumber = "3")
 public class VoidWinnower extends Card {
 
     public VoidWinnower() {

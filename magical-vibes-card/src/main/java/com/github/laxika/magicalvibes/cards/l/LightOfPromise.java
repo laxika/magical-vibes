@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M21", collectorNumber = "25")
+@CardRegistration(set = "MAR", collectorNumber = "46")
 public class LightOfPromise extends Card {
 
     public LightOfPromise() {

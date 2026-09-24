@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "234")
+@CardRegistration(set = "DBL", collectorNumber = "234")
 public class OldStickfingers extends Card {
 
     public OldStickfingers() {

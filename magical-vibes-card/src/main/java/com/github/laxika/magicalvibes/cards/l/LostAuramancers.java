@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "11")
+@CardRegistration(set = "TSR", collectorNumber = "24")
 public class LostAuramancers extends Card {
 
     public LostAuramancers() {

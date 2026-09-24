@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EpicExperimentEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "159")
+@CardRegistration(set = "TSR", collectorNumber = "376")
+@CardRegistration(set = "PIO", collectorNumber = "223")
+@CardRegistration(set = "C15", collectorNumber = "216")
 public class EpicExperiment extends Card {
 
     public EpicExperiment() {

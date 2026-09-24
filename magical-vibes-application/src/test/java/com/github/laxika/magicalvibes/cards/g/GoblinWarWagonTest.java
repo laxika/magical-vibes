@@ -2,24 +2,24 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinWarWagon.class})
 class GoblinWarWagonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapped Goblin War Wagon does not untap during its controller's untap step")
     void doesNotUntapDuringUntapStep() {
-        Permanent wagon = addGoblinWarWagon(player1, true);
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(wagon.isTapped()).isTrue();
     }
@@ -27,7 +27,8 @@ class GoblinWarWagonTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2} during upkeep untaps Goblin War Wagon")
     void payingTwoUntapsGoblinWarWagon() {
-        Permanent wagon = addGoblinWarWagon(player1, true);
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -40,7 +41,8 @@ class GoblinWarWagonTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep payment leaves Goblin War Wagon tapped")
     void decliningLeavesGoblinWarWagonTapped() {
-        Permanent wagon = addGoblinWarWagon(player1, true);
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -50,24 +52,46 @@ class GoblinWarWagonTest extends BaseCardTest {
         assertThat(wagon.isTapped()).isTrue();
     }
 
-    private Permanent addGoblinWarWagon(Player player, boolean tapped) {
-        Permanent permanent = new Permanent(new GoblinWarWagon());
-        permanent.setSummoningSick(false);
-        if (tapped) {
-            permanent.tap();
-        }
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Goblin War Wagon does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(wagon.isTapped()).isTrue();
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Accepting the upkeep payment without enough mana leaves Goblin War Wagon tapped")
+    void acceptingWithoutTwoManaLeavesGoblinWarWagonTapped() {
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(wagon.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Paying Goblin War Wagon's upkeep cost consumes exactly two mana")
+    void payingTwoConsumesExactlyTwoMana() {
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(wagon.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }

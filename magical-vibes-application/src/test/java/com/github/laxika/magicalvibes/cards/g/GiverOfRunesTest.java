@@ -17,43 +17,40 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GiverOfRunesTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Tapping grants chosen-color protection to another creature you control")
-    void grantsChosenColorProtection() {
-        addCreatureReady(player1, new GiverOfRunes());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+    @DisplayName("Grants protection from a chosen color to another creature you control")
+    void grantsProtectionFromChosenColor() {
+        Permanent giver = addCreatureReady(player1, new GiverOfRunes());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, CardColor.RED.name());
 
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isTrue();
-        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.BLUE)).isFalse();
+        assertThat(giver.isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Tapping can grant protection from colorless")
+    @DisplayName("Can grant protection from colorless")
     void grantsProtectionFromColorless() {
         addCreatureReady(player1, new GiverOfRunes());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "COLORLESS");
 
         assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, target, null)).isTrue();
-        assertThat(gqs.hasProtectionFromSource(gd, target, new Permanent(new BrittleEffigy()))).isTrue();
     }
 
     @Test
-    @DisplayName("The granted protection wears off at end of turn")
+    @DisplayName("Protection wears off at end of turn")
     void protectionWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new GiverOfRunes());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, CardColor.BLUE.name());
 
@@ -65,18 +62,85 @@ class GiverOfRunesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ability only targets another creature you control")
-    void restrictsTargets() {
-        Permanent giver = addCreatureReady(player1, new GiverOfRunes());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent noncreature = new Permanent(new BrittleEffigy());
-        gd.playerBattlefields.get(player1.getId()).add(noncreature);
+    @DisplayName("Cannot target Giver of Runes itself")
+    void cannotTargetItself() {
+        addCreatureReady(player1, new GiverOfRunes());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, giver.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, null, harness.getPermanentId(player1, "Giver of Runes")))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, opponentCreature.getId()))
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's creature")
+    void cannotTargetOpponentCreature() {
+        addCreatureReady(player1, new GiverOfRunes());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, noncreature.getId()))
-                .isInstanceOf(IllegalStateException.class);
+    }
+}
+
+class Mh1GiverOfRunesTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Tapping Giver of Runes grants another creature protection from a chosen color")
+    void grantsProtectionFromChosenColor() {
+        Permanent giver = addCreatureReady(player1, new GiverOfRunes());
+        Permanent target = addCreatureReady(player1, new GiverOfRunes());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(giver.isTapped()).isTrue();
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+    }
+
+    @Test
+    @DisplayName("Can grant protection from colorless")
+    void grantsProtectionFromColorless() {
+        Permanent giver = addCreatureReady(player1, new GiverOfRunes());
+        Permanent target = addCreatureReady(player1, new GiverOfRunes());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "COLORLESS");
+
+        assertThat(giver.isTapped()).isTrue();
+        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target itself, an opponent's creature, or a noncreature")
+    void requiresAnotherCreatureYouControl() {
+        Permanent giver = addCreatureReady(player1, new GiverOfRunes());
+        Permanent opponentCreature = addCreatureReady(player2, new GiverOfRunes());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giver.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("another creature you control");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("another creature you control");
+    }
+
+    @Test
+    @DisplayName("Protection wears off at end of turn")
+    void protectionWearsOffAtEndOfTurn() {
+        addCreatureReady(player1, new GiverOfRunes());
+        Permanent target = addCreatureReady(player1, new GiverOfRunes());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
     }
 }

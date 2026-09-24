@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "170")
 @CardRegistration(set = "SLD", collectorNumber = "1966")
+@CardRegistration(set = "KLR", collectorNumber = "260")
 public class PeacewalkerColossus extends Card {
 
     public PeacewalkerColossus() {

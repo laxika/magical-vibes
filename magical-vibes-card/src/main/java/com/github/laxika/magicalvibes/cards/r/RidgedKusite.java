@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "78")
+@CardRegistration(set = "TSR", collectorNumber = "134")
 public class RidgedKusite extends Card {
 
     public RidgedKusite() {

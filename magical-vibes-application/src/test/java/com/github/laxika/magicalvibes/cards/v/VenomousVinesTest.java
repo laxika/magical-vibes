@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.ArcaneFlight;
+import com.github.laxika.magicalvibes.cards.f.FaithsFetters;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VenomousVines.class, ArcaneFlight.class, GrizzlyBears.class})
+@CardUsed({ArcaneFlight.class, FaithsFetters.class, Forest.class, GrizzlyBears.class, VenomousVines.class})
 class VenomousVinesTest extends BaseCardTest {
 
     @Test
@@ -27,6 +29,20 @@ class VenomousVinesTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Destroys an enchanted noncreature permanent")
+    void destroysEnchantedNoncreaturePermanent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FaithsFetters());
+        aura.setAttachedTo(land.getId());
+
+        castAt(land);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -56,9 +72,8 @@ class VenomousVinesTest extends BaseCardTest {
     }
 
     private Permanent attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new ArcaneFlight());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneFlight());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 

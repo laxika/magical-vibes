@@ -12,13 +12,15 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "431")
+@CardRegistration(set = "SLX", collectorNumber = "13")
 public class TheHowlingAbomination extends Card {
 
     public TheHowlingAbomination() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
-                new ControllerCastThreeOrMoreSpellsThisTurn(null),
+                new ControllerCastThreeOrMoreSpellsThisTurn(new CardTruePredicate()),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, SequenceEffect.of(

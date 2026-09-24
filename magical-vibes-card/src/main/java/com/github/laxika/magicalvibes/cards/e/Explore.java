@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 @CardRegistration(set = "MM3", collectorNumber = "125")
 @CardRegistration(set = "SLD", collectorNumber = "114")
 @CardRegistration(set = "SLD", collectorNumber = "689")
+@CardRegistration(set = "TLE", collectorNumber = "259")
 public class Explore extends Card {
 
     public Explore() {

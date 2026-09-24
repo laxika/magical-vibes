@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "50")
+@CardRegistration(set = "ECC", collectorNumber = "69")
 public class Slithermuse extends Card {
 
     public Slithermuse() {

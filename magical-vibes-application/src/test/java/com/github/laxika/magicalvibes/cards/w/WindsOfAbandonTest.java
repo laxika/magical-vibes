@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,30 +14,31 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WindsOfAbandon.class, GrizzlyBears.class, Plains.class, Forest.class})
+@CardUsed({WindsOfAbandon.class, GrizzlyBears.class, Plains.class, Forest.class, Island.class})
 class WindsOfAbandonTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Exiles a target creature an opponent controls and searches its controller's library")
-    void exilesTargetCreatureAndSearchesItsController() {
-        Permanent target = addCreature(player2);
-        setupLibrary(player2, new Plains());
+    @DisplayName("Exiles the target creature and searches its controller's library for a tapped basic land")
+    void exilesTargetAndSearchesForBasicLand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new Island()));
         harness.setHand(player1, List.of(new WindsOfAbandon()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, target.getId());
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getName)
+                .contains("Grizzly Bears");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
@@ -45,30 +47,17 @@ class WindsOfAbandonTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player2,
                 new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(permanent ->
-                permanent.getCard().hasType(CardType.LAND) && permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().hasType(CardType.LAND) && permanent.isTapped());
     }
 
     @Test
-    @DisplayName("Cannot target a creature controlled by the caster")
-    void cannotTargetOwnCreature() {
-        Permanent ownCreature = addCreature(player1);
-        harness.setHand(player1, List.of(new WindsOfAbandon()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, ownCreature.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature an opponent controls");
-    }
-
-    @Test
-    @DisplayName("Overload exiles opposing creatures and searches for one tapped basic land per creature")
-    void overloadExilesOpposingCreaturesAndSearchesForBasicLands() {
-        Permanent first = addCreature(player2);
-        Permanent second = addCreature(player2);
-        Permanent own = addCreature(player1);
-        setupLibrary(player2, new Plains(), new Forest());
+    @DisplayName("Overload exiles each opponent creature and searches once for each exiled creature")
+    void overloadExilesEachOpponentCreatureAndSearchesForEach() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new Island(), new Forest()));
         harness.setHand(player1, List.of(new WindsOfAbandon()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -78,31 +67,33 @@ class WindsOfAbandonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(own);
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search).isNotNull();
-        assertThat(search.params().playerId()).isEqualTo(player2.getId());
-        assertThat(search.params().remainingCount()).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Grizzly Bears", "Grizzly Bears");
 
         harness.getGameService().handleInteractionAnswer(gd, player2,
                 new InteractionAnswer.LibraryCardChosen(0));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
+                .isEqualTo(player2.getId());
+
         harness.getGameService().handleInteractionAnswer(gd, player2,
                 new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.LAND))
-                .filter(Permanent::isTapped)
-                .count()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .hasSize(2)
+                .allMatch(Permanent::isTapped);
     }
 
-    private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Cannot target a creature you control")
+    void cannotTargetOwnCreature() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WindsOfAbandon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-    private void setupLibrary(Player player, Card... cards) {
-        harness.setLibrary(player, List.of(cards));
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, own.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature an opponent controls");
     }
 }

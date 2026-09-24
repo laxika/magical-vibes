@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "175")
+@CardRegistration(set = "SIR", collectorNumber = "173")
 public class RavenousBloodseeker extends Card {
 
     public RavenousBloodseeker() {

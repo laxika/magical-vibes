@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "256")
 @CardRegistration(set = "SLD", collectorNumber = "1806")
+@CardRegistration(set = "SPG", collectorNumber = "145")
 public class DolmenGate extends Card {
 
     public DolmenGate() {

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "197")
 @CardRegistration(set = "SLD", collectorNumber = "1602")
+@CardRegistration(set = "TSR", collectorNumber = "377")
 public class FeatherTheRedeemed extends Card {
 
     public FeatherTheRedeemed() {

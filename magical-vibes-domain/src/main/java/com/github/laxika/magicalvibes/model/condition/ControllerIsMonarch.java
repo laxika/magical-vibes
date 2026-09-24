@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.model.condition;
 
-/** True when the source effect's controller is the monarch. */
+/** The source permanent's controller is the monarch. */
 public record ControllerIsMonarch() implements Condition {
 
     @Override
     public String conditionName() {
-        return "controller is the monarch";
+        return "the monarch";
     }
 
     @Override

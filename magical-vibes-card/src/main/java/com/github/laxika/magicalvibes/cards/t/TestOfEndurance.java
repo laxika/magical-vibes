@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "29")
 @CardRegistration(set = "SLD", collectorNumber = "1840")
+@CardRegistration(set = "DMR", collectorNumber = "32")
 public class TestOfEndurance extends Card {
 
     public TestOfEndurance() {

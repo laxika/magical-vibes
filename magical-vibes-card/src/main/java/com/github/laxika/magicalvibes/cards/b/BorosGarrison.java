@@ -15,7 +15,12 @@ import java.util.List;
 @CardRegistration(set = "RAV", collectorNumber = "275")
 @CardRegistration(set = "HOP", collectorNumber = "131")
 @CardRegistration(set = "MM2", collectorNumber = "237")
+@CardRegistration(set = "GK1", collectorNumber = "98")
 @CardRegistration(set = "IMA", collectorNumber = "233")
+@CardRegistration(set = "2X2", collectorNumber = "319")
+@CardRegistration(set = "C13", collectorNumber = "279")
+@CardRegistration(set = "CMD", collectorNumber = "268")
+@CardRegistration(set = "C15", collectorNumber = "279")
 public class BorosGarrison extends Card {
 
     public BorosGarrison() {

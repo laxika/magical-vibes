@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "MRD", collectorNumber = "134")
 @CardRegistration(set = "MMA", collectorNumber = "170")
 @CardRegistration(set = "SLD", collectorNumber = "2250")
+@CardRegistration(set = "HA7", collectorNumber = "15")
 public class ToothAndNail extends Card {
 
     public ToothAndNail() {

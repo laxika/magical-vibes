@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "112")
 @CardRegistration(set = "SLD", collectorNumber = "580")
 @CardRegistration(set = "SLD", collectorNumber = "1678")
+@CardRegistration(set = "BRR", collectorNumber = "14")
 public class DoorToNothingness extends Card {
 
     public DoorToNothingness() {

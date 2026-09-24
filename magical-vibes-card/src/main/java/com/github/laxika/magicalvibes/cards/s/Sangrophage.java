@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "127")
+@CardRegistration(set = "TSR", collectorNumber = "135")
 public class Sangrophage extends Card {
 
     public Sangrophage() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "67")
+@CardRegistration(set = "UMA", collectorNumber = "99")
 public class GoryosVengeance extends Card {
 
     public GoryosVengeance() {

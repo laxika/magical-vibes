@@ -16,6 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "100")
 @CardRegistration(set = "SLD", collectorNumber = "1039")
+@CardRegistration(set = "MAR", collectorNumber = "76")
+@CardRegistration(set = "WOT", collectorNumber = "51")
+@CardRegistration(set = "WOT", collectorNumber = "80")
+@CardRegistration(set = "WOT", collectorNumber = "100")
 public class DefenseOfTheHeart extends Card {
 
     public DefenseOfTheHeart() {

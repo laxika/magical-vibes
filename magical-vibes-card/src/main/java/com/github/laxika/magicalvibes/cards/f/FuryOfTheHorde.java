@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "81")
 @CardRegistration(set = "DDN", collectorNumber = "30")
+@CardRegistration(set = "MAR", collectorNumber = "71")
 public class FuryOfTheHorde extends Card {
 
     public FuryOfTheHorde() {

@@ -9,14 +9,17 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "1793")
+@CardRegistration(set = "MH1", collectorNumber = "86")
 public class Defile extends Card {
 
     public Defile() {
         PermanentCount swampsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(
-                new Scaled(swampsYouControl, -1), new Scaled(swampsYouControl, -1)));
+        Scaled swampPenalty = new Scaled(swampsYouControl, -1);
+        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
+                new BoostTargetCreatureEffect(swampPenalty, swampPenalty));
     }
 }

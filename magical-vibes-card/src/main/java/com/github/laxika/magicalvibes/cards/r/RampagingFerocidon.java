@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "154")
 @CardRegistration(set = "SLD", collectorNumber = "1390")
+@CardRegistration(set = "SPG", collectorNumber = "8")
 public class RampagingFerocidon extends Card {
 
     public RampagingFerocidon() {

@@ -10,13 +10,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
-
-/** Resolves Fell the Mighty by deriving the wipe threshold from its target. */
+/** Resolves Fell the Mighty's power-relative creature wipe. */
 @Component
 @RequiredArgsConstructor
 public class DestroyAllCreaturesWithPowerGreaterThanTargetEffectHandler implements NormalEffectHandlerBean {
@@ -34,11 +33,12 @@ public class DestroyAllCreaturesWithPowerGreaterThanTargetEffectHandler implemen
         List<UUID> targets = entry.targetsForEffect(effect);
         UUID targetId = targets.isEmpty() ? entry.getTargetId() : targets.getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
+        if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
 
-        int minimumPower = gameQueryService.getEffectivePower(gameData, target) + 1;
+        int targetPower = gameQueryService.getEffectivePower(gameData, target);
+        int minimumPower = targetPower == Integer.MAX_VALUE ? Integer.MAX_VALUE : targetPower + 1;
         destroyAllPermanentsEffectHandler.resolve(gameData, entry, new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

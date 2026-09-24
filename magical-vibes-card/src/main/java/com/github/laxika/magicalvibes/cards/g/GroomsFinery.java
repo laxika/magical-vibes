@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "117")
+@CardRegistration(set = "DBL", collectorNumber = "384")
 public class GroomsFinery extends Card {
 
     public GroomsFinery() {

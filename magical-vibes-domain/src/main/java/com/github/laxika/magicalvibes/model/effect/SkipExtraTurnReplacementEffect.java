@@ -9,7 +9,7 @@ import java.util.UUID;
 public record SkipExtraTurnReplacementEffect() implements ExtraTurnSkipReplacementEffect {
 
     @Override
-    public boolean appliesTo(UUID sourceControllerId, UUID extraTurnPlayerId) {
+    public boolean appliesToExtraTurn(UUID sourceControllerId, UUID extraTurnPlayerId) {
         return !sourceControllerId.equals(extraTurnPlayerId);
     }
 }

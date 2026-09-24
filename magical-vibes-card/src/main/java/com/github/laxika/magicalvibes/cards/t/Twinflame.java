@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JOU", collectorNumber = "115")
 @CardRegistration(set = "SLD", collectorNumber = "1810")
+@CardRegistration(set = "2X2", collectorNumber = "129")
 public class Twinflame extends Card {
 
     public Twinflame() {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "225")
 @CardRegistration(set = "KLD", collectorNumber = "200")
+@CardRegistration(set = "2XM", collectorNumber = "238")
+@CardRegistration(set = "KLR", collectorNumber = "226")
 public class ChiefOfTheFoundry extends Card {
 
     public ChiefOfTheFoundry() {

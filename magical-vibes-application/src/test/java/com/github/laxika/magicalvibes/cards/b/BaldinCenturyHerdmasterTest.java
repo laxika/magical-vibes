@@ -1,70 +1,116 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BaldinCenturyHerdmaster.class, GoblinPiker.class, GrizzlyBears.class})
+@CardUsed({BaldinCenturyHerdmaster.class, GoblinPiker.class, GrizzlyBears.class, FountainOfYouth.class})
 class BaldinCenturyHerdmasterTest extends BaseCardTest {
 
     @Test
-    void usesToughnessForCombatDamageOnlyDuringYourTurn() {
-        addCreatureReady(player1, new BaldinCenturyHerdmaster());
-        Permanent ownPiker = addCreatureReady(player1, new GoblinPiker());
-        Permanent opposingPiker = addCreatureReady(player2, new GoblinPiker());
-
-        harness.forceActivePlayer(player1);
-        assertThat(gqs.getEffectiveCombatDamage(gd, ownPiker)).isEqualTo(1);
-        assertThat(gqs.getEffectiveCombatDamage(gd, opposingPiker)).isEqualTo(1);
-
-        harness.forceActivePlayer(player2);
-        assertThat(gqs.getEffectiveCombatDamage(gd, ownPiker)).isEqualTo(2);
-        assertThat(gqs.getEffectiveCombatDamage(gd, opposingPiker)).isEqualTo(2);
-    }
-
-    @Test
-    void attackTriggerBoostsEachChosenCreatureByCardsInHand() {
-        Permanent baldin = addCreatureReady(player1, new BaldinCenturyHerdmaster());
-        Permanent ownPiker = addCreatureReady(player1, new GoblinPiker());
-        Permanent opposingPiker = addCreatureReady(player2, new GoblinPiker());
+    @DisplayName("Attacking lets you boost up to one hundred target creatures by your hand size")
+    void attackBoostsSelectedCreaturesByHandSize() {
+        Permanent baldin = addReadyPermanent(player1, new BaldinCenturyHerdmaster());
+        Permanent ownTarget = addReadyStats(player1, 1, 1);
+        Permanent opposingTarget = addReadyStats(player2, 1, 1);
+        Permanent artifact = addReadyPermanent(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        declareAttackers(List.of(0));
+        beginCombat(player1);
+        gs.declareAttackers(gd, player1, List.of(indexOf(player1, baldin)));
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(baldin.getId(), ownPiker.getId(), opposingPiker.getId());
-
-        harness.handlePermanentChosen(player1, ownPiker.getId());
-        harness.handlePermanentChosen(player1, opposingPiker.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).contains(ownTarget.getId(), opposingTarget.getId())
+                .doesNotContain(artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownTarget.getId(), opposingTarget.getId()));
         harness.passBothPriorities();
 
-        assertThat(ownPiker.getEffectivePower()).isEqualTo(2);
-        assertThat(ownPiker.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingPiker.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingPiker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(ownTarget.getPowerModifier()).isEqualTo(0);
+        assertThat(ownTarget.getToughnessModifier()).isEqualTo(3);
+        assertThat(opposingTarget.getToughnessModifier()).isEqualTo(3);
+
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.UNTAP);
+
+        assertThat(ownTarget.getToughnessModifier()).isEqualTo(0);
+        assertThat(opposingTarget.getToughnessModifier()).isEqualTo(0);
     }
 
     @Test
-    void attackTriggerMayChooseNoTargets() {
-        addCreatureReady(player1, new BaldinCenturyHerdmaster());
-        Permanent piker = addCreatureReady(player1, new GoblinPiker());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+    @DisplayName("During your turn every creature assigns combat damage equal to its toughness")
+    void usesToughnessForAllCreaturesDuringYourTurn() {
+        addReadyPermanent(player1, new BaldinCenturyHerdmaster());
+        Permanent attacker = addReadyStats(player1, 1, 5);
+        Permanent blocker = addReadyStats(player2, 1, 4);
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(indexOf(player1, attacker));
 
-        declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, player1.getId());
+        beginCombatDamage(player1);
         harness.passBothPriorities();
 
-        assertThat(piker.getEffectivePower()).isEqualTo(2);
-        assertThat(piker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Baldin's combat-damage replacement is inactive during another player's turn")
+    void doesNotUseToughnessDuringOpponentsTurn() {
+        addReadyPermanent(player1, new BaldinCenturyHerdmaster());
+        Permanent attacker = addReadyStats(player2, 1, 4);
+        Permanent blocker = addReadyStats(player1, 1, 5);
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(indexOf(player2, attacker));
+
+        beginCombatDamage(player2);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    private Permanent addReadyPermanent(Player player, Card card) {
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        return permanent;
+    }
+
+    private Permanent addReadyStats(Player player, int power, int toughness) {
+        GrizzlyBears card = new GrizzlyBears();
+        card.setPower(power);
+        card.setToughness(toughness);
+        return addReadyPermanent(player, card);
+    }
+
+    private int indexOf(Player player, Permanent permanent) {
+        return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    }
+
+    private void beginCombat(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+    }
+
+    private void beginCombatDamage(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
     }
 }

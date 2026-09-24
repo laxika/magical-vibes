@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "23")
+@CardRegistration(set = "DBL", collectorNumber = "23")
 public class HedgewitchsMask extends Card {
 
     public HedgewitchsMask() {

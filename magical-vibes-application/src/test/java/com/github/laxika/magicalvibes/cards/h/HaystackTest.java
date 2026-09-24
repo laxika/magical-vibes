@@ -15,13 +15,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HaystackTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Phases out a target creature you control and taps Haystack")
+    @DisplayName("{2}, {T}: phases out a target creature you control")
     void phasesOutTargetCreatureYouControl() {
         Permanent haystack = harness.addToBattlefieldAndReturn(player1, new Haystack());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.activateAbility(player1, battlefieldIndex(haystack), 0, null, creature.getId());
 
         assertThat(haystack.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -33,13 +33,13 @@ class HaystackTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A phased-out creature phases in during its controller's next untap step")
-    void phasedOutCreaturePhasesBackIn() {
-        harness.addToBattlefield(player1, new Haystack());
+    @DisplayName("Phased-out creature returns during its controller's next untap step")
+    void phasesInOnNextUntapStep() {
+        Permanent haystack = harness.addToBattlefieldAndReturn(player1, new Haystack());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.activateAbility(player1, battlefieldIndex(haystack), 0, null, creature.getId());
         harness.passBothPriorities();
 
         advanceToUpkeep(player1);
@@ -49,16 +49,22 @@ class HaystackTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target an opponent's creature")
+    @DisplayName("The ability cannot target an opponent's creature")
     void cannotTargetOpponentsCreature() {
         Permanent haystack = harness.addToBattlefieldAndReturn(player1, new Haystack());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, battlefieldIndex(haystack), 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
 
         assertThat(haystack.isTapped()).isFalse();
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    private int battlefieldIndex(Permanent permanent) {
+        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
 }

@@ -198,6 +198,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 || grant.scope() == GrantScope.EQUIPPED_CREATURE) {
             Permanent source = entry.getSourcePermanentId() == null
                     ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) source = entry.getSourcePermanentSnapshot();
             Permanent target = source == null || source.getAttachedTo() == null
                     ? null : gameQueryService.findPermanentById(gameData, source.getAttachedTo());
             boolean creatureScope = grant.scope() == GrantScope.ENCHANTED_CREATURE
@@ -417,6 +418,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     }
 
     void grantToPermanent(GameData gameData, StackEntry entry, Permanent permanent, Set<Keyword> keywords) {
+        grantToPermanent(gameData, entry.getCard().getName(), entry.getControllerId(), permanent, keywords);
+    }
+
+    void grantToPermanent(GameData gameData, String sourceName, UUID controllerId,
+                          Permanent permanent, Set<Keyword> keywords) {
         Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, keywords);
         if (grantableKeywords.isEmpty()) {
             return;
@@ -424,7 +430,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
         addLegacyBucket(permanent, GrantDuration.END_OF_TURN, grantableKeywords);
         gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(),
+                sourceName, null, controllerId,
                 new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
                 permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
         String keywordNames = formatKeywords(grantableKeywords);

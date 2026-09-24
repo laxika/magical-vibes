@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Progress state for Goblin Game's private item-count choices. */
+/** Progress state for private hidden-number choices. */
 public class GoblinGameState {
 
     public boolean active;

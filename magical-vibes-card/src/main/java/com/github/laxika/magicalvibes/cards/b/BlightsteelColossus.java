@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MBS", collectorNumber = "99")
 @CardRegistration(set = "SLD", collectorNumber = "1079")
 @CardRegistration(set = "SLD", collectorNumber = "2223")
+@CardRegistration(set = "2XM", collectorNumber = "235")
 public class BlightsteelColossus extends Card {
 
     public BlightsteelColossus() {

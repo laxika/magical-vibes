@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "MPS", collectorNumber = "31")
 @CardRegistration(set = "SLD", collectorNumber = "56")
 @CardRegistration(set = "SLD", collectorNumber = "2105")
+@CardRegistration(set = "PZA", collectorNumber = "14")
 public class ArcboundRavager extends Card {
 
     public ArcboundRavager() {

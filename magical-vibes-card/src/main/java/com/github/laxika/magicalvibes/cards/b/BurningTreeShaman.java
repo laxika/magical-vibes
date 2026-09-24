@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "105")
+@CardRegistration(set = "GK2", collectorNumber = "89")
 public class BurningTreeShaman extends Card {
 
     public BurningTreeShaman() {

@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "146")
 @CardRegistration(set = "SLD", collectorNumber = "76")
+@CardRegistration(set = "PIO", collectorNumber = "303")
 public class AthreosGodOfPassage extends Card {
 
     public AthreosGodOfPassage() {

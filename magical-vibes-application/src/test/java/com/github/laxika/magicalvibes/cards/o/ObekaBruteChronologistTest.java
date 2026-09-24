@@ -11,49 +11,44 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ObekaBruteChronologist.class)
+@CardUsed({ObekaBruteChronologist.class})
 class ObekaBruteChronologistTest extends BaseCardTest {
 
     @Test
-    @DisplayName("The active player may end the turn")
+    @DisplayName("The active player may accept ending the turn")
     void activePlayerMayEndTheTurn() {
-        addReadyObeka(player2);
-        harness.forceActivePlayer(player1);
+        addCreatureReady(player1, new ObekaBruteChronologist());
+        harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         int turnBefore = gd.turnNumber;
-        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
         assertThat(gd.stack).isEmpty();
     }
 
     @Test
-    @DisplayName("The active player may decline to end the turn")
-    void activePlayerMayDecline() {
-        addReadyObeka(player2);
-        harness.forceActivePlayer(player1);
+    @DisplayName("The active player may decline ending the turn")
+    void activePlayerMayDeclineEndingTheTurn() {
+        addCreatureReady(player1, new ObekaBruteChronologist());
+        harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         int turnBefore = gd.turnNumber;
-        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.turnNumber).isEqualTo(turnBefore);
         assertThat(gd.stack).isEmpty();
-    }
-
-    private Permanent addReadyObeka(Player player) {
-        Permanent obeka = harness.addToBattlefieldAndReturn(player, new ObekaBruteChronologist());
-        obeka.setSummoningSick(false);
-        return obeka;
     }
 }

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "220")
+@CardRegistration(set = "KLR", collectorNumber = "248")
+@CardRegistration(set = "BRR", collectorNumber = "27")
 public class KeyToTheCity extends Card {
 
     public KeyToTheCity() {

@@ -14,6 +14,8 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "207")
 @CardRegistration(set = "SLD", collectorNumber = "18")
 @CardRegistration(set = "SLD", collectorNumber = "929")
+@CardRegistration(set = "SPG", collectorNumber = "136")
+@CardRegistration(set = "C13", collectorNumber = "111")
 public class GoblinSharpshooter extends Card {
 
     public GoblinSharpshooter() {

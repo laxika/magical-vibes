@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Incinerate;
-import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
+import com.github.laxika.magicalvibes.cards.a.AncientSpider;
+import com.github.laxika.magicalvibes.cards.a.AmphibiousKavu;
+import com.github.laxika.magicalvibes.cards.c.CalderaKavu;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,39 +14,34 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThornscapeFamiliar.class, Incinerate.class, YouthfulKnight.class, GrizzlyBears.class})
+@CardUsed({ThornscapeFamiliar.class, CalderaKavu.class, AncientSpider.class, AmphibiousKavu.class})
 class ThornscapeFamiliarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Red spells you cast cost {1} less")
     void redSpellsCostOneLess() {
         harness.addToBattlefield(player1, new ThornscapeFamiliar());
-        harness.setHand(player1, List.of(new Incinerate()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromHand(player1, new CalderaKavu(), "{1}{R}");
 
-        harness.castInstant(player1, 0, player2.getId());
-
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Incinerate"));
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Caldera Kavu"));
     }
 
     @Test
     @DisplayName("White spells you cast cost {1} less")
     void whiteSpellsCostOneLess() {
         harness.addToBattlefield(player1, new ThornscapeFamiliar());
-        harness.setHand(player1, List.of(new YouthfulKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromHand(player1, new AncientSpider(), "{1}{G}{W}");
 
-        harness.castCreature(player1, 0);
-
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Youthful Knight"));
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Ancient Spider"));
     }
 
     @Test
     @DisplayName("Spells of other colors are not reduced")
     void otherColorsAreNotReduced() {
         harness.addToBattlefield(player1, new ThornscapeFamiliar());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AmphibiousKavu()));
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -56,10 +51,11 @@ class ThornscapeFamiliarTest extends BaseCardTest {
     @DisplayName("The reduction only applies to the controller's spells")
     void opponentSpellsAreNotReduced() {
         harness.addToBattlefield(player1, new ThornscapeFamiliar());
-        harness.setHand(player2, List.of(new Incinerate()));
+        harness.setHand(player2, List.of(new CalderaKavu()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "104")
+@CardRegistration(set = "KLR", collectorNumber = "108")
 public class UnderhandedDesigns extends Card {
 
     public UnderhandedDesigns() {

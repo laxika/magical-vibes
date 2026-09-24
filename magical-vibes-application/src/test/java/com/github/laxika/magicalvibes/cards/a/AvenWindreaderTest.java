@@ -1,23 +1,23 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.Werebear;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AvenWindreader.class, Forest.class, Werebear.class})
 class AvenWindreaderTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -31,7 +31,6 @@ class AvenWindreaderTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Aven Windreader");
@@ -52,7 +51,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Note the top card of player2's deck
-        GameData gd = harness.getGameData();
+        harness.setLibrary(player2, List.of(new Forest()));
         String topCardName = gd.playerDecks.get(player2.getId()).getFirst().getName();
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -77,7 +76,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        GameData gd = harness.getGameData();
+        harness.setLibrary(player1, List.of(new Forest()));
         String topCardName = gd.playerDecks.get(player1.getId()).getFirst().getName();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -95,8 +94,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        GameData gd = harness.getGameData();
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Werebear()));
         harness.setLibrary(player2, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -105,7 +103,7 @@ class AvenWindreaderTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("reveals") && log.contains("Forest"));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .noneMatch(log -> log.contains("Grizzly Bears"));
+                .noneMatch(log -> log.contains("Werebear"));
     }
 
     @Test
@@ -115,9 +113,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        // Empty player2's deck
-        GameData gd = harness.getGameData();
-        gd.playerDecks.put(player2.getId(), new ArrayList<>());
+        harness.setLibrary(player2, List.of());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -131,12 +127,12 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvenWindreader());
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setLibrary(player2, List.of(new Forest()));
 
         // First activation
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         long revealCount = gd.gameLog.stream().map(GameLogEntry::plainText).filter(log -> log.contains("reveals")).count();
         assertThat(revealCount).isEqualTo(1);
 
@@ -166,15 +162,39 @@ class AvenWindreaderTest extends BaseCardTest {
     @DisplayName("Activating ability targeting a permanent instead of a player throws exception")
     void activateTargetingPermanent() {
         harness.addToBattlefield(player1, new AvenWindreader());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Werebear());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID werebearId = harness.getPermanentId(player2, "Werebear");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, werebearId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must be a player");
+    }
+
+    @Test
+    @DisplayName("Flying prevents a nonflying creature from blocking Aven Windreader")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        addCreatureReady(player1, new AvenWindreader());
+        addCreatureReady(player2, new Werebear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Activating ability without enough mana throws exception")
+    void activateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new AvenWindreader());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 }
 

@@ -12,13 +12,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * granting a per-creature flag — lets multiple copies stack correctly without looping.
  */
 public record DoublePlusOnePlusOneCountersEffect(boolean globalReplacement)
-        implements PlusOnePlusOneCountersReplacementEffect {
+        implements PlusOnePlusOneCountersReplacementEffect, DoublingEffect {
 
     public DoublePlusOnePlusOneCountersEffect() {
         this(false);
     }
 
-    /** Creates the Primal Vigor variant that applies to creatures controlled by any player. */
     public static DoublePlusOnePlusOneCountersEffect global() {
         return new DoublePlusOnePlusOneCountersEffect(true);
     }
@@ -26,6 +25,11 @@ public record DoublePlusOnePlusOneCountersEffect(boolean globalReplacement)
     @Override
     public int replace(int count) {
         return count > 0 ? count * 2 : count;
+    }
+
+    @Override
+    public boolean appliesToAllPermanents() {
+        return globalReplacement;
     }
 
     @Override

@@ -1,108 +1,95 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
 import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JodahTheUnifier.class, CaptainSisay.class, EmpressGalina.class,
-        Forest.class, GrizzlyBears.class, MoxAmber.class})
+@CardUsed({JodahTheUnifier.class, CaptainSisay.class, EmpressGalina.class, Forest.class, GrizzlyBears.class, MoxAmber.class, AdelizTheCinderWind.class, HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class})
 class JodahTheUnifierTest extends BaseCardTest {
 
     @Test
-    void legendaryCreaturesGetBonusIncludingJodahItself() {
-        Permanent sisay = addCreatureReady(player1, new CaptainSisay());
-        Permanent galina = addCreatureReady(player1, new EmpressGalina());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        int sisayPower = gqs.getEffectivePower(gd, sisay);
-        int sisayToughness = gqs.getEffectiveToughness(gd, sisay);
-        int galinaPower = gqs.getEffectivePower(gd, galina);
-        int bearsPower = gqs.getEffectivePower(gd, bears);
+    @DisplayName("Legendary creatures you control get +X/+X, including Jodah")
+    void boostsLegendaryCreaturesByLegendaryCreatureCount() {
+        Permanent jodah = harness.addToBattlefieldAndReturn(player1, new JodahTheUnifier());
+        Permanent isamaru = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent jodah = addCreatureReady(player1, new JodahTheUnifier());
-
-        assertThat(gqs.getEffectivePower(gd, sisay)).isEqualTo(sisayPower + 3);
-        assertThat(gqs.getEffectiveToughness(gd, sisay)).isEqualTo(sisayToughness + 3);
-        assertThat(gqs.getEffectivePower(gd, galina)).isEqualTo(galinaPower + 3);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(bearsPower);
-        assertThat(gqs.getEffectivePower(gd, jodah)).isEqualTo(jodah.getCard().getPower() + 3);
+        assertThat(gqs.getEffectivePower(gd, jodah)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, jodah)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, isamaru)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, isamaru)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
-    void legendarySpellExilesAndOffersFirstLowerManaValueLegendaryNonland() {
-        setupJodah();
-        Forest forest = new Forest();
-        GrizzlyBears bears = new GrizzlyBears();
-        CaptainSisay equalManaValueLegend = new CaptainSisay();
-        MoxAmber mox = new MoxAmber();
-        harness.setLibrary(player1, List.of(forest, bears, equalManaValueLegend, mox));
+    @DisplayName("Casting a legendary spell from hand cascades into a legendary nonland card")
+    void castsLegendarySpellFromHandAndFindsLegendaryCard() {
+        prepareCasterTurn();
+        harness.addToBattlefield(player1, new JodahTheUnifier());
 
-        castCaptainSisay();
-        harness.passBothPriorities();
+        LlanowarElves belowHit = new LlanowarElves();
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).addAll(List.of(
+                new HillGiant(), new GrizzlyBears(), new IsamaruHoundOfKonda(), belowHit));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == mox);
-        assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactlyInAnyOrder(forest, bears, equalManaValueLegend);
-
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == mox
-                && entry.getEntryType() == StackEntryType.ARTIFACT_SPELL);
-    }
-
-    @Test
-    void decliningFreeCastLeavesTheHitExiled() {
-        setupJodah();
-        Forest forest = new Forest();
-        MoxAmber mox = new MoxAmber();
-        harness.setLibrary(player1, List.of(forest, mox));
-
-        castCaptainSisay();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == mox);
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(mox);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
-    }
-
-    @Test
-    void nonlegendarySpellDoesNotTrigger() {
-        setupJodah();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
+        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).extracting(Card::getName)
+                .containsExactly("Isamaru, Hound of Konda");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(belowHit);
     }
 
-    private void setupJodah() {
+    @Test
+    @DisplayName("Nonlegendary spells do not trigger Jodah")
+    void nonlegendarySpellDoesNotTrigger() {
+        prepareCasterTurn();
+        harness.addToBattlefield(player1, new JodahTheUnifier());
+
+        LlanowarElves libraryCard = new LlanowarElves();
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).add(libraryCard);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    private void prepareCasterTurn() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
-        harness.addToBattlefield(player1, new JodahTheUnifier());
-    }
-
-    private void castCaptainSisay() {
-        harness.setHand(player1, List.of(new CaptainSisay()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
     }
 }

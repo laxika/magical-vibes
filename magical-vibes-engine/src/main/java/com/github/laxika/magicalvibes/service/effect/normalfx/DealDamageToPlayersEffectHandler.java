@@ -52,6 +52,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                         resolveSingleTargetPlayer(gameData, entry, e);
                 case TRIGGERING_PERMANENT_CONTROLLER -> resolveTriggeringPermanentController(gameData, entry, e);
                 case CONTROLLER -> resolveController(gameData, entry, e);
+                case DEFENDING_PLAYER -> resolveDefendingPlayer(gameData, entry, e);
                 case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
                 case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
                 case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
@@ -110,6 +111,24 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
             damageSupport.dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
         }
+    }
+
+    /** DEFENDING_PLAYER: the player attacked by the source, including a planeswalker's controller. */
+    private void resolveDefendingPlayer(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        if (attackedTargetId == null) return;
+
+        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        if (defendingPlayerId == null || !gameData.playerIds.contains(defendingPlayerId)
+                || damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+            return;
+        }
+
+        int amount = evaluateAmount(gameData, entry, e, defendingPlayerId);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+        damageSupport.dealDamageToPlayer(gameData, entry, defendingPlayerId, rawDamage);
     }
 
     /** EACH_OPPONENT uses one shared amount; EACH_PLAYER evaluates player-relative amounts separately. */
@@ -185,6 +204,8 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         AmountContext context = AmountContext.forStackEntry(entry, source);
         if (e.recipient() == DamageRecipient.EACH_PLAYER) {
             context = context.withControllerId(victimId);
+        } else if (e.recipient() == DamageRecipient.DEFENDING_PLAYER) {
+            context = context.withTargetPermanentId(victimId);
         }
         return amountEvaluationService.evaluate(gameData, e.amount(), context);
     }

@@ -9,16 +9,22 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouDontControlAndSearchBasicLandsToBattlefieldTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsAndSearchBasicLandPerControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "882")
 @CardRegistration(set = "SLD", collectorNumber = "1817")
+@CardRegistration(set = "MH1", collectorNumber = "37")
+@CardRegistration(set = "SOA", collectorNumber = "12")
 public class WindsOfAbandon extends Card {
 
     public WindsOfAbandon() {
@@ -26,10 +32,17 @@ public class WindsOfAbandon extends Card {
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new Overloaded(),
                 new ExileTargetPermanentThenEffect(
-                        new SearchLibraryEffect(CardPredicateUtils.basicLand(),
+                        new SearchLibraryEffect(
+                                CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         ThenEffectRecipient.TARGET_CONTROLLER),
-                new ExileAllCreaturesYouDontControlAndSearchBasicLandsToBattlefieldTappedEffect()));
+                new ExileAllPermanentsAndSearchBasicLandPerControllerEffect(opponentCreatures())));
         target(TargetFilters.creatureAnOpponentControls());
+    }
+
+    private static PermanentAllOfPredicate opponentCreatures() {
+        return new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }
 }

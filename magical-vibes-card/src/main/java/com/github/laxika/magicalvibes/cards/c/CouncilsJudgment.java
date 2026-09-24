@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.WillOfTheCouncilEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "20")
 @CardRegistration(set = "SLD", collectorNumber = "1635")
+@CardRegistration(set = "2XM", collectorNumber = "11")
+@CardRegistration(set = "2XM", collectorNumber = "336")
 public class CouncilsJudgment extends Card {
 
     public CouncilsJudgment() {

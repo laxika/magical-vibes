@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCreaturesExceptChosenTypeEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1897")
+@CardRegistration(set = "HOC", collectorNumber = "18")
+@CardRegistration(set = "HOC", collectorNumber = "58")
 public class RaiseThePalisade extends Card {
 
     public RaiseThePalisade() {

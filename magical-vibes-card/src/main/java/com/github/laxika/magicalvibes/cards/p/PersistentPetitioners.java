@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "600")
 @CardRegistration(set = "SLD", collectorNumber = "601")
 @CardRegistration(set = "SLD", collectorNumber = "602")
+@CardRegistration(set = "RVR", collectorNumber = "53")
 public class PersistentPetitioners extends Card {
 
     public PersistentPetitioners() {

@@ -1,86 +1,109 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DawnbreakReclaimer.class, GrizzlyBears.class})
+@CardUsed({DawnbreakReclaimer.class, GrizzlyBears.class, Island.class})
 class DawnbreakReclaimerTest extends BaseCardTest {
 
     @Test
-    void choosesAcrossGraveyardsThenReturnsUnderOwnersControl() {
-        Card opponentChoice = new GrizzlyBears();
-        Card opponentOther = new GrizzlyBears();
-        Card controllerChoice = new GrizzlyBears();
-        Card controllerOther = new GrizzlyBears();
-        harness.setGraveyard(player2, List.of(opponentChoice, opponentOther));
-        harness.setGraveyard(player1, List.of(controllerChoice, controllerOther));
-        harness.addToBattlefield(player1, new DawnbreakReclaimer());
+    void controllerAndOpponentChooseCardsThenMayReturnThemUnderTheirOwnersControl() {
+        Card opponentUnchosen = new GrizzlyBears();
+        Card opponentChosen = new GrizzlyBears();
+        Card ownChosen = new GrizzlyBears();
+        Card ownUnchosen = new GrizzlyBears();
+        setUpGraveyards(List.of(ownChosen, ownUnchosen), List.of(opponentUnchosen, opponentChosen));
 
-        advanceToOwnEndStep();
+        resolveEndStepTrigger();
 
-        PendingInteraction.GraveyardChoice firstChoice =
+        PendingInteraction.GraveyardChoice opponentChoice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(firstChoice.playerId()).isEqualTo(player1.getId());
-        harness.handleGraveyardCardChosen(player1, cardPoolIndex(firstChoice, opponentChoice));
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.cardPool()).containsExactly(opponentUnchosen, opponentChosen);
+        harness.handleGraveyardCardChosen(player1, opponentChoice.cardPool().indexOf(opponentChosen));
 
-        PendingInteraction.GraveyardChoice secondChoice =
+        PendingInteraction.GraveyardChoice ownChoice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
-        harness.handleGraveyardCardChosen(player2, cardPoolIndex(secondChoice, controllerChoice));
+        assertThat(ownChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(ownChoice.cardPool()).containsExactly(ownChosen, ownUnchosen);
+        harness.handleGraveyardCardChosen(player2, ownChoice.cardPool().indexOf(ownChosen));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(controllerChoice.getId())))
-                .hasSize(1);
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(opponentChoice.getId())))
-                .hasSize(1);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(ownChosen.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(opponentChosen.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(ownUnchosen.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(opponentUnchosen.getId());
     }
 
     @Test
-    void decliningMayLeavesBothCardsInTheirGraveyards() {
-        Card opponentChoice = new GrizzlyBears();
-        Card controllerChoice = new GrizzlyBears();
-        harness.setGraveyard(player2, List.of(opponentChoice));
-        harness.setGraveyard(player1, List.of(controllerChoice));
-        harness.addToBattlefield(player1, new DawnbreakReclaimer());
+    void decliningReturnLeavesBothChosenCardsInTheirGraveyards() {
+        Card ownCard = new GrizzlyBears();
+        Card opponentCard = new GrizzlyBears();
+        setUpGraveyards(List.of(ownCard), List.of(opponentCard));
 
-        advanceToOwnEndStep();
+        resolveEndStepTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
-                .contains(controllerChoice.getId());
+                .containsExactly(ownCard.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
-                .contains(opponentChoice.getId());
+                .containsExactly(opponentCard.getId());
     }
 
-    private int cardPoolIndex(PendingInteraction.GraveyardChoice choice, Card card) {
-        return choice.cardPool().stream()
-                .map(Card::getId)
-                .toList()
-                .indexOf(card.getId());
+    @Test
+    void opponentChoosesFromOwnGraveyardWhenNoOpponentCreatureIsAvailable() {
+        Card ownUnchosen = new GrizzlyBears();
+        Card ownChosen = new GrizzlyBears();
+        Card nonCreature = new Island();
+        setUpGraveyards(List.of(ownUnchosen, ownChosen), List.of(nonCreature));
+
+        resolveEndStepTrigger();
+
+        PendingInteraction.GraveyardChoice ownChoice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(ownChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(ownChoice.cardPool()).containsExactly(ownUnchosen, ownChosen);
+        harness.handleGraveyardCardChosen(player2, ownChoice.cardPool().indexOf(ownChosen));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(ownChosen.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(ownUnchosen.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(nonCreature.getId());
     }
 
-    private void advanceToOwnEndStep() {
+    private void setUpGraveyards(List<Card> ownCards, List<Card> opponentCards) {
+        harness.setGraveyard(player1, ownCards);
+        harness.setGraveyard(player2, opponentCards);
+        harness.addToBattlefield(player1, new DawnbreakReclaimer());
+    }
+
+    private void resolveEndStepTrigger() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntil(player1, com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }

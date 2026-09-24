@@ -265,15 +265,38 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * the flow has a sacrifice half, as Natural Balance does).
      */
     public record BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
-                                      List<PendingForcedSacrifice> sacrifices) {
+                                      List<PendingForcedSacrifice> sacrifices,
+                                      boolean shuffleAfterQueue,
+                                      List<UUID> searchedPlayerIds) {
+
+        public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
+                                    List<PendingForcedSacrifice> sacrifices) {
+            this(remainingPicks, sacrifices, false, List.of());
+        }
+
+        public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
+                                    List<PendingForcedSacrifice> sacrifices,
+                                    boolean shuffleAfterQueue) {
+            this(remainingPicks, sacrifices, shuffleAfterQueue, List.of());
+        }
 
         public BasicLandSearchQueue {
             remainingPicks = List.copyOf(remainingPicks);
             sacrifices = List.copyOf(sacrifices);
+            searchedPlayerIds = List.copyOf(searchedPlayerIds);
         }
 
         public BasicLandSearchQueue withRemainingPicks(List<BasicLandsPick> remaining) {
-            return new BasicLandSearchQueue(remaining, sacrifices);
+            return new BasicLandSearchQueue(remaining, sacrifices, shuffleAfterQueue, searchedPlayerIds);
+        }
+
+        public BasicLandSearchQueue withSearchedPlayer(UUID playerId) {
+            if (searchedPlayerIds.contains(playerId)) {
+                return this;
+            }
+            List<UUID> updated = new java.util.ArrayList<>(searchedPlayerIds);
+            updated.add(playerId);
+            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, updated);
         }
     }
 
@@ -376,6 +399,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
                 false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
                 new SelectedCardFollowUp(predicate, effect));
+    }
+
+    public static LibrarySearchFollowUp forSelectedCard(CardPredicate predicate, CardEffect effect,
+                                                         CardEffect effectIfNoCardChosen) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
+                new SelectedCardFollowUp(predicate, effect, false, effectIfNoCardChosen));
     }
 
     public static LibrarySearchFollowUp forNoCard(CardEffect effect) {
@@ -599,8 +629,15 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /** The remaining APNAP per-player basic-land picks plus any forced sacrifices that follow them. */
     public static LibrarySearchFollowUp basicLandSearches(List<BasicLandsPick> remainingPicks,
                                                         List<PendingForcedSacrifice> sacrifices) {
+        return basicLandSearches(remainingPicks, sacrifices, false);
+    }
+
+    /** A basic-land search queue whose players shuffle once after all queued searches resolve. */
+    public static LibrarySearchFollowUp basicLandSearches(List<BasicLandsPick> remainingPicks,
+                                                        List<PendingForcedSacrifice> sacrifices,
+                                                        boolean shuffleAfterQueue) {
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
-                null, List.of(), null, new BasicLandSearchQueue(remainingPicks, sacrifices), null);
+                null, List.of(), null, new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue), null);
     }
 
     /** Completion data for a reveal-only search followed by Grim Reminder's life-loss clause. */

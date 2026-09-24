@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnt
 
 @CardRegistration(set = "LRW", collectorNumber = "173")
 @CardRegistration(set = "M13", collectorNumber = "136")
+@CardRegistration(set = "C15", collectorNumber = "156")
 public class HamletbackGoliath extends Card {
 
     public HamletbackGoliath() {

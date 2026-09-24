@@ -42,6 +42,20 @@ class BloodCelebrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate with only non-black mana")
+    void cannotActivateWithOnlyNonBlackMana() {
+        harness.addToBattlefield(player1, new BloodCelebrant());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Cannot activate without enough life")
     void cannotActivateWithoutEnoughLife() {
         harness.addToBattlefield(player1, new BloodCelebrant());

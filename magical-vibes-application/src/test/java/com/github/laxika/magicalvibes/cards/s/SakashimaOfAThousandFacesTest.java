@@ -1,68 +1,64 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KondaLordOfEiganjo;
 import com.github.laxika.magicalvibes.cards.t.TsaboTavoc;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SakashimaOfAThousandFaces.class, GrizzlyBears.class, TsaboTavoc.class})
+@CardUsed({SakashimaOfAThousandFaces.class, GrizzlyBears.class, TsaboTavoc.class, KondaLordOfEiganjo.class})
 class SakashimaOfAThousandFacesTest extends BaseCardTest {
 
     @Test
-    void onlyOffersCreaturesTheControllerControls() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        SakashimaOfAThousandFaces card = castSakashima();
+    @DisplayName("Copies a creature and keeps its legend-rule exemption")
+    void copiesCreatureAndKeepsLegendRuleExemption() {
+        harness.addToBattlefield(player1, new KondaLordOfEiganjo());
+        harness.castFromHand(player1, new SakashimaOfAThousandFaces(), "{3}{U}");
 
-        resolveCopyChoice(card, null);
-
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).containsExactly(ownCreature.getId());
-        assertThat(choice.validPermanentIds()).doesNotContain(opponentCreature.getId());
-
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-
-        Permanent copy = findSakashima(card);
-        assertThat(copy.getCard().getPower()).isEqualTo(2);
-        assertThat(copy.getCard().getToughness()).isEqualTo(2);
-    }
-
-    @Test
-    void copiedSakashimaStillIgnoresTheLegendRuleForItsController() {
-        Permanent legendaryCreature = harness.addToBattlefieldAndReturn(player1, new TsaboTavoc());
-        SakashimaOfAThousandFaces card = castSakashima();
-
-        resolveCopyChoice(card, legendaryCreature);
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-    }
-
-    private SakashimaOfAThousandFaces castSakashima() {
-        SakashimaOfAThousandFaces card = new SakashimaOfAThousandFaces();
-        harness.castFromHand(player1, card, "{3}{U}");
-        return card;
-    }
-
-    private void resolveCopyChoice(SakashimaOfAThousandFaces card, Permanent target) {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        if (target != null) {
-            harness.handlePermanentChosen(player1, target.getId());
-        }
+        harness.handlePermanentChosen(
+                player1, harness.getPermanentId(player1, "Konda, Lord of Eiganjo"));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(permanent -> permanent.getCard().getName().equals("Konda, Lord of Eiganjo"));
     }
 
-    private Permanent findSakashima(SakashimaOfAThousandFaces card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() == card)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Does not offer an opponent's creature as a copy choice")
+    void onlyCopiesControlledCreatures() {
+        harness.addToBattlefield(player2, new KondaLordOfEiganjo());
+        harness.castFromHand(player1, new SakashimaOfAThousandFaces(), "{3}{U}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Sakashima of a Thousand Faces");
+        harness.assertOnBattlefield(player2, "Konda, Lord of Eiganjo");
+    }
+
+    @Test
+    @DisplayName("Only exempts legendary permanents controlled by Sakashima's controller")
+    void exemptionIsControllerScoped() {
+        harness.addToBattlefield(player1, new SakashimaOfAThousandFaces());
+        harness.addToBattlefield(player2, new KondaLordOfEiganjo());
+        harness.addToBattlefield(player2, new KondaLordOfEiganjo());
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.LegendRule.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
     }
 }

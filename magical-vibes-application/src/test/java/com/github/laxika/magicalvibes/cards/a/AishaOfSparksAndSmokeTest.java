@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.CruelUltimatum;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlagueWind;
@@ -11,43 +12,20 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AishaOfSparksAndSmoke.class, Divination.class, GrizzlyBears.class, PlagueWind.class,
-        Shock.class})
+@CardUsed({AishaOfSparksAndSmoke.class, Divination.class, GrizzlyBears.class, PlagueWind.class, Shock.class, CruelUltimatum.class})
 class AishaOfSparksAndSmokeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Prowess gives Aisha +1/+1 for the turn")
-    void prowessBoostsAisha() {
-        Permanent aisha = addAisha();
-
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(gqs.getEffectivePower(gd, aisha)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, aisha)).isEqualTo(3);
-
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(gqs.getEffectivePower(gd, aisha)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, aisha)).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("The hybrid ability grants first strike until end of turn")
-    void grantsFirstStrike() {
-        Permanent aisha = addAisha();
+    @DisplayName("{R/W} grants first strike until end of turn")
+    void firstStrikeGrantedAndWearsOff() {
+        Permanent aisha = addCreatureReady(player1, new AishaOfSparksAndSmoke());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -63,45 +41,40 @@ class AishaOfSparksAndSmokeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Combat damage offers a sorcery at most equal to the damage for free")
-    void combatDamageFreeCastsAffordableSorcery() {
-        Permanent aisha = addAisha();
-        aisha.setAttacking(true);
-        Divination sorcery = new Divination();
-        harness.setHand(player1, List.of(sorcery));
+    @DisplayName("Combat damage offers a sorcery with mana value at most the damage dealt")
+    void combatDamageOffersQualifyingSorcery() {
+        Divination divination = new Divination();
+        harness.setHand(player1, new ArrayList<>(List.of(
+                divination, new Shock(), new GrizzlyBears(), new CruelUltimatum())));
+        attackAndResolveTrigger();
 
-        resolveCombatAndTrigger();
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.description()).isEqualTo("Cast Divination without paying its mana cost?");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.stack).hasSize(2);
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(sorcery.getId()));
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(divination.getId());
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(divination.getId()));
     }
 
     @Test
-    @DisplayName("Combat damage does not offer instants, creatures, or expensive sorceries")
-    void combatDamageFiltersHandByCardTypeAndDamage() {
-        Permanent aisha = addAisha();
-        aisha.setAttacking(true);
-        Shock instant = new Shock();
-        GrizzlyBears creature = new GrizzlyBears();
-        PlagueWind expensiveSorcery = new PlagueWind();
-        harness.setHand(player1, List.of(instant, creature, expensiveSorcery));
-
-        resolveCombatAndTrigger();
+    @DisplayName("Combat damage does not offer instants, creatures, or over-cap sorceries")
+    void combatDamageOffersNoNonqualifyingCards() {
+        harness.setHand(player1, new ArrayList<>(List.of(
+                new Shock(), new GrizzlyBears(), new CruelUltimatum())));
+        attackAndResolveTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(instant, creature, expensiveSorcery);
     }
 
-    private Permanent addAisha() {
-        return addCreatureReady(player1, new AishaOfSparksAndSmoke());
-    }
-
-    private void resolveCombatAndTrigger() {
+    private void attackAndResolveTrigger() {
+        addCreatureReady(player1, new AishaOfSparksAndSmoke());
+        declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities();
     }

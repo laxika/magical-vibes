@@ -8,10 +8,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class IgnobleHierarchTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Exalted boosts a creature attacking alone")
+    @DisplayName("Exalted — another creature attacking alone gets +1/+1")
     void allyAttackingAloneBoosted() {
         addCreatureReady(player1, new IgnobleHierarch());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -50,7 +49,7 @@ class IgnobleHierarchTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Exalted does not trigger when more than one creature attacks")
+    @DisplayName("Exalted does not trigger when attacking with more than one creature")
     void noTriggerWhenNotAlone() {
         addCreatureReady(player1, new IgnobleHierarch());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "193")
+@CardRegistration(set = "2X2", collectorNumber = "274")
 public class SedrisTheTraitorKing extends Card {
 
     public SedrisTheTraitorKing() {

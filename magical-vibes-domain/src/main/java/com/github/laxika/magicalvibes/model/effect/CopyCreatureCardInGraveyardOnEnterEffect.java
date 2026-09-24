@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
 import java.util.Set;
 
 /**
@@ -19,7 +18,8 @@ public record CopyCreatureCardInGraveyardOnEnterEffect(
         boolean controllerGraveyardOnly,
         boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn,
         boolean grantHaste,
-        boolean exileCopiedGraveyardCardAfterEntry) implements ReplacementEffect {
+        boolean exileCopiedGraveyardCardAfterEntry,
+        boolean exileTwoAndAddOtherPowerCounters) implements ReplacementEffect {
 
     public CopyCreatureCardInGraveyardOnEnterEffect(
             String nameOverride,
@@ -27,7 +27,32 @@ public record CopyCreatureCardInGraveyardOnEnterEffect(
             int toughnessOverride,
             Set<CardSubtype> additionalSubtypesOverride) {
         this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
-                null, false, false, false, true);
+                null, false, false, false, true, false);
+    }
+
+    public CopyCreatureCardInGraveyardOnEnterEffect(
+            String nameOverride,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Set<CardSubtype> additionalSubtypesOverride,
+            boolean exileTwoAndAddOtherPowerCounters) {
+        this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
+                null, false, false, false, true, exileTwoAndAddOtherPowerCounters);
+    }
+
+    public CopyCreatureCardInGraveyardOnEnterEffect(
+            String nameOverride,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Set<CardSubtype> additionalSubtypesOverride,
+            CardPredicate cardFilter,
+            boolean controllerGraveyardOnly,
+            boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn,
+            boolean grantHaste,
+            boolean exileCopiedGraveyardCardAfterEntry) {
+        this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
+                cardFilter, controllerGraveyardOnly, onlyCardsPutIntoGraveyardFromLibraryThisTurn,
+                grantHaste, exileCopiedGraveyardCardAfterEntry, false);
     }
 
     public CopyCreatureCardInGraveyardOnEnterEffect {

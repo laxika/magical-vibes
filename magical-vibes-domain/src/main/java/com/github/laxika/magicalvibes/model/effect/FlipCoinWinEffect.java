@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.UUID;
+
 /**
  * Wrapper effect: "Flip a coin. If you win the flip, [wrapped effect].
  * If you lose the flip, [lost effect]."
@@ -9,8 +11,19 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param wrapped the effect to execute on a coin flip win
  * @param lost    the effect to execute on a coin flip loss (may be null)
+ * @param triggeringSpellController whether the spell-cast collector binds the caster as the flipping player
+ * @param flippingPlayerId the player bound when the trigger is collected, or null for the ability's controller
  */
-public record FlipCoinWinEffect(CardEffect wrapped, CardEffect lost) implements CardEffect {
+public record FlipCoinWinEffect(CardEffect wrapped, CardEffect lost,
+                                boolean triggeringSpellController, UUID flippingPlayerId) implements CardEffect {
+
+    public FlipCoinWinEffect(CardEffect wrapped, CardEffect lost) {
+        this(wrapped, lost, false, null);
+    }
+
+    public static FlipCoinWinEffect forTriggeringSpellController(CardEffect wrapped, CardEffect lost) {
+        return new FlipCoinWinEffect(wrapped, lost, true, null);
+    }
 
     /** Coin flip with only a win effect (nothing happens on a loss). */
     public FlipCoinWinEffect(CardEffect wrapped) {

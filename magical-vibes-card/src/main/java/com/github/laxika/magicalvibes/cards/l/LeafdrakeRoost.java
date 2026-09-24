@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "116")
+@CardRegistration(set = "C13", collectorNumber = "196")
 public class LeafdrakeRoost extends Card {
 
     public LeafdrakeRoost() {

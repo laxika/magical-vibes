@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Destroys all creatures with power greater than the targeted creature's power.
+ * Destroys every creature with power greater than the power of the targeted creature.
  */
 public record DestroyAllCreaturesWithPowerGreaterThanTargetEffect() implements BoardWipeEffect {
 

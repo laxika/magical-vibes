@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "SOK", collectorNumber = "157")
+@CardRegistration(set = "2XM", collectorNumber = "278")
 public class ONaginata extends Card {
 
     private static final PermanentPowerAtLeastPredicate POWER_THREE_OR_GREATER =

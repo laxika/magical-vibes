@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "4")
+@CardRegistration(set = "DBL", collectorNumber = "4")
 public class BereavedSurvivor extends Card {
 
     public BereavedSurvivor() {

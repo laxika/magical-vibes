@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "99")
 @CardRegistration(set = "SLD", collectorNumber = "1233")
+@CardRegistration(set = "RVR", collectorNumber = "83")
+@CardRegistration(set = "MAR", collectorNumber = "67")
 public class MassacreGirl extends Card {
 
     public MassacreGirl() {

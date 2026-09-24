@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.UnexpectedResultsEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "203")
+@CardRegistration(set = "PIO", collectorNumber = "397")
 public class UnexpectedResults extends Card {
 
     public UnexpectedResults() {

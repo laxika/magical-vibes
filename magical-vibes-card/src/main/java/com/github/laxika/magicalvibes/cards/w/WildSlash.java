@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "118")
+@CardRegistration(set = "Q06", collectorNumber = "8")
+@CardRegistration(set = "PIO", collectorNumber = "159")
 public class WildSlash extends Card {
 
     public WildSlash() {

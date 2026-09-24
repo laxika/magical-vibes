@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "204")
+@CardRegistration(set = "SPG", collectorNumber = "108")
 public class RuinousUltimatum extends Card {
 
     public RuinousUltimatum() {

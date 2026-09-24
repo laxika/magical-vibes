@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "VOW", collectorNumber = "56")
+@CardRegistration(set = "DBL", collectorNumber = "323")
 public class DiverSkaab extends Card {
 
     public DiverSkaab() {

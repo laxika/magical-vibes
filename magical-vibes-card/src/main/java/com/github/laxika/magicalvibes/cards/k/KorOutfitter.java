@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "21")
+@CardRegistration(set = "GN3", collectorNumber = "14")
 public class KorOutfitter extends Card {
 
     public KorOutfitter() {

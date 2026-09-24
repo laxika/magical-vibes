@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+/** Resolves a source copy created under the target player's control. */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfSourceForTargetPlayerEffectHandler implements NormalEffectHandlerBean {
@@ -29,15 +29,15 @@ public class CreateTokenCopyOfSourceForTargetPlayerEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null || !gameData.playerIdToName.containsKey(targetPlayerId)) {
+        if (entry.getTargetId() == null || !gameData.playerIds.contains(entry.getTargetId())) {
             return;
         }
 
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? entry.getSourcePermanentSnapshot()
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : entry.getCard();
         if (sourceCard == null) {
-            log.info("Game {} - Source permanent no longer exists and no source card is available", gameData.id);
             return;
         }
 
@@ -46,7 +46,7 @@ public class CreateTokenCopyOfSourceForTargetPlayerEffectHandler implements Norm
                 entry,
                 List.of(sourceCard),
                 sourcePermanent,
-                targetPlayerId,
+                entry.getTargetId(),
                 new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "ROE", collectorNumber = "1")
 @CardRegistration(set = "MM2", collectorNumber = "1")
 @CardRegistration(set = "SLD", collectorNumber = "268")
+@CardRegistration(set = "UMA", collectorNumber = "1")
 public class AllIsDust extends Card {
 
     public AllIsDust() {

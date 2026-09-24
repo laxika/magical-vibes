@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,8 +11,20 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinDynamo.class, BalduvianBears.class})
+@CardUsed({GoblinDynamo.class, AvenEnvoy.class})
 class GoblinDynamoTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Tap ability deals 1 damage to a creature")
+    void tapAbilityDealsDamageToCreature() {
+        addReadyDynamo(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenEnvoy());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Tap ability deals 1 damage to a player")
@@ -46,15 +58,14 @@ class GoblinDynamoTest extends BaseCardTest {
     @DisplayName("Sacrifice ability can deal X damage to a creature")
     void sacrificeAbilityDealsDamageToCreature() {
         addReadyDynamo(player1);
-        harness.addToBattlefield(player2, new BalduvianBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenEnvoy());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent target = findPermanent(player2, "Balduvian Bears");
         harness.activateAbility(player1, 0, 1, 2, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Aven Envoy");
     }
 
     private Permanent addReadyDynamo(Player player) {

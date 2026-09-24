@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEf
 
 @CardRegistration(set = "WAR", collectorNumber = "50")
 @CardRegistration(set = "SLD", collectorNumber = "583")
+@CardRegistration(set = "TSR", collectorNumber = "308")
+@CardRegistration(set = "RVR", collectorNumber = "44")
 public class FblthpTheLost extends Card {
 
     public FblthpTheLost() {

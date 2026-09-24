@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "148")
+@CardRegistration(set = "2XM", collectorNumber = "180")
 public class Skullmulcher extends Card {
 
     public Skullmulcher() {

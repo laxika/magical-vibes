@@ -1,13 +1,18 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
-/** Exiles cards from library bottoms and tracks them with the source permanent. */
+/** Exiles cards from one or more libraries' bottoms and tracks them with the source permanent. */
 public record ExileBottomCardsToSourceEffect(DynamicAmount count, boolean faceDown,
-                                             boolean eachOpponent) implements CardEffect {
+                                             LibraryScope scope) implements CardEffect {
 
-    /** Exiles cards from the controller's library bottom face up. */
+    /** Face-up exile from the controller's library. */
     public ExileBottomCardsToSourceEffect(DynamicAmount count) {
-        this(count, false, false);
+        this(count, false, LibraryScope.CONTROLLER);
+    }
+
+    public ExileBottomCardsToSourceEffect(int count, boolean faceDown, LibraryScope scope) {
+        this(new Fixed(count), faceDown, scope);
     }
 }

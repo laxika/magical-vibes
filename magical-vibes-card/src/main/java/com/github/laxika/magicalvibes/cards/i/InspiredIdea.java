@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceControllerMaxHandSizeEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "64")
+@CardRegistration(set = "DBL", collectorNumber = "331")
 public class InspiredIdea extends Card {
 
     public InspiredIdea() {

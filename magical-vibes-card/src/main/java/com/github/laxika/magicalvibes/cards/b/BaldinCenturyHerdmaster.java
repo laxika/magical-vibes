@@ -14,14 +14,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "428")
+@CardRegistration(set = "SLX", collectorNumber = "10")
 public class BaldinCenturyHerdmaster extends Card {
 
     public BaldinCenturyHerdmaster() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
-                new ControllerTurn(),
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
                 new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_CREATURES)));
-        target(TargetFilters.creature(), 0, 100)
-                .addEffect(EffectSlot.ON_ATTACK,
-                        new BoostTargetCreatureEffect(new Fixed(0), new CardsInHand(CountScope.CONTROLLER)));
+
+        target(TargetFilters.creature(), 0, 100).addEffect(EffectSlot.ON_ATTACK,
+                new BoostTargetCreatureEffect(new Fixed(0), new CardsInHand(CountScope.CONTROLLER)));
     }
 }

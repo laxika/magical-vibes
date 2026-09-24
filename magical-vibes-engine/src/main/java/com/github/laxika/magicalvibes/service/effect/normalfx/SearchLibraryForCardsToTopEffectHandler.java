@@ -66,6 +66,7 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
+            if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }

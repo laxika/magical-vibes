@@ -20,12 +20,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1598")
+@CardRegistration(set = "C14", collectorNumber = "43")
 public class FreyaliseLlanowarsFury extends Card {
 
     public FreyaliseLlanowarsFury() {
@@ -50,7 +50,8 @@ public class FreyaliseLlanowarsFury extends Card {
                         false,
                         false,
                         0,
-                        Set.of())),
+                        Set.of()
+                )),
                 "+2: Create a 1/1 green Elf Druid creature token with \"{T}: Add {G}.\""
         ));
 
@@ -74,7 +75,8 @@ public class FreyaliseLlanowarsFury extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))
                         )),
-                        CountScope.CONTROLLER))),
+                        CountScope.CONTROLLER
+                ))),
                 "−6: Draw a card for each green creature you control."
         ));
     }

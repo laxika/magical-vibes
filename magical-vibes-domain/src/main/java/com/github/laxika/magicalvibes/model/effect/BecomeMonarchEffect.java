@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** The effect controller becomes the monarch. */
+/** Makes the resolving ability's controller the monarch. */
 public record BecomeMonarchEffect() implements CardEffect {
 }

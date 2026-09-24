@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsThenGainLifeForEachCardTypeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class TargetPlayerDiscardsThenGainLifeForEachCardTypeEffectHandler
 
     private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,10 +44,13 @@ public class TargetPlayerDiscardsThenGainLifeForEachCardTypeEffectHandler
             return;
         }
 
+        gameData.discardCausedByOpponent = !entry.getControllerId().equals(targetPlayerId);
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, targetPlayerId)) {
+            return;
+        }
         gameData.pendingGainLifeOnDiscardType = new PendingGainLifeOnDiscardType(
                 entry.getCard(), entry.getEntryType(), entry.getControllerId(), e.cardType(),
                 e.lifePerCard(), 0);
-        gameData.discardCausedByOpponent = !entry.getControllerId().equals(targetPlayerId);
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, e.amount());
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "20")
+@CardRegistration(set = "AA4", collectorNumber = "6")
 public class ChromescaleDrake extends Card {
 
     public ChromescaleDrake() {

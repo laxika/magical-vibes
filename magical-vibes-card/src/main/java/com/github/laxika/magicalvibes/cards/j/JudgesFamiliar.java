@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "218")
+@CardRegistration(set = "GK2", collectorNumber = "14")
+@CardRegistration(set = "EA3", collectorNumber = "8")
+@CardRegistration(set = "RVR", collectorNumber = "192")
 public class JudgesFamiliar extends Card {
 
     public JudgesFamiliar() {

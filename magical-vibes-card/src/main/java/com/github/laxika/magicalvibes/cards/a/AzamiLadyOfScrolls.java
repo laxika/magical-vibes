@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "52")
 @CardRegistration(set = "SLD", collectorNumber = "1106")
+@CardRegistration(set = "C13", collectorNumber = "31")
 public class AzamiLadyOfScrolls extends Card {
 
     public AzamiLadyOfScrolls() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "213")
+@CardRegistration(set = "DBL", collectorNumber = "213")
 public class CantStayAway extends Card {
 
     public CantStayAway() {

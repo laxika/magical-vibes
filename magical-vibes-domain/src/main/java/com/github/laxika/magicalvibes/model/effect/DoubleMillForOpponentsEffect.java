@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/**
- * Static replacement effect that doubles mill events affecting an opponent of this permanent's
- * controller.
- */
+/** Static replacement effect that doubles cards milled by each opponent of the source's controller. */
 public record DoubleMillForOpponentsEffect() implements ControllerOpponentMillMultiplyingEffect {
 
     @Override

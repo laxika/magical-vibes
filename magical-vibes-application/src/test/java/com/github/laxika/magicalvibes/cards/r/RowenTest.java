@@ -130,6 +130,28 @@ class RowenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A controller's first draw on an opponent's turn triggers, but the extra draw is not revealed")
+    void firstDrawOnOpponentsTurnTriggersOnlyOnce() {
+        harness.addToBattlefield(player1, new Rowen());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gameLogContains("reveals Forest")).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("reveals Grizzly Bears")).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("The first draw of a later turn triggers again")
     void firstDrawOfLaterTurnTriggersAgain() {
         harness.setHand(player1, List.of());

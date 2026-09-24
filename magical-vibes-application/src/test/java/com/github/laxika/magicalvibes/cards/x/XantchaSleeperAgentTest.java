@@ -1,30 +1,29 @@
 package com.github.laxika.magicalvibes.cards.x;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({XantchaSleeperAgent.class})
+@CardUsed({XantchaSleeperAgent.class, Forest.class})
 class XantchaSleeperAgentTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters under an opponent's control")
+    @DisplayName("Xantcha enters under an opponent's control")
     void entersUnderOpponentsControl() {
-        XantchaSleeperAgent xantcha = new XantchaSleeperAgent();
-        xantcha.setOwnerId(player1.getId());
-        harness.setHand(player1, List.of(xantcha));
+        harness.setHand(player1, List.of(new XantchaSleeperAgent()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -35,37 +34,42 @@ class XantchaSleeperAgentTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot attack its owner or its owner's planeswalkers")
-    void cannotAttackOwnerOrOwnersPlaneswalkers() {
-        XantchaSleeperAgent xantchaCard = new XantchaSleeperAgent();
-        xantchaCard.setOwnerId(player1.getId());
-        Permanent xantcha = addCreatureReady(player2, xantchaCard);
+    @DisplayName("Xantcha can't attack its owner or that owner's planeswalkers")
+    void cannotAttackOwnerOrOwnersPlaneswalker() {
+        XantchaSleeperAgent card = new XantchaSleeperAgent();
+        card.setOwnerId(player1.getId());
+        Permanent xantcha = addCreatureReady(player2, card);
 
-        Card planeswalker = new Card();
-        planeswalker.setName("Test Walker");
-        planeswalker.setType(CardType.PLANESWALKER);
-        Permanent walker = harness.addToBattlefieldAndReturn(player1, planeswalker);
-
-        assertThat(als.canAttack(gd, xantcha, player2.getId())).isTrue();
         assertThat(als.canAttackDefender(gd, xantcha, player1.getId())).isFalse();
-        assertThat(als.canAttackDefender(gd, xantcha, walker.getId())).isFalse();
+
+        Card planeswalkerCard = new Card();
+        planeswalkerCard.setType(CardType.PLANESWALKER);
+        planeswalkerCard.setOwnerId(player1.getId());
+        Permanent planeswalker = new Permanent(planeswalkerCard);
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        gd.playerBattlefields.get(player1.getId()).add(planeswalker);
+
+        assertThat(als.canAttackDefender(gd, xantcha, planeswalker.getId())).isFalse();
     }
 
     @Test
-    @DisplayName("Any player may activate it; its controller loses life and the activator draws")
+    @DisplayName("Any player may activate Xantcha's ability, making its controller lose life while the activator draws")
     void anyPlayerMayActivate() {
-        XantchaSleeperAgent xantchaCard = new XantchaSleeperAgent();
-        xantchaCard.setOwnerId(player1.getId());
-        harness.addToBattlefield(player2, xantchaCard);
-        harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Card()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        int player2Life = gd.playerLifeTotals.get(player2.getId());
+        XantchaSleeperAgent card = new XantchaSleeperAgent();
+        card.setOwnerId(player1.getId());
+        harness.addToBattlefield(player1, card);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2Life - 2);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 }

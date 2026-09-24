@@ -17,6 +17,8 @@ import java.util.List;
 @CardRegistration(set = "TSB", collectorNumber = "29")
 @CardRegistration(set = "EMA", collectorNumber = "67")
 @CardRegistration(set = "SLD", collectorNumber = "1672")
+@CardRegistration(set = "ME4", collectorNumber = "58")
+@CardRegistration(set = "2ED", collectorNumber = "74")
 public class ProdigalSorcerer extends Card {
 
     public ProdigalSorcerer() {

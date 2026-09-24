@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "240")
+@CardRegistration(set = "DBL", collectorNumber = "240")
 public class SigardaChampionOfLight extends Card {
 
     public SigardaChampionOfLight() {

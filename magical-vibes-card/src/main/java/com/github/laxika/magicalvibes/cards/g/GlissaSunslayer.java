@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "202")
+@CardRegistration(set = "ECC", collectorNumber = "122")
 public class GlissaSunslayer extends Card {
 
     public GlissaSunslayer() {

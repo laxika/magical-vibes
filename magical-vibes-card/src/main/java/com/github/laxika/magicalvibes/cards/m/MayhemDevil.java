@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "204")
 @CardRegistration(set = "SLD", collectorNumber = "1715")
+@CardRegistration(set = "RVR", collectorNumber = "199")
 public class MayhemDevil extends Card {
 
     public MayhemDevil() {

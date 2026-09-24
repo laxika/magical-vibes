@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GPT", collectorNumber = "2")
+@CardRegistration(set = "GK2", collectorNumber = "29")
 public class BelfrySpirit extends Card {
 
     public BelfrySpirit() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "81")
+@CardRegistration(set = "UMA", collectorNumber = "112")
 public class ShireiShizosCaretaker extends Card {
 
     public ShireiShizosCaretaker() {

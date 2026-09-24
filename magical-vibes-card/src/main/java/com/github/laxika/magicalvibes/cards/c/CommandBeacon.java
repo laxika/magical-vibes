@@ -6,21 +6,24 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.PutCommanderFromCommandZoneIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCommanderIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "470")
 @CardRegistration(set = "SLD", collectorNumber = "1533")
+@CardRegistration(set = "FCA", collectorNumber = "64")
+@CardRegistration(set = "C15", collectorNumber = "56")
 public class CommandBeacon extends Card {
 
     public CommandBeacon() {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
+
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), new PutCommanderFromCommandZoneIntoHandEffect()),
-                "{T}, Sacrifice this land: Put your commander into your hand from the command zone."
+                List.of(new SacrificeSelfCost(), new PutCommanderIntoHandEffect()),
+                "{T}, Sacrifice Command Beacon: Put your commander into your hand from the command zone."
         ));
     }
 }

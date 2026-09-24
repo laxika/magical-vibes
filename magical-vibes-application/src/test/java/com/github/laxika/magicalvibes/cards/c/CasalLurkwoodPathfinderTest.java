@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,11 +13,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,115 +24,79 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CasalLurkwoodPathfinderTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters by putting a Forest from the library onto the battlefield tapped")
-    void entersAndSearchesForForest() {
-        Forest forest = new Forest();
-        harness.setLibrary(player1, List.of(forest, new GrizzlyBears()));
-        harness.setHand(player1, List.of(new CasalLurkwoodPathfinder()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+    void entersAndSearchesForAForestTapped() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.castFromHand(player1, new CasalLurkwoodPathfinder(), "{3}{G}");
+
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 0);
 
-        Permanent fetchedForest = findPermanent(player1, "Forest");
-        assertThat(fetchedForest.isTapped()).isTrue();
-        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(forest);
+        Permanent forest = findPermanent(player1, "Forest");
+        assertThat(forest.isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("May pay to transform when it attacks")
-    void transformsAfterPayingForAttackTrigger() {
-        Permanent casal = addReadyCasal();
+    void attackingMayPayToTransformAndBuffOtherLegendaryCreatures() {
+        Permanent casal = addReady(player1, new CasalLurkwoodPathfinder());
+        Permanent otherLegendary = addReady(player1, legendaryCreature());
+        Permanent nonLegendary = addReady(player1, new GrizzlyBears());
+        int otherLegendaryPower = gqs.getEffectivePower(gd, otherLegendary);
+        int otherLegendaryToughness = gqs.getEffectiveToughness(gd, otherLegendary);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        declareAttackers(List.of(0));
+        declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(casal.isTransformed()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, casal)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, otherLegendary)).isEqualTo(otherLegendaryPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, otherLegendary)).isEqualTo(otherLegendaryToughness + 2);
+        assertThat(gqs.hasKeyword(gd, otherLegendary, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, nonLegendary)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, nonLegendary, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
-    @DisplayName("Declining the attack payment does not transform it")
-    void doesNotTransformWhenAttackPaymentIsDeclined() {
-        Permanent casal = addReadyCasal();
-
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(casal.isTransformed()).isFalse();
-    }
-
-    @Test
-    @DisplayName("Transformation boosts other legendary creatures and grants them trample")
-    void transformationBoostsOtherLegendaryCreatures() {
-        Permanent casal = addReadyCasal();
-        Permanent legendaryBear = addCreatureReady(player1, legendaryBear());
-        Permanent ordinaryBear = addCreatureReady(player1, new GrizzlyBears());
+    void backFaceTransformsAtItsControllersUpkeep() {
+        Permanent casal = addReady(player1, new CasalLurkwoodPathfinder());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        declareAttackers(List.of(0));
+        declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(casal.isTransformed()).isTrue();
-        assertThat(gqs.getEffectivePower(gd, legendaryBear)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, legendaryBear)).isEqualTo(4);
-        assertThat(gqs.hasKeyword(gd, legendaryBear, Keyword.TRAMPLE)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, ordinaryBear)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, ordinaryBear)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, ordinaryBear, Keyword.TRAMPLE)).isFalse();
-    }
-
-    @Test
-    @DisplayName("Transforms back at the beginning of its controller's upkeep")
-    void transformsBackOnControllersUpkeep() {
-        Permanent casal = addTransformedCasal(player1);
-
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
-
-        assertThat(casal.isTransformed()).isFalse();
-    }
-
-    @Test
-    @DisplayName("Does not transform back on an opponent's upkeep")
-    void doesNotTransformBackOnOpponentsUpkeep() {
-        Permanent casal = addTransformedCasal(player1);
-
-        harness.forceActivePlayer(player2);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        assertThat(casal.isTransformed()).isTrue();
+        assertThat(casal.isTransformed()).isFalse();
+        assertThat(casal.getCard().getName()).isEqualTo("Casal, Lurkwood Pathfinder");
     }
 
-    private Permanent addReadyCasal() {
-        return addCreatureReady(player1, new CasalLurkwoodPathfinder());
+    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player, Card card) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 
-    private Permanent addTransformedCasal(Player player) {
-        CasalLurkwoodPathfinder card = new CasalLurkwoodPathfinder();
-        Permanent casal = addCreatureReady(player, card);
-        casal.setCard(card.getBackFaceCard());
-        casal.setTransformed(true);
-        return casal;
-    }
-
-    private GrizzlyBears legendaryBear() {
-        GrizzlyBears card = new GrizzlyBears();
+    private Card legendaryCreature() {
+        Card card = new Card();
+        card.setName("Legendary Creature");
+        card.setType(CardType.CREATURE);
         card.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        card.setPower(2);
+        card.setToughness(2);
         return card;
     }
-
 }

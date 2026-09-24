@@ -9,12 +9,10 @@ import java.util.UUID;
 public interface ExtraTurnSkipReplacementEffect extends CardEffect {
 
     /**
-     * Returns whether this replacement applies to an extra turn for the given player.
-     *
-     * @param sourceControllerId controller of the permanent carrying this effect
-     * @param extraTurnPlayerId player whose extra turn would begin
+     * Returns whether this replacement applies to an extra turn taken by the given player.
+     * Existing implementations apply to every player's extra turns by default.
      */
-    default boolean appliesTo(UUID sourceControllerId, UUID extraTurnPlayerId) {
+    default boolean appliesToExtraTurn(UUID sourceControllerId, UUID extraTurnPlayerId) {
         return true;
     }
 }

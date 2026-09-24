@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DefiantElf.class, GiantGrowth.class, GrizzlyBears.class})
 class DefiantElfTest extends BaseCardTest {
@@ -27,10 +28,39 @@ class DefiantElfTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, elf.getId());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 2
+        ));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void trampleMustAssignLethalDamageBeforeDefendingPlayer() {
+        harness.setLife(player2, 20);
+        Permanent elf = addCreatureReady(player1, new DefiantElf());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, elf.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 3
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Trample");
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 2,

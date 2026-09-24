@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeDayAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "53")
+@CardRegistration(set = "DBL", collectorNumber = "53")
 public class FirmamentSage extends Card {
 
     public FirmamentSage() {

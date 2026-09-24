@@ -192,6 +192,24 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
+    void keepsTheFrontOfAThreeFaceSplitCardAndRecordsAllFaceNames() {
+        JsonNode cards = MAPPER.readTree("""
+                [
+                  { "faceName": "Smelt", "number": "100", "side": "a" },
+                  { "faceName": "Herd", "number": "100", "side": "b" },
+                  { "faceName": "Saw", "number": "100", "side": "c" }
+                ]
+                """);
+
+        MtgjsonOracleLoader.FaceIndex faces = MtgjsonOracleLoader.indexFacesByCollectorNumber(cards);
+
+        assertThat(faces.frontFaces().get("100").get("faceName").asText()).isEqualTo("Smelt");
+        assertThat(faces.backFaces().get("100").get("faceName").asText()).isEqualTo("Herd");
+        assertThat(faces.faceNamesByCollectorNumber().get("100"))
+                .containsExactly("Smelt", "Herd", "Saw");
+    }
+
+    @Test
     void parsesCreatureAndNonCreatureTokensUnderScryfallTokenSetCode() {
         JsonNode setData = MAPPER.readTree("""
                 {

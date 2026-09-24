@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "145")
 @CardRegistration(set = "SLD", collectorNumber = "962")
+@CardRegistration(set = "SLX", collectorNumber = "21")
 public class GregorShrewdMagistrate extends Card {
 
     public GregorShrewdMagistrate() {

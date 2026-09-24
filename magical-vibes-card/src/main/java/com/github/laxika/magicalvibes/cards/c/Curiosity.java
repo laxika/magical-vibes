@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "TPR", collectorNumber = "44")
 @CardRegistration(set = "A25", collectorNumber = "52")
 @CardRegistration(set = "SLD", collectorNumber = "403")
+@CardRegistration(set = "WOT", collectorNumber = "17")
 public class Curiosity extends Card {
 
     public Curiosity() {

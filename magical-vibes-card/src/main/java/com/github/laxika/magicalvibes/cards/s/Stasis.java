@@ -15,10 +15,12 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "83")
 @CardRegistration(set = "3ED", collectorNumber = "83")
 @CardRegistration(set = "SLD", collectorNumber = "1103")
+@CardRegistration(set = "ME4", collectorNumber = "64")
+@CardRegistration(set = "2ED", collectorNumber = "81")
 public class Stasis extends Card {
 
     public Stasis() {
-        // Players skip their untap steps — no permanent, any controller, untaps.
+        // Players skip their untap steps â€” no permanent, any controller, untaps.
         addEffect(EffectSlot.STATIC, new PlayersSkipUntapStepEffect());
 
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}.

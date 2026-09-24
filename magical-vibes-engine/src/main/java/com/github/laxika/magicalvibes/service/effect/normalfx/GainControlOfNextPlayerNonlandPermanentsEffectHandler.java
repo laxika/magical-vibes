@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect.Direction;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -15,13 +16,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the directional permanent-control exchange used by Aminatou's ultimate. */
+/** Resolves Aminatou's permanent control rotation. */
 @Component
 @RequiredArgsConstructor
 public class GainControlOfNextPlayerNonlandPermanentsEffectHandler implements NormalEffectHandlerBean {
-
-    private static final GainControlOfTargetEffect CONTROL_EFFECT =
-            new GainControlOfTargetEffect(ControlDuration.PERMANENT);
 
     private final CreatureControlService creatureControlService;
     private final GameQueryService gameQueryService;
@@ -33,46 +31,38 @@ public class GainControlOfNextPlayerNonlandPermanentsEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        GainControlOfNextPlayerNonlandPermanentsEffect directionalEffect =
+        GainControlOfNextPlayerNonlandPermanentsEffect rotation =
                 (GainControlOfNextPlayerNonlandPermanentsEffect) effect;
-
-        List<UUID> players = new ArrayList<>();
-        synchronized (gameData.orderedPlayerIds) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                if (gameData.playerIds.contains(playerId)) {
-                    players.add(playerId);
-                }
-            }
-        }
+        List<UUID> players = new ArrayList<>(gameData.orderedPlayerIds);
         if (players.size() < 2) {
             return;
         }
 
+        int offset = rotation.direction() == Direction.RIGHT ? 1 : -1;
+        List<ControlChange> changes = new ArrayList<>();
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        List<ControlledPermanent> permanents = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!gameQueryService.isLand(gameData, permanent)
-                    && (sourcePermanentId == null || !sourcePermanentId.equals(permanent.getId()))) {
-                permanents.add(new ControlledPermanent(controllerId, permanent));
+        for (int i = 0; i < players.size(); i++) {
+            UUID currentControllerId = players.get(i);
+            UUID newControllerId = players.get(Math.floorMod(i + offset, players.size()));
+            List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(currentControllerId, List.of());
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                if (permanent.getId().equals(sourcePermanentId)
+                        || gameQueryService.isLand(gameData, permanent)) {
+                    continue;
+                }
+                changes.add(new ControlChange(permanent, newControllerId));
             }
-        });
+        }
 
-        int offset = directionalEffect.direction().turnOrderOffset();
-        for (ControlledPermanent controlledPermanent : permanents) {
-            int controllerIndex = players.indexOf(controlledPermanent.controllerId());
-            if (controllerIndex < 0) {
-                continue;
-            }
-            UUID newControllerId = players.get(Math.floorMod(controllerIndex + offset, players.size()));
-            if (!newControllerId.equals(controlledPermanent.controllerId())) {
-                creatureControlService.applyControlEffect(gameData, newControllerId,
-                        controlledPermanent.permanent(), CONTROL_EFFECT,
-                        ControlDuration.PERMANENT.toEffectDuration(), null,
-                        entry.getCard().getName());
-            }
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(
+                rotation.controlDuration());
+        for (ControlChange change : changes) {
+            creatureControlService.applyControlEffect(
+                    gameData, change.newControllerId(), change.permanent(), controlEffect,
+                    rotation.controlDuration().toEffectDuration(), null, entry.getCard().getName());
         }
     }
 
-    private record ControlledPermanent(UUID controllerId, Permanent permanent) {
+    private record ControlChange(Permanent permanent, UUID newControllerId) {
     }
 }

@@ -55,6 +55,9 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             // Capture the controller before exile (needed for token creation)
             UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
 
+            if (controllerId != null) {
+                entry.getRemovedPermanentControllers().put(targetId, controllerId);
+            }
             permanentRemovalService.removePermanentToExile(gameData, target);
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",

@@ -17,6 +17,8 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "720")
 @CardRegistration(set = "SLD", collectorNumber = "1151")
 @CardRegistration(set = "SLD", collectorNumber = "2123")
+@CardRegistration(set = "EA2", collectorNumber = "3")
+@CardRegistration(set = "SPG", collectorNumber = "39")
 public class ThoughtKnotSeer extends Card {
 
     public ThoughtKnotSeer() {

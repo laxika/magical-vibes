@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Threaten.class, GrizzlyBears.class, Pacifism.class})
 class ThreatenTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Threaten puts it on the stack with the target creature")
@@ -37,7 +36,6 @@ class ThreatenTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Threaten");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -50,8 +48,7 @@ class ThreatenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
@@ -64,23 +61,15 @@ class ThreatenTest extends BaseCardTest {
     @DisplayName("Stolen creature can attack this turn because Threaten grants haste")
     void stolenCreatureCanAttackDueToHaste() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setSummoningSick(false);
         harness.setHand(player1, List.of(new Threaten()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        GameService gs = harness.getGameService();
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(target);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(attackerIndex));
+        declareAttackers(List.of(attackerIndex));
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -93,8 +82,7 @@ class ThreatenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -115,8 +103,7 @@ class ThreatenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, ownCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, ownCreature.getId());
 
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();

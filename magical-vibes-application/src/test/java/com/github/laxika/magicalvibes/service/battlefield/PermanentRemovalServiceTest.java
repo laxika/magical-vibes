@@ -584,7 +584,8 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, bears);
 
             verify(triggerCollectionService).collectDeathTrigger(
-                    eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears), eq(List.of()), eq(0));
+                    eq(gd), eq(bears.getCard()), eq(player1Id), eq(true),
+                    eq(bears), eq(List.of()), eq(0), eq(false));
             verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears, 0);
             verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears, 0, 0);
             verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(
@@ -604,7 +605,7 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, artifact);
 
             verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                    gd, player1Id, player1Id, artifact.getCard().getManaValue(),
+                    gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
                     Map.of(CounterType.CHARGE, 2), false);
         }
 
@@ -623,7 +624,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(artifact);
             verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                    gd, player1Id, player1Id, artifact.getCard().getManaValue(),
+                    gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
                     Map.of(CounterType.CHARGE, 2), true);
         }
 

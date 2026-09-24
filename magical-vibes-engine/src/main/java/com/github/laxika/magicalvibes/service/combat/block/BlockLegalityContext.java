@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedBlockPermissionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -179,7 +178,7 @@ public final class BlockLegalityContext {
                         List<PermanentPredicate> blocksAsThoughReachForAttackers,
                         boolean artifact,
                         Set<CardColor> colors,
-                        List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions,
+                        List<BlockingRestrictionEffect> attackerFilterRestrictions,
                         boolean prohibitedFromBlocking,
                         boolean cantBlockPowerAtLeastOwnToughness,
                         Integer cantBlockPowerAtLeast) {

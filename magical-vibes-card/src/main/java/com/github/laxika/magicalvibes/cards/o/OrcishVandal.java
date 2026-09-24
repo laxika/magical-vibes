@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "137")
+@CardRegistration(set = "2XM", collectorNumber = "137")
 public class OrcishVandal extends Card {
 
     public OrcishVandal() {

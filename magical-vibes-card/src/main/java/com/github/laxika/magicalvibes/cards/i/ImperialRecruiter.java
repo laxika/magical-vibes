@@ -15,6 +15,10 @@ import java.util.List;
 @CardRegistration(set = "ME2", collectorNumber = "130")
 @CardRegistration(set = "A25", collectorNumber = "136")
 @CardRegistration(set = "SLD", collectorNumber = "2244")
+@CardRegistration(set = "2XM", collectorNumber = "131")
+@CardRegistration(set = "SLZ", collectorNumber = "61")
+@CardRegistration(set = "SLZ", collectorNumber = "182")
+@CardRegistration(set = "SLZ", collectorNumber = "303")
 public class ImperialRecruiter extends Card {
 
     public ImperialRecruiter() {

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "79")
 @CardRegistration(set = "SLD", collectorNumber = "1187")
+@CardRegistration(set = "FCA", collectorNumber = "7")
 public class BolassCitadel extends Card {
 
     public BolassCitadel() {

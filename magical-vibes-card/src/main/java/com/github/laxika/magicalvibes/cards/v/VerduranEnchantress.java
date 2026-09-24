@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "337")
 @CardRegistration(set = "SUM", collectorNumber = "223")
 @CardRegistration(set = "3ED", collectorNumber = "223")
+@CardRegistration(set = "2ED", collectorNumber = "223")
 public class VerduranEnchantress extends Card {
 
     public VerduranEnchantress() {

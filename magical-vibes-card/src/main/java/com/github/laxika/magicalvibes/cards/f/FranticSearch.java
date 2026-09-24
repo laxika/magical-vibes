@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "VMA", collectorNumber = "70")
 @CardRegistration(set = "SLD", collectorNumber = "228")
 @CardRegistration(set = "SLD", collectorNumber = "1996")
+@CardRegistration(set = "UMA", collectorNumber = "57")
+@CardRegistration(set = "DMR", collectorNumber = "51")
+@CardRegistration(set = "TLE", collectorNumber = "159")
 public class FranticSearch extends Card {
 
     public FranticSearch() {

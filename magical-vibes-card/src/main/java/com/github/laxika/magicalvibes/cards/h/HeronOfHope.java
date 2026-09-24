@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "18")
+@CardRegistration(set = "DBL", collectorNumber = "285")
 public class HeronOfHope extends Card {
 
     public HeronOfHope() {

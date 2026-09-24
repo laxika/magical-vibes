@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "123")
+@CardRegistration(set = "2XM", collectorNumber = "174")
 public class LiegeOfTheTangle extends Card {
 
     public LiegeOfTheTangle() {

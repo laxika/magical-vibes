@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /** Copies cards exiled with the source permanent and offers the copies to the controller. */
 public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, CopyCastCost castCost,
-                                                               boolean requireKickCounter,
-                                                               boolean onlyCardsOwnedByController)
+                                                              boolean onlyOwnKickCounterCards)
         implements CardEffect {
+
+    public CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, CopyCastCost castCost) {
+        this(copyAll, castCost, false);
+    }
 
     public enum CopyCastCost {
         NORMAL,
@@ -16,10 +19,6 @@ public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, C
         if (castCost == null) {
             throw new IllegalArgumentException("castCost must not be null");
         }
-    }
-
-    public CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, CopyCastCost castCost) {
-        this(copyAll, castCost, false, false);
     }
 
     public static CopyCardsExiledWithSourceAndMayCastCopiesEffect oneForNormalCost() {
@@ -34,7 +33,7 @@ public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, C
         return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(true, CopyCastCost.FREE);
     }
 
-    public static CopyCardsExiledWithSourceAndMayCastCopiesEffect allKickCounterCardsForNormalCost() {
-        return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(true, CopyCastCost.NORMAL, true, true);
+    public static CopyCardsExiledWithSourceAndMayCastCopiesEffect allOwnedKickCounterCardsForNormalCost() {
+        return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(true, CopyCastCost.NORMAL, true);
     }
 }

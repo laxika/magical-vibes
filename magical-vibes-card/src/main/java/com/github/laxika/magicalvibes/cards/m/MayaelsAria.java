@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "121")
 @CardRegistration(set = "SLD", collectorNumber = "1848")
+@CardRegistration(set = "2X2", collectorNumber = "253")
 public class MayaelsAria extends Card {
 
     public MayaelsAria() {

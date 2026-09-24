@@ -15,6 +15,8 @@ import java.util.List;
 @CardRegistration(set = "DDS", collectorNumber = "17")
 @CardRegistration(set = "SLD", collectorNumber = "2050")
 @CardRegistration(set = "SLD", collectorNumber = "2055")
+@CardRegistration(set = "2X2", collectorNumber = "122")
+@CardRegistration(set = "TSR", collectorNumber = "184")
 public class RiftBolt extends Card {
 
     public RiftBolt() {

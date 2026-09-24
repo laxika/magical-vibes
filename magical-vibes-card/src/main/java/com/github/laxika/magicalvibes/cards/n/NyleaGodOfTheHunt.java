@@ -15,12 +15,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "166")
 @CardRegistration(set = "SLD", collectorNumber = "80")
+@CardRegistration(set = "PIO", collectorNumber = "300")
 public class NyleaGodOfTheHunt extends Card {
 
     public NyleaGodOfTheHunt() {

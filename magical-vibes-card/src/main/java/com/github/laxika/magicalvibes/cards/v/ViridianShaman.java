@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MRD", collectorNumber = "139")
 @CardRegistration(set = "DDU", collectorNumber = "25")
 @CardRegistration(set = "SLD", collectorNumber = "782")
+@CardRegistration(set = "C15", collectorNumber = "209")
 public class ViridianShaman extends Card {
 
     public ViridianShaman() {

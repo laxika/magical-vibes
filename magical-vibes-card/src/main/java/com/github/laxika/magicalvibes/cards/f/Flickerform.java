@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "18")
+@CardRegistration(set = "C13", collectorNumber = "12")
 public class Flickerform extends Card {
 
     public Flickerform() {

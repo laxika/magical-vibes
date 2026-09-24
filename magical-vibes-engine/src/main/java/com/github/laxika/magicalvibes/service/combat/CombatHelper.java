@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,6 +37,9 @@ public final class CombatHelper {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
+                    return true;
+                }
+                if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
                     return true;
                 }
                 if (hasDefenderCondition(restriction, landwalkIgnored)
@@ -68,6 +70,10 @@ public final class CombatHelper {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof BlockabilityRestrictionEffect restriction) {
                     if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
+                        result[0] = true;
+                        return;
+                    }
+                    if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
                         result[0] = true;
                         return;
                     }
@@ -145,16 +151,30 @@ public final class CombatHelper {
         if (minimum == null) {
             return false;
         }
-        UUID defenderControllerId = null;
-        if (defenderBattlefield != null) {
-            for (Permanent permanent : defenderBattlefield) {
-                defenderControllerId = gameData.findControllerOf(permanent);
-                if (defenderControllerId != null) {
-                    break;
-                }
+        return !gameQueryService.controlsCreaturesSharingCreatureType(
+                gameData, defenderControllerId(gameData, defenderBattlefield), minimum);
+    }
+
+    private static boolean hasMostCreaturesCondition(GameQueryService gameQueryService,
+                                                      GameData gameData,
+                                                      List<Permanent> defenderBattlefield,
+                                                      BlockabilityRestrictionEffect restriction) {
+        return restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
+                && gameQueryService.controlsMostCreaturesOrTied(
+                        gameData, defenderControllerId(gameData, defenderBattlefield));
+    }
+
+    private static UUID defenderControllerId(GameData gameData, List<Permanent> defenderBattlefield) {
+        if (defenderBattlefield == null) {
+            return null;
+        }
+        for (Permanent permanent : defenderBattlefield) {
+            UUID controllerId = gameData.findControllerOf(permanent);
+            if (controllerId != null) {
+                return controllerId;
             }
         }
-        return !gameQueryService.controlsCreaturesSharingCreatureType(gameData, defenderControllerId, minimum);
+        return null;
     }
 
     public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,
@@ -182,12 +202,10 @@ public final class CombatHelper {
      */
     public static void validateMaximumAttackers(GameData gameData, List<Integer> attackerIndices,
                                                 Map<Integer, UUID> attackTargets,
-                                                StaticEffectConditionResolver conditionResolver) {
+                                                GameQueryService gameQueryService) {
         gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                CardEffect activeEffect = conditionResolver == null ? effect
-                        : conditionResolver.resolve(gameData, permanent, sourceControllerId, effect);
-                validateMaximumAttackers(limitOrNull(activeEffect), sourceControllerId, permanent.getId(),
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
+                validateMaximumAttackers(limitOrNull(effect), sourceControllerId, permanent.getId(),
                         attackerIndices, attackTargets);
             }
         });
@@ -239,6 +257,11 @@ public final class CombatHelper {
                 CardEffect activeEffect = conditionResolver == null ? effect
                         : conditionResolver.resolve(gameData, permanent, sourceControllerId, effect);
                 if (activeEffect instanceof CombatCreatureLimitEffect limit) {
+                    maximum[0] = Math.min(maximum[0], limit.maxBlockers());
+                }
+            }
+            for (CardEffect effect : permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CombatCreatureLimitEffect limit) {
                     maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }
             }

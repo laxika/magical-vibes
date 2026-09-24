@@ -181,6 +181,21 @@ class DiscardTriggerCollectorServiceTest {
         });
     }
 
+    @Test
+    @DisplayName("Optional cycling triggers request targets before they can resolve")
+    void optionalCyclingTriggerQueuesTargetChoiceBeforeResolution() {
+        Permanent source = createPermanent("Cycling observer");
+        var effect = new MayEffect(new BoostTargetCreatureEffect(1, 1), "Boost target creature?");
+        var context = new TriggerContext.Cycle(player2Id, createCard("Cycled card"));
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_ANY_PLAYER_CYCLES, effect, context);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)).isTrue();
+    }
+
     private static Card createCard(String name) {
         Card card = new Card();
         card.setName(name);
@@ -1080,6 +1095,31 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(drakeHaven.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(MayPayManaEffect.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — DrawCardEffect")
+    class ControllerDiscardDraw {
+
+        @Test
+        @DisplayName("queues a draw trigger for the controller")
+        void queuesDrawTrigger() {
+            Permanent boneMiser = createPermanent("Bone Miser");
+            var effect = new DrawCardEffect(1);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Spellbook"));
+
+            boolean result = registry.dispatch(
+                    match(boneMiser, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(boneMiser.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
         }
     }
 }

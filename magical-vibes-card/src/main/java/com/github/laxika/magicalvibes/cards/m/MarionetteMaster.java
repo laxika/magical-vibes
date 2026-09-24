@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "90")
+@CardRegistration(set = "KLR", collectorNumber = "98")
 public class MarionetteMaster extends Card {
 
     public MarionetteMaster() {

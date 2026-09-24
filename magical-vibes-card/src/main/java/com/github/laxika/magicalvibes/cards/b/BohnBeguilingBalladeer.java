@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTu
 import com.github.laxika.magicalvibes.model.effect.GrantForetellToNonlandCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1242")
+@CardRegistration(set = "SLX", collectorNumber = "30")
 public class BohnBeguilingBalladeer extends Card {
 
     public BohnBeguilingBalladeer() {
@@ -19,6 +19,7 @@ public class BohnBeguilingBalladeer extends Card {
                 2,
                 null,
                 List.of(new GoadTargetCreatureUntilNextTurnEffect()),
-                TargetFilters.creatureAnOpponentControls()));
+                TargetFilters.creatureAnOpponentControls()
+        ));
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGr
 
 @CardRegistration(set = "INR", collectorNumber = "265")
 @CardRegistration(set = "SOI", collectorNumber = "256")
+@CardRegistration(set = "SIR", collectorNumber = "252")
 public class HarvestHand extends Card {
 
     public HarvestHand() {

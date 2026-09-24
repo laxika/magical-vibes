@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "MMA", collectorNumber = "70")
 @CardRegistration(set = "A25", collectorNumber = "76")
 @CardRegistration(set = "SLD", collectorNumber = "118")
+@CardRegistration(set = "HA7", collectorNumber = "5")
 public class VendilionClique extends Card {
 
     public VendilionClique() {

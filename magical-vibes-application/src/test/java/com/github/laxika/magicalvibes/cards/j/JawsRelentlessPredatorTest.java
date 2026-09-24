@@ -36,7 +36,7 @@ class JawsRelentlessPredatorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BasilicaSkullbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 1, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);

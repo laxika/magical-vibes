@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DragonsClaw.class, BogardanFirefiend.class, GrizzlyBears.class, Shock.class})
 class DragonsClawTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -135,6 +138,28 @@ class DragonsClawTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
+    @Test
+    @DisplayName("Casting a red instant also triggers Dragon's Claw")
+    void redInstantSpellTriggers() {
+        harness.addToBattlefield(player1, new DragonsClaw());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
     // ===== Non-red spell does NOT trigger =====
 
     @Test
@@ -194,7 +219,7 @@ class DragonsClawTest extends BaseCardTest {
     @DisplayName("Dragon's Claw does not trigger when not on the battlefield")
     void doesNotTriggerWhenNotOnBattlefield() {
         // Dragon's Claw is in the hand, not on the battlefield
-        harness.setHand(player1, List.of(new BogardanFirefiend()));
+        harness.setHand(player1, List.of(new BogardanFirefiend(), new DragonsClaw()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castCreature(player1, 0);

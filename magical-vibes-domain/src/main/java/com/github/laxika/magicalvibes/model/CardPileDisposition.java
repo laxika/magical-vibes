@@ -33,6 +33,8 @@ public enum CardPileDisposition {
      * hand, so the flow completes in step 1 and never asks the controller to pick a pile.
      */
     GIFTS_UNGIVEN,
+    /** Threats Undetected: selected cards return to the controller's library; the rest go to hand. */
+    THREATS_UNDETECTED,
     /** Elemental Teachings: selected cards go to the graveyard and the rest enter tapped. */
     GIFTS_UNGIVEN_BATTLEFIELD_TAPPED,
     /** Deliver Unto Evil: the opponent chooses cards to leave in the controller's graveyard. */

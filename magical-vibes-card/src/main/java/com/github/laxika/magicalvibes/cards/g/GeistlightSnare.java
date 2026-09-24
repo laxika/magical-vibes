@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 @CardRegistration(set = "INR", collectorNumber = "66")
 @CardRegistration(set = "INR", collectorNumber = "356")
 @CardRegistration(set = "VOW", collectorNumber = "60")
+@CardRegistration(set = "DBL", collectorNumber = "327")
 public class GeistlightSnare extends Card {
 
     public GeistlightSnare() {

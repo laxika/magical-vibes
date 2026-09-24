@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "SOI", collectorNumber = "281")
 @CardRegistration(set = "SLD", collectorNumber = "1159")
 @CardRegistration(set = "SLD", collectorNumber = "1212")
+@CardRegistration(set = "SIR", collectorNumber = "275")
 public class WestvaleAbbey extends Card {
 
     public WestvaleAbbey() {

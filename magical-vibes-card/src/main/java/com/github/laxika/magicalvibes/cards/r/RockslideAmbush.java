@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "121")
+@CardRegistration(set = "ME4", collectorNumber = "134")
 public class RockslideAmbush extends Card {
 
     public RockslideAmbush() {

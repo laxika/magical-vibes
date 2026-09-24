@@ -21,6 +21,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "102")
+@CardRegistration(set = "SLC", collectorNumber = "10")
+@CardRegistration(set = "SLC", collectorNumber = "37")
+@CardRegistration(set = "SLC", collectorNumber = "56")
 public class JunjiTheMidnightSky extends Card {
 
     public JunjiTheMidnightSky() {

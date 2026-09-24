@@ -4,23 +4,23 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
-
-/** Resolves a targeted goad by narrowing the existing dynamic goad requirement to one permanent. */
+/** Resolves a targeted goad effect as a single-permanent floating combat requirement. */
 @Component
 @RequiredArgsConstructor
 public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GoadCreaturesUntilNextTurnEffectHandler goadHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,14 +33,15 @@ public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffec
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
+
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
+            if (target == null || !gameQueryService.isCreature(gameData, target)) {
                 continue;
             }
-            goadHandler.resolve(gameData, entry,
-                    new GoadCreaturesUntilNextTurnEffect(
-                            new PermanentIsSpecificPermanentPredicate(target.getId())));
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
+                    effect, targetId, null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
         }
     }
 }

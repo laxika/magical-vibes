@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "166")
 @CardRegistration(set = "PD2", collectorNumber = "10")
+@CardRegistration(set = "TSR", collectorNumber = "172")
 public class JayaBallardTaskMage extends Card {
 
     public JayaBallardTaskMage() {

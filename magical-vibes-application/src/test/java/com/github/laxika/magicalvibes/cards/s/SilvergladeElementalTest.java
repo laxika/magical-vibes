@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SilvergladeElemental.class, Forest.class, Plains.class, Island.class, FreshVolunteers.class})
 class SilvergladeElementalTest extends BaseCardTest {
 
     @Test
@@ -44,7 +42,6 @@ class SilvergladeElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .isNotEmpty()
@@ -63,9 +60,8 @@ class SilvergladeElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -73,6 +69,23 @@ class SilvergladeElementalTest extends BaseCardTest {
                         && p.getCard().getSubtypes().contains(CardSubtype.FOREST)
                         && !p.isTapped());
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting the ETB search with no Forest puts no card onto the battlefield")
+    void acceptingSearchWithNoForestFindsNothing() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Plains(), new Island(), new FreshVolunteers()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(3)
+                .allMatch(card -> !card.getSubtypes().contains(CardSubtype.FOREST));
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -89,14 +102,10 @@ class SilvergladeElementalTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new SilvergladeElemental()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SilvergladeElemental(), "{4}{G}");
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new FreshVolunteers()));
     }
 }

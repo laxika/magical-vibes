@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.k.KrosanColossus;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,23 +14,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Starstorm.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({Starstorm.class, ElvishWarrior.class, KrosanColossus.class})
 class StarstormTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals X damage to each creature")
     void dealsXDamageToEachCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        Permanent colossus = harness.addToBattlefieldAndReturn(player2, new KrosanColossus());
         harness.setHand(player1, List.of(new Starstorm()));
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castInstant(player1, 0, 3, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Giant Spider");
-        assertThat(spider.getMarkedDamage()).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.assertOnBattlefield(player2, "Krosan Colossus");
+        assertThat(colossus.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
@@ -52,22 +52,22 @@ class StarstormTest extends BaseCardTest {
     @Test
     @DisplayName("X=0 deals no damage")
     void zeroXDealsNoDamage() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
         harness.setHand(player1, List.of(new Starstorm()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, 0, null);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(bears.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+        assertThat(warrior.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Cycling discards the card and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new Starstorm()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateHandAbility(player1, 0, null);
@@ -75,6 +75,6 @@ class StarstormTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Starstorm");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Elvish Warrior");
     }
 }

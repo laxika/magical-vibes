@@ -6,38 +6,42 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerChoiceStage;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerContext;
+import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DawnbreakReclaimerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class DawnbreakReclaimerEffectHandler implements NormalEffectHandlerBean {
 
-    private static final CardTypePredicate CREATURE_CARD = new CardTypePredicate(CardType.CREATURE);
-
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentRemovalService permanentRemovalService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final PermanentRemovalService permanentRemovalService;
-    private final PredicateEvaluationService predicateEvaluationService;
+    private final PlayerInputService playerInputService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,126 +50,194 @@ public class DawnbreakReclaimerEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var state = gameData.graveyardTargetOperation;
-        DawnbreakReclaimerContext context = state.dawnbreakReclaimer;
+        DawnbreakReclaimerEffect reclaimerEffect = (DawnbreakReclaimerEffect) effect;
+        GraveyardTargetOperationState state = gameData.graveyardTargetOperation;
 
-        if (context != null && context.stage() == DawnbreakReclaimerChoiceStage.READY
-                && gameData.resolvedMayAccepted != null) {
-            boolean accepted = gameData.resolvedMayAccepted;
-            gameData.resolvedMayAccepted = null;
-            if (accepted) {
-                returnChosenCards(gameData, entry, context);
-            }
-            state.dawnbreakReclaimer = null;
+        if (reclaimerEffect.opponentCardId() != null || reclaimerEffect.ownCardId() != null) {
+            returnSelectedCards(gameData, entry, reclaimerEffect);
             return;
         }
 
-        if (context == null) {
-            List<Card> opponentCards = opponentCreatureCards(
-                    gameData, entry.getControllerId(), entry.getCard().getId());
-            if (opponentCards.isEmpty()) {
-                return;
-            }
-            if (opponentCards.size() > 1) {
-                state.dawnbreakReclaimer = new DawnbreakReclaimerContext(
-                        null, null, null, DawnbreakReclaimerChoiceStage.OPPONENT_CARD);
-                beginChoice(gameData, entry.getControllerId(), opponentCards,
-                        entry.getCard().getName() + " — choose a creature card in an opponent's graveyard.");
-                return;
-            }
-            context = contextAfterOpponentChoice(gameData, opponentCards.getFirst());
-            if (context == null) {
-                return;
-            }
-            state.dawnbreakReclaimer = context;
+        if (state.dawnbreakReclaimerChosenOwnCardId != null) {
+            queueMayAbility(gameData, entry, reclaimerEffect,
+                    state.dawnbreakReclaimerChosenOpponentCardId,
+                    state.dawnbreakReclaimerChosenOwnCardId);
+            return;
         }
 
-        if (context.stage() == DawnbreakReclaimerChoiceStage.CONTROLLER_CARD) {
-            List<Card> controllerCards = creatureCards(
-                    gameData, entry.getControllerId(), entry.getCard().getId());
-            if (controllerCards.size() > 1) {
-                beginChoice(gameData, context.opponentPlayerId(), controllerCards,
-                        entry.getCard().getName() + " — choose a creature card in your graveyard.");
-                return;
-            }
-            Card chosen = controllerCards.isEmpty() ? null : controllerCards.getFirst();
-            context = new DawnbreakReclaimerContext(
-                    context.opponentCardId(), context.opponentPlayerId(),
-                    chosen == null ? null : chosen.getId(), DawnbreakReclaimerChoiceStage.READY);
-            state.dawnbreakReclaimer = context;
+        if (state.dawnbreakReclaimerChosenOpponentCardId != null
+                || state.dawnbreakReclaimerChosenOpponentId != null) {
+            beginOwnCardChoice(gameData, entry, reclaimerEffect);
+            return;
         }
 
-        gameData.resolvingMayEffectFromStack = true;
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(), entry.getControllerId(), List.of(effect),
-                entry.getCard().getName()
-                        + " — Return those cards to the battlefield under their owners' control?"));
-    }
-
-    private void beginChoice(GameData gameData, UUID chooserId, List<Card> cards, String prompt) {
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(chooserId, IntStream.range(0, cards.size()).boxed().toList(),
-                        GraveyardChoiceDestination.MAY_ABILITY_TARGET, prompt)
-                .cardPool(new ArrayList<>(cards))
-                .mandatory(true)
-                .build());
-        gameData.rerunCurrentEffectAfterInteraction = true;
-    }
-
-    private DawnbreakReclaimerContext contextAfterOpponentChoice(GameData gameData, Card card) {
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
-        if (graveyardOwnerId == null) {
-            return null;
-        }
-        return new DawnbreakReclaimerContext(
-                card.getId(), graveyardOwnerId, null, DawnbreakReclaimerChoiceStage.CONTROLLER_CARD);
-    }
-
-    private List<Card> opponentCreatureCards(GameData gameData, UUID controllerId, UUID sourceCardId) {
-        List<Card> cards = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(controllerId)) {
-                cards.addAll(creatureCards(gameData, playerId, sourceCardId));
-            }
-        }
-        return cards;
-    }
-
-    private List<Card> creatureCards(GameData gameData, UUID playerId, UUID sourceCardId) {
-        if (playerId == null) {
-            return List.of();
-        }
-        return gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, CREATURE_CARD, sourceCardId))
+        UUID controllerId = entry.getControllerId();
+        List<Card> opponentCards = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId))
+                .flatMap(playerId -> gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream())
+                .filter(card -> matches(card, reclaimerEffect.filter(), entry.getCard().getId()))
                 .toList();
-    }
 
-    private void returnChosenCards(GameData gameData, StackEntry entry, DawnbreakReclaimerContext context) {
-        List<Card> cards = new ArrayList<>();
-        Map<UUID, UUID> graveyardOwners = new HashMap<>();
-        List<UUID> cardIds = new ArrayList<>();
-        cardIds.add(context.opponentCardId());
-        if (context.controllerCardId() != null) {
-            cardIds.add(context.controllerCardId());
+        if (!opponentCards.isEmpty()) {
+            if (opponentCards.size() == 1) {
+                chooseOpponentCard(gameData, entry, opponentCards.getFirst());
+                beginOwnCardChoice(gameData, entry, reclaimerEffect);
+            } else {
+                state.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume = true;
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice.builder(
+                                controllerId,
+                                IntStream.range(0, opponentCards.size()).boxed().toList(),
+                                GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                                entry.getCard().getName()
+                                        + " — choose a creature card in an opponent's graveyard.")
+                        .cardPool(new ArrayList<>(opponentCards))
+                        .mandatory(true)
+                        .build());
+            }
+            return;
         }
 
-        for (UUID cardId : cardIds) {
+        List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId))
+                .toList();
+        if (opponents.isEmpty()) {
+            return;
+        }
+        if (opponents.size() == 1) {
+            state.dawnbreakReclaimerChosenOpponentId = opponents.getFirst();
+            beginOwnCardChoice(gameData, entry, reclaimerEffect);
+            return;
+        }
+
+        gameData.rerunCurrentEffectAfterInteraction = true;
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.DawnbreakReclaimerOpponentChoice());
+        playerInputService.beginPlayerChoice(gameData, controllerId, opponents,
+                entry.getCard().getName() + " — choose an opponent to choose a creature card in your graveyard.");
+    }
+
+    /** Completes the controller's opponent choice and resumes the parked ability. */
+    public void completeOpponentChoice(GameData gameData, UUID opponentId) {
+        gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentId = opponentId;
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void chooseOpponentCard(GameData gameData, StackEntry entry, Card card) {
+        gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentCardId = card.getId();
+        gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentId =
+                gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+    }
+
+    private void beginOwnCardChoice(GameData gameData, StackEntry entry,
+                                    DawnbreakReclaimerEffect effect) {
+        GraveyardTargetOperationState state = gameData.graveyardTargetOperation;
+        UUID opponentId = state.dawnbreakReclaimerChosenOpponentId;
+        if (opponentId == null && state.dawnbreakReclaimerChosenOpponentCardId != null) {
+            opponentId = gameQueryService.findGraveyardOwnerById(
+                    gameData, state.dawnbreakReclaimerChosenOpponentCardId);
+            state.dawnbreakReclaimerChosenOpponentId = opponentId;
+        }
+        if (opponentId == null) {
+            clearState(gameData);
+            return;
+        }
+
+        List<Card> ownCards = matchingCards(gameData.playerGraveyards.get(entry.getControllerId()),
+                effect.filter(), entry.getCard().getId());
+        if (ownCards.isEmpty()) {
+            queueMayAbility(gameData, entry, effect, state.dawnbreakReclaimerChosenOpponentCardId, null);
+        } else if (ownCards.size() == 1) {
+            queueMayAbility(gameData, entry, effect,
+                    state.dawnbreakReclaimerChosenOpponentCardId, ownCards.getFirst().getId());
+        } else {
+            state.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume = true;
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            String controllerName = gameData.playerIdToName.get(entry.getControllerId());
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice.builder(
+                            opponentId,
+                            IntStream.range(0, ownCards.size()).boxed().toList(),
+                            GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                            entry.getCard().getName() + " — choose a creature card from "
+                                    + controllerName + "'s graveyard.")
+                    .cardPool(new ArrayList<>(ownCards))
+                    .mandatory(true)
+                    .build());
+        }
+    }
+
+    private void queueMayAbility(GameData gameData, StackEntry entry,
+                                 DawnbreakReclaimerEffect effect,
+                                 UUID opponentCardId, UUID ownCardId) {
+        if (opponentCardId == null && ownCardId == null) {
+            clearState(gameData);
+            return;
+        }
+
+        clearState(gameData);
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(), entry.getControllerId(),
+                List.of(new DawnbreakReclaimerEffect(effect.filter(), opponentCardId, ownCardId)),
+                "You may return those cards to the battlefield under their owners' control.",
+                null, null, entry.getSourcePermanentId()));
+    }
+
+    private void returnSelectedCards(GameData gameData, StackEntry entry,
+                                     DawnbreakReclaimerEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> selectedCards = new ArrayList<>();
+        HashMap<UUID, UUID> graveyardOwners = new HashMap<>();
+        List<UUID> selectedCardIds = new ArrayList<>(2);
+        if (effect.opponentCardId() != null) {
+            selectedCardIds.add(effect.opponentCardId());
+        }
+        if (effect.ownCardId() != null) {
+            selectedCardIds.add(effect.ownCardId());
+        }
+        for (UUID cardId : selectedCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-            if (card == null) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (card == null || graveyardOwnerId == null
+                    || !matches(card, effect.filter(), entry.getCard().getId())) {
                 continue;
             }
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-            if (graveyardOwnerId == null) {
+            if (cardId.equals(effect.opponentCardId()) && graveyardOwnerId.equals(controllerId)) {
+                continue;
+            }
+            if (cardId.equals(effect.ownCardId()) && !graveyardOwnerId.equals(controllerId)) {
                 continue;
             }
             permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-            cards.add(card);
+            selectedCards.add(card);
             graveyardOwners.put(cardId, graveyardOwnerId);
         }
 
-        if (!cards.isEmpty()) {
-            graveyardReturnSupport.putCardsOntoBattlefieldSimultaneouslyUnderController(
-                    gameData, new PendingGraveyardReturnBatch(entry.getControllerId(), cards, graveyardOwners, true));
+        if (!selectedCards.isEmpty()) {
+            graveyardReturnSupport.putCardsOntoBattlefieldSimultaneouslyUnderController(gameData,
+                    new PendingGraveyardReturnBatch(controllerId, selectedCards, graveyardOwners, true));
         }
+    }
+
+    private List<Card> matchingCards(List<Card> cards, CardPredicate filter, UUID sourceCardId) {
+        if (cards == null) {
+            return List.of();
+        }
+        return cards.stream()
+                .filter(card -> matches(card, filter, sourceCardId))
+                .toList();
+    }
+
+    private boolean matches(Card card, CardPredicate filter, UUID sourceCardId) {
+        return predicateEvaluationService.matchesCardPredicate(card, filter, sourceCardId);
+    }
+
+    private void clearState(GameData gameData) {
+        GraveyardTargetOperationState state = gameData.graveyardTargetOperation;
+        state.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume = false;
+        state.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume = false;
+        state.dawnbreakReclaimerChosenOpponentId = null;
+        state.dawnbreakReclaimerChosenOpponentCardId = null;
+        state.dawnbreakReclaimerChosenOwnCardId = null;
+        gameData.rerunCurrentEffectAfterInteraction = false;
     }
 }

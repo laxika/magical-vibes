@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Changes the controller's experience-counter total. */
-public record ExperienceCountersEffect(int amount) implements CardEffect {
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
-    public ExperienceCountersEffect {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Experience counter change must be positive");
-        }
+/** Changes the resolving controller's experience-counter total. */
+public record ExperienceCountersEffect(DynamicAmount amount) implements CardEffect {
+
+    public ExperienceCountersEffect(int amount) {
+        this(new Fixed(amount));
     }
 }

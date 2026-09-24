@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "140")
 @CardRegistration(set = "SLD", collectorNumber = "122")
+@CardRegistration(set = "MB1", collectorNumber = "140")
 public class EnchantedEvening extends Card {
 
     public EnchantedEvening() {

@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,38 +17,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Cagemail.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({Cagemail.class, GrizzlyBears.class, KrosanVerge.class, SuntailHawk.class})
 class CagemailTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cagemail gives the enchanted creature +2/+2")
     void boostsEnchantedCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-        Permanent aura = new Permanent(new Cagemail());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Cagemail());
+        aura.setAttachedTo(hawk.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Cagemail prevents the enchanted creature from attacking")
     void preventsEnchantedCreatureFromAttacking() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-        Permanent aura = new Permanent(new Cagemail());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
+        addCreatureReady(player1, new SuntailHawk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Cagemail());
+        aura.setAttachedTo(gd.playerBattlefields.get(player1.getId()).get(0).getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -55,22 +46,14 @@ class CagemailTest extends BaseCardTest {
     @Test
     @DisplayName("Cagemail still allows the enchanted creature to block")
     void allowsEnchantedCreatureToBlock() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        Permanent aura = new Permanent(new Cagemail());
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Cagemail());
         aura.setAttachedTo(blocker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SuntailHawk());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
@@ -80,38 +63,75 @@ class CagemailTest extends BaseCardTest {
     @Test
     @DisplayName("Removing Cagemail restores the enchanted creature's stats and attack ability")
     void effectsStopWhenRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-        Permanent aura = new Permanent(new Cagemail());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
+        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Cagemail());
+        aura.setAttachedTo(hawk.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(3);
         gd.playerBattlefields.get(player2.getId()).remove(aura);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        addCreatureReady(player2, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
-        assertThat(bears.isAttacking()).isTrue();
+        assertThat(hawk.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting Cagemail attaches it to a target creature")
+    void castingCagemailAttachesToTargetCreature() {
+        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, hawk.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Cagemail
+                        && hawk.getId().equals(permanent.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Cagemail cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
         harness.setHand(player1, List.of(new Cagemail()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
-
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cagemail boosts only the enchanted creature")
+    void doesNotBoostOtherCreatures() {
+        Permanent enchantedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Cagemail());
+        aura.setAttachedTo(enchantedBears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, enchantedBears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enchantedBears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cagemail can enchant a creature an opponent controls")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
 }

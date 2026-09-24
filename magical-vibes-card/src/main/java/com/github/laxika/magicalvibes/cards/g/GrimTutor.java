@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 @CardRegistration(set = "SLD", collectorNumber = "444")
 @CardRegistration(set = "SLD", collectorNumber = "971")
 @CardRegistration(set = "SLD", collectorNumber = "972")
+@CardRegistration(set = "SPG", collectorNumber = "76")
 public class GrimTutor extends Card {
 
     public GrimTutor() {

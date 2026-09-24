@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGrav
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "IKO", collectorNumber = "184")
+@CardRegistration(set = "SLC", collectorNumber = "5")
+@CardRegistration(set = "SLC", collectorNumber = "32")
+@CardRegistration(set = "SPG", collectorNumber = "104")
 public class EerieUltimatum extends Card {
 
     public EerieUltimatum() {

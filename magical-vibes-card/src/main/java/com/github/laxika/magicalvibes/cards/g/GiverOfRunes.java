@@ -6,19 +6,22 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1463")
+@CardRegistration(set = "MH1", collectorNumber = "13")
+@CardRegistration(set = "HA7", collectorNumber = "2")
 public class GiverOfRunes extends Card {
 
     public GiverOfRunes() {
-        PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
+        PermanentAllOfPredicate anotherCreatureYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
+                new PermanentControlledBySourceControllerPredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
 
@@ -26,10 +29,11 @@ public class GiverOfRunes extends Card {
                 true,
                 null,
                 List.of(GrantProtectionChoiceUntilEndOfTurnEffect.colorOrColorless()),
-                "{T}: Another target creature you control gains protection from colorless or from the color "
-                        + "of your choice until end of turn.",
-                new ControlledPermanentPredicateTargetFilter(anotherCreature,
-                        "Target must be another creature you control")
+                "{T}: Another target creature you control gains protection from colorless or from the color of your choice until end of turn.",
+                new ControlledPermanentPredicateTargetFilter(
+                        anotherCreatureYouControl,
+                        "Target must be another creature you control"
+                )
         ));
     }
 }

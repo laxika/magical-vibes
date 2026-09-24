@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "212")
+@CardRegistration(set = "DMU", collectorNumber = "155")
 public class BiteDown extends Card {
 
     public BiteDown() {

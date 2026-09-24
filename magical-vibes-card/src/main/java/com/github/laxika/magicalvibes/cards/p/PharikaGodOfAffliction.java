@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "154")
 @CardRegistration(set = "SLD", collectorNumber = "82")
+@CardRegistration(set = "PIO", collectorNumber = "315")
 public class PharikaGodOfAffliction extends Card {
 
     public PharikaGodOfAffliction() {

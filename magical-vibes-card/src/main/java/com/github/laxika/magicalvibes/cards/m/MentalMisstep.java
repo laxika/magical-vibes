@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "NPH", collectorNumber = "38")
 @CardRegistration(set = "SLD", collectorNumber = "1179")
 @CardRegistration(set = "SLD", collectorNumber = "2273")
+@CardRegistration(set = "SLZ", collectorNumber = "22")
+@CardRegistration(set = "SLZ", collectorNumber = "143")
+@CardRegistration(set = "SLZ", collectorNumber = "264")
 public class MentalMisstep extends Card {
 
     public MentalMisstep() {

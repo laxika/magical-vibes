@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TahngarthTalruumHero.class, CrawWurm.class, Forest.class, GrizzlyBears.class})
 class TahngarthTalruumHeroTest extends BaseCardTest {
 
     @Test
@@ -37,7 +38,7 @@ class TahngarthTalruumHeroTest extends BaseCardTest {
     @DisplayName("Both creatures are destroyed when reciprocal damage is lethal")
     void bothCreaturesDieFromReciprocalDamage() {
         Permanent tahngarth = addReadyTahngarth(player1);
-        Permanent target = addReadyCreature(player2, new CrawWurm());
+        Permanent target = addCreatureReady(player2, new CrawWurm());
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -45,6 +46,22 @@ class TahngarthTalruumHeroTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tahngarth);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Still deals first damage using its last known power if it leaves before resolution")
+    void sourceLeavingBeforeResolutionStillDealsDamage() {
+        Permanent tahngarth = addReadyTahngarth(player1);
+        Permanent target = addCreatureReady(player2, new CrawWurm());
+        target.setToughnessModifier(1); // Keep the four damage nonlethal so it can be inspected.
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(tahngarth);
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
     }
 
     @Test
@@ -63,26 +80,19 @@ class TahngarthTalruumHeroTest extends BaseCardTest {
     @DisplayName("Cannot activate the tap ability while tapped")
     void cannotActivateWhileTapped() {
         addReadyTahngarth(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        Permanent secondTarget = addReadyCreature(player2, new GrizzlyBears());
+        Permanent secondTarget = addCreatureReady(player2, new GrizzlyBears());
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, secondTarget.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyTahngarth(Player player) {
-        return addReadyCreature(player, new TahngarthTalruumHero());
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new TahngarthTalruumHero());
     }
 
     private void addAbilityMana() {

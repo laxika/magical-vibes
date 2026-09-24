@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  * Capability for static effects that multiply damage dealt by sources controlled by the effect
  * permanent's controller.
  */
-public interface ControllerDamageMultiplyingEffect extends CardEffect {
+public interface ControllerDamageMultiplyingEffect extends DoublingEffect {
 
     int damageMultiplier();
 

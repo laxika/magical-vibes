@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "85")
 @CardRegistration(set = "SLD", collectorNumber = "74")
+@CardRegistration(set = "PIO", collectorNumber = "291")
 public class ErebosGodOfTheDead extends Card {
 
     public ErebosGodOfTheDead() {

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "225")
+@CardRegistration(set = "C14", collectorNumber = "297")
 public class GargoyleCastle extends Card {
 
     public GargoyleCastle() {

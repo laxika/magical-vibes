@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -17,18 +18,17 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MimeoplasmCopyOnEnterEffect;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -39,16 +39,15 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -261,23 +260,12 @@ public class CloneService {
                                                            Card physicalCard, boolean transformed,
                                                            CopyCreatureCardInGraveyardOnEnterEffect copyEffect,
                                                            int xValue) {
-        boolean hasValidCard = false;
-        for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
-            if (copyEffect.controllerGraveyardOnly() && !controllerId.equals(graveyardOwnerId)) {
-                continue;
-            }
-            for (Card graveyardCard : gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of())) {
-                if (isValidGraveyardCopyCard(gameData, controllerId, graveyardOwnerId,
-                        graveyardCard, copyEffect)) {
-                    hasValidCard = true;
-                    break;
-                }
-            }
-            if (hasValidCard) {
-                break;
-            }
-        }
-        if (!hasValidCard) {
+        long creatureCardCount = gameData.playerGraveyards.values().stream()
+                .flatMap(List::stream)
+                .filter(graveyardCard -> graveyardCard.hasType(CardType.CREATURE))
+                .count();
+        int requiredCreatureCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
+        if (creatureCardCount < requiredCreatureCards) {
             return false;
         }
 
@@ -312,12 +300,17 @@ public class CloneService {
         gameData.cloneOperation.graveyardCopyChoicePending = true;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry =
                 copyEffect.exileCopiedGraveyardCardAfterEntry();
+        gameData.cloneOperation.exileTwoAndAddOtherPowerCounters =
+                copyEffect.exileTwoAndAddOtherPowerCounters();
+        gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 card,
                 controllerId,
                 List.of(copyEffect),
-                card.getName() + " — You may have it enter as a copy of any creature card in a graveyard."
+                card.getName() + (copyEffect.exileTwoAndAddOtherPowerCounters()
+                        ? " — You may exile two creature cards from graveyards to copy one."
+                        : " — You may have it enter as a copy of any creature card in a graveyard.")
         ));
         playerInputService.processNextMayAbility(gameData);
         return true;
@@ -383,6 +376,8 @@ public class CloneService {
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
+        gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
+        gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
 
         CopyCreatureCardFromGraveyardOnEnterEffect copyEffect = findFixedGraveyardCopyEffect(card);
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -547,9 +542,8 @@ public class CloneService {
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
-        gameData.cloneOperation.mimeoplasmGraveyardChoicePending = false;
-        gameData.cloneOperation.mimeoplasmCopyChoicePending = false;
-        gameData.cloneOperation.mimeoplasmSelectedCardIds = List.of();
+        gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
+        gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
 
         Permanent perm = new Permanent(physicalCard != null ? physicalCard : card);
         if (transformed) {

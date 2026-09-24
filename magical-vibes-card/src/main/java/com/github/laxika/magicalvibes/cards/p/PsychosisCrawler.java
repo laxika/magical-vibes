@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "126")
+@CardRegistration(set = "BRR", collectorNumber = "44")
+@CardRegistration(set = "C15", collectorNumber = "263")
 public class PsychosisCrawler extends Card {
 
     public PsychosisCrawler() {

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenFarseer;
+import com.github.laxika.magicalvibes.cards.d.DaruSpiritualist;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
-import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrontlineStrategist.class, GrizzlyBears.class, YotianSoldier.class, ProdigalSorcerer.class})
+@CardUsed({FrontlineStrategist.class, AvenFarseer.class, DaruSpiritualist.class, ProdigalSorcerer.class})
 class FrontlineStrategistTest extends BaseCardTest {
 
     @Test
@@ -23,16 +23,35 @@ class FrontlineStrategistTest extends BaseCardTest {
         turnFrontlineStrategistFaceUp();
         harness.setLife(player2, 20);
 
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent soldier = addCreatureReady(player1, new YotianSoldier());
+        Permanent nonSoldier = addCreatureReady(player1, new DaruSpiritualist());
+        Permanent soldier = addCreatureReady(player1, new AvenFarseer());
 
-        assertThat(gqs.isPreventedFromDealingDamage(gd, bears, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, nonSoldier, true)).isTrue();
         assertThat(gqs.isPreventedFromDealingDamage(gd, soldier, true)).isFalse();
 
         declareAttackers(player1, List.of(1, 2));
         resolveCombat(player1);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Turning face up prevents combat damage from creatures controlled by either player")
+    void turningFaceUpPreventsCombatDamageFromOpposingNonSoldiers() {
+        turnFrontlineStrategistFaceUp();
+        harness.setLife(player1, 20);
+
+        Permanent nonSoldier = addCreatureReady(player2, new DaruSpiritualist());
+        Permanent soldier = addCreatureReady(player2, new AvenFarseer());
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, nonSoldier, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, soldier, true)).isFalse();
+
+        declareAttackers(player2, List.of(0, 1));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
     }
 
     @Test

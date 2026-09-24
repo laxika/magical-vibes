@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "118")
 @CardRegistration(set = "SLD", collectorNumber = "1888")
+@CardRegistration(set = "PZA", collectorNumber = "8")
 public class AllWillBeOne extends Card {
 
     public AllWillBeOne() {

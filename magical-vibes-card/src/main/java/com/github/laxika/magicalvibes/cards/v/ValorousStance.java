@@ -20,6 +20,10 @@ import java.util.List;
 @CardRegistration(set = "VOW", collectorNumber = "42")
 @CardRegistration(set = "FRF", collectorNumber = "28")
 @CardRegistration(set = "CP3", collectorNumber = "3")
+@CardRegistration(set = "GN3", collectorNumber = "20")
+@CardRegistration(set = "2XM", collectorNumber = "38")
+@CardRegistration(set = "TLE", collectorNumber = "154")
+@CardRegistration(set = "DBL", collectorNumber = "309")
 public class ValorousStance extends Card {
 
     public ValorousStance() {

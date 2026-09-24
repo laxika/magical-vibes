@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "32")
 @CardRegistration(set = "SLD", collectorNumber = "2089")
+@CardRegistration(set = "PIO", collectorNumber = "360")
 public class OpenTheArmory extends Card {
 
     public OpenTheArmory() {

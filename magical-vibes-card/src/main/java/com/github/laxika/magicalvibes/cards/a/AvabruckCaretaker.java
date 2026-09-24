@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "187")
 @CardRegistration(set = "SLD", collectorNumber = "1608")
+@CardRegistration(set = "DBL", collectorNumber = "454")
 public class AvabruckCaretaker extends Card {
 
     public AvabruckCaretaker() {

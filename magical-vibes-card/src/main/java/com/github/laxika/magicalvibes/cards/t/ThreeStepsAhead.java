@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OTJ", collectorNumber = "75")
+@CardRegistration(set = "MAR", collectorNumber = "62")
 public class ThreeStepsAhead extends Card {
 
     public ThreeStepsAhead() {

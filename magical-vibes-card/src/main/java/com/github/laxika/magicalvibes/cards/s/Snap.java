@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDS", collectorNumber = "10")
 @CardRegistration(set = "SLD", collectorNumber = "412")
 @CardRegistration(set = "SLD", collectorNumber = "2247")
+@CardRegistration(set = "DMR", collectorNumber = "66")
 public class Snap extends Card {
 
     public Snap() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1167")
+@CardRegistration(set = "MH1", collectorNumber = "206")
 public class KessDissidentMage extends Card {
 
     public KessDissidentMage() {

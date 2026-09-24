@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -14,5 +17,12 @@ import java.util.Set;
  *
  * @param cardTypes the card types that gain flashback (e.g. INSTANT, SORCERY)
  */
-public record EmblemGrantsFlashbackEffect(Set<CardType> cardTypes) implements CardEffect {
+public record EmblemGrantsFlashbackEffect(Set<CardType> cardTypes) implements EmblemGrantsCastingOptionEffect {
+
+    @Override
+    public Optional<FlashbackCast> castingOption(Card card) {
+        return card.getManaCost() == null
+                ? Optional.empty()
+                : Optional.of(new FlashbackCast(card.getManaCost()));
+    }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "MRD", collectorNumber = "285")
 @CardRegistration(set = "HOP", collectorNumber = "140")
 @CardRegistration(set = "SLD", collectorNumber = "304")
+@CardRegistration(set = "AA2", collectorNumber = "25")
 public class TreeOfTales extends Card {
 
     public TreeOfTales() {
