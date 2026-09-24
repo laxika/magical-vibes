@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Zombify.class, GrizzlyBears.class, HolyDay.class})
 class ZombifyTest extends BaseCardTest {
 
     @Test
@@ -29,11 +28,26 @@ class ZombifyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns only the targeted creature when multiple creatures are in the graveyard")
+    void returnsOnlyTargetedCreature() {
+        Card targetedCreature = new GrizzlyBears();
+        Card otherCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(targetedCreature, otherCreature));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, targetedCreature.getId());
+        harness.passBothPriorities();
+
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(creature.getId()));
+                .anyMatch(p -> p.getCard().getId().equals(targetedCreature.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(creature.getId()));
+                .anyMatch(c -> c.getId().equals(otherCreature.getId()));
     }
 
     @Test
@@ -73,10 +87,8 @@ class ZombifyTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getId().equals(creature.getId()));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -90,7 +102,6 @@ class ZombifyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Zombify");
     }

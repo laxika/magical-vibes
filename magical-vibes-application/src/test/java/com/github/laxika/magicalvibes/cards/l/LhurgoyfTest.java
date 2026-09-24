@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Lhurgoyf.class, BalduvianBears.class, Plains.class})
+@CardUsed({Lhurgoyf.class, GrizzlyBears.class, Plains.class})
 class LhurgoyfTest extends BaseCardTest {
 
     @Test
@@ -61,6 +61,17 @@ class LhurgoyfTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lhurgoyf ignores noncreature cards in either graveyard")
+    void ignoresNoncreatureCardsInEitherGraveyard() {
+        Permanent perm = addCreatureReady(player1, new Lhurgoyf());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Plains()));
+        harness.setGraveyard(player2, List.of(new Plains(), new GrizzlyBears()));
+
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Lhurgoyf P/T updates as creatures enter the graveyard")
     void ptUpdatesWithGraveyard() {
         Permanent perm = addCreatureReady(player1, new Lhurgoyf());
@@ -69,7 +80,7 @@ class LhurgoyfTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
 
-        gd.playerGraveyards.get(player1.getId()).add(new BalduvianBears());
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
@@ -93,7 +104,7 @@ class LhurgoyfTest extends BaseCardTest {
     private List<Card> createCreatureCards(int count) {
         List<Card> creatures = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            creatures.add(new BalduvianBears());
+            creatures.add(new GrizzlyBears());
         }
         return creatures;
     }

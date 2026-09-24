@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.a.ArixmethesSlumberingIsle;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NaturalAffinity.class, Forest.class, Mountain.class, GrizzlyBears.class})
 class NaturalAffinityTest extends BaseCardTest {
 
     private void cast() {
@@ -31,12 +32,6 @@ class NaturalAffinityTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent land(GameData gd, com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElse(null);
-    }
-
     @Test
     @DisplayName("Animates lands of both players as 2/2 creatures, still lands")
     void animatesAllLands() {
@@ -44,22 +39,20 @@ class NaturalAffinityTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
 
         cast();
-        GameData gd = harness.getGameData();
 
-        Permanent ownForest = land(gd, player1, "Forest");
-        assertThat(ownForest).isNotNull();
+        Permanent ownForest = findPermanent(player1, "Forest");
         assertThat(ownForest.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(ownForest.getEffectivePower()).isEqualTo(2);
         assertThat(ownForest.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.isCreature(gd, ownForest)).isTrue();
-        assertThat(ownForest.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isLand(gd, ownForest)).isTrue();
 
-        Permanent opponentMountain = land(gd, player2, "Mountain");
-        assertThat(opponentMountain).isNotNull();
+        Permanent opponentMountain = findPermanent(player2, "Mountain");
         assertThat(opponentMountain.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(opponentMountain.getEffectivePower()).isEqualTo(2);
         assertThat(opponentMountain.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.isCreature(gd, opponentMountain)).isTrue();
+        assertThat(gqs.isLand(gd, opponentMountain)).isTrue();
     }
 
     @Test
@@ -69,11 +62,41 @@ class NaturalAffinityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         cast();
-        GameData gd = harness.getGameData();
 
-        Permanent bears = land(gd, player1, "Grizzly Bears");
-        assertThat(bears).isNotNull();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isAnimatedUntilEndOfTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not animate lands entering after resolution")
+    void doesNotAnimateLandsEnteringAfterResolution() {
+        harness.addToBattlefield(player1, new Forest());
+
+        cast();
+        Permanent laterForest = harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(laterForest.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gqs.isCreature(gd, laterForest)).isFalse();
+        assertThat(gqs.isLand(gd, laterForest)).isTrue();
+    }
+
+    @Test
+    @CardUsed(ArixmethesSlumberingIsle.class)
+    @DisplayName("Animates permanents that are currently lands even when their cards are not lands")
+    void animatesCurrentLands() {
+        Permanent arixmethes = harness.enterBattlefieldAndReturn(player2,
+                new ArixmethesSlumberingIsle());
+
+        assertThat(gqs.isLand(gd, arixmethes)).isTrue();
+        assertThat(gqs.isCreature(gd, arixmethes)).isFalse();
+
+        cast();
+
+        assertThat(arixmethes.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gqs.isCreature(gd, arixmethes)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, arixmethes)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, arixmethes)).isEqualTo(2);
+        assertThat(gqs.isLand(gd, arixmethes)).isTrue();
     }
 
     @Test
@@ -82,15 +105,16 @@ class NaturalAffinityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         cast();
-        GameData gd = harness.getGameData();
 
-        Permanent forest = land(gd, player1, "Forest");
-        assertThat(forest).isNotNull();
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isAnimatedUntilEndOfTurn()).isTrue();
 
+        gd.expireEndOfTurnFloatingEffects();
         forest.resetModifiers();
 
         assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, forest)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isZero();
     }
 }

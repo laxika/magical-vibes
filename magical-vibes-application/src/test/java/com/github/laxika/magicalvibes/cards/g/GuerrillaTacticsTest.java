@@ -89,6 +89,20 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
+    @CardUsed(JaceBeleren.class)
+    @Test
+    @DisplayName("Deals 2 damage to target planeswalker")
+    void deals2DamageToPlaneswalker() {
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setHand(player1, List.of(new GuerrillaTactics()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, jace.getId());
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
     @Test
     @DisplayName("Goes to graveyard after resolving as spell")
     void goesToGraveyardAfterResolving() {

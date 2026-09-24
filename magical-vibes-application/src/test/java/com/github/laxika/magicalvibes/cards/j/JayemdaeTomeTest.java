@@ -29,10 +29,7 @@ class JayemdaeTomeTest extends BaseCardTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         JayemdaeTome tome = new JayemdaeTome();
-        harness.setHand(player1, List.of(tome));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, tome, "{4}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -43,10 +40,7 @@ class JayemdaeTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new JayemdaeTome()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new JayemdaeTome(), "{4}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

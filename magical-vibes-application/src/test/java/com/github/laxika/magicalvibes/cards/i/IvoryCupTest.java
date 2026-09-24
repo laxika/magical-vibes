@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.a.ArdentMilitia;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArdentMilitia.class, GrizzlyBears.class, HealingSalve.class, IvoryCup.class, WhiteKnight.class})
+@CardUsed({ArdentMilitia.class, GrizzlyBears.class, HealingSalve.class, IvoryCup.class})
 class IvoryCupTest extends BaseCardTest {
 
     // ===== Controller casts white spell =====

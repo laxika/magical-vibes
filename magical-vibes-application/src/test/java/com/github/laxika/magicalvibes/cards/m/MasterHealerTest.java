@@ -35,6 +35,18 @@ class MasterHealerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature controlled by the healer's controller")
+    void preventsOnOwnCreature() {
+        addHealerReady();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getDamagePreventionShield()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Adds 4 prevention shield to target player")
     void preventsOnPlayer() {
         addHealerReady();

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -22,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandraNalaar.class, GrizzlyBears.class, HillGiant.class, Mountain.class, SerraAngel.class,
+@CardUsed({ChandraNalaar.class, GrizzlyBears.class, HillGiant.class, RodOfRuin.class, SerraAngel.class,
         Shock.class, VolcanicHammer.class})
 class VolcanicHammerTest extends BaseCardTest {
 
@@ -136,13 +136,13 @@ class VolcanicHammerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Volcanic Hammer cannot target a land")
-    void cannotTargetLand() {
-        harness.addToBattlefield(player2, new Mountain());
+    @DisplayName("Volcanic Hammer cannot target a noncreature artifact")
+    void cannotTargetNoncreatureArtifact() {
+        harness.addToBattlefield(player2, new RodOfRuin());
         harness.setHand(player1, List.of(new VolcanicHammer()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Mountain");
+        UUID targetId = harness.getPermanentId(player2, "Rod of Ruin");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }

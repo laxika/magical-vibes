@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ElfhamePalace.class)
 class ElfhamePalaceTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -23,7 +24,7 @@ class ElfhamePalaceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent palace = findPermanent(player1, "Elfhame Palace");
         assertThat(palace.isTapped()).isTrue();
@@ -34,7 +35,7 @@ class ElfhamePalaceTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingProducesGreenMana() {
-        addPalaceReady(player1);
+        addCreatureReady(player1, new ElfhamePalace());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -45,21 +46,11 @@ class ElfhamePalaceTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for white mana produces one white")
     void tappingProducesWhiteMana() {
-        addPalaceReady(player1);
+        addCreatureReady(player1, new ElfhamePalace());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
-    }
-
-    // ===== Helper methods =====
-
-    private Permanent addPalaceReady(Player player) {
-        ElfhamePalace card = new ElfhamePalace();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

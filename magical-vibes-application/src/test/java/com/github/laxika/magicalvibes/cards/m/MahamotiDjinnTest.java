@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MahamotiDjinn.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class})
@@ -89,27 +88,25 @@ class MahamotiDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Mahamoti Djinn can be blocked by a creature with flying")
     void canBeBlockedByFlyingCreature() {
-        addCreatureReady(player2, new AirElemental());
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
         addCreatureReady(player1, new MahamotiDjinn());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Mahamoti Djinn can be blocked by a creature with reach")
     void canBeBlockedByReachCreature() {
-        addCreatureReady(player2, new GiantSpider());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
         addCreatureReady(player1, new MahamotiDjinn());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
 

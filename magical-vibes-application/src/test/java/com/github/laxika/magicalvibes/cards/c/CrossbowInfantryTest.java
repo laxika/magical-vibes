@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrossbowInfantry.class, EagerCadet.class, GrizzlyBears.class})
+@CardUsed({CrossbowInfantry.class, GrizzlyBears.class})
 class CrossbowInfantryTest extends BaseCardTest {
 
     @Test
@@ -53,10 +51,24 @@ class CrossbowInfantryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttackingBeforeResolution() {
+        addCreatureReady(player1, new CrossbowInfantry());
+        Permanent attacker = addAttackingCreature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("1 damage destroys a 1-toughness blocking creature")
     void destroysOneToughnessTarget() {
         addCreatureReady(player1, new CrossbowInfantry());
-        Permanent blocker = addCreatureReady(player2, new EagerCadet());
+        Permanent blocker = addCreatureReady(player2, new CrossbowInfantry());
         blocker.setBlocking(true);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
@@ -66,7 +78,7 @@ class CrossbowInfantryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(blocker.getId()));
-        harness.assertInGraveyard(player2, "Eager Cadet");
+        harness.assertInGraveyard(player2, "Crossbow Infantry");
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SaltMarsh.class)
 class SaltMarshTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -23,7 +25,7 @@ class SaltMarshTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent marsh = findPermanent(player1, "Salt Marsh");
         assertThat(marsh.isTapped()).isTrue();
@@ -56,10 +58,6 @@ class SaltMarshTest extends BaseCardTest {
     // ===== Helper methods =====
 
     private Permanent addMarshReady(Player player) {
-        SaltMarsh card = new SaltMarsh();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new SaltMarsh());
     }
 }

@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(PrimevalShambler.class)
 class PrimevalShamblerTest extends BaseCardTest {
 
     @Test
@@ -70,10 +72,31 @@ class PrimevalShamblerTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Cannot activate without black mana")
+    void cannotActivateWithoutBlackMana() {
+        addReadyShambler(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick because the ability does not require tapping")
+    void canActivateWhileSummoningSick() {
+        Permanent shambler = harness.addToBattlefieldAndReturn(player1, new PrimevalShambler());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shambler)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shambler)).isEqualTo(4);
+    }
+
     private Permanent addReadyShambler(Player player) {
-        Permanent perm = new Permanent(new PrimevalShambler());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new PrimevalShambler());
     }
 }

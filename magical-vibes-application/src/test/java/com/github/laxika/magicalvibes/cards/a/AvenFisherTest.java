@@ -2,20 +2,22 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AvenFisher.class, GrizzlyBears.class, WrathOfGod.class})
 class AvenFisherTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -23,11 +25,7 @@ class AvenFisherTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Aven Fisher puts it on the stack and resolves to battlefield")
     void castAndResolve() {
-        harness.setHand(player1, List.of(new AvenFisher()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AvenFisher(), "{3}{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -40,37 +38,43 @@ class AvenFisherTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Aven Fisher");
     }
 
+    @Test
+    @DisplayName("Flying prevents a creature without flying or reach from blocking Aven Fisher")
+    void flyingPreventsGroundCreatureFromBlocking() {
+        Permanent fisher = addCreatureReady(player1, new AvenFisher());
+        fisher.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
     // ===== Death trigger: combat (blocker dies) =====
 
     @Test
     @DisplayName("Aven Fisher dies blocking a bigger creature, accept may ability, draws a card")
     void diesInCombatAsBlockerAcceptDraw() {
         // Aven Fisher (2/2) blocks a 3/3 attacker — it will die
-        AvenFisher fisher = new AvenFisher();
-        Permanent fisherPerm = new Permanent(fisher);
-        fisherPerm.setSummoningSick(false);
+        Permanent fisherPerm = addCreatureReady(player1, new AvenFisher());
         fisherPerm.setBlocking(true);
         fisherPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(fisherPerm);
 
         // Create a 3/3 attacker for player2
         GrizzlyBears bears = new GrizzlyBears();
         bears.setPower(3);
         bears.setToughness(3);
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, bears);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
         // Force to combat damage step
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Both pass priority — advances to combat damage step
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         GameData gd = harness.getGameData();
 
@@ -95,28 +99,19 @@ class AvenFisherTest extends BaseCardTest {
     @DisplayName("Aven Fisher dies blocking a bigger creature, decline may ability, no card drawn")
     void diesInCombatAsBlockerDeclineDraw() {
         // Aven Fisher (2/2) blocks a 3/3 attacker — it will die
-        AvenFisher fisher = new AvenFisher();
-        Permanent fisherPerm = new Permanent(fisher);
-        fisherPerm.setSummoningSick(false);
+        Permanent fisherPerm = addCreatureReady(player1, new AvenFisher());
         fisherPerm.setBlocking(true);
         fisherPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(fisherPerm);
 
         GrizzlyBears bears = new GrizzlyBears();
         bears.setPower(3);
         bears.setToughness(3);
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, bears);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         GameData gd = harness.getGameData();
 
@@ -139,28 +134,19 @@ class AvenFisherTest extends BaseCardTest {
     @DisplayName("Aven Fisher dies as attacker blocked by bigger creature, accept may ability, draws a card")
     void diesInCombatAsAttackerAcceptDraw() {
         // Aven Fisher (2/2) attacks, blocked by a 3/3
-        AvenFisher fisher = new AvenFisher();
-        Permanent fisherPerm = new Permanent(fisher);
-        fisherPerm.setSummoningSick(false);
+        Permanent fisherPerm = addCreatureReady(player1, new AvenFisher());
         fisherPerm.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(fisherPerm);
 
         GrizzlyBears bears = new GrizzlyBears();
         bears.setPower(3);
         bears.setToughness(3);
-        Permanent blocker = new Permanent(bears);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, bears);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         GameData gd = harness.getGameData();
 
@@ -186,13 +172,9 @@ class AvenFisherTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvenFisher());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
-
         // Cast Wrath of God
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        int handSizeAfterCast = harness.getGameData().playerHands.get(player1.getId()).size();
 
         // Resolve Wrath of God — all creatures are destroyed
         harness.passBothPriorities();
@@ -213,7 +195,7 @@ class AvenFisherTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Hand should be empty (Wrath went to graveyard) + 1 drawn card
-        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1 + 1);
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeAfterCast + 1);
     }
 
     @Test
@@ -221,12 +203,8 @@ class AvenFisherTest extends BaseCardTest {
     void diesFromWrathOfGodDeclineDraw() {
         harness.addToBattlefield(player1, new AvenFisher());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        int handSizeAfterCast = harness.getGameData().playerHands.get(player1.getId()).size();
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -237,8 +215,29 @@ class AvenFisherTest extends BaseCardTest {
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
 
-        // No card drawn (hand size = before - 1 for casting Wrath)
-        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1);
+        // No card drawn after Wrath has left the hand
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeAfterCast);
+    }
+
+    @Test
+    @DisplayName("Aven Fisher's controller chooses whether to draw when an opponent destroys it")
+    void controllerChoosesAfterOpponentDestroysIt() {
+        harness.addToBattlefield(player2, new AvenFisher());
+
+        int handSizeBefore = harness.getGameData().playerHands.get(player2.getId()).size();
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Aven Fisher");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handSizeBefore + 1);
     }
 
     // ===== No trigger when Aven Fisher survives =====
@@ -247,27 +246,18 @@ class AvenFisherTest extends BaseCardTest {
     @DisplayName("Aven Fisher survives combat, no death trigger fires")
     void survivesNoCombatDeathTrigger() {
         // Aven Fisher (2/2) blocks a 1/1 — both survive or attacker dies, Fisher lives
-        AvenFisher fisher = new AvenFisher();
-        Permanent fisherPerm = new Permanent(fisher);
-        fisherPerm.setSummoningSick(false);
+        Permanent fisherPerm = addCreatureReady(player1, new AvenFisher());
         fisherPerm.setBlocking(true);
         fisherPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(fisherPerm);
 
         // 1/1 attacker — Aven Fisher survives
         GrizzlyBears weakAttacker = new GrizzlyBears();
         weakAttacker.setPower(1);
         weakAttacker.setToughness(1);
-        Permanent attacker = new Permanent(weakAttacker);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, weakAttacker);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         GameData gd = harness.getGameData();
 

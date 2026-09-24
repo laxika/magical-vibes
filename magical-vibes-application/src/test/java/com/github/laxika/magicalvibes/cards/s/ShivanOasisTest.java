@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ShivanOasis.class)
 class ShivanOasisTest extends BaseCardTest {
 
     @Test
@@ -21,7 +21,7 @@ class ShivanOasisTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
@@ -29,7 +29,7 @@ class ShivanOasisTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for red mana produces one red")
     void tappingProducesRedMana() {
-        addOasisReady(player1);
+        addCreatureReady(player1, new ShivanOasis());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -40,7 +40,7 @@ class ShivanOasisTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingProducesGreenMana() {
-        addOasisReady(player1);
+        addCreatureReady(player1, new ShivanOasis());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -48,10 +48,4 @@ class ShivanOasisTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    private Permanent addOasisReady(Player player) {
-        Permanent perm = new Permanent(new ShivanOasis());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

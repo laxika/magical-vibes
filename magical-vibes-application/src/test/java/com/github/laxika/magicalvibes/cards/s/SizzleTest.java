@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({Sizzle.class})
 class SizzleTest extends BaseCardTest {
 
     @Test
@@ -17,8 +14,8 @@ class SizzleTest extends BaseCardTest {
         castSizzle();
         harness.passBothPriorities(); // resolve the sorcery
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -30,13 +27,11 @@ class SizzleTest extends BaseCardTest {
         castSizzle();
         harness.passBothPriorities(); // resolve the sorcery
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+        harness.assertLife(player2, 12);
+        harness.assertLife(player1, 10);
     }
 
     private void castSizzle() {
-        harness.setHand(player1, List.of(new Sizzle()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Sizzle(), "{2}{R}");
     }
 }

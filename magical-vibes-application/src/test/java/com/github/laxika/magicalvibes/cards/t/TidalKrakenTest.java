@@ -1,36 +1,31 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TidalKraken.class, GrizzlyBears.class})
 class TidalKrakenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tidal Kraken cannot be blocked by a ground creature")
     void cannotBeBlocked() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent atkPerm = new Permanent(new TidalKraken());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        addCreatureReady(player1, new TidalKraken());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -38,20 +33,28 @@ class TidalKrakenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A face-down Tidal Kraken can be blocked")
+    void faceDownCanBeBlocked() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent attacker = addCreatureReady(player1, new TidalKraken());
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Unblocked Tidal Kraken deals 6 damage to defending player")
     void dealsDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new TidalKraken());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
+        addCreatureReady(player1, new TidalKraken());
+        declareAttackers(List.of(0));
+        resolveCombat();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        harness.assertLife(player2, 14);
     }
 }

@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,44 +16,42 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Dehydration.class, GrizzlyBears.class, Island.class})
 class DehydrationTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Dehydration puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Dehydration dehydration = new Dehydration();
 
-        harness.setHand(player1, List.of(new Dehydration()));
+        harness.setHand(player1, List.of(dehydration));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Dehydration");
+        assertThat(entry.getCard()).isSameAs(dehydration);
     }
 
     @Test
     @DisplayName("Resolving Dehydration attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Dehydration dehydration = new Dehydration();
 
-        harness.setHand(player1, List.of(new Dehydration()));
+        harness.setHand(player1, List.of(dehydration));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(bearsPerm.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dehydration")
+                .anyMatch(p -> p.getCard() == dehydration
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
@@ -62,83 +59,57 @@ class DehydrationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Dehydration without enough mana")
     void cannotCastWithoutEnoughMana() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Dehydration()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bearsPerm.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Prevents untapping =====
-
     @Test
     @DisplayName("Tapped creature with Dehydration does not untap during controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        // Player2 has a tapped creature
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        // Attach Dehydration to the creature
-        Permanent dehydrationPerm = new Permanent(new Dehydration());
+        Permanent dehydrationPerm = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydrationPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydrationPerm);
 
-        // Advance to player2's turn to trigger untap
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
-        // The creature should still be tapped
         assertThat(bearsPerm.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Untapped creature with Dehydration remains untapped (Dehydration does not tap)")
     void untappedCreatureRemainsUntapped() {
-        // Player2 has an untapped creature with Dehydration
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent dehydrationPerm = new Permanent(new Dehydration());
+        Permanent dehydrationPerm = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydrationPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydrationPerm);
 
-        // Advance to player2's turn
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
-        // Creature was untapped and stays untapped (Dehydration only prevents untapping)
         assertThat(bearsPerm.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Other permanents owned by the same player still untap normally")
     void otherPermanentsStillUntap() {
-        // Player2 has two tapped creatures, one with Dehydration
-        Permanent enchantedBears = new Permanent(new GrizzlyBears());
-        enchantedBears.setSummoningSick(false);
+        Permanent enchantedBears = addCreatureReady(player2, new GrizzlyBears());
         enchantedBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(enchantedBears);
 
-        Permanent freeBears = new Permanent(new GrizzlyBears());
-        freeBears.setSummoningSick(false);
+        Permanent freeBears = addCreatureReady(player2, new GrizzlyBears());
         freeBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(freeBears);
 
-        // Attach Dehydration only to the first creature
-        Permanent dehydrationPerm = new Permanent(new Dehydration());
+        Permanent dehydrationPerm = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydrationPerm.setAttachedTo(enchantedBears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydrationPerm);
 
-        // Advance to player2's turn
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
-        // Enchanted creature stays tapped, free creature untaps
         assertThat(enchantedBears.isTapped()).isTrue();
         assertThat(freeBears.isTapped()).isFalse();
     }
@@ -146,102 +117,73 @@ class DehydrationTest extends BaseCardTest {
     @Test
     @DisplayName("Creature stays tapped across multiple turns")
     void creatureStaysTappedAcrossMultipleTurns() {
-        // Player2 has a tapped creature with Dehydration
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent dehydrationPerm = new Permanent(new Dehydration());
+        Permanent dehydrationPerm = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydrationPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydrationPerm);
 
-        // Advance through player2's turn
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
         assertThat(bearsPerm.isTapped()).isTrue();
 
-        // Advance through player1's turn
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
         assertThat(bearsPerm.isTapped()).isTrue();
 
-        // Advance through player2's turn again — still tapped
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
         assertThat(bearsPerm.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Multiple Dehydrations on different creatures prevent both from untapping")
     void multipleDehydrationsOnDifferentCreatures() {
-        // Player2 has two tapped creatures
-        Permanent bears1 = new Permanent(new GrizzlyBears());
-        bears1.setSummoningSick(false);
+        Permanent bears1 = addCreatureReady(player2, new GrizzlyBears());
         bears1.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bears1);
 
-        Permanent bears2 = new Permanent(new GrizzlyBears());
-        bears2.setSummoningSick(false);
+        Permanent bears2 = addCreatureReady(player2, new GrizzlyBears());
         bears2.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bears2);
 
-        // Attach a Dehydration to each
-        Permanent dehydration1 = new Permanent(new Dehydration());
+        Permanent dehydration1 = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydration1.setAttachedTo(bears1.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydration1);
 
-        Permanent dehydration2 = new Permanent(new Dehydration());
+        Permanent dehydration2 = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydration2.setAttachedTo(bears2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydration2);
 
-        // Advance to player2's turn
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
-        // Both creatures should remain tapped
         assertThat(bears1.isTapped()).isTrue();
         assertThat(bears2.isTapped()).isTrue();
     }
 
-    // ===== Removal restores untapping =====
-
     @Test
     @DisplayName("Creature can untap again after Dehydration is removed")
     void creatureUntapsAfterDehydrationRemoved() {
-        // Player2 has a tapped creature with Dehydration
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent dehydrationPerm = new Permanent(new Dehydration());
+        Permanent dehydrationPerm = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydrationPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydrationPerm);
 
-        // Remove Dehydration
         gd.playerBattlefields.get(player1.getId()).remove(dehydrationPerm);
 
-        // Advance to player2's turn
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
-        // Creature should now untap normally
         assertThat(bearsPerm.isTapped()).isFalse();
     }
-
-    // ===== Dehydration on own creature =====
 
     @Test
     @DisplayName("Dehydration can be cast on own creature")
     void canCastOnOwnCreature() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Dehydration dehydration = new Dehydration();
 
-        harness.setHand(player1, List.of(new Dehydration()));
+        harness.setHand(player1, List.of(dehydration));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dehydration")
+                .anyMatch(p -> p.getCard() == dehydration
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
@@ -249,54 +191,42 @@ class DehydrationTest extends BaseCardTest {
     @Test
     @DisplayName("Dehydration on own creature prevents it from untapping")
     void dehydrationOnOwnCreaturePreventsUntap() {
-        // Player1 has a tapped creature with their own Dehydration on it
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent dehydrationPerm = new Permanent(new Dehydration());
+        Permanent dehydrationPerm = harness.addToBattlefieldAndReturn(player1, new Dehydration());
         dehydrationPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dehydrationPerm);
 
-        // Advance to player1's turn
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
-        // Player1's creature should still be tapped
         assertThat(bearsPerm.isTapped()).isTrue();
     }
-
-    // ===== Dehydration fizzles if target removed =====
 
     @Test
     @DisplayName("Dehydration fizzles to graveyard if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Dehydration dehydration = new Dehydration();
 
-        harness.setHand(player1, List.of(new Dehydration()));
+        harness.setHand(player1, List.of(dehydration));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
-        // Remove the target before Dehydration resolves
-        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bearsPerm));
 
         harness.passBothPriorities();
 
-        // Dehydration should be in graveyard, not on battlefield
-        harness.assertInGraveyard(player1, "Dehydration");
-        harness.assertNotOnBattlefield(player1, "Dehydration");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(dehydration);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() == dehydration);
     }
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Can target a creature with Dehydration")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Dehydration()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
@@ -308,61 +238,35 @@ class DehydrationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Dehydration")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of(new Dehydration()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
-
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Full integration: cast, resolve, advance turn =====
-
     @Test
     @DisplayName("Full integration: cast Dehydration on tapped creature, advance turn, creature stays tapped")
     void fullIntegrationCastAndPreventUntap() {
-        // Player2 has a tapped creature
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Dehydration dehydration = new Dehydration();
 
-        // Player1 casts Dehydration on it
-        harness.setHand(player1, List.of(new Dehydration()));
+        harness.setHand(player1, List.of(dehydration));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
-        // Verify Dehydration resolved and attached
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dehydration")
+                .anyMatch(p -> p.getCard() == dehydration
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
 
-        // Advance to player2's turn (triggers untap step)
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
-        // Creature should still be tapped due to Dehydration
         assertThat(bearsPerm.isTapped()).isTrue();
     }
-
-    // ===== Helpers =====
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        // Clear hands so cleanup hand-size limit doesn't interrupt turn advancement
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
-    }
 }
-

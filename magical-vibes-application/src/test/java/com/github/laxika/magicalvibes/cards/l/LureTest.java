@@ -91,9 +91,8 @@ class LureTest extends BaseCardTest {
     void blockCostIsNotRequiredForLure() {
         Permanent enchantedAttacker = addCreatureReady(player1, new BalduvianBarbarians());
         enchantedAttacker.setAttacking(true);
-        Permanent lure = new Permanent(new Lure());
+        Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(lure);
 
         Permanent blocker = addCreatureReady(player2, new Hipparion());
 

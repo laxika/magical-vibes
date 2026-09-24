@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,6 +23,7 @@ class DeathPitOfferingTest extends BaseCardTest {
         castAndResolveOffering();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Death Pit Offering");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
@@ -39,6 +37,25 @@ class DeathPitOfferingTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("ETB sacrifices Death Pit Offering when Opalescence makes it a creature")
+    void etbSacrificesAnimatedOffering() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castAndResolveOffering();
+
+        harness.assertNotOnBattlefield(player1, "Death Pit Offering");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Opalescence");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Death Pit Offering"))
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Grizzly Bears"))
+                .hasSize(1);
     }
 
     // ===== Static effect: +2/+2 to creatures you control =====
@@ -95,9 +112,7 @@ class DeathPitOfferingTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void castAndResolveOffering() {
-        harness.setHand(player1, List.of(new DeathPitOffering()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new DeathPitOffering(), "{2}{B}{B}");
         harness.passBothPriorities(); // resolve enchantment spell
         harness.passBothPriorities(); // resolve ETB trigger
     }

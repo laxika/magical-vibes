@@ -1,16 +1,19 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrafRats;
+import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,12 +22,17 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({
+        ThievesAuction.class,
+        RagingGoblin.class,
+        Plains.class,
+        RodOfRuin.class,
+        GloriousAnthem.class
+})
 class ThievesAuctionTest extends BaseCardTest {
 
     private void cast(com.github.laxika.magicalvibes.model.Player caster) {
-        harness.setHand(caster, List.of(new ThievesAuction()));
-        harness.addMana(caster, ManaColor.RED, 7);
-        harness.castSorcery(caster, 0, 0);
+        harness.castFromHand(caster, new ThievesAuction(), "{4}{R}{R}{R}");
         harness.passBothPriorities();
     }
 
@@ -62,6 +70,31 @@ class ThievesAuctionTest extends BaseCardTest {
         assertThat(promptIndex).isPositive();
         assertThat(messages.subList(0, promptIndex))
                 .anyMatch(message -> message.contains("\"type\":\"GAME_STATE\""));
+    }
+
+    @Test
+    @DisplayName("Resolves without a choice when there are no nontoken permanents")
+    void resolvesWithoutNontokenPermanents() {
+        cast(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @CardUsed({GrafRats.class, MidnightScavengers.class, ChitteringHost.class})
+    @DisplayName("A melded permanent contributes both physical cards to the auction pool")
+    void meldedPermanentContributesBothCards() {
+        Permanent melded = new Permanent(new ChitteringHost());
+        melded.getMeldComponentCards().add(new GrafRats());
+        melded.getMeldComponentCards().add(new MidnightScavengers());
+        gd.playerBattlefields.get(player1.getId()).add(melded);
+
+        cast(player1);
+
+        assertThat(activeAuction().pool()).extracting(Card::getName)
+                .containsExactly("Graf Rats", "Midnight Scavengers");
     }
 
     @Test

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Revive.class, GrizzlyBears.class, GiantGrowth.class, HillGiant.class})
 class ReviveTest extends BaseCardTest {
 
     @Test
@@ -28,6 +31,21 @@ class ReviveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(green.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(green.getId()));
+    }
+
+    @Test
+    @DisplayName("Revive returns a target green noncreature card from graveyard to hand")
+    void returnsTargetGreenNoncreatureCardFromGraveyardToHand() {
+        Card green = new GiantGrowth();
+        harness.setGraveyard(player1, List.of(green));
+        harness.setHand(player1, List.of(new Revive()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, green.getId());
+        harness.passBothPriorities();
+
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(green.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(green.getId()));
     }

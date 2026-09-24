@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DistortingLens.class, GrizzlyBears.class})
 class DistortingLensTest extends BaseCardTest {
 
     @Test
@@ -49,6 +52,21 @@ class DistortingLensTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's permanent")
+    void canTargetOpponentsPermanent() {
+        harness.addToBattlefield(player1, new DistortingLens());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.activateAbility(player1, 0, 0, null, bearsId);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.WHITE);
+    }
+
+    @Test
     @DisplayName("Chosen color wears off at end of turn")
     void colorWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new DistortingLens());
@@ -63,9 +81,9 @@ class DistortingLensTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.RED);
 
         // The floating layer-5 color setter expires at cleanup.
-        gd.expireEndOfTurnFloatingEffects();
-        bears.resetModifiers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(gqs.getEffectiveColors(gd, bears)).doesNotContain(CardColor.RED);
+        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.GREEN);
     }
 }

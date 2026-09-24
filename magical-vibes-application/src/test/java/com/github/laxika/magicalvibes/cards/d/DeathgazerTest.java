@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.v.VampireAristocrat;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,16 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Deathgazer.class, GiantSpider.class, ScatheZombies.class})
 class DeathgazerTest extends BaseCardTest {
-
-    // ===== Deathgazer becomes blocked =====
 
     @Test
     @DisplayName("When Deathgazer becomes blocked by a nonblack creature, that creature is scheduled for end-of-combat destruction")
     void becomesBlockedByNonblackSchedulesDestruction() {
-        Permanent deathgazer = addReadyDeathgazer(player1);
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
         deathgazer.setAttacking(true);
-        Permanent spider = addReadySpider(player2); // green, 2/4
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -36,9 +35,34 @@ class DeathgazerTest extends BaseCardTest {
                         && se.getTargetId().equals(spider.getId()));
 
         // Resolving it schedules the blocker for destruction at end of combat
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(a -> a.permanentId().equals(spider.getId()));
+    }
+
+    @Test
+    @DisplayName("Deathgazer creates one destruction trigger for each nonblack blocker")
+    void eachNonblackBlockerCreatesItsOwnTrigger() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new GiantSpider());
+        Permanent secondBlocker = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack.stream()
+                .filter(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .filter(se -> se.getCard().getName().equals("Deathgazer")))
+                .hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .extracting(DelayedPermanentAction::permanentId)
+                .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
     @Test
@@ -47,16 +71,16 @@ class DeathgazerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent deathgazer = addReadyDeathgazer(player1);
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
         deathgazer.setAttacking(true);
-        addReadySpider(player2); // 2/4 survives Deathgazer's 2 damage
+        addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the trigger, then advance through end of combat
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -65,26 +89,25 @@ class DeathgazerTest extends BaseCardTest {
     @Test
     @DisplayName("When Deathgazer becomes blocked by a black creature, nothing is scheduled for destruction")
     void becomesBlockedByBlackSchedulesNothing() {
-        Permanent deathgazer = addReadyDeathgazer(player1);
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
         deathgazer.setAttacking(true);
-        addReadyVampire(player2); // black
+        addCreatureReady(player2, new ScatheZombies());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        // The trigger still fires but the nonblack filter fails at resolution
-        harness.passBothPriorities();
+        assertThat(gd.stack)
+                .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Deathgazer"));
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
-
-    // ===== Deathgazer blocks =====
 
     @Test
     @DisplayName("When Deathgazer blocks a nonblack creature, that attacker is scheduled for end-of-combat destruction")
     void blocksNonblackSchedulesDestruction() {
-        Permanent attacker = addReadySpider(player1); // green, 2/4
+        Permanent attacker = addCreatureReady(player1, new GiantSpider());
         attacker.setAttacking(true);
-        addReadyDeathgazer(player2);
+        addCreatureReady(player2, new Deathgazer());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -95,7 +118,7 @@ class DeathgazerTest extends BaseCardTest {
                         && se.getCard().getName().equals("Deathgazer")
                         && se.getTargetId().equals(attacker.getId()));
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(a -> a.permanentId().equals(attacker.getId()));
     }
@@ -103,37 +126,16 @@ class DeathgazerTest extends BaseCardTest {
     @Test
     @DisplayName("When Deathgazer blocks a black creature, nothing is scheduled for destruction")
     void blocksBlackSchedulesNothing() {
-        Permanent attacker = addReadyVampire(player1); // black
+        Permanent attacker = addCreatureReady(player1, new ScatheZombies());
         attacker.setAttacking(true);
-        addReadyDeathgazer(player2);
+        addCreatureReady(player2, new Deathgazer());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
+        assertThat(gd.stack)
+                .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Deathgazer"));
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
-    }
-
-    // ===== Helpers =====
-
-    private Permanent addReadyDeathgazer(Player player) {
-        Permanent perm = new Permanent(new Deathgazer());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadySpider(Player player) {
-        Permanent perm = new Permanent(new GiantSpider());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyVampire(Player player) {
-        Permanent perm = new Permanent(new VampireAristocrat());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

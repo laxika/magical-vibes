@@ -20,16 +20,13 @@ class RazorfootGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a creature without flying or reach from blocking")
     void cannotBeBlockedByGroundCreature() {
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new RazorfootGriffin());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
     }
@@ -37,16 +34,13 @@ class RazorfootGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Flying creature can be blocked by another flying creature")
     void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new RazorfootGriffin());
         Permanent blocker = addCreatureReady(player2, new RazorfootGriffin());
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+                List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
@@ -55,15 +49,12 @@ class RazorfootGriffinTest extends BaseCardTest {
     @DisplayName("Flying creature can be blocked by a creature with reach")
     void canBeBlockedByCreatureWithReach() {
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new RazorfootGriffin());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+                List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
@@ -71,14 +62,28 @@ class RazorfootGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("First strike deals combat damage before a creature without first strike")
     void firstStrikeDealsDamageFirst() {
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new RazorfootGriffin());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Razorfoot Griffin");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("First strike deals combat damage before a creature without first strike when blocking")
+    void firstStrikeDealsDamageFirstWhenBlocking() {
+        addCreatureReady(player1, new RazorfootGriffin());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Razorfoot Griffin");
         harness.assertInGraveyard(player2, "Grizzly Bears");

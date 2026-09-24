@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArgothianSwine.class, Forest.class, GoblinRaider.class, GrizzlyBears.class, HealingSalve.class, ProdigalSorcerer.class, Shock.class})
+@CardUsed({HealingSalve.class, Forest.class, GoblinRaider.class, GrizzlyBears.class, Shock.class})
 class HealingSalveTest extends BaseCardTest {
 
     @Nested
@@ -33,8 +31,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.WHITE, 1);
             int before = gd.playerLifeTotals.get(player2.getId());
 
-            harness.castInstant(player1, 0, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(before + 3);
         }
@@ -42,7 +39,7 @@ class HealingSalveTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a creature with the gain-life mode")
         void cannotTargetCreature() {
-            Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArgothianSwine());
+            Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             harness.setHand(player1, List.of(new HealingSalve()));
             harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -152,8 +149,6 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, player2.getId());
             harness.passBothPriorities();
 
-            harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
             harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
             harness.setHand(player2, List.of(new Shock()));
@@ -171,7 +166,7 @@ class HealingSalveTest extends BaseCardTest {
         @Test
         @DisplayName("Adds a 3-damage prevention shield to a target creature")
         void shieldOnCreature() {
-            Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
+            Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
             harness.setHand(player1, List.of(new HealingSalve()));
             harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -217,7 +212,7 @@ class HealingSalveTest extends BaseCardTest {
         @Test
         @DisplayName("Prevents combat damage to the targeted creature")
         void preventsCombatDamageToTargetCreature() {
-            Permanent blocker = addCreatureReady(player1, new ArgothianSwine());
+            Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
             Permanent attacker = addCreatureReady(player2, new GoblinRaider());
             harness.setHand(player1, List.of(new HealingSalve()));
             harness.addMana(player1, ManaColor.WHITE, 1);
@@ -262,20 +257,18 @@ class HealingSalveTest extends BaseCardTest {
         @DisplayName("Prevents noncombat damage to the targeted player")
         void preventsNoncombatDamageToTargetPlayer() {
             harness.setLife(player2, 20);
-            Permanent damageSource = addCreatureReady(player1, new ProdigalSorcerer());
             harness.setHand(player1, List.of(new HealingSalve()));
             harness.addMana(player1, ManaColor.WHITE, 1);
 
             harness.castInstant(player1, 0, 1, player2.getId());
             harness.passBothPriorities();
 
-            harness.activateAbility(player1,
-                    gd.playerBattlefields.get(player1.getId()).indexOf(damageSource),
-                    null, player2.getId());
-            harness.passBothPriorities();
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castAndResolveInstant(player1, 0, player2.getId());
 
             harness.assertLife(player2, 20);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         }
 
         @Test
@@ -289,9 +282,7 @@ class HealingSalveTest extends BaseCardTest {
 
             assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
 
-            harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
+            harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
             assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
         }

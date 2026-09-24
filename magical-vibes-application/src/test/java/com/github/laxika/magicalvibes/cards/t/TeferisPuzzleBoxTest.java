@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Impulse;
-import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, Impulse.class, JamuraanLion.class, TeferisPuzzleBox.class})
+@CardUsed({GrizzlyBears.class, TeferisPuzzleBox.class})
 class TeferisPuzzleBoxTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -89,9 +87,9 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void exchangesSingleCardAfterNormalDraw() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card firstLibraryCard = new Impulse();
-        Card secondLibraryCard = new Impulse();
-        Card thirdLibraryCard = new Impulse();
+        Card firstLibraryCard = new GrizzlyBears();
+        Card secondLibraryCard = new GrizzlyBears();
+        Card thirdLibraryCard = new GrizzlyBears();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(firstLibraryCard, secondLibraryCard, thirdLibraryCard));
 
@@ -139,16 +137,14 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void doesNotTriggerOnStartingPlayersFirstDrawStep() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card handCard = new JamuraanLion();
-        Card topLibraryCard = new Impulse();
+        Card handCard = new GrizzlyBears();
+        Card topLibraryCard = new GrizzlyBears();
         harness.setHand(player1, List.of(handCard));
         harness.setLibrary(player1, List.of(topLibraryCard));
 
-        harness.forceActivePlayer(player1);
         gd.turnNumber = 1;
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passUntil(player1, TurnStep.DRAW);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topLibraryCard);

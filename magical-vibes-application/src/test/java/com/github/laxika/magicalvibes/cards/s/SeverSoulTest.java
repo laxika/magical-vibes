@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeverSoul.class, BogImp.class, Forest.class, GrizzlyBears.class})
 class SeverSoulTest extends BaseCardTest {
 
     private void giveSpell() {
@@ -25,12 +28,10 @@ class SeverSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys a nonblack creature and gains life equal to its toughness")
     void destroysAndGainsLife() {
-        Permanent bears = new Permanent(new GrizzlyBears()); // green 2/2
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // green 2/2
 
         giveSpell();
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -41,28 +42,66 @@ class SeverSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Destroyed creature can't be regenerated")
     void cannotBeRegenerated() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setRegenerationShield(1);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
 
         giveSpell();
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        // A valid nonblack creature so the spell itself is castable.
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        giveSpell();
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
         // A valid nonblack target so the spell itself is castable.
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent imp = new Permanent(new BogImp()); // black creature
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(imp);
+        Permanent imp = harness.addToBattlefieldAndReturn(player2, new BogImp()); // black creature
 
         giveSpell();
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, imp.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, imp.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Gains life equal to the target's effective toughness")
+    void gainsLifeEqualToEffectiveToughness() {
+        harness.setLife(player1, 10);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setToughnessModifier(3); // 2 + 3 = 5 effective toughness
+
+        giveSpell();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Fizzles without gaining life if the target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        harness.setLife(player1, 20);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        giveSpell();
+        harness.castSorcery(player1, 0, bears.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player1, "Sever Soul");
     }
 }

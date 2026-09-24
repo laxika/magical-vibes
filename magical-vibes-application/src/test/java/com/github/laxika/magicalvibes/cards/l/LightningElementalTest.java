@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.v.ViridianLongbow;
+import com.github.laxika.magicalvibes.cards.a.ArcaneTeachings;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LightningElemental.class, ViridianLongbow.class})
+@CardUsed({LightningElemental.class, ArcaneTeachings.class})
 class LightningElementalTest extends BaseCardTest {
 
     @Test
@@ -30,8 +30,8 @@ class LightningElementalTest extends BaseCardTest {
     void canActivateTapAbilityImmediatelyBecauseOfHaste() {
         harness.setLife(player2, 20);
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new LightningElemental());
-        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
-        longbow.setAttachedTo(elemental.getId());
+        Permanent teachings = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
+        teachings.setAttachedTo(elemental.getId());
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();

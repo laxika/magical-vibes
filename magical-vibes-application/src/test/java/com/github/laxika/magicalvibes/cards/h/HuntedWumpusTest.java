@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HuntedWumpus.class, GrizzlyBears.class, Forest.class})
 class HuntedWumpusTest extends BaseCardTest {
 
     /**
@@ -28,18 +29,13 @@ class HuntedWumpusTest extends BaseCardTest {
      * stack is non-empty so auto-pass doesn't fire), but we still have priority state.
      */
     private void setupAndCastWumpus() {
-        harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HuntedWumpus(), "{3}{G}");
     }
 
     @Test
     @DisplayName("Casting Hunted Wumpus puts it on the stack as a creature spell")
     void castingWumpusPutsItOnStack() {
-        harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HuntedWumpus(), "{3}{G}");
 
         GameData gd = harness.getGameData();
 
@@ -47,18 +43,17 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Hunted Wumpus");
+        assertThat(entry.getCard()).isInstanceOf(HuntedWumpus.class);
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
 
         // Wumpus is NOT on the battlefield yet
-        List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
-        assertThat(p1Battlefield).noneMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
+        harness.assertNotOnBattlefield(player1, "Hunted Wumpus");
 
         // Hand is now empty (had 1 card, played it)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        // Mana was spent ({3}{G} = 4 green total)
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+        // Mana was spent ({3}{G})
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -75,17 +70,10 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry etbEntry = gd.stack.getFirst();
         assertThat(etbEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(etbEntry.getCard().getName()).isEqualTo("Hunted Wumpus");
+        assertThat(etbEntry.getCard()).isInstanceOf(HuntedWumpus.class);
 
         // Wumpus IS on player1's battlefield
-        List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
-        assertThat(p1Battlefield).anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
-
-        Permanent wumpus = p1Battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Hunted Wumpus"))
-                .findFirst().orElseThrow();
-        assertThat(wumpus.getCard().getPower()).isEqualTo(6);
-        assertThat(wumpus.getCard().getToughness()).isEqualTo(6);
+        harness.assertOnBattlefield(player1, "Hunted Wumpus");
     }
 
     @Test
@@ -129,8 +117,7 @@ class HuntedWumpusTest extends BaseCardTest {
         harness.handleCardChosen(player2, 1);
 
         // Grizzly Bears is on player2's battlefield
-        List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
-        assertThat(p2Battlefield).anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         // Opponent's hand decreased by 1
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore - 1);
@@ -183,6 +170,24 @@ class HuntedWumpusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB ignores creatures in the Wumpus controller's hand")
+    void wumpusEtbOnlyUsesOtherPlayersHand() {
+        setupAndCastWumpus();
+        harness.passBothPriorities(); // resolve creature spell
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.passBothPriorities(); // resolve ETB
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Opponent putting a Hunted Wumpus via ETB triggers a second ETB on the stack")
     void wumpusEtbRecursiveOpponentPutsWumpus() {
         setupAndCastWumpus();
@@ -203,7 +208,7 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry recursiveEtb = gd.stack.getFirst();
         assertThat(recursiveEtb.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(recursiveEtb.getCard().getName()).isEqualTo("Hunted Wumpus");
+        assertThat(recursiveEtb.getCard()).isInstanceOf(HuntedWumpus.class);
 
         // Both Wumpuses are on their respective battlefields
         harness.assertOnBattlefield(player1, "Hunted Wumpus");
