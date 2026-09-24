@@ -1,31 +1,25 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
-import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
-import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.f.Frostling;
+import com.github.laxika.magicalvibes.cards.m.MatsuTribeSniper;
+import com.github.laxika.magicalvibes.cards.r.RoarOfJukai;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScaledHulk.class, Frostling.class, RoarOfJukai.class, MatsuTribeSniper.class})
 class ScaledHulkTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a Spirit spell gives Scaled Hulk +2/+2")
     void spiritSpellBoostsScaledHulk() {
         Permanent hulk = addCreatureReady(player1, new ScaledHulk());
-        harness.setHand(player1, List.of(new HarshDeceiver()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Frostling(), "{R}");
         harness.passBothPriorities();
 
         assertThat(hulk.getPowerModifier()).isEqualTo(2);
@@ -36,10 +30,7 @@ class ScaledHulkTest extends BaseCardTest {
     @DisplayName("Casting an Arcane spell gives Scaled Hulk +2/+2")
     void arcaneSpellBoostsScaledHulk() {
         Permanent hulk = addCreatureReady(player1, new ScaledHulk());
-        harness.setHand(player1, List.of(new DesperateRitual()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castInstant(player1, 0, (UUID) null);
+        harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
         harness.passBothPriorities();
 
         assertThat(hulk.getPowerModifier()).isEqualTo(2);
@@ -50,10 +41,7 @@ class ScaledHulkTest extends BaseCardTest {
     @DisplayName("Casting a non-Spirit non-Arcane spell does not trigger Scaled Hulk")
     void unrelatedSpellDoesNotBoostScaledHulk() {
         Permanent hulk = addCreatureReady(player1, new ScaledHulk());
-        harness.setHand(player1, List.of(new DevotedRetainer()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MatsuTribeSniper(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(hulk.getPowerModifier()).isZero();
@@ -64,12 +52,9 @@ class ScaledHulkTest extends BaseCardTest {
     @DisplayName("The boosts stack and wear off at end of turn")
     void boostsStackAndWearOffAtEndOfTurn() {
         Permanent hulk = addCreatureReady(player1, new ScaledHulk());
-        harness.setHand(player1, List.of(new DesperateRitual(), new DesperateRitual()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castInstant(player1, 0, (UUID) null);
+        harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
         harness.passBothPriorities();
-        harness.castInstant(player1, 0, (UUID) null);
+        harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
         harness.passBothPriorities();
 
         assertThat(hulk.getPowerModifier()).isEqualTo(4);
@@ -77,7 +62,21 @@ class ScaledHulkTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(hulk.getPowerModifier()).isZero();
+        assertThat(hulk.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Spirit spell does not trigger Scaled Hulk")
+    void opponentSpiritSpellDoesNotBoostScaledHulk() {
+        Permanent hulk = addCreatureReady(player1, new ScaledHulk());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new Frostling(), "{R}");
         harness.passBothPriorities();
 
         assertThat(hulk.getPowerModifier()).isZero();
