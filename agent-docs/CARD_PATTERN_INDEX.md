@@ -39,6 +39,8 @@ This index has been split into smaller files for faster lookup. Each file is und
 | destroy, terror, wrath, board wipe, total power and toughness target restriction | CARD_PATTERNS_LANDS_SPELLS.md |
 | each player sacrifices artifacts, enchantments, and nonbasic lands, then searches for basics | WaveOfVitriolEffect |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
+| spellbook, draft from a spellbook, digital card offer | `DraftCardFromSpellbookEffect` + shared `LibraryRevealChoice` + `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` (`y/SupportSkyforge.java`, YDFT 26) |
+| seek a card and discard that exact card later | `SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect` + `DiscardSpecificCardEffect` |
 | opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | seek a random matching card from the top of a library, then shuffle | `SeekFromTopOfLibraryEffect` |
@@ -77,8 +79,11 @@ This index has been split into smaller files for faster lookup. Each file is und
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
 | lose a keyword and prevent opponents from gaining it | CARD_PATTERNS_PERMANENTS_STATIC.md and EFFECTS_QUICK_REFERENCE.md |
 | first matching spell cast each turn costs less | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| random greatest-mana-value creature card in hand perpetually costs less | `f/FuelTankFeaster.java` + `PerpetualReduceRandomGreatestManaValueCreatureCardCostEffect` |
+| creature card in your graveyard without unearth perpetually gains unearth; max speed makes first unearth free | `h/HighwayReaver.java` + `PerpetuallyGrantUnearthToTargetCreatureCardEffect` + `MaxSpeedFreeFirstUnearthEffect` |
 | enchantment spell and Room unlock cost reduction | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |
+| ETB secretly choose an opponent permanent, then opponent sacrifices another and the chosen permanent | `TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentEffect` + CARD_PATTERNS_CREATURES_ETB.md |
 | airbend, exile target nonland permanent for a {2} cast | CARD_PATTERNS_CREATURES_ETB.md |
 | airbend all other creatures, opponents can't cast from outside hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | kicker, alternate casting cost | CARD_PATTERNS_CREATURES_ETB.md |

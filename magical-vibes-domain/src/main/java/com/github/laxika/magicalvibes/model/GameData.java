@@ -318,6 +318,12 @@ public class GameData {
     public final Map<UUID, Integer> perpetualCardCastCostReductions = new ConcurrentHashMap<>();
     /** Perpetual generic spell-cost increases granted to physical cards, keyed by stable card id. */
     public final Map<UUID, Integer> perpetualCardCastCostIncreases = new ConcurrentHashMap<>();
+    /** Perpetual power bonuses attached to individual card identities, keyed by card id. */
+    public final Map<UUID, Integer> perpetualCardPowerModifiers = new ConcurrentHashMap<>();
+    /** Perpetually removed keywords attached to individual card identities, keyed by card id. */
+    public final Map<UUID, Set<Keyword>> perpetualCardRemovedKeywords = new ConcurrentHashMap<>();
+    /** Card identities that have perpetually gained unearth. */
+    public final Set<UUID> cardsGrantedPerpetualUnearth = ConcurrentHashMap.newKeySet();
     /** Keyword or ability word chosen for a card's Legacy pregame ability, keyed by card id. */
     public final Map<UUID, String> legacyChosenWordsByCardId = new ConcurrentHashMap<>();
     /**
@@ -373,6 +379,8 @@ public class GameData {
     public final Map<UUID, Integer> playerSpeeds = new ConcurrentHashMap<>();
     /** Players whose speed has already increased during the current turn. */
     public final Set<UUID> playersWhoseSpeedIncreasedThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who used Highway Reaver's max-speed free unearth this turn. */
+    public final Set<UUID> playersWhoUsedMaxSpeedFreeUnearthThisTurn = ConcurrentHashMap.newKeySet();
     public final InteractionState interaction = new InteractionState();
     public final List<StackEntry> stack = Collections.synchronizedList(new TriggerAwareStackList(this));
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
@@ -5982,6 +5990,13 @@ public class GameData {
                         Collections.synchronizedList(new ArrayList<>(effects))));
         copy.perpetualCardCastCostReductions.putAll(this.perpetualCardCastCostReductions);
         copy.perpetualCardCastCostIncreases.putAll(this.perpetualCardCastCostIncreases);
+        copy.perpetualCardPowerModifiers.putAll(this.perpetualCardPowerModifiers);
+        copy.cardsGrantedPerpetualUnearth.addAll(this.cardsGrantedPerpetualUnearth);
+        this.perpetualCardRemovedKeywords.forEach((cardId, keywords) -> {
+            Set<Keyword> copiedKeywords = ConcurrentHashMap.newKeySet();
+            copiedKeywords.addAll(keywords);
+            copy.perpetualCardRemovedKeywords.put(cardId, copiedKeywords);
+        });
         copy.legacyChosenWordsByCardId.putAll(this.legacyChosenWordsByCardId);
         copy.exiledVoyageCounters.putAll(this.exiledVoyageCounters);
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
@@ -6085,6 +6100,7 @@ public class GameData {
         copy.playerCoolness.putAll(this.playerCoolness);
         copy.playerSpeeds.putAll(this.playerSpeeds);
         copy.playersWhoseSpeedIncreasedThisTurn.addAll(this.playersWhoseSpeedIncreasedThisTurn);
+        copy.playersWhoUsedMaxSpeedFreeUnearthThisTurn.addAll(this.playersWhoUsedMaxSpeedFreeUnearthThisTurn);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);

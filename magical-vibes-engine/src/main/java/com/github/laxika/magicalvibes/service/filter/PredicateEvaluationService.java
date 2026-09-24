@@ -29,6 +29,17 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasExactlyNColorsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasUnearthPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasKickerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithControlledLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
@@ -150,6 +161,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastAttachedAurasPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasExhaustAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -568,6 +580,8 @@ public class PredicateEvaluationService {
                     isAuraEnchantingCreature(card);
             case CardHasFlashbackPredicate ignored ->
                     card.getCastingOption(FlashbackCast.class).isPresent();
+            case CardHasUnearthPredicate ignored ->
+                    gameData != null && gameQueryService.cardHasUnearthAbility(gameData, cardOwnerId, card);
             case CardHasXInManaCostPredicate ignored ->
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX();
             case CardHasAdventurePredicate ignored ->
@@ -992,6 +1006,8 @@ public class PredicateEvaluationService {
             }
             case PermanentHasNonManaActivatedAbilityPredicate hasNonManaAbilityPredicate ->
                     hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
+            case PermanentHasExhaustAbilityPredicate ignored ->
+                    hasExhaustActivatedAbility(gameData, permanent);
             case PermanentHasTapActivatedAbilityPredicate ignored ->
                     hasTapActivatedAbility(gameData, permanent);
             case PermanentHasManaAbilityPredicate ignored ->
@@ -2386,7 +2402,8 @@ public class PredicateEvaluationService {
 
     /** Whether a static amount filter needs the live board to evaluate permanent ownership. */
     public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
-        if (predicate instanceof PermanentOwnedBySourceControllerPredicate
+        if (predicate instanceof PermanentHasExhaustAbilityPredicate
+                || predicate instanceof PermanentOwnedBySourceControllerPredicate
                 || predicate instanceof PermanentSharesCreatureTypeWithEquippedCreaturePredicate
                 || predicate instanceof PermanentHasSupertypePredicate
                 || predicate instanceof PermanentIsCommanderPredicate
@@ -2664,6 +2681,8 @@ public class PredicateEvaluationService {
                         .contains(permanent.getId());
             }
             case PermanentHasAtLeastCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasExhaustAbilityPredicate ignored ->
+                    hasExhaustActivatedAbilityForStaticEvaluation(permanent, context);
             case PermanentCounterCountAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasMorphAbilityPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -3270,6 +3289,38 @@ public class PredicateEvaluationService {
         return effectiveActivatedAbilities(gameData, permanent).stream()
                 .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability)
                         && (!levelUpOnly || ability.isLevelUpAbility()));
+    }
+
+    private boolean hasExhaustActivatedAbility(GameData gameData, Permanent permanent) {
+        return effectiveActivatedAbilities(gameData, permanent).stream()
+                .anyMatch(ActivatedAbility::isExhaustAbility);
+    }
+
+    private boolean hasExhaustActivatedAbilityForStaticEvaluation(Permanent permanent, FilterContext context) {
+        CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+        if (state != null) {
+            if (state.getGrantedActivatedAbilities().stream().anyMatch(ActivatedAbility::isExhaustAbility)) {
+                return true;
+            }
+            if (state.isLosesAllAbilities() || state.isPrintedAbilitiesRemoved()) {
+                return false;
+            }
+            return permanent.getCard().getActivatedAbilities().stream()
+                    .filter(ability -> !state.isLosesAllNonManaAbilities()
+                            || AbilityActivationService.isManaAbility(ability))
+                    .anyMatch(ActivatedAbility::isExhaustAbility);
+        }
+        if (GameQueryService.isStaticEvaluationActive()) {
+            return permanent.getPersistentGrantedActivatedAbilities().stream()
+                    .anyMatch(ActivatedAbility::isExhaustAbility)
+                    || permanent.getTemporaryActivatedAbilities().stream()
+                    .anyMatch(ActivatedAbility::isExhaustAbility)
+                    || permanent.getUntilNextTurnActivatedAbilities().stream()
+                    .anyMatch(ActivatedAbility::isExhaustAbility)
+                    || permanent.getCard().getActivatedAbilities().stream()
+                    .anyMatch(ActivatedAbility::isExhaustAbility);
+        }
+        return hasExhaustActivatedAbility(context == null ? null : context.gameData(), permanent);
     }
 
     private boolean hasTapActivatedAbility(GameData gameData, Permanent permanent) {
