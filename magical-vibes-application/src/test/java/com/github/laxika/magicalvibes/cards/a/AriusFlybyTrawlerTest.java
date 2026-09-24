@@ -41,6 +41,7 @@ class AriusFlybyTrawlerTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sought);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(extra);
