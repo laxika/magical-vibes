@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "240")
+@CardRegistration(set = "SOC", collectorNumber = "332")
 public class TanazirQuandrix extends Card {
 
     public TanazirQuandrix() {

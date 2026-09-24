@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat.attack;
 import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -303,6 +304,14 @@ public class AttackLegalityService {
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect fe : gameData.floatingEffects) {
+                if (attacker.getId().equals(fe.affectedPermanentId())
+                        && protectedPlayerId.equals(fe.controllerId())
+                        && fe.effect() instanceof EnchantedCreatureAttackRestrictionEffect
+                        && attacker.getCounterCount(CounterType.VOW) > 0
+                        && (targetIsPlayer || targetPermanent != null
+                        && targetPermanent.getCard().hasType(CardType.PLANESWALKER))) {
+                    return false;
+                }
                 boolean scopedToAttacker = fe.scope() != null
                         && predicateEvaluationService.matchesPermanentPredicate(
                         gameData, attacker, fe.scope());

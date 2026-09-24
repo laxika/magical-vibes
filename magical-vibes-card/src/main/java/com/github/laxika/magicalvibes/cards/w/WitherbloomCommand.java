@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "248")
+@CardRegistration(set = "SOC", collectorNumber = "339")
 public class WitherbloomCommand extends Card {
 
     public WitherbloomCommand() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachCreatureDealsPowerDamageToItselfEffect;
 
 @CardRegistration(set = "MMQ", collectorNumber = "56")
+@CardRegistration(set = "SOC", collectorNumber = "112")
 public class WaveOfReckoning extends Card {
 
     public WaveOfReckoning() {

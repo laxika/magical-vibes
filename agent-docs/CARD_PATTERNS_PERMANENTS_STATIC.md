@@ -31,6 +31,8 @@ All paths relative to `cards/`.
 
 | Divide combat damage among defending player and creatures | `b/ButcherOrgg.java` | STATIC `AssignCombatDamageAmongDefendingPlayerAndCreaturesEffect()` - the source may divide damage among the defending player and any number of creatures they control |
 
+| X counters + counter replacement on other creatures + counter-paid activated ability | `b/BenevolentHydra.java` | ON_ENTER_BATTLEFIELD `EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, XValue)` + STATIC `AddOnePlusOneCountersToOtherCreaturesEffect()` + `{T}`, remove a +1/+1 counter ability targeting another creature you control |
+
 ## Static permanents
 
 | Owned Adventure card in exile grants haste | `h/HowlingGalefang.java` | STATIC ConditionalEffect(new CardsInExileMatchingAtLeast(1, new CardHasAdventurePredicate()), StaticBoostEffect(0, 0, [HASTE], SELF)) — haste as long as the controller owns an Adventure card in exile |
@@ -53,7 +55,10 @@ All paths relative to `cards/`.
 | Per-attack creature boost | `m/MoraugFuryOfAkoum.java` | STATIC `BoostByAttackCountEffect(1, 0, GrantScope.ALL_OWN_CREATURES)` — each creature gets +1/+0 for each time it attacked this turn |
 | Mana-retaining self boost | `o/OmnathLocusOfMana.java` | STATIC `PreventManaDrainEffect(ManaColor.GREEN)` + `BoostSelfEffect(new UnspentMana(ManaColor.GREEN), same)` |
 | Dynamic anthem from creatures entering this turn + combat token | `k/Kinbinding.java` | STATIC DynamicStaticBoostEffect(CreaturesEnteredBattlefieldThisTurn(CONTROLLER), same, OWN_CREATURES) + BEGINNING_OF_COMBAT_TRIGGERED green and white Kithkin token |
+| Commander-cast-count Spirit anthem | `v/VanguardOfTheRestless.java` | STATIC DynamicStaticBoostEffect(CommanderCastsFromCommandZoneThisGame(), same, ALL_OWN_CREATURES, PermanentHasAnySubtypePredicate(SPIRIT)) — Spirits you control get +1/+1 for each commander cast from the command zone this game |
+| Commander lord + commander hexproof | `g/GuardianAugmenter.java` | STATIC `StaticBoostEffect(2, 2, ALL_OWN_CREATURES, PermanentIsCommanderPredicate)` + `GrantKeywordEffect(HEXPROOF, ALL_OWN_CREATURES, PermanentIsCommanderPredicate)` — your commander creatures get +2/+2 and hexproof |
 | Graveyard-count self boost | `m/MastersCouncillors.java` | STATIC `DynamicStaticBoostEffect(new Scaled(new GraveyardsAtLeast(7), 2), new Fixed(0), SELF)` — count each player's graveyard with seven or more cards once |
+| Shared once-per-turn graveyard land/permanent permission | `s/SerraParagon.java` | STATIC `PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(CardAllOfPredicate(IsPermanent, Not(LAND), MaxManaValue(3)))` — land play and permanent casting use the same source marker; the chosen permanent receives an entry-granted `ON_DEATH` exile-self-and-gain-2-life trigger |
 | Multi-subtype lord + transform lock | `i/Immerwolf.java` | STATIC StaticBoostEffect(1, 1, OWN_CREATURES, PermanentHasAnySubtypePredicate({WOLF, WEREWOLF})) + STATIC PreventTransformEffect(PermanentAllOfPredicate(WEREWOLF, NOT HUMAN)) â€” +1/+1 to other Wolves/Werewolves you control and "Non-Human Werewolves you control can't transform" |
 | Color-filtered anthem + cost lock | `a/AngelOfJubilation.java` | STATIC StaticBoostEffect(1, 1, OWN_CREATURES, PermanentNotPredicate(PermanentColorInPredicate(BLACK))) + PlayersCantPayLifeOrSacrificeCreaturesEffect â€” +1/+1 to other nonblack creatures you control, and no player may pay life or sacrifice creatures as a spell/ability cost |
 | Forced-sacrifice immunity | `s/SigardaHostOfHerons.java` | STATIC OpponentEffectsCantCauseSacrificeEffect â€” "Spells and abilities your opponents control can't cause you to sacrifice permanents"; keywords (flying, hexproof) come from Scryfall so the constructor holds only the one static |
@@ -550,4 +555,5 @@ All paths relative to `cards/`.
 | Planeswalker-scoped combat attack limit | `t/TheEternalWanderer.java` | STATIC MaximumCombatCreaturesEffect(1, Integer.MAX_VALUE, SOURCE_PERMANENT) — no more than one creature can attack the effect planeswalker each combat |
 | No instants while stack is empty | `p/PriorityAvenger.java` | STATIC PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect — symmetric; non-instant spells and activated abilities are unaffected |
 | Toughness for stationing when greater than power | `t/TapestryWarden.java` | STATIC UseToughnessForStationEffect() + AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES, PermanentToughnessGreaterThanPowerPredicate) — qualifying creatures use effective toughness when stationing Spacecraft and for combat damage |
+| First X spell cost reduction scaling with source counters | `z/ZimoneInfiniteAnalyst.java` | STATIC `ReduceCastCostForFirstMatchingSpellEachTurnEffect(CardHasXInManaCostPredicate, CountersOnSource(PLUS_ONE_PLUS_ONE))` + `ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect.nth(1, CardHasXInManaCostPredicate, ...)` with two `PutCountersOnSelfEffect` counters |
 | Prevent all damage from Deserts to self | `d/DesertNomads.java` | STATIC PreventDamageFromDesertsToSelfEffect |

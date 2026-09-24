@@ -45,6 +45,7 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
 
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());
+        entry.getCreatedPermanentIds().addAll(createdIds);
         if (counterAmount == 0 || createdIds.isEmpty()) {
             return;
         }

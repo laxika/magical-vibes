@@ -104,6 +104,14 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithLegendaryControlledPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -214,6 +222,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
@@ -1430,6 +1439,20 @@ public class PredicateEvaluationService {
                         ? bonus.basePowerOverride()
                         : permanent.getBasePower();
                 yield gameQueryService.getEffectivePower(gameData, permanent) > basePower;
+            }
+            case PermanentBasePowerEqualsPredicate basePowerEqualsPredicate -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                if (layered != null) {
+                    yield layered.getBasePower() == basePowerEqualsPredicate.basePower();
+                }
+                if (gameData == null) {
+                    yield permanent.getBasePower() == basePowerEqualsPredicate.basePower();
+                }
+                GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                int basePower = bonus.basePTOverridden()
+                        ? bonus.basePowerOverride()
+                        : permanent.getBasePower();
+                yield basePower == basePowerEqualsPredicate.basePower();
             }
             case PermanentPowerAtMostControlledSubtypeCountPredicate subtypeCountPredicate -> {
                 if (gameData == null || sourceControllerId == null) {
@@ -2893,6 +2916,7 @@ public class PredicateEvaluationService {
             case PermanentHasProtectionFromColorPredicate p -> hasRecursionSafeProtectionFrom(permanent, p.color());
             case PermanentPowerAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentBasePowerEqualsPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentMaxManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);

@@ -222,6 +222,14 @@ public sealed interface ChoiceContext {
     record ChosenPlayerManaColorChoice(UUID playerId, UUID sourceControllerId, UUID recipientPlayerId,
                                        boolean fromCreature, int amount) implements ChoiceContext {}
 
+    record CommanderCastCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                               UUID sourcePermanentId, List<ManaColor> allowedColors)
+            implements ChoiceContext {
+        public CommanderCastCounterManaColorChoice {
+            allowedColors = List.copyOf(allowedColors);
+        }
+    }
+
     record EnchantedManaCostChoice(UUID playerId, List<Set<ManaColor>> choices,
                                    boolean fromCreature) implements ChoiceContext {
         public EnchantedManaCostChoice {
@@ -1800,6 +1808,19 @@ public sealed interface ChoiceContext {
         public ExpropriateChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             moneyVoterIds = List.copyOf(moneyVoterIds);
+        }
+    }
+
+    /** Fateful Tempest: the current player voted for past or present. */
+    record FatefulTempestChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String PAST = "Past";
+        public static final String PRESENT = "Present";
+        public static final List<String> OPTIONS = List.of(PAST, PRESENT);
+
+        public FatefulTempestChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
         }
     }
 

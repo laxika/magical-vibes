@@ -126,6 +126,9 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
             case CONTROLLER -> (int) destroyedControllerIds.stream()
                     .filter(entry.getControllerId()::equals)
                     .count();
+            case CONTROLLER_NONTOKEN -> (int) destroyedNontokenControllerIds.stream()
+                    .filter(entry.getControllerId()::equals)
+                    .count();
         };
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());

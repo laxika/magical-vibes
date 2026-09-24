@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DST", collectorNumber = "52")
+@CardRegistration(set = "SOC", collectorNumber = "119")
 public class ScreamsFromWithin extends Card {
 
     public ScreamsFromWithin() {

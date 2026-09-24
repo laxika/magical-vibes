@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 
 @CardRegistration(set = "BRO", collectorNumber = "30")
+@CardRegistration(set = "SOC", collectorNumber = "181")
 public class TocasiasWelcome extends Card {
 
     public TocasiasWelcome() {

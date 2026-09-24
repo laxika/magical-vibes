@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "56")
+@CardRegistration(set = "SOC", collectorNumber = "115")
 public class IngeniousProdigy extends Card {
 
     public IngeniousProdigy() {

@@ -790,7 +790,16 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
      */
-    record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
+    record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId, List<Card> cards)
+            implements TriggerContext {
+        public ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) {
+            this(graveyardOwnerId, List.of());
+        }
+
+        public ControllerCardsLeaveGraveyard {
+            cards = List.copyOf(cards);
+        }
+    }
 
     /** Context for a card put from the controller's graveyard into their hand. */
     record ControllerCardReturnedFromGraveyardToHand(UUID graveyardOwnerId, Card returnedCard)

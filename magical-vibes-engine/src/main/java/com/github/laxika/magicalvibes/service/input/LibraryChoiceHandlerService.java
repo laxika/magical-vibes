@@ -283,6 +283,12 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (destination == LibrarySearchDestination.CAST_ONE_AND_PUT_REST_INTO_HAND) {
+                handleCastOneAndPutRestIntoHandChoice(
+                        gameData, player, cardIndex, searchCards, sourceCards, deckOwnerId);
+                return;
+            }
+
             if (destination == LibrarySearchDestination.PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM) {
                 handlePutOneIntoHandRestToBottomRandom(
                         gameData, cardIndex, searchCards, sourceCards, deck, deckOwnerId);
@@ -1634,6 +1640,8 @@ public class LibraryChoiceHandlerService {
                 case DISCOVER -> throw new IllegalStateException("DISCOVER should be handled earlier");
                 case CAST_ONE_AND_PUT_OTHER_INTO_HAND -> throw new IllegalStateException(
                         "CAST_ONE_AND_PUT_OTHER_INTO_HAND should be handled earlier");
+                case CAST_ONE_AND_PUT_REST_INTO_HAND -> throw new IllegalStateException(
+                        "CAST_ONE_AND_PUT_REST_INTO_HAND should be handled earlier");
                 case PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException(
                         "PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM should be handled earlier");
                 case EXILE_AND_MAY_CAST_WITHOUT_PAYING -> throw new IllegalStateException(
@@ -3860,6 +3868,42 @@ public class LibraryChoiceHandlerService {
                     " is put into " + player.getUsername() + "'s hand."));
         }
         castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    private void handleCastOneAndPutRestIntoHandChoice(GameData gameData, Player player, int cardIndex,
+                                                        List<Card> searchCards, List<Card> sourceCards,
+                                                        UUID handOwnerId) {
+        if (cardIndex == -1) {
+            putAllExiledCardsIntoHand(gameData, sourceCards, handOwnerId);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        Card chosenCard = searchCards.get(cardIndex);
+        if (!canCastWithoutPaying(gameData, player.getId(), chosenCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                    " has no legal targets, so it can't be cast."));
+            putAllExiledCardsIntoHand(gameData, sourceCards, handOwnerId);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        for (Card card : new ArrayList<>(sourceCards)) {
+            if (card.getId().equals(chosenCard.getId())) {
+                gameData.removeFromExile(card.getId());
+            } else if (gameData.removeFromExile(card.getId())) {
+                gameData.addCardToHand(handOwnerId, card);
+            }
+        }
+        castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    private void putAllExiledCardsIntoHand(GameData gameData, List<Card> cards, UUID handOwnerId) {
+        for (Card card : cards) {
+            if (gameData.removeFromExile(card.getId())) {
+                gameData.addCardToHand(handOwnerId, card);
+            }
+        }
     }
 
     private void handlePutOneIntoHandRestToBottomRandom(GameData gameData, int cardIndex,

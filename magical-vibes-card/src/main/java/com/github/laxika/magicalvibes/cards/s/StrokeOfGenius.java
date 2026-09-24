@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "USG", collectorNumber = "100")
 @CardRegistration(set = "VMA", collectorNumber = "95")
 @CardRegistration(set = "DMR", collectorNumber = "67")
+@CardRegistration(set = "SOC", collectorNumber = "203")
 @CardRegistration(set = "C14", collectorNumber = "129")
 @CardRegistration(set = "C15", collectorNumber = "108")
 public class StrokeOfGenius extends Card {

@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -39,11 +42,12 @@ public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implem
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<Card> exiledCards = gameData.getCardsExiledByPermanent(entry.getSourcePermanentId());
-        if (exiledCards.isEmpty()) {
+        Card exiledCard = exiledCards.isEmpty() && entry.getSourceZone() == Zone.GRAVEYARD
+                ? entry.getCard()
+                : exiledCards.isEmpty() ? null : exiledCards.get(0);
+        if (exiledCard == null) {
             return;
         }
-
-        Card exiledCard = exiledCards.get(0);
         List<UUID> opponentIds = opponentIds(gameData, entry.getControllerId());
         if (opponentIds.isEmpty()) {
             return;
@@ -53,11 +57,20 @@ public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implem
                 gameData, entry.getControllerId(), 1, exiledCard.getSubtypes(), true);
         Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect();
+        var copyEffect = (CreateTokenCopiesOfExiledCardAttackingOpponentsEffect) effect;
+        CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect = new CreateTokenCopyOfTargetPermanentEffect();
 
         for (UUID opponentId : opponentIds) {
             for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(exiledCard, copyEffect);
+                Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(exiledCard, tokenCopyEffect);
+                if (copyEffect.grantHaste()) {
+                    EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+                    if (tokenCard.getKeywords() != null) {
+                        keywords.addAll(tokenCard.getKeywords());
+                    }
+                    keywords.add(Keyword.HASTE);
+                    tokenCard.setKeywords(keywords);
+                }
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, entry.getControllerId(), tokenCard);
                 Permanent tokenPermanent = new Permanent(tokenCard);

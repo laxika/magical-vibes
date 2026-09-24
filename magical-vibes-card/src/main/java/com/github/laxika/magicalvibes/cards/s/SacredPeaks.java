@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "254")
+@CardRegistration(set = "SOC", collectorNumber = "402")
 public class SacredPeaks extends Card {
 
     public SacredPeaks() {

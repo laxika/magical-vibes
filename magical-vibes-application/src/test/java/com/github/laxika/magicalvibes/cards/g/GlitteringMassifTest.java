@@ -59,7 +59,6 @@ class GlitteringMassifTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new GlitteringMassif());
         land.untap();
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, color.name());
+        harness.activateAbility(player1, 0, color == ManaColor.RED ? 0 : 1, null, null);
     }
 }

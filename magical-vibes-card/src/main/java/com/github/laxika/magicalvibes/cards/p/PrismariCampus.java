@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "270")
+@CardRegistration(set = "SOC", collectorNumber = "394")
 public class PrismariCampus extends Card {
 
     public PrismariCampus() {
