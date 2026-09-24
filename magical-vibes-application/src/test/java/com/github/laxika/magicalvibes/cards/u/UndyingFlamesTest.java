@@ -9,10 +9,12 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({UndyingFlames.class, Divination.class, Forest.class, Shock.class})
 class UndyingFlamesTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class UndyingFlamesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UndyingFlames()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(forest, divination);
@@ -42,8 +43,7 @@ class UndyingFlamesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UndyingFlames()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(forest);
@@ -59,8 +59,7 @@ class UndyingFlamesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UndyingFlames()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player1.getId());
         Card upkeepForest = new Forest();
@@ -76,14 +75,40 @@ class UndyingFlamesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can choose a new target for the Epic copy")
+    void canRetargetEpicCopy() {
+        Card initialShock = new Shock();
+        Card upkeepForest = new Forest();
+        Card upkeepDivination = new Divination();
+        harness.setLibrary(player1, List.of(initialShock));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new UndyingFlames()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.setLibrary(player1, List.of(upkeepForest, upkeepDivination));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactly(initialShock, upkeepForest, upkeepDivination);
+    }
+
+    @Test
     @DisplayName("Prevents the controller from casting spells after Epic resolves")
     void preventsControllerFromCastingSpells() {
         harness.setLibrary(player1, List.of(new Shock()));
         harness.setHand(player1, List.of(new UndyingFlames()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

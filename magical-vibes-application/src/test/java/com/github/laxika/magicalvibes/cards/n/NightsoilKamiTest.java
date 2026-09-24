@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.i.InameAsOne;
-import com.github.laxika.magicalvibes.cards.k.KikusShadow;
+import com.github.laxika.magicalvibes.cards.b.BriarknitKami;
+import com.github.laxika.magicalvibes.cards.d.DeathknellKami;
+import com.github.laxika.magicalvibes.cards.h.HandOfHonor;
 import com.github.laxika.magicalvibes.cards.k.KamiOfEmptyGraves;
+import com.github.laxika.magicalvibes.cards.k.KikusShadow;
+import com.github.laxika.magicalvibes.cards.m.MasumaroFirstToLive;
+import com.github.laxika.magicalvibes.cards.m.MirenTheMoaningWell;
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,19 +21,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({
-        NightsoilKami.class,
-        KikusShadow.class,
-        KamiOfEmptyGraves.class,
-        InameAsOne.class,
-        PithingNeedle.class
-})
+@CardUsed({NightsoilKami.class, KikusShadow.class, KamiOfEmptyGraves.class, PithingNeedle.class,
+        MirenTheMoaningWell.class, DeathknellKami.class, BriarknitKami.class,
+        MasumaroFirstToLive.class, HandOfHonor.class})
 class NightsoilKamiTest extends BaseCardTest {
 
     private void kikuShadowToKillNightsoilKami() {
         harness.setHand(player1, List.of(new KikusShadow()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Nightsoil Kami"));
+        harness.passBothPriorities();
+    }
+
+    private void mirenToKillNightsoilKami(Permanent nightsoil) {
+        harness.addToBattlefield(player1, new MirenTheMoaningWell());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, 1, null, null);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player1, nightsoil.getId());
+        }
         harness.passBothPriorities();
     }
 
@@ -53,21 +64,44 @@ class NightsoilKamiTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Spirits with mana value 6 or greater and an opponent's Spirits are not legal targets")
+    @DisplayName("Only your Spirits with mana value 5 or less are legal targets")
     void expensiveOrOpponentSpiritNotTargetable() {
-        harness.addToBattlefield(player1, new NightsoilKami());
-        Card cheapSpirit = new KamiOfEmptyGraves();
-        Card expensiveSpirit = new InameAsOne();
-        Card opponentSpirit = new KamiOfEmptyGraves();
-        harness.setGraveyard(player1, List.of(cheapSpirit, expensiveSpirit));
+        Permanent nightsoil = harness.addToBattlefieldAndReturn(player1, new NightsoilKami());
+        Card cheapSpirit = new DeathknellKami();
+        Card boundarySpirit = new BriarknitKami();
+        Card expensiveSpirit = new MasumaroFirstToLive();
+        Card nonSpirit = new HandOfHonor();
+        Card opponentSpirit = new DeathknellKami();
+        harness.setGraveyard(player1, List.of(cheapSpirit, boundarySpirit, expensiveSpirit, nonSpirit));
         harness.setGraveyard(player2, List.of(opponentSpirit));
 
-        kikuShadowToKillNightsoilKami();
+        mirenToKillNightsoilKami(nightsoil);
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).contains(cheapSpirit.getId());
-        assertThat(choice.validCardIds()).doesNotContain(expensiveSpirit.getId(), opponentSpirit.getId());
+        assertThat(choice.validCardIds()).contains(cheapSpirit.getId(), boundarySpirit.getId());
+        assertThat(choice.validCardIds()).doesNotContain(
+                expensiveSpirit.getId(), nonSpirit.getId(), opponentSpirit.getId());
+    }
+
+    @Test
+    @DisplayName("Soulshift may be declined")
+    void soulshiftMayBeDeclined() {
+        Permanent nightsoil = harness.addToBattlefieldAndReturn(player1, new NightsoilKami());
+        Card spirit = new DeathknellKami();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        mirenToKillNightsoilKami(nightsoil);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(spirit.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(spirit.getId()));
     }
 
     @Test

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.Cancel;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.p.Prohibit;
+import com.github.laxika.magicalvibes.cards.r.Repulse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlurredMongoose.class, Prohibit.class, Repulse.class})
 class BlurredMongooseTest extends BaseCardTest {
 
     @Test
@@ -23,9 +24,9 @@ class BlurredMongooseTest extends BaseCardTest {
         harness.setHand(player1, List.of(mongoose));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        Cancel cancel = new Cancel();
-        harness.setHand(player2, List.of(cancel));
-        harness.addMana(player2, ManaColor.BLUE, 3);
+        Prohibit prohibit = new Prohibit();
+        harness.setHand(player2, List.of(prohibit));
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.forceActivePlayer(player1);
         harness.castCreature(player1, 0);
@@ -36,7 +37,7 @@ class BlurredMongooseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Blurred Mongoose");
-        harness.assertInGraveyard(player2, "Cancel");
+        harness.assertInGraveyard(player2, "Prohibit");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -49,10 +50,8 @@ class BlurredMongooseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mongoose = findPermanent(player1, "Blurred Mongoose");
-        assertThat(gqs.hasKeyword(gd, mongoose, Keyword.SHROUD)).isTrue();
-
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, mongoose.getId()))
                 .isInstanceOf(IllegalStateException.class);

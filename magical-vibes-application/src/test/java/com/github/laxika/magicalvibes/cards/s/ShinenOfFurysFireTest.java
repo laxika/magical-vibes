@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShinenOfFurysFire.class, GrizzlyBears.class, Forest.class})
 class ShinenOfFurysFireTest extends BaseCardTest {
 
     @Test
@@ -32,6 +34,19 @@ class ShinenOfFurysFireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Channel can target a creature an opponent controls")
+    void channelCanTargetOpposingCreature() {
+        harness.setHand(player1, List.of(new ShinenOfFurysFire()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Channel haste wears off at end of turn")
     void channelHasteWearsOff() {
         harness.setHand(player1, List.of(new ShinenOfFurysFire()));
@@ -45,6 +60,19 @@ class ShinenOfFurysFireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Channel requires red mana")
+    void channelRequiresRedMana() {
+        harness.setHand(player1, List.of(new ShinenOfFurysFire()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Shinen of Fury's Fire");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test

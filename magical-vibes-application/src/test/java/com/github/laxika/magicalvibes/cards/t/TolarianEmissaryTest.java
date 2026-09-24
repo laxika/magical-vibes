@@ -3,15 +3,20 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TolarianEmissary.class, GloriousAnthem.class, GrizzlyBears.class})
 class TolarianEmissaryTest extends BaseCardTest {
 
     @Test
@@ -56,6 +61,41 @@ class TolarianEmissaryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castKickedCreature(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("enchantment");
+    }
+
+    @Test
+    @DisplayName("When kicked, chooses the enchantment as the ETB ability is put on the stack")
+    void kickedChoosesTargetAtEtbTime() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new TolarianEmissary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(enchantment.getId());
+
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("When kicked without an enchantment, the creature enters without an ETB ability")
+    void kickedWithoutEnchantmentDoesNotCreateTrigger() {
+        harness.setHand(player1, List.of(new TolarianEmissary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tolarian Emissary");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void addBaseMana() {

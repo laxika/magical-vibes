@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.c.CallousDeceiver;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.MatsuTribeBirdstalker;
+import com.github.laxika.magicalvibes.cards.s.Secretkeeper;
+import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,21 +12,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HaruOnna.class, SpiritualVisit.class, Secretkeeper.class, MatsuTribeBirdstalker.class})
 class HaruOnnaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters and draws a card")
     void entersAndDrawsCard() {
-        harness.setLibrary(player1, List.of(new Forest()));
-        harness.setHand(player1, List.of(new HaruOnna()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLibrary(player1, List.of(new SpiritualVisit()));
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new HaruOnna(), "{3}{G}");
+        resolveAllTriggers();
 
-        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Spiritual Visit");
         harness.assertOnBattlefield(player1, "Haru-Onna");
     }
 
@@ -35,11 +31,8 @@ class HaruOnnaTest extends BaseCardTest {
     @DisplayName("Casting a Spirit spell may return Haru-Onna to its owner's hand")
     void spiritSpellReturnsHaruOnna() {
         addHaruOnna();
-        harness.setHand(player1, List.of(new CallousDeceiver()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new Secretkeeper(), "{3}{U}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -50,10 +43,8 @@ class HaruOnnaTest extends BaseCardTest {
     @DisplayName("Casting an Arcane spell may return Haru-Onna to its owner's hand")
     void arcaneSpellReturnsHaruOnna() {
         addHaruOnna();
-        harness.setHand(player1, List.of(new ReachThroughMists()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
 
-        harness.castInstant(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -64,10 +55,8 @@ class HaruOnnaTest extends BaseCardTest {
     @DisplayName("Declining the cast trigger leaves Haru-Onna on the battlefield")
     void decliningCastTriggerLeavesHaruOnnaOnBattlefield() {
         addHaruOnna();
-        harness.setHand(player1, List.of(new ReachThroughMists()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
 
-        harness.castInstant(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -78,12 +67,21 @@ class HaruOnnaTest extends BaseCardTest {
     @DisplayName("A non-Spirit non-Arcane spell does not trigger Haru-Onna")
     void unrelatedSpellDoesNotTrigger() {
         addHaruOnna();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new MatsuTribeBirdstalker(), "{2}{G}{G}");
+        resolveAllTriggers();
 
-        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Haru-Onna");
+    }
 
+    @Test
+    @DisplayName("An opponent's Spirit or Arcane spell does not trigger Haru-Onna")
+    void opponentSpellDoesNotTrigger() {
+        addHaruOnna();
+        harness.castFromHand(player2, new SpiritualVisit(), "{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Haru-Onna");
     }
 
