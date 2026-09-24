@@ -71,6 +71,29 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyRemoveKeywordEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -1316,6 +1339,42 @@ public class CombatAttackService {
             gameLogService.append(gameData,
                     GameLog.builder().card(attacker.getCard()).text("'s training triggers.").build());
             log.info("Game {} - {} training trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        }
+
+        // Engine-level double team triggers: a nontoken attacker conjures a copy into its
+        // controller's hand, then both cards lose double team permanently.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.DOUBLE_TEAM)
+                    || attacker.getCard().isToken()) {
+                continue;
+            }
+            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
+            try {
+                List<CardEffect> doubleTeamEffects = List.of(
+                        new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM),
+                        ConjureCardToHandEffect.withoutKeyword(
+                                attacker.getCard().getName(), Keyword.DOUBLE_TEAM));
+                StackEntry doubleTeamTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        playerId,
+                        attacker.getCard().getName() + "'s double team",
+                        doubleTeamEffects,
+                        attacker.getId(),
+                        attacker.getId()
+                );
+                doubleTeamTrigger.setNonTargeting(true);
+                gameData.stack.add(doubleTeamTrigger);
+                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                        gameData, attacker, doubleTeamTrigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(attacker.getCard()).text("'s double team triggers.").build());
+                log.info("Game {} - {} double team trigger pushed onto stack", gameData.id,
+                        attacker.getCard().getName());
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }

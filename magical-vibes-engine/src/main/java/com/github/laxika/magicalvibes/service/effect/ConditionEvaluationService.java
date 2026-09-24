@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsStartingPlayer;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
@@ -1330,6 +1331,9 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.monarchPlayerId);
             case ControllerIsStartingPlayer ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.startingPlayerId);
+            case ControllerIsNotStartingPlayer ignored ->
+                    ctx.controllerId() != null && gameData.startingPlayerId != null
+                            && !ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerMainPhase ignored ->
                     ctx.controllerId() != null
                             && ctx.controllerId().equals(gameData.activePlayerId)
@@ -1342,10 +1346,6 @@ public class ConditionEvaluationService {
             case ControllerOwnTurnCountAtMost c ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
                             && gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0) <= c.maxTurns();
-            case ControllerIsNotStartingPlayer ignored ->
-                    ctx.controllerId() != null
-                            && gameData.startingPlayerId != null
-                            && !ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerPlayedOrCastFromOutsideHandThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.contains(ctx.controllerId());

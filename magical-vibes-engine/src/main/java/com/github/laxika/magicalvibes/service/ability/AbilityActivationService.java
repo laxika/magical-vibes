@@ -1585,8 +1585,10 @@ public class AbilityActivationService {
         // ability cost {N} less to activate; the reduction is floored to the generic portion so the
         // cost never drops below its colored requirements, then threaded through as a negative
         // additional generic cost.
+        boolean maxSpeedFreeUnearth = ability.isUnearthAbility()
+                && gameQueryService.canUseMaxSpeedFreeUnearth(gameData, playerId);
         String abilityCost = ability.getManaCost();
-        if (abilityCost != null) {
+        if (abilityCost != null && !maxSpeedFreeUnearth) {
             ManaCost manaCost = new ManaCost(abilityCost);
             int genericCost = manaCost.getGenericCost();
             int additionalGenericCost = -Math.min(
@@ -1608,6 +1610,9 @@ public class AbilityActivationService {
             }
             payManaCostForSourceCard(gameData, playerId, card, abilityCost, xValue, false, false,
                     additionalGenericCost);
+        }
+        if (maxSpeedFreeUnearth) {
+            gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.add(playerId);
         }
 
         // Pay the mill-controller cost. Milled cards land on top of the graveyard, leaving the
