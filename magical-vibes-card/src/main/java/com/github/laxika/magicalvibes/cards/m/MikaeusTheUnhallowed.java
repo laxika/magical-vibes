@@ -17,6 +17,9 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "490")
 @CardRegistration(set = "SLD", collectorNumber = "846")
 @CardRegistration(set = "UMA", collectorNumber = "106")
+@CardRegistration(set = "CMM", collectorNumber = "173")
+@CardRegistration(set = "CMM", collectorNumber = "516")
+@CardRegistration(set = "CMM", collectorNumber = "675")
 public class MikaeusTheUnhallowed extends Card {
 
     public MikaeusTheUnhallowed() {

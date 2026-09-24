@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -157,6 +158,7 @@ public class AdditionalSpellCostService {
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
             ExileAnyNumberOfCardsFromHandCost.class,
+            ExileAnyNumberOfCardsFromGraveyardCost.class,
             PutOpponentOwnedExiledCardIntoGraveyardCost.class,
             CollectEvidenceCost.class,
             ExileNCardsFromGraveyardCost.class,
@@ -223,6 +225,7 @@ public class AdditionalSpellCostService {
             PayLifeCost payLifeCost,
             PayLifeOrPayManaCost payLifeOrPayManaCost,
             ExileAnyNumberOfCardsFromHandCost exileAnyNumberOfCardsFromHandCost,
+            ExileAnyNumberOfCardsFromGraveyardCost exileAnyNumberOfCardsFromGraveyardCost,
             ExileCardFromGraveyardCost exileGraveyardCost,
             ExileXCardsFromGraveyardCost exileXCardsCost,
             PutOpponentOwnedExiledCardIntoGraveyardCost putOpponentOwnedExiledCardIntoGraveyardCost,
@@ -278,6 +281,7 @@ public class AdditionalSpellCostService {
                     || payLifeOrSacrificePermanentCost != null
                     || discardCardOrSacrificePermanentCost != null
                     || exileAnyNumberOfCardsFromHandCost != null
+                    || exileAnyNumberOfCardsFromGraveyardCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null
                     || putOpponentOwnedExiledCardIntoGraveyardCost != null
                     || collectEvidenceCost != null || exileNCardsCost != null
@@ -478,6 +482,8 @@ public class AdditionalSpellCostService {
         PayLifeOrPayManaCost payLifeOrPayManaCost = removeFirst(effects, PayLifeOrPayManaCost.class);
         ExileAnyNumberOfCardsFromHandCost exileAnyNumberOfCardsFromHandCost =
                 removeFirst(effects, ExileAnyNumberOfCardsFromHandCost.class);
+        ExileAnyNumberOfCardsFromGraveyardCost exileAnyNumberOfCardsFromGraveyardCost =
+                removeFirst(effects, ExileAnyNumberOfCardsFromGraveyardCost.class);
         PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost =
                 removeFirst(effects, PayLifeOrSacrificePermanentCost.class);
         ExileCardFromGraveyardCost exileGraveyardCost = removeFirst(effects, ExileCardFromGraveyardCost.class);
@@ -529,6 +535,7 @@ public class AdditionalSpellCostService {
                 returnPermanentToHand, returnCreature,
                 blightCost, putCounterCost, putCountersOrPayManaCost,
                 payXLife, payLifeCost, payLifeOrPayManaCost, exileAnyNumberOfCardsFromHandCost,
+                exileAnyNumberOfCardsFromGraveyardCost,
                 exileGraveyardCost, exileXCardsCost, putOpponentOwnedExiledCardIntoGraveyardCost,
                 collectEvidenceCost, exileNCardsCost, exileNCardsOrPayManaCost, discardCost, discardRandomCost,
                 discardOrPay, discardOrPayLife,
@@ -847,6 +854,7 @@ public class AdditionalSpellCostService {
                     if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
                 }
                 case ExileAnyNumberOfCardsFromHandCost ignored -> { }
+                case ExileAnyNumberOfCardsFromGraveyardCost ignored -> { }
                 case CollectEvidenceCost cost -> {
                     if (!cost.optional() && graveyard.stream()
                             .filter(cardInGraveyard -> matchesCollectEvidenceCard(cardInGraveyard, cost))
@@ -1317,6 +1325,10 @@ public class AdditionalSpellCostService {
             validateExileAnyNumberOfCardsFromHandCost(gameData, player, card,
                     costs.exileAnyNumberOfCardsFromHandCost(), selection.discardHandCardIndices(),
                     selection.spellCardIndex());
+        }
+        if (costs.exileAnyNumberOfCardsFromGraveyardCost() != null) {
+            validateExileAnyNumberOfCardsFromGraveyardCost(gameData, player, card,
+                    costs.exileAnyNumberOfCardsFromGraveyardCost(), selection.exileGraveyardCardIndices());
         }
         if (costs.putOpponentOwnedExiledCardIntoGraveyardCost() != null) {
             validatePutOpponentOwnedExiledCardIntoGraveyardCost(
@@ -2957,6 +2969,36 @@ public class AdditionalSpellCostService {
                 throw new IllegalStateException("Exiled cards must match the additional cost for " + card.getName());
             }
             effectiveIndices.add(effectiveIndex);
+        }
+        return effectiveIndices;
+    }
+
+    /** Validates the optional graveyard-card exile cost without mutating the graveyard. */
+    public List<Integer> validateExileAnyNumberOfCardsFromGraveyardCost(
+            GameData gameData, Player player, Card card, ExileAnyNumberOfCardsFromGraveyardCost cost,
+            List<Integer> exileGraveyardCardIndices) {
+        List<Integer> indices = exileGraveyardCardIndices != null ? exileGraveyardCardIndices : List.of();
+        if (indices.stream().distinct().count() != indices.size()) {
+            throw new IllegalStateException("Duplicate graveyard exile indices for " + card.getName());
+        }
+        List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
+        if (graveyard == null && !indices.isEmpty()) {
+            throw new IllegalStateException("Cannot exile cards from graveyard to cast " + card.getName());
+        }
+        List<Integer> effectiveIndices = new ArrayList<>();
+        for (int index : indices) {
+            if (index < 0 || index >= graveyard.size()) {
+                throw new IllegalStateException("Cannot exile that card from graveyard to cast " + card.getName());
+            }
+            Card toExile = graveyard.get(index);
+            if (toExile.getId().equals(card.getId())) {
+                throw new IllegalStateException("Cannot exile the spell itself to pay for " + card.getName());
+            }
+            if (cost.predicate() != null
+                    && !predicateEvaluationService.matchesCardPredicate(toExile, cost.predicate(), toExile.getId())) {
+                throw new IllegalStateException("Exiled cards must match the additional cost for " + card.getName());
+            }
+            effectiveIndices.add(index);
         }
         return effectiveIndices;
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "38")
+@CardRegistration(set = "CMM", collectorNumber = "69")
 public class WanderersStrike extends Card {
 
     public WanderersStrike() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "285")
 @CardRegistration(set = "SLD", collectorNumber = "1660")
 @CardRegistration(set = "SLD", collectorNumber = "2225")
+@CardRegistration(set = "CMM", collectorNumber = "399")
 public class MeteorGolem extends Card {
 
     public MeteorGolem() {

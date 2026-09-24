@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 @CardRegistration(set = "SLD", collectorNumber = "1234")
 @CardRegistration(set = "SLD", collectorNumber = "1597")
 @CardRegistration(set = "FCA", collectorNumber = "15")
+@CardRegistration(set = "CMM", collectorNumber = "274")
+@CardRegistration(set = "CMM", collectorNumber = "554")
+@CardRegistration(set = "CMM", collectorNumber = "679")
 public class AzusaLostButSeeking extends Card {
 
     public AzusaLostButSeeking() {

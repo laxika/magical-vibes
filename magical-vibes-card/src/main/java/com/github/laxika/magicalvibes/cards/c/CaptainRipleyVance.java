@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "209")
 @CardRegistration(set = "MH2", collectorNumber = "119")
 public class CaptainRipleyVance extends Card {
 
@@ -23,7 +24,6 @@ public class CaptainRipleyVance extends Card {
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new DealDamageToAnyTargetEffect(new SourcePower())
-                )
-        ));
+                )));
     }
 }

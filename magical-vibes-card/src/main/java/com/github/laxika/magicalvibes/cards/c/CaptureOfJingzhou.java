@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "PTK", collectorNumber = "38")
 @CardRegistration(set = "ME3", collectorNumber = "33")
 @CardRegistration(set = "SLD", collectorNumber = "2149")
+@CardRegistration(set = "CMM", collectorNumber = "79")
+@CardRegistration(set = "CMM", collectorNumber = "483")
 public class CaptureOfJingzhou extends Card {
 
     public CaptureOfJingzhou() {

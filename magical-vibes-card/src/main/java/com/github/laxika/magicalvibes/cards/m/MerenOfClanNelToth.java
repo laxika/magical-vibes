@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureFromGraveyardToBattlefieldOrHandByManaValueEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "52")
+@CardRegistration(set = "CMM", collectorNumber = "346")
+@CardRegistration(set = "CMM", collectorNumber = "584")
+@CardRegistration(set = "CMM", collectorNumber = "685")
 @CardRegistration(set = "C15", collectorNumber = "49")
 public class MerenOfClanNelToth extends Card {
 

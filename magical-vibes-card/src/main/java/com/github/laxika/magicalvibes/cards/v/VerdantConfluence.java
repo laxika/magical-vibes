@@ -18,15 +18,15 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "329")
+@CardRegistration(set = "CMM", collectorNumber = "575")
 @CardRegistration(set = "C15", collectorNumber = "40")
 public class VerdantConfluence extends Card {
 
     public VerdantConfluence() {
         setAllowSharedTargets(true);
 
-        var permanentCardInGraveyard = new GraveyardCardPredicateTargetFilter(
-                new CardIsPermanentPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
-
+        CardIsPermanentPredicate permanentCard = new CardIsPermanentPredicate();
         addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Put two +1/+1 counters on target creature",
@@ -36,14 +36,16 @@ public class VerdantConfluence extends Card {
                         "Return target permanent card from your graveyard to your hand",
                         () -> ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
-                                .filter(new CardIsPermanentPredicate())
+                                .filter(permanentCard)
                                 .targetGraveyard(true)
                                 .build(),
-                        permanentCardInGraveyard),
-                new ChooseOneEffect.ChooseOneOption(
+                        new GraveyardCardPredicateTargetFilter(permanentCard,
+                                GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
+                ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle",
-                        new SearchLibraryEffect(CardPredicateUtils.basicLand(),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED))
+                        () -> new SearchLibraryEffect(CardPredicateUtils.basicLand(),
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                        null)
         ), 3));
     }
 }

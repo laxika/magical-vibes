@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,11 +30,12 @@ class GargadonTest extends BaseCardTest {
     @DisplayName("The last suspend counter offers a free cast and grants haste")
     void lastCounterOffersFreeCastWithHaste() {
         Gargadon card = suspendCard();
+        removeTimeCounter();
+        removeTimeCounter();
+        removeTimeCounter();
 
-        for (int i = 0; i < 4; i++) {
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
-        }
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -42,16 +43,39 @@ class GargadonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        var permanent = findPermanent(player1, "Gargadon");
+        Permanent permanent = findPermanent(player1, "Gargadon");
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Gargadon in exile")
+    void decliningCastLeavesCardInExile() {
+        Gargadon card = suspendCard();
+        removeTimeCounter();
+        removeTimeCounter();
+        removeTimeCounter();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .doesNotContain(card);
     }
 
     private Gargadon suspendCard() {
         Gargadon card = new Gargadon();
         harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
         harness.activateHandAbility(player1, 0, null);
         return card;
+    }
+
+    private void removeTimeCounter() {
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
     }
 }

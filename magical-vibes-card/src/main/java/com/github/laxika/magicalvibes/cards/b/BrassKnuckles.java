@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "234")
+@CardRegistration(set = "CMM", collectorNumber = "372")
 public class BrassKnuckles extends Card {
 
     public BrassKnuckles() {

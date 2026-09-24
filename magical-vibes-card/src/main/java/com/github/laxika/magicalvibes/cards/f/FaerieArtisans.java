@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1628")
+@CardRegistration(set = "CMM", collectorNumber = "92")
+@CardRegistration(set = "CMM", collectorNumber = "488")
 public class FaerieArtisans extends Card {
 
     public FaerieArtisans() {

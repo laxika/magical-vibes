@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "125")
+@CardRegistration(set = "CMM", collectorNumber = "204")
 public class AnaxHardenedInTheForge extends Card {
 
     private static final CreateTokenEffect SATYR_TOKEN = new CreateTokenEffect(

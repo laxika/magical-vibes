@@ -15,8 +15,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
-@CardRegistration(set = "SLD", collectorNumber = "965")
 @CardRegistration(set = "SLD", collectorNumber = "1621")
+@CardRegistration(set = "SLD", collectorNumber = "965")
+@CardRegistration(set = "CMM", collectorNumber = "228")
+@CardRegistration(set = "CMM", collectorNumber = "538")
+@CardRegistration(set = "CMM", collectorNumber = "677")
 public class GrenzoHavocRaiser extends Card {
 
     public GrenzoHavocRaiser() {

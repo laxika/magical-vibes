@@ -52,12 +52,12 @@ class CaptainNghathrodTest extends BaseCardTest {
 
         advanceToEndStep(player1);
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.cardPool()).containsExactly(eligible);
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

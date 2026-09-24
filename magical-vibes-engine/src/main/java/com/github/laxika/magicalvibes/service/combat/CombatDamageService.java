@@ -831,7 +831,7 @@ public class CombatDamageService {
                 int alreadyTaken = blk.getMarkedDamage() + p1.defDamageTaken.getOrDefault(blkIdx, 0);
                 int lethal = atkHasDeathtouchForValidation
                         ? Math.max(0, 1 - alreadyTaken)
-                        : Math.max(0, gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken);
+                        : Math.max(0, gameQueryService.getLethalDamageThreshold(gameData, blk) - alreadyTaken);
                 int assigned = assignments.getOrDefault(blk.getId(), 0);
                 if (assigned < lethal) {
                     throw new IllegalStateException("Trample: must assign at least " + lethal
@@ -1104,7 +1104,7 @@ public class CombatDamageService {
                                 int atkDamageSoFar = atk.getMarkedDamage() + state.atkDamageTaken.getOrDefault(atkIdx, 0);
                                 int lethalNeeded = blkStats.deathtouch()
                                         ? Math.max(0, 1 - atkDamageSoFar)
-                                        : Math.max(0, atkStats.toughness() - atkDamageSoFar);
+                                        : Math.max(0, atkStats.lethalDamageThreshold() - atkDamageSoFar);
                                 assignedDmg = Math.min(blkRemaining, lethalNeeded);
                             }
                             blockerRemainingDamage.put(blkIdx, blkRemaining - assignedDmg);
@@ -1204,7 +1204,8 @@ public class CombatDamageService {
      * and dealing use the pre-damage board even when earlier loop iterations placed infect
      * counters or removed permanents).
      */
-    private record CombatantStats(int combatDamage, int toughness, boolean firstestStrike,
+    private record CombatantStats(int combatDamage, int lethalDamageThreshold,
+                                  boolean firstestStrike,
                                   boolean firstStrike,
                                   boolean doubleStrike, boolean deathtouch, boolean trample,
                                   boolean infect, boolean preventedFromDealingCombatDamage,
@@ -1274,7 +1275,7 @@ public class CombatDamageService {
     private CombatantStats snapshotCombatant(GameData gameData, Permanent creature) {
         return new CombatantStats(
                 gameQueryService.getEffectiveCombatDamage(gameData, creature),
-                gameQueryService.getEffectiveToughness(gameData, creature),
+                gameQueryService.getLethalDamageThreshold(gameData, creature),
                 gameQueryService.hasActiveStaticEffect(gameData, creature, FirstestStrikeEffect.class),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.FIRST_STRIKE),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.DOUBLE_STRIKE),
@@ -1302,7 +1303,7 @@ public class CombatDamageService {
             int blockerDamageSoFar = blk.getMarkedDamage() + state.defDamageTaken.getOrDefault(blkIdx, 0);
             int lethalNeeded = atkHasDeathtouch
                     ? Math.max(0, 1 - blockerDamageSoFar)
-                    : snap.defenderStats().get(blkIdx).toughness() - blockerDamageSoFar;
+                    : snap.defenderStats().get(blkIdx).lethalDamageThreshold() - blockerDamageSoFar;
             int dmg = i == damageRecipients.size() - 1 && !atkStats.trample()
                     ? remaining
                     : Math.min(remaining, Math.max(0, lethalNeeded));
@@ -3101,6 +3102,8 @@ public class CombatDamageService {
                 gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanentId, 0));
         state.markedDamageBeforeStep.put(permanentId, permanent.getMarkedDamage());
         state.toughnessBeforeStep.put(permanentId, gameQueryService.getEffectiveToughness(gameData, permanent));
+        state.lethalDamageThresholdBeforeStep.put(permanentId,
+                gameQueryService.getLethalDamageThreshold(gameData, permanent));
         state.loyaltyBeforeStep.put(permanentId, permanent.getCounterCount(CounterType.LOYALTY));
     }
 
@@ -3129,8 +3132,8 @@ public class CombatDamageService {
             int markedDamageBefore = state.markedDamageBeforeStep.getOrDefault(permanentId, 0);
             int lethalDamage = permanent.isDamagedByDeathtouch()
                     ? 1
-                    : Math.max(0, state.toughnessBeforeStep.getOrDefault(permanentId,
-                            gameQueryService.getEffectiveToughness(gameData, permanent)) - markedDamageBefore);
+                    : Math.max(0, state.lethalDamageThresholdBeforeStep.getOrDefault(permanentId,
+                            gameQueryService.getLethalDamageThreshold(gameData, permanent)) - markedDamageBefore);
             int excessDamage = Math.max(0, damage - lethalDamage);
             if (excessDamage > 0) {
                 gameData.recordExcessDamageToPermanent(permanentId);
@@ -4763,10 +4766,10 @@ public class CombatDamageService {
         Set<UUID> domainTargetIds = new HashSet<>();
         for (int blkIdx : livingBlockers) {
             Permanent blk = defBf.get(blkIdx);
-            int toughness = gameQueryService.getEffectiveToughness(gameData, blk);
+            int lethalDamageThreshold = gameQueryService.getLethalDamageThreshold(gameData, blk);
             int damageTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
             domainTargets.add(new CombatDamageTarget(
-                    blk.getId(), blk.getCard().getName(), toughness, damageTaken, false));
+                    blk.getId(), blk.getCard().getName(), lethalDamageThreshold, damageTaken, false));
             domainTargetIds.add(blk.getId());
         }
 
@@ -4783,7 +4786,7 @@ public class CombatDamageService {
             for (Permanent def : defBf) {
                 if (gameQueryService.isCreature(gameData, def) && domainTargetIds.add(def.getId())) {
                     domainTargets.add(new CombatDamageTarget(def.getId(), def.getCard().getName(),
-                            gameQueryService.getEffectiveToughness(gameData, def), def.getMarkedDamage(), false));
+                            gameQueryService.getLethalDamageThreshold(gameData, def), def.getMarkedDamage(), false));
                 }
             }
         }
@@ -4793,7 +4796,7 @@ public class CombatDamageService {
                 if (gameQueryService.isCreature(gameData, def) && domainTargetIds.add(def.getId())) {
                     domainTargets.add(new CombatDamageTarget(
                             def.getId(), def.getCard().getName(),
-                            gameQueryService.getEffectiveToughness(gameData, def),
+                            gameQueryService.getLethalDamageThreshold(gameData, def),
                             def.getMarkedDamage() + p1.defDamageTaken.getOrDefault(defIdx, 0), false));
                 }
             }
@@ -4863,7 +4866,7 @@ public class CombatDamageService {
             Permanent atk = atkBf.get(atkIdx);
             domainTargets.add(new CombatDamageTarget(
                     atk.getId(), atk.getCard().getName(),
-                    gameQueryService.getEffectiveToughness(gameData, atk),
+                    gameQueryService.getLethalDamageThreshold(gameData, atk),
                     atk.getMarkedDamage() + p1.atkDamageTaken.getOrDefault(atkIdx, 0), false));
         }
 
@@ -4872,7 +4875,7 @@ public class CombatDamageService {
             for (Permanent permanent : defBf) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
                     domainTargets.add(new CombatDamageTarget(permanent.getId(), permanent.getCard().getName(),
-                            gameQueryService.getEffectiveToughness(gameData, permanent), permanent.getMarkedDamage(), false));
+                            gameQueryService.getLethalDamageThreshold(gameData, permanent), permanent.getMarkedDamage(), false));
                 }
             }
         }

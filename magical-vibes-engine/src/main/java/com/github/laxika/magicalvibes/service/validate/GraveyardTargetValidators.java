@@ -134,13 +134,23 @@ public class GraveyardTargetValidators {
             }
         }
         if (effect.targetPutIntoGraveyardFromLibraryThisTurn()) {
-            boolean tracked = graveyardOwnerId != null
+            boolean milled = graveyardOwnerId != null
                     && ctx.gameData().cardsPutIntoGraveyardFromLibraryThisTurn
-                            .getOrDefault(graveyardOwnerId, Set.of())
-                            .contains(ctx.targetId());
-            if (!tracked) {
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(ctx.targetId());
+            if (!milled) {
                 throw new IllegalStateException(
                         "Target must be a card put into a graveyard from a library this turn");
+            }
+        }
+        if (effect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()) {
+            boolean discardedOrMilled = graveyardOwnerId != null
+                    && (ctx.gameData().cardsDiscardedOrCycledThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(ctx.targetId())
+                    || ctx.gameData().cardsPutIntoGraveyardFromLibraryThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(ctx.targetId()));
+            if (!discardedOrMilled) {
+                throw new IllegalStateException(
+                        "Target must have been discarded or put into a graveyard from a library this turn");
             }
         }
         if (effect.targetNotPutIntoGraveyardThisCombat()) {

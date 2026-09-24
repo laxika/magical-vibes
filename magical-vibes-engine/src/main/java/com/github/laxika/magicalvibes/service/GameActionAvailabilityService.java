@@ -377,6 +377,11 @@ public class GameActionAvailabilityService {
             pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteNonHandSpellOnlyMana();
         }
+        if (gameData.playerCommanders.getOrDefault(playerId, List.of()).stream()
+                .anyMatch(commander -> commander.getId().equals(card.getId()))) {
+            pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteCommanderOnlyMana();
+        }
         // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
         // mutating the caller's pool. Only copy when the player actually has the permission (rare).
         if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {

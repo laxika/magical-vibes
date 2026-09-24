@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffec
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
@@ -125,7 +126,13 @@ public class CastingCostService {
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
     }
 
-    public record AlternativeCostSelection(String manaCost, boolean castsWithWarp) {
+    public record AlternativeCostSelection(String manaCost, boolean castsWithWarp,
+                                            CostEffect nonManaCost, UUID sourcePermanentId,
+                                            boolean oncePerTurn) {
+
+        public AlternativeCostSelection(String manaCost, boolean castsWithWarp) {
+            this(manaCost, castsWithWarp, null, null, false);
+        }
     }
 
     record CollectedCostModifier(CostModificationHandlerBean handler, CardEffect effect, CostModificationSource source) {
@@ -1722,21 +1729,45 @@ public class CastingCostService {
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
-                        && altCost.nonManaCost() == null
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                         && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
+                        && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
+                        && (!altCost.oncePerTurn() || !gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))
                         && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
-                    String alternativeCostString = altCost.manaCostFor(card.getManaValue());
-                    ManaCost alternativeManaCost = applyColoredManaCostReductions(
-                            gameData, playerId, card, new ManaCost(alternativeCostString));
-                    if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
-                        return new AlternativeCostSelection(alternativeCostString, altCost.castsWithWarp());
+                    if (altCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost
+                            && gameData.getLife(playerId) >= card.getManaValue()
+                            && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                            && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                            && canPayAdditionalManaCost(pool, additionalCost)) {
+                        return new AlternativeCostSelection(null, altCost.castsWithWarp(),
+                                altCost.nonManaCost(), perm.getId(), altCost.oncePerTurn());
+                    }
+                    if (altCost.nonManaCost() == null) {
+                        String alternativeCostString = altCost.manaCostFor(card.getManaValue());
+                        ManaCost alternativeManaCost = applyColoredManaCostReductions(
+                                gameData, playerId, card, new ManaCost(alternativeCostString));
+                        if (alternativeManaCost.getManaValue() > 0
+                                && alternativeManaCost.canPay(pool, additionalCost)) {
+                            return new AlternativeCostSelection(alternativeCostString, altCost.castsWithWarp(),
+                                    null, perm.getId(), altCost.oncePerTurn());
+                        }
                     }
                 }
             }
         }
         return null;
+    }
+
+    private boolean canPayAdditionalManaCost(ManaPool pool, int additionalCost) {
+        return additionalCost <= 0 || pool.getTotalAllMana() >= additionalCost;
+    }
+
+    /** Records use of a once-per-turn non-free alternative cost after its payment succeeds. */
+    public void consumeAlternativeCost(AlternativeCostSelection selection, GameData gameData) {
+        if (selection != null && selection.oncePerTurn() && selection.sourcePermanentId() != null) {
+            gameData.freeCastPermanentUsedThisTurn.add(selection.sourcePermanentId());
+        }
     }
 
     public WebSlingingEffect findWebSlingingEffectFromBattlefield(GameData gameData, UUID playerId, Card card) {
@@ -2287,6 +2318,7 @@ public class CastingCostService {
         for (Permanent perm : defenderBattlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof RequirePaymentToAttackEffect tax
+                        && (!tax.planeswalkersOnly() || attackingPlaneswalker)
                         && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
                         && (tax.activeCondition() == null || conditionEvaluationService.isMet(
                                 gameData, tax.activeCondition(), ConditionContext.forPermanent(perm, defenderId)))) {

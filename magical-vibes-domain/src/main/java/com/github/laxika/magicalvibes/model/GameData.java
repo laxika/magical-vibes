@@ -281,6 +281,8 @@ public class GameData {
     public final Set<UUID> permanentsThatReceivedPlusOnePlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     /** Per-player count of +1/+1 counters put on creatures they controlled this turn. */
     public final Map<UUID, Integer> plusOnePlusOneCountersPutOnControlledCreaturesThisTurn = new ConcurrentHashMap<>();
+    /** Players who created at least one token this turn. */
+    public final Set<UUID> playersWhoCreatedTokensThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who sacrificed at least one permanent this turn. */
     public final Set<UUID> playersWhoSacrificedPermanentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who sacrificed at least one artifact this turn. */
@@ -1697,6 +1699,9 @@ public class GameData {
 
     /** Pending one-shot loyalty-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
+
+    /** Permanents whose source subtype choice is temporary and expires during cleanup. */
+    public final Set<UUID> temporaryChosenSubtypePermanentIds = ConcurrentHashMap.newKeySet();
 
     /** Pending one-shot non-mana exhaust-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextExhaustAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
@@ -5468,6 +5473,7 @@ public class GameData {
         source.damageDealtToPermanentsBeforeStep.forEach((key, value) -> copy.damageDealtToPermanentsBeforeStep.put(key, value));
         source.markedDamageBeforeStep.forEach((key, value) -> copy.markedDamageBeforeStep.put(key, value));
         source.toughnessBeforeStep.forEach((key, value) -> copy.toughnessBeforeStep.put(key, value));
+        source.lethalDamageThresholdBeforeStep.forEach((key, value) -> copy.lethalDamageThresholdBeforeStep.put(key, value));
         source.loyaltyBeforeStep.forEach((key, value) -> copy.loyaltyBeforeStep.put(key, value));
         copy.deathtouchDamagedAttackerIndices.addAll(source.deathtouchDamagedAttackerIndices);
         copy.deathtouchDamagedDefenderIndices.addAll(source.deathtouchDamagedDefenderIndices);
@@ -6027,6 +6033,7 @@ public class GameData {
         copy.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
                 .addAll(this.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn);
         copy.playersWhoSacrificedPermanentsThisTurn.addAll(this.playersWhoSacrificedPermanentsThisTurn);
+        copy.playersWhoCreatedTokensThisTurn.addAll(this.playersWhoCreatedTokensThisTurn);
         copy.sacrificedPermanentCountThisTurn.putAll(this.sacrificedPermanentCountThisTurn);
         copy.playersWhoSacrificedArtifactsThisTurn.addAll(this.playersWhoSacrificedArtifactsThisTurn);
         copy.sacrificedPermanentCountThisTurn.putAll(this.sacrificedPermanentCountThisTurn);
@@ -6732,6 +6739,7 @@ public class GameData {
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
+        copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
         copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->

@@ -452,6 +452,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleChosenPermanentAttackTarget(gameData, permanentId, chosenAttackTarget);
         } else if (context instanceof PermanentChoiceContext.ReselectAttackingCreatureTarget reselectAttackTarget) {
             triggerHandler.handleReselectAttackingCreatureTarget(gameData, permanentId, reselectAttackTarget);
+        } else if (context instanceof PermanentChoiceContext.ReselectAttackTarget reselectAttackTarget) {
+            triggerHandler.handleReselectedAttackTarget(gameData, permanentId, reselectAttackTarget);
         } else if (context instanceof PermanentChoiceContext.ExileReturnAttackTarget erat) {
             triggerHandler.handleExileReturnAttackTarget(gameData, permanentId, erat);
         } else if (context instanceof PermanentChoiceContext.EntersTriggerTarget ett) {

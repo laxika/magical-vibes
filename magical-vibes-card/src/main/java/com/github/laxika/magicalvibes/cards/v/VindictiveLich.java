@@ -20,28 +20,29 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "235")
 @CardRegistration(set = "SLD", collectorNumber = "856")
+@CardRegistration(set = "CMM", collectorNumber = "196")
+@CardRegistration(set = "CMM", collectorNumber = "525")
 public class VindictiveLich extends Card {
 
     public VindictiveLich() {
         var opponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent.");
+                "Target must be an opponent");
 
-        addEffect(EffectSlot.ON_DEATH, new ChooseOneAtTriggerTimeEffect(
-                ChooseOneEffect.oneOrMore(List.of(
-                        new ChooseOneEffect.ChooseOneOption(
-                                "Target opponent sacrifices a creature of their choice.",
-                                new SacrificePermanentsEffect(
-                                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER),
-                                opponent),
-                        new ChooseOneEffect.ChooseOneOption(
-                                "Target opponent discards two cards.",
-                                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
-                                opponent),
-                        new ChooseOneEffect.ChooseOneOption(
-                                "Target opponent loses 5 life.",
-                                new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER),
-                                opponent)
-                ))));
+        addEffect(EffectSlot.ON_DEATH, ChooseOneEffect.oneOrMore(List.of(
+                new ChooseOneEffect.ChooseOneOption(
+                        "Target opponent sacrifices a creature of their choice",
+                        new SacrificePermanentsEffect(
+                                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER),
+                        opponent),
+                new ChooseOneEffect.ChooseOneOption(
+                        "Target opponent discards two cards",
+                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
+                        opponent),
+                new ChooseOneEffect.ChooseOneOption(
+                        "Target opponent loses 5 life",
+                        new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER),
+                        opponent)
+        )));
     }
 }

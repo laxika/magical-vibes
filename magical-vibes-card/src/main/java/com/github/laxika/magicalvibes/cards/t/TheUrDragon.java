@@ -23,24 +23,26 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "11")
+@CardRegistration(set = "CMM", collectorNumber = "361")
+@CardRegistration(set = "CMM", collectorNumber = "594")
+@CardRegistration(set = "CMM", collectorNumber = "689")
 public class TheUrDragon extends Card {
 
     public TheUrDragon() {
-        CardAllOfPredicate otherDragonSpell = new CardAllOfPredicate(List.of(
+        var otherDragonSpell = new CardAllOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.DRAGON),
                 new CardNotPredicate(new CardIsSelfPredicate())));
-        ReduceCastCostForMatchingSpellsEffect eminenceReduction =
-                new ReduceCastCostForMatchingSpellsEffect(otherDragonSpell, 1, CostModificationScope.SELF);
-        addEffect(EffectSlot.STATIC, eminenceReduction);
-        addEffect(EffectSlot.COMMAND_ZONE_STATIC, eminenceReduction);
+        var dragonSpellReduction = new ReduceCastCostForMatchingSpellsEffect(
+                otherDragonSpell, 1, CostModificationScope.SELF);
+        addEffect(EffectSlot.STATIC, dragonSpellReduction);
+        addEffect(EffectSlot.COMMAND_ZONE_STATIC, dragonSpellReduction);
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                new ConditionalEffect(
-                        new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                        SequenceEffect.of(
-                                new DrawCardEffect(new EventValue()),
-                                new MayEffect(
-                                        new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent"),
-                                        "Put a permanent card from your hand onto the battlefield?"))));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+                new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
+                SequenceEffect.of(
+                        new DrawCardEffect(new EventValue()),
+                        new MayEffect(
+                                new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent"),
+                                "Put a permanent card from your hand onto the battlefield?"))));
     }
 }

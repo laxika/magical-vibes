@@ -15,14 +15,14 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1529")
+@CardRegistration(set = "CMM", collectorNumber = "254")
 public class SkylineDespot extends Card {
 
     public SkylineDespot() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ControllerIsMonarch(),
-                new CreateTokenEffect(
-                        1, "Dragon", 5, 5, CardColor.RED,
+                new CreateTokenEffect("Dragon", 5, 5, CardColor.RED,
                         List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())));
     }
 }

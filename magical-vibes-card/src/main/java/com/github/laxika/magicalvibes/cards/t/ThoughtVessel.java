@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 @CardRegistration(set = "SLZ", collectorNumber = "116")
 @CardRegistration(set = "SLZ", collectorNumber = "237")
 @CardRegistration(set = "SLZ", collectorNumber = "358")
+@CardRegistration(set = "CMM", collectorNumber = "414")
 public class ThoughtVessel extends Card {
 
     public ThoughtVessel() {

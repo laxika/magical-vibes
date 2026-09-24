@@ -59,6 +59,11 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean
     }
 
     @Override
+    public boolean usesEnteringPermanentReference() {
+        return wrapped.usesEnteringPermanentReference();
+    }
+
+    @Override
     public TriggerContext combatDamageTriggerContext() {
         return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
                 ? contextEffect.combatDamageTriggerContext()

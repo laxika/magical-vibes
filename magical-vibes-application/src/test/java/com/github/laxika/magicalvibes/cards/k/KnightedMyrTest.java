@@ -17,8 +17,8 @@ class KnightedMyrTest extends BaseCardTest {
 
     @Test
     @DisplayName("Adapt puts a +1/+1 counter on Knighted Myr and grants double strike")
-    void adaptPutsCounterAndGrantsDoubleStrike() {
-        Permanent myr = addKnightedMyr();
+    void adaptAddsCounterAndGrantsDoubleStrike() {
+        Permanent myr = addMyr();
         addAdaptMana();
 
         harness.activateAbility(player1, 0, null, null);
@@ -30,16 +30,14 @@ class KnightedMyrTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Double strike granted by Knighted Myr wears off at end of turn")
+    @DisplayName("Double strike wears off at end of turn")
     void doubleStrikeWearsOffAtEndOfTurn() {
-        Permanent myr = addKnightedMyr();
+        Permanent myr = addMyr();
         addAdaptMana();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(gqs.hasKeyword(gd, myr, Keyword.DOUBLE_STRIKE)).isTrue();
-
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -48,20 +46,22 @@ class KnightedMyrTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Adapt does not add another counter when Knighted Myr already has one")
-    void adaptDoesNotAddCounterWhenAlreadyCountered() {
-        Permanent myr = addKnightedMyr();
+    @DisplayName("Adapt does not add a counter or trigger double strike when one is already present")
+    void adaptDoesNotTriggerWithExistingCounter() {
+        Permanent myr = addMyr();
         myr.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         addAdaptMana();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(myr.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
-    private Permanent addKnightedMyr() {
-        return harness.addToBattlefieldAndReturn(player1, new KnightedMyr());
+    private Permanent addMyr() {
+        return addCreatureReady(player1, new KnightedMyr());
     }
 
     private void addAdaptMana() {

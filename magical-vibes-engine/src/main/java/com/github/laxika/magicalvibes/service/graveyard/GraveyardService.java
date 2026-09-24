@@ -1529,6 +1529,14 @@ public class GraveyardService {
         }
     }
 
+    private void updateFromLibraryThisTurnTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
+        if (sourceZone == Zone.LIBRARY && !card.isToken()) {
+            gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                    .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(card.getId());
+        }
+    }
+
     private void updateThisCombatGraveyardTracking(GameData gameData, UUID ownerId, Card card) {
         if (gameData.currentStep != null && gameData.currentStep.isCombatPhase() && !card.isToken()) {
             gameData.cardsPutIntoGraveyardThisCombat
@@ -1869,6 +1877,10 @@ public class GraveyardService {
 
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
         if (leavingCard != null) {
+            Set<UUID> libraryTracked = gameData.cardsPutIntoGraveyardFromLibraryThisTurn.get(ownerId);
+            if (libraryTracked != null) {
+                libraryTracked.remove(leavingCard.getId());
+            }
             gameData.oncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
         }
@@ -1887,6 +1899,10 @@ public class GraveyardService {
             return;
         }
         leavingCards.forEach(card -> gameData.graveyardAdventureCastPermissions.remove(card.getId()));
+        Set<UUID> libraryTracked = gameData.cardsPutIntoGraveyardFromLibraryThisTurn.get(ownerId);
+        if (libraryTracked != null) {
+            leavingCards.forEach(card -> libraryTracked.remove(card.getId()));
+        }
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size());

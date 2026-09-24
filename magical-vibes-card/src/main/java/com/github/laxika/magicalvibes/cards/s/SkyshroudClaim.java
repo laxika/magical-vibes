@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "NEM", collectorNumber = "117")
 @CardRegistration(set = "SLD", collectorNumber = "2279")
+@CardRegistration(set = "CMM", collectorNumber = "321")
 public class SkyshroudClaim extends Card {
 
     public SkyshroudClaim() {

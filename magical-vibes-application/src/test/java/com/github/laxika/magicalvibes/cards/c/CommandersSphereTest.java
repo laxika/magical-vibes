@@ -11,10 +11,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CommandersSphere.class, GrizzlyBears.class, EdgarMarkov.class, Plains.class})
+
+
+
+@CardUsed({CommandersSphere.class, EdgarMarkov.class, GrizzlyBears.class, Plains.class})
 class CommandersSphereTest extends BaseCardTest {
 
     @Test
@@ -35,6 +38,35 @@ class CommandersSphereTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Rejects a color outside the commander's color identity")
+    void rejectsColorOutsideCommandersIdentity() {
+        gd.playerCommanders.put(player1.getId(), List.of(new EdgarMarkov()));
+        harness.addToBattlefield(player1, new CommandersSphere());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, ManaColor.GREEN.name()))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+    }
+
+    @Test
+    @DisplayName("Sacrificing Commander's Sphere draws a card")
+    void sacrificesAndDraws() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new CommandersSphere());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sphere);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sphere.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof GrizzlyBears);
+    }
     @Test
     @DisplayName("Sacrificing the sphere draws a card without requiring it to be untapped")
     void sacrificingDrawsACardWithoutTapCost() {
@@ -68,4 +100,5 @@ class CommandersSphereTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Commander's Sphere");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
+
 }

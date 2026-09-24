@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "36")
 @CardRegistration(set = "MH2", collectorNumber = "17")
 public class KnightedMyr extends Card {
 
@@ -22,6 +23,7 @@ public class KnightedMyr extends Card {
                 "{2}{W}: Adapt 1."
         ));
 
+        // Whenever one or more +1/+1 counters are put on Knighted Myr, it gains double strike until end of turn.
         addEffect(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
     }

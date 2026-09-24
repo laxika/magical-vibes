@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "XLN", collectorNumber = "161")
 @CardRegistration(set = "SLD", collectorNumber = "1862")
+@CardRegistration(set = "CMM", collectorNumber = "259")
+@CardRegistration(set = "CMM", collectorNumber = "550")
 public class StarOfExtinction extends Card {
 
     public StarOfExtinction() {

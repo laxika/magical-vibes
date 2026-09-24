@@ -21,6 +21,9 @@ import java.util.List;
 @CardRegistration(set = "OGW", collectorNumber = "4")
 @CardRegistration(set = "SLD", collectorNumber = "493")
 @CardRegistration(set = "EA2", collectorNumber = "1")
+@CardRegistration(set = "CMM", collectorNumber = "2")
+@CardRegistration(set = "CMM", collectorNumber = "452")
+@CardRegistration(set = "CMM", collectorNumber = "668")
 public class KozilekTheGreatDistortion extends Card {
 
     public KozilekTheGreatDistortion() {

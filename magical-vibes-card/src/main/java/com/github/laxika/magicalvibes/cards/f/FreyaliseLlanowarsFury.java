@@ -25,10 +25,13 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1598")
+@CardRegistration(set = "CMM", collectorNumber = "290")
+@CardRegistration(set = "CMM", collectorNumber = "560")
 @CardRegistration(set = "C14", collectorNumber = "43")
 public class FreyaliseLlanowarsFury extends Card {
 
     public FreyaliseLlanowarsFury() {
+        // +2: Create a 1/1 green Elf Druid creature token with "{T}: Add {G}."
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(new CreateTokenEffect(
@@ -55,6 +58,7 @@ public class FreyaliseLlanowarsFury extends Card {
                 "+2: Create a 1/1 green Elf Druid creature token with \"{T}: Add {G}.\""
         ));
 
+        // −2: Destroy target artifact or enchantment.
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(new DestroyTargetPermanentEffect()),
@@ -68,6 +72,7 @@ public class FreyaliseLlanowarsFury extends Card {
                 )
         ));
 
+        // −6: Draw a card for each green creature you control.
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new DrawCardEffect(new PermanentCount(

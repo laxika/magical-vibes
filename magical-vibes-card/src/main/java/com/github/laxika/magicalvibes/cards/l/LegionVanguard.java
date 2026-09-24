@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "170")
 @CardRegistration(set = "MH2", collectorNumber = "90")
 public class LegionVanguard extends Card {
 
     public LegionVanguard() {
-        // {1}, Sacrifice another creature: This creature explores.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

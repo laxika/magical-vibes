@@ -56,6 +56,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers}. Used by Trespasser's Curse. */
     ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
     STATIC,
+    /** Static cost-modifying effects of cards in the controller's command zone (Eminence). */
+    COMMAND_ZONE_STATIC,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
@@ -763,8 +765,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if
      *  {@code SourceCardInCommandZone} so the ability fails if the card left the command zone. */
     COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL,
-    /** Static effects that remain active while this card is in its controller's command zone. */
-    COMMAND_ZONE_STATIC,
     /** Triggers whenever the controller of this permanent loses life (damage or direct life loss).
      *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
      *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
@@ -815,6 +815,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
      *  battlefield during that controller's turn. */
     ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
+    /** Triggers whenever another permanent controlled by this permanent's controller leaves the
+     *  battlefield by any means. */
+    ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */

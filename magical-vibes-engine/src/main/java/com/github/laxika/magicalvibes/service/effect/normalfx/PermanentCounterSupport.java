@@ -243,7 +243,15 @@ public class PermanentCounterSupport {
             boolean markOnAcceptance = false;
             boolean markImmediately = false;
             for (CardEffect effect : effects) {
-                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
+                CardEffect resolved = effect;
+                if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, target, conditional.predicate())) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                if (resolved instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
                     if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
                         continue;
                     }
@@ -254,7 +262,7 @@ public class PermanentCounterSupport {
                     }
                     effectsToResolve.add(oncePerTurnTrigger.wrapped());
                 } else {
-                    effectsToResolve.add(effect);
+                    effectsToResolve.add(resolved);
                 }
             }
             if (effectsToResolve.isEmpty()) {
@@ -441,7 +449,8 @@ public class PermanentCounterSupport {
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(controllerId);
+                .withSourceControllerId(controllerId)
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId());
 
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent p : battlefield) {

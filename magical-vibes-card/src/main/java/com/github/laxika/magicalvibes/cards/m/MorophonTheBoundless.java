@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 @CardRegistration(set = "SLD", collectorNumber = "1896")
 @CardRegistration(set = "SLD", collectorNumber = "1944")
 @CardRegistration(set = "MH1", collectorNumber = "1")
+@CardRegistration(set = "CMM", collectorNumber = "3")
+@CardRegistration(set = "CMM", collectorNumber = "453")
+@CardRegistration(set = "CMM", collectorNumber = "669")
 public class MorophonTheBoundless extends Card {
 
     public MorophonTheBoundless() {

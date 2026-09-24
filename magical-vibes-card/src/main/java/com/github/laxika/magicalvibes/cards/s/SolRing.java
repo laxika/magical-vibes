@@ -47,6 +47,8 @@ import java.util.List;
 @CardRegistration(set = "ME4", collectorNumber = "227")
 @CardRegistration(set = "ECC", collectorNumber = "57")
 @CardRegistration(set = "ECC", collectorNumber = "58")
+@CardRegistration(set = "CMM", collectorNumber = "410")
+@CardRegistration(set = "CMM", collectorNumber = "703")
 public class SolRing extends Card {
 
     public SolRing() {

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "PTK", collectorNumber = "56")
 @CardRegistration(set = "V11", collectorNumber = "12")
 @CardRegistration(set = "ME3", collectorNumber = "53")
+@CardRegistration(set = "CMM", collectorNumber = "123")
+@CardRegistration(set = "CMM", collectorNumber = "498")
 public class SunQuanLordOfWu extends Card {
 
     public SunQuanLordOfWu() {

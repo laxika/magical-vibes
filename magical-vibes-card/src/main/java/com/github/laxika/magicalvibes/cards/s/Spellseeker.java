@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1165")
+@CardRegistration(set = "CMM", collectorNumber = "120")
+@CardRegistration(set = "CMM", collectorNumber = "495")
+@CardRegistration(set = "CMM", collectorNumber = "635")
 public class Spellseeker extends Card {
 
     public Spellseeker() {

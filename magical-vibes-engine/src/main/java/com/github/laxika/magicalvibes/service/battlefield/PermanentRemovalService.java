@@ -323,6 +323,7 @@ public class PermanentRemovalService {
             triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
             triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
             triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
             triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(
                     gameData, target, controllerId);
@@ -467,6 +468,7 @@ public class PermanentRemovalService {
             triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, info.controllerId());
             triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, info.controllerId());
             triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, info.controllerId());
             triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(
                     gameData, target, info.controllerId());
@@ -522,6 +524,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
@@ -569,6 +572,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
@@ -650,6 +654,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
@@ -752,6 +757,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
@@ -799,6 +805,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
@@ -871,6 +878,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
@@ -917,6 +925,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
@@ -1190,7 +1199,7 @@ public class PermanentRemovalService {
     /**
      * Checks if the player has an aura with {@link RedirectPlayerDamageToEnchantedCreatureEffect}
      * (e.g. Pariah) and redirects incoming damage to the enchanted creature. Destroys the creature
-     * if the redirected damage meets or exceeds its toughness.
+     * if the redirected damage meets or exceeds its lethal damage threshold.
      *
      * @param gameData   the current game state
      * @param playerId   the player who would receive the damage
@@ -1288,7 +1297,7 @@ public class PermanentRemovalService {
         }
 
         triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
-        if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+        if (effectiveDamage >= gameQueryService.getLethalDamageThreshold(gameData, target)) {
             if (tryDestroyPermanent(gameData, target)) {
                 gameLogService.append(gameData,
                         GameLog.cardThen(target.getCard(), " is destroyed by redirected " + sourceName + " damage."));

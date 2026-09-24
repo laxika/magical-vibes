@@ -417,6 +417,14 @@ public class GraveyardReturnSupport {
                 .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
             return false;
         }
+        if (effect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                && (cardOwnerId == null
+                || (!gameData.cardsDiscardedOrCycledThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId())
+                && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId())))) {
+            return false;
+        }
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, entry, sourceCardId);
             return chosenSubtype != null

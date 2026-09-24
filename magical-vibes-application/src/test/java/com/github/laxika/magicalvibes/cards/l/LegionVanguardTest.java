@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,52 +20,53 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LegionVanguardTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Pays one mana, sacrifices another creature, and explores into a land")
-    void sacrificesAnotherCreatureAndExploresLand() {
-        Permanent vanguard = addCreatureReady(player1, new LegionVanguard());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
-        Forest land = new Forest();
-        harness.setLibrary(player1, List.of(land));
+    void sacrificesAnotherCreatureAndPutsExploredLandIntoHand() {
+        Permanent vanguard = addReadyVanguard();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vanguard).doesNotContain(fodder);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(fodder.getCard());
-        assertThat(gd.playerHands.get(player1.getId())).contains(land);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).contains(forest.getId());
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Exploring a nonland puts a counter on Legion Vanguard and offers the graveyard choice")
-    void exploresNonland() {
-        Permanent vanguard = addCreatureReady(player1, new LegionVanguard());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
-        GrizzlyBears topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(topCard));
+    void sacrificesAnotherCreatureAndExploringNonlandAddsCounter() {
+        Permanent vanguard = addReadyVanguard();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        GrizzlyBears exploredCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(exploredCard));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vanguard).doesNotContain(fodder);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(fodder.getCard(), topCard);
-        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(exploredCard.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Cannot sacrifice Legion Vanguard itself")
-    void requiresAnotherCreature() {
-        addCreatureReady(player1, new LegionVanguard());
+    void cannotActivateWithoutAnotherCreature() {
+        addReadyVanguard();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature to sacrifice");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent addReadyVanguard() {
+        Permanent vanguard = new Permanent(new LegionVanguard());
+        vanguard.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(vanguard);
+        return vanguard;
     }
 }

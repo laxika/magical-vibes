@@ -357,6 +357,8 @@ the slot whenever a creature is exiled from the battlefield, checked after the c
 `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD` is the controller-scoped sibling; effects implementing
 `LeavingCreatureCountersAwareEffect` receive a snapshot of the leaving creature's concrete
 counters before the trigger is queued.
+`ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
+use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
@@ -373,7 +375,8 @@ counters are put on a Human the controller controls, including counters the Huma
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
 `ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE` (Knight of Wundagore; fires once when
 the controller puts one or more +1/+1 counters on a creature other than the watcher, regardless of
-that creature's controller),
+that creature's controller; it also accepts a `TriggeringPermanentConditionalEffect` wrapper for
+event-subject restrictions such as "another colorless creature"),
 `ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO` (Invisible Woman, Sue Storm; fires once when
 the controller puts one or more +1/+1 counters on another Hero they control),
 `ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE` (Enduring Scalelord; fires once when

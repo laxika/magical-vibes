@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefield
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
+import com.github.laxika.magicalvibes.model.action.DelayedReturnSourceAuraToCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
@@ -4864,6 +4866,31 @@ public class StepTriggerService {
                         .card(enchantedPermanent.getCard())
                         .text(" (delayed trigger).")
                         .build());
+            }
+        }
+
+        if (gameData.hasDelayedAction(DelayedReturnSourceAuraToCreature.class)) {
+            List<DelayedReturnSourceAuraToCreature> pendingReturns =
+                    gameData.drainDelayedActions(DelayedReturnSourceAuraToCreature.class);
+            for (DelayedReturnSourceAuraToCreature pending : pendingReturns) {
+                Card auraCard = gameQueryService.findCardInGraveyardById(gameData, pending.auraCardId());
+                if (auraCard == null) {
+                    continue;
+                }
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        auraCard,
+                        pending.controllerId(),
+                        auraCard.getName() + "'s delayed return ability",
+                        new ArrayList<>(List.of(new ReturnSourceAuraToCreatureOnDeathEffect())));
+                entry.setNonTargeting(true);
+                entry.setTriggeringCardId(auraCard.getId());
+                entry.setTriggeringCardGraveyardEntryVersion(
+                        gameData.graveyardEntryVersion(auraCard.getId()));
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(auraCard, "'s delayed return ability triggers."));
             }
         }
 

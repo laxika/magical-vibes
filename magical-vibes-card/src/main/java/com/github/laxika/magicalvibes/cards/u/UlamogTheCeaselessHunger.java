@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "BFZ", collectorNumber = "15")
 @CardRegistration(set = "SLD", collectorNumber = "1122")
 @CardRegistration(set = "HA3", collectorNumber = "1")
+@CardRegistration(set = "CMM", collectorNumber = "5")
+@CardRegistration(set = "CMM", collectorNumber = "454")
+@CardRegistration(set = "CMM", collectorNumber = "670")
 public class UlamogTheCeaselessHunger extends Card {
 
     public UlamogTheCeaselessHunger() {

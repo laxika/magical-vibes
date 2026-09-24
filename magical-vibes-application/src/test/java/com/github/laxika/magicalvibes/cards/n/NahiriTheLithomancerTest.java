@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,18 +18,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NahiriTheLithomancer.class, Bonesplitter.class, GrizzlyBears.class})
+@CardUsed({NahiriTheLithomancer.class, Bonesplitter.class, GrizzlyBears.class, LeoninScimitar.class})
 class NahiriTheLithomancerTest extends BaseCardTest {
 
     @Test
-    void createsKorSoldierAndMayAttachEquipment() {
-        Permanent nahiri = addReadyNahiri(3);
+    void createsKorSoldierAndMayAttachControlledEquipment() {
+        Permanent nahiri = addReadyNahiri(player1, 3);
         Permanent bonesplitter = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Kor Soldier");
+        assertThat(token.getEffectivePower()).isEqualTo(1);
+        assertThat(token.getEffectiveToughness()).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, bonesplitter.getId());
@@ -38,49 +41,41 @@ class NahiriTheLithomancerTest extends BaseCardTest {
     }
 
     @Test
-    void putsEquipmentFromHandOntoTheBattlefield() {
-        Permanent nahiri = addReadyNahiri(3);
-        Card equipment = new Bonesplitter();
-        harness.setHand(player1, List.of(equipment));
+    void putsEquipmentFromHandOrGraveyardOntoTheBattlefield() {
+        Permanent nahiri = addReadyNahiri(player1, 3);
+        Bonesplitter fromHand = new Bonesplitter();
+        LeoninScimitar fromGraveyard = new LeoninScimitar();
+        harness.setHand(player1, List.of(fromHand));
+        harness.setGraveyard(player1, List.of(fromGraveyard));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PutCardFromHandOrGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+        PendingInteraction.PutCardFromHandOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PutCardFromHandOrGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(fromHand.getId(), fromGraveyard.getId());
 
-        assertThat(findPermanent(player1, "Bonesplitter")).isNotNull();
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(equipment);
+        harness.handleMultipleCardsChosen(player1, List.of(fromGraveyard.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
+                permanent -> permanent.getCard().getId().equals(fromGraveyard.getId()));
         assertThat(nahiri.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
     @Test
-    void putsEquipmentFromGraveyardOntoTheBattlefield() {
-        Permanent nahiri = addReadyNahiri(3);
-        Card equipment = new Bonesplitter();
-        harness.setGraveyard(player1, List.of(equipment));
-
-        harness.activateAbility(player1, 0, 1, null, null);
-        harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
-
-        assertThat(findPermanent(player1, "Bonesplitter")).isNotNull();
-        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(equipment);
-        assertThat(nahiri.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
-    }
-
-    @Test
-    void createsIndestructibleStoneforgedBladeThatBoostsAndGivesDoubleStrike() {
-        addReadyNahiri(10);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+    void ultimateCreatesIndestructibleStoneforgedBladeWithZeroEquip() {
+        Permanent nahiri = addReadyNahiri(player1, 10);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
         Permanent blade = findPermanent(player1, "Stoneforged Blade");
-        assertThat(gqs.hasKeyword(gd, blade, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(blade.getCard().isToken()).isTrue();
+        assertThat(blade.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(blade.getCard().getKeywords()).contains(Keyword.INDESTRUCTIBLE);
 
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         int bladeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blade);
         harness.activateAbility(player1, bladeIndex, null, bears.getId());
         harness.passBothPriorities();
@@ -89,14 +84,15 @@ class NahiriTheLithomancerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(nahiri.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
-    private Permanent addReadyNahiri(int loyalty) {
+    private Permanent addReadyNahiri(Player player, int loyalty) {
         Permanent permanent = new Permanent(new NahiriTheLithomancer());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        harness.forceActivePlayer(player1);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
     }
