@@ -1,30 +1,27 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.i.InTheWebOfWar;
+import com.github.laxika.magicalvibes.cards.o.OrbOfDreams;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReduceToDreams.class, OrbOfDreams.class, InTheWebOfWar.class, GnarledMass.class})
 class ReduceToDreamsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns all artifacts and enchantments on both sides to their owners' hands")
     void returnsAllArtifactsAndEnchantments() {
-        harness.addToBattlefield(player1, new Millstone());
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        harness.addToBattlefield(player2, new Ornithopter());
-        harness.setHand(player1, List.of(new ReduceToDreams()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.addToBattlefield(player1, new OrbOfDreams());
+        harness.addToBattlefield(player1, new InTheWebOfWar());
+        harness.addToBattlefield(player2, new OrbOfDreams());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ReduceToDreams(), "{3}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -32,36 +29,44 @@ class ReduceToDreamsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactlyInAnyOrder("Millstone", "Glorious Anthem");
+                .containsExactlyInAnyOrder("Orb of Dreams", "In the Web of War");
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(c -> c.getName())
-                .contains("Ornithopter");
+                .contains("Orb of Dreams");
     }
 
     @Test
     @DisplayName("Leaves non-artifact non-enchantment permanents alone")
     void leavesOtherPermanentsAlone() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Millstone());
-        harness.setHand(player1, List.of(new ReduceToDreams()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.addToBattlefield(player1, new GnarledMass());
+        harness.addToBattlefield(player1, new OrbOfDreams());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ReduceToDreams(), "{3}{U}{U}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactly("Millstone");
+                .containsExactly("Orb of Dreams");
+    }
+
+    @Test
+    @DisplayName("Returns a matching permanent to its owner's hand even when another player controls it")
+    void returnsMatchingPermanentToItsOwner() {
+        Permanent stolenArtifact = harness.addToBattlefieldAndReturn(player1, new OrbOfDreams());
+        gd.stolenCreatures.put(stolenArtifact.getId(), player2.getId());
+
+        harness.castFromHand(player1, new ReduceToDreams(), "{3}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Orb of Dreams");
+        harness.assertNotInHand(player1, "Orb of Dreams");
     }
 
     @Test
     @DisplayName("Resolves with nothing to bounce and goes to the graveyard")
     void resolvesWithEmptyBattlefield() {
-        harness.setHand(player1, List.of(new ReduceToDreams()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ReduceToDreams(), "{3}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

@@ -5,15 +5,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(UrborgVolcano.class)
+@CardUsed({UrborgVolcano.class})
 class UrborgVolcanoTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -71,5 +70,15 @@ class UrborgVolcanoTest extends BaseCardTest {
 
     private Permanent addLandReady() {
         return harness.addToBattlefieldAndReturn(player1, new UrborgVolcano());
+    }
+
+    @Test
+    @DisplayName("Enters the battlefield tapped")
+    void entersTapped() {
+        harness.setHand(player1, List.of(new UrborgVolcano()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 }

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.c.CallousDeceiver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
+import com.github.laxika.magicalvibes.cards.d.Dreamcatcher;
+import com.github.laxika.magicalvibes.cards.i.InnerChamberGuard;
+import com.github.laxika.magicalvibes.cards.i.IvoryCraneNetsuke;
+import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KiriOnna.class, Dreamcatcher.class, SpiritualVisit.class,
+        InnerChamberGuard.class, IvoryCraneNetsuke.class})
 class KiriOnnaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters by returning a target creature to its owner's hand")
     void entersByReturningTargetCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InnerChamberGuard());
         harness.setHand(player1, List.of(new KiriOnna()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -28,7 +32,7 @@ class KiriOnnaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Inner-Chamber Guard");
         harness.assertOnBattlefield(player1, "Kiri-Onna");
     }
 
@@ -36,11 +40,7 @@ class KiriOnnaTest extends BaseCardTest {
     @DisplayName("Casting a Spirit spell may return Kiri-Onna to its owner's hand")
     void spiritSpellReturnsKiriOnna() {
         addKiriOnna();
-        harness.setHand(player1, List.of(new CallousDeceiver()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Dreamcatcher(), "{U}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -51,10 +51,7 @@ class KiriOnnaTest extends BaseCardTest {
     @DisplayName("Casting an Arcane spell may return Kiri-Onna to its owner's hand")
     void arcaneSpellReturnsKiriOnna() {
         addKiriOnna();
-        harness.setHand(player1, List.of(new ReachThroughMists()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -65,10 +62,7 @@ class KiriOnnaTest extends BaseCardTest {
     @DisplayName("Declining the cast trigger leaves Kiri-Onna on the battlefield")
     void decliningCastTriggerLeavesKiriOnnaOnBattlefield() {
         addKiriOnna();
-        harness.setHand(player1, List.of(new ReachThroughMists()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -78,21 +72,31 @@ class KiriOnnaTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Spirit non-Arcane spell does not trigger Kiri-Onna")
     void unrelatedSpellDoesNotTrigger() {
-        Permanent kiriOnna = addKiriOnna();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        addKiriOnna();
+        harness.castFromHand(player1, new InnerChamberGuard(), "{1}{W}");
+        harness.passBothPriorities();
 
-        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Kiri-Onna");
+    }
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kiriOnna);
+    @Test
+    @DisplayName("An opponent's Spirit spell does not trigger Kiri-Onna")
+    void opponentsSpiritSpellDoesNotTrigger() {
+        addKiriOnna();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Dreamcatcher(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Kiri-Onna");
     }
 
     @Test
     @DisplayName("The ETB ability cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent noncreature = harness.addToBattlefieldAndReturn(player2,
-                new com.github.laxika.magicalvibes.cards.g.GildedLotus());
+                new IvoryCraneNetsuke());
         harness.setHand(player1, List.of(new KiriOnna()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

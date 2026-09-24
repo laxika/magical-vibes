@@ -1516,24 +1516,26 @@ public class CastingPermissionService {
                         || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
                     continue;
                 }
-                if (permission.availabilityCondition() != null
-                        && !conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
-                        ConditionContext.forCasting(playerId))) {
-                    continue;
-                }
-                if (permission.onlyDuringControllerTurn()
-                        && !playerId.equals(gameData.activePlayerId)) {
-                    continue;
-                }
-                if (permission.oncePerControllerTurn()
-                        && (!playerId.equals(gameData.activePlayerId)
-                            || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
+                if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
                     continue;
                 }
                 return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
             }
         }
         return Optional.empty();
+    }
+
+    private boolean isGraveyardPermissionAvailable(GameData gameData, UUID playerId,
+                                                     Permanent source,
+                                                     CastSpellsFromGraveyardPermission permission) {
+        return (permission.availabilityCondition() == null
+                || conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
+                ConditionContext.forCasting(playerId)))
+                && (!permission.onlyDuringControllerTurn()
+                || playerId.equals(gameData.activePlayerId))
+                && (!permission.oncePerControllerTurn()
+                || (playerId.equals(gameData.activePlayerId)
+                && !gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(source.getId())));
     }
 
     /**

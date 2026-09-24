@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "STX", collectorNumber = "94")
+@CardRegistration(set = "SOC", collectorNumber = "240")
 public class ConspiracyTheorist extends Card {
 
     public ConspiracyTheorist() {

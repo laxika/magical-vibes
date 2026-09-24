@@ -1,21 +1,18 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.j.JackOLantern;
+import com.github.laxika.magicalvibes.cards.m.MikokoroCenterOfTheSea;
+import com.github.laxika.magicalvibes.cards.s.SakuraTribeScout;
+import com.github.laxika.magicalvibes.cards.s.ShinenOfFurysFire;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,9 +21,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PithingNeedle.class, SakuraTribeScout.class, MikokoroCenterOfTheSea.class,
+        ShinenOfFurysFire.class, JackOLantern.class})
 class PithingNeedleTest extends BaseCardTest {
-
-    // ===== Casting and card name choice =====
 
     @Test
     @DisplayName("Casting Pithing Needle puts it on the stack as artifact spell")
@@ -51,10 +48,11 @@ class PithingNeedleTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
+        // As this artifact enters, its name choice must be made before it enters.
         harness.assertNotOnBattlefield(player1, "Pithing Needle");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player1.getId());
     }
 
     @Test
@@ -65,10 +63,10 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Sakura-Tribe Scout");
 
         Permanent perm = findPermanent(player1, "Pithing Needle");
-        assertThat(perm.getChosenName()).isEqualTo("Prodigal Pyromancer");
+        assertThat(perm.getChosenName()).isEqualTo("Sakura-Tribe Scout");
     }
 
     @Test
@@ -79,7 +77,7 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Sakura-Tribe Scout");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
@@ -93,28 +91,19 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Sakura-Tribe Scout");
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Prodigal Pyromancer") && log.contains("Pithing Needle"));
+                log.contains("Sakura-Tribe Scout") && log.contains("Pithing Needle"));
     }
-
-    // ===== Blocking activated abilities =====
 
     @Test
     @DisplayName("Blocks non-mana activated abilities of the named card")
     void blocksNonManaActivatedAbilities() {
-        // Put Pithing Needle naming "Prodigal Pyromancer" on the battlefield
-        Permanent needle = addReadyPithingNeedle(player1, "Prodigal Pyromancer");
+        addReadyPithingNeedle(player1, "Sakura-Tribe Scout");
+        addCreatureReady(player2, new SakuraTribeScout());
 
-        // Put Prodigal Pyromancer on opponent's battlefield (tap: deal 1 damage)
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
-
-        // Try to activate Prodigal Pyromancer's ability — should be blocked
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated")
                 .hasMessageContaining("Pithing Needle");
@@ -123,163 +112,114 @@ class PithingNeedleTest extends BaseCardTest {
     @Test
     @DisplayName("Does NOT block mana abilities of the named card")
     void doesNotBlockManaAbilities() {
-        // Put Pithing Needle naming "Birds of Paradise" on the battlefield
-        Permanent needle = addReadyPithingNeedle(player1, "Birds of Paradise");
+        addReadyPithingNeedle(player1, "Mikokoro, Center of the Sea");
+        Permanent mikokoro = harness.addToBattlefieldAndReturn(player2, new MikokoroCenterOfTheSea());
+        int manaBefore = gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS);
 
-        // Put Birds of Paradise on opponent's battlefield (tap: add any color mana)
-        Card birds = createCreatureWithManaAbility("Birds of Paradise", 0, 1, CardColor.GREEN);
-        Permanent birdsPerm = new Permanent(birds);
-        birdsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(birdsPerm);
-
-        // Activating Birds' mana ability should NOT be blocked by Pithing Needle
-        // Mana abilities are resolved immediately, so we should get a color choice prompt
         harness.activateAbility(player2, 0, null, null);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(mikokoro.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS))
+                .isEqualTo(manaBefore + 1);
     }
 
     @Test
     @DisplayName("Does NOT block abilities of differently-named cards")
     void doesNotBlockDifferentlyNamedCards() {
-        // Put Pithing Needle naming "Some Other Card" on the battlefield
-        Permanent needle = addReadyPithingNeedle(player1, "Some Other Card");
+        addReadyPithingNeedle(player1, "Mikokoro, Center of the Sea");
+        addCreatureReady(player2, new SakuraTribeScout());
 
-        // Put Prodigal Pyromancer on opponent's battlefield
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
-
-        // Should be able to activate Prodigal Pyromancer normally
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Prodigal Pyromancer");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Sakura-Tribe Scout");
     }
 
     @Test
     @DisplayName("Blocks abilities of the controller's own named cards")
     void blocksOwnCardsAbilities() {
-        // Player1 plays Pithing Needle naming "Prodigal Pyromancer"
-        Permanent needle = addReadyPithingNeedle(player1, "Prodigal Pyromancer");
+        addReadyPithingNeedle(player1, "Sakura-Tribe Scout");
+        addCreatureReady(player1, new SakuraTribeScout());
 
-        // Player1 ALSO has a Prodigal Pyromancer
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pyromancerPerm);
-
-        // Even the controller's own Pyromancer is blocked
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
 
-    // ===== Pithing Needle removal =====
+    @Test
+    @DisplayName("Blocks a named activated ability from a card in hand")
+    void blocksHandActivatedAbility() {
+        addReadyPithingNeedle(player1, "Shinen of Fury's Fire");
+        Permanent target = addCreatureReady(player2, new SakuraTribeScout());
+        harness.setHand(player2, List.of(new ShinenOfFurysFire()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated")
+                .hasMessageContaining("Pithing Needle");
+    }
 
     @Test
     @DisplayName("After Pithing Needle leaves the battlefield, abilities are usable again")
     void abilitiesWorkAfterNeedleRemoved() {
-        Permanent needle = addReadyPithingNeedle(player1, "Prodigal Pyromancer");
+        Permanent needle = addReadyPithingNeedle(player1, "Sakura-Tribe Scout");
+        addCreatureReady(player2, new SakuraTribeScout());
 
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
-
-        // Verify blocked
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
 
-        // Remove Pithing Needle from battlefield
         gd.playerBattlefields.get(player1.getId()).remove(needle);
 
-        // Now the ability should work
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, null);
         assertThat(gd.stack).hasSize(1);
     }
-
-    // ===== Multiple Pithing Needles =====
 
     @Test
     @DisplayName("Multiple Pithing Needles can name different cards")
     void multiplePithingNeedlesBlockDifferentCards() {
-        addReadyPithingNeedle(player1, "Prodigal Pyromancer");
-        addReadyPithingNeedle(player1, "Siege-Gang Commander");
+        addReadyPithingNeedle(player1, "Sakura-Tribe Scout");
+        addReadyPithingNeedle(player1, "Mikokoro, Center of the Sea");
+        addCreatureReady(player2, new SakuraTribeScout());
+        harness.addToBattlefield(player2, new MikokoroCenterOfTheSea());
 
-        // Prodigal Pyromancer on opponent's side
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
 
-        // Prodigal Pyromancer should be blocked
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
 
-    // ===== No chosen name (edge case) =====
+    @Test
+    @DisplayName("Does NOT block a named mana ability from a card in the graveyard")
+    void doesNotBlockGraveyardManaAbility() {
+        addReadyPithingNeedle(player1, "Jack-o'-Lantern");
+        harness.setGraveyard(player2, List.of(new JackOLantern()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Jack-o'-Lantern");
+    }
 
     @Test
     @DisplayName("Pithing Needle with no chosen name does not block anything")
     void noChosenNameDoesNotBlock() {
-        // Add Pithing Needle without setting a chosen name (e.g. it was never resolved)
-        PithingNeedle needleCard = new PithingNeedle();
-        Permanent needlePerm = new Permanent(needleCard);
-        gd.playerBattlefields.get(player1.getId()).add(needlePerm);
+        harness.addToBattlefield(player1, new PithingNeedle());
+        addCreatureReady(player2, new SakuraTribeScout());
 
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
-
-        // Should activate normally — no name was chosen
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, null);
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyPithingNeedle(Player player, String chosenName) {
-        PithingNeedle card = new PithingNeedle();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new PithingNeedle());
         perm.setChosenName(chosenName);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private static Card createCreatureWithTapAbility(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{T}: " + name + " deals 1 damage to any target."
-        ));
-        return card;
-    }
-
-    private static Card createCreatureWithManaAbility(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new AwardAnyColorManaEffect()),
-                "{T}: Add one mana of any color."
-        ));
-        return card;
     }
 }

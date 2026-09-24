@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "SOC", collectorNumber = "161")
 @CardRegistration(set = "MSC", collectorNumber = "142")
 @CardRegistration(set = "MSC", collectorNumber = "319")
 public class PromiseOfLoyalty extends Card {

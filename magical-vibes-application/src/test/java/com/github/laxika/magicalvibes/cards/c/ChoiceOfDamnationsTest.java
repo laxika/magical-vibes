@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChoiceOfDamnations.class, GrizzlyBears.class, JayemdaeTome.class, Swamp.class})
 class ChoiceOfDamnationsTest extends BaseCardTest {
 
     @Test
@@ -79,6 +81,23 @@ class ChoiceOfDamnationsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing zero and declining life loss sacrifices every permanent")
+    void choosingZeroSacrificesEveryPermanent() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new JayemdaeTome());
+
+        cast();
+        harness.handleXValueChosen(player2, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Swamp");
+        harness.assertNotOnBattlefield(player2, "Jayemdae Tome");
     }
 
     @Test

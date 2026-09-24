@@ -150,6 +150,8 @@ public class ChoiceHandlerService {
             pleaForPowerEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
             expropriateEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.FatefulTempestEffectHandler
+            fatefulTempestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
             voteForDenialOrDuplicationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
@@ -777,6 +779,17 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             expropriateEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.FatefulTempestChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Fateful Tempest vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            fatefulTempestEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }

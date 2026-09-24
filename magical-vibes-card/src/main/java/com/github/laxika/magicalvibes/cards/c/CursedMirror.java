@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "2308")
+@CardRegistration(set = "SOC", collectorNumber = "242")
 public class CursedMirror extends Card {
 
     public CursedMirror() {

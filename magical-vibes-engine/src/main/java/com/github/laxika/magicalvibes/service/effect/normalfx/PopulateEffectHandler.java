@@ -45,7 +45,7 @@ public class PopulateEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (tokens.size() == 1) {
-            populateSupport.createCopy(gameData, controllerId, tokens.getFirst());
+            populateSupport.createCopy(gameData, controllerId, tokens.getFirst(), entry);
             return;
         }
 

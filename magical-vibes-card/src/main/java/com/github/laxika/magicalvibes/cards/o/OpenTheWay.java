@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCards
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "23")
+@CardRegistration(set = "SOC", collectorNumber = "280")
 public class OpenTheWay extends Card {
 
     public OpenTheWay() {

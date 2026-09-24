@@ -1,63 +1,74 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.k.KavuScout;
+import com.github.laxika.magicalvibes.cards.k.KavuTitan;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DesperateResearch.class, KavuTitan.class, KavuScout.class, Plains.class})
 class DesperateResearchTest extends BaseCardTest {
 
     private void cast() {
-        harness.setHand(player1, List.of(new DesperateResearch()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DesperateResearch(), "{1}{B}");
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Resolving prompts the controller to name a non-basic-land card")
     void promptsForNonBasicLandName() {
-        UUID p1 = player1.getId();
-        gd.playerDecks.get(p1).addFirst(basicLand("Plains"));
-        gd.playerDecks.get(p1).addFirst(named("Research Target"));
+        harness.setLibrary(player1, List.of(new Plains(), new KavuTitan()));
 
         cast();
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice.class);
-        assertThat(choice.options()).contains("Research Target").doesNotContain("Plains");
+        assertThat(choice.options()).contains("Kavu Titan").doesNotContain("Plains");
+    }
+
+    @Test
+    @DisplayName("Offers a legal non-basic-land card name with no copy in the game")
+    void offersNonBasicLandNameNotPresentInGame() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new KavuScout()));
+        harness.setLibrary(player2, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        Card absentCardName = new KavuTitan();
+
+        cast();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).contains(absentCardName.getName());
     }
 
     @Test
     @DisplayName("Puts all matching cards from the top seven into hand and exiles the rest")
     void matchingCardsGoToHandAndRestAreExiled() {
         UUID p1 = player1.getId();
-        Card hit1 = named("Research Target");
-        Card miss1 = named("Miss One");
-        Card hit2 = named("Research Target");
-        Card miss2 = named("Miss Two");
-        Card miss3 = named("Miss Three");
-        Card miss4 = named("Miss Four");
-        Card miss5 = named("Miss Five");
-        Card untouched = named("Untouched");
-        gd.playerDecks.put(p1, new ArrayList<>(List.of(
-                hit1, miss1, hit2, miss2, miss3, miss4, miss5, untouched)));
+        Card hit1 = new KavuTitan();
+        Card miss1 = new KavuScout();
+        Card hit2 = new KavuTitan();
+        Card miss2 = new KavuScout();
+        Card miss3 = new KavuScout();
+        Card miss4 = new KavuScout();
+        Card miss5 = new KavuScout();
+        Card untouched = new Plains();
+        harness.setLibrary(player1, List.of(hit1, miss1, hit2, miss2, miss3, miss4, miss5, untouched));
 
         cast();
-        harness.handleListChoice(player1, "Research Target");
+        harness.handleListChoice(player1, "Kavu Titan");
 
         assertThat(gd.playerHands.get(p1)).extracting(Card::getId)
                 .contains(hit1.getId(), hit2.getId())
@@ -75,15 +86,15 @@ class DesperateResearchTest extends BaseCardTest {
         UUID p1 = player1.getId();
         List<Card> revealed = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            revealed.add(named("Chaff " + i));
+            revealed.add(new KavuScout());
         }
-        Card wanted = named("Wanted Card");
+        Card wanted = new KavuTitan();
         List<Card> deck = new ArrayList<>(revealed);
         deck.add(wanted);
-        gd.playerDecks.put(p1, deck);
+        harness.setLibrary(player1, deck);
 
         cast();
-        harness.handleListChoice(player1, "Wanted Card");
+        harness.handleListChoice(player1, "Kavu Titan");
 
         assertThat(gd.playerHands.get(p1)).extracting(Card::getId).doesNotContain(
                 revealed.stream().map(Card::getId).toArray(UUID[]::new));
@@ -92,20 +103,19 @@ class DesperateResearchTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(p1)).containsExactly(wanted);
     }
 
-    private static Card named(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.BLACK);
-        return card;
-    }
+    @Test
+    @DisplayName("Reveals only the cards available when the library has fewer than seven cards")
+    void smallLibraryRevealsWhatIsAvailable() {
+        UUID p1 = player1.getId();
+        Card hit = new KavuTitan();
+        Card other = new KavuScout();
+        harness.setLibrary(player1, List.of(hit, other));
 
-    private static Card basicLand(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.LAND);
-        card.setSupertypes(Set.of(CardSupertype.BASIC));
-        return card;
+        cast();
+        harness.handleListChoice(player1, "Kavu Titan");
+
+        assertThat(gd.playerHands.get(p1)).extracting(Card::getId).contains(hit.getId());
+        assertThat(gd.getPlayerExiledCards(p1)).extracting(Card::getId).contains(other.getId());
+        assertThat(gd.playerDecks.get(p1)).isEmpty();
     }
 }

@@ -30,6 +30,7 @@ class PlanarPortalTest extends BaseCardTest {
         assertThat(portal.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -109,6 +110,20 @@ class PlanarPortalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("An empty library search resolves without a card choice")
+    void emptyLibrarySearchResolvesWithoutChoice() {
+        addReadyPortal(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private Permanent addReadyPortal(Player player) {

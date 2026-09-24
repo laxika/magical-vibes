@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisT
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
+import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
 import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
@@ -223,6 +224,7 @@ import com.github.laxika.magicalvibes.model.condition.CreatureCardsPutIntoGravey
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ModifiedCreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureWithDifferentNameDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
@@ -622,6 +624,9 @@ public class ConditionEvaluationService {
             case CreatureDiedUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
+            case ModifiedCreatureDiedUnderYourControlThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoControlledModifiedCreatureDiedThisTurn.contains(ctx.controllerId());
             case CreatureLeftBattlefieldUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureLeftBattlefieldCountThisTurn
@@ -1024,6 +1029,14 @@ public class ConditionEvaluationService {
             case AttackedTargetIsOpponent ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
+            case AttackedOpponentHasMoreLifeThanAnotherOpponent ignored ->
+                    ctx.targetId() != null && ctx.controllerId() != null
+                            && gameData.playerIds.contains(ctx.targetId())
+                            && !ctx.targetId().equals(ctx.controllerId())
+                            && gameData.orderedPlayerIds.stream()
+                                    .filter(playerId -> !playerId.equals(ctx.controllerId())
+                                            && !playerId.equals(ctx.targetId()))
+                                    .anyMatch(playerId -> gameData.getLife(ctx.targetId()) > gameData.getLife(playerId));
             case AttackedTargetIsMonarch ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.targetId().equals(gameData.monarchPlayerId);
@@ -1821,6 +1834,24 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private boolean attackedOpponentHasMoreLifeThanAnotherOpponent(GameData gameData,
+                                                                    ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackedOpponentId = ctx.targetId();
+        if (controllerId == null
+                || attackedOpponentId == null
+                || !gameData.playerIds.contains(attackedOpponentId)
+                || controllerId.equals(attackedOpponentId)) {
+            return false;
+        }
+
+        int attackedOpponentLife = gameData.getLife(attackedOpponentId);
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId)
+                        && !playerId.equals(attackedOpponentId))
+                .anyMatch(playerId -> attackedOpponentLife > gameData.getLife(playerId));
     }
 
     private boolean anOpponentHasMoreCardsInHandThanController(GameData gameData, UUID controllerId) {

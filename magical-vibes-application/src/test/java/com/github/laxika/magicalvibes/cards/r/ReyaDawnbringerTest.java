@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,23 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ReyaDawnbringer.class, RagingKavu.class, AngelOfMercy.class, HolyDay.class})
 class ReyaDawnbringerTest extends BaseCardTest {
-
-    /**
-     * Advances from UNTAP to UPKEEP, triggering upkeep abilities.
-     * Resolves the MayEffect from the stack and accepts the may choice.
-     * Inner effects resolve inline during acceptance.
-     */
-    private void advanceToUpkeepAndTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effects resolve inline
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Reya Dawnbringer puts it on the stack")
@@ -61,8 +44,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving puts Reya Dawnbringer on the battlefield")
     void resolvingPutsOnBattlefield() {
@@ -76,20 +57,25 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Reya Dawnbringer");
     }
 
-    // ===== Upkeep trigger =====
-
     @Test
-    @DisplayName("Upkeep trigger puts ability on the stack")
+    @DisplayName("Upkeep trigger chooses a target before going on the stack")
     void upkeepTriggerPutsAbilityOnStack() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        RagingKavu target = new RagingKavu();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(target));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
+        advanceToUpkeep(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -97,191 +83,188 @@ class ReyaDawnbringerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Upkeep trigger fires even with summoning sickness")
+    @DisplayName("Upkeep trigger asks for a target even with summoning sickness")
     void triggerFiresWithSummoningSickness() {
+        RagingKavu target = new RagingKavu();
         Permanent reya = new Permanent(new ReyaDawnbringer());
-        // summoning sick by default
         gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(target));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
+        advanceToUpkeep(player1);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reya Dawnbringer");
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
     }
 
     @Test
     @DisplayName("No trigger during opponent's upkeep")
     void noTriggerDuringOpponentsUpkeep() {
-        // Reya on player1's battlefield, but it's player2's turn
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(new RagingKavu()));
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP — only checks player2's permanents
+        advanceToUpkeep(player2);
 
-        // No trigger from player1's Reya
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(s -> s.contains("Reya Dawnbringer"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(text -> text.contains("Reya Dawnbringer"));
     }
 
-    // ===== Graveyard return =====
-
     @Test
-    @DisplayName("Returns creature from graveyard to battlefield")
+    @DisplayName("Returns the chosen creature from the graveyard to the battlefield")
     void returnsCreatureFromGraveyardToBattlefield() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        RagingKavu target = new RagingKavu();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(target));
 
-        advanceToUpkeepAndTrigger();
+        advanceToUpkeep(player1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
 
-        // Inner effects resolve inline → graveyard choice prompt
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
-        // Choose the creature (index 0)
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        // Grizzly Bears moved from graveyard to battlefield
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Raging Kavu");
+        harness.assertNotInGraveyard(player1, "Raging Kavu");
     }
 
     @Test
-    @DisplayName("Player can decline graveyard choice")
+    @DisplayName("Player may decline after choosing a graveyard target")
     void playerCanDeclineGraveyardChoice() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        RagingKavu target = new RagingKavu();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(target));
 
-        advanceToUpkeepAndTrigger();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        // Decline with -1
-        harness.handleGraveyardCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, false);
 
-        // Grizzly Bears stays in graveyard, not on battlefield
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Raging Kavu");
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
     }
 
     @Test
-    @DisplayName("Choosing specific creature when multiple are in graveyard")
+    @DisplayName("Choosing a specific creature when multiple are in the graveyard")
     void choosesSpecificCreatureFromGraveyard() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new AngelOfMercy()));
+        RagingKavu ragingKavu = new RagingKavu();
+        AngelOfMercy angel = new AngelOfMercy();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(ragingKavu, angel));
 
-        advanceToUpkeepAndTrigger();
+        advanceToUpkeep(player1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ragingKavu.getId(), angel.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(angel.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
-        // Choose Angel of Mercy (index 1)
-        harness.handleGraveyardCardChosen(player1, 1);
-
-        // Angel of Mercy returned, Grizzly Bears stays
         harness.assertOnBattlefield(player1, "Angel of Mercy");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Raging Kavu");
         harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
-    // ===== No creatures in graveyard =====
-
     @Test
-    @DisplayName("Trigger resolves with no effect if graveyard is empty")
+    @DisplayName("Does not put the trigger on the stack with an empty graveyard")
     void noEffectWithEmptyGraveyard() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        // Empty graveyard — no cards at all
+        addCreatureReady(player1, new ReyaDawnbringer());
 
-        advanceToUpkeepAndTrigger();
+        advanceToUpkeep(player1);
 
-        // Inner effects resolved inline — no graveyard choice since graveyard is empty
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
-    @DisplayName("Trigger resolves with no effect if graveyard has only non-creature cards")
+    @DisplayName("Does not put the trigger on the stack when no creature card is in the graveyard")
     void noEffectWithOnlyNonCreaturesInGraveyard() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        // Only instants in graveyard
+        addCreatureReady(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(new HolyDay()));
 
-        advanceToUpkeepAndTrigger();
+        advanceToUpkeep(player1);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
-        // HolyDay stays in graveyard untouched
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Holy Day");
     }
-
-    // ===== ETB on returned creature =====
 
     @Test
     @DisplayName("Returned creature's ETB ability triggers")
     void returnedCreatureTriggersETB() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new AngelOfMercy()));
+        AngelOfMercy angel = new AngelOfMercy();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(angel));
         harness.setLife(player1, 20);
 
-        advanceToUpkeepAndTrigger();
-        harness.handleGraveyardCardChosen(player1, 0); // return Angel of Mercy
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(angel.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
-        // Angel of Mercy's ETB (gain 3 life) should be on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Angel of Mercy");
 
-        // Resolve the ETB
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
 
-    // ===== Invalid choices =====
-
     @Test
-    @DisplayName("Cannot choose invalid graveyard index")
+    @DisplayName("Cannot choose a non-creature card as the graveyard target")
     void cannotChooseInvalidIndex() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        // Graveyard: index 0 = HolyDay (instant), index 1 = GrizzlyBears (creature)
-        harness.setGraveyard(player1, List.of(new HolyDay(), new GrizzlyBears()));
+        HolyDay holyDay = new HolyDay();
+        RagingKavu target = new RagingKavu();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(holyDay, target));
 
-        advanceToUpkeepAndTrigger();
+        advanceToUpkeep(player1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
 
-        // Index 0 is HolyDay (not a creature) → not in valid indices
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(holyDay.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+                .hasMessageContaining("Invalid card");
     }
 
     @Test
-    @DisplayName("Opponent cannot make graveyard choice for controller")
+    @DisplayName("Opponent cannot choose a graveyard target for the controller")
     void opponentCannotChoose() {
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        reya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(reya);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        RagingKavu target = new RagingKavu();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(target));
 
-        advanceToUpkeepAndTrigger();
+        advanceToUpkeep(player1);
 
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 0))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn to choose");
     }
-}
 
+    @Test
+    @DisplayName("The chosen target fizzles if it leaves the graveyard before resolution")
+    void targetFizzlingWhenItLeavesGraveyard() {
+        RagingKavu target = new RagingKavu();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(target));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(text -> text.contains("Reya Dawnbringer") && text.contains("fizzles"));
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+    }
+}

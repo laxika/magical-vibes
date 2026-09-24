@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.Absorb;
+import com.github.laxika.magicalvibes.cards.a.AncientSpring;
+import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.q.QuirionElves;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +16,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RevivingVapors.class, Absorb.class, AncientSpring.class, Opt.class, QuirionElves.class})
 class RevivingVaporsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chooses one revealed card for hand, puts the rest in the graveyard, and gains its mana value")
     void choosesCardAndGainsItsManaValue() {
-        Card chosen = new GrizzlyBears();
-        Card restOne = new Shock();
-        Card restTwo = new Shock();
+        Card chosen = new QuirionElves();
+        Card restOne = new Opt();
+        Card restTwo = new Opt();
         harness.setLibrary(player1, List.of(chosen, restOne, restTwo));
         castRevivingVapors();
 
@@ -38,9 +41,47 @@ class RevivingVaporsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gains life for the selected card even when it is not the first revealed card")
+    void choosesNonFirstCardAndGainsItsManaValue() {
+        Card restOne = new Opt();
+        Card chosen = new Absorb();
+        Card restTwo = new QuirionElves();
+        harness.setLibrary(player1, List.of(restOne, chosen, restTwo));
+        int lifeBeforeChoice = gd.playerLifeTotals.get(player1.getId());
+        castRevivingVapors();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(restOne, restTwo);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBeforeChoice + 3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Gains no life when the chosen card has mana value zero")
+    void chosenLandHasZeroManaValue() {
+        Card chosen = new AncientSpring();
+        Card restOne = new Opt();
+        Card restTwo = new QuirionElves();
+        harness.setLibrary(player1, List.of(chosen, restOne, restTwo));
+        int lifeBeforeChoice = gd.playerLifeTotals.get(player1.getId());
+        castRevivingVapors();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(restOne, restTwo);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBeforeChoice);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("With one card in the library, it is put into hand and its mana value is gained")
     void oneCardLibrary() {
-        Card chosen = new GrizzlyBears();
+        Card chosen = new QuirionElves();
         harness.setLibrary(player1, List.of(chosen));
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         castRevivingVapors();
@@ -62,11 +103,7 @@ class RevivingVaporsTest extends BaseCardTest {
     }
 
     private void castRevivingVapors() {
-        harness.setHand(player1, List.of(new RevivingVapors()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new RevivingVapors(), "{2}{W}{U}");
         harness.passBothPriorities();
     }
 }

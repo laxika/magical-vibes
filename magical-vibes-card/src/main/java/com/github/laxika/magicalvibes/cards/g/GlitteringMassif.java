@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
+@CardRegistration(set = "SOC", collectorNumber = "376")
 @CardRegistration(set = "MSC", collectorNumber = "249")
 @CardRegistration(set = "MSC", collectorNumber = "478")
 public class GlitteringMassif extends Card {

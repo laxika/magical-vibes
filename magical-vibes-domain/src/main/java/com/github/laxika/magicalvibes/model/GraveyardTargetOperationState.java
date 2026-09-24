@@ -121,6 +121,8 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenPutCounterOnTargetCreatureResume;
     public ExileUpToOneMatchingCardFromEachGraveyardContext
             resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
+    /** Resolution-time mandatory exile of one card from each player's graveyard. */
+    public EachPlayerExilesCardFromGraveyardContext eachPlayerExilesCardFromGraveyard;
     public boolean resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
     public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesResume;
     public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChoiceMade;
@@ -266,6 +268,14 @@ public class GraveyardTargetOperationState {
 
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {
+    }
+
+    public record EachPlayerExilesCardFromGraveyardContext(
+            UUID controllerId, UUID sourcePermanentId, CardEffect thenEffect,
+            List<UUID> remainingPlayerIds, UUID currentPlayerId, int nonlandCardsExiled) {
+        public EachPlayerExilesCardFromGraveyardContext {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
     }
 
     public record MilledCreatureReturnContext(List<UUID> chosenCardIds) {

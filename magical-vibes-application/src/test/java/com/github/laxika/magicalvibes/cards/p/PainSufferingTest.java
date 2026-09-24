@@ -1,27 +1,28 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HoodedKavu;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PainSuffering.class, HoodedKavu.class, Mountain.class})
 class PainSufferingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Pain makes the targeted player discard a card")
     void painMakesTargetDiscard() {
         harness.setHand(player1, List.of(new PainSuffering()));
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new HoodedKavu()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castSorcery(player1, 0, 0, player2.getId());
@@ -31,14 +32,14 @@ class PainSufferingTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hooded Kavu");
     }
 
     @Test
     @DisplayName("Pain can be cast for its black mana cost")
     void painUsesItsOwnManaCost() {
         harness.setHand(player1, List.of(new PainSuffering()));
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new HoodedKavu()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castSorcery(player1, 0, 0, player2.getId());
@@ -67,13 +68,25 @@ class PainSufferingTest extends BaseCardTest {
     @Test
     @DisplayName("Suffering cannot target a creature")
     void sufferingCannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HoodedKavu());
         harness.setHand(player1, List.of(new PainSuffering()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Hooded Kavu");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pain cannot target a permanent")
+    void painCannotTargetPermanent() {
+        harness.addToBattlefield(player2, new HoodedKavu());
+        harness.setHand(player1, List.of(new PainSuffering()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Hooded Kavu");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

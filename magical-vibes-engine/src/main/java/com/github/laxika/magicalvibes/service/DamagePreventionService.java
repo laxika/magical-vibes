@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
 import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;

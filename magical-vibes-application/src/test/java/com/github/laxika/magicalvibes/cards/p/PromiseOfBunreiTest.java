@@ -1,26 +1,25 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HandOfHonor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PromiseOfBunrei.class, HandOfHonor.class})
 class PromiseOfBunreiTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrifices itself and creates four colorless Spirit tokens when your creature dies")
     void creatureDeathCreatesFourSpirits() {
         harness.addToBattlefield(player1, new PromiseOfBunrei());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        killPlayerOnesCreature();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+        putIntoGraveyard(creature);
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Promise of Bunrei");
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -38,32 +37,51 @@ class PromiseOfBunreiTest extends BaseCardTest {
     @DisplayName("Does not trigger when an opponent's creature dies")
     void opponentCreatureDeathDoesNotTrigger() {
         harness.addToBattlefield(player1, new PromiseOfBunrei());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new CruelEdict()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HandOfHonor());
+        putIntoGraveyard(creature);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Promise of Bunrei");
+        harness.assertInGraveyard(player2, "Hand of Honor");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Spirit"))
                 .isEmpty();
     }
 
-    private void killPlayerOnesCreature() {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
+    @Test
+    @DisplayName("Does not create tokens if the enchantment leaves before its trigger resolves")
+    void sourceLeavingBeforeTriggerResolutionPreventsTokens() {
+        Permanent promise = harness.addToBattlefieldAndReturn(player1, new PromiseOfBunrei());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
 
-        harness.castSorcery(player2, 0, player1.getId());
+        putIntoGraveyard(creature);
+        putIntoGraveyard(promise);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Promise of Bunrei");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Spirit"))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates only one batch when multiple creatures die before the trigger resolves")
+    void multipleDeathsCreateOnlyOneBatch() {
+        harness.addToBattlefield(player1, new PromiseOfBunrei());
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+
+        putIntoGraveyard(firstCreature);
+        putIntoGraveyard(secondCreature);
         harness.passBothPriorities();
         harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Spirit"))
+                .hasSize(4);
+    }
+
+    private void putIntoGraveyard(Permanent permanent) {
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, permanent));
     }
 }
