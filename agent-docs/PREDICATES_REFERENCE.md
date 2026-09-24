@@ -58,6 +58,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentHasExhaustAbilityPredicate` | `()` | permanents with at least one effective exhaust ability; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasTapActivatedAbilityPredicate` | `()` | permanents with at least one effective activated ability whose cost includes `{T}`; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentCouldProduceManaPredicate` | `(ManaColor)` | permanents whose current mana abilities could produce the requested mana type, including basic-land types and applicable mana replacements; needs game data |

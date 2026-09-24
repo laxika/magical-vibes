@@ -807,6 +807,7 @@ public class LayerSystemService {
             h = mix(h, timestamp.getKey().ordinal());
             h = mix(h, timestamp.getValue());
         }
+        h = mix(h, p.getPersistentPowerModifier());
         h = mix(h, p.getPowerModifier());
         h = mix(h, p.getToughnessModifier());
         h = mix(h, p.getBasePowerOverride());
@@ -2430,6 +2431,9 @@ public class LayerSystemService {
             state.addKeywords(gameData.perpetualCardKeywords.getOrDefault(
                     permanent.getCard().getId(), Set.of()));
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
+            gameData.perpetualCardRemovedKeywords
+                    .getOrDefault(permanent.getCard().getId(), Set.of())
+                    .forEach(state::removeKeyword);
         }
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
             // Losing all creature types nullifies the Changeling grant (legacy semantics).

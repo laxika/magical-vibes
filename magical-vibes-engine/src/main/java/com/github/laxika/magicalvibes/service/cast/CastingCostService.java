@@ -531,6 +531,7 @@ public class CastingCostService {
         UUID commanderId = playerId.equals(gameData.commandCastPlayerId) ? gameData.commandCastCardId : card.getId();
         int delta = (sourceZone == Zone.COMMAND || playerId.equals(gameData.commandCastPlayerId))
                 ? gameData.commanderTaxByCardId.getOrDefault(commanderId, 0) : 0;
+        delta -= gameData.perpetualCardCastCostReductions.getOrDefault(card.getId(), 0);
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
         if (exilePlayCostModifier != null

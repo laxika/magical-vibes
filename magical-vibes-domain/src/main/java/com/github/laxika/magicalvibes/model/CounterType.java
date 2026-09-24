@@ -199,6 +199,7 @@ public enum CounterType {
     VOID,
     WAGE,
     HASTE,
+    WRECK,
     DEATHTOUCH,
     DECAYED,
     FLYING,
