@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Swelter.class, GiantWarthog.class, KrosanVerge.class, LavaDart.class, SuntailHawk.class})
+@CardUsed({GiantWarthog.class, KrosanVerge.class, LavaDart.class, SuntailHawk.class, Swelter.class})
 class SwelterTest extends BaseCardTest {
 
     private void giveMana() {
@@ -121,5 +121,39 @@ class SwelterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 List.of(creature.getId(), land.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Deals 2 damage to each of two target creatures")
+    void damagesBothTargetsJudReview() {
+        Permanent warthog = harness.addToBattlefieldAndReturn(player2, new GiantWarthog());
+        Permanent otherWarthog = harness.addToBattlefieldAndReturn(player2, new GiantWarthog());
+        harness.setHand(player1, List.of(new Swelter()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(warthog.getId(), otherWarthog.getId()));
+
+        assertThat(warthog.getMarkedDamage()).isEqualTo(2);
+        assertThat(otherWarthog.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Giant Warthog");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Giant Warthog"))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Two damage destroys a 1/1 target while marking damage on a larger target")
+    void damagesLethallyAndNonLethally() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent warthog = harness.addToBattlefieldAndReturn(player2, new GiantWarthog());
+        harness.setHand(player1, List.of(new Swelter()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(hawk.getId(), warthog.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        assertThat(warthog.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Giant Warthog");
     }
 }

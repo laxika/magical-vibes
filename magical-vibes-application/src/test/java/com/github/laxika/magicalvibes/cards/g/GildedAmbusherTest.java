@@ -32,13 +32,15 @@ class GildedAmbusherTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player2, opposing.getId());
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ambusher).doesNotContain(sacrifice);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposing);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(exiledFromLibrary);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
-        assertThat(player2.getLifeTotal()).isEqualTo(13);
+        // Three from the exile trigger and four from Ambusher's combat damage.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
     }
 
     @Test
@@ -55,6 +57,6 @@ class GildedAmbusherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ambusher, sacrifice);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposing);
-        assertThat(player2.getLifeTotal()).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

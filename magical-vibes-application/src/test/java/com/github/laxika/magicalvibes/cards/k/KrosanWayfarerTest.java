@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KrosanWayfarer.class, NantukoMonastery.class, IronshellBeetle.class})
+@CardUsed({IronshellBeetle.class, KrosanWayfarer.class, NantukoMonastery.class})
 class KrosanWayfarerTest extends BaseCardTest {
 
     @Test
@@ -76,5 +76,20 @@ class KrosanWayfarerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
         harness.assertNotOnBattlefield(player1, "Nantuko Monastery");
+    }
+
+    @Test
+    void acceptingMayWithNoLandLeavesHandUnchanged() {
+        addCreatureReady(player1, new KrosanWayfarer());
+        KrosanWayfarer nonlandCard = new KrosanWayfarer();
+        harness.setHand(player1, List.of(nonlandCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonlandCard);
+        harness.assertInGraveyard(player1, "Krosan Wayfarer");
     }
 }

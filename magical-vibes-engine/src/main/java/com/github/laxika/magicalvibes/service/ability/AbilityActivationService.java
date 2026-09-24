@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -1237,6 +1238,35 @@ public class AbilityActivationService {
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null, null);
+    }
+
+    /** Activates an activated ability belonging to one of the activating player's emblems. */
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        List<Emblem> ownedEmblems = gameData.emblems.stream()
+                .filter(emblem -> player.getId().equals(emblem.controllerId()))
+                .toList();
+        if (emblemIndex < 0 || emblemIndex >= ownedEmblems.size()) {
+            throw new IllegalStateException("Invalid emblem index");
+        }
+        Emblem emblem = ownedEmblems.get(emblemIndex);
+        int effectiveAbilityIndex = effectiveAbilityIndex(abilityIndex);
+        if (effectiveAbilityIndex < 0 || effectiveAbilityIndex >= emblem.activatedAbilities().size()) {
+            throw new IllegalStateException("Emblem has no activated ability at that index");
+        }
+        if (emblem.sourceCard() == null) {
+            throw new IllegalStateException("Emblem has no source card");
+        }
+
+        // ActivatedAbilityExecutionService already handles the complete activation sequence for a
+        // Permanent. A mutable runtime copy gives the emblem ability that same path without
+        // mutating the frozen card that originally created the emblem.
+        Card sourceCopy = emblem.sourceCard().createRuntimeCopy();
+        sourceCopy.getActivatedAbilities().clear();
+        sourceCopy.getActivatedAbilities().addAll(emblem.activatedAbilities());
+        activateAbilityInternal(gameData, player, -1, effectiveAbilityIndex, xValue, targetId, targetZone,
+                null, null, targetIds, damageAssignments, new Permanent(sourceCopy), null);
     }
 
     /** Activates an ability printed on a card in its controller's command zone. */

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
+@CardRegistration(set = "C14", collectorNumber = "54")
 @CardRegistration(set = "ECC", collectorNumber = "139")
 public class CommandersSphere extends Card {
 
@@ -26,7 +27,7 @@ public class CommandersSphere extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new DrawCardEffect()),
-                "Sacrifice Commander's Sphere: Draw a card."
+                "Sacrifice this artifact: Draw a card."
         ));
     }
 }

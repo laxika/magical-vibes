@@ -135,6 +135,20 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectCondit
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
     @Test
+    void faceDownPermanentsHaveZeroManaValueForLowestManaValueComparison() {
+        Card printedExpensive = createCreature("Face down", 6, 6, CardColor.GREEN);
+        printedExpensive.setManaCost("{6}");
+        Permanent faceDown = addPermanent(player1Id, printedExpensive);
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card printedCheap = createCreature("Face up", 1, 1, CardColor.GREEN);
+        printedCheap.setManaCost("{1}");
+        Permanent faceUp = addPermanent(player2Id, printedCheap);
+
+        assertThat(gqs.hasLowestManaValueAmongAllNonlandPermanents(gd, faceDown)).isTrue();
+        assertThat(gqs.hasLowestManaValueAmongAllNonlandPermanents(gd, faceUp)).isFalse();
+    }
+
+    @Test
     void landCountUsesCurrentPermanentTypes() {
         Permanent creature = addPermanent(player1Id, createCreature("Changed land", 2, 2, CardColor.GREEN));
         GameQueryService query = org.mockito.Mockito.spy(gqs);

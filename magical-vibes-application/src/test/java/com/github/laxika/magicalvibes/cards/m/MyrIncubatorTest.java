@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AuriokBladewarden;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.i.IronMyr;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +18,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MyrIncubator.class, GoldMyr.class, IronMyr.class, AuriokBladewarden.class})
 class MyrIncubatorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles any number of artifact cards and creates one Myr for each")
     void exilesArtifactsAndCreatesMatchingNumberOfMyrs() {
-        resolveActivation(List.of(new MyrSire(), new GoldMyr(), new LlanowarElves()));
+        resolveActivation(List.of(new IronMyr(), new GoldMyr(), new AuriokBladewarden()));
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -35,21 +39,27 @@ class MyrIncubatorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
-                .containsExactlyInAnyOrder("Myr Sire", "Gold Myr");
+                .containsExactlyInAnyOrder("Iron Myr", "Gold Myr");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(card -> card.getName())
-                .containsExactly("Llanowar Elves");
-        assertThat(findPermanents(player1, "Myr")).hasSize(2);
-        assertThat(findPermanent(player1, "Myr").getCard().getType()).isEqualTo(CardType.CREATURE);
-        assertThat(findPermanents(player1, "Myr"))
-                .allMatch(permanent -> permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+                .containsExactly("Auriok Bladewarden");
+        assertThat(findPermanents(player1, "Myr")).hasSize(2)
+                .allSatisfy(myr -> {
+                    assertThat(myr.getCard().getPower()).isEqualTo(1);
+                    assertThat(myr.getCard().getToughness()).isEqualTo(1);
+                    assertThat(myr.getCard().getColor()).isNull();
+                    assertThat(myr.getCard().getType()).isEqualTo(CardType.CREATURE);
+                    assertThat(myr.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
+                    assertThat(myr.getCard().getSubtypes()).contains(CardSubtype.MYR);
+                    assertThat(myr.getCard().isToken()).isTrue();
+                });
         harness.assertInGraveyard(player1, "Myr Incubator");
     }
 
     @Test
     @DisplayName("May stop the artifact search without selecting any card")
     void maySelectZeroArtifactCards() {
-        resolveActivation(List.of(new MyrSire(), new GoldMyr()));
+        resolveActivation(List.of(new IronMyr(), new GoldMyr()));
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
@@ -62,8 +72,7 @@ class MyrIncubatorTest extends BaseCardTest {
 
     private void resolveActivation(List<com.github.laxika.magicalvibes.model.Card> library) {
         harness.setLibrary(player1, library);
-        harness.addToBattlefield(player1, new MyrIncubator());
-        Permanent incubator = findPermanent(player1, "Myr Incubator");
+        Permanent incubator = harness.addToBattlefieldAndReturn(player1, new MyrIncubator());
         incubator.setSummoningSick(false);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

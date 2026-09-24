@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,11 +14,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WebOfInertia.class, SuntailHawk.class})
+@CardUsed({ChandraNalaar.class, SuntailHawk.class, WebOfInertia.class})
 class WebOfInertiaTest extends BaseCardTest {
 
     @Test
@@ -124,5 +128,39 @@ class WebOfInertiaTest extends BaseCardTest {
 
     private void declareAttackers() {
         declareAttackers(player2, List.of(0));
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("The restriction does not prevent attacks at the controller's planeswalker")
+    void restrictionDoesNotPreventAttackingControllerPlaneswalker() {
+        harness.addToBattlefield(player1, new WebOfInertia());
+        Permanent attacker = addCreatureReady(player2, new SuntailHawk());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+
+        resolveCombatTriggerForJudReview(player2);
+        harness.handleMayAbilityChosen(player2, false);
+
+        declareAttackerAtTargetForJudReview(player2, attacker, planeswalker);
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+    }
+
+    private void resolveCombatTriggerForJudReview(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void declareAttackerAtTargetForJudReview(Player attacker, Permanent creature, Permanent target) {
+        harness.forceActivePlayer(attacker);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        int attackerIndex = gd.playerBattlefields.get(attacker.getId()).indexOf(creature);
+        gs.declareAttackers(gd, attacker, List.of(attackerIndex), Map.of(attackerIndex, target.getId()));
     }
 }

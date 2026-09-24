@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.a.AetherVial;
+import com.github.laxika.magicalvibes.cards.s.ScreamsFromWithin;
+import com.github.laxika.magicalvibes.cards.t.TelJiladWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ViridianZealot.class, AetherVial.class, ScreamsFromWithin.class, TelJiladWolf.class})
 class ViridianZealotTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,8 @@ class ViridianZealotTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player2, "Aether Vial");
+        harness.assertInGraveyard(player2, "Aether Vial");
     }
 
     @Test
@@ -42,15 +44,15 @@ class ViridianZealotTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Screams from Within");
+        harness.assertInGraveyard(player2, "Screams from Within");
     }
 
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addReadyZealot(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new TelJiladWolf());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -69,23 +71,57 @@ class ViridianZealotTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot activate without enough generic mana")
+    void cannotActivateWithoutEnoughGenericMana() {
+        addReadyZealot(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact it controls")
+    void destroysOwnArtifact() {
+        addReadyZealot(player1);
+        Permanent target = addReadyArtifact(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Aether Vial");
+        harness.assertInGraveyard(player1, "Aether Vial");
+    }
+
+    @Test
+    @DisplayName("Can activate despite summoning sickness because it has no tap cost")
+    void canActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new ViridianZealot());
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Viridian Zealot");
+    }
+
     private Permanent addReadyZealot(Player player) {
-        Permanent perm = new Permanent(new ViridianZealot());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ViridianZealot());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        Permanent perm = new Permanent(new LeoninScimitar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new AetherVial());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Permanent perm = new Permanent(new GloriousAnthem());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent host = addCreatureReady(player, new TelJiladWolf());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new ScreamsFromWithin());
+        aura.setAttachedTo(host.getId());
+        return aura;
     }
 }

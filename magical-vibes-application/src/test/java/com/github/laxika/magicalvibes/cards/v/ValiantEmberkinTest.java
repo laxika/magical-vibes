@@ -56,7 +56,7 @@ class ValiantEmberkinTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, target.getId());
+        harness.castInstant(player2, 0, retromancer.getId());
 
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack.stream()

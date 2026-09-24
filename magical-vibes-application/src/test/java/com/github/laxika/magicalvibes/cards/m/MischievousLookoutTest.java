@@ -32,6 +32,8 @@ class MischievousLookoutTest extends BaseCardTest {
 
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent ringPermanent = findPermanent(player1, "Sol Ring");
         assertThat(gqs.isArtifact(gd, ringPermanent)).isTrue();
@@ -42,6 +44,7 @@ class MischievousLookoutTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.clearPriorityPassed();
         harness.castInstant(player1, 0, ringPermanent.getId());
         resolveAllTriggers();

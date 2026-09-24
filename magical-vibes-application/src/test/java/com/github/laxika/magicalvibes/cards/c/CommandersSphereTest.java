@@ -52,4 +52,19 @@ class CommandersSphereTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         harness.assertInGraveyard(player1, "Commander's Sphere");
     }
+
+    @Test
+    @DisplayName("Sacrificing it draws a card")
+    void sacrificingItDrawsACard() {
+        harness.addToBattlefield(player1, new CommandersSphere());
+        harness.setLibrary(player1, List.of(new Plains()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Commander's Sphere");
+        harness.assertInGraveyard(player1, "Commander's Sphere");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
 }

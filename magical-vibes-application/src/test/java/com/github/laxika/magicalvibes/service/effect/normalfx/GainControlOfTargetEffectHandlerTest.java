@@ -149,6 +149,9 @@ class GainControlOfTargetEffectHandlerTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
+            when(creatureControlService.applyControlEffect(eq(gd), eq(player1Id), any(Permanent.class),
+                    eq(effect), eq(EffectDuration.PERMANENT), eq(null), eq("Captivating Vampire")))
+                    .thenReturn(true);
             handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
@@ -262,6 +265,9 @@ class GainControlOfTargetEffectHandlerTest {
             when(gameQueryService.findPermanentById(gd, target1.getId())).thenReturn(target1);
             when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
 
+            when(creatureControlService.applyControlEffect(eq(gd), eq(player1Id), any(Permanent.class),
+                    eq(effect), eq(EffectDuration.PERMANENT), eq(null), eq("Captivating Vampire")))
+                    .thenReturn(true);
             handler.resolve(gd, entry, effect);
 
             assertThat(target1.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);

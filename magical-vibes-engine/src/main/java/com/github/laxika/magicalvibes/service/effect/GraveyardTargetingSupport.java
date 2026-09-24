@@ -120,8 +120,10 @@ public class GraveyardTargetingSupport {
                     GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to the battlefield attached to the token", 1, 1);
         }
         if (effect instanceof ExileCardsFromGraveyardEffect exile) {
-            return new Target(null, GraveyardSearchScope.ALL_GRAVEYARDS, "to exile",
-                    exile.maxTargets(), 0);
+            return new Target(exile.filter(), exile.ownGraveyardOnly()
+                    ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD : GraveyardSearchScope.ALL_GRAVEYARDS,
+                    "to exile", exile.maxTargets(), exile.graveyardChoiceMinTargets(), null,
+                    exile.singleGraveyard());
         }
         if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
             return findTarget(List.of(exileThen.thenEffect()));
@@ -234,7 +236,13 @@ public class GraveyardTargetingSupport {
      * @param minTargets how many graveyard targets the step requires
      */
     public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
-                         int maxTargets, int minTargets, DynamicAmount maximumManaValue) {
+                         int maxTargets, int minTargets, DynamicAmount maximumManaValue,
+                         boolean singleGraveyard) {
+
+        public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
+                int maxTargets, int minTargets, DynamicAmount maximumManaValue) {
+            this(filter, scope, destination, maxTargets, minTargets, maximumManaValue, false);
+        }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                 int maxTargets, int minTargets) {

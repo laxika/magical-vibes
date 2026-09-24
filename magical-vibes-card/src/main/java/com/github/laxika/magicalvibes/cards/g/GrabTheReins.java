@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -31,8 +34,10 @@ public class GrabTheReins extends Card {
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice a creature. Grab the Reins deals damage equal to that creature's power to any target",
-                        List.of(new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect()),
-                        null, null, 0, 0, false, null)
+                        new SacrificePermanentThenEffect(new PermanentIsCreaturePredicate(),
+                                new DealDamageToAnyTargetEffect(new SacrificedPermanentPower()),
+                                "a creature", true, false),
+                        null)
         )));
     }
 }

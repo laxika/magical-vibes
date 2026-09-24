@@ -119,6 +119,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsIn
 import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureTypeCountAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.GreatestDamageDealtBySourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GraveyardsAtLeast;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
@@ -153,7 +154,9 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithLifeAtMost;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
@@ -162,6 +165,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.PlusOnePlusOneCountersPutOnControlledCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
+import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
@@ -350,6 +354,8 @@ public class AmountEvaluationService {
                     sumPermanentManaValues(gameData, s, ctx);
             case PlayersWithCardsInHandAtMost a ->
                     countPlayersWithCardsInHandAtMost(gameData, a, ctx);
+            case PlayersWithCardsInHandAtLeast a ->
+                    countPlayersWithCardsInHandAtLeast(gameData, a, ctx);
             case PlayersInGame ignored ->
                     gameData.orderedPlayerIds.size();
             case PlayersWhoDiscardedThisTurn ignored ->
@@ -502,6 +508,10 @@ public class AmountEvaluationService {
                     greatestOpponentHandSize(gameData, ctx);
             case OpponentsWithAtLeastTwoMoreLandsThanController ignored ->
                     opponentsWithAtLeastTwoMoreLandsThanController(gameData, ctx);
+            case OpponentsWithLifeAtMost thresholdAmount ->
+                    opponentsWithLifeAtMost(gameData, thresholdAmount, ctx);
+            case OpponentsWithMoreLandsThanController ignored ->
+                    opponentsWithMoreLandsThanController(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case OpponentsAttackedThisTurn ignored ->
@@ -630,6 +640,8 @@ public class AmountEvaluationService {
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPermanentsThisTurn
                                     .getOrDefault(ctx.targetPermanentId(), 0);
+            case GreatestDamageDealtBySourceThisTurn ignored ->
+                    greatestDamageDealtBySourceThisTurn(gameData);
             case DamageDealtToSourcePermanentBySourceNameThisTurn sourceDamage ->
                     damageDealtToSourcePermanentBySourceNameThisTurn(gameData, ctx, sourceDamage.sourceName());
             case TotalManaValueOfCardsExiledWithSource ignored ->
@@ -2354,6 +2366,32 @@ public class AmountEvaluationService {
         return count;
     }
 
+    private int opponentsWithLifeAtMost(GameData gameData, OpponentsWithLifeAtMost amount,
+                                        AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.getLife(playerId) <= amount.threshold()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsWithMoreLandsThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerLandCount = countLandsControlledBy(gameData, ctx.controllerId());
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && countLandsControlledBy(gameData, playerId) > controllerLandCount) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private int opponentsWhoLostLifeThisTurn(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
         int count = 0;
@@ -2507,6 +2545,32 @@ public class AmountEvaluationService {
             total += gameData.damageDealtToPlayersThisTurn.getOrDefault(playerId, 0);
         }
         return total;
+    }
+
+    private int countPlayersWithCardsInHandAtLeast(GameData gameData,
+            PlayersWithCardsInHandAtLeast count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (isPlayerInScope(gameData, playerId, count.scope(), ctx)
+                    && gameData.playerHands.getOrDefault(playerId, List.of()).size() >= count.threshold()) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    private int greatestDamageDealtBySourceThisTurn(GameData gameData) {
+        int greatestToPermanent = gameData.damageDealtToPermanentsBySourceThisTurn.values().stream()
+                .flatMap(sourceDamage -> sourceDamage.values().stream())
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0);
+        int greatestToPlayer = gameData.damageDealtToPlayersBySourceThisTurn.values().stream()
+                .flatMap(sourceDamage -> sourceDamage.values().stream())
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0);
+        return Math.max(greatestToPermanent, greatestToPlayer);
     }
 
     private int damageDealtToSourcePermanentBySourceNameThisTurn(GameData gameData, AmountContext ctx,

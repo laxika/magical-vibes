@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
@@ -380,6 +381,7 @@ public class StackResolutionService {
         perm.setCast(!entry.isCopy());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
+        perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
@@ -936,6 +938,19 @@ public class StackResolutionService {
             queueWarpExileIfPresent(gameData, entry, enchPerm);
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
+
+            boolean needsTwoPlayerChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(TwoPlayerChoiceOnEnterEffect.class::isInstance);
+            if (needsTwoPlayerChoice && gameData.orderedPlayerIds.size() >= 2) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseTwoPlayersAsEnter(
+                                enchPerm.getId(), controllerId, enteredCard, entry.getTargetId(), true,
+                                entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                                entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds(), null));
+                playerInputService.beginPlayerChoice(gameData, controllerId,
+                        new ArrayList<>(gameData.orderedPlayerIds), "Choose a player.");
+                return;
+            }
 
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (enteredCard.isSaga()) {

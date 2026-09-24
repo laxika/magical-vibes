@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -35,6 +36,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -808,6 +810,79 @@ public class PermanentChoiceSpellHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    public void handleOpponentChosenSpellTargets(GameData gameData, UUID chosenId,
+                                                  PermanentChoiceContext.OpponentChosenSpellTargets context) {
+        Card card = context.cardToCast();
+        int targetPosition = card.getOpponentChosenSpellTargetIndices().get(context.nextTargetIndex());
+        int groupIndex = targetGroupIndexForPosition(card, targetPosition);
+        int xValue = context.xValue() != null ? context.xValue() : 0;
+
+        if (context.chosenOpponentId() == null) {
+            List<UUID> validTargets = targetLegalityService.computeValidOpponentChosenTargetGroupPermanents(
+                    gameData, card, context.caster().getId(), chosenId, groupIndex, xValue, false);
+            if (validTargets.isEmpty()) {
+                throw new IllegalStateException("No legal target remains");
+            }
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
+                    context.caster(), card, context.cardIndex(), context.xValue(), context.buyback(),
+                    context.selectedTargets(), context.nextTargetIndex(), chosenId));
+            playerInputService.beginPermanentChoice(gameData, chosenId, validTargets,
+                    "Choose a target for " + card.getName() + ".");
+            return;
+        }
+
+        List<UUID> validTargets = targetLegalityService.computeValidOpponentChosenTargetGroupPermanents(
+                gameData, card, context.caster().getId(), context.chosenOpponentId(), groupIndex, xValue, false);
+        if (!validTargets.contains(chosenId)) {
+            throw new IllegalStateException("Invalid target");
+        }
+
+        Map<Integer, UUID> selectedTargets = new HashMap<>(context.selectedTargets());
+        selectedTargets.put(targetPosition, chosenId);
+        int nextTargetIndex = context.nextTargetIndex() + 1;
+        if (nextTargetIndex < card.getOpponentChosenSpellTargetIndices().size()) {
+            int nextTargetPosition = card.getOpponentChosenSpellTargetIndices().get(nextTargetIndex);
+            int nextGroupIndex = targetGroupIndexForPosition(card, nextTargetPosition);
+            List<UUID> validOpponentIds = targetLegalityService.computeValidOpponentChosenTargetGroupPlayers(
+                    gameData, card, context.caster().getId(), nextGroupIndex, xValue, false);
+            if (validOpponentIds.isEmpty()) {
+                throw new IllegalStateException("No legal opponent can choose a target");
+            }
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
+                    context.caster(), card, context.cardIndex(), context.xValue(), context.buyback(),
+                    selectedTargets, nextTargetIndex, null));
+            playerInputService.beginPermanentChoice(gameData, context.caster().getId(), validOpponentIds,
+                    "Choose an opponent to choose a target for " + card.getName() + ".");
+            return;
+        }
+
+        List<UUID> targetIds = new ArrayList<>();
+        for (int positionIndex = 0; positionIndex < card.getMultiTargetFilters().size(); positionIndex++) {
+            UUID targetId = selectedTargets.get(positionIndex);
+            if (targetId == null) {
+                throw new IllegalStateException("Missing spell target");
+            }
+            targetIds.add(targetId);
+        }
+        spellCastingService.playCardAfterOpponentChosenTargets(
+                gameData, context.caster(), context.cardIndex(), context.xValue(), targetIds, context.buyback());
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private int targetGroupIndexForPosition(Card card, int positionIndex) {
+        int positionOffset = 0;
+        for (SpellTarget target : card.getSpellTargets()) {
+            int targetCount = target.getMaxTargets();
+            if (positionIndex < positionOffset + targetCount) {
+                return target.getIndex();
+            }
+            positionOffset += targetCount;
+        }
+        throw new IllegalArgumentException("Unknown spell target position");
     }
 
     private boolean isValidSpellTarget(GameData gameData, Card card, List<CardEffect> spellEffects,

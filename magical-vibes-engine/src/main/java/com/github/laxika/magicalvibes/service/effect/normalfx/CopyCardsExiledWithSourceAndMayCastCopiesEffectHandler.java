@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
@@ -28,6 +30,7 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
     private final CopySupport copySupport;
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,9 +54,18 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
                     })
                     .toList();
         }
+        if (!copyEffect.copyAll() && copyEffect.castCost() == CopyCastCost.FREE
+                && targetCardId(entry) == null && trackedCards.size() > 1) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledSpellCopyChoice(
+                    entry.getControllerId(), trackedCards.stream().map(Card::getId).toList(),
+                    1, true, "a card exiled with " + entry.getCard().getName()));
+            return;
+        }
         List<Card> cardsToCopy = copyEffect.copyAll()
                 ? trackedCards
-                : singletonOrEmpty(findTargetCard(trackedCards, targetCardId(entry)));
+                : copyEffect.castCost() == CopyCastCost.FREE && targetCardId(entry) == null
+                        && trackedCards.size() == 1 ? trackedCards
+                        : singletonOrEmpty(findTargetCard(trackedCards, targetCardId(entry)));
 
         if (cardsToCopy.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no exiled card to copy."));

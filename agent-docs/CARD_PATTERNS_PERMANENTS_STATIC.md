@@ -291,6 +291,7 @@ All paths relative to `cards/`.
 | Defending player assigns combat damage | `d/DefensiveFormation.java` | STATIC DefensiveFormationEffect() â€” the controller assigns combat damage dealt by creatures attacking them |
 | Toughness as combat damage (Aura, always) | `g/GauntletsOfLight.java` | STATIC AssignCombatDamageWithToughnessEffect(ENCHANTED_CREATURE, true) â€” enchanted creature assigns combat damage equal to toughness even when its power is greater |
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
+| Double damage between two chosen players | `b/BitterFeud.java` | ON_ENTER_BATTLEFIELD ChooseTwoPlayersOnEnterEffect + STATIC DoubleDamageBetweenChosenPlayersEffect — doubles damage from either chosen player's sources to the other chosen player or that player's permanents |
 | Double damage (creatures you control) | `g/GratuitousViolence.java` | STATIC DoubleDamageFromCreaturesEffect |
 | Double damage (creatures you control with counters) | `r/RaphaelTheMuscle.java` | STATIC DoubleDamageFromCreaturesEffect(PermanentHasCountersPredicate(ANY)) |
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |

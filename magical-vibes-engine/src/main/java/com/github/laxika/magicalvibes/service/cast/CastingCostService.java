@@ -543,10 +543,6 @@ public class CastingCostService {
                 delta += modifier.handler().modifyCost(context, modifier.effect(), modifier.source());
             }
         }
-        for (CollectedCostModifier modifier : afterOtherModifiers) {
-            delta += modifier.handler().modifyCostAfterOtherModifiers(
-                    context, modifier.effect(), modifier.source(), delta);
-        }
         List<NextSpellCostReduction> reductions = gameData.nextSpellCostReductionsThisTurn.get(playerId);
         if (reductions != null) {
             synchronized (reductions) {
@@ -554,6 +550,17 @@ public class CastingCostService {
                         .filter(reduction -> reduction.cardTypes().stream().anyMatch(card::hasType))
                         .mapToInt(NextSpellCostReduction::amount)
                         .sum();
+            }
+        }
+        if (!afterOtherModifiers.isEmpty()) {
+            ManaCost printedCost = card.getParsedManaCost();
+            ManaCost coloredCost = printedCost == null ? null : applyColoredManaCostReductions(
+                    gameData, playerId, card, printedCost, snapshot, flashbackCost);
+            int coloredModifier = coloredCost == null ? 0
+                    : coloredCost.getManaValue() - printedCost.getManaValue();
+            for (CollectedCostModifier modifier : afterOtherModifiers) {
+                delta += modifier.handler().modifyCostAfterOtherModifiers(
+                        context, modifier.effect(), modifier.source(), delta + coloredModifier);
             }
         }
         return delta;

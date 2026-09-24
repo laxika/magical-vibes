@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.f.FolkMedicine;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Seedtime.class, MentalNote.class, FolkMedicine.class})
+@CardUsed({FlaringPain.class, FolkMedicine.class, MentalNote.class, Seedtime.class})
 class SeedtimeTest extends BaseCardTest {
 
     @Test
@@ -94,5 +95,32 @@ class SeedtimeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void doesNotTakeAnExtraTurnWhenOpponentCastsNonBlueSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passPriority(player1);
+        harness.castFromHand(player2, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new Seedtime(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    void doesNotTakeAnExtraTurnWhenControllerCastsBlueSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new MentalNote(), "{U}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new Seedtime(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).isEmpty();
     }
 }

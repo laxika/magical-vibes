@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingU
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
-import java.util.Set;
 
 @CardRegistration(set = "YDSK", collectorNumber = "14")
 public class EagerFlameguide extends Card {
@@ -18,7 +17,7 @@ public class EagerFlameguide extends Card {
     public EagerFlameguide() {
         // When Eager Flameguide enters, add {C}{C}{C}. Spend this mana only to cast creature spells.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AwardRestrictedManaEffect(
-                ManaColor.COLORLESS, 3, new ManaRestriction.SpellTypes(Set.of(CardType.CREATURE))));
+                ManaColor.COLORLESS, 3, new ManaRestriction.CreatureSpells()));
 
         // When Eager Flameguide dies, exile the top two cards of your library. Until the end of
         // your next turn, you may cast creature spells from among the exiled cards.

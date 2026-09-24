@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "DDU", collectorNumber = "57")
 @CardRegistration(set = "2XM", collectorNumber = "276")
 @CardRegistration(set = "C13", collectorNumber = "247")
+@CardRegistration(set = "C14", collectorNumber = "254")
 public class MyrBattlesphere extends Card {
 
     public MyrBattlesphere() {

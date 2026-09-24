@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "56")
 @CardRegistration(set = "DDS", collectorNumber = "3")
+@CardRegistration(set = "C14", collectorNumber = "105")
 public class DeepSeaKraken extends Card {
 
     public DeepSeaKraken() {

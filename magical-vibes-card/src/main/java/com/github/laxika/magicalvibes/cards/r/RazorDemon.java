@@ -18,7 +18,7 @@ public class RazorDemon extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL,
+        )).addEffect(EffectSlot.ON_SELF_CAST,
                 new DraftFromSpellbookEffect(
                         List.of(
                                 new DraftFromSpellbookEffect.SpellbookCard("VOW", "103"),

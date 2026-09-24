@@ -1662,6 +1662,11 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
     }
 
+    public void activateEmblemAbility(Player player, int emblemIndex, int abilityIndex, Integer xValue, UUID targetId) {
+        ensurePriority(player);
+        gameService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue, targetId, null, null, null);
+    }
+
     public void activateStackAbility(Player player, UUID stackCardId, int abilityIndex, int discardHandCardIndex) {
         ensurePriority(player);
         gameService.activateStackAbility(gameData, player, stackCardId, abilityIndex, discardHandCardIndex);

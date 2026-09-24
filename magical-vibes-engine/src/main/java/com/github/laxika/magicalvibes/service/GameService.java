@@ -1976,6 +1976,21 @@ public class GameService {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments, null);
     }
 
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateEmblemAbility(gameData, actionPlayer, emblemIndex, abilityIndex, xValue,
+                        targetId, targetZone, targetIds, damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue,
+                    targetId, targetZone, targetIds, damageAssignments);
+        }
+    }
+
     /**
      * @param paymentIntent what the player is activating this mana ability for, so an "any colour"
      *                      prompt can grey out the colours that would strand it; {@code null} when

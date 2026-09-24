@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.t.ToxicStench;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,12 +17,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhantomCentaur.class, CabalTrainee.class, Cagemail.class, FlaringPain.class,
-        LavaDart.class, ToxicStench.class})
+@CardUsed({CabalTrainee.class, Cagemail.class, FlaringPain.class, GiantWarthog.class, LavaDart.class, PhantomCentaur.class, ToxicStench.class})
 class PhantomCentaurTest extends BaseCardTest {
 
     @Test
@@ -118,5 +120,66 @@ class PhantomCentaurTest extends BaseCardTest {
         assertThat(findPermanent(player2, "Phantom Centaur")).isSameAs(centaur);
         assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(centaur.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage is prevented and removes one +1/+1 counter")
+    void damageIsPreventedAndRemovesOneCounter() {
+        Permanent centaur = harness.addToBattlefieldAndReturn(player2, new PhantomCentaur());
+        centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        dealLavaDartForJudReview(centaur);
+
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(centaur.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unpreventable damage still removes one +1/+1 counter")
+    void unpreventableDamageStillRemovesOneCounter() {
+        Permanent centaur = harness.addToBattlefieldAndReturn(player2, new PhantomCentaur());
+        centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        centaur.setToughnessModifier(3);
+
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        dealLavaDartForJudReview(centaur);
+
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(centaur.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(centaur);
+    }
+
+    @Test
+    @DisplayName("Simultaneous combat damage from multiple sources removes only one counter")
+    void simultaneousCombatDamageFromMultipleSourcesRemovesOnlyOneCounter() {
+        Permanent centaur = addCreatureReady(player1, new PhantomCentaur());
+        centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        centaur.setToughnessModifier(10);
+        Permanent firstBlocker = addCreatureReady(player2, new GiantWarthog());
+        Permanent secondBlocker = addCreatureReady(player2, new GiantWarthog());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 2,
+                secondBlocker.getId(), 2));
+
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(centaur.getMarkedDamage()).isZero();
+    }
+
+    private void dealLavaDartForJudReview(Permanent target) {
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
     }
 }

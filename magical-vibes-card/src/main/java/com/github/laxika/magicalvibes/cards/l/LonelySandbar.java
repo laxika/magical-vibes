@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "HA2", collectorNumber = "23")
 @CardRegistration(set = "C13", collectorNumber = "305")
 @CardRegistration(set = "CMD", collectorNumber = "281")
+@CardRegistration(set = "C14", collectorNumber = "304")
 public class LonelySandbar extends Card {
 
     public LonelySandbar() {

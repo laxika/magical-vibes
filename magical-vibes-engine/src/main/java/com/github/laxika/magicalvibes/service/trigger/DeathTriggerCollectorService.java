@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -2568,6 +2569,33 @@ public class DeathTriggerCollectorService {
                     source.getName() + "'s emblem ability",
                     effects));
         }
+        return true;
+    }
+
+    @CollectsEmblemTrigger(EmblemArtifactGraveyardReturnTriggerEffect.class)
+    boolean handleEmblemArtifactGraveyardReturn(EmblemTriggerMatchContext match,
+            EmblemArtifactGraveyardReturnTriggerEffect effect, TriggerContext ctx) {
+        TriggerContext.ArtifactGraveyard artifactGraveyard = (TriggerContext.ArtifactGraveyard) ctx;
+        Card artifactCard = artifactGraveyard.artifactCard();
+        if (artifactCard == null || artifactCard.isToken()) {
+            return false;
+        }
+
+        Card source = match.emblem().sourceCard();
+        String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+        RegisterDelayedReturnDyingCreatureUnderControlEffect delayedReturn =
+                new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                        false, null, 0, null, null, false, true, false,
+                        artifactCard.getId(), false);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source != null ? source : artifactCard,
+                match.controllerId(),
+                description,
+                new ArrayList<>(List.of(delayedReturn)));
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.text(description + " triggers (an artifact was put into a graveyard)."));
+        log.info("Game {} - {} schedules a delayed return of {}", match.gameData().id, description, artifactCard.getName());
         return true;
     }
 

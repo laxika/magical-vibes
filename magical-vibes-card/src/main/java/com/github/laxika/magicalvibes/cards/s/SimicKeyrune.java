@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "237")
+@CardRegistration(set = "C15", collectorNumber = "265")
 public class SimicKeyrune extends Card {
 
     public SimicKeyrune() {

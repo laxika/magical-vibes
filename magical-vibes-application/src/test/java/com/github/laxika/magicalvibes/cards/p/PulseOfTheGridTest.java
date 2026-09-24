@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,15 +12,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PulseOfTheGrid.class, DarksteelCitadel.class})
 class PulseOfTheGridTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws two, discards one, and returns to hand when an opponent has more cards")
     void returnsToHandWhenOpponentHasMoreCards() {
         PulseOfTheGrid pulse = new PulseOfTheGrid();
-        harness.setHand(player1, List.of(pulse, new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setHand(player1, List.of(pulse, new DarksteelCitadel(), new DarksteelCitadel()));
+        harness.setHand(player2, List.of(new DarksteelCitadel(), new DarksteelCitadel(),
+                new DarksteelCitadel(), new DarksteelCitadel()));
+        harness.setLibrary(player1, List.of(new DarksteelCitadel(), new DarksteelCitadel()));
         addMana();
 
         harness.castInstant(player1, 0);
@@ -37,9 +39,10 @@ class PulseOfTheGridTest extends BaseCardTest {
     @DisplayName("Goes to the graveyard when no opponent has more cards after the discard")
     void goesToGraveyardWhenOpponentDoesNotHaveMoreCards() {
         PulseOfTheGrid pulse = new PulseOfTheGrid();
-        harness.setHand(player1, List.of(pulse, new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setHand(player1, List.of(pulse, new DarksteelCitadel(), new DarksteelCitadel()));
+        harness.setHand(player2, List.of(new DarksteelCitadel(), new DarksteelCitadel(),
+                new DarksteelCitadel()));
+        harness.setLibrary(player1, List.of(new DarksteelCitadel(), new DarksteelCitadel()));
         addMana();
 
         harness.castInstant(player1, 0);

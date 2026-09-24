@@ -47,7 +47,7 @@ class WelcomeTheDarknessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 

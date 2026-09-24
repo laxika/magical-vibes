@@ -204,6 +204,8 @@ public class Card {
      * "target Merfolk", where a Merfolk satisfies both).
      */
     private boolean allowSharedTargets;
+    /** Expanded target positions chosen by an opponent during this spell's announcement. */
+    private List<Integer> opponentChosenSpellTargetIndices = List.of();
     /** Whether this card's targeted attack trigger is chosen by the defending player. */
     private boolean attackTriggerTargetChosenByDefendingPlayer;
     /**
@@ -379,6 +381,7 @@ public class Card {
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
         this.allowSharedTargets = source.allowSharedTargets;
+        this.opponentChosenSpellTargetIndices = source.opponentChosenSpellTargetIndices;
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
@@ -476,6 +479,7 @@ public class Card {
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = face.additionalLifeCostPerTarget;
         this.allowSharedTargets = face.allowSharedTargets;
+        this.opponentChosenSpellTargetIndices = face.opponentChosenSpellTargetIndices;
         this.multiTargetConstraint = face.multiTargetConstraint;
         this.spellTargets.clear();
         this.spellTargets.addAll(face.spellTargets);
@@ -589,6 +593,10 @@ public class Card {
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
     public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
+    public void setOpponentChosenSpellTargetIndices(List<Integer> indices) {
+        assertMutable();
+        this.opponentChosenSpellTargetIndices = indices == null ? List.of() : List.copyOf(indices);
+    }
     public void setAttackTriggerTargetChosenByDefendingPlayer(boolean chosenByDefendingPlayer) {
         assertMutable();
         this.attackTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
@@ -633,6 +641,7 @@ public class Card {
         setAdditionalManaCostPerExtraTarget(null);
         setAdditionalLifeCostPerTarget(0);
         setAllowSharedTargets(false);
+        setOpponentChosenSpellTargetIndices(List.of());
         setAttackTriggerTargetChosenByDefendingPlayer(false);
         setMultiTargetConstraint(null);
         setCastTimeTargetFilter(null);
@@ -861,6 +870,7 @@ public class Card {
     public void appendSpellTargetingFrom(Card source) {
         assertMutable();
         int targetIndexOffset = spellTargets.size();
+        int targetPositionOffset = getMultiTargetFilters().size();
         for (SpellTarget sourceTarget : source.spellTargets) {
             SpellTarget target = new SpellTarget(
                     this,
@@ -880,6 +890,13 @@ public class Card {
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 targetIndices.forEach(targetIndex ->
                         registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
+        if (!source.opponentChosenSpellTargetIndices.isEmpty()) {
+            List<Integer> appendedIndices = new ArrayList<>(opponentChosenSpellTargetIndices);
+            source.opponentChosenSpellTargetIndices.stream()
+                    .map(index -> index + targetPositionOffset)
+                    .forEach(appendedIndices::add);
+            opponentChosenSpellTargetIndices = List.copyOf(appendedIndices);
+        }
     }
 
     /**
@@ -949,6 +966,7 @@ public class Card {
         assertMutable();
         spellTargets.clear();
         effectTargetIndexMap.clear();
+        opponentChosenSpellTargetIndices = List.of();
     }
 
     // ── Derived targeting getters (replace old stored fields) ────────
@@ -1179,6 +1197,7 @@ public class Card {
         }
         original.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
+        opponentChosenSpellTargetIndices = original.opponentChosenSpellTargetIndices;
         castTimeTargetFilter = original.castTimeTargetFilter;
     }
 

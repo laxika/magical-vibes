@@ -242,6 +242,28 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume) {
+            gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentCardId = chosen.getId();
+            gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentId =
+                    gameQueryService.findGraveyardOwnerById(gameData, chosen.getId());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume) {
+            gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOwnCardId = chosen.getId();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
         UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
         CardColor grantColor = graveyardChoice.grantColor();
@@ -952,6 +974,16 @@ public class GraveyardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.milledCreatureReturn =
                     new GraveyardTargetOperationState.MilledCreatureReturnContext(List.copyOf(cardIds));
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.milledCreatureExile != null) {
+            var context = gameData.graveyardTargetOperation.milledCreatureExile;
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledCreatureExile =
+                    new GraveyardTargetOperationState.MilledCreatureExileContext(
+                            context.eligibleCardIds(), List.copyOf(cardIds));
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }
