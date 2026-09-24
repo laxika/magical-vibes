@@ -49,6 +49,15 @@ public interface CostModificationHandlerBean {
     }
 
     /**
+     * Returns a signed generic-mana delta for a cost paid to turn a face-down permanent face up.
+     * Morph-only modifiers do not affect this channel unless they explicitly override it.
+     */
+    default int modifyTurnFaceUpCost(CostModificationContext context, CardEffect effect,
+                                     CostModificationSource source) {
+        return 0;
+    }
+
+    /**
      * Returns a signed generic-mana delta for an alternate cost explicitly affected by this
      * modifier. Ordinary cast-cost modifiers do not affect alternate costs unless they override
      * this method.

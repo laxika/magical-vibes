@@ -94,6 +94,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
+        register(PendingInteraction.HeistCardChoice.class, this::projectHeistCardChoice);
         register(PendingInteraction.LudevicCopyChoice.class, this::projectLudevicCopyChoice);
         register(PendingInteraction.KohExiledCreatureChoice.class,
                 this::projectKohExiledCreatureChoice);
@@ -197,6 +198,10 @@ public class InteractionPromptProjectionRegistry {
                 this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.PerpetualCreatureCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualTargetCardChoice.class,
+                this::projectPerpetualTargetCardChoice);
         register(PendingInteraction.WordOfCommandCardChoice.class,
                 this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
@@ -235,6 +240,7 @@ public class InteractionPromptProjectionRegistry {
                 this::projectLibrarySearchDestinationChoice);
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
+        register(PendingInteraction.SpellbookCardChoice.class, this::projectSpellbookCardChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
@@ -508,6 +514,15 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
                 "Choose a card exiled this way to play " + duration + ".");
+    }
+
+    private InteractionPromptMessage projectHeistCardChoice(
+            GameData gameData, PendingInteraction.HeistCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "Choose one nonland card to exile face down and cast for as long as it remains exiled.");
     }
 
     private InteractionPromptMessage projectLudevicCopyChoice(
@@ -1250,6 +1265,13 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(), interaction.prompt(), declinable);
     }
 
+    private InteractionPromptMessage projectPerpetualTargetCardChoice(
+            GameData gameData, PendingInteraction.PerpetualTargetCardChoice interaction) {
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of())),
+                interaction.validIndices(), interaction.prompt(), false);
+    }
+
     private InteractionPromptMessage projectPutCardsFromHandOnLibraryCardChoice(
             GameData gameData,
             PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction) {
@@ -1350,6 +1372,13 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews,
                 interaction.maxCount(),
+                interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectSpellbookCardChoice(
+            GameData gameData, PendingInteraction.SpellbookCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
                 interaction.prompt());
     }
 

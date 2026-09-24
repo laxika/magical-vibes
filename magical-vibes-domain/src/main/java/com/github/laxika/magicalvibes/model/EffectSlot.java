@@ -177,6 +177,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ENCHANTED_PLAYER_DRAWS,
     ON_OPPONENT_DISCARDS,
     ON_CONTROLLER_FORAGES,
+    /** Triggers whenever the controller seeks one or more cards during their turn. */
+    ON_CONTROLLER_SEEKS,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
      *  player's own battlefield in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Necropotence. */
     ON_CONTROLLER_DISCARDS,

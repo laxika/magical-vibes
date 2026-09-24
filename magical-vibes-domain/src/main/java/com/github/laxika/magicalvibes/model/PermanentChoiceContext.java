@@ -258,6 +258,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
                                       PermanentPredicate filter) implements PermanentChoiceContext {}
 
+    /** Fear of Change: choose another creature to exile before conjuring a random creature. */
+    record ExileAnotherCreatureAndConjureRandomCreature(
+            Card sourceCard, UUID sourcePermanentId, UUID controllerId)
+            implements PermanentChoiceContext {}
+
     /** Godsend: choose one creature blocking or blocked by the equipped creature to exile. */
     record ExileCombatOpponent(UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {}
 
@@ -312,6 +317,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> remainingOpponentIds
     ) implements PermanentChoiceContext {
         public EachOpponentChoosesCreatureToExileWithSource {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+        }
+    }
+
+    /** Gilded Ambusher: an opponent chooses a nonland, nontoken permanent to exile. */
+    record GildedAmbusherChoice(
+            StackEntry resolvingEntry,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            PermanentPredicate permanentFilter
+    ) implements PermanentChoiceContext {
+        public GildedAmbusherChoice {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
         }
     }

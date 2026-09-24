@@ -137,6 +137,7 @@ public sealed interface Condition permits
         ControllerLostLifeThisTurn,
         ControllerLostLifeLastTurn,
         ControllerOwnTurnCountAtMost,
+        ControllerIsNotStartingPlayer,
         ControllerPlayedOrCastFromOutsideHandThisTurn,
         ControllerPlayedAtLeastLandsThisTurn,
         ControllerSacrificedPermanentThisTurn,

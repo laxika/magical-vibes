@@ -165,6 +165,9 @@ public class MultiPermanentChoiceHandlerService {
             .EachOpponentSacrificesCreatureCreateTokensEffectHandler
             eachOpponentSacrificesCreatureCreateTokensHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandler
+            eachOpponentSacrificesNontokenCreatureConjuresDuplicatesHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
             controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -296,6 +299,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesNontokenCreatureConjuresDuplicates
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one nontoken creature must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice
                 && permanentIds.size() != 1) {
@@ -800,6 +807,12 @@ public class MultiPermanentChoiceHandlerService {
             }
         } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens ctx) {
             eachOpponentSacrificesCreatureCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+        } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesNontokenCreatureConjuresDuplicates ctx) {
+            eachOpponentSacrificesNontokenCreatureConjuresDuplicatesHandler.completeChoice(
+                    gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }

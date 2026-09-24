@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
@@ -618,6 +619,13 @@ public class PredicateEvaluationService {
                             && card.getManaValue() <= gameData.playerBattlefields
                             .getOrDefault(cardOwnerId, List.of()).stream()
                             .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                            .count();
+            case CardManaValueAtMostControlledTappedCreaturesPredicate ignored ->
+                    gameData != null && cardOwnerId != null
+                            && card.getManaValue() <= gameData.playerBattlefields
+                            .getOrDefault(cardOwnerId, List.of()).stream()
+                            .filter(permanent -> permanent.isTapped()
+                                    && gameQueryService.isCreature(gameData, permanent))
                             .count();
             case CardManaValueAtMostSourcePowerPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

@@ -153,6 +153,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
         KEYWORD_MAP.put("Camouflage", Keyword.CAMOUFLAGE);
         KEYWORD_MAP.put("Double", Keyword.DOUBLE);
+        KEYWORD_MAP.put("Double team", Keyword.DOUBLE);
         KEYWORD_MAP.put("Amass", Keyword.AMASS);
         KEYWORD_MAP.put("Plot", Keyword.PLOT);
         KEYWORD_MAP.put("Cleave", Keyword.CLEAVE);

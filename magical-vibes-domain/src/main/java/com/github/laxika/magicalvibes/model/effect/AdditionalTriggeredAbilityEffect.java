@@ -11,24 +11,32 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                                boolean attackOnly, boolean includeSourcePermanent,
-                                               boolean allControllers)
+                                               boolean allControllers,
+                                               boolean allyCreatureBecomesTarget)
         implements CardEffect {
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
-        this(sourcePredicate, null, false, false, false);
+        this(sourcePredicate, null, false, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition) {
-        this(sourcePredicate, condition, false, false, false);
+        this(sourcePredicate, condition, false, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                              boolean includeSourcePermanent, boolean allControllers) {
-        this(sourcePredicate, condition, false, includeSourcePermanent, allControllers);
+        this(sourcePredicate, condition, false, includeSourcePermanent, allControllers, false);
     }
 
     public static AdditionalTriggeredAbilityEffect forAttackTriggers(
             PermanentPredicate sourcePredicate, Condition condition) {
-        return new AdditionalTriggeredAbilityEffect(sourcePredicate, condition, true, false, false);
+        return new AdditionalTriggeredAbilityEffect(sourcePredicate, condition, true, false, false, false);
+    }
+
+    /** Makes target-caused triggered abilities of your permanents trigger one additional time. */
+    public static AdditionalTriggeredAbilityEffect forAllyCreatureBecomesTarget() {
+        return new AdditionalTriggeredAbilityEffect(
+                new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate(),
+                null, false, true, false, true);
     }
 }
