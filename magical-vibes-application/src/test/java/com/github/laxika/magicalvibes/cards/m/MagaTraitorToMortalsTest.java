@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(MagaTraitorToMortals.class)
 class MagaTraitorToMortalsTest extends BaseCardTest {
 
     @Test
@@ -18,17 +20,16 @@ class MagaTraitorToMortalsTest extends BaseCardTest {
     void entersWithCountersAndCausesLifeLoss() {
         harness.setHand(player1, List.of(new MagaTraitorToMortals()));
         harness.addMana(player1, ManaColor.BLACK, 6);
-        int lifeBefore = gd.getLife(player2.getId());
 
         harness.castCreature(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
 
-        Permanent maga = findMaga();
+        Permanent maga = findPermanent(player1, "Maga, Traitor to Mortals");
         assertThat(maga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -36,22 +37,43 @@ class MagaTraitorToMortalsTest extends BaseCardTest {
     void etbUsesCountersAtResolution() {
         harness.setHand(player1, List.of(new MagaTraitorToMortals()));
         harness.addMana(player1, ManaColor.BLACK, 6);
-        int lifeBefore = gd.getLife(player2.getId());
 
         harness.castCreature(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
 
-        Permanent maga = findMaga();
+        Permanent maga = findPermanent(player1, "Maga, Traitor to Mortals");
         maga.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
+        harness.assertLife(player2, 19);
     }
 
-    private Permanent findMaga() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Maga, Traitor to Mortals"))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Maga can target its controller")
+    void canTargetItsController() {
+        harness.setHand(player1, List.of(new MagaTraitorToMortals()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castCreature(player1, 0, 2, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Maga with X=0 dies and its ETB causes no life loss")
+    void zeroXDiesAndCausesNoLifeLoss() {
+        harness.setHand(player1, List.of(new MagaTraitorToMortals()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Maga, Traitor to Mortals");
+        harness.assertInGraveyard(player1, "Maga, Traitor to Mortals");
     }
 }

@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.d.DeathmaskNezumi;
+import com.github.laxika.magicalvibes.cards.g.GodosIrregulars;
+import com.github.laxika.magicalvibes.cards.k.KagemarosClutch;
+import com.github.laxika.magicalvibes.cards.k.KikusShadow;
+import com.github.laxika.magicalvibes.cards.s.SpiralingEmbers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,14 +19,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HandOfHonor.class, GodosIrregulars.class, DeathmaskNezumi.class,
+        KagemarosClutch.class, KikusShadow.class, SpiralingEmbers.class})
 class HandOfHonorTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Hand of Honor becomes blocked, it gets +1/+1 until end of turn")
     void becomesBlockedGetsBushidoBonus() {
-        Permanent hand = addReady(player1, new HandOfHonor());
+        Permanent hand = addCreatureReady(player1, new HandOfHonor());
         hand.setAttacking(true);
-        addReady(player2, new GiantSpider());
+        addCreatureReady(player2, new GodosIrregulars());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -39,9 +41,9 @@ class HandOfHonorTest extends BaseCardTest {
     @Test
     @DisplayName("When Hand of Honor blocks, it gets +1/+1 until end of turn")
     void blocksGetsBushidoBonus() {
-        Permanent attacker = addReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GodosIrregulars());
         attacker.setAttacking(true);
-        Permanent hand = addReady(player2, new HandOfHonor());
+        Permanent hand = addCreatureReady(player2, new HandOfHonor());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -52,11 +54,66 @@ class HandOfHonorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("When Hand of Honor is unblocked, it gets no Bushido bonus")
+    void unblockedGetsNoBushidoBonus() {
+        Permanent hand = addCreatureReady(player1, new HandOfHonor());
+        hand.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(hand.getPowerModifier()).isZero();
+        assertThat(hand.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Hand of Honor's Bushido bonus wears off at end of turn")
+    void bushidoBonusWearsOffAtEndOfTurn() {
+        Permanent hand = addCreatureReady(player1, new HandOfHonor());
+        hand.setAttacking(true);
+        addCreatureReady(player2, new GodosIrregulars());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hand)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hand)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hand)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hand of Honor gets only one Bushido bonus when multiple creatures block it")
+    void becomesBlockedByMultipleCreaturesGetsOneBushidoBonus() {
+        Permanent hand = addCreatureReady(player1, new HandOfHonor());
+        hand.setAttacking(true);
+        addCreatureReady(player2, new GodosIrregulars());
+        addCreatureReady(player2, new GodosIrregulars());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            prepareDeclareBlockers();
+            gs.declareBlockers(gd, player2, List.of(
+                    new BlockerAssignment(0, 0),
+                    new BlockerAssignment(1, 0)));
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, hand)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hand)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Black creature cannot block Hand of Honor")
     void blackCreatureCannotBlock() {
-        Permanent hand = addReady(player1, new HandOfHonor());
+        Permanent hand = addCreatureReady(player1, new HandOfHonor());
         hand.setAttacking(true);
-        Permanent blocker = addReady(player2, createCreature("Black Creature", 2, 2, CardColor.BLACK));
+        Permanent blocker = addCreatureReady(player2, new DeathmaskNezumi());
 
         prepareDeclareBlockers();
 
@@ -69,9 +126,9 @@ class HandOfHonorTest extends BaseCardTest {
     @Test
     @DisplayName("Black creature deals no combat damage to Hand of Honor")
     void takesNoDamageFromBlackCreature() {
-        Permanent attacker = addReady(player1, createCreature("Black Creature", 3, 3, CardColor.BLACK));
+        Permanent attacker = addCreatureReady(player1, new DeathmaskNezumi());
         attacker.setAttacking(true);
-        Permanent hand = addReady(player2, new HandOfHonor());
+        Permanent hand = addCreatureReady(player2, new HandOfHonor());
         hand.setBlocking(true);
         hand.addBlockingTarget(0);
 
@@ -79,61 +136,49 @@ class HandOfHonorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(hand);
+        assertThat(hand.getMarkedDamage()).isZero();
     }
 
     @Test
-    @DisplayName("Black instant cannot target Hand of Honor")
-    void cannotBeTargetedByBlackInstant() {
-        Permanent hand = addReady(player2, new HandOfHonor());
-        addReady(player2, new GrizzlyBears());
+    @DisplayName("Black sorcery cannot target Hand of Honor")
+    void cannotBeTargetedByBlackSorcery() {
+        Permanent hand = addCreatureReady(player2, new HandOfHonor());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Black Bolt", CardColor.BLACK, "{B}")));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player1, List.of(new KikusShadow()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, hand.getId(), null))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, hand.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
 
     @Test
-    @DisplayName("Red instant can target Hand of Honor")
-    void canBeTargetedByRedInstant() {
-        Permanent hand = addReady(player1, new HandOfHonor());
+    @DisplayName("Red sorcery can target Hand of Honor")
+    void canBeTargetedByRedSorcery() {
+        Permanent hand = addCreatureReady(player1, new HandOfHonor());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Red Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new SpiralingEmbers()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player1, 0, 0, hand.getId(), null);
+        harness.castSorcery(player1, 0, hand.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Red Bolt");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Spiraling Embers");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(hand.getId());
     }
 
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
+    @Test
+    @DisplayName("Black Aura cannot enchant Hand of Honor")
+    void cannotBeEnchantedByBlackAura() {
+        Permanent hand = addCreatureReady(player2, new HandOfHonor());
 
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
+        harness.setHand(player1, List.of(new KagemarosClutch()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, hand.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
     }
 }

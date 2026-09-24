@@ -9,11 +9,15 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
+import com.github.laxika.magicalvibes.cards.s.ShiftingBorders;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +27,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Twincast.class, Bandage.class, Boomerang.class, CounselOfTheSoratami.class,
+        GloriousAnthem.class, GrizzlyBears.class, MightOfOaks.class})
 class TwincastTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -482,6 +488,32 @@ class TwincastTest extends BaseCardTest {
         StackEntry copyEntry = gd.stack.getLast();
         assertThat(copyEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
+    }
+
+    @Test
+    @CardUsed({ShiftingBorders.class, OboroPalaceInTheClouds.class})
+    @DisplayName("Copying a multi-target spell offers new target choices")
+    void copyOfMultiTargetSpellOffersRetarget() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new OboroPalaceInTheClouds());
+
+        ShiftingBorders shiftingBorders = new ShiftingBorders();
+        harness.setHand(player1, List.of(shiftingBorders));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(ownLand.getId(), opponentLand.getId()));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, shiftingBorders.getId());
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
     }
 
     // ===== Copy retarget — "You may choose new targets for the copy" =====

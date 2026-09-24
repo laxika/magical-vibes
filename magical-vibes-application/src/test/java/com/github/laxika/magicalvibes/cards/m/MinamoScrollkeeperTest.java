@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(MinamoScrollkeeper.class)
 class MinamoScrollkeeperTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class MinamoScrollkeeperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MinamoScrollkeeper());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.setHand(player1, handOfEightCards());
+        harness.setHand(player1, handOfSize(8));
 
         gs.advanceStep(gd);
 
@@ -36,7 +35,7 @@ class MinamoScrollkeeperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MinamoScrollkeeper());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.setHand(player2, handOfEightCards());
+        harness.setHand(player2, handOfSize(8));
 
         gs.advanceStep(gd);
 
@@ -51,7 +50,7 @@ class MinamoScrollkeeperTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.setHand(player1, handOfEightCards());
+        harness.setHand(player1, handOfSize(8));
 
         gs.advanceStep(gd);
 
@@ -59,10 +58,25 @@ class MinamoScrollkeeperTest extends BaseCardTest {
                 .isEqualTo(1);
     }
 
-    private List<Card> handOfEightCards() {
-        return new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new Forest(), new Forest(), new Forest(), new Plains(), new Plains()
-        ));
+    @Test
+    @DisplayName("Multiple Minamo Scrollkeepers increase the maximum hand size cumulatively")
+    void multipleScrollkeepersStack() {
+        harness.addToBattlefield(player1, new MinamoScrollkeeper());
+        harness.addToBattlefield(player1, new MinamoScrollkeeper());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, handOfSize(9));
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    private List<Card> handOfSize(int size) {
+        List<Card> hand = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            hand.add(new MinamoScrollkeeper());
+        }
+        return hand;
     }
 }
