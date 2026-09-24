@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElvishChampion.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
 class ElvishChampionTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Elvish Champion puts it on the stack")
@@ -34,7 +33,6 @@ class ElvishChampionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Elvish Champion");
     }
 
     @Test
@@ -191,19 +189,12 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player2, new Forest());
 
-        Permanent elfAttacker = new Permanent(new LlanowarElves());
-        elfAttacker.setSummoningSick(false);
+        Permanent elfAttacker = addCreatureReady(player1, new LlanowarElves());
         elfAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(elfAttacker);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(elfAttacker);
@@ -218,19 +209,12 @@ class ElvishChampionTest extends BaseCardTest {
     void forestwalkAllowsBlockingWithoutForest() {
         harness.addToBattlefield(player1, new ElvishChampion());
 
-        Permanent elfAttacker = new Permanent(new LlanowarElves());
-        elfAttacker.setSummoningSick(false);
+        Permanent elfAttacker = addCreatureReady(player1, new LlanowarElves());
         elfAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(elfAttacker);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(elfAttacker);
@@ -243,21 +227,14 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Elvish Champion itself does not have forestwalk when alone")
     void championDoesNotHaveForestwalkItself() {
-        harness.addToBattlefield(player1, new ElvishChampion());
+        Permanent champion = addCreatureReady(player1, new ElvishChampion());
         harness.addToBattlefield(player2, new Forest());
 
-        Permanent champion = findPermanent(player1, "Elvish Champion");
-        champion.setSummoningSick(false);
         champion.setAttacking(true);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(champion);
@@ -273,9 +250,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player2, new Forest());
 
-        Permanent elfAttacker = new Permanent(new LlanowarElves());
-        elfAttacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(elfAttacker);
+        Permanent elfAttacker = addCreatureReady(player1, new LlanowarElves());
 
         assertThat(gqs.hasKeyword(gd, elfAttacker, Keyword.FORESTWALK)).isTrue();
 

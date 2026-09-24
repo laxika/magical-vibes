@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PhyrexianDelver.class, GrizzlyBears.class, HolyDay.class})
 class PhyrexianDelverTest extends BaseCardTest {
 
     @Test
@@ -56,6 +58,27 @@ class PhyrexianDelverTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Only your graveyard is offered as an ETB target source")
+    void onlyYourGraveyardIsOfferedAsATargetSource() {
+        Card yourCreature = new GrizzlyBears();
+        Card opponentsCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(yourCreature));
+        harness.setGraveyard(player2, List.of(opponentsCreature));
+        harness.setHand(player1, List.of(new PhyrexianDelver()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(yourCreature.getId());
     }
 
     @Test

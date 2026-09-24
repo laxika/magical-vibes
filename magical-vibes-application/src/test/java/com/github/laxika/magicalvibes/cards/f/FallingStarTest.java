@@ -25,8 +25,7 @@ class FallingStarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(creature.getMarkedDamage()).isEqualTo(3);
         assertThat(creature.isTapped()).isTrue();

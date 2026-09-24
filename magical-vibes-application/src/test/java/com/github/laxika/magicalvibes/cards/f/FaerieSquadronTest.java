@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(FaerieSquadron.class)
 class FaerieSquadronTest extends BaseCardTest {
 
     @Test
@@ -35,6 +38,18 @@ class FaerieSquadronTest extends BaseCardTest {
 
         Permanent faerie = findFaerie();
         assertThat(faerie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void castWithKickerEntersWithFlying() {
+        harness.setHand(player1, List.of(new FaerieSquadron()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent faerie = findFaerie();
+        assertThat(gqs.hasKeyword(gd, faerie, Keyword.FLYING)).isTrue();
     }
 
     @Test

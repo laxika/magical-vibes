@@ -1,45 +1,23 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.f.FiresOfYavimaya;
+import com.github.laxika.magicalvibes.cards.k.KavuTitan;
+import com.github.laxika.magicalvibes.cards.r.RagingKavu;
+import com.github.laxika.magicalvibes.cards.v.ViashinoGrappler;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SearingRays.class, FiresOfYavimaya.class, KavuTitan.class, RagingKavu.class,
+        ViashinoGrappler.class})
 class SearingRaysTest extends BaseCardTest {
 
-    private static Card createCreature(String name, CardColor... colors) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setColor(colors[0]);
-        card.setColors(List.of(colors));
-        return card;
-    }
-
-    private static Card createArtifact(String name, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.ARTIFACT);
-        card.setColor(color);
-        card.setColors(List.of(color));
-        return card;
-    }
-
     private void castSearingRays() {
-        harness.setHand(player1, List.of(new SearingRays()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SearingRays(), "{2}{R}");
         harness.passBothPriorities();
     }
 
@@ -56,11 +34,11 @@ class SearingRaysTest extends BaseCardTest {
     @Test
     @DisplayName("Deals damage to each player based on that player's creatures of the chosen color")
     void dealsPerPlayerCreatureCount() {
-        harness.addToBattlefield(player1, createCreature("Red Creature", CardColor.RED));
-        harness.addToBattlefield(player1, createCreature("Red Green Creature", CardColor.RED, CardColor.GREEN));
-        harness.addToBattlefield(player1, createArtifact("Red Artifact", CardColor.RED));
-        harness.addToBattlefield(player2, createCreature("Red Creature", CardColor.RED));
-        harness.addToBattlefield(player2, createCreature("Green Creature", CardColor.GREEN));
+        harness.addToBattlefield(player1, new ViashinoGrappler());
+        harness.addToBattlefield(player1, new RagingKavu());
+        harness.addToBattlefield(player1, new FiresOfYavimaya());
+        harness.addToBattlefield(player2, new ViashinoGrappler());
+        harness.addToBattlefield(player2, new KavuTitan());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
@@ -72,10 +50,24 @@ class SearingRaysTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts creatures present when the color choice resolves")
+    void countsCreaturesAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castSearingRays();
+        harness.addToBattlefield(player1, new ViashinoGrappler());
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("A color with no creatures deals no damage")
     void noMatchingCreaturesDealNoDamage() {
-        harness.addToBattlefield(player1, createCreature("Green Creature", CardColor.GREEN));
-        harness.addToBattlefield(player2, createCreature("White Creature", CardColor.WHITE));
+        harness.addToBattlefield(player1, new KavuTitan());
+        harness.addToBattlefield(player2, new KavuTitan());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.u.UndergroundRiver;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AetherRift.class, GrizzlyBears.class, LlanowarElves.class, UndergroundRiver.class})
 class AetherRiftTest extends BaseCardTest {
 
     @Test
@@ -58,6 +60,18 @@ class AetherRiftTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Underground River");
+    }
+
+    @Test
+    @DisplayName("An empty hand produces no discard or payment choice")
+    void emptyHandDoesNothing() {
+        harness.addToBattlefield(player1, new AetherRift());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

@@ -1,51 +1,63 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.d.DreamThrush;
+import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeersVision.class, DreamThrush.class, Opt.class})
 class SeersVisionTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Both players see each other's hands while Seer's Vision is on the battlefield")
-    void bothHandsAreRevealed() {
+    @DisplayName("The controller sees opponents' hands, but opponents do not see the controller's hand")
+    void onlyOpponentsHandsAreRevealed() {
         harness.addToBattlefield(player1, new SeersVision());
-        harness.setHand(player1, List.of(new AirElemental()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DreamThrush()));
+        harness.setHand(player2, List.of(new Opt()));
         harness.clearMessages();
 
         harness.passPriority(player1);
 
         assertThat(harness.getConn1().getSentMessages())
                 .anyMatch(message -> message.contains("\"opponentHand\"")
-                        && message.contains("Grizzly Bears"));
+                        && message.contains("Opt"));
         assertThat(harness.getConn2().getSentMessages())
-                .anyMatch(message -> message.contains("\"opponentHand\"")
-                        && message.contains("Air Elemental"));
+                .anyMatch(message -> message.contains("\"opponentHand\":[]"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("\"opponentHand\"")
+                        && message.contains("Dream Thrush"));
     }
 
     @Test
     @DisplayName("Sacrificing Seer's Vision lets its controller choose a card for the target to discard")
     void sacrificeAndDiscardChosenCard() {
         harness.addToBattlefield(player1, new SeersVision());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
+        harness.setHand(player2, List.of(new DreamThrush(), new Opt()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.assertNotOnBattlefield(player1, "Seer's Vision");
         harness.assertInGraveyard(player1, "Seer's Vision");
 
+        harness.clearMessages();
         harness.passBothPriorities();
+
+        assertThat(gd.gameLog)
+                .anyMatch(log -> log.plainText().contains("looks at " + player2.getUsername() + "'s hand."));
+        assertThat(gd.gameLog)
+                .noneMatch(log -> log.plainText().contains("reveals their hand")
+                        && log.plainText().contains("Opt"));
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Opt"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
 
         PendingInteraction.RevealedHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
@@ -57,8 +69,24 @@ class SeersVisionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player2, "Peek");
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Opt");
+        harness.assertInHand(player2, "Dream Thrush");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Seer's Vision does not create a choice when the target has an empty hand")
+    void sacrificeWithEmptyTargetHand() {
+        harness.addToBattlefield(player1, new SeersVision());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertNotOnBattlefield(player1, "Seer's Vision");
+        harness.assertInGraveyard(player1, "Seer's Vision");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
     @Test
