@@ -429,6 +429,7 @@ public class TurnCleanupService {
         gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
+        gameData.nextSpellChosenSubtypeFlashGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
         gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();

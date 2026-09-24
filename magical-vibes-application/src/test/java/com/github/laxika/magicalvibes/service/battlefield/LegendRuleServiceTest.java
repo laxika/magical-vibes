@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -35,6 +36,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LegendRuleServiceTest {
@@ -241,6 +243,25 @@ class LegendRuleServiceTest {
             gd.playerBattlefields.get(player1Id).remove(gallery);
 
             assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("Controlled creature legend rule exemption")
+    class ControlledCreatureExemption {
+
+        @Test
+        @DisplayName("Protects duplicate legendary creatures")
+        void protectsDuplicateLegendaryCreatures() {
+            Card source = createCreature("Council of Reeds");
+            source.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledCreaturesEffect());
+            addPermanent(player1Id, source);
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
     }
 

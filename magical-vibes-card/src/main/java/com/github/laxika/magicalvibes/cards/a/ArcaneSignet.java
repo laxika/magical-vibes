@@ -5,6 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 @CardRegistration(set = "ANB", collectorNumber = "117")
+@CardRegistration(set = "MSC", collectorNumber = "191")
+@CardRegistration(set = "MSC", collectorNumber = "192")
+@CardRegistration(set = "MSC", collectorNumber = "193")
+@CardRegistration(set = "MSC", collectorNumber = "194")
 @CardRegistration(set = "SLZ", collectorNumber = "94")
 @CardRegistration(set = "SLZ", collectorNumber = "215")
 @CardRegistration(set = "SLZ", collectorNumber = "336")

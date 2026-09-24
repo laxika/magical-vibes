@@ -263,6 +263,13 @@ public class AttackLegalityService {
                         .withSourceCardId(source.getCard().getId())
                         .withSourceControllerId(protectedPlayerId);
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ConditionalEffect conditional) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forStaticEffect(source, protectedPlayerId))) {
+                            continue;
+                        }
+                        effect = conditional.wrapped();
+                    }
                     if (effect instanceof EnchantedCreatureAttackRestrictionEffect
                             && !source.isAuraEffectsIgnoredThisTurn()
                             && source.isAttached()
@@ -283,7 +290,11 @@ public class AttackLegalityService {
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect fe : gameData.floatingEffects) {
-                if (protectedPlayerId.equals(fe.affectedPlayerId())) {
+                boolean scopedToAttacker = fe.scope() != null
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, fe.scope());
+                if (protectedPlayerId.equals(fe.affectedPlayerId())
+                        || (scopedToAttacker && protectedPlayerId.equals(fe.controllerId()))) {
                     CardEffect effect = fe.effect();
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
@@ -631,6 +642,12 @@ public class AttackLegalityService {
                     && predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {
+                Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
+                UUID requiredTargetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
+                if (requiredTargetId != null && !canAttackRequiredTarget(gameData, creature, requiredTargetId)) {
+                    continue;
+                }
                 count[0]++;
             }
         }
@@ -669,7 +686,7 @@ public class AttackLegalityService {
     }
 
     /**
-     * Returns the legal specific attack targets required by matching static combat requirements.
+     * Returns the legal specific attack targets required by matching combat requirements.
      * A target is omitted when the requirement is inactive or the creature cannot attack it.
      */
     public List<UUID> getRequiredAttackTargetIds(GameData gameData, Permanent creature) {
@@ -690,6 +707,22 @@ public class AttackLegalityService {
                 }
             }
         });
+        for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
+            if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
+                    || (floatingEffect.affectedPermanentId() != null
+                    && !creature.getId().equals(floatingEffect.affectedPermanentId()))
+                    || !predicateEvaluationService.matchesPermanentPredicate(creature,
+                    requirement.affectedPredicate(), FilterContext.of(gameData)
+                            .withSourceControllerId(floatingEffect.controllerId()))) {
+                continue;
+            }
+            Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
+            UUID targetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
+            if (targetId != null && canAttackRequiredTarget(gameData, creature, targetId)) {
+                targetIds.add(targetId);
+            }
+        }
         return targetIds;
     }
 

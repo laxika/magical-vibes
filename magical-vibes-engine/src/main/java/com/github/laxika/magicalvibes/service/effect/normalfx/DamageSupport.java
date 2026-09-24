@@ -640,7 +640,8 @@ public class DamageSupport {
                 int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
                 if (counters > 0) {
                     target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    permanentCounterSupport.notifyCountersPlaced(gameData, entry, target, counters);
+                    permanentCounterSupport.notifyCountersPlaced(
+                            gameData, entry, target, counters, CounterType.MINUS_ONE_MINUS_ONE);
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                             " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
                     log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());

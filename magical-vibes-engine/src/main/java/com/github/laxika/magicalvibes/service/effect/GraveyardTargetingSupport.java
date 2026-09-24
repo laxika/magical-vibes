@@ -194,6 +194,11 @@ public class GraveyardTargetingSupport {
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,
                     returnEffect.upTo() ? 0 : 1, returnEffect.dynamicMaxManaValue());
         }
+        GraveyardSearchScope declaredScope = effect.targetSpec().graveyardScope().orElse(null);
+        if (declaredScope != null) {
+            return new Target(effect.targetSpec().graveyardCardPredicate().orElse(null), declaredScope,
+                    "to exile", 1, 1);
+        }
         return null;
     }
 

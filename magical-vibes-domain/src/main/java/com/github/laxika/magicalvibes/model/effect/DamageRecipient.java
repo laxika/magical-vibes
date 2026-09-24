@@ -6,6 +6,8 @@ public enum DamageRecipient {
     TARGET_PLAYER,
     /** Every opponent of the effect's controller. */
     EACH_OPPONENT,
+    /** Every opponent of the effect's controller except the player recorded on the stack entry. */
+    EACH_OTHER_OPPONENT,
     /** Every player (including the controller). */
     EACH_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */

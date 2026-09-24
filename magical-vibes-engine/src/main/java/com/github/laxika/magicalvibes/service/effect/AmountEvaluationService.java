@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanentsAndSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
 import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
@@ -420,6 +421,8 @@ public class AmountEvaluationService {
                     colorManaPairsSpentToCast(gameData, c, ctx);
             case ColorsAmongControlledPermanents count ->
                     countColorsAmongControlledPermanents(gameData, count, ctx);
+            case ColorsAmongControlledPermanentsAndSpellsCastThisTurn ignored ->
+                    countColorsAmongControlledPermanentsAndSpellsCastThisTurn(gameData, ctx);
             case ColorManaSymbolsInGraveyard c ->
                     countColorManaSymbolsInGraveyard(gameData, c, ctx);
             case ColorManaSymbolsInHand c ->
@@ -2080,9 +2083,25 @@ public class AmountEvaluationService {
 
     private int countColorsAmongControlledPermanents(
             GameData gameData, ColorsAmongControlledPermanents count, AmountContext ctx) {
-        if (gameData == null || ctx.controllerId() == null) return 0;
+        return colorsAmongControlledPermanents(gameData, count, ctx).size();
+    }
+
+    private int countColorsAmongControlledPermanentsAndSpellsCastThisTurn(
+            GameData gameData, AmountContext ctx) {
+        Set<CardColor> colors = colorsAmongControlledPermanents(
+                gameData, new ColorsAmongControlledPermanents(), ctx);
+        if (gameData == null || ctx.controllerId() == null) return colors.size();
+        for (Card spell : gameData.getSpellsCastThisTurn(ctx.controllerId())) {
+            colors.addAll(gameQueryService.getEffectiveCardColors(gameData, spell));
+        }
+        return colors.size();
+    }
+
+    private Set<CardColor> colorsAmongControlledPermanents(
+            GameData gameData, ColorsAmongControlledPermanents count, AmountContext ctx) {
+        if (gameData == null || ctx.controllerId() == null) return EnumSet.noneOf(CardColor.class);
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return 0;
+        if (battlefield == null) return EnumSet.noneOf(CardColor.class);
 
         boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
         boolean filterNeedsBoard = staticEvaluation
@@ -2110,7 +2129,7 @@ public class AmountEvaluationService {
                     ? gameQueryService.colorsForStaticEvaluation(permanent)
                     : gameQueryService.getEffectiveColors(gameData, permanent));
         }
-        return colors.size();
+        return colors;
     }
 
     private int countCreaturesEnteredBattlefieldThisTurn(

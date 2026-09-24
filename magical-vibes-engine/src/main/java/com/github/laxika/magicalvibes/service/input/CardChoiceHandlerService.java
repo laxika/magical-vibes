@@ -2274,15 +2274,19 @@ public class CardChoiceHandlerService {
         if (pending == null) {
             return;
         }
+        boolean lastDiscard = pending.remainingDiscards() == 1;
         gameData.pendingConnive = pending.remainingDiscards() > 1
                 ? new PendingConnive(pending.sourcePermanentId(), pending.remainingDiscards() - 1)
                 : null;
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
         if (!discardedCard.hasType(CardType.LAND)) {
-            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-            if (source == null) {
-                return;
-            }
             permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
+        }
+        if (lastDiscard) {
+            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
         }
     }
 

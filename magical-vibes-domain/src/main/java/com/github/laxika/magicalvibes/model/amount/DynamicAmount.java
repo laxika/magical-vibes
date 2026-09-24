@@ -43,6 +43,7 @@ public sealed interface DynamicAmount permits
         ColorManaSymbolsAmongControlledPermanents,
         ColorManaPairsSpentToCast,
         ColorsAmongControlledPermanents,
+        ColorsAmongControlledPermanentsAndSpellsCastThisTurn,
         ColorManaSymbolsInGraveyard,
         ColorManaSymbolsInHand,
         ColorsAmongCardsExiledWithSource,

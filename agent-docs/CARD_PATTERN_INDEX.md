@@ -32,6 +32,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | double any effect that doubles, quadruple | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
+| choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | target player's graveyard to bottom in random order | CARD_PATTERNS_CREATURES_ETB.md |
 | modal, choose one, fight, bite | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -58,11 +59,14 @@ This index has been split into smaller files for faster lookup. Each file is und
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| first instant, sorcery, or subtype spell each turn — exile the triggering spell, dig to a nonland, damage by mana-value difference, and offer a free cast | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| combat damage → random own-graveyard instant/sorcery, free cast at next upkeep | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| commander-only anthem, opponent attacks with two creatures | CARD_PATTERNS_PERMANENTS_STATIC.md and CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | damage prevention into counters | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | aura, enchant creature, pacifism | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | curse, enchant player | CARD_PATTERNS_PERMANENTS_STATIC.md |

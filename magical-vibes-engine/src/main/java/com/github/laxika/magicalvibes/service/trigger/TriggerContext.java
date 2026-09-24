@@ -102,7 +102,16 @@ public sealed interface TriggerContext {
     }
 
     /** Context for a discard event containing one or more cards. */
-    record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
+    record DiscardEvent(UUID discardingPlayerId, int discardedCount, List<Card> discardedCards)
+            implements TriggerContext {
+        public DiscardEvent {
+            discardedCards = discardedCards == null ? List.of() : List.copyOf(discardedCards);
+        }
+
+        public DiscardEvent(UUID discardingPlayerId, int discardedCount) {
+            this(discardingPlayerId, discardedCount, List.of());
+        }
+    }
 
     /** Context for cycling triggers. */
     record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
@@ -276,6 +285,9 @@ public sealed interface TriggerContext {
 
     /** Context for a creature controlled by a player mutating. */
     record CreatureMutates(Permanent mutatedPermanent, UUID controllerId) implements TriggerContext {}
+
+    /** Context for a creature controlled by a player conniving. */
+    record CreatureConnives(Permanent connivingCreature, UUID controllerId) implements TriggerContext {}
 
     /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
     record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,

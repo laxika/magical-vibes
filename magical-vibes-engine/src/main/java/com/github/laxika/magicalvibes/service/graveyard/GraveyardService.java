@@ -1601,7 +1601,9 @@ public class GraveyardService {
                                 .withSourceCardId(sourceCard.getId())
                                 .withSourceControllerId(controllerId)
                                 .withSourcePermanentId(sourcePermanentId)
-                                .withSourcePermanentSnapshot(sourcePermanent))) {
+                                .withSourcePermanentSnapshot(sourcePermanent)
+                                .withTriggeringPermanentId(dyingPermanent == null ? null : dyingPermanent.getId())
+                                .withTriggeringPermanentControllerId(dyingControllerId))) {
                     continue;
                 }
                 effect = conditional.wrapped();

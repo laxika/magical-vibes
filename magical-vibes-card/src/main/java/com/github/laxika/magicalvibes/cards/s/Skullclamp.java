@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "SLZ", collectorNumber = "113")
 @CardRegistration(set = "SLZ", collectorNumber = "234")
 @CardRegistration(set = "SLZ", collectorNumber = "355")
+@CardRegistration(set = "MSC", collectorNumber = "210")
+@CardRegistration(set = "MSC", collectorNumber = "451")
 public class Skullclamp extends Card {
 
     public Skullclamp() {

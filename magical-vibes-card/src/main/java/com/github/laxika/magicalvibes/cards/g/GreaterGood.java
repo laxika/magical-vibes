@@ -14,6 +14,8 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "245")
 @CardRegistration(set = "USG", collectorNumber = "257")
 @CardRegistration(set = "2XM", collectorNumber = "170")
+@CardRegistration(set = "MSC", collectorNumber = "174")
+@CardRegistration(set = "MSC", collectorNumber = "380")
 public class GreaterGood extends Card {
 
     public GreaterGood() {

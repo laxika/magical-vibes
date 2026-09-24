@@ -886,6 +886,18 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Promise of Loyalty: each player chose the creature that receives a vow counter and survives. */
+    record EachPlayerChoosesCreaturePutsVowCounterChoice(
+            StackEntry resolvingEntry, java.util.List<UUID> playerIds, int playerIndex,
+            java.util.List<UUID> keptIds,
+            String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesCreaturePutsVowCounterChoice {
+            playerIds = List.copyOf(playerIds);
+            keptIds = List.copyOf(keptIds);
+        }
+    }
+
     /** Fade Away: the player selected creatures whose controllers will pay instead of sacrificing. */
     record FadeAwayKeep(UUID choosingPlayerId, java.util.List<UUID> creatureIds,
                         java.util.List<UUID> remainingPlayerIds,

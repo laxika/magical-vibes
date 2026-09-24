@@ -184,6 +184,7 @@ public enum CounterType {
     VERSE,
     VITALITY,
     VORTEX,
+    VOW,
     VOID,
     WAGE,
     HASTE,

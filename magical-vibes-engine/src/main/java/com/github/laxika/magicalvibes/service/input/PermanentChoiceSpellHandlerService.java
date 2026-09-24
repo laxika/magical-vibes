@@ -609,6 +609,9 @@ public class PermanentChoiceSpellHandlerService {
                 }
             }
 
+            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, gct.cardToCast(), gct.controllerId(),
+                    gct.sourcePermanentId(), gct.afterSuccessfulCastEffect());
+
             Card castCharacteristics = gct.castWithAdventure()
                     ? gct.cardToCast().createRuntimeCopyWithFace(spellCard) : gct.cardToCast();
             if (gct.castWithAdventure()) {

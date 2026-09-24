@@ -1789,7 +1789,7 @@ public class PermanentRemovalService {
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.triggerDelayedEffectOnDeath(
                         gameData, target.getCard().getId(), controllerId, target.getEffectivePower(),
-                        target.getCard().getManaValue());
+                        target.getCard().getManaValue(), Map.copyOf(target.getCounters()));
                 triggerCollectionService.triggerDelayedReturnOnDeath(
                         gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
             }

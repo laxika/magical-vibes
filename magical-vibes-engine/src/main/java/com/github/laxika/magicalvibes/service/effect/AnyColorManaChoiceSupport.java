@@ -211,7 +211,8 @@ public final class AnyColorManaChoiceSupport {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
             case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
-            case COMMANDER_COLOR_IDENTITY -> ManaProductionSupport.commanderColorIdentity(gameData, playerId);
+            case COMMANDER_COLOR_IDENTITY, PATH_OF_ANCESTRY ->
+                    ManaProductionSupport.commanderColorIdentity(gameData, playerId);
             default -> effect.allowedColors();
         };
         if (allowedColors.isEmpty()) {
@@ -245,6 +246,9 @@ public final class AnyColorManaChoiceSupport {
                     manaPool.addCreatureMana(effectiveColor, amount);
                 }
             }
+            if (effect.restriction() == ManaSpendRestriction.PATH_OF_ANCESTRY) {
+                manaPool.addPathOfAncestryManaTag(effectiveColor, amount);
+            }
             if (fromTreasureSource) {
                 manaPool.addTreasureMana(effectiveColor, amount);
             }
@@ -253,6 +257,9 @@ public final class AnyColorManaChoiceSupport {
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext,
                 allowedColors.stream().map(Enum::name).toList(), prompt(effect.restriction()));
+        if (effect.restriction() == ManaSpendRestriction.PATH_OF_ANCESTRY) {
+            gameData.markPendingPathOfAncestryManaChoice(sourcePermanentId, amount);
+        }
         beginOrQueueChoice(interactionHandlerRegistry, gameData, choice);
         if (effect.restriction() == ManaSpendRestriction.INSTANT_SORCERY_COPY) {
             // Delayed trigger: copy the next instant/sorcery spell this mana is spent on.
@@ -318,7 +325,7 @@ public final class AnyColorManaChoiceSupport {
         }
 
         ChoiceContext choice = switch (effect.restriction()) {
-            case NONE, INSTANT_SORCERY_COPY -> effect.restriction() == ManaSpendRestriction.NONE
+            case NONE, INSTANT_SORCERY_COPY, PATH_OF_ANCESTRY -> effect.restriction() == ManaSpendRestriction.NONE
                     && sourceCard != null
                     && sourceCard.getSubtypes().contains(CardSubtype.TREASURE)
                     ? new ChoiceContext.TreasureManaColorChoice(playerId, amount)
@@ -451,6 +458,7 @@ public final class AnyColorManaChoiceSupport {
     private static String prompt(ManaSpendRestriction restriction) {
         return switch (restriction) {
             case COMMANDER_COLOR_IDENTITY -> "Choose a color in your commander's color identity.";
+            case PATH_OF_ANCESTRY -> "Choose a color in your commander's color identity.";
             case LEGENDARY_SPELLS -> "Choose a color of mana to add (legendary spells only).";
             case SPELL_ONLY -> "Choose a color of mana to add (spells only).";
             case MULTICOLORED_SPELLS -> "Choose a color of mana to add (multicolored spells only).";

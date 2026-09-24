@@ -238,6 +238,8 @@ public class CombatBlockService {
                 }
             }
             collectUnblockedAttackTriggers(gameData, activeId, defenderId);
+            checkOpponentCreaturesAttackYouUnblockedTriggers(gameData, activeId, defenderId,
+                    unblockedAttackers);
             checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerGainLifeTriggers(gameData, activeId, unblockedAttackers);
@@ -686,6 +688,8 @@ public class CombatBlockService {
                 unblockedAttackers.add(attacker);
             }
         }
+        checkOpponentCreaturesAttackYouUnblockedTriggers(gameData, activeId, defenderId,
+                unblockedAttackers);
         checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
 
         // "Whenever a creature you control attacks and isn't blocked, you may have it deal damage
@@ -1442,6 +1446,52 @@ public class CombatBlockService {
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS_UNBLOCKED trigger for {} unblocked",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             }
+        }
+        return pushed;
+    }
+
+    /**
+     * Collects batched triggers for permanents watching an opponent's unblocked direct attack.
+     * The attacking player is stored as the non-targeting {@code targetId}, so player-affecting
+     * effects can resolve against that player even though the trigger itself has no target.
+     */
+    private int checkOpponentCreaturesAttackYouUnblockedTriggers(GameData gameData, UUID activeId,
+                                                                  UUID defenderId,
+                                                                  List<Permanent> unblockedAttackers) {
+        if (activeId.equals(defenderId) || unblockedAttackers.stream()
+                .noneMatch(attacker -> defenderId.equals(attacker.getAttackTarget()))) {
+            return 0;
+        }
+
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null) {
+            return 0;
+        }
+
+        int pushed = 0;
+        for (Permanent permanent : new ArrayList<>(defenderBattlefield)) {
+            List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(
+                    EffectSlot.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED));
+            effects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                    gameData, permanent, EffectSlot.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED));
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    defenderId,
+                    permanent.getCard().getName() + "'s unblocked-attack trigger",
+                    effects,
+                    activeId,
+                    permanent.getId());
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+            log.info("Game {} - {} opponent unblocked-attack trigger for player {}",
+                    gameData.id, permanent.getCard().getName(), activeId);
+            pushed++;
         }
         return pushed;
     }

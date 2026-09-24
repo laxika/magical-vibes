@@ -222,7 +222,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                  MANA_VALUE_AT_LEAST_FOUR,
                  CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS,
-                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY -> 0;
+                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY, PATH_OF_ANCESTRY -> 0;
         };
     }
 }

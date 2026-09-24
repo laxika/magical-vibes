@@ -13,6 +13,10 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "118")
 @CardRegistration(set = "SLZ", collectorNumber = "239")
 @CardRegistration(set = "SLZ", collectorNumber = "360")
+@CardRegistration(set = "MSC", collectorNumber = "233")
+@CardRegistration(set = "MSC", collectorNumber = "234")
+@CardRegistration(set = "MSC", collectorNumber = "235")
+@CardRegistration(set = "MSC", collectorNumber = "236")
 public class CommandTower extends Card {
 
     public CommandTower() {

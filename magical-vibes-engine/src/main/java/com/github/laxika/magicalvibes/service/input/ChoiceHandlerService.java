@@ -1432,6 +1432,11 @@ public class ChoiceHandlerService {
         } else {
             manaPool.add(manaColor, amount);
             tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
+            int pathOfAncestryAmount = gameData.consumePendingPathOfAncestryManaChoice(
+                    ctx.sourcePermanentId(), amount);
+            if (pathOfAncestryAmount > 0) {
+                manaPool.addPathOfAncestryManaTag(manaColor, pathOfAncestryAmount);
+            }
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
             }

@@ -74,6 +74,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> additionalCounterGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent on a creature spell, it gains riot". */
     private final EnumMap<ManaColor, Integer> riotGrantingMana = new EnumMap<>(ManaColor.class);
+    /** Mana carrying Path of Ancestry's creature-type matching scry rider. */
+    private final EnumMap<ManaColor, Integer> pathOfAncestryMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
     /** Per-color mana spendable only to cast artifact spells or activate abilities of artifacts (Vedalken Engineer). */
     private final EnumMap<ManaColor, Integer> artifactOnlyMana = new EnumMap<>(ManaColor.class);
@@ -259,6 +261,7 @@ public class ManaPool {
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
+            pathOfAncestryMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             graveyardOnlyMana.put(color, 0);
             promotedGraveyardOnlyMana.put(color, 0);
@@ -321,6 +324,7 @@ public class ManaPool {
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         additionalCounterGrantingMana.putAll(source.additionalCounterGrantingMana);
         riotGrantingMana.putAll(source.riotGrantingMana);
+        pathOfAncestryMana.putAll(source.pathOfAncestryMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         graveyardOnlyMana.putAll(source.graveyardOnlyMana);
         promotedGraveyardOnlyMana.putAll(source.promotedGraveyardOnlyMana);
@@ -773,6 +777,7 @@ public class ManaPool {
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
+            pathOfAncestryMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             graveyardOnlyMana.put(color, 0);
             promotedGraveyardOnlyMana.put(color, 0);
@@ -1243,6 +1248,10 @@ public class ManaPool {
         if (riotGranting > 0) {
             riotGrantingMana.put(color, riotGranting - 1);
         }
+        int pathOfAncestry = pathOfAncestryMana.getOrDefault(color, 0);
+        if (pathOfAncestry > 0) {
+            pathOfAncestryMana.put(color, pathOfAncestry - 1);
+        }
         // Clamp creature mana so it never exceeds total for this color
         int total = pool.getOrDefault(color, 0);
         int creature = creatureMana.getOrDefault(color, 0);
@@ -1267,6 +1276,9 @@ public class ManaPool {
         }
         if (riotGrantingMana.getOrDefault(color, 0) > total) {
             riotGrantingMana.put(color, total);
+        }
+        if (pathOfAncestryMana.getOrDefault(color, 0) > total) {
+            pathOfAncestryMana.put(color, total);
         }
         if (treasureMana.getOrDefault(color, 0) > total) {
             treasureMana.put(color, total);
@@ -1352,6 +1364,22 @@ public class ManaPool {
     public int getRiotGrantingManaTotal() {
         int total = 0;
         for (int value : riotGrantingMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Adds mana carrying Path of Ancestry's scry rider. */
+    public void addPathOfAncestryManaTag(ManaColor color, int amount) {
+        if (amount > 0) {
+            pathOfAncestryMana.merge(color, amount, Integer::sum);
+        }
+    }
+
+    /** Total mana still carrying Path of Ancestry's scry rider, across all colors. */
+    public int getPathOfAncestryManaTotal() {
+        int total = 0;
+        for (int value : pathOfAncestryMana.values()) {
             total += value;
         }
         return total;
@@ -3601,6 +3629,7 @@ public class ManaPool {
             moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
             moveTaggedManaToColorless(additionalCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(riotGrantingMana, color, amount);
+            moveTaggedManaToColorless(pathOfAncestryMana, color, amount);
         }
 
         moveColoredManaToColorlessBuckets(spellCastTriggerMana);
@@ -3686,6 +3715,7 @@ public class ManaPool {
             moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
             moveTaggedMana(additionalCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(riotGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(pathOfAncestryMana, color, replacementColor, amount);
         }
 
         moveManaToPool(replacementColor, artifactOnlyColorless);
@@ -3931,6 +3961,7 @@ public class ManaPool {
         clampColorTag(uncounterableGrantingMana, protectedColors);
         clampColorTag(additionalCounterGrantingMana, protectedColors);
         clampColorTag(riotGrantingMana, protectedColors);
+        clampColorTag(pathOfAncestryMana, protectedColors);
         drainColorMap(spellCastTriggerMana, protectedColors);
         drainColorBucket(abilityOnlyMana, protectedColors);
         drainColorBucket(promotedAbilityOnlyMana, protectedColors);

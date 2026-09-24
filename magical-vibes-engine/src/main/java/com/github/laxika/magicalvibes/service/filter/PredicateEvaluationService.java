@@ -179,8 +179,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingAlonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksWhileSourceControllerHasMostLifePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSameTargetAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
@@ -203,6 +206,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsKindredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
@@ -967,6 +971,8 @@ public class PredicateEvaluationService {
                         || gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.LEGENDARY)
                         || hasSagaSubtype(permanent);
             }
+            case PermanentIsCommanderPredicate ignored ->
+                    gameData != null && gameData.isCommander(permanent.getOriginalCard().getId());
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
             case PermanentHasAtLeastAttachedAurasPredicate p ->
@@ -1157,10 +1163,19 @@ public class PredicateEvaluationService {
                 yield permanent.isAttacking() && enchantedPlayerId != null
                         && enchantedPlayerId.equals(permanent.getAttackTarget());
             }
+            case PermanentIsAttackingMonarchPredicate ignored ->
+                    permanent.isAttacking() && gameData != null
+                            && gameData.monarchPlayerId != null
+                            && gameData.monarchPlayerId.equals(permanent.getAttackTarget())
+                            && gameData.playerIds.contains(permanent.getAttackTarget());
             case PermanentAttacksPlayerWithMostLifePredicate ignored ->
                     attacksPlayerWithMostLife(gameData, permanent);
             case PermanentAttacksWhileSourceControllerHasMostLifePredicate ignored ->
                     attacksWhileSourceControllerHasMostLife(gameData, permanent, sourceControllerId);
+            case PermanentAttacksPlayerWithMoreLifeThanControllerPredicate ignored ->
+                    attacksPlayerWithMoreLifeThanController(gameData, permanent);
+            case PermanentIsAttackingSameTargetAsSourcePredicate ignored ->
+                    attacksSameTargetAsSource(gameData, permanent, filterContext);
             case PermanentIsAttackingOpponentOfSourceControllerPredicate ignored ->
                     permanent.isAttacking() && sourceControllerId != null && gameData != null
                             && gameData.playerIds.contains(permanent.getAttackTarget())
@@ -1694,7 +1709,15 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
-                yield controllerBattlefield != null && controllerBattlefield.contains(permanent);
+                if (controllerBattlefield != null && controllerBattlefield.contains(permanent)) {
+                    yield true;
+                }
+                UUID triggeringPermanentControllerId = filterContext != null
+                        && permanent.getId().equals(filterContext.triggeringPermanentId())
+                        ? filterContext.triggeringPermanentControllerId()
+                        : null;
+                yield triggeringPermanentControllerId != null
+                        && sourceControllerId.equals(triggeringPermanentControllerId);
             }
             case PermanentControlledByPlayerPredicate p ->
                     gameData != null && p.playerId() != null
@@ -2237,6 +2260,30 @@ public class PredicateEvaluationService {
                 .allMatch(playerId -> controllerLife >= gameData.getLife(playerId));
     }
 
+    private boolean attacksPlayerWithMoreLifeThanController(GameData gameData, Permanent permanent) {
+        if (gameData == null || !permanent.isAttacking()
+                || !gameData.playerIds.contains(permanent.getAttackTarget())) {
+            return false;
+        }
+        UUID controllerId = gameData.findControllerOf(permanent);
+        return controllerId != null
+                && gameData.getLife(permanent.getAttackTarget()) > gameData.getLife(controllerId);
+    }
+
+    private boolean attacksSameTargetAsSource(GameData gameData, Permanent permanent,
+                                               FilterContext filterContext) {
+        if (gameData == null || filterContext == null || !permanent.isAttacking()
+                || permanent.getAttackTarget() == null) {
+            return false;
+        }
+        Permanent source = filterContext.sourcePermanentSnapshot();
+        if (source == null && filterContext.sourcePermanentId() != null) {
+            source = gameQueryService.findPermanentById(gameData, filterContext.sourcePermanentId());
+        }
+        return source != null && source.getAttackTarget() != null
+                && source.getAttackTarget().equals(permanent.getAttackTarget());
+    }
+
     /** Whether a static amount filter needs the live board to evaluate permanent ownership. */
     public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
         if (predicate instanceof PermanentOwnedBySourceControllerPredicate
@@ -2248,6 +2295,9 @@ public class PredicateEvaluationService {
             return true;
         }
         if (predicate instanceof PermanentIsModifiedPredicate) {
+            return true;
+        }
+        if (predicate instanceof PermanentIsCommanderPredicate) {
             return true;
         }
         if (predicate instanceof PermanentIsEnchantedBySourceControllerAuraPredicate) {
@@ -2507,6 +2557,13 @@ public class PredicateEvaluationService {
                 yield permanent.isAttacking() && enchantedPlayerId != null
                         && enchantedPlayerId.equals(permanent.getAttackTarget());
             }
+            case PermanentIsAttackingMonarchPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield permanent.isAttacking() && gameData != null
+                        && gameData.monarchPlayerId != null
+                        && gameData.monarchPlayerId.equals(permanent.getAttackTarget())
+                        && gameData.playerIds.contains(permanent.getAttackTarget());
+            }
             case PermanentAttackedDuringControllersLastTurnPredicate ignored ->
                     matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingOpponentOfSourceControllerPredicate ignored -> {
@@ -2600,6 +2657,10 @@ public class PredicateEvaluationService {
                 }
                 yield source != null && source.getChosenPermanentId() != null
                         && source.getChosenPermanentId().equals(permanent.getId());
+            }
+            case PermanentIsCommanderPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && gameData.isCommander(permanent.getOriginalCard().getId());
             }
             case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
                 // Recursion-safe: both colour sets come from the in-flight layer state (or the

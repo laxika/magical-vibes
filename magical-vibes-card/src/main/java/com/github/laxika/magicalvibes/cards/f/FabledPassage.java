@@ -17,6 +17,8 @@ import java.util.List;
 @CardRegistration(set = "M21", collectorNumber = "246")
 @CardRegistration(set = "BLB", collectorNumber = "252")
 @CardRegistration(set = "ELD", collectorNumber = "244")
+@CardRegistration(set = "MSC", collectorNumber = "242")
+@CardRegistration(set = "MSC", collectorNumber = "471")
 public class FabledPassage extends Card {
 
     public FabledPassage() {

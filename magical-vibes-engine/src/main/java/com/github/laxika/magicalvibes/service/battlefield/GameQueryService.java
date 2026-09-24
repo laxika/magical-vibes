@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
@@ -502,6 +503,58 @@ public class GameQueryService {
                     && !perm.isLosesAllAbilitiesUntilEndOfTurn()
                     && perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /** Returns whether a creature currently has a goad attack requirement. */
+    public boolean isGoaded(GameData gameData, Permanent creature) {
+        if (creature == null) {
+            return false;
+        }
+
+        final boolean[] goaded = {false};
+        gameData.forEachPermanent((sourceControllerId, sourcePermanent) -> {
+            if (goaded[0] || sourcePermanent.isFaceDown()
+                    || hasLostPrintedAbilities(gameData, sourcePermanent)) {
+                return;
+            }
+
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(sourcePermanent.getOriginalCard().getId())
+                    .withSourceControllerId(sourceControllerId)
+                    .withSourcePermanentId(sourcePermanent.getId())
+                    .withSourcePermanentSnapshot(sourcePermanent);
+            for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CombatAttackRequirementEffect requirement
+                        && requirement.requiresAttackAtOtherPlayerIfAble()
+                        && requirement.isActive(gameData, sourcePermanent)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        creature, requirement.affectedPredicate(), context)) {
+                    goaded[0] = true;
+                    return;
+                }
+            }
+        });
+        if (goaded[0]) {
+            return true;
+        }
+
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
+                if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
+                        || !requirement.requiresAttackAtOtherPlayerIfAble()
+                        || (floatingEffect.affectedPermanentId() != null
+                        && !creature.getId().equals(floatingEffect.affectedPermanentId()))) {
+                    continue;
+                }
+                if (predicateEvaluationService.matchesPermanentPredicate(
+                        creature, requirement.affectedPredicate(),
+                        FilterContext.of(gameData)
+                                .withSourceControllerId(floatingEffect.controllerId()))) {
+                    return true;
+                }
             }
         }
         return false;

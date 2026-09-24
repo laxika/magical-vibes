@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -1043,6 +1044,11 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttackedTargetIsOpponent ? ce.wrapped() : e);
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetIsMonarch
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetIsMonarch ? ce.wrapped() : e);
 
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.interveningIf()
@@ -1187,6 +1193,58 @@ public class CombatAttackService {
 
             // Check for aura-based "when enchanted creature attacks" triggers
             combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_ATTACK);
+        }
+
+        // Engine-level melee triggers: each attacking creature with melee gets +1/+1 until end
+        // of turn for each distinct opponent attacked by this combat. Attacking a planeswalker
+        // counts as attacking its controller, while attacking a battle does not count.
+        Set<UUID> opponentsAttackedThisCombat = new HashSet<>();
+        for (int idx : attackerIndices) {
+            UUID attackTarget = resolvedTargets.get(idx);
+            if (attackTarget == null) {
+                continue;
+            }
+            if (gameData.playerIds.contains(attackTarget)) {
+                opponentsAttackedThisCombat.add(attackTarget);
+                continue;
+            }
+            Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
+            if (attackedPermanent != null && attackedPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, attackTarget);
+                if (controllerId != null) {
+                    opponentsAttackedThisCombat.add(controllerId);
+                }
+            }
+        }
+        if (!opponentsAttackedThisCombat.isEmpty()) {
+            int meleeBoost = opponentsAttackedThisCombat.size();
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.MELEE)) {
+                    continue;
+                }
+                int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
+                try {
+                    StackEntry meleeTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            playerId,
+                            attacker.getCard().getName() + "'s melee",
+                            List.of(new BoostSelfEffect(meleeBoost, meleeBoost)),
+                            null,
+                            attacker.getId()
+                    );
+                    gameData.stack.add(meleeTrigger);
+                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                            gameData, attacker, meleeTrigger);
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(attacker.getCard()).text("'s melee triggers.").build());
+                    log.info("Game {} - {} melee trigger pushed onto stack", gameData.id,
+                            attacker.getCard().getName());
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
+            }
         }
 
         // Engine-level battle cry triggers (keyword-driven, no manual card wiring needed)
@@ -1433,10 +1491,21 @@ public class CombatAttackService {
 
             int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
             try {
+                boolean needsGraveyardTarget = filteredEffects.stream()
+                        .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
+                                && choosingEffect.choosesGraveyardCards()
+                                || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                 boolean needsTarget = filteredEffects.stream()
                         .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                if (needsTarget) {
+                if (needsGraveyardTarget) {
+                    graveyardTargetingService.handleAttackGraveyardTargeting(
+                            gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null);
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
+                    log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK graveyard trigger queued",
+                            gameData.id, perm.getCard().getName());
+                } else if (needsTarget) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
                             null, attackerIndices.size()));

@@ -44,6 +44,8 @@ public class StackEntry {
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
+    /** Index of the effect currently being dispatched by EffectResolutionService. */
+    @Setter private int resolvingEffectIndex = -1;
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
@@ -653,6 +655,7 @@ public class StackEntry {
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
+        this.resolvingEffectIndex = source.resolvingEffectIndex;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;

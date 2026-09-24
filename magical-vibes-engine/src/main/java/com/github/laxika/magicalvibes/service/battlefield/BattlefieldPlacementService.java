@@ -316,6 +316,13 @@ public class BattlefieldPlacementService {
         int countersPlacedOnEntry = counterCountAfterEntry - counterCountBeforeEntry;
         if (countersPlacedOnEntry > 0) {
             triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlacedOnEntry);
+            for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
+                int added = counter.getValue() - countersBeforeEntry.getOrDefault(counter.getKey(), 0);
+                if (added > 0) {
+                    permanentCounterSupport.fireYouPutCountersOnAnotherCreatureTriggers(
+                            gameData, permanent, counter.getKey(), added, controllerId);
+                }
+            }
         }
         if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(
@@ -1329,7 +1336,8 @@ public class BattlefieldPlacementService {
                 || permanent.getChosenSubtype() == null
                 || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
-        int countersBefore = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
+        Map<CounterType, Integer> countersBefore = new EnumMap<>(permanent.getCounters());
+        int countersBeforeTotal = countersBefore.values().stream().mapToInt(Integer::intValue).sum();
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             if (effect instanceof EnterWithCountersEffect enterWith
                     && matchesEnterWithCountersPredicate(gameData, controllerId, permanent.getCard(), enterWith)
@@ -1338,9 +1346,17 @@ public class BattlefieldPlacementService {
                         List.of(), 0, permanent.getCard());
             }
         }
-        int countersPlaced = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum() - countersBefore;
+        int countersPlaced = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum()
+                - countersBeforeTotal;
         if (countersPlaced > 0) {
             triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlaced);
+            for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
+                int added = counter.getValue() - countersBefore.getOrDefault(counter.getKey(), 0);
+                if (added > 0) {
+                    permanentCounterSupport.fireYouPutCountersOnAnotherCreatureTriggers(
+                            gameData, permanent, counter.getKey(), added, controllerId);
+                }
+            }
         }
     }
 

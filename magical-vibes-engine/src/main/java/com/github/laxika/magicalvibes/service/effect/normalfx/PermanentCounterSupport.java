@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSameCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
@@ -79,6 +80,79 @@ public class PermanentCounterSupport {
         if (triggerCollectionService != null && target != null && amount > 0) {
             triggerCollectionService.checkYouPutCountersTriggers(
                     gameData, placingPlayerId(gameData, entry, target), amount);
+        }
+    }
+
+    public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
+                                     int amount, CounterType counterType) {
+        if (target == null || amount <= 0) {
+            return;
+        }
+        UUID placingPlayerId = placingPlayerId(gameData, entry, target);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        }
+        fireYouPutCountersOnAnotherCreatureTriggers(
+                gameData, target, counterType, amount, placingPlayerId);
+    }
+
+    /** Fires Captain Marvel-style triggers once per counter-placement event. */
+    public void fireYouPutCountersOnAnotherCreatureTriggers(
+            GameData gameData, Permanent target, CounterType counterType, int amount,
+            UUID placingPlayerId) {
+        if (target == null || counterType == null || amount <= 0 || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, target)
+                || gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.KREE)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            if (source.getId().equals(target.getId())) {
+                continue;
+            }
+
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            List<CardEffect> boundEffects = new ArrayList<>();
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayEffect may
+                        && may.wrapped() instanceof PutSameCountersOnSourceEffect) {
+                    boundEffects.add(new MayEffect(
+                            new PutSameCountersOnSourceEffect(counterType, amount, target.getId()),
+                            may.prompt(), may.elseEffect(), may.choicePlayer()));
+                } else if (effect instanceof PutSameCountersOnSourceEffect) {
+                    boundEffects.add(new PutSameCountersOnSourceEffect(
+                            counterType, amount, target.getId()));
+                }
+            }
+            if (boundEffects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    placingPlayerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    boundEffects,
+                    null,
+                    source.getId());
+            trigger.setTriggeringPermanentId(target.getId());
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(
+                    source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} counter-on-another-creature trigger fires", gameData.id,
+                    source.getCard().getName());
         }
     }
 
@@ -301,7 +375,7 @@ public class PermanentCounterSupport {
             return;
         }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
-        notifyCountersPlaced(gameData, entry, target, counters);
+        notifyCountersPlaced(gameData, entry, target, counters, CounterType.PLUS_ONE_PLUS_ONE);
         notifySelfCountersPlaced(gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, previousCount, counters);
         recordPlusOnePlusOneCounterPlacedOnCreature(gameData, target, placingPlayerId);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId);
@@ -349,7 +423,7 @@ public class PermanentCounterSupport {
                 if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
                     recordPlusOnePlusOneCounterPlacedOnCreature(gameData, perm, placingPlayerId);
                 }
-                notifyCountersPlaced(gameData, entry, perm, placed);
+                notifyCountersPlaced(gameData, entry, perm, placed, counterType);
                 notifySelfCountersPlaced(gameData, entry, perm, counterType, previousCount, placed);
                 fireCounterPutOnControlledCreatureTriggers(gameData, perm, placed, placingPlayerId);
                 affectedCards.add(perm.getCard());
@@ -611,7 +685,7 @@ public class PermanentCounterSupport {
         };
         if (counterName == null || count <= 0) return 0;
 
-        notifyCountersPlaced(gameData, entry, target, count);
+        notifyCountersPlaced(gameData, entry, target, count, counterType);
         notifySelfCountersPlaced(gameData, entry, target, counterType, previousCount, count);
         recordCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {

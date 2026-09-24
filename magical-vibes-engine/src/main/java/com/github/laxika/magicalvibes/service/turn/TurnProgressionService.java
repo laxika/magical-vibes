@@ -589,6 +589,7 @@ public class TurnProgressionService {
                              boolean offerTimeVaultChoice, UUID excludedTimeVaultId) {
         if (snapshotEndingPlayer) {
             gameData.snapshotPlayerActionsForLastTurn(gameData.activePlayerId);
+            gameData.snapshotPlayerAttacksForLastTurn(gameData.activePlayerId);
         }
         // Clear any active mind control from the ending turn
         gameData.mindControlledPlayerId = null;

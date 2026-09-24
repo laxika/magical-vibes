@@ -2264,6 +2264,32 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_CONNIVES)
+    private boolean handleAllyCreatureConnivesDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureConnives connive = (TriggerContext.CreatureConnives) ctx;
+        Permanent source = match.permanent();
+        if (source == null || connive.connivingCreature() == null) return false;
+
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                connive.connivingCreature().getId(),
+                source.getId());
+        entry.setTriggeringPermanentId(connive.connivingCreature().getId());
+        entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers for a controlled creature conniving",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_MUTATES)
     private boolean handleAllyCreatureMutatesDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

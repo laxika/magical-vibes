@@ -312,6 +312,7 @@ public class EffectResolutionService {
             }
 
             if (!skipEffect) {
+                entry.setResolvingEffectIndex(i);
                 EffectHandler handler = registry.getHandler(effectToResolve);
                 if (handler != null) {
                     handler.resolve(gameData, entry, effectToResolve);
@@ -347,6 +348,7 @@ public class EffectResolutionService {
         }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
+        entry.setResolvingEffectIndex(-1);
         entry.setResolvingEffectTargetGroup(null);
         // Cast-time mana snapshots (converge, colors spent) live until resolution truly finishes.
         // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast

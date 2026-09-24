@@ -97,6 +97,8 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return recipient == DamageRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
+        return recipient == DamageRecipient.TARGET_PLAYER
+                || recipient == DamageRecipient.EACH_OTHER_OPPONENT
+                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

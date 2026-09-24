@@ -1248,6 +1248,7 @@ public class CastingPermissionService {
         }
         // Quicken: an unconsumed grant for the next spell of a given type this turn.
         if (gameData.hasNextSpellFlashGrant(playerId, card)) return true;
+        if (gameData.hasNextSpellChosenSubtypeFlashGrant(playerId, card)) return true;
         for (UUID ownerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
             if (battlefield == null) continue;

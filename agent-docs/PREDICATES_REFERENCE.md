@@ -90,8 +90,11 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsAttackingAlonePredicate` | `()` | creatures currently attacking that were the only creatures declared as attackers in the current combat; needs game data |
 | `PermanentIsAttackingEnchantedPlayerPredicate` | `()` | creatures attacking the player enchanted by the source Aura directly; attacks against that player's planeswalker or battle do not match, and the source must be attached to a player (Curse of Hospitality) |
+| `PermanentIsAttackingMonarchPredicate` | `()` | creatures attacking the monarch directly; attacks against the monarch's planeswalker or battle do not match (M'Baku, Jabari Chieftain) |
 | `PermanentAttacksPlayerWithMostLifePredicate` | `()` | attacking creatures whose direct player attack target is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
 | `PermanentAttacksWhileSourceControllerHasMostLifePredicate` | `()` | attacking creatures whose source controller is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
+| `PermanentAttacksPlayerWithMoreLifeThanControllerPredicate` | `()` | attacking creatures whose direct player attack target has more life than that creature's controller; attacks against planeswalkers or battles do not match (Namor, Atlantean King) |
+| `PermanentIsAttackingSameTargetAsSourcePredicate` | `()` | attacking permanents whose attack target matches the source permanent's attack target; requires source permanent context (Namor, Atlantean King) |
 | `PermanentIsAttackingOpponentOfSourceControllerPredicate` | `()` | creatures attacking one of the source controller's opponents directly; attacks against planeswalkers and battles do not match; needs a `FilterContext` with source controller (Oviya, Automech Artisan) |
 | `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal). Also usable as a static `StaticBoostEffect`/`GrantKeywordEffect` filter — `matchesStaticFilter` reads the source controller off the context (Boarded Window and Watchdog, "creatures attacking you get -1/-0") |
 | `PermanentIsBlockingPredicate` | `()` | blocking creatures (the blockers themselves). Also usable as a static GrantKeywordEffect/StaticBoostEffect filter (`matchesStaticFilter` supports it, like `PermanentIsAttackingPredicate`) — Snow Devil |
@@ -106,6 +109,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsTokenPredicate` | `()` | token permanents |
 | `PermanentIsTransformedPredicate` | `()` | permanents currently showing their transformed face |
 | `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
+| `PermanentIsCommanderPredicate` | `()` | permanents whose original card is designated as a commander in `GameData`; requires game data |
 | `PermanentHasAdventurePredicate` | `()` | permanents whose cards have an Adventure, regardless of whether they were cast as an Adventure (Mysterious Pathlighter) |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |
 
@@ -223,7 +227,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentIsSourcePermanentPredicate` | `()` | the source **permanent** itself, matched by permanent id (so a second copy of the same card is not matched). Wrap in `PermanentNotPredicate` for "each **other** …" wording (Renegade Krasis) | `sourcePermanentSnapshot` |
 | `PermanentIsTriggeringPermanentPredicate` | `()` | the permanent whose event caused the resolving ability to trigger, matched by the trigger's captured permanent id | `triggeringPermanentId` |
 | `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence, Zenos yae Galvus) | none |
-| `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
+| `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller; damaged-creature death trigger conditions also use the triggering permanent's last-known controller | `gameData` + `sourceControllerId` |
 | `PermanentControlledByActivePlayerPredicate` | `()` | permanents controlled by the active player (`gameData.activePlayerId`) | `gameData` |
 | `PermanentControlledByDefendingPlayerPredicate` | `()` | permanents controlled by a defending player of the current combat (a player attacked directly or via one of their planeswalkers, per `GameQueryService.isPlayerBeingAttacked`). Matches nothing outside combat, so a spell using it is uncastable before attackers are declared. Yare | `gameData` |
 | `PermanentControlledContinuouslySinceBeginningOfTurnPredicate` | `()` | permanents controlled continuously since the beginning of the turn (`!isSummoningSick()`; same signal as `CameUnderControlThisTurn` / Siren's Call exemption). Norritt | — |

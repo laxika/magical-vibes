@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "INR", collectorNumber = "49")
 @CardRegistration(set = "INR", collectorNumber = "302")
 @CardRegistration(set = "MID", collectorNumber = "41")
+@CardRegistration(set = "MSC", collectorNumber = "146")
+@CardRegistration(set = "MSC", collectorNumber = "325")
 public class VanquishTheHorde extends Card {
 
     public VanquishTheHorde() {

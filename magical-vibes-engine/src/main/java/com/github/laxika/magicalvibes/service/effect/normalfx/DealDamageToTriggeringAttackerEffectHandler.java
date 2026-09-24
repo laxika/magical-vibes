@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final DamageSupport damageSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +43,15 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
+        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ").card(attacker.getCard()).text(".").build());
         damageSupport.dealCreatureDamage(gameData, entry, attacker, damage);
     }

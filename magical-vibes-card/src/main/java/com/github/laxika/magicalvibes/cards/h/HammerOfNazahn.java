@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "2XM", collectorNumber = "260")
+@CardRegistration(set = "MSC", collectorNumber = "286")
+@CardRegistration(set = "MSC", collectorNumber = "427")
 public class HammerOfNazahn extends Card {
 
     public HammerOfNazahn() {

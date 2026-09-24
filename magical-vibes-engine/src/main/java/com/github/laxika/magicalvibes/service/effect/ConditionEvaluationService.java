@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermane
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
@@ -107,6 +108,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisT
 import com.github.laxika.magicalvibes.model.condition.ControllerControlledSourcesDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.RedSourcesControlledDealtNoncombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotDealtCombatDamageSinceLastTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerWasAttackedByPlayerLastTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
@@ -315,6 +317,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceAttackedBattleThisTu
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledDifferentManaValuesThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
@@ -904,6 +907,9 @@ public class ConditionEvaluationService {
             case AttackedTargetIsOpponent ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
+            case AttackedTargetIsMonarch ignored ->
+                    ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
+                            && ctx.targetId().equals(gameData.monarchPlayerId);
             case TargetPermanentAttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 Permanent attackedTarget = target == null || target.getAttackTarget() == null
@@ -1024,6 +1030,10 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.redSourceNoncombatDamageThisTurn.getOrDefault(ctx.controllerId(), 0)
                                     >= c.minimumAmount();
+            case ControllerWasAttackedByPlayerLastTurn ignored ->
+                    ctx.controllerId() != null
+                            && !gameData.playersWhoAttackedPlayersLastTurn
+                                    .getOrDefault(ctx.controllerId(), Set.of()).isEmpty();
             case ControllerWasNotDealtCombatDamageSinceLastTurn ignored ->
                     ctx.controllerId() != null
                             && !gameData.playersDealtCombatDamageLastTurn.contains(ctx.controllerId())
@@ -1359,6 +1369,8 @@ public class ConditionEvaluationService {
                                     .filter(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()))
                                     .filter(e -> !e.card().isToken())
                                     .count() >= c.threshold();
+            case SourceExiledCardsMatchingAtLeast c ->
+                    sourceExiledCardsMatchingAtLeast(gameData, ctx, c.threshold(), c.filter());
             case SourceExiledDifferentManaValuesThreshold c ->
                     ctx.sourcePermanentId() != null
                             && gameData.exiledCards.stream()
@@ -3418,6 +3430,20 @@ public class ConditionEvaluationService {
             if (matches) count++;
         }
         return count;
+    }
+
+    private boolean sourceExiledCardsMatchingAtLeast(GameData gameData, ConditionContext ctx,
+                                                     int threshold, CardPredicate filter) {
+        if (ctx.sourcePermanentId() == null) return false;
+        long count = gameData.exiledCards.stream()
+                .filter(entry -> ctx.sourcePermanentId().equals(entry.sourcePermanentId()))
+                .filter(entry -> !entry.card().isToken())
+                .filter(entry -> GameQueryService.isStaticEvaluationActive()
+                        ? predicateEvaluationService.matchesCardPredicate(entry.card(), filter, null)
+                        : predicateEvaluationService.matchesCardPredicate(
+                                entry.card(), filter, null, gameData, entry.ownerId()))
+                .count();
+        return count >= threshold;
     }
 
     private boolean isTopCardOfLibraryColor(GameData gameData, UUID controllerId, TopCardOfLibraryColor c) {
