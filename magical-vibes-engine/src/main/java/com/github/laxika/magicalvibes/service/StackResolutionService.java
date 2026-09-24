@@ -425,11 +425,11 @@ public class StackResolutionService {
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());
+                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked(), entry);
         } else {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
                     entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
-                    entry.getConvokeCreatureIds().size());
+                    entry.getConvokeCreatureIds().size(), entry);
         }
     }
 

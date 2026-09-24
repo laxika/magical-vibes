@@ -338,7 +338,16 @@ public class Card {
      * fails on any newly declared field to force this update.
      */
     protected Card(Card source) {
-        this.id = source.id;
+        this(source, source.id);
+    }
+
+    /** Creates a mutable copy with a fresh card identity for conjured/duplicated cards. */
+    public Card createCardCopy() {
+        return new Card(this, UUID.randomUUID());
+    }
+
+    private Card(Card source, UUID id) {
+        this.id = id;
         this.ownerId = source.ownerId;
         this.name = source.name;
         this.type = source.type;

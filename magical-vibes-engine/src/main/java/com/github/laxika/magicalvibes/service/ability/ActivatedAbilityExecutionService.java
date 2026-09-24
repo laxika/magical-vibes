@@ -1676,6 +1676,7 @@ public class ActivatedAbilityExecutionService {
                         new Permanent(permanent),
                         null,
                         delayed.untilNextTurn(),
+                        delayed.persistsUntilConsumed(),
                         gameData.turnNumber));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),

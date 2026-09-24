@@ -3505,7 +3505,7 @@ public class ChoiceHandlerService {
             hand.removeAll(toDiscard);
             triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card card : toDiscard) {
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.HAND);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
             triggerCollectionService.finishDiscardEvent(gameData);
@@ -6301,6 +6301,12 @@ public class ChoiceHandlerService {
         if (ctx.tokenTemplate() != null && handExiledCount > 0) {
             permanentControlSupport.applyCreateToken(gameData, targetPlayerId, ctx.tokenTemplate(),
                     handExiledCount, ctx.sourceSetCode());
+        }
+
+        if (ctx.followUpEffect() != null && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setEventValue(handExiledCount);
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(ctx.followUpEffect()));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

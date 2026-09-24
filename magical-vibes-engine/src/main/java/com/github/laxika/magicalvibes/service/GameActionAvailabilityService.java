@@ -398,7 +398,8 @@ public class GameActionAvailabilityService {
             flagged.setWhiteSpendableAsAnyColorWithoutRestriction(true);
             pool = flagged;
         }
-        if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId) && !pool.isAllManaSpendableAsAnyColor()) {
+        if (gameQueryService.canSpendManaAsAnyColorToCastCard(gameData, playerId, card)
+                && !pool.isAllManaSpendableAsAnyColor()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             flagged.setAllManaSpendableAsAnyColor(true);

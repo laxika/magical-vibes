@@ -70,6 +70,9 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
+        register(PendingInteraction.SpellbookDraftChoice.class, this::projectSpellbookDraftChoice);
+        register(PendingInteraction.RevealedMatchingHandCardChoice.class,
+                this::projectRevealedMatchingHandCardChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.TargetPlayerHandOrderChoice.class,
@@ -222,6 +225,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.DiscardCostChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PlanarAbilityHandCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualPowerToughnessChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class,
                 this::projectPutCardsFromHandOnLibraryCardChoice);
@@ -379,6 +384,19 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validPlaneCardIds()), cardViews, 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectSpellbookDraftChoice(
+            GameData gameData, PendingInteraction.SpellbookDraftChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), 1,
+                "Choose a card from " + interaction.sourceCardName() + "'s spellbook.");
+    }
+
+    private InteractionPromptMessage projectRevealedMatchingHandCardChoice(
+            GameData gameData, PendingInteraction.RevealedMatchingHandCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), 1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(
@@ -1402,8 +1420,10 @@ public class InteractionPromptProjectionRegistry {
         }
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
-                "You may reveal a " + interaction.cardLabel()
-                        + " from outside the game or choose one in face-up exile.");
+                interaction.mandatory()
+                        ? "Choose a " + interaction.cardLabel() + " from outside the game."
+                        : "You may reveal a " + interaction.cardLabel()
+                                + " from outside the game or choose one in face-up exile.");
     }
 
     private InteractionPromptMessage projectExchangeOutsideGameCardChoice(

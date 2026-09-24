@@ -20,7 +20,18 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       int convokeCreatureCount,
                                       EnterBattlefieldOnDiscardEffect discardReplacement,
                                       EnterWithCountersEffect enterWithCounters,
-                                      Zone landPlayZone) {
+                                      Zone landPlayZone,
+                                      StackEntry sourceStackEntry) {
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts, int convokeCreatureCount,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters, Zone landPlayZone) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
+                landPlayZone, null);
+    }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
@@ -64,6 +75,7 @@ public record BattlefieldEntryRequest(UUID controllerId,
     public BattlefieldEntryRequest deepCopy() {
         return new BattlefieldEntryRequest(controllerId, new Permanent(permanent), enterTappedTypes,
                 simultaneouslyEntered.stream().map(Permanent::new).toList(), xValue, kicked,
-                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters, landPlayZone);
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
+                landPlayZone, sourceStackEntry == null ? null : new StackEntry(sourceStackEntry));
     }
 }

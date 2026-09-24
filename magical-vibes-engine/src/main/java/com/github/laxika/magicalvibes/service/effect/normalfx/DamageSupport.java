@@ -262,6 +262,7 @@ public class DamageSupport {
                     gameData, entry, targetControllerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, bonusSourceControllerId);
+            rawDamage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
         UUID sourceControllerId = bonusSourceControllerId;
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
@@ -735,6 +736,7 @@ public class DamageSupport {
                     gameQueryService.findPermanentController(gameData, target.getId()));
             damage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
+            damage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
 
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn()) {
@@ -1343,6 +1345,7 @@ public class DamageSupport {
                     gameData, entry, playerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
+            rawDamage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
         // Energy Storm and Hidden Retreat: prevent all damage dealt by instant and sorcery spells.
         if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {

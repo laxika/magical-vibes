@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsInExileAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInExileMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandGraveyardAndLibraryMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
@@ -90,6 +91,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedA
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
@@ -848,6 +850,9 @@ public class ConditionEvaluationService {
                     gameData.cardPutIntoExileThisTurn;
             case CardsInHandMatchingAtLeast c ->
                     countMatchingCardsInHand(gameData, ctx.controllerId(), c.filter()) >= c.threshold();
+            case CardsInHandGraveyardAndLibraryMatchingAtLeast c ->
+                    countMatchingCardsInHandGraveyardAndLibrary(gameData, ctx.controllerId(), c.filter())
+                            >= c.threshold();
             case ActivePlayerControlsPermanent c ->
                     activePlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case ActivePlayerControlsMoreLandsThanEachOtherPlayer ignored ->
@@ -1245,6 +1250,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
             case ControllerIsMonarch ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.monarchPlayerId);
+            case ControllerIsStartingPlayer ignored ->
+                    ctx.controllerId() != null && ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerMainPhase ignored ->
                     ctx.controllerId() != null
                             && ctx.controllerId().equals(gameData.activePlayerId)
@@ -3527,6 +3534,24 @@ public class ConditionEvaluationService {
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null) return 0;
         return (int) hand.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, null, gameData, controllerId))
+                .count();
+    }
+
+    private int countMatchingCardsInHandGraveyardAndLibrary(GameData gameData, UUID controllerId,
+                                                            CardPredicate filter) {
+        if (controllerId == null) return 0;
+        return countMatchingCards(gameData.playerHands.get(controllerId), gameData, controllerId, filter)
+                + countMatchingCards(gameData.playerGraveyards.get(controllerId), gameData, controllerId, filter)
+                + countMatchingCards(gameData.playerDecks.get(controllerId), gameData, controllerId, filter);
+    }
+
+    private int countMatchingCards(List<Card> cards, GameData gameData, UUID controllerId,
+                                   CardPredicate filter) {
+        if (cards == null) return 0;
+        return (int) cards.stream()
+                .filter(card -> !card.isToken())
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, controllerId))
                 .count();

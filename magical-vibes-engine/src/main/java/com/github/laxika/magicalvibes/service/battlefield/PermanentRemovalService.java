@@ -1316,12 +1316,16 @@ public class PermanentRemovalService {
                                                    boolean checkExileInsteadOfDie, String destinationDescription) {
         boolean permanentGraveyardReplacement = checkExileInsteadOfDie
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
+        boolean perpetualGraveyardReplacement = checkExileInsteadOfDie
+                && target.getOriginalCard() != null
+                && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
         if (!target.isExileIfLeavesBattlefield()
                 && !target.isExileIfLeavesBattlefieldUntilEndOfTurn()
                 && !(checkExileInsteadOfDie && target.isExileIfDying())
                 && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
                 && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
-                && !permanentGraveyardReplacement) {
+                && !permanentGraveyardReplacement
+                && !perpetualGraveyardReplacement) {
             return false;
         }
         boolean exiled = removePermanentToExile(gameData, target);

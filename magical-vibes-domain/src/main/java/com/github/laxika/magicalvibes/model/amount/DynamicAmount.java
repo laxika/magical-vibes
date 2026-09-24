@@ -191,6 +191,7 @@ public sealed interface DynamicAmount permits
         TotalToughnessOfCardsExiledWithSource,
         TotalToughnessOfControlledCreatures,
         TurnsTakenByController,
+        TurnsBegunSinceForetell,
         UnspentMana,
         UntappedLandsAtTurnStart,
         UnlockedRoomDoorsCount,

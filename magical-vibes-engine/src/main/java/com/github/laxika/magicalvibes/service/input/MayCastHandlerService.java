@@ -447,7 +447,7 @@ public class MayCastHandlerService {
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects, player.getId());
             if (validTargets.isEmpty()) {
                 if (cardsToBottom == null) {
-                    graveyardService.addCardToGraveyard(gameData, ownerId, card);
+                    graveyardService.addCardToGraveyard(gameData, ownerId, card, Zone.LIBRARY);
                     gameLogService.append(gameData, GameLog.cardThen(card,
                             " has no legal targets, so it can't be cast. It is put into the graveyard."));
                 } else {
@@ -1731,7 +1731,7 @@ public class MayCastHandlerService {
                 if (exileInsteadOfGraveyard) {
                     gameData.addToExile(ownerId, card);
                 } else {
-                    graveyardService.addCardToGraveyard(gameData, ownerId, card);
+                    graveyardService.addCardToGraveyard(gameData, ownerId, card, Zone.HAND);
                 }
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} cast-from-hand has no valid targets", gameData.id, card.getName());

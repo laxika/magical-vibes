@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromLibraryTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -1504,6 +1505,31 @@ public class SpellCastTriggerCollectorService {
             ));
         }
         log.info("Game {} - {} cast-from-graveyard trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CastFromLibraryTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCastFromLibraryTrigger(TriggerMatchContext match,
+            CastFromLibraryTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (sc.castZone() != Zone.LIBRARY || !sc.spellCard().hasType(CardType.CREATURE)) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(trigger.resolvedEffects()),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        log.info("Game {} - {} cast-from-library trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

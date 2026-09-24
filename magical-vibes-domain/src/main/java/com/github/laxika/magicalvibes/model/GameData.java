@@ -305,6 +305,34 @@ public class GameData {
      * (e.g. Hoarding Dragon's death trigger, Clone Shell's sacrifice ability).
      */
     public final Map<UUID, Card> imprintedCards = new ConcurrentHashMap<>();
+    /** Perpetual power/toughness changes keyed by the affected card's identity. */
+    public final Map<UUID, PerpetualPowerToughnessModifier> perpetualPowerToughnessModifiers =
+            new ConcurrentHashMap<>();
+    /** Perpetual keyword grants keyed by the affected card's identity. */
+    public final Map<UUID, Set<Keyword>> perpetualKeywords = new ConcurrentHashMap<>();
+    /** Perpetual generic cast-cost increases keyed by the affected card's identity. */
+    public final Map<UUID, Integer> perpetualGenericCastCostIncreases = new ConcurrentHashMap<>();
+    /** Perpetual noncombat damage bonuses keyed by the affected card's identity. */
+    public final Map<UUID, Integer> perpetualNoncombatDamageBonuses = new ConcurrentHashMap<>();
+    /** Cards that perpetually let their controller spend mana as any color to cast them. */
+    public final Set<UUID> perpetualAnyColorManaForCastCardIds = ConcurrentHashMap.newKeySet();
+    /** Cards that perpetually enter the battlefield tapped, keyed by card identity. */
+    public final Set<UUID> perpetualEnterTappedCardIds = ConcurrentHashMap.newKeySet();
+    /** Cards that perpetually exile themselves instead of dying, keyed by card identity. */
+    public final Set<UUID> perpetualExileInsteadOfDyingCardIds = ConcurrentHashMap.newKeySet();
+    /** Perpetual triggered abilities keyed by the affected card's identity. */
+    public final Map<UUID, List<CardEffect>> perpetualTriggeredAbilities = new ConcurrentHashMap<>();
+    /** Perpetual triggered-ability grants reapplied when the affected card enters the battlefield. */
+    public final Map<UUID, Map<EffectSlot, List<CardEffect>>> perpetualTriggeredAbilityGrants =
+            new ConcurrentHashMap<>();
+    /** Perpetual graveyard-activated abilities keyed by the affected card's identity. */
+    public final Map<UUID, List<ActivatedAbility>> perpetualGraveyardAbilities = new ConcurrentHashMap<>();
+    /** Perpetual card types keyed by the affected card's identity. */
+    public final Map<UUID, Set<CardType>> perpetualCardTypes = new ConcurrentHashMap<>();
+    /** Perpetual card subtypes keyed by the affected card's identity. */
+    public final Map<UUID, Set<CardSubtype>> perpetualCardSubtypes = new ConcurrentHashMap<>();
+    /** Perpetual activated abilities keyed by the affected card's identity. */
+    public final Map<UUID, List<ActivatedAbility>> perpetualActivatedAbilities = new ConcurrentHashMap<>();
     /** Keyword or ability word chosen for a card's Legacy pregame ability, keyed by card id. */
     public final Map<UUID, String> legacyChosenWordsByCardId = new ConcurrentHashMap<>();
     /**
@@ -768,6 +796,9 @@ public class GameData {
     /** Progress state for each-player discard effects that check for discarded creature cards. */
     public final EachPlayerDiscardsCreatureOrLosesLifeState eachPlayerDiscardsCreatureOrLosesLife =
             new EachPlayerDiscardsCreatureOrLosesLifeState();
+    /** Progress state for each-player discard effects restricted to nonland cards. */
+    public final EachPlayerDiscardsNonlandCardState eachPlayerDiscardsNonlandCard =
+            new EachPlayerDiscardsNonlandCardState();
     /** Progress state for each player's optional graveyard exile and remaining-card life loss. */
     public final EachPlayerMayExileGraveyardCardsState eachPlayerMayExileGraveyardCards =
             new EachPlayerMayExileGraveyardCardsState();
@@ -4576,7 +4607,7 @@ public class GameData {
                     if (transformed != entry.card()) {
                         exiledCards.set(i, new ExiledCardEntry(transformed, entry.ownerId(),
                                 entry.sourcePermanentId(), entry.faceDown(), entry.exilerId(),
-                                entry.exiledTurnNumber()));
+                                entry.exiledTurnNumber(), entry.controllerTurnsTakenAtExile()));
                     }
                 }
             }
@@ -4681,7 +4712,8 @@ public class GameData {
                 Card original = bombardmentOriginalCardsUntilEndOfTurn.get(entry.card().getId());
                 if (original != null) {
                     exiledCards.set(i, new ExiledCardEntry(original, entry.ownerId(), entry.sourcePermanentId(),
-                            entry.faceDown(), entry.exilerId(), entry.exiledTurnNumber()));
+                            entry.faceDown(), entry.exilerId(), entry.exiledTurnNumber(),
+                            entry.controllerTurnsTakenAtExile()));
                 }
             }
         }
@@ -4746,7 +4778,7 @@ public class GameData {
                 if (oldSourcePermanentId.equals(entry.sourcePermanentId())) {
                     exiledCards.set(i, new ExiledCardEntry(
                             entry.card(), entry.ownerId(), newSourcePermanentId, entry.faceDown(),
-                            entry.exilerId(), entry.exiledTurnNumber()));
+                            entry.exilerId(), entry.exiledTurnNumber(), entry.controllerTurnsTakenAtExile()));
                 }
             }
         }
@@ -4794,7 +4826,7 @@ public class GameData {
                 if (exiled.card().getId().equals(cardId)) {
                     exiledCards.set(i, new ExiledCardEntry(exiled.card(), exiled.ownerId(),
                             sourcePermanentId, exiled.faceDown(), exiled.exilerId(),
-                            exiled.exiledTurnNumber()));
+                            exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile()));
                     return true;
                 }
             }
@@ -4877,7 +4909,8 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(playerId, card)) return;
         commanderEnteredReturnZone(card);
-        exiledCards.add(new ExiledCardEntry(card, playerId, null, true, playerId, turnNumber));
+        exiledCards.add(new ExiledCardEntry(card, playerId, null, true, playerId, turnNumber,
+                turnsTakenByPlayer.getOrDefault(playerId, 0)));
         foretoldCardIds.add(card.getId());
         if (foretellCost != null) {
             foretoldCardCosts.put(card.getId(), foretellCost);
@@ -5125,7 +5158,8 @@ public class GameData {
             ExiledCardEntry e = it.next();
             if (e.sourcePermanentId() != null) {
                 it.remove();
-                updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null, e.faceDown(), e.exilerId()));
+                updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null, e.faceDown(), e.exilerId(),
+                        e.exiledTurnNumber(), e.controllerTurnsTakenAtExile()));
             }
         }
         exiledCards.addAll(updated);
@@ -5517,6 +5551,10 @@ public class GameData {
         copy.eachPlayerDiscardsCreatureOrLosesLife.remaining.addAll(this.eachPlayerDiscardsCreatureOrLosesLife.remaining);
         copy.eachPlayerDiscardsCreatureOrLosesLife.playersWhoDiscardedCreature
                 .addAll(this.eachPlayerDiscardsCreatureOrLosesLife.playersWhoDiscardedCreature);
+        copy.eachPlayerDiscardsNonlandCard.active = this.eachPlayerDiscardsNonlandCard.active;
+        copy.eachPlayerDiscardsNonlandCard.controllerId = this.eachPlayerDiscardsNonlandCard.controllerId;
+        copy.eachPlayerDiscardsNonlandCard.currentPlayerId = this.eachPlayerDiscardsNonlandCard.currentPlayerId;
+        copy.eachPlayerDiscardsNonlandCard.remaining.addAll(this.eachPlayerDiscardsNonlandCard.remaining);
         copy.eachPlayerMayExileGraveyardCards.active = this.eachPlayerMayExileGraveyardCards.active;
         copy.eachPlayerMayExileGraveyardCards.currentPlayerId = this.eachPlayerMayExileGraveyardCards.currentPlayerId;
         copy.eachPlayerMayExileGraveyardCards.remaining.addAll(this.eachPlayerMayExileGraveyardCards.remaining);
@@ -5829,6 +5867,29 @@ public class GameData {
         // --- Map<UUID, String/Integer> ---
         copy.playerIdToName.putAll(this.playerIdToName);
         copy.imprintedCards.putAll(this.imprintedCards);
+        copy.perpetualPowerToughnessModifiers.putAll(this.perpetualPowerToughnessModifiers);
+        this.perpetualKeywords.forEach((cardId, keywords) ->
+                copy.perpetualKeywords.put(cardId, Set.copyOf(keywords)));
+        copy.perpetualGenericCastCostIncreases.putAll(this.perpetualGenericCastCostIncreases);
+        copy.perpetualNoncombatDamageBonuses.putAll(this.perpetualNoncombatDamageBonuses);
+        copy.perpetualAnyColorManaForCastCardIds.addAll(this.perpetualAnyColorManaForCastCardIds);
+        copy.perpetualEnterTappedCardIds.addAll(this.perpetualEnterTappedCardIds);
+        copy.perpetualExileInsteadOfDyingCardIds.addAll(this.perpetualExileInsteadOfDyingCardIds);
+        this.perpetualTriggeredAbilities.forEach((cardId, effects) ->
+                copy.perpetualTriggeredAbilities.put(cardId, List.copyOf(effects)));
+        this.perpetualTriggeredAbilityGrants.forEach((cardId, effectsBySlot) -> {
+            Map<EffectSlot, List<CardEffect>> copied = new EnumMap<>(EffectSlot.class);
+            effectsBySlot.forEach((slot, effects) -> copied.put(slot, List.copyOf(effects)));
+            copy.perpetualTriggeredAbilityGrants.put(cardId, Map.copyOf(copied));
+        });
+        this.perpetualGraveyardAbilities.forEach((cardId, abilities) ->
+                copy.perpetualGraveyardAbilities.put(cardId, List.copyOf(abilities)));
+        this.perpetualCardTypes.forEach((cardId, types) ->
+                copy.perpetualCardTypes.put(cardId, Set.copyOf(types)));
+        this.perpetualCardSubtypes.forEach((cardId, subtypes) ->
+                copy.perpetualCardSubtypes.put(cardId, Set.copyOf(subtypes)));
+        this.perpetualActivatedAbilities.forEach((cardId, abilities) ->
+                copy.perpetualActivatedAbilities.put(cardId, List.copyOf(abilities)));
         copy.legacyChosenWordsByCardId.putAll(this.legacyChosenWordsByCardId);
         copy.exiledVoyageCounters.putAll(this.exiledVoyageCounters);
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);

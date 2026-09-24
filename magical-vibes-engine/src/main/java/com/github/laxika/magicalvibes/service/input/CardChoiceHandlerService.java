@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
@@ -1545,14 +1546,19 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} puts {} {}", gameData.id, player.getUsername(), cardNames, placement);
         }
 
-        if (revealedHandChoice.chosenCardThenEffect() != null
+        CardEffect chosenCardThenEffect = revealedHandChoice.chosenCardThenEffect();
+        if (chosenCardThenEffect instanceof ChosenCardAwareEffect chosenCardAwareEffect
+                && !chosenCards.isEmpty()) {
+            chosenCardThenEffect = chosenCardAwareEffect.withChosenCard(chosenCards.getLast());
+        }
+        if (chosenCardThenEffect != null
                 && chosenCards.stream().anyMatch(card -> revealedHandChoice.chosenCardCondition() == null
                 || predicateEvaluationService.matchesCardPredicate(
                 card, revealedHandChoice.chosenCardCondition(), null))
                 && gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
-                    List.of(revealedHandChoice.chosenCardThenEffect()));
+                    List.of(chosenCardThenEffect));
         }
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
@@ -1896,7 +1902,7 @@ public class CardChoiceHandlerService {
             ExiledCardEntry entry = gameData.findExiledCard(cardId);
             if (entry != null) {
                 gameData.removeFromExile(cardId);
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, entry.card());
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, entry.card(), Zone.HAND);
             }
         }
         log.info("Game {} - alternating hand exile finished: {} cards returned, {} to graveyard",

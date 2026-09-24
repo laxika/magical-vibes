@@ -43,7 +43,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TurnFaceUpXValueChoice,
         PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
-        PendingInteraction.PlanarCardChoice,
+        PendingInteraction.PlanarCardChoice, PendingInteraction.SpellbookDraftChoice,
+        PendingInteraction.RevealedMatchingHandCardChoice,
         PendingInteraction.SpatialMergingCardOrder,
         PendingInteraction.LibraryReorder,
         PendingInteraction.TargetPlayerHandOrderChoice,
@@ -129,6 +130,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ExileFromHandWithRefineCountersChoice,
         PendingInteraction.DiscardCostChoice,
         PendingInteraction.PlanarAbilityHandCardChoice,
+        PendingInteraction.PerpetualPowerToughnessChoice,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.NivMizzetColorPairChoice,
@@ -598,6 +600,73 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validPlaneCardIds, 1, 1);
+        }
+    }
+
+    /** The controller chooses one of the three cards offered from a spellbook. */
+    record SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
+                                String sourceCardName, boolean revealChosenCard,
+                                boolean exileChosenCard,
+                                boolean putChosenCardOntoBattlefield,
+                                java.util.List<CardEffect> chosenCardEffects) implements PendingInteraction {
+
+        public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards, String sourceCardName) {
+            this(playerId, cards, sourceCardName, false, false, false, java.util.List.of());
+        }
+
+        public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
+                                    String sourceCardName, boolean revealChosenCard) {
+            this(playerId, cards, sourceCardName, revealChosenCard, false, false, java.util.List.of());
+        }
+
+        public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
+                                    String sourceCardName, boolean revealChosenCard,
+                                    boolean exileChosenCard) {
+            this(playerId, cards, sourceCardName, revealChosenCard, exileChosenCard, false,
+                    java.util.List.of());
+        }
+
+        public SpellbookDraftChoice {
+            cards = java.util.List.copyOf(cards);
+            chosenCardEffects = java.util.List.copyOf(chosenCardEffects);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** The controller chooses one of the matching cards revealed from a target player's hand. */
+    record RevealedMatchingHandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                          java.util.List<Card> cards, CardEffect thenEffect,
+                                          String prompt) implements PendingInteraction {
+
+        public RevealedMatchingHandCardChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 
@@ -1830,20 +1899,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                 boolean drawForHandExiled,
                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                 String sourceSetCode,
-                                UUID sourcePermanentId)
+                                UUID sourcePermanentId,
+                                CardEffect followUpEffect)
             implements PendingInteraction {
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName) {
             this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    false, null, null, null);
+                    false, null, null, null, null);
         }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName,
                                     boolean drawForHandExiled) {
             this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    drawForHandExiled, null, null, null);
+                    drawForHandExiled, null, null, null, null);
         }
 
         @Override
@@ -3023,6 +3093,49 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         java.util.List<Integer> validIndices();
 
         String prompt();
+    }
+
+    /** Chooses a matching hand card for a perpetual power/toughness, keyword, or cost modification. */
+    record PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                         String prompt, int power, int toughness,
+                                         java.util.Set<Keyword> grantedKeywords,
+                                         int genericCostReduction,
+                                         int noncombatDamageBonus)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                             String prompt, int power, int toughness) {
+            this(playerId, validIndices, prompt, power, toughness, java.util.Set.of(), 0, 0);
+        }
+
+        public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                             String prompt, int power, int toughness,
+                                             java.util.Set<Keyword> grantedKeywords) {
+            this(playerId, validIndices, prompt, power, toughness, grantedKeywords, 0, 0);
+        }
+
+        public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                             String prompt, int power, int toughness,
+                                             java.util.Set<Keyword> grantedKeywords,
+                                             int genericCostReduction) {
+            this(playerId, validIndices, prompt, power, toughness, grantedKeywords,
+                    genericCostReduction, 0);
+        }
+
+        public PerpetualPowerToughnessChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+            grantedKeywords = java.util.Set.copyOf(grantedKeywords);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /** Retraced Image: reveal one card from hand, then conditionally put it onto the battlefield. */
@@ -4434,12 +4547,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Chooses at most one eligible card from outside the game or face-up exile. */
+    /** Chooses an eligible card from outside the game or face-up exile, optionally requiring one. */
     record SearchOutsideGameOrExileCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                               CardPredicate filter, String cardLabel) implements PendingInteraction {
+                                               CardPredicate filter, String cardLabel,
+                                               boolean mandatory, boolean leaveOutsideGame,
+                                               CardEffect followUpEffect) implements PendingInteraction {
 
         public SearchOutsideGameOrExileCardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        public SearchOutsideGameOrExileCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                  CardPredicate filter, String cardLabel) {
+            this(playerId, validCardIds, filter, cardLabel, false, false, null);
         }
 
         @Override
@@ -4449,7 +4569,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+            return new InteractionOptions.MultiCardPick(validCardIds, mandatory ? 1 : 0, 1);
         }
     }
 
