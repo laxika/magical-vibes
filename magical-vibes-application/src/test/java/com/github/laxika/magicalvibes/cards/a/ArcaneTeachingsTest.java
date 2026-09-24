@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArcaneTeachings.class, BattlewiseAven.class, CabalTrainee.class, NantukoMonastery.class})
+@CardUsed({ArcaneTeachings.class, BattlewiseAven.class, CabalTrainee.class, GrizzlyBears.class, NantukoMonastery.class})
 class ArcaneTeachingsTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -256,5 +257,20 @@ class ArcaneTeachingsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
-}
 
+    @Test
+    @DisplayName("Enchanted opponent's creature can use the granted ability")
+    void opponentControlsEnchantedCreatureCanUseGrantedAbility() {
+        harness.setLife(player1, 20);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(bearsPerm.isTapped()).isTrue();
+    }
+}

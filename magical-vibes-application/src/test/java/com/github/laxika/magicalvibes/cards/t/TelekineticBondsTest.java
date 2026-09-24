@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CabalTherapy;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TelekineticBonds.class, Distress.class, GrizzlyBears.class})
+@CardUsed({CabalTherapy.class, Distress.class, GrizzlyBears.class, TelekineticBonds.class})
 class TelekineticBondsTest extends BaseCardTest {
 
     @Test
@@ -119,6 +120,36 @@ class TelekineticBondsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("After paying, declining the tap or untap action leaves the target unchanged")
+    void decliningTapOrUntapAfterPayingDoesNothing() {
+        harness.addToBattlefield(player1, new TelekineticBonds());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TelekineticBonds());
+        harness.setHand(player1, List.of(new CabalTherapy()));
+        harness.setHand(player2, List.of(new CabalTherapy()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Cabal Therapy");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());

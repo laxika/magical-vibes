@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "DDR", collectorNumber = "22")
 @CardRegistration(set = "GN3", collectorNumber = "110")
 @CardRegistration(set = "TSR", collectorNumber = "240")
+@CardRegistration(set = "C14", collectorNumber = "219")
 public class ThornwealdArcher extends Card {
 }

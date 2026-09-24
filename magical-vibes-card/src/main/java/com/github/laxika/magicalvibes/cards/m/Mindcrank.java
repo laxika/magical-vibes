@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "NPH", collectorNumber = "144")
 @CardRegistration(set = "IMA", collectorNumber = "220")
+@CardRegistration(set = "SLD", collectorNumber = "2186")
 public class Mindcrank extends Card {
 
     public Mindcrank() {

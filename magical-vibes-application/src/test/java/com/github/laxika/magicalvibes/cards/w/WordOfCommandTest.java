@@ -65,4 +65,13 @@ class WordOfCommandTest extends BaseCardTest {
         gs.tapPermanent(gd, player1, 0);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
+
+    @Test
+    void canTargetOnlyAnOpponent() {
+        harness.setHand(player1, List.of(new WordOfCommand()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

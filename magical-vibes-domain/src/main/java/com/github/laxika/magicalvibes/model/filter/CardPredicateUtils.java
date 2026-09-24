@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.filter;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

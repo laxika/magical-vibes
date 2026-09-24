@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "172")
+@CardRegistration(set = "SLD", collectorNumber = "1329")
 public class GargosViciousWatcher extends Card {
 
     public GargosViciousWatcher() {

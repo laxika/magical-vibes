@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "50")
+@CardRegistration(set = "SLD", collectorNumber = "618")
 public class DiffusionSliver extends Card {
 
     public DiffusionSliver() {

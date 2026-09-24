@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -17,7 +16,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Handles accepting or declining an optional sacrifice that puts a +1/+1 counter on its source. */
+/** Handles accepting or declining an optional sacrifice that puts a counter on its source. */
 @Component
 @RequiredArgsConstructor
 public class MaySacrificePermanentForCounterSourceHandler implements MayEffectHandlerBean {
@@ -52,7 +51,7 @@ public class MaySacrificePermanentForCounterSourceHandler implements MayEffectHa
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.MaySacrificeForCounterOnSource(
                                 controllerId, sourcePermanentId, ability.sourceCard(),
-                                CounterType.PLUS_ONE_PLUS_ONE, effect.counterAmount()));
+                                effect.counterType(), effect.counterAmount()));
                 playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds,
                         "Choose " + effect.description() + " to sacrifice.");
                 return;
@@ -68,11 +67,11 @@ public class MaySacrificePermanentForCounterSourceHandler implements MayEffectHa
         if (effect.counterAmount() instanceof SacrificedPermanentPower) {
             maySacrificeForCounterSupport.sacrificeThenAddCountersEqualToPower(
                     gameData, controllerId, permanentId, sourcePermanentId,
-                    CounterType.PLUS_ONE_PLUS_ONE);
+                    effect.counterType());
         } else if (effect.counterAmount() instanceof Fixed fixed) {
             maySacrificeForCounterSupport.sacrificeThenAddCounters(
                     gameData, controllerId, permanentId, sourcePermanentId,
-                    CounterType.PLUS_ONE_PLUS_ONE, fixed.value());
+                    effect.counterType(), fixed.value());
         } else {
             throw new IllegalArgumentException("Unsupported counter amount for may-sacrifice effect: "
                     + effect.counterAmount().getClass().getSimpleName());

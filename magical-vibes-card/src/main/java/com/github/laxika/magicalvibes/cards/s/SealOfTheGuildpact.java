@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForEachChosenColorEffect;
 
 @CardRegistration(set = "RVR", collectorNumber = "266")
+@CardRegistration(set = "C15", collectorNumber = "54")
 public class SealOfTheGuildpact extends Card {
 
     public SealOfTheGuildpact() {

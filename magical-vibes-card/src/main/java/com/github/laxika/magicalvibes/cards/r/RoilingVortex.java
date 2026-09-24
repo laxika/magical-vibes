@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "156")
+@CardRegistration(set = "SLD", collectorNumber = "1958")
 public class RoilingVortex extends Card {
 
     public RoilingVortex() {

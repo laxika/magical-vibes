@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "130")
+@CardRegistration(set = "ME4", collectorNumber = "158")
 public class IronhoofOx extends Card {
 
     public IronhoofOx() {

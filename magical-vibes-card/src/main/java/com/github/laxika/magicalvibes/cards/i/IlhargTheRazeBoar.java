@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "133")
+@CardRegistration(set = "SLD", collectorNumber = "318")
 @CardRegistration(set = "RVR", collectorNumber = "113")
 public class IlhargTheRazeBoar extends Card {
 

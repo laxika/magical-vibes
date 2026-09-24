@@ -4,15 +4,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSacrificedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,12 +34,26 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateTokenCopyOfSacrificedPermanentEffect copyEffect =
                 (CreateTokenCopyOfSacrificedPermanentEffect) effect;
+        if (copyEffect.amount() <= 0) {
+            return;
+        }
+
         if (copyEffect.copiedCard() == null) {
+            Permanent sacrificed = entry.getSacrificedPermanentSnapshot();
+            if (sacrificed == null) {
+                return;
+            }
+            Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                    ? entry.getSourcePermanentSnapshot()
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            tokenCopySupport.createTokenCopies(gameData, entry,
+                    Collections.nCopies(copyEffect.amount(), sacrificed.getCard()),
+                    sourcePermanent, new CreateTokenCopyOfTargetPermanentEffect());
             return;
         }
 
         List<UUID> tokenIds = tokenCopySupport.createTokenCopies(
-                gameData, entry, List.of(copyEffect.copiedCard()), null,
+                gameData, entry, Collections.nCopies(copyEffect.amount(), copyEffect.copiedCard()), null,
                 new CreateTokenCopyOfTargetPermanentEffect());
         for (UUID tokenId : tokenIds) {
             Permanent token = gameQueryService.findPermanentById(gameData, tokenId);

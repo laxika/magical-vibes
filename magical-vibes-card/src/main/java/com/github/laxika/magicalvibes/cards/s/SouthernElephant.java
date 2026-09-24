@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "146")
 @CardRegistration(set = "S99", collectorNumber = "142")
+@CardRegistration(set = "ME4", collectorNumber = "167")
 public class SouthernElephant extends Card {
 }

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "164")
+@CardRegistration(set = "SLD", collectorNumber = "517")
 public class JiangYangguWildcrafter extends Card {
 
     public JiangYangguWildcrafter() {

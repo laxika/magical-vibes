@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 @CardRegistration(set = "SLZ", collectorNumber = "102")
 @CardRegistration(set = "SLZ", collectorNumber = "223")
 @CardRegistration(set = "SLZ", collectorNumber = "344")
+@CardRegistration(set = "CMM", collectorNumber = "743")
+@CardRegistration(set = "CMM", collectorNumber = "778")
 public class DarksteelMonolith extends Card {
 
     public DarksteelMonolith() {

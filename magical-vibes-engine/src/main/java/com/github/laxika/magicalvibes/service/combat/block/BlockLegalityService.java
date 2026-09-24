@@ -325,7 +325,9 @@ public class BlockLegalityService {
             return BlockDenial.INTIMIDATE;
         }
         // Skulk: can't be blocked by creatures with greater power (CR 702.129a).
-        if (atk.skulk() && gameQueryService.getEffectivePower(gameData, blocker) > gameQueryService.getEffectivePower(gameData, attacker)) {
+        if ((atk.skulk() || atk.ringBearerCantBeBlockedByGreaterPower())
+                && gameQueryService.getEffectivePower(gameData, blocker)
+                > gameQueryService.getEffectivePower(gameData, attacker)) {
             return BlockDenial.SKULK;
         }
         // Shrill Howler: creatures with power less than this creature's power can't block it.
@@ -664,6 +666,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.FEAR),
                 intimidate,
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SKULK),
+                gameQueryService.isRingBearer(gameData, attacker),
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SHADOW),
                 cantBeBlockedByLessPower,
                 cantBeBlockedByPowerLessThanIslandCount,

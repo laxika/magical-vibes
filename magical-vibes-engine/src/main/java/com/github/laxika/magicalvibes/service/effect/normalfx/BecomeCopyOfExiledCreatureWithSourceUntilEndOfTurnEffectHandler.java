@@ -28,6 +28,8 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect copyEffect =
+                (BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
             return;
@@ -38,7 +40,8 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
             entry.setTargetId(null);
             ExiledCardEntry chosen = gameData.findExiledCard(chosenCardId);
             if (isEligible(chosen, sourcePermanentId)) {
-                copyHandler.resolve(gameData, entry, new BecomeCopyOfCardUntilEndOfTurnEffect(chosen.card()));
+                copyHandler.resolve(gameData, entry, new BecomeCopyOfCardUntilEndOfTurnEffect(
+                        chosen.card(), copyEffect.additionalTypes(), copyEffect.additionalSubtypes()));
             }
             return;
         }
@@ -52,7 +55,8 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
         }
         if (eligible.size() == 1) {
             copyHandler.resolve(gameData, entry,
-                    new BecomeCopyOfCardUntilEndOfTurnEffect(eligible.getFirst().card()));
+                    new BecomeCopyOfCardUntilEndOfTurnEffect(eligible.getFirst().card(),
+                            copyEffect.additionalTypes(), copyEffect.additionalSubtypes()));
             return;
         }
 

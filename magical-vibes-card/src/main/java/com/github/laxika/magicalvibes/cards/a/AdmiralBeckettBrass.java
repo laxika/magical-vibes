@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "217")
+@CardRegistration(set = "SLD", collectorNumber = "1410")
+@CardRegistration(set = "SLD", collectorNumber = "1561")
 public class AdmiralBeckettBrass extends Card {
 
     public AdmiralBeckettBrass() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "85")
+@CardRegistration(set = "ME4", collectorNumber = "94")
 public class RainOfDaggers extends Card {
 
     public RainOfDaggers() {

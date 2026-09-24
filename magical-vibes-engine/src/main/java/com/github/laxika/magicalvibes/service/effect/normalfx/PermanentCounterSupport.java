@@ -76,9 +76,53 @@ public class PermanentCounterSupport {
     }
 
     public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target, int amount) {
-        if (triggerCollectionService != null && target != null && amount > 0) {
-            triggerCollectionService.checkYouPutCountersTriggers(
-                    gameData, placingPlayerId(gameData, entry, target), amount);
+        if (target == null || amount <= 0) {
+            return;
+        }
+        UUID placingPlayerId = placingPlayerId(gameData, entry, target);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        }
+        fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
+    }
+
+    /** Fires "whenever you put one or more counters on a creature you don't control" watchers. */
+    private void fireCountersPutOnCreatureYouDontControlTriggers(
+            GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
+        if (count <= 0 || creature == null || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+
+        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (creatureControllerId == null || placingPlayerId.equals(creatureControllerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            Card card = source.getCard();
+            List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    placingPlayerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId()
+            );
+            trigger.setEventValue(count);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} opponent-creature counter trigger fires", gameData.id, card.getName());
         }
     }
 
@@ -93,6 +137,7 @@ public class PermanentCounterSupport {
                 }
             }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+            fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
         }
     }
 
@@ -198,7 +243,15 @@ public class PermanentCounterSupport {
             boolean markOnAcceptance = false;
             boolean markImmediately = false;
             for (CardEffect effect : effects) {
-                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
+                CardEffect resolved = effect;
+                if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, target, conditional.predicate())) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                if (resolved instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
                     if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
                         continue;
                     }
@@ -209,7 +262,7 @@ public class PermanentCounterSupport {
                     }
                     effectsToResolve.add(oncePerTurnTrigger.wrapped());
                 } else {
-                    effectsToResolve.add(effect);
+                    effectsToResolve.add(resolved);
                 }
             }
             if (effectsToResolve.isEmpty()) {
@@ -396,7 +449,8 @@ public class PermanentCounterSupport {
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(controllerId);
+                .withSourceControllerId(controllerId)
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId());
 
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent p : battlefield) {
@@ -427,6 +481,11 @@ public class PermanentCounterSupport {
 
     public int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
                                        CounterType counterType, int count) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, false);
+    }
+
+    public int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
+                                       CounterType counterType, int count, boolean modularAbility) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
         int previousLoreCount = counterType == CounterType.LORE
@@ -434,7 +493,7 @@ public class PermanentCounterSupport {
         int previousCount = target.getCounterCount(counterType);
         UUID counterPlacingPlayerId = placingPlayerId(gameData, entry, target);
         count = gameQueryService.replaceCounters(gameData, target, counterType, count,
-                counterPlacingPlayerId);
+                counterPlacingPlayerId, modularAbility);
 
         String counterName = switch (counterType) {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }

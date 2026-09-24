@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect;
+import java.util.ArrayList;
+import java.util.List;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Gives created permanents the attack state and carries the source's attack target onto them.
+ * Lets the controller choose a defender for each created attacking permanent.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,22 +31,37 @@ public class MakeCreatedPermanentsAttackingEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var makeAttacking = (MakeCreatedPermanentsAttackingEffect) effect;
-        Permanent source = entry.getSourcePermanentId() == null ? entry.getSourcePermanentSnapshot()
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
+        if (makeAttacking.tapped()) {
+            Permanent source = entry.getSourcePermanentId() == null ? entry.getSourcePermanentSnapshot()
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) {
+                source = entry.getSourcePermanentSnapshot();
+            }
+            var attackTarget = source == null ? null : source.getAttackTarget();
+            for (var createdId : entry.getCreatedPermanentIds()) {
+                Permanent created = gameQueryService.findPermanentById(gameData, createdId);
+                if (created != null && gameQueryService.isCreature(gameData, created)) {
+                    created.tap();
+                    created.setAttacking(true);
+                    created.setAttackedOrBlockedSinceLastUpkeep(true);
+                    created.setAttackTarget(attackTarget);
+                }
+            }
+            return;
         }
-        var attackTarget = source == null ? null : source.getAttackTarget();
+
+        List<CardEffect> choices = new ArrayList<>();
         for (var createdId : entry.getCreatedPermanentIds()) {
             Permanent created = gameQueryService.findPermanentById(gameData, createdId);
-            if (created != null) {
-                created.setAttacking(true);
-                if (makeAttacking.tapped()) {
-                    created.tap();
-                }
-                created.setAttackTarget(attackTarget);
+            if (created != null && gameQueryService.isCreature(gameData, created)) {
+                choices.add(new MakeChosenPermanentAttackingEffect(createdId));
             }
         }
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        if (effectIndex < 0) {
+            throw new IllegalStateException("Current effect is not present in its stack entry");
+        }
+        entry.insertEffectsToResolve(effectIndex + 1, choices);
         log.info("Game {} - {} permanent(s) made attacking by {}",
                 gameData.id, entry.getCreatedPermanentIds().size(), entry.getCard().getName());
     }

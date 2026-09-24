@@ -12,94 +12,85 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.planar.PlanarObject;
-import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
+import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.BeheldPower;
-import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsDelved;
+import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CreatureTypesAmongControlledCreatures;
-import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
-import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
+import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
-import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
-import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
+import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
+import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
-import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
-import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongCardsExiledWithSource;
-import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
+import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
+import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
+import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
-import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.ConvokeCreatureCount;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
-import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
+import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
-import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
-import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
-import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
-import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
-import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
-import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
-import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CreaturesExiledThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CreaturesEnteredBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CreaturesLeftBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CreaturesThatCrewedSourceThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreatureTypesAmongControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockedBySource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
-import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
-import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesExiledThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesLeftBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesThatCrewedSourceThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtByTargetPlayerSorceryThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerByArtifactsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
-import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponentsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourcePermanentBySourceNameThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPermanentThisTurn;
-import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourcePermanentBySourceNameThisTurn;
-import com.github.laxika.magicalvibes.model.amount.DamageDealtByTargetPlayerSorceryThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
-import com.github.laxika.magicalvibes.model.amount.ConvokeCreatureCount;
-import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DescentsThisTurn;
-import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
-import com.github.laxika.magicalvibes.model.amount.Divided;
-import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
+import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
+import com.github.laxika.magicalvibes.model.amount.DistinctColorPairsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.DistinctKeywordAbilitiesAmongControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsInGraveyard;
-import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongCardsInGraveyard;
-import com.github.laxika.magicalvibes.model.amount.DistinctColorPairsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongStudyCounterCardsInExile;
+import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.amount.DistinctPowersAmongControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.Divided;
+import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.DyingPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
@@ -112,114 +103,132 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTot
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
+import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
+import com.github.laxika.magicalvibes.model.amount.GraveyardsAtLeast;
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureCountAmongPlayers;
-import com.github.laxika.magicalvibes.model.amount.GreatestPermanentCountAmongOpponents;
-import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
-import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.GreatestCreatureTypeCountAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.GreatestDamageDealtBySourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
-import com.github.laxika.magicalvibes.model.amount.GreatestCreatureTypeCountAmongControlled;
-import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
-import com.github.laxika.magicalvibes.model.amount.GraveyardsAtLeast;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
+import com.github.laxika.magicalvibes.model.amount.GreatestPermanentCountAmongOpponents;
+import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.GreatestStackSourceCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.HighestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.HighestOpponentLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
-import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
-import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
-import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
-import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
-import com.github.laxika.magicalvibes.model.amount.UnspentMana;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
-import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.LandsEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
+import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardTypeCount;
 import com.github.laxika.magicalvibes.model.amount.LastMilledCardColorSymbols;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LowestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
-import com.github.laxika.magicalvibes.model.amount.SnowManaSpentToCast;
-import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
+import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponentsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
-import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
-import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithLifeAtMost;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
-import com.github.laxika.magicalvibes.model.amount.PlusOnePlusOneCountersPutOnControlledCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
-import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
-import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
-import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
-import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
+import com.github.laxika.magicalvibes.model.amount.PileGroupingOrGuessCountThisTurn;
+import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
+import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtLeast;
+import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtMost;
+import com.github.laxika.magicalvibes.model.amount.PlusOnePlusOneCountersPutOnControlledCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
-import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
-import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
-import com.github.laxika.magicalvibes.model.amount.GreatestStackSourceCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
-import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
-import com.github.laxika.magicalvibes.model.amount.TargetPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.TargetGroupCount;
-import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
-import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.amount.TargetPermanentColorCount;
+import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
+import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPowerPlusToughness;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
-import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
-import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
-import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
+import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfOtherSpellsCastThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
+import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
+import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
+import com.github.laxika.magicalvibes.model.amount.UnspentMana;
+import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
+import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.effect.CountAsNamedCardForSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.effect.CountAsNamedCardForSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * The single evaluation point for every {@link DynamicAmount} in the engine (the numeric
@@ -336,6 +345,8 @@ public class AmountEvaluationService {
                     gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of()).size();
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case PileGroupingOrGuessCountThisTurn ignored ->
+                    gameData.pileGroupingOrGuessCountThisTurn;
             case UnlockedRoomDoorsCount c ->
                     countUnlockedRoomDoors(gameData, c, ctx);
             case PermanentCounterSum s ->
@@ -350,6 +361,8 @@ public class AmountEvaluationService {
                     sumPermanentManaValues(gameData, s, ctx);
             case PlayersWithCardsInHandAtMost a ->
                     countPlayersWithCardsInHandAtMost(gameData, a, ctx);
+            case PlayersWithCardsInHandAtLeast a ->
+                    countPlayersWithCardsInHandAtLeast(gameData, a, ctx);
             case PlayersInGame ignored ->
                     gameData.orderedPlayerIds.size();
             case PlayersWhoDiscardedThisTurn ignored ->
@@ -414,9 +427,10 @@ public class AmountEvaluationService {
                             .count();
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
-            case CardsExiledWithSource ignored ->
-                    ctx.sourcePermanent() == null ? 0
-                            : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).size();
+            case CardsExiledWithSource c ->
+                    countCardsExiledWithSource(gameData, c, ctx);
+            case CardsDelved delved ->
+                    countDelvedCards(gameData, delved, ctx);
             case GreatestManaValueAmongCardsExiledWithSource ignored ->
                     greatestManaValueAmongCardsExiledWithSource(gameData, ctx);
             case ForetoldCardsInExile c ->
@@ -435,6 +449,8 @@ public class AmountEvaluationService {
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
             case ColorManaPairsSpentToCast c ->
                     colorManaPairsSpentToCast(gameData, c, ctx);
+            case ColorsSpentToCast ignored ->
+                    ctx.sourceCard() == null ? 0 : gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).size();
             case ColorsAmongControlledPermanents count ->
                     countColorsAmongControlledPermanents(gameData, count, ctx);
             case ColorManaSymbolsInGraveyard c ->
@@ -492,6 +508,8 @@ public class AmountEvaluationService {
                     ctx.controllerId() == null ? 0 : gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0);
             case ControllerSpeed ignored ->
                     ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
+            case CommanderCastsFromCommandZoneThisGame ignored ->
+                    gameData.getCommanderCastsFromCommandZoneThisGame(ctx.controllerId());
             case HighestLifeTotalAmongPlayers ignored ->
                     gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).max().orElse(0);
             case LowestLifeTotalAmongPlayers ignored ->
@@ -502,6 +520,10 @@ public class AmountEvaluationService {
                     greatestOpponentHandSize(gameData, ctx);
             case OpponentsWithAtLeastTwoMoreLandsThanController ignored ->
                     opponentsWithAtLeastTwoMoreLandsThanController(gameData, ctx);
+            case OpponentsWithLifeAtMost thresholdAmount ->
+                    opponentsWithLifeAtMost(gameData, thresholdAmount, ctx);
+            case OpponentsWithMoreLandsThanController ignored ->
+                    opponentsWithMoreLandsThanController(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case OpponentsAttackedThisTurn ignored ->
@@ -630,6 +652,8 @@ public class AmountEvaluationService {
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPermanentsThisTurn
                                     .getOrDefault(ctx.targetPermanentId(), 0);
+            case GreatestDamageDealtBySourceThisTurn ignored ->
+                    greatestDamageDealtBySourceThisTurn(gameData);
             case DamageDealtToSourcePermanentBySourceNameThisTurn sourceDamage ->
                     damageDealtToSourcePermanentBySourceNameThisTurn(gameData, ctx, sourceDamage.sourceName());
             case TotalManaValueOfCardsExiledWithSource ignored ->
@@ -655,6 +679,8 @@ public class AmountEvaluationService {
                     ctx.stackEntry() != null && ctx.stackEntry().getDiscardedCardSnapshot() != null
                             ? ctx.stackEntry().getDiscardedCardSnapshot().getManaValue()
                             : gameData.lastDiscardedCardManaValue;
+            case LastDiscardedCardTypeCount ignored ->
+                    gameData.lastDiscardedCardTypes.size();
             case GreatestDiscardedCardManaValue ignored ->
                     gameData.greatestDiscardedCardManaValue;
             case LastMilledCardColorSymbols a ->
@@ -767,6 +793,9 @@ public class AmountEvaluationService {
             return power == null ? 0 : Math.max(0, power);
         }
         int power = gameQueryService.getEffectivePower(gameData, chosen);
+        if (ctx.sourcePermanent() != null && ctx.sourcePermanent().getCard().hasKeyword(Keyword.STATION)) {
+            power += stationPowerBonus(gameData, chosen);
+        }
         if (usesToughnessForStationing(gameData, ctx)) {
             int toughness = gameQueryService.getEffectiveToughness(gameData, chosen);
             if (toughness > power) {
@@ -774,6 +803,17 @@ public class AmountEvaluationService {
             }
         }
         return Math.max(0, power);
+    }
+
+    private int stationPowerBonus(GameData gameData, Permanent permanent) {
+        int bonus = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(StationPowerModifierEffect.class::isInstance)
+                .mapToInt(effect -> ((StationPowerModifierEffect) effect).powerBonus())
+                .sum();
+        return bonus + gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .filter(StationPowerModifierEffect.class::isInstance)
+                .mapToInt(effect -> ((StationPowerModifierEffect) effect).powerBonus())
+                .sum();
     }
 
     private boolean usesToughnessForStationing(GameData gameData, AmountContext ctx) {
@@ -1515,6 +1555,21 @@ public class AmountEvaluationService {
                 if (predicateEvaluationService.matchesCardPredicate(card, count.filter(), null)) {
                     matches++;
                 }
+            }
+        }
+        return matches;
+    }
+
+    private int countDelvedCards(GameData gameData, CardsDelved count, AmountContext ctx) {
+        if (ctx.stackEntry() == null) {
+            return 0;
+        }
+        int matches = 0;
+        for (UUID cardId : ctx.stackEntry().getDelvedCardIds()) {
+            var exiledCard = gameData.findExiledCard(cardId);
+            if (exiledCard != null && !exiledCard.card().isToken()
+                    && predicateEvaluationService.matchesCardPredicate(exiledCard.card(), count.filter(), null)) {
+                matches++;
             }
         }
         return matches;
@@ -2354,6 +2409,32 @@ public class AmountEvaluationService {
         return count;
     }
 
+    private int opponentsWithLifeAtMost(GameData gameData, OpponentsWithLifeAtMost amount,
+                                        AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.getLife(playerId) <= amount.threshold()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsWithMoreLandsThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerLandCount = countLandsControlledBy(gameData, ctx.controllerId());
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && countLandsControlledBy(gameData, playerId) > controllerLandCount) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private int opponentsWhoLostLifeThisTurn(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
         int count = 0;
@@ -2470,6 +2551,27 @@ public class AmountEvaluationService {
                 .count();
     }
 
+    private int countCardsExiledWithSource(GameData gameData, CardsExiledWithSource count,
+                                           AmountContext ctx) {
+        UUID sourceId = ctx.sourcePermanent() != null
+                ? ctx.sourcePermanent().getId()
+                : ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+        if (sourceId == null) return 0;
+
+        List<Card> exiledCards = gameData.getCardsExiledByPermanent(sourceId);
+        // Delve cards are tracked by the physical card ID until the creature spell resolves into
+        // a permanent. Entry replacement effects evaluate before that link is transferred.
+        if (exiledCards.isEmpty() && ctx.sourcePermanent() != null && ctx.sourceCard() != null
+                && !ctx.sourcePermanent().getId().equals(ctx.sourceCard().getId())) {
+            exiledCards = gameData.getCardsExiledByPermanent(ctx.sourceCard().getId());
+        }
+        if (count.filter() == null) return exiledCards.size();
+        return (int) exiledCards.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, count.filter(), null, gameData, ctx.controllerId()))
+                .count();
+    }
+
     private int greatestManaValueAmongCardsExiledWithSource(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
         return gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
@@ -2507,6 +2609,32 @@ public class AmountEvaluationService {
             total += gameData.damageDealtToPlayersThisTurn.getOrDefault(playerId, 0);
         }
         return total;
+    }
+
+    private int countPlayersWithCardsInHandAtLeast(GameData gameData,
+            PlayersWithCardsInHandAtLeast count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (isPlayerInScope(gameData, playerId, count.scope(), ctx)
+                    && gameData.playerHands.getOrDefault(playerId, List.of()).size() >= count.threshold()) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    private int greatestDamageDealtBySourceThisTurn(GameData gameData) {
+        int greatestToPermanent = gameData.damageDealtToPermanentsBySourceThisTurn.values().stream()
+                .flatMap(sourceDamage -> sourceDamage.values().stream())
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0);
+        int greatestToPlayer = gameData.damageDealtToPlayersBySourceThisTurn.values().stream()
+                .flatMap(sourceDamage -> sourceDamage.values().stream())
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0);
+        return Math.max(greatestToPermanent, greatestToPlayer);
     }
 
     private int damageDealtToSourcePermanentBySourceNameThisTurn(GameData gameData, AmountContext ctx,

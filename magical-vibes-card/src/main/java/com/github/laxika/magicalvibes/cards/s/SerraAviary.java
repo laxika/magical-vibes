@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "HML", collectorNumber = "14")
+@CardRegistration(set = "ME4", collectorNumber = "26")
 public class SerraAviary extends Card {
 
     public SerraAviary() {

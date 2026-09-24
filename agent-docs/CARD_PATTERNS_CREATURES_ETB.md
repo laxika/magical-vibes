@@ -1,5 +1,7 @@
 # Card Patterns: Vanilla, Keyword & ETB Creatures
 
+| ETB during declare attackers may reselect an attacking creature's target | `p/PortalMage.java` | `target(TargetFilters.attackingCreature()).addEffect(ON_ENTER_BATTLEFIELD, ConditionalEffect(new DuringDeclareAttackers(), MayEffect(new ReselectAttackingCreatureAttackTargetEffect(), ...)))`; the original attacker is chosen at trigger time and the replacement attack target is chosen on resolution using current attack legality |
+
 All paths relative to `cards/`.
 
 For an ETB that free-casts an instant from your graveyard, use
@@ -115,6 +117,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB search any number of subtype to top | `g/GoblinRecruiter.java` | SearchLibraryForSubtypeCardsToTopEffect(CardSubtype.GOBLIN) — mandatory search for any number of Goblin cards, reveal, shuffle, put chosen subset on top in any order (multi-card-to-top; generic SearchLibraryEffect+TOP_OF_LIBRARY only does one card) |
 | ETB return targeted instant/sorcery/creature from GY + exile-instead-of-dying | `p/PossessedSkaab.java` | ON_ENTER_BATTLEFIELD `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardAnyOfPredicate(INSTANT, SORCERY, CREATURE)).targetGraveyard(true)` + STATIC `ExileInsteadOfGraveyardReplacementEffect(true)` (`dyingOnly` — a countered copy still goes to the graveyard) |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).build()) |
+| ETB +1/+1 counters for land cards in all graveyards | `c/CentaurVinecrasher.java` | `ON_ENTER_BATTLEFIELD` + `EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, CardsInGraveyard(CardTypePredicate(LAND), ANY_PLAYER))` |
 | ETB return an enchantment or unlock a Room door | `g/GhostlyDancers.java` | `ChooseOneEffect` on `ON_ENTER_BATTLEFIELD` with `ReturnCardFromGraveyardEffect` filtered to `ENCHANTMENT` and a non-targeting `UnlockControlledRoomDoorEffect`; the latter offers currently locked doors of Rooms controlled by the ability controller and reuses the normal fully-unlocked Room trigger path |
 | ETB return greatest-power creature from GY | `d/DesecratorHag.java` | ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).greatestPower(true).build() — mandatory; single card forced, ties chosen |
 | ETB return creature card chosen by an opponent | `m/MausoleumTurnkey.java` | `ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect(CardTypePredicate(CREATURE))` — the controller chooses which opponent makes the target choice; in a two-player game the sole opponent chooses directly through the trigger-time graveyard target flow |
@@ -129,6 +132,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `ExploreTriggerTarget` queue for target selection |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
+| ETB temporary creature copy | `c/CursedMirror.java` | `CopyPermanentOnEnterEffect.temporaryCopy(...)` — optional creature copy with haste, reverted during cleanup |
+| ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java`, `t/TheFourteenthDoctor.java` | CopyCreatureCardInGraveyardOnEnterEffect(...) — supports filtered graveyard choices, optional haste, and configurable post-entry exile |
+| ETB exile two graveyard creatures, copy one, and add counters for the other’s power | `t/TheMimeoplasm.java` | MimeoplasmCopyOnEnterEffect — accept the replacement, choose two creature cards from any graveyards, choose one to copy, exile both before entry, and give the copy additional +1/+1 counters equal to the other card’s power |
 | ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java` | CopyCreatureCardInGraveyardOnEnterEffect(name, power, toughness, additionalSubtypes) — the chosen card remains in its graveyard until the reflexive exile trigger resolves; use the boolean overload for The Mimeoplasm's two-card exile and other-card-power counter choice |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |

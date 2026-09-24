@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "66")
 @CardRegistration(set = "TSR", collectorNumber = "74")
+@CardRegistration(set = "CMM", collectorNumber = "102")
 public class LooterIlKor extends Card {
 
     public LooterIlKor() {

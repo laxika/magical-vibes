@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 
 @CardRegistration(set = "M10", collectorNumber = "122")
+@CardRegistration(set = "C14", collectorNumber = "170")
 public class XathridDemon extends Card {
 
     public XathridDemon() {

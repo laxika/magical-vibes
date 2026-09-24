@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.WaterbendingLesson;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,8 +38,10 @@ class KataraSeekingRevengeTest extends BaseCardTest {
         addMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class))
                 .isNotNull();
@@ -55,10 +58,14 @@ class KataraSeekingRevengeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         addMana();
 
-        harness.castCreatureTappingPermanents(player1, 0,
-                List.of(firstSource.getId(), secondSource.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null,
+                List.of(firstSource.getId(), secondSource.getId()), List.of(), false,
+                null, null, null, null, null, null, true);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(firstSource.isTapped()).isTrue();
         assertThat(secondSource.isTapped()).isTrue();

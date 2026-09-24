@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "108")
+@CardRegistration(set = "ME4", collectorNumber = "225")
 public class Scarecrow extends Card {
 
     public Scarecrow() {

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -39,13 +38,8 @@ class AriusFlybyTrawlerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shark);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(extra, sought);
 
-        int soughtIndex = gd.playerHands.get(player1.getId()).indexOf(sought);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        harness.handleCardChosen(player1, soughtIndex);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sought);

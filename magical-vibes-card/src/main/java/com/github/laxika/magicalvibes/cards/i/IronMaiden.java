@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "127")
+@CardRegistration(set = "SLD", collectorNumber = "2185")
 public class IronMaiden extends Card {
 
     public IronMaiden() {

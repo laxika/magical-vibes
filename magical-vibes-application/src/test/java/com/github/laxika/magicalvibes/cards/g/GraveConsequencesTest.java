@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
+import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(GraveConsequences.class)
+@CardUsed({CabalTrainee.class, GraveConsequences.class, HaplessResearcher.class})
 class GraveConsequencesTest extends BaseCardTest {
 
     @Test
@@ -141,5 +143,30 @@ class GraveConsequencesTest extends BaseCardTest {
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player2.getId())).contains(drawn);
+    }
+
+    @Test
+    @DisplayName("An empty graveyard is skipped while the other player still chooses")
+    void emptyGraveyardIsSkipped() {
+        Card opponentCard = new CabalTrainee();
+        Card drawn = new HaplessResearcher();
+
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.castFromHand(player1, new GraveConsequences(), "{1}{B}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .playerId()).isEqualTo(player2.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
 }

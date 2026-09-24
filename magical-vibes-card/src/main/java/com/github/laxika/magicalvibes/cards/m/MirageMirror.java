@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "165")
 @CardRegistration(set = "AKR", collectorNumber = "276")
+@CardRegistration(set = "SLD", collectorNumber = "2030")
 public class MirageMirror extends Card {
 
     public MirageMirror() {

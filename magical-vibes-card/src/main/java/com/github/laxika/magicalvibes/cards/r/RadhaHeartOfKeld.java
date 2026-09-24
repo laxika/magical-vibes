@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "224")
+@CardRegistration(set = "SLD", collectorNumber = "1876")
 public class RadhaHeartOfKeld extends Card {
 
     public RadhaHeartOfKeld() {

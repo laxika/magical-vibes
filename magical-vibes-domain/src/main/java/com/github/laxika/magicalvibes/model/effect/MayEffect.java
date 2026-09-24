@@ -19,7 +19,7 @@ import java.util.UUID;
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
         implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
-        SacrificedPermanentManaValueAwareEffect {
+        SacrificedPermanentManaValueAwareEffect, DyingCreaturePermanentAwareEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -96,5 +96,16 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
                 ? aware.boundToSacrificedPermanentManaValue(manaValue)
                 : wrapped;
         return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
+    }
+
+    @Override
+    public CardEffect boundToDyingCreature(com.github.laxika.magicalvibes.model.Permanent dyingCreature) {
+        CardEffect boundWrapped = wrapped instanceof DyingCreaturePermanentAwareEffect aware
+                ? aware.boundToDyingCreature(dyingCreature)
+                : wrapped;
+        CardEffect boundElse = elseEffect instanceof DyingCreaturePermanentAwareEffect aware
+                ? aware.boundToDyingCreature(dyingCreature)
+                : elseEffect;
+        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
     }
 }

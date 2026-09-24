@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,48 +15,42 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DescendantsFury.class, Forest.class, GrizzlyBears.class, ShivanDragon.class})
+@CardUsed({DescendantsFury.class, GrizzlyBears.class, RuneclawBear.class, Shock.class})
 class DescendantsFuryTest extends BaseCardTest {
 
     @Test
-    void maySacrificeOneOfTheCombatDealersAndPutAMatchingCreatureOntoTheBattlefield() {
+    void mayDeclineSacrifice() {
         harness.addToBattlefield(player1, new DescendantsFury());
-        Permanent bears = addReadyCreature(new GrizzlyBears());
-        Permanent dragon = addReadyCreature(new ShivanDragon());
-        bears.setAttacking(true);
-        dragon.setAttacking(true);
+        Permanent attacker = addReadyCreature(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new RuneclawBear()));
 
-        Card nonmatching = new Forest();
-        Card matching = new ShivanDragon();
-        harness.setLibrary(player1, List.of(nonmatching, matching));
+        dealUnblockedCombat(attacker);
+        harness.handleMayAbilityChosen(player1, false);
 
-        resolveCombatDamage();
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, dragon.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dragon);
-        assertThat(findPermanents(player1, "Shivan Dragon")).hasSize(1);
-        harness.assertInGraveyard(player1, "Shivan Dragon");
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatching);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof RuneclawBear);
     }
 
     @Test
-    void mayDeclineWithoutSacrificingOrRevealing() {
+    void sacrificesChosenDealerAndRevealsUntilSharedCreatureType() {
         harness.addToBattlefield(player1, new DescendantsFury());
-        Permanent bears = addReadyCreature(new GrizzlyBears());
-        bears.setAttacking(true);
-        Card topCard = new ShivanDragon();
-        harness.setLibrary(player1, List.of(topCard));
+        Permanent firstAttacker = addReadyCreature(new GrizzlyBears());
+        Permanent secondAttacker = addReadyCreature(new GrizzlyBears());
+        Card nonmatching = new Shock();
+        Card matching = new RuneclawBear();
+        harness.setLibrary(player1, List.of(nonmatching, matching));
 
-        resolveCombatDamage();
-        harness.handleMayAbilityChosen(player1, false);
+        dealUnblockedCombat(firstAttacker, secondAttacker);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, firstAttacker.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstAttacker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondAttacker);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == matching);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(nonmatching);
     }
 
     private Permanent addReadyCreature(Card card) {
@@ -65,7 +59,10 @@ class DescendantsFuryTest extends BaseCardTest {
         return creature;
     }
 
-    private void resolveCombatDamage() {
+    private void dealUnblockedCombat(Permanent... attackers) {
+        for (Permanent attacker : attackers) {
+            attacker.setAttacking(true);
+        }
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

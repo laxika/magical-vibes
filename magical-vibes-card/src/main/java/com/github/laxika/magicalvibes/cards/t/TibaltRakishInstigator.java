@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "146")
+@CardRegistration(set = "SLD", collectorNumber = "515")
 public class TibaltRakishInstigator extends Card {
 
     public TibaltRakishInstigator() {

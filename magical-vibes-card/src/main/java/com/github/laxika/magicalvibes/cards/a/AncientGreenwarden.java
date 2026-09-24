@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "178")
+@CardRegistration(set = "SLD", collectorNumber = "2059")
 public class AncientGreenwarden extends Card {
 
     public AncientGreenwarden() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "207")
+@CardRegistration(set = "SLD", collectorNumber = "1832")
 public class SimicAscendancy extends Card {
 
     public SimicAscendancy() {

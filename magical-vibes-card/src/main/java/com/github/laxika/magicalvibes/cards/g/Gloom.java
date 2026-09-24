@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "3ED", collectorNumber = "113")
 @CardRegistration(set = "2ED", collectorNumber = "111")
 @CardRegistration(set = "SUM", collectorNumber = "113")
+@CardRegistration(set = "ME4", collectorNumber = "83")
 public class Gloom extends Card {
 
     public Gloom() {

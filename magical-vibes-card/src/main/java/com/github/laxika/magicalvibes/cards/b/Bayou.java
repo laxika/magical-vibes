@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "3ED", collectorNumber = "283")
 @CardRegistration(set = "VMA", collectorNumber = "293")
 @CardRegistration(set = "ME3", collectorNumber = "204")
+@CardRegistration(set = "ME4", collectorNumber = "242")
 @CardRegistration(set = "2ED", collectorNumber = "279")
 public class Bayou extends Card {
 

@@ -16,15 +16,22 @@ import java.util.UUID;
  * @param castingPlayerId the player who cast the spell (and controls the copies)
  * @param copies          number of copies to create
  * @param tokenCopy       whether the copies enter the battlefield as tokens when they resolve
+ * @param removeLegendary whether token copies lose the legendary supertype
  */
 public record StormCopyEffect(
         StackEntry spellSnapshot,
         UUID castingPlayerId,
         int copies,
-        boolean tokenCopy
+        boolean tokenCopy,
+        boolean removeLegendary
 ) implements CardEffect {
 
     public StormCopyEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies) {
-        this(spellSnapshot, castingPlayerId, copies, false);
+        this(spellSnapshot, castingPlayerId, copies, false, false);
+    }
+
+    public StormCopyEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies,
+                           boolean tokenCopy) {
+        this(spellSnapshot, castingPlayerId, copies, tokenCopy, false);
     }
 }

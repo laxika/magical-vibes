@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
+import com.github.laxika.magicalvibes.cards.f.FuneralPyre;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StitchTogether.class, GiantWarthog.class, MentalNote.class})
+@CardUsed({AvenFogbringer.class, FuneralPyre.class, GiantWarthog.class, MentalNote.class, StitchTogether.class})
 class StitchTogetherTest extends BaseCardTest {
 
     @Test
@@ -120,5 +122,43 @@ class StitchTogetherTest extends BaseCardTest {
     private void setUpStitchTogether() {
         harness.setHand(player1, List.of(new StitchTogether()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+    }
+
+    @Test
+    @DisplayName("Checks threshold when the spell resolves")
+    void checksThresholdWhenSpellResolvesJudReview() {
+        Card creature = new AvenFogbringer();
+        harness.setGraveyard(player1, List.of(creature,
+                new FuneralPyre(), new FuneralPyre(), new FuneralPyre(), new FuneralPyre(), new FuneralPyre(),
+                new FuneralPyre()));
+        harness.setHand(player1, List.of(new StitchTogether()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, creature.getId());
+
+        harness.setGraveyard(player1, List.of(creature,
+                new FuneralPyre(), new FuneralPyre(), new FuneralPyre(), new FuneralPyre(), new FuneralPyre()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Aven Fogbringer");
+        harness.assertNotOnBattlefield(player1, "Aven Fogbringer");
+    }
+
+    @Test
+    @DisplayName("Does nothing if the target leaves the graveyard before resolution")
+    void doesNothingIfTargetLeavesGraveyardBeforeResolutionJudReview() {
+        Card creature = new AvenFogbringer();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new StitchTogether()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, creature.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(creature.getId()));
+        harness.assertNotInHand(player1, "Aven Fogbringer");
+        harness.assertNotOnBattlefield(player1, "Aven Fogbringer");
     }
 }

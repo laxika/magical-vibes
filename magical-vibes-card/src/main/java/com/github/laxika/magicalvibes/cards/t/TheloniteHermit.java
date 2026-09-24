@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "228")
 @CardRegistration(set = "TSR", collectorNumber = "239")
+@CardRegistration(set = "C15", collectorNumber = "205")
 public class TheloniteHermit extends Card {
 
     public TheloniteHermit() {

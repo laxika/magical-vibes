@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.model.condition;
 
-/** The controller is not the game's starting player. */
+/** The source controller is not the player who started the game. */
 public record ControllerIsNotStartingPlayer() implements Condition {
 
     @Override
     public String conditionName() {
-        return "not the starting player";
+        return "controller is not the starting player";
     }
 
     @Override
     public String conditionNotMetReason() {
-        return "the starting player";
+        return "controller is the starting player";
     }
 }

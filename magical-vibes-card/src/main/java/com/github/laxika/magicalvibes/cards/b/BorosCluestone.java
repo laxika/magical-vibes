@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "137")
+@CardRegistration(set = "C15", collectorNumber = "246")
 public class BorosCluestone extends Card {
 
     public BorosCluestone() {

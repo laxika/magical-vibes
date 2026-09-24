@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEff
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -219,6 +219,11 @@ public final class CombatHelper {
         }
     }
 
+    public static void validateMaximumAttackers(GameData gameData, List<Integer> attackerIndices,
+                                                Map<Integer, UUID> attackTargets) {
+        validateMaximumAttackers(gameData, attackerIndices, attackTargets, null);
+    }
+
     private static CombatCreatureLimitEffect limitOrNull(CardEffect effect) {
         return effect instanceof CombatCreatureLimitEffect limit ? limit : null;
     }
@@ -244,11 +249,14 @@ public final class CombatHelper {
     /**
      * Returns the smallest static cap on the number of distinct blockers in the current combat.
      */
-    public static int getMaximumBlockers(GameData gameData) {
+    public static int getMaximumBlockers(GameData gameData, UUID blockerControllerId,
+                                         StaticEffectConditionResolver conditionResolver) {
         int[] maximum = {Integer.MAX_VALUE};
-        gameData.forEachPermanent((ignored, permanent) -> {
+        gameData.forEachPermanent((sourceControllerId, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CombatCreatureLimitEffect limit) {
+                CardEffect activeEffect = conditionResolver == null ? effect
+                        : conditionResolver.resolve(gameData, permanent, sourceControllerId, effect);
+                if (activeEffect instanceof CombatCreatureLimitEffect limit) {
                     maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }
             }
@@ -267,7 +275,22 @@ public final class CombatHelper {
                 }
             }
         }
+        synchronized (gameData.floatingEffects) {
+            for (var floating : gameData.floatingEffects) {
+                if (blockerControllerId != null && floating.affectedPlayerId() != null
+                        && !floating.affectedPlayerId().equals(blockerControllerId)) {
+                    continue;
+                }
+                if (floating.effect() instanceof CombatCreatureLimitEffect limit) {
+                    maximum[0] = Math.min(maximum[0], limit.maxBlockers());
+                }
+            }
+        }
         return maximum[0];
+    }
+
+    public static int getMaximumBlockers(GameData gameData) {
+        return getMaximumBlockers(gameData, null, null);
     }
 
 }

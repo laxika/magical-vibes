@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
@@ -380,6 +381,7 @@ public class StackResolutionService {
         perm.setCast(!entry.isCopy());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
+        perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
@@ -425,11 +427,11 @@ public class StackResolutionService {
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());
+                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked(), entry);
         } else {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
                     entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
-                    entry.getConvokeCreatureIds().size());
+                    entry.getConvokeCreatureIds().size(), entry);
         }
     }
 
@@ -937,6 +939,19 @@ public class StackResolutionService {
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
 
+            boolean needsTwoPlayerChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(TwoPlayerChoiceOnEnterEffect.class::isInstance);
+            if (needsTwoPlayerChoice && gameData.orderedPlayerIds.size() >= 2) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseTwoPlayersAsEnter(
+                                enchPerm.getId(), controllerId, enteredCard, entry.getTargetId(), true,
+                                entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                                entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds(), null));
+                playerInputService.beginPlayerChoice(gameData, controllerId,
+                        new ArrayList<>(gameData.orderedPlayerIds), "Choose a player.");
+                return;
+            }
+
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (enteredCard.isSaga()) {
                 sagaChapterService.initializeSaga(gameData, enchPerm, enteredCard, controllerId);
@@ -1319,7 +1334,7 @@ public class StackResolutionService {
             return;
         }
         triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
-                gameData, entry.getControllerId());
+                gameData, entry.getControllerId(), card.getManaValue());
     }
 
     /**

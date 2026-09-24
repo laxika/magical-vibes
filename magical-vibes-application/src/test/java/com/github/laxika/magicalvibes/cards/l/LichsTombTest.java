@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbedLightning;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
+import com.github.laxika.magicalvibes.cards.d.DarksteelPendant;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LichsTomb.class, DarksteelGargoyle.class, DarksteelIngot.class,
+        DarksteelPendant.class, BarbedLightning.class})
 class LichsTombTest extends BaseCardTest {
 
     @Test
@@ -32,8 +38,8 @@ class LichsTombTest extends BaseCardTest {
     @DisplayName("Losing life triggers a sacrifice for each life lost")
     void losingLifeTriggersSacrificeForEachLifeLost() {
         Permanent tomb = harness.addToBattlefieldAndReturn(player1, new LichsTomb());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        Permanent ingot = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
         harness.setLife(player1, 20);
 
         loseLife(2);
@@ -42,14 +48,14 @@ class LichsTombTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.maxCount()).isEqualTo(2);
-        assertThat(choice.validIds()).containsExactly(tomb.getId(), forest.getId(), bears.getId());
+        assertThat(choice.validIds()).containsExactly(tomb.getId(), gargoyle.getId(), ingot.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), bears.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(gargoyle.getId(), ingot.getId()));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         harness.assertOnBattlefield(player1, "Lich's Tomb");
-        harness.assertNotOnBattlefield(player1, "Forest");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Darksteel Gargoyle");
+        harness.assertNotOnBattlefield(player1, "Darksteel Ingot");
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
@@ -57,7 +63,7 @@ class LichsTombTest extends BaseCardTest {
     @DisplayName("Lich's Tomb itself is an eligible sacrifice")
     void itselfIsEligibleSacrifice() {
         Permanent tomb = harness.addToBattlefieldAndReturn(player1, new LichsTomb());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
         harness.setLife(player1, 20);
 
         loseLife(1);
@@ -65,12 +71,48 @@ class LichsTombTest extends BaseCardTest {
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(tomb.getId(), forest.getId());
+        assertThat(choice.validIds()).containsExactly(tomb.getId(), gargoyle.getId());
 
         harness.handleMultiplePermanentsChosen(player1, List.of(tomb.getId()));
 
         harness.assertNotOnBattlefield(player1, "Lich's Tomb");
-        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Darksteel Gargoyle");
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Damage causes the life-loss sacrifice trigger")
+    void damageCausesLifeLossSacrificeTrigger() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new LichsTomb());
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        Permanent ingot = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        Permanent pendant = harness.addToBattlefieldAndReturn(player1, new DarksteelPendant());
+        harness.setLife(player1, 20);
+
+        harness.setHand(player1, List.of(new BarbedLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(3);
+        assertThat(choice.validIds()).containsExactly(
+                tomb.getId(), gargoyle.getId(), ingot.getId(), pendant.getId());
+
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(gargoyle.getId(), ingot.getId(), pendant.getId()));
+
+        harness.assertOnBattlefield(player1, "Lich's Tomb");
+        harness.assertNotOnBattlefield(player1, "Darksteel Gargoyle");
+        harness.assertNotOnBattlefield(player1, "Darksteel Ingot");
+        harness.assertNotOnBattlefield(player1, "Darksteel Pendant");
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 

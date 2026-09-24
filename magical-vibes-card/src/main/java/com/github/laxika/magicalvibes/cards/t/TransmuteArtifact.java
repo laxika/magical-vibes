@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TransmuteArtifactSearchEffect
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ATQ", collectorNumber = "14")
+@CardRegistration(set = "ME4", collectorNumber = "69")
 public class TransmuteArtifact extends Card {
 
     public TransmuteArtifact() {

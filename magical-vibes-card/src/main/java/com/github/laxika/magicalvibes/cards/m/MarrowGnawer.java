@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "124")
 @CardRegistration(set = "PHUK", collectorNumber = "1")
+@CardRegistration(set = "SLD", collectorNumber = "34")
 public class MarrowGnawer extends Card {
 
     public MarrowGnawer() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "133")
+@CardRegistration(set = "SLD", collectorNumber = "2109")
+@CardRegistration(set = "C14", collectorNumber = "217")
 public class SylvanSafekeeper extends Card {
 
     public SylvanSafekeeper() {

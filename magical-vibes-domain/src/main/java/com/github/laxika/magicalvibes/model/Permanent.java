@@ -192,6 +192,10 @@ public class Permanent {
     @Setter private UUID chosenPermanentId;
     /** Player targeted by a linked enter-the-battlefield ability. */
     @Setter private UUID rememberedTargetPlayerId;
+    /** Players chosen by an as-enters ability that remembers more than one player. */
+    @Getter private final List<UUID> rememberedTargetPlayerIds = new ArrayList<>();
+    /** Players chosen by an as-enters effect such as Bitter Feud. */
+    private final List<UUID> chosenPlayerIds = new ArrayList<>();
     /** Life lost by the controller when this permanent's Soulgorger Orgg-style ETB resolved. */
     @Setter private int lifeLostWhenEntered;
     /** Player who lost the recorded life when this permanent's Soulgorger Orgg-style ETB resolved. */
@@ -214,6 +218,8 @@ public class Permanent {
     /** True while this permanent has the suspected designation. Cleared only by a leave-and-return
      *  event or an effect that specifically makes it no longer suspected. */
     @Setter private boolean suspected;
+    /** True while this permanent represents a commander. */
+    @Setter private boolean commander;
     /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
      *  effect (e.g. Act of Heroism). Stacks on top of any static "can block an additional creature"
      *  grants counted in {@code CombatBlockService}. Cleared at end of turn by {@link #resetModifiers()}. */
@@ -338,6 +344,7 @@ public class Permanent {
      *  New counter kinds require only a new {@link CounterType} value — never a new field here.
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    private int countersRemovedSinceTriggerCheck;
     private int loyaltyCountersRemovedSinceTriggerCheck;
     /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
      *  in layer ordering; removing counters does not remove their timestamp. */
@@ -564,6 +571,8 @@ public class Permanent {
     @Setter private boolean spectacle;
     /** Whether this permanent's optional collect-evidence additional cost was paid. */
     @Setter private boolean collectEvidenceCostPaid;
+    /** Whether this permanent's spell had its waterbend additional cost paid. */
+    @Setter private boolean waterbendCostPaid;
     /** Whether the spell's optional reveal-a-card-from-hand additional cost was paid. */
     @Setter private boolean revealCardFromHandCostPaid;
     /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
@@ -777,6 +786,8 @@ public class Permanent {
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
+        this.rememberedTargetPlayerIds.addAll(source.rememberedTargetPlayerIds);
+        this.chosenPlayerIds.addAll(source.chosenPlayerIds);
         this.lifeLostWhenEntered = source.lifeLostWhenEntered;
         this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
@@ -788,6 +799,7 @@ public class Permanent {
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantBlockThisCombat = source.cantBlockThisCombat;
         this.suspected = source.suspected;
+        this.commander = source.commander;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
         this.mustBlockEachAttackingCreatureThisTurnIfAble = source.mustBlockEachAttackingCreatureThisTurnIfAble;
@@ -844,6 +856,7 @@ public class Permanent {
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.counters.putAll(source.counters);
+        this.countersRemovedSinceTriggerCheck = source.countersRemovedSinceTriggerCheck;
         this.loyaltyCountersRemovedSinceTriggerCheck = source.loyaltyCountersRemovedSinceTriggerCheck;
         this.counterTimestamps.putAll(source.counterTimestamps);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
@@ -918,6 +931,7 @@ public class Permanent {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
+        this.waterbendCostPaid = source.waterbendCostPaid;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
@@ -1048,13 +1062,13 @@ public class Permanent {
         }
     }
 
-    /** True when at least one source has marked damage greater than or equal to {@code toughness}. */
-    public boolean hasLethalDamageFromSingleSource(int toughness) {
-        if (toughness <= 0) {
+    /** True when at least one source has marked damage greater than or equal to the lethal threshold. */
+    public boolean hasLethalDamageFromSingleSource(int lethalDamageThreshold) {
+        if (lethalDamageThreshold <= 0) {
             return false;
         }
         for (int amount : markedDamageBySource.values()) {
-            if (amount >= toughness) {
+            if (amount >= lethalDamageThreshold) {
                 return true;
             }
         }
@@ -1267,6 +1281,9 @@ public class Permanent {
         }
         int previousCount = counters.getOrDefault(counterType, 0);
         int newCount = Math.max(0, count);
+        if (newCount < previousCount) {
+            countersRemovedSinceTriggerCheck += previousCount - newCount;
+        }
         if (counterType == CounterType.LOYALTY && newCount < previousCount) {
             loyaltyCountersRemovedSinceTriggerCheck += previousCount - newCount;
         }
@@ -1275,6 +1292,12 @@ public class Permanent {
         } else {
             counters.put(counterType, count);
         }
+    }
+
+    public int drainCountersRemovedSinceTriggerCheck() {
+        int removed = countersRemovedSinceTriggerCheck;
+        countersRemovedSinceTriggerCheck = 0;
+        return removed;
     }
 
     public int drainLoyaltyCountersRemovedSinceTriggerCheck() {

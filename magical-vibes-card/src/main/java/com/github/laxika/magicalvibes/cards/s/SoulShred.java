@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "112")
+@CardRegistration(set = "ME4", collectorNumber = "98")
 public class SoulShred extends Card {
 
     public SoulShred() {

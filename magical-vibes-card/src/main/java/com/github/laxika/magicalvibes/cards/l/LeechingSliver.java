@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "102")
+@CardRegistration(set = "SLD", collectorNumber = "632")
 public class LeechingSliver extends Card {
 
     public LeechingSliver() {

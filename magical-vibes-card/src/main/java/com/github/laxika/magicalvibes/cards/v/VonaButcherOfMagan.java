@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "231")
+@CardRegistration(set = "SLD", collectorNumber = "1413")
 public class VonaButcherOfMagan extends Card {
 
     public VonaButcherOfMagan() {

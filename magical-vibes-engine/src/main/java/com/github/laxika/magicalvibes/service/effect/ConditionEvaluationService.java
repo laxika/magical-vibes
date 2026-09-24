@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,75 +15,82 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsMoreLandsThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
-import com.github.laxika.magicalvibes.model.condition.ActivationCount;
-import com.github.laxika.magicalvibes.model.condition.AllNonartifactCreaturesShareColor;
+import com.github.laxika.magicalvibes.model.condition.AllBendingTypesCompletedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
+import com.github.laxika.magicalvibes.model.condition.AllNonartifactCreaturesShareColor;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
-import com.github.laxika.magicalvibes.model.condition.ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyardFromBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoGraveyardFromBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
-import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentIsMonarch;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.AnotherCreatureDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
+import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
-import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageAtLeastThisTurn;
-import com.github.laxika.magicalvibes.model.condition.AnyPlayerHandAtMost;
-import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermanent;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThisTurn;
-import com.github.laxika.magicalvibes.model.condition.AnyOf;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerHandAtMost;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
-import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
-import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
-import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
+import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
+import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
+import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
-import com.github.laxika.magicalvibes.model.condition.SourceIsBlocked;
-import com.github.laxika.magicalvibes.model.condition.SourceBlocksWithAtLeastAndOnlyMatchingBlockers;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CanBeholdSubtype;
-import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
-import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
-import com.github.laxika.magicalvibes.model.condition.CardsInExileAtLeast;
-import com.github.laxika.magicalvibes.model.condition.CardsInExileMatchingAtLeast;
-import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
-import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
-import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
-import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
-import com.github.laxika.magicalvibes.model.condition.CardTypesAmongControlledPermanentsAndGraveyardAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardTypesAmongCardsInGraveyardAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardTypesAmongControlledPermanentsAndGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsExiledThisTurn;
-import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CardsInExileAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInExileMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardAtLeastThisTurn;
-import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.condition.CastForForetellCost;
-import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
+import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
+import com.github.laxika.magicalvibes.model.condition.CastForForetellCost;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
+import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
+import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
+import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
-import com.github.laxika.magicalvibes.model.condition.Freerunning;
-import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens;
+import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSpellsThisTurn;
@@ -101,7 +109,9 @@ import com.github.laxika.magicalvibes.model.condition.ControlledModifiedCreature
 import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerCreatedTokenThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFromExileThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsFewerCreaturesThanEachOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
@@ -112,6 +122,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerControlledSource
 import com.github.laxika.magicalvibes.model.condition.RedSourcesControlledDealtNoncombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotDealtCombatDamageSinceLastTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentSubtypeAtLeastThisTurn;
@@ -126,15 +137,16 @@ import com.github.laxika.magicalvibes.model.condition.ControllerOwnsCardInExile;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActivePlayer;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceHasAtLeastAttachedEquipment;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
-import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerOrControllerHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
@@ -144,7 +156,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTur
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
-import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerPlayedOrCastFromOutsideHandThisTurn;
@@ -154,274 +165,280 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPerman
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerUnspentManaAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ColorsAmongControlledPermanentsAtLeast;
-import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
-import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
-import com.github.laxika.magicalvibes.model.condition.ControlsDistinctUnlockedRoomNamesCount;
-import com.github.laxika.magicalvibes.model.condition.ControlsUnlockedRoomDoorsCount;
-import com.github.laxika.magicalvibes.model.condition.ControlsMoreCreaturesThanOpponent;
-import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
-import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.ControlsVillainWithGreaterManaValueThanTarget;
-import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
-import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggeringPermanentCount;
-import com.github.laxika.magicalvibes.model.condition.ControlledOtherPermanentsPlusGraveyardCardsAtLeast;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.condition.ControlsCreaturesSharingCreatureType;
-import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
-import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
-import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
-import com.github.laxika.magicalvibes.model.condition.ControllerHasEmblem;
-import com.github.laxika.magicalvibes.model.condition.ControllerLostGameThisMatch;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterCountAtLeast;
-import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounterTotalAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterKindsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalToughnessAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControlledOtherPermanentsPlusGraveyardCardsAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounterTotalAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
+import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasCommanderAsCast;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasEmblem;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
+import com.github.laxika.magicalvibes.model.condition.ControllerLostGameThisMatch;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestToughness;
+import com.github.laxika.magicalvibes.model.condition.ControlsCreaturesSharingCreatureType;
+import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsDistinctUnlockedRoomNamesCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
+import com.github.laxika.magicalvibes.model.condition.ControlsMoreCreaturesThanOpponent;
+import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggeringPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
+import com.github.laxika.magicalvibes.model.condition.ControlsUnlockedRoomDoorsCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsVillainWithGreaterManaValueThanTarget;
+import com.github.laxika.magicalvibes.model.condition.CoolnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Coven;
-import com.github.laxika.magicalvibes.model.condition.FullParty;
-import com.github.laxika.magicalvibes.model.condition.AnotherCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardPutIntoYourGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardsPutIntoGraveyardThisTurnAtLeast;
-import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
-import com.github.laxika.magicalvibes.model.condition.CreatureWithDifferentNameDiedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.CreatureLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
+import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureLeftBattlefieldUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureWithDifferentNameDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DealtDamageByRedSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
-import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
-import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
+import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeastCardsInLibrary;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
+import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.DidntPlayLandThisTurn;
+import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
+import com.github.laxika.magicalvibes.model.condition.DuringCombat;
+import com.github.laxika.magicalvibes.model.condition.DuringDeclareAttackers;
+import com.github.laxika.magicalvibes.model.condition.DuringYourDeclareBlockers;
+import com.github.laxika.magicalvibes.model.condition.Enchanted;
+import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAttack;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ExiledCardTypeThreshold;
-import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
-import com.github.laxika.magicalvibes.model.condition.Enchanted;
-import com.github.laxika.magicalvibes.model.condition.DuringCombat;
-import com.github.laxika.magicalvibes.model.condition.DuringYourDeclareBlockers;
-import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
+import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
+import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureHasAtLeastEquipment;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
+import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
 import com.github.laxika.magicalvibes.model.condition.FaceDownCreatureEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.FaceDownPermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
-import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.condition.OpponentCastTwoOrMoreSpellsThisTurn;
-import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpellsThisTurn;
-import com.github.laxika.magicalvibes.model.condition.Equipped;
-import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
+import com.github.laxika.magicalvibes.model.condition.Freerunning;
+import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.GiantWizardOrSpellDealtDamageToTargetThisTurn;
+import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.condition.IsNight;
-import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
-import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
-import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
-import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
-import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
-import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
-import com.github.laxika.magicalvibes.model.condition.AllBendingTypesCompletedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
-import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTurn;
-import com.github.laxika.magicalvibes.model.condition.PutCounterOnSourceThisTurn;
-import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
-import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
-import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
+import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
-import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
-import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
-import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
-import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NonSubtypeCreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NonZombieCreatureDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.NoncreaturePermanentDestroyedByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
-import com.github.laxika.magicalvibes.model.condition.DidntPlayLandThisTurn;
-import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
-import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OilCounterEventThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
+import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpellsThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsNoPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
-import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
-import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
-import com.github.laxika.magicalvibes.model.condition.OpponentPermanentDealtExcessDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtCombatDamageByLegendaryCreatureThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
-import com.github.laxika.magicalvibes.model.condition.OpponentPutThreeOrMoreCardsIntoGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentOwnsCardInExile;
-import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
+import com.github.laxika.magicalvibes.model.condition.OpponentPermanentDealtExcessDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.condition.OilCounterEventThisTurn;
-import com.github.laxika.magicalvibes.model.condition.NoncreaturePermanentDestroyedByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
+import com.github.laxika.magicalvibes.model.condition.OpponentPutThreeOrMoreCardsIntoGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThisTurn;
-import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.condition.VoidCondition;
-import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.Overloaded;
+import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
-import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
-import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
+import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PutCounterOnSourceThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
+import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
-import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
-import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedBattleThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedDuringControllersLastTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceAttackedBattleThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedByColorThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceBlocksWithAtLeastAndOnlyMatchingBlockers;
+import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
+import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledDifferentManaValuesThreshold;
-import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
-import com.github.laxika.magicalvibes.model.condition.SourceWasCrewedBySubtypeThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
 import com.github.laxika.magicalvibes.model.condition.SourceHasDealtDamage;
-import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedByColorThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttackingOrBlocking;
-import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
-import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
+import com.github.laxika.magicalvibes.model.condition.SourceIsBlocked;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
-import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
-import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
-import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceWasSecondSpellCastThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
+import com.github.laxika.magicalvibes.model.condition.SourceIsHarnessed;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMotivated;
-import com.github.laxika.magicalvibes.model.condition.SourceIsHarnessed;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
+import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
-import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
+import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
-import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
-import com.github.laxika.magicalvibes.model.condition.SourceStartedTurnUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
+import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
+import com.github.laxika.magicalvibes.model.condition.SourceStartedTurnUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
+import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceWasCrewedBySubtypeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceWasSecondSpellCastThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
+import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
+import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtMost;
+import com.github.laxika.magicalvibes.model.condition.TargetManaValueAtMostControllerGraveyardCount;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueAtMostColorsSpent;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEqualsControllerUnspentMana;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActive;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellManaSpentLessThanManaValue;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellManaValueAtMostGreatestControlledPermanentManaValue;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellNoManaSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellSharesColorWithControlledCreature;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellWouldDestroyLandYouControl;
+import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
+import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
+import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
+import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryMatchesPredicate;
+import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
+import com.github.laxika.magicalvibes.model.condition.TotalCreatureCardsInGraveyardsAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
+import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
+import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasKeyword;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanEachOtherCreature;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.VoidCondition;
+import com.github.laxika.magicalvibes.model.condition.WasCast;
+import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
+import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.PartyAlwaysFullEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDestroysPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
-import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
-import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
-import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
-import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
-import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
-import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
-import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
-import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
-import com.github.laxika.magicalvibes.model.condition.TargetManaValueAtMostControllerGraveyardCount;
-import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtLeast;
-import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtMost;
-import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEqualsControllerUnspentMana;
-import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
-import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanEachOtherCreature;
-import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellManaSpentLessThanManaValue;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellManaValueAtMostGreatestControlledPermanentManaValue;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellNoManaSpentToCast;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellWouldDestroyLandYouControl;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellSharesColorWithControlledCreature;
-import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
-import com.github.laxika.magicalvibes.model.condition.TotalCreatureCardsInGraveyardsAtLeast;
-import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
-import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryMatchesPredicate;
-import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
-import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.condition.WonClash;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtMostControllerExperienceCounters;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -429,6 +446,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
 /**
  * The single evaluation point for every {@link Condition} in the engine.
@@ -497,6 +518,11 @@ public class ConditionEvaluationService {
                             && gameData.cardsDiscardedOrCycledThisTurn
                             .getOrDefault(ctx.controllerId(), Set.of())
                             .contains(ctx.sourceCard().getId());
+            case AnOpponentDiscardedCardThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.orderedPlayerIds.stream()
+                            .anyMatch(playerId -> !playerId.equals(ctx.controllerId())
+                                    && gameData.cardsDiscardedThisTurn.getOrDefault(playerId, 0) > 0);
             case ControllerDiscardedCardThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.cardsDiscardedThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
@@ -514,6 +540,9 @@ public class ConditionEvaluationService {
                     basicLandTypesAmongControlledLandsAtLeast(gameData, ctx, c.threshold());
             case MaxSpeed ignored ->
                     ctx.controllerId() != null && gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0) == 4;
+            case CoolnessAtLeast c ->
+                    ctx.controllerId() != null
+                            && gameData.playerCoolness.getOrDefault(ctx.controllerId(), 0) >= c.threshold();
             case Delirium ignored ->
                     isDeliriumMet(gameData, ctx);
             case CardTypesAmongCardsInGraveyardAtLeast c ->
@@ -641,6 +670,9 @@ public class ConditionEvaluationService {
             case ControllerSacrificedPermanentThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoSacrificedPermanentsThisTurn.contains(ctx.controllerId());
+            case ControllerCreatedTokenThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoCreatedTokensThisTurn.contains(ctx.controllerId());
             case ControllerSacrificedPermanentsAtLeastThisTurn c ->
                     ctx.controllerId() != null
                             && gameData.sacrificedPermanentCountThisTurn
@@ -662,6 +694,8 @@ public class ConditionEvaluationService {
                     equippedCreatureDidntDealCombatDamageToCreatureThisTurn(gameData, ctx);
             case EquippedCreatureHasAtLeastEquipment c ->
                     equippedCreatureHasAtLeastEquipment(gameData, ctx, c.minimum());
+            case SourceHasAtLeastAttachedEquipment c ->
+                    countEquipmentAttachedToSource(gameData, ctx) >= c.minimum();
             case Enchanted ignored ->
                     isSourceEnchanted(gameData, ctx);
             case EnchantedByAtLeastAuras c ->
@@ -692,7 +726,12 @@ public class ConditionEvaluationService {
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
             case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast();
             case ControlledCommanderAsCast ignored -> controlsCommander(gameData, ctx);
+            case ControllerControlsCommander ignored -> controllerControlsCommander(gameData, ctx);
             case ControlledFaerieAsCast ignored -> ctx.controlledFaerieAsCast();
+            case ControllerHasCommanderAsCast ignored ->
+                    ctx.controllerId() != null
+                            && !gameData.playerCommandZones
+                            .getOrDefault(ctx.controllerId(), List.of()).isEmpty();
             case ControlledModifiedCreatureAsCast ignored -> ctx.controlledModifiedCreatureAsCast();
             case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
                     ctx.controllerId() != null
@@ -794,6 +833,13 @@ public class ConditionEvaluationService {
                     anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
                     anOpponentHasMoreLifeThanController(gameData, ctx.controllerId());
+            case TargetPlayerOrControllerHasMoreLifeThanController ignored -> {
+                UUID targetPlayerId = ctx.targetId() == null ? null
+                        : gameData.playerIds.contains(ctx.targetId()) ? ctx.targetId()
+                        : gameQueryService.findPermanentController(gameData, ctx.targetId());
+                yield targetPlayerId != null && ctx.controllerId() != null
+                        && gameData.getLife(targetPlayerId) > gameData.getLife(ctx.controllerId());
+            }
             case ControllerLifeAtLeast c ->
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) >= c.threshold();
@@ -892,9 +938,16 @@ public class ConditionEvaluationService {
                             > countCardsInHand(gameData, ctx.controllerId());
             case TargetPlayerControlsPermanent c ->
                     targetPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
+            case TargetPlayerControlsMoreLandsThanController ignored ->
+                    ctx.targetId() != null
+                            && ctx.controllerId() != null
+                            && gameQueryService.controlsMoreLandsThan(
+                            gameData, ctx.targetId(), ctx.controllerId());
             case TargetPlayerTurn ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerIsActivePlayer ignored ->
+                    ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
+            case TargetPlayerIsActive ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerLifeTotalEquals c ->
                     ctx.targetId() != null && gameData.getLife(ctx.targetId()) == c.lifeTotal();
@@ -935,6 +988,8 @@ public class ConditionEvaluationService {
                     enchantedPermanentMatches(gameData, ctx, c.filter());
             case AttacksAlone ignored ->
                     countAttackingCreatures(gameData, ctx.controllerId()) == 1;
+            case AttacksPlayerAlone ignored ->
+                    attacksPlayerAlone(gameData, ctx);
             case AttackingCreaturesTotalPowerAtLeast c ->
                     totalPowerOfAttackingCreatures(gameData, ctx.controllerId()) >= c.threshold();
             case AttackedTargetMatches c -> {
@@ -955,6 +1010,8 @@ public class ConditionEvaluationService {
                     allMatchingCreaturesAttack(gameData, ctx, c.filter());
             case DuringCombat ignored ->
                     gameData.currentStep != null && gameData.currentStep.isCombatPhase();
+            case DuringDeclareAttackers ignored ->
+                    gameData.currentStep == TurnStep.DECLARE_ATTACKERS;
             case DuringYourDeclareBlockers ignored ->
                     gameData.currentStep == TurnStep.DECLARE_BLOCKERS
                             && ctx.controllerId() != null
@@ -972,6 +1029,10 @@ public class ConditionEvaluationService {
                             >= c.minimum();
             case OpponentAttacksPlaneswalker ignored ->
                     opponentAttacksPlaneswalker(gameData, ctx);
+            case OpponentAttacksAnotherOpponent ignored ->
+                    opponentAttacksAnotherOpponent(gameData, ctx);
+            case PlayerAttacksOneOfYourOpponents ignored ->
+                    playerAttacksOneOfYourOpponents(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
                     countAttackingCreaturesOfSubtype(gameData, ctx.controllerId(), c.subtype()) >= c.minimum();
             case HasAttacker c ->
@@ -1198,6 +1259,10 @@ public class ConditionEvaluationService {
                     opponentCastThreeOrMoreSpellsThisTurn(gameData, ctx);
             case OpponentPermanentEnteredThisTurn c ->
                     opponentPermanentEnteredThisTurn(gameData, ctx, c);
+            case AnOpponentIsMonarch ignored ->
+                    ctx.controllerId() != null
+                            && gameData.monarchPlayerId != null
+                            && !gameData.monarchPlayerId.equals(ctx.controllerId());
             case NoncreaturePermanentDestroyedByOpponentThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn
@@ -1226,6 +1291,8 @@ public class ConditionEvaluationService {
                     targetManaValueAtMostControllerGraveyardCount(gameData, ctx);
             case TargetGraveyardCardManaValueAtMost c ->
                     targetGraveyardCardManaValueAtMost(gameData, ctx, c.maxManaValue());
+            case TargetGraveyardCardManaValueAtMostControllerExperienceCounters ignored ->
+                    targetGraveyardCardManaValueAtMostControllerExperienceCounters(gameData, ctx);
             case TargetGraveyardCardManaValueAtLeast c ->
                     targetGraveyardCardManaValueAtLeast(gameData, ctx, c.minManaValue());
             case ColorSpentToCast c ->
@@ -1277,6 +1344,12 @@ public class ConditionEvaluationService {
                         : gameData.playerManaPools.get(ctx.controllerId());
                 yield target != null && manaPool != null
                         && target.getCard().getManaValue() == manaPool.getTotalAllMana();
+            }
+            case TargetPermanentManaValueAtMostColorsSpent ignored -> {
+                Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+                yield target != null && ctx.sourceCard() != null
+                        && target.getCard().getManaValue()
+                        <= gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).size();
             }
             case TargetToughnessAtMostControllerGraveyardCount ignored ->
                     targetToughnessAtMostControllerGraveyardCount(gameData, ctx);
@@ -1344,6 +1417,8 @@ public class ConditionEvaluationService {
             }
             case SourceCardInCommandZone ignored ->
                     isSourceCardInCommandZone(gameData, ctx);
+            case SourceCardOnBattlefield ignored ->
+                    isSourceCardOnBattlefield(gameData, ctx);
             case SourceCardInGraveyard ignored ->
                     isSourceCardInGraveyard(gameData, ctx);
             case SourceCardSuspended ignored ->
@@ -1433,6 +1508,25 @@ public class ConditionEvaluationService {
                         : gameQueryService.getEffectivePower(gameData, triggeringPermanent);
                 yield triggeringPower > gameQueryService.getEffectivePower(gameData, source);
             }
+            case TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures ignored -> {
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                if (triggeringPermanent == null && ctx.triggeringPermanentId() != null
+                        && ctx.sourcePermanent() != null
+                        && ctx.triggeringPermanentId().equals(ctx.sourcePermanentId())) {
+                    triggeringPermanent = ctx.sourcePermanent();
+                }
+                if (triggeringPermanent == null) {
+                    yield false;
+                }
+                int triggeringPower = gameQueryService.findPermanentById(gameData, triggeringPermanent.getId()) != null
+                        ? gameQueryService.getEffectivePower(gameData, triggeringPermanent)
+                        : ctx.triggeringPermanentPowerAtTrigger() != null
+                        ? ctx.triggeringPermanentPowerAtTrigger()
+                        : triggeringPermanent.getEffectivePower();
+                yield gameQueryService.hasUniqueGreatestPowerAmongAllCreatures(
+                        gameData, triggeringPermanent, triggeringPower);
+            }
             case TriggeringPermanentPowerGreaterThanEachOtherCreature ignored -> {
                 UUID triggeringPermanentId = ctx.triggeringPermanentId() != null
                         ? ctx.triggeringPermanentId() : ctx.sourcePermanentId();
@@ -1456,6 +1550,13 @@ public class ConditionEvaluationService {
                         .filter(permanent -> triggeringPermanentId == null
                                 || !triggeringPermanentId.equals(permanent.getId()))
                         .allMatch(permanent -> power > gameQueryService.getEffectivePower(gameData, permanent));
+            }
+            case TriggeringPermanentHasKeyword c -> {
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                yield triggeringPermanent != null
+                        ? gameQueryService.hasKeyword(gameData, triggeringPermanent, c.keyword())
+                        : ctx.triggeringCard() != null && ctx.triggeringCard().hasKeyword(c.keyword());
             }
             case TriggeringPermanentHasSubtype c -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
@@ -2121,6 +2222,15 @@ public class ConditionEvaluationService {
         return commandZone != null && commandZone.contains(ctx.sourceCard());
     }
 
+    /** True when the source card is represented by a permanent on a battlefield. */
+    private boolean isSourceCardOnBattlefield(GameData gameData, ConditionContext ctx) {
+        if (ctx.sourceCard() == null) return false;
+        UUID sourceCardId = ctx.sourceCard().getId();
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(sourceCardId));
+    }
+
     /** True when the stack entry's source card object is still in its controller's graveyard. */
     private boolean isSourceCardInGraveyard(GameData gameData, ConditionContext ctx) {
         if (ctx.sourceCard() == null) return false;
@@ -2135,6 +2245,14 @@ public class ConditionEvaluationService {
         UUID cardId = ctx.sourceCard().getId();
         Integer timeCounters = gameData.exiledCardTimeCounters.get(cardId);
         return timeCounters != null && timeCounters > 0 && gameData.findExiledCard(cardId) != null;
+    }
+
+    /** True when a permanent on the controller's battlefield makes their party count as full. */
+    private boolean partyIsAlwaysFull(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PartyAlwaysFullEffect.class::isInstance));
     }
 
     /**
@@ -2368,6 +2486,24 @@ public class ConditionEvaluationService {
         return count;
     }
 
+    private int countEquipmentAttachedToSource(GameData gameData, ConditionContext ctx) {
+        UUID sourcePermanentId = ctx.sourcePermanentId();
+        if (sourcePermanentId == null) return 0;
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.isAttached()
+                        && perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                        && sourcePermanentId.equals(perm.getAttachedTo())) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
     private boolean controlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
         if (ctx.controllerId() == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -2390,6 +2526,18 @@ public class ConditionEvaluationService {
 
         return battlefield.stream().anyMatch(permanent -> commandZone.stream()
                 .anyMatch(commander -> commander.getName().equals(permanent.getCard().getName())));
+    }
+
+    private boolean controllerControlsCommander(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+
+        List<Card> commanders = gameData.playerCommanders.get(controllerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (commanders == null || commanders.isEmpty() || battlefield == null) return false;
+
+        return battlefield.stream().anyMatch(permanent -> commanders.stream()
+                .anyMatch(commander -> commander.getId().equals(permanent.getOriginalCard().getId())));
     }
 
     private boolean targetPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx,
@@ -2942,6 +3090,17 @@ public class ConditionEvaluationService {
         return target != null && target.getManaValue() <= maxManaValue;
     }
 
+    private boolean targetGraveyardCardManaValueAtMostControllerExperienceCounters(
+            GameData gameData, ConditionContext ctx) {
+        Card target = ctx.targetId() == null
+                ? null
+                : gameQueryService.findCardInGraveyardById(gameData, ctx.targetId());
+        return target != null
+                && ctx.controllerId() != null
+                && target.getManaValue() <= gameData.playerExperienceCounters
+                .getOrDefault(ctx.controllerId(), 0);
+    }
+
     private boolean targetGraveyardCardManaValueAtLeast(GameData gameData, ConditionContext ctx, int minManaValue) {
         Card target = ctx.targetId() == null
                 ? null
@@ -3048,6 +3207,28 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
         return battlefield.stream().filter(Permanent::isAttacking).count();
+    }
+
+    private boolean attacksPlayerAlone(GameData gameData, ConditionContext ctx) {
+        Permanent attacker = ctx.triggeringPermanentId() == null
+                ? ctx.sourcePermanent()
+                : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+        if (attacker == null || !attacker.isAttacking()) return false;
+
+        UUID attackedPlayerId = attacker.getAttackTarget();
+        if (attackedPlayerId == null || !gameData.playerIds.contains(attackedPlayerId)) return false;
+
+        long attackersAtPlayer = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isAttacking() && attackedPlayerId.equals(permanent.getAttackTarget())) {
+                    attackersAtPlayer++;
+                }
+            }
+        }
+        return attackersAtPlayer == 1;
     }
 
     private int totalPowerOfAttackingCreatures(GameData gameData, UUID controllerId) {
@@ -3181,6 +3362,38 @@ public class ConditionEvaluationService {
         return attackers.stream()
                 .filter(Permanent::isAttacking)
                 .anyMatch(attacker -> controlledPlaneswalkerIds.contains(attacker.getAttackTarget()));
+    }
+
+    private boolean opponentAttacksAnotherOpponent(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (controllerId == null || attackingPlayerId == null || controllerId.equals(attackingPlayerId)) {
+            return false;
+        }
+
+        List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
+        if (attackers == null) return false;
+
+        return attackers.stream()
+                .filter(Permanent::isAttacking)
+                .map(Permanent::getAttackTarget)
+                .filter(gameData.playerIds::contains)
+                .anyMatch(targetId -> !controllerId.equals(targetId)
+                        && !attackingPlayerId.equals(targetId));
+    }
+
+    private boolean playerAttacksOneOfYourOpponents(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (controllerId == null || attackingPlayerId == null) {
+            return false;
+        }
+
+        return gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
+                .filter(Permanent::isAttacking)
+                .map(Permanent::getAttackTarget)
+                .filter(gameData.playerIds::contains)
+                .anyMatch(targetId -> !controllerId.equals(targetId));
     }
 
     private boolean controlsMatchingPermanentsWithSameName(GameData gameData, ConditionContext ctx,

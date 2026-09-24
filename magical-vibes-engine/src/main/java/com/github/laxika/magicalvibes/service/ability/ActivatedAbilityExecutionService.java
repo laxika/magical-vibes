@@ -1,116 +1,117 @@
 package com.github.laxika.magicalvibes.service.ability;
 
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
+import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
+import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
+import com.github.laxika.magicalvibes.model.condition.ActivationCount;
+import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
+import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeUntappedLandCouldProduceEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
-import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.ActivationCount;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
-import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
-import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
+import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
-import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
-import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
-import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
-import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
-import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingManaActivation;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
@@ -118,25 +119,20 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -147,6 +143,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -840,13 +839,14 @@ public class ActivatedAbilityExecutionService {
                 || abilityEffects.stream().anyMatch(
                         com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
         boolean recordsSacrificedPermanentSnapshot = abilityEffects.stream()
-                .filter(SacrificeCreatureCost.class::isInstance)
-                .map(SacrificeCreatureCost.class::cast)
-                .anyMatch(SacrificeCreatureCost::recordSacrificedPermanentSnapshot);
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::recordsSacrificedPermanentSnapshot);
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                 targetZone, targetIds, damageAssignments, chosenCostPermanentIds, tracksSacrificedCard,
                 recordsSacrificedPermanentSnapshot, sacrificedSourceSnapshot, sacrificedAttachedEquipmentIds,
-                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds);
+                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds,
+                activatedPermanentControllerId);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -1244,7 +1244,8 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(effectiveColor, amount);
                     }
-                    if (award.tracksProducingSourceForSpellCastTriggers()) {
+                    if (award.tracksProducingSourceForSpellCastTriggers()
+                            || gameQueryService.isArtifact(gameData, permanent)) {
                         pool.addSpellCastTriggerMana(permanent.getId(), effectiveColor, amount);
                     }
                     if (isCreatureSource) {
@@ -1384,6 +1385,9 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, picks);
+                    }
+                    if (gameQueryService.isArtifact(gameData, permanent)) {
+                        pool.addSpellCastTriggerMana(permanent.getId(), manaColor, picks);
                     }
                 } else {
                     // Each of the `picks` mana is chosen individually from the fixed color list; the
@@ -1567,7 +1571,7 @@ public class ActivatedAbilityExecutionService {
                 // here rather than on the stack.
                 int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.recipient())) {
+                for (UUID victimId : lifeLossRecipients(gameData, playerId, permanent, loss.recipient())) {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
@@ -1893,6 +1897,7 @@ public class ActivatedAbilityExecutionService {
      */
     private static boolean isNonTargetedLifeLoss(LoseLifeEffect effect) {
         return effect.recipient() == LoseLifeRecipient.CONTROLLER
+                || effect.recipient() == LoseLifeRecipient.SOURCE_CONTROLLER
                 || effect.recipient() == LoseLifeRecipient.EACH_PLAYER
                 || effect.recipient() == LoseLifeRecipient.EACH_OPPONENT;
     }
@@ -1904,9 +1909,14 @@ public class ActivatedAbilityExecutionService {
     }
 
     /** The players losing life, in turn order, for a non-targeted {@link LoseLifeRecipient}. */
-    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, LoseLifeRecipient recipient) {
+    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, Permanent source,
+                                                  LoseLifeRecipient recipient) {
         return switch (recipient) {
             case CONTROLLER -> List.of(controllerId);
+            case SOURCE_CONTROLLER -> {
+                UUID sourceControllerId = source == null ? null : gameData.findControllerOf(source);
+                yield sourceControllerId == null ? List.of() : List.of(sourceControllerId);
+            }
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
             case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
                     .filter(pid -> !pid.equals(controllerId))
@@ -2156,7 +2166,8 @@ public class ActivatedAbilityExecutionService {
                                     List<UUID> sacrificedAttachedEquipmentIds,
                                     List<UUID> sacrificedCardIds,
                                     Card discardedCardSnapshot,
-                                    Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
+                                    Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds,
+                                    UUID activatedPermanentControllerId) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -2225,6 +2236,7 @@ public class ActivatedAbilityExecutionService {
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
+        stackEntry.setSourcePermanentControllerId(activatedPermanentControllerId);
         List<UUID> trackedIds = chosenCostPermanentIds == null ? List.of() : List.copyOf(chosenCostPermanentIds);
         stackEntry.setChosenCostPermanentIds(trackedIds);
         List<Permanent> trackedSnapshots = new ArrayList<>();

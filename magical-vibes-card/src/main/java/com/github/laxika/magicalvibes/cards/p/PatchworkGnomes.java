@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "ODY", collectorNumber = "306")
 @CardRegistration(set = "TPR", collectorNumber = "229")
 @CardRegistration(set = "UMA", collectorNumber = "231")
+@CardRegistration(set = "MH2", collectorNumber = "299")
 public class PatchworkGnomes extends Card {
 
     public PatchworkGnomes() {

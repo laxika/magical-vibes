@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "LEG", collectorNumber = "221")
 @CardRegistration(set = "ME3", collectorNumber = "144")
+@CardRegistration(set = "SLD", collectorNumber = "1931")
 public class BarktoothWarbeard extends Card {
 }

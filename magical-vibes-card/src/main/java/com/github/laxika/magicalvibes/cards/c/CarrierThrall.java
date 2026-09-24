@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "BFZ", collectorNumber = "106")
 @CardRegistration(set = "DDR", collectorNumber = "42")
 @CardRegistration(set = "2X2", collectorNumber = "72")
+@CardRegistration(set = "CMM", collectorNumber = "142")
 public class CarrierThrall extends Card {
 
     private static final CreateTokenEffect ELDRAZI_SCION = new CreateTokenEffect(

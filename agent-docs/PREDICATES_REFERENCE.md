@@ -53,12 +53,15 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentBlockedBySourceThisTurnPredicate` | `()` | creatures that were blocked by the source permanent this turn (attacker direction only). Reads `GameData.creaturesBlockedThisTurn` and the source's recorded combat-opponent IDs, so it remains usable after combat state is cleared; requires a `FilterContext` source permanent ID or source snapshot. Wall of Nets |
 | `PermanentThatSaddledSourceThisTurnPredicate` | `()` | creatures that saddled the source Mount during the current turn; requires the source permanent context and reads `GameData.creaturesThatSaddledPermanentThisTurn` |
 | `PermanentIsCreaturePredicate` | `()` | creatures |
+| `PermanentIsCommanderPredicate` | `()` | permanents designated as commanders |
+| `PermanentIsCommanderPredicate` | `()` | permanents whose physical card is designated as a commander in `GameData`; needs game data |
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasExhaustAbilityPredicate` | `()` | permanents with at least one effective exhaust ability; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasTapActivatedAbilityPredicate` | `()` | permanents with at least one effective activated ability whose cost includes `{T}`; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentCouldProduceManaPredicate` | `(ManaColor)` | permanents whose current mana abilities could produce the requested mana type, including basic-land types and applicable mana replacements; needs game data |
 | `PermanentHasMorphAbilityPredicate` | `()` | face-up permanents whose current card has a morph ability |
 | `PermanentHasNoAbilitiesPredicate` | `()` | permanents with no currently effective abilities, including printed text, keywords, granted abilities, and intrinsic basic-land mana abilities when applicable; used by Muraganda Petroglyphs |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
@@ -230,9 +233,11 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
 | `PermanentIsSourcePermanentPredicate` | `()` | the source **permanent** itself, matched by permanent id (so a second copy of the same card is not matched). Wrap in `PermanentNotPredicate` for "each **other** …" wording (Renegade Krasis) | `sourcePermanentSnapshot` |
+| `PermanentIsCommanderPredicate` | `()` | a permanent whose original card is designated as a commander | `gameData` |
 | `PermanentIsTriggeringPermanentPredicate` | `()` | the permanent whose event caused the resolving ability to trigger, matched by the trigger's captured permanent id | `triggeringPermanentId` |
 | `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence, Zenos yae Galvus) | none |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
+| `PermanentControlledByMonarchPredicate` | `()` | permanents whose current controller is the monarch; useful for Aura conditions that refer to the enchanted permanent's controller | `gameData` |
 | `PermanentControlledByActivePlayerPredicate` | `()` | permanents controlled by the active player (`gameData.activePlayerId`) | `gameData` |
 | `PermanentControlledByDefendingPlayerPredicate` | `()` | permanents controlled by a defending player of the current combat (a player attacked directly or via one of their planeswalkers, per `GameQueryService.isPlayerBeingAttacked`). Matches nothing outside combat, so a spell using it is uncastable before attackers are declared. Yare | `gameData` |
 | `PermanentControlledContinuouslySinceBeginningOfTurnPredicate` | `()` | permanents controlled continuously since the beginning of the turn (`!isSummoningSick()`; same signal as `CameUnderControlThisTurn` / Siren's Call exemption). Norritt | — |
@@ -260,7 +265,9 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
 | `StackEntryIsMulticoloredPredicate` | `()` | stack entries whose cards have two or more effective colors; Neutralizing Blast uses it to restrict a counterspell target |
 | `StackEntryCardTypeInPredicate` | `(Set<CardType>)` | stack entries whose card has any of the given card types. On an activated/triggered ability entry the card is the ability's **source**, so `Set.of(CardType.ARTIFACT)` + `StackEntryTypeInPredicate(ACTIVATED_ABILITY)` is "activated ability from an artifact source" (Brown Ouphe) |
+| `StackEntrySourceIsColorlessPredicate` | `()` | activated or triggered abilities from a currently colorless source; also admits abilities from a planar command-zone object, but not abilities with no source (Abstruse Archaic) |
 | `StackEntrySubtypeInPredicate` | `(Set<CardSubtype>)` | spells whose card has any of the given subtypes. Wrap in `StackEntryNotPredicate` for "non-[subtype] spell" (e.g. Faerie Trickery: counter target non-Faerie spell) |
+| `StackEntryHasSourceChosenSubtypePredicate` | `()` | an activated ability whose source permanent has the subtype chosen by the evaluating source permanent; pass the watcher permanent as the source context (Leori, Sparktouched Hunter) |
 | `StackEntrySupertypeInPredicate` | `(Set<CardSupertype>)` | stack entries whose card has any of the given supertypes. Combine with `StackEntryTypeInPredicate` to restrict a target to legendary spells without admitting abilities from legendary permanents |
 | `StackEntryManaValuePredicate` | `(int manaValue)` | spells with exact mana value; also supported in `TargetSpellMatches` resolution conditions |
 | `StackEntryMaxManaValuePredicate` | `(int maxManaValue)` | spells with mana value (including chosen X) <= N. "counter target spell with mana value 4 or less" — Thoughtbind; also supported in `TargetSpellMatches` resolution conditions |
@@ -278,6 +285,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsNthSpellCastThisTurnPredicate` | `(int spellNumber)` | the spell at 1-based position `spellNumber` in this turn's **global** cast order across all players. "counter target spell that's the second spell cast this turn" — Second Guess with `2`. Read from `GameData.getSpellCastOrdinalThisTurn(cardId)` (appended by `recordSpellCast`, cleared each turn), so copies put on the stack without being cast never match |
 | `StackEntryKickedPredicate` | `()` | spells cast with a kicker or at least one multikicker payment |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
+| `StackEntryTargetsOnlySinglePermanentOrPlayerPredicate` | `()` | spells whose target occurrences all identify the same permanent or player; repeated occurrences are allowed (Chef's Kiss) |
 | `StackEntryTargetsOnlySingleCreaturePredicate` | `()` | spells whose target occurrences all identify one creature; repeated occurrences of that creature are allowed (Muck Drubb) |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
@@ -285,6 +293,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsCopyPredicate` | `()` | spells that were put onto the stack as copies rather than cast; used for "spell ... that wasn't cast" (Errant, Street Artist) |
 | `StackEntryNotTargetedByNamedCreatureAbilityPredicate` | `(String creatureName)` | target spells that are not already targeted by an activated or triggered ability from another creature with the given name; source-aware and evaluated by `TargetLegalityService` |
 | `StackEntryCastFromZonePredicate` | `(Zone)` | spells cast from the given zone (via the entry's `sourceZone`); e.g. `Zone.GRAVEYARD` for "casts a spell from a graveyard" (River Kelpie), distinguishing graveyard casts from exile casts |
+| `StackEntryCastWithWarpCostPredicate` | `()` | spells cast using a Warp alternative cost |
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The source aura's attachment is supplied externally by the evaluating service. Used by Curse of Echoes and Curse of Silence |
 | `StackEntrySharesChosenNameWithSourcePredicate` | `()` | spells whose card name equals the chosen name recorded on the source permanent (via a "choose a card name" ETB — `ChooseCardNameOnEnterEffect`). "counter target spell with the chosen name" — Declaration of Naught. Source-dependent: matches nothing unless the source permanent is passed to `TargetLegalityService.matchesStackEntryPredicate(..., source)`; the ability-activation path supplies it automatically |
 | `StackEntrySharesNameWithCardExiledWithSourcePredicate` | `()` | spells whose card name equals the name of a card exiled with the source permanent. "counter target spell with the same name as a card exiled with this creature" — Mindreaver. Source-dependent: the ability-activation path supplies the source automatically |
@@ -375,6 +384,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `PlayerAttackedThisTurnPredicate` | `()` | players who declared at least one attacker this turn (evaluated against `GameData.playersDeclaredAttackersThisTurn`). Used by Fire and Brimstone's "target player who attacked this turn" |
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerIdPredicate` | `(UUID)` | exactly the specified player; useful after an effect has randomly selected a player |
+| `PlayerOtherThanSourceOwnerPredicate` | `()` | any player other than the owner of the ability's source permanent; source-relative |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerCastSorceryThisTurnPredicate` | `()` | players who cast at least one sorcery spell this turn (evaluated against `GameData.getSpellsCastThisTurn`). Used by Backdraft's player target |
 | `OpponentPreviouslyDamagedBySourcePredicate` | `()` | opponents previously dealt damage by the ability's own source permanent during the game (evaluated against the durable `GameData.damageRecipientsBySource` record). Source-relative; used by Diseased Vermin's upkeep trigger |
@@ -423,6 +433,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardMaxManaValueXPredicate` | `()` | a card with mana value ≤ the resolving spell's X; before X is chosen, it matches permissively |
 | `CardManaValueLessThanXPredicate` | `()` | a card with mana value strictly less than the resolving spell or ability's X; useful when a prior cost snapshots a comparison value into X |
 | `CardSharesCardTypeWithImprintedCardPredicate` | `()` or `(boolean requireImprintedCard)` | a card sharing at least one card type with the card imprinted on the source; without game state it matches broadly, and the boolean form can require an actual imprint for resolution-time triggers (Holistic Wisdom, Cemetery Protector) |
+| `CardSharesCreatureTypeWithCommanderPredicate` | `()` | a creature card sharing a creature type with one of its controller's commanders; requires `GameData` and honors Changeling/effective creature types (Path of Ancestry) |
 | `CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate` | `()` | a card sharing a creature type with a creature controlled by the perspective player or a creature card in that player's graveyard; requires the `GameData` overload and honors Changeling/effective controlled creature types (Volo, Guide to Monsters) |
 | `CardSharesCreatureTypeWithCommanderPredicate` | `()` | a creature card sharing an effective creature type with one of the perspective player's commanders; requires the `GameData` overload and honors Changeling/effective commander and card creature types (Path of Ancestry) |
 | `CardSharesNameWithAPermanentPredicate` | `()` | a card with the same name as any permanent on any battlefield (Mitotic Manipulation via `LookAtTopCardsEffect.mayPutMatchingOntoBattlefield`). Needs the `GameData` overload of `matchesCardPredicate`; matches nothing without game state |
@@ -432,6 +443,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasSourceChosenColorPredicate` | `()` | a card containing the color chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful for spell-cast triggers such as Jeweled Torque |
 | `CardDoesNotShareColorWithSourceControlledCreaturePredicate` | `()` | a card whose effective colors share no color with any creature controlled by the source permanent; needs the `GameData` overload and source card ID, and is evaluated when a spell-cast trigger is created (Invoke Prejudice) |
 | `CardSharesCreatureTypeWithSourcePredicate` | `()` | a creature card sharing an effective creature type with the source permanent; respects Changeling and transient/layered creature-type changes, including the source permanent snapshot if it has left the battlefield; needs the `GameData` overload plus source card ID |
+| `CardSharesCreatureTypeWithCommanderPredicate` | `()` | a card sharing a creature type with one of the evaluating player's command-zone cards; needs the `GameData` overload and evaluating player ID |
 | `CardHasSourceChosenCardTypePredicate` | `()` | a card with a card type chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful with global spell taxes |
 | `CardHasSourceChosenNamePredicate` | `()` | a card whose name equals the name chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful with global spell taxes |
 | `CardHasSourceChosenSubtypePredicate` | `()` | a creature card carrying the creature subtype chosen by the source permanent; Changeling matches every creature type. Needs the `GameData` overload and the source card ID |

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * Fiction; the enters trigger on Unesh, Criosphinx Sovereign), while
  * {@link CardPileDisposition#HAND_WITH_FACE_DOWN_PILE} supports Curator of Destinies and Fortune's
  * Favor by keeping one pile face down and using the same final destinations,
+ * {@link CardPileDisposition#HAND_AND_EXILE_WITH_FACE_DOWN_PILE} keeps the unchosen pile in exile,
+ * with one pile face down,
  * {@link CardPileDisposition#HAND_AND_THOPTER} adds Intrude on the Mind's Thopter after the
  * graveyard pile is moved, and
  * {@link CardPileDisposition#HAND_AND_BOTTOM} sends it to the bottom of their library in any order
@@ -20,51 +22,61 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * controller's library, hands the pile split to the appropriate player, then lets the appropriate
  * player choose which pile goes to their hand. When {@code controllerSeparates} is true, the
  * controller separates and an opponent chooses. When {@code targetedSeparator} is true, the stack
- * entry's target is the player who separates the piles. Reuses the shared card-pile flow
+ * entry's target is the player who separates the piles. When {@code defendingPlayerChoosesPile} is
+ * true, the defending player associated with the attack chooses the pile. Reuses the shared card-pile flow
  * ({@code PendingPileSeparation}).
  */
 public record RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDisposition disposition,
                                               boolean controllerSeparates, boolean targetedSeparator,
-                                              boolean faceDownPile) implements CardEffect {
+                                              boolean faceDownPile,
+                                              boolean defendingPlayerChoosesPile) implements CardEffect {
 
     public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
                                            boolean controllerSeparates) {
         this(new Fixed(count), disposition, controllerSeparates, false,
-                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE);
+                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, false);
     }
 
     /** Fact-or-Fiction default: the unchosen pile goes to the controller's graveyard. */
     public RevealTopCardsAndSeparateEffect(int count) {
-        this(new Fixed(count), CardPileDisposition.HAND, false, false, false);
+        this(new Fixed(count), CardPileDisposition.HAND, false, false, false, false);
     }
 
     public RevealTopCardsAndSeparateEffect(DynamicAmount count) {
-        this(count, CardPileDisposition.HAND, false, false, false);
+        this(count, CardPileDisposition.HAND, false, false, false, false);
     }
 
     public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition) {
         this(new Fixed(count), disposition, false, false,
-                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE);
+                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, false);
     }
 
     public RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDisposition disposition) {
         this(count, disposition, false, false,
-                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE);
+                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, false);
     }
 
     /** Steam Augury variant: the controller separates and an opponent chooses a pile. */
     public RevealTopCardsAndSeparateEffect(int count, boolean controllerSeparates) {
-        this(new Fixed(count), CardPileDisposition.HAND, controllerSeparates, false, false);
+        this(new Fixed(count), CardPileDisposition.HAND, controllerSeparates, false, false, false);
     }
 
     public RevealTopCardsAndSeparateEffect(DynamicAmount count, boolean controllerSeparates) {
-        this(count, CardPileDisposition.HAND, controllerSeparates, false, false);
+        this(count, CardPileDisposition.HAND, controllerSeparates, false, false, false);
     }
 
     public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
                                             boolean controllerSeparates, boolean targetedSeparator,
                                             boolean faceDownPile) {
-        this(new Fixed(count), disposition, controllerSeparates, targetedSeparator, faceDownPile);
+        this(new Fixed(count), disposition, controllerSeparates, targetedSeparator, faceDownPile, false);
+    }
+
+    /** Variant whose pile chooser is the player being attacked by the source ability. */
+    public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
+                                            boolean controllerSeparates, boolean targetedSeparator,
+                                            boolean faceDownPile, boolean defendingPlayerChoosesPile) {
+        this(new Fixed(count), disposition, controllerSeparates, targetedSeparator, faceDownPile,
+                defendingPlayerChoosesPile);
     }
 
     @Override

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "60")
+@CardRegistration(set = "SLD", collectorNumber = "956")
+@CardRegistration(set = "SLD", collectorNumber = "1928")
 public class GrazilaxxIllithidScholar extends Card {
 
     public GrazilaxxIllithidScholar() {
