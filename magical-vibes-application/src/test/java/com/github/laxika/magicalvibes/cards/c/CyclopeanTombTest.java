@@ -34,10 +34,10 @@ class CyclopeanTombTest extends BaseCardTest {
 
         assertThat(tomb.isTapped()).isTrue();
         assertThat(forest.getCounterCount(CounterType.MIRE)).isEqualTo(1);
-        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.SWAMP)).isTrue();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
 
         forest.setCounterCount(CounterType.MIRE, 0);
-        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.SWAMP)).isFalse();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test
@@ -73,8 +73,10 @@ class CyclopeanTombTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(tomb).isNotIn(gd.playerBattlefields.get(player1.getId()));
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
         advanceToUpkeep(player1);
         resolveAllTriggers();
         assertThat(forest.getCounterCount(CounterType.MIRE)).isZero();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 }

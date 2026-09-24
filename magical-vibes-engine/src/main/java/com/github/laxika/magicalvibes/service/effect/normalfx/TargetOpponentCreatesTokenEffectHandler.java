@@ -62,14 +62,16 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
             source = entry.getSourcePermanentSnapshot();
         }
 
-        int amount = amountEvaluationService.evaluate(gameData, e.token().amount(),
-                AmountContext.forStackEntry(entry, source));
+        var context = AmountContext.forStackEntry(entry, source);
+        int amount = amountEvaluationService.evaluate(gameData, e.token().amount(), context);
         if (amount <= 0) {
             return;
         }
 
+        int power = amountEvaluationService.evaluate(gameData, e.token().power(), context);
+        int toughness = amountEvaluationService.evaluate(gameData, e.token().toughness(), context);
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, opponentId, e.token(),
-                amount, entry.getCard().getSetCode());
+                amount, entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
         if (e.gift()) {
             triggerCollectionService.checkControllerGivesGiftTriggers(gameData, controllerId);

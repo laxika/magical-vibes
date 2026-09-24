@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "70")
+@CardRegistration(set = "SLD", collectorNumber = "1683")
 public class OrvarTheAllForm extends Card {
 
     public OrvarTheAllForm() {

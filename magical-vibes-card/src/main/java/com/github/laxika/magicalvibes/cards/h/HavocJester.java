@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "149")
+@CardRegistration(set = "CMM", collectorNumber = "230")
 public class HavocJester extends Card {
 
     public HavocJester() {

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1315")
 @CardRegistration(set = "2X2", collectorNumber = "275")
 @CardRegistration(set = "C13", collectorNumber = "213")
 public class ShattergangBrothers extends Card {

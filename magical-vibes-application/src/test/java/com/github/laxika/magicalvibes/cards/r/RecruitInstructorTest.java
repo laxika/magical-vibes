@@ -43,8 +43,8 @@ class RecruitInstructorTest extends BaseCardTest {
 
         PendingInteraction.SpellbookCardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
-        assertThat(choice.spellbookCards()).hasSize(3);
-        assertThat(choice.spellbookCards())
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards())
                 .extracting(Card::getName)
                 .allMatch(Set.of(
                         "Angelfire Ignition", "Barge In", "Become Brutes", "Boon of Safety",
@@ -56,7 +56,7 @@ class RecruitInstructorTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
-                .contains(choice.spellbookCards().getFirst().getName());
+                .contains(choice.cards().getFirst().getName());
     }
 
     @Test

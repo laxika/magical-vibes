@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "150")
+@CardRegistration(set = "SLD", collectorNumber = "516")
 public class ArlinnVoiceOfThePack extends Card {
 
     public ArlinnVoiceOfThePack() {

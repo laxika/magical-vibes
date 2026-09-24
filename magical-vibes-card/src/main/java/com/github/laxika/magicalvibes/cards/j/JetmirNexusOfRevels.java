@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "193")
+@CardRegistration(set = "SLD", collectorNumber = "1509")
+@CardRegistration(set = "SLD", collectorNumber = "1555")
 public class JetmirNexusOfRevels extends Card {
 
     public JetmirNexusOfRevels() {

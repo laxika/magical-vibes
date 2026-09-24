@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "87")
+@CardRegistration(set = "CMM", collectorNumber = "134")
 public class WindriderWizard extends Card {
 
     public WindriderWizard() {

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "199")
+@CardRegistration(set = "SLD", collectorNumber = "1600")
 public class TheRoyalScions extends Card {
 
     public TheRoyalScions() {

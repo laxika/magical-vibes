@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayPayLifeToCounterS
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "81")
+@CardRegistration(set = "SLD", collectorNumber = "1859")
 public class TemporalExtortion extends Card {
 
     public TemporalExtortion() {

@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "FDN", collectorNumber = "359")
 @CardRegistration(set = "FDN", collectorNumber = "419")
 @CardRegistration(set = "WAR", collectorNumber = "97")
+@CardRegistration(set = "SLD", collectorNumber = "510")
 @CardRegistration(set = "RVR", collectorNumber = "80")
 public class LilianaDreadhordeGeneral extends Card {
 

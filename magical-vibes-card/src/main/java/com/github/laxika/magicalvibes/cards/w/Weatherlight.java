@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "237")
+@CardRegistration(set = "SLD", collectorNumber = "2100")
 public class Weatherlight extends Card {
 
     public Weatherlight() {

@@ -14,6 +14,9 @@ import java.util.List;
 @CardRegistration(set = "TSR", collectorNumber = "312")
 @CardRegistration(set = "MAR", collectorNumber = "12")
 @CardRegistration(set = "OMB", collectorNumber = "12")
+@CardRegistration(set = "C15", collectorNumber = "14")
+@CardRegistration(set = "CMM", collectorNumber = "108")
+@CardRegistration(set = "CMM", collectorNumber = "492")
 public class MysticConfluence extends Card {
 
     public MysticConfluence() {

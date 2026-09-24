@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "31")
+@CardRegistration(set = "ME4", collectorNumber = "146")
 public class CitanulDruid extends Card {
 
     public CitanulDruid() {

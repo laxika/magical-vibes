@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "136")
 @CardRegistration(set = "S99", collectorNumber = "110")
+@CardRegistration(set = "SLD", collectorNumber = "405")
 @CardRegistration(set = "DMR", collectorNumber = "127")
+@CardRegistration(set = "ME4", collectorNumber = "125")
 public class LastChance extends Card {
 
     public LastChance() {

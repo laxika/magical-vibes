@@ -135,6 +135,13 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                 Set.of(Zone.HAND, Zone.LIBRARY), null, null);
     }
 
+    /** Once during each controller turn, pay life equal to the spell's mana value instead. */
+    public static AlternativeCostForSpellsEffect payLifeEqualToManaValueOnceDuringControllerTurn(
+            CardPredicate filter) {
+        return new AlternativeCostForSpellsEffect(null, filter, null, true, false, false, false, true,
+                null, new PayLifeEqualToSpellManaValueCost(), null);
+    }
+
     /** An alternative cost that is paid by collecting evidence rather than paying mana. */
     public static AlternativeCostForSpellsEffect collectEvidence(int minimumManaValue,
                                                                   CardPredicate filter) {

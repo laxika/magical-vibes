@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SUM", collectorNumber = "195")
+@CardRegistration(set = "ME4", collectorNumber = "153")
 @CardRegistration(set = "M14", collectorNumber = "171")
 @CardRegistration(set = "M10", collectorNumber = "182")
 @CardRegistration(set = "M13", collectorNumber = "172")

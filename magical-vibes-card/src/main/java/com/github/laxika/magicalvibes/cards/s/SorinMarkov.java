@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "109")
 @CardRegistration(set = "ZEN", collectorNumber = "111")
+@CardRegistration(set = "SLD", collectorNumber = "1698")
 public class SorinMarkov extends Card {
 
     public SorinMarkov() {

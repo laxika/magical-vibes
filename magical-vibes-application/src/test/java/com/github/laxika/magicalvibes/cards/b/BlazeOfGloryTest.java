@@ -116,4 +116,21 @@ class BlazeOfGloryTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("Blaze of Glory can only target a defending player's creature")
+    void targetMustBeDefendingPlayersCreature() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player1, List.of(new BlazeOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("defending player controls");
+    }
+
 }

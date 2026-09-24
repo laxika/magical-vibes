@@ -17,9 +17,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1731")
 @CardRegistration(set = "MAR", collectorNumber = "91")
 public class IronManTitanOfInnovation extends Card {
 

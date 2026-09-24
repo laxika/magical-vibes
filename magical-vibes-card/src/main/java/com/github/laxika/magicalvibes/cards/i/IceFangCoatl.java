@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "171")
+@CardRegistration(set = "SLD", collectorNumber = "1225")
 @CardRegistration(set = "MH1", collectorNumber = "203")
 public class IceFangCoatl extends Card {
 

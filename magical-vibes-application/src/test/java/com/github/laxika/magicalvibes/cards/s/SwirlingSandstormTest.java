@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DwarvenScorcher;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.t.TunnelerWurm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwirlingSandstorm.class, SuntailHawk.class, TunnelerWurm.class})
+@CardUsed({DwarvenScorcher.class, GiantWarthog.class, SuntailHawk.class, SwirlingSandstorm.class, TunnelerWurm.class})
 class SwirlingSandstormTest extends BaseCardTest {
 
     @Test
@@ -60,5 +62,45 @@ class SwirlingSandstormTest extends BaseCardTest {
             cards.add(new TunnelerWurm());
         }
         return cards;
+    }
+
+    @Test
+    @DisplayName("With threshold, Swirling Sandstorm deals exactly 5 damage to non-flying creatures")
+    void thresholdDealsExactlyFiveToNonFlyingCreatures() {
+        harness.addToBattlefield(player1, new GiantWarthog());
+        harness.addToBattlefield(player2, new GiantWarthog());
+        harness.addToBattlefield(player2, new TunnelerWurm());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.setGraveyard(player1, List.of(
+                new DwarvenScorcher(), new DwarvenScorcher(), new DwarvenScorcher(), new DwarvenScorcher(),
+                new DwarvenScorcher(), new DwarvenScorcher(), new SwirlingSandstorm()));
+        harness.castFromHand(player1, new SwirlingSandstorm(), "{3}{R}");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
+        harness.assertNotOnBattlefield(player2, "Giant Warthog");
+        harness.assertOnBattlefield(player2, "Tunneler Wurm");
+        harness.assertOnBattlefield(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Threshold uses only the caster's graveyard")
+    void thresholdUsesCastersGraveyardOnly() {
+        harness.addToBattlefield(player1, new DwarvenScorcher());
+        harness.addToBattlefield(player2, new DwarvenScorcher());
+        harness.setGraveyard(player1, List.of(
+                new DwarvenScorcher(), new DwarvenScorcher(), new DwarvenScorcher(),
+                new DwarvenScorcher(), new DwarvenScorcher(), new DwarvenScorcher()));
+        harness.setGraveyard(player2, List.of(
+                new DwarvenScorcher(), new DwarvenScorcher(), new DwarvenScorcher(),
+                new DwarvenScorcher(), new DwarvenScorcher(), new DwarvenScorcher(),
+                new DwarvenScorcher()));
+        harness.castFromHand(player1, new SwirlingSandstorm(), "{3}{R}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dwarven Scorcher");
+        harness.assertOnBattlefield(player2, "Dwarven Scorcher");
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "SOM", collectorNumber = "23")
 @CardRegistration(set = "MM2", collectorNumber = "35")
+@CardRegistration(set = "CMM", collectorNumber = "62")
 public class SunspearShikari extends Card {
 
     public SunspearShikari() {

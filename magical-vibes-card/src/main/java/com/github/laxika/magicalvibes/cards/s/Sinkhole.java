@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMA", collectorNumber = "106")
+@CardRegistration(set = "ME4", collectorNumber = "97")
 @CardRegistration(set = "2ED", collectorNumber = "130")
 public class Sinkhole extends Card {
 

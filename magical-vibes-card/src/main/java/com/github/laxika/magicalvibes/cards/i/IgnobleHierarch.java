@@ -9,10 +9,12 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "906")
 @CardRegistration(set = "AA2", collectorNumber = "14")
+@CardRegistration(set = "MH2", collectorNumber = "166")
+@CardRegistration(set = "ECC", collectorNumber = "52")
 public class IgnobleHierarch extends Card {
 
     public IgnobleHierarch() {

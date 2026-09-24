@@ -9,9 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MaySacrificePermanentForCounterSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -23,17 +21,12 @@ import java.util.Set;
 public class Chitterspitter extends Card {
 
     public Chitterspitter() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentIsTokenPredicate(),
-                        new PutCountersOnSelfEffect(CounterType.ACORN),
-                        "a token"),
-                "Sacrifice a token?"));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MaySacrificePermanentForCounterSourceEffect(
+                new PermanentIsTokenPredicate(), "a token", CounterType.ACORN));
 
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(
                 1, 1, GrantScope.OWN_CREATURES,
-                new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL),
-                CounterType.ACORN, false));
+                new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL), CounterType.ACORN, false));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

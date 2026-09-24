@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 
 @CardRegistration(set = "SNC", collectorNumber = "195")
+@CardRegistration(set = "SLD", collectorNumber = "1510")
+@CardRegistration(set = "SLD", collectorNumber = "1556")
 public class JinnieFayJetmirsSecond extends Card {
 
     public JinnieFayJetmirsSecond() {

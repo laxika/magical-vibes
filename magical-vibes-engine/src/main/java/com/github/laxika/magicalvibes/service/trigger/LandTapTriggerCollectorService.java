@@ -340,6 +340,7 @@ public class LandTapTriggerCollectorService {
         String sourceName = sourceCard != null ? sourceCard.getName() : "Planar ability";
         // Vorinclex fires only for the controller's own lands; Mana Flare is symmetric.
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
+        if (trigger.monarchOnly() && !match.controllerId().equals(match.gameData().monarchPlayerId)) return false;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;

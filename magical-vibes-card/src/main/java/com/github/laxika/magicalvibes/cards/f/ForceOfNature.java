@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "242")
+@CardRegistration(set = "ME4", collectorNumber = "154")
 @CardRegistration(set = "2ED", collectorNumber = "195")
 @CardRegistration(set = "5ED", collectorNumber = "294")
 @CardRegistration(set = "4ED", collectorNumber = "245")

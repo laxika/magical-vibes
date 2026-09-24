@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "189")
+@CardRegistration(set = "SLD", collectorNumber = "1916")
+@CardRegistration(set = "SLD", collectorNumber = "1921")
 @CardRegistration(set = "MAR", collectorNumber = "89")
 public class EscapeToTheWilds extends Card {
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 @CardRegistration(set = "MUL", collectorNumber = "25")
 @CardRegistration(set = "MUL", collectorNumber = "90")
 @CardRegistration(set = "MUL", collectorNumber = "155")
+@CardRegistration(set = "CMM", collectorNumber = "268")
 public class ZadaHedronGrinder extends Card {
 
     public ZadaHedronGrinder() {

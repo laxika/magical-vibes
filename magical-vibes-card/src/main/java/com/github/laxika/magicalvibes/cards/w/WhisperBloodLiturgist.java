@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "111")
+@CardRegistration(set = "CMM", collectorNumber = "198")
 public class WhisperBloodLiturgist extends Card {
 
     public WhisperBloodLiturgist() {

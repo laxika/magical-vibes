@@ -2,23 +2,25 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfTheDawn;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DemonOfDeathsGate;
 import com.github.laxika.magicalvibes.cards.d.DragonlordDromoka;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragonlordDromoka.class, KaaliaOfTheVast.class, AngelOfTheDawn.class, GrizzlyBears.class, ChandraNalaar.class})
+@CardUsed({KaaliaOfTheVast.class, SerraAngel.class, DemonOfDeathsGate.class, ShivanDragon.class, GrizzlyBears.class, DragonlordDromoka.class, AngelOfTheDawn.class, ChandraNalaar.class})
 class KaaliaOfTheVastTest extends BaseCardTest {
 
     @Test

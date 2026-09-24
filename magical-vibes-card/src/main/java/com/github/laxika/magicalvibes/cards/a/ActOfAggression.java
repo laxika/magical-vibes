@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "NPH", collectorNumber = "78")
+@CardRegistration(set = "C15", collectorNumber = "141")
 public class ActOfAggression extends Card {
 
     public ActOfAggression() {

@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,8 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Scalpelexis.class, GrizzlyBears.class, SerraAngel.class, SuntailHawk.class,
-        SamiteHealer.class, SteadfastGuard.class, SkyhunterProwler.class})
+@CardUsed({GrizzlyBears.class, SamiteHealer.class, Scalpelexis.class, SerraAngel.class, SkyhunterProwler.class, SteadfastGuard.class, SuntailHawk.class})
 class ScalpelexisTest extends BaseCardTest {
 
     // ===== Combat damage trigger =====
@@ -242,5 +240,23 @@ class ScalpelexisTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("Serra Angel"));
         assertThat(gameLogContains("exiles cards from the top")).isTrue();
     }
-}
 
+    @Test
+    @DisplayName("Repeats when a partial batch contains duplicate names")
+    void repeatsOnDuplicateNamesInPartialBatch() {
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
+        scalpelexis.setAttacking(true);
+
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(),
+                new GrizzlyBears()
+        ));
+
+        resolveCombat();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains("repeating the process")).isTrue();
+    }
+}

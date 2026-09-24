@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSacrificedCardUnderCont
 
 @CardRegistration(set = "ROE", collectorNumber = "7")
 @CardRegistration(set = "DDP", collectorNumber = "43")
+@CardRegistration(set = "SLD", collectorNumber = "1176")
 public class ItThatBetrays extends Card {
 
     public ItThatBetrays() {

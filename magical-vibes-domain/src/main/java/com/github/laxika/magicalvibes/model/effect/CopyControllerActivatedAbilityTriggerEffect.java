@@ -64,4 +64,8 @@ public record CopyControllerActivatedAbilityTriggerEffect(
                                                        StackEntryPredicate targetPredicate) {
         this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false);
     }
+
+    public boolean requiresXInActivationCost() {
+        return activationCostContainsX;
+    }
 }

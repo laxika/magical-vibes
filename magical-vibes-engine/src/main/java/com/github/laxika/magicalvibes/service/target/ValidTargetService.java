@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -651,6 +652,17 @@ public class ValidTargetService {
                         "Select targets for " + sourceCard.getName() + " ability");
             }
 
+            if (positionFilter instanceof ExiledCardPredicateTargetFilter exiledFilter) {
+                List<UUID> validExiledCardIds = computeValidExiledTargetsForFilter(
+                        gameData, ability, sourceCard, controllerId, abilitySourcePermanentId,
+                        exiledFilter, excludeIds, effectiveTargetScalingValue);
+                return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
+                        validGraveyardCardIds, validExiledCardIds,
+                        ability.getEffectiveMinTargets(effectiveTargetScalingValue),
+                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        "Select targets for " + sourceCard.getName() + " ability");
+            }
+
             if (positionFilter instanceof PlayerPredicateTargetFilter) {
                 // Player-targeting position: add valid players
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
@@ -1060,6 +1072,26 @@ public class ValidTargetService {
         return List.copyOf(validIds);
     }
 
+    private List<UUID> computeValidExiledTargetsForFilter(GameData gameData, ActivatedAbility ability,
+                                                           Card sourceCard, UUID controllerId,
+                                                           UUID sourcePermanentId,
+                                                           ExiledCardPredicateTargetFilter filter,
+                                                           Set<UUID> excludeIds, int xValue) {
+        List<UUID> validIds = computeValidExiledTargetsForAbility(
+                gameData, ability, sourceCard, controllerId, sourcePermanentId, excludeIds, xValue);
+        if (filter.predicate() == null) {
+            return validIds;
+        }
+        return validIds.stream()
+                .filter(id -> {
+                    var entry = gameData.findExiledCard(id);
+                    return entry != null && predicateEvaluationService.matchesCardPredicate(
+                            entry.card(), filter.predicate(), sourceCard.getId(), gameData,
+                            entry.ownerId(), sourcePermanentId, null, xValue);
+                })
+                .toList();
+    }
+
     /**
      * Full permanent-target validation for a spell — the same logic used by
      * {@link #computeValidTargetsForSpell} (and therefore the frontend UI).
@@ -1426,6 +1458,14 @@ public class ValidTargetService {
         boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
                 e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && e.targetSpec().harmful());
         if (dealsDamageOrDestroys) {
+            UUID sourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(
+                    gameData, sourceCard.getId());
+            Permanent sourcePermanent = sourcePermanentId == null
+                    ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (sourcePermanent != null
+                    && gameQueryService.hasProtectionFromSource(gameData, perm, sourcePermanent)) {
+                return false;
+            }
             if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
                 return false;
             }
@@ -1456,7 +1496,9 @@ public class ValidTargetService {
         if (!ability.isMultiTarget()
                 && targetValidationService.checkEffectTargets(ability.getEffects(),
                         new TargetValidationContext(gameData, perm.getId(), null, sourceCard,
-                                0, controllerId, null)).isPresent()) {
+                                0, controllerId, null, false,
+                                targetLegalityService.findSourcePermanentIdByCardId(
+                                        gameData, sourceCard.getId()), null)).isPresent()) {
             return false;
         }
 
@@ -1778,6 +1820,18 @@ public class ValidTargetService {
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
+                        if (rge.targetPutIntoGraveyardFromLibraryThisTurn()
+                                && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
+                        if (rge.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                                && !gameData.cardsDiscardedOrCycledThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())
+                                && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
                         if (rge.targetNotPutIntoGraveyardThisCombat()
                                 && gameData.cardsPutIntoGraveyardThisCombat
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
@@ -1979,7 +2033,16 @@ public class ValidTargetService {
                     || c.getManaValue() <= amountEvaluationService.evaluate(
                     gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {
-            return matchesReturnCardFilter(gameData, e, c, sourceCardId, controllerId, xValue);
+            if (!matchesReturnCardFilter(gameData, e, c, sourceCardId, controllerId, xValue)) {
+                return false;
+            }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
+            return !e.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                    || (graveyardOwnerId != null
+                    && (gameData.cardsDiscardedOrCycledThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId())
+                    || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId())));
         } else if (effect instanceof ReturnTargetCardFromGraveyardOrExileToHandEffect e) {
             return predicateEvaluationService.matchesCardPredicate(c, e.graveyardFilter(), sourceCardId);
         } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
@@ -1999,11 +2062,17 @@ public class ValidTargetService {
 
     private boolean matchesReturnCardFilter(GameData gameData, ReturnCardFromGraveyardEffect effect,
                                              Card card, UUID sourceCardId, UUID controllerId, Integer xValue) {
+        UUID cardOwnerId = card.getOwnerId() != null
+                ? card.getOwnerId()
+                : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (effect.targetPutIntoGraveyardFromLibraryThisTurn()
+                && (cardOwnerId == null
+                || !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
+            return false;
+        }
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, sourceCardId);
-            UUID cardOwnerId = card.getOwnerId() != null
-                    ? card.getOwnerId()
-                    : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
             return chosenSubtype != null
                     && (card.hasKeyword(Keyword.CHANGELING)
                     || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));

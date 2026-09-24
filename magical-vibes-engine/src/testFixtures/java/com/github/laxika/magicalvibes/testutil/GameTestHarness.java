@@ -408,6 +408,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    public void castCreatureWithRepeatedCosts(Player player, int cardIndex,
+                                               List<String> repeatedAdditionalCosts) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
     public void castCreatureTappingPermanents(Player player, int cardIndex, List<UUID> tapPermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
@@ -1319,6 +1327,17 @@ public class GameTestHarness {
                 null, null, null, sacrificePermanentIds);
     }
 
+    /** Casts a modal sorcery while paying a single creature sacrifice cost and supplying targets. */
+    public void castModalSorceryWithModesAndSacrifice(Player player, int cardIndex,
+                                                      int choicesRequired, int choicesMax,
+                                                      int[] modeIndices, List<UUID> targetIds,
+                                                      UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                null, null, targetIds, List.of(), false, sacrificePermanentId);
+    }
+
     /** Casts a modal sorcery while paying a conditional multi-permanent tap cost. */
     public void castModalSorceryWithModesAndTaps(Player player, int cardIndex,
                                                  int choicesRequired, int choicesMax,
@@ -1649,6 +1668,11 @@ public class GameTestHarness {
     public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
+    }
+
+    public void activateEmblemAbility(Player player, int emblemIndex, int abilityIndex, Integer xValue, UUID targetId) {
+        ensurePriority(player);
+        gameService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue, targetId, null, null, null);
     }
 
     public void activateStackAbility(Player player, UUID stackCardId, int abilityIndex, int discardHandCardIndex) {

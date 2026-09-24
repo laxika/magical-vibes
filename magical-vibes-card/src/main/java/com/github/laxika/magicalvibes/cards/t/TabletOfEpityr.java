@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 
 @CardRegistration(set = "ATQ", collectorNumber = "67")
+@CardRegistration(set = "ME4", collectorNumber = "230")
 public class TabletOfEpityr extends Card {
 
     public TabletOfEpityr() {

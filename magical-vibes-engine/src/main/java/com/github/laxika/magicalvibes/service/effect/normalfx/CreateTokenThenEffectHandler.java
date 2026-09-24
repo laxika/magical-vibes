@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -47,7 +48,8 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (createThen.thenEffect() instanceof AttachCreatedEquipmentToTargetCreatureEffect) {
+        if (createThen.thenEffect() instanceof AttachCreatedEquipmentToTargetCreatureEffect
+                || createThen.thenEffect() instanceof ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect) {
             queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect(),
                     entry.getCreatedPermanentIds().get(createdBefore), false);
         } else {
@@ -62,8 +64,10 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
     void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect,
                                        UUID sourcePermanentId, boolean optionalTarget) {
         if (graveyardTargetingSupport.findTarget(List.of(thenEffect)) != null) {
+            GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(thenEffect));
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(thenEffect)));
+                    entry.getCard(), entry.getControllerId(), List.of(thenEffect), null,
+                    target.minTargets(), 0, target.maxTargets(), null, false, sourcePermanentId));
             return;
         }
 

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "151")
+@CardRegistration(set = "SLD", collectorNumber = "1547")
 public class RainOfFilth extends Card {
 
     public RainOfFilth() {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+
 import java.util.List;
 
 /**
@@ -24,15 +26,21 @@ import java.util.List;
  */
 public record CreateEmblemEffect(List<CardEffect> staticEffects,
                                  String reminderText,
-                                 EmblemRecipient recipient) implements CardEffect {
+                                 EmblemRecipient recipient,
+                                 List<ActivatedAbility> activatedAbilities) implements CardEffect {
 
     public CreateEmblemEffect {
         staticEffects = List.copyOf(staticEffects);
+        activatedAbilities = List.copyOf(activatedAbilities);
+    }
+
+    public CreateEmblemEffect(List<CardEffect> staticEffects, String reminderText, EmblemRecipient recipient) {
+        this(staticEffects, reminderText, recipient, List.of());
     }
 
     /** "You get an emblem with …" — the controller is the recipient. */
     public CreateEmblemEffect(List<CardEffect> staticEffects, String reminderText) {
-        this(staticEffects, reminderText, EmblemRecipient.CONTROLLER);
+        this(staticEffects, reminderText, EmblemRecipient.CONTROLLER, List.of());
     }
 
     @Override

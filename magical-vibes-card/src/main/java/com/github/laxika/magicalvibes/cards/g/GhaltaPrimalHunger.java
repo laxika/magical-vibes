@@ -12,9 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 @CardRegistration(set = "FDN", collectorNumber = "335")
 @CardRegistration(set = "FDN", collectorNumber = "397")
 @CardRegistration(set = "RIX", collectorNumber = "130")
+@CardRegistration(set = "SLD", collectorNumber = "1124")
 @CardRegistration(set = "GN2", collectorNumber = "47")
 @CardRegistration(set = "GNT", collectorNumber = "44")
 @CardRegistration(set = "SPG", collectorNumber = "11")
+@CardRegistration(set = "CMM", collectorNumber = "292")
+@CardRegistration(set = "CMM", collectorNumber = "561")
 public class GhaltaPrimalHunger extends Card {
 
     public GhaltaPrimalHunger() {

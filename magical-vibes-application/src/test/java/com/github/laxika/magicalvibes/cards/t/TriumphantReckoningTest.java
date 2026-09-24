@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
 import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorWellspring;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TriumphantReckoning.class, GhostlyPrison.class, GrizzlyBears.class,
-        IchorWellspring.class, JaceBeleren.class})
+@CardUsed({TriumphantReckoning.class, AjaniGoldmane.class, GloriousAnthem.class, GrizzlyBears.class, Ornithopter.class, GhostlyPrison.class, IchorWellspring.class, JaceBeleren.class})
 class TriumphantReckoningTest extends BaseCardTest {
 
     @Test

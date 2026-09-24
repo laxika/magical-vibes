@@ -172,6 +172,7 @@ public class LibraryChoiceHandlerService {
                 || destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT;
         boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED
                 || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER;
+        boolean finalCardToHand = librarySearch.finalCardToHand() && remainingCount == 1;
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
         String filterCardName = librarySearch.filterCardName();
@@ -1266,6 +1267,18 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.HEIST) {
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
+            gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+            String targetName = gameData.playerIdToName.get(deckOwnerId);
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " exiles a card face down from "
+                            + targetName + "'s library with Heist."));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
             boolean faceUp = filterPredicate != null
@@ -1426,7 +1439,14 @@ public class LibraryChoiceHandlerService {
                 triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
             }
         } else {
-            if (remainingCount > 1) {
+            if (finalCardToHand) {
+                if (!accumulatedCards.isEmpty()) {
+                    placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, battlefieldControllerId,
+                            toBattlefieldTapped, grantHaste, exileAtEndStep, returnToHandAtEndStep,
+                            animateFound, battlefieldCounter, enterWithCounters);
+                }
+                gameData.addCardToHand(handOwnerId, chosenCard);
+            } else if (remainingCount > 1) {
                 // CR 608.2f: Accumulate for simultaneous battlefield entry
                 accumulatedCards.add(chosenCard);
             } else {
@@ -1518,7 +1538,9 @@ public class LibraryChoiceHandlerService {
                 String destinationDesc = toGraveyard ? "their graveyard" : "their hand";
                 prompt = "Search " + targetName + "'s library for a card to put into " + destinationDesc + " (" + newRemaining + " remaining).";
             } else {
-                String destinationDesc = toBattlefieldTapped ? "onto the battlefield tapped"
+                String destinationDesc = librarySearch.finalCardToHand() && newRemaining == 1
+                        ? "into their hand"
+                        : toBattlefieldTapped ? "onto the battlefield tapped"
                         : toBattlefield ? "onto the battlefield" : "into your hand";
                 String distinct = requireDifferentNames ? " with a different name" : "";
                 prompt = "Search your library for a matching card" + distinct + " to put " + destinationDesc + " (" + newRemaining + " remaining).";
@@ -1534,7 +1556,8 @@ public class LibraryChoiceHandlerService {
                     .filterCardTypes(filterCardTypes)
                     .filterCardName(filterCardName)
                     .filterPredicate(filterPredicate)
-                    .accumulatedCards(accumulatedCards)
+                    .shuffleAfterSelection(shuffleAfterSelection)
+                     .accumulatedCards(accumulatedCards)
                     .battlefieldControllerId(battlefieldControllerId)
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
@@ -1551,6 +1574,7 @@ public class LibraryChoiceHandlerService {
                     .battlefieldIfChosenBeholdType(battlefieldIfChosenBeholdType)
                     .battlefieldIfChosenPredicate(battlefieldIfChosenPredicate)
                     .battlefieldIfChosenTapped(battlefieldIfChosenTapped)
+                    .finalCardToHand(librarySearch.finalCardToHand())
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 
@@ -1560,6 +1584,12 @@ public class LibraryChoiceHandlerService {
 
         if (shuffleAfterSelection) {
             LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+        }
+
+        if (finalCardToHand) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard,
+                    " and puts it into their hand."));
         }
 
         // When simultaneous placement was done, individual entry logs were already emitted
@@ -1583,7 +1613,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
                         EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, HEIST,
                         EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST,
                         EXILE_FOR_MAY_CAST_WITH_NORMAL_COST -> "into exile";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
@@ -1901,6 +1931,7 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        gameData.recordPileGroupingOrGuess();
         Map<UUID, UUID> cardOwners = new HashMap<>();
         for (Card card : pool) {
             cardOwners.put(card.getId(), controllerId);
@@ -3141,6 +3172,7 @@ public class LibraryChoiceHandlerService {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, controllerId, remainingCards, sourceEntry);
             applySelectionLifeLoss(gameData, controllerId, selectedCards.size(),
                     lifeLossPerSelectedCard, sourceEntry);
             applySelectionLifePayment(gameData, controllerId, selectedCards.size(),
@@ -3196,6 +3228,25 @@ public class LibraryChoiceHandlerService {
                 ? sourceEntry.getCard().getName()
                 : "library choice";
         lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, sourceName);
+    }
+
+    private void gainLifeForGreatestPowerOfGraveyardCards(
+            GameData gameData, UUID controllerId, List<Card> cards, StackEntry sourceEntry) {
+        if (sourceEntry == null
+                || !sourceEntry.isGainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) {
+            return;
+        }
+        int greatestPower = cards.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .map(Card::getPower)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(power -> Math.max(0, power))
+                .max()
+                .orElse(0);
+        if (greatestPower > 0) {
+            lifeSupport.applyGainLife(gameData, controllerId, greatestPower,
+                    sourceEntry.getCard().getName(), sourceEntry.getCard(), sourceEntry.getEntryType());
+        }
     }
 
     private void applySelectionLifePayment(GameData gameData, UUID controllerId, int selectedCount,
@@ -3387,7 +3438,7 @@ public class LibraryChoiceHandlerService {
                 if (chosenIds.contains(card.getId())) {
                     returnCardExiledWithSourceToBattlefieldEffectHandler.returnToBattlefield(
                             gameData, returnControllerId, card, "exile", pending.grantedSubtype(),
-                            pending.enterTapped(), pending.enterAttacking());
+                            pending.enterTapped(), pending.enterAttacking(), pending.grantHaste());
                     break;
                 }
             }

@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThrivingGroveTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters tapped and allows choosing any color other than green")
-    void entersTappedAndRestrictsColorChoice() {
+    @DisplayName("Enters tapped and offers every color except green")
+    void entersTappedAndChoosesNonGreenColor() {
         harness.setHand(player1, List.of(new ThrivingGrove()));
 
         harness.playLand(player1, 0);
@@ -28,6 +28,7 @@ class ThrivingGroveTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED");
+        assertThat(choice.options()).doesNotContain("GREEN");
 
         harness.handleListChoice(player1, "BLUE");
 
@@ -35,24 +36,32 @@ class ThrivingGroveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The two mana abilities add green or the chosen color")
-    void addsGreenOrChosenColorMana() {
-        Permanent grove = addReadyGrove(CardColor.RED);
+    @DisplayName("The first mana ability adds green mana")
+    void firstAbilityAddsGreenMana() {
+        Permanent grove = addReadyGrove();
+        grove.setChosenColor(CardColor.BLUE);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
-        grove.untap();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(grove.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The second mana ability adds mana of the chosen color")
+    void secondAbilityAddsChosenColorMana() {
+        Permanent grove = addReadyGrove();
+        grove.setChosenColor(CardColor.RED);
+
         harness.activateAbility(player1, 0, 1, null, null);
+
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(grove.isTapped()).isTrue();
     }
 
-    private Permanent addReadyGrove(CardColor chosenColor) {
-        Permanent grove = new Permanent(new ThrivingGrove());
+    private Permanent addReadyGrove() {
+        Permanent grove = harness.addToBattlefieldAndReturn(player1, new ThrivingGrove());
         grove.setSummoningSick(false);
-        grove.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player1.getId()).add(grove);
         return grove;
     }
 }

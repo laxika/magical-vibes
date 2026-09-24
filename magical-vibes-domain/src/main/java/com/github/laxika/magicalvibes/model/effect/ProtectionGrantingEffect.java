@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.OptionalInt;
 import java.util.Set;
@@ -50,6 +51,11 @@ public interface ProtectionGrantingEffect extends CardEffect {
     /** Whether this effect protects against modified creature permanents. */
     default boolean protectionFromModifiedCreatures() {
         return false;
+    }
+
+    /** Counter types whose bearer permanents this effect protects against. */
+    default Set<CounterType> protectionFromPermanentsWithCounters() {
+        return Set.of();
     }
 
     /** Whether this effect protects against sources with exactly one color. */

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -17,7 +18,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /** Applies Lazav, Familiar Stranger's temporary copy of the exiled creature card. */
@@ -51,7 +52,18 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
         }
 
         String originalName = source.getCard().getName();
-        permanentCopierService.applyCloneCopy(source, card, null, null, Set.of());
+        BecomeCopyOfCardUntilEndOfTurnEffect copyEffect =
+                (BecomeCopyOfCardUntilEndOfTurnEffect) effect;
+        permanentCopierService.applyCloneCopy(source, card, null, null, copyEffect.additionalTypes());
+        if (!copyEffect.additionalSubtypes().isEmpty()) {
+            ArrayList<CardSubtype> subtypes = new ArrayList<>(source.getCard().getSubtypes());
+            for (CardSubtype subtype : copyEffect.additionalSubtypes()) {
+                if (!subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+            source.getCard().setSubtypes(subtypes);
+        }
         source.setCopyUntilEndOfTurn(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(),

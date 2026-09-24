@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "190")
+@CardRegistration(set = "SLD", collectorNumber = "53")
 public class NarsetEnlightenedMaster extends Card {
 
     public NarsetEnlightenedMaster() {

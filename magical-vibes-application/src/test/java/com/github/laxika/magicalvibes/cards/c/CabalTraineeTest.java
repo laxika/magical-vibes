@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.Brawn;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CabalTrainee.class, Brawn.class, KrosanVerge.class})
+@CardUsed({Brawn.class, CabalTrainee.class, GiantWarthog.class, KrosanVerge.class})
 class CabalTraineeTest extends BaseCardTest {
 
     @Test
@@ -79,5 +80,23 @@ class CabalTraineeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Cabal Trainee");
         harness.assertNotInGraveyard(player1, "Cabal Trainee");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid even when the target leaves before resolution")
+    void sacrificeIsPaidWhenTargetLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new CabalTrainee());
+        harness.addToBattlefield(player2, new GiantWarthog());
+        UUID targetId = harness.getPermanentId(player2, "Giant Warthog");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.assertNotOnBattlefield(player1, "Cabal Trainee");
+        harness.assertInGraveyard(player1, "Cabal Trainee");
+
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(targetId));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Giant Warthog");
     }
 }

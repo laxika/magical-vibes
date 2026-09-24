@@ -15,6 +15,7 @@ import java.util.List;
  * Destroys a creature with the least power during its controller's upkeep and sacrifices itself
  * when there are no creatures on the battlefield.
  */
+@CardRegistration(set = "ME4", collectorNumber = "150")
 @CardRegistration(set = "ARN", collectorNumber = "47")
 public class DropOfHoney extends Card {
 

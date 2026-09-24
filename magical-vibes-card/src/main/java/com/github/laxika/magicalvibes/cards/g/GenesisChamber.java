@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "122")
+@CardRegistration(set = "SLD", collectorNumber = "1811")
 public class GenesisChamber extends Card {
 
     public GenesisChamber() {

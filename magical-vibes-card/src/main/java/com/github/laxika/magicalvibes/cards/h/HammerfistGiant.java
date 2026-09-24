@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "130")
+@CardRegistration(set = "C15", collectorNumber = "157")
 public class HammerfistGiant extends Card {
 
     public HammerfistGiant() {

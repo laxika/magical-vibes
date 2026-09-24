@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "127")
+@CardRegistration(set = "C14", collectorNumber = "200")
 public class HuntingTriad extends Card {
 
     public HuntingTriad() {

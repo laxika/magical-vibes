@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MH1", collectorNumber = "123")
+@CardRegistration(set = "TLE", collectorNumber = "166")
+@CardRegistration(set = "CMM", collectorNumber = "223")
 public class FistsOfFlame extends Card {
 
     public FistsOfFlame() {

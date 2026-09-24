@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimalMagnetismEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "245")
+@CardRegistration(set = "CMM", collectorNumber = "271")
 public class AnimalMagnetism extends Card {
 
     public AnimalMagnetism() {

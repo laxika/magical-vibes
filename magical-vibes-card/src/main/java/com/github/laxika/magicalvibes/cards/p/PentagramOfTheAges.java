@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "ICE", collectorNumber = "332")
 @CardRegistration(set = "6ED", collectorNumber = "306")
 @CardRegistration(set = "5ED", collectorNumber = "394")
+@CardRegistration(set = "ME4", collectorNumber = "220")
 public class PentagramOfTheAges extends Card {
 
     public PentagramOfTheAges() {

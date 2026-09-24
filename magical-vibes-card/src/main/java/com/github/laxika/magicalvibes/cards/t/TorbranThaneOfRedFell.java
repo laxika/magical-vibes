@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromColorSourcesEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "147")
+@CardRegistration(set = "SLD", collectorNumber = "463")
+@CardRegistration(set = "SLD", collectorNumber = "678")
 public class TorbranThaneOfRedFell extends Card {
 
     public TorbranThaneOfRedFell() {

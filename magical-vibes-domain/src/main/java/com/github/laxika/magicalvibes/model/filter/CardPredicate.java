@@ -50,6 +50,7 @@ public sealed interface CardPredicate permits
         CardNameInControllerGraveyardPredicate,
         CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate,
         CardManaValueAtMostControlledLandsPredicate,
+        CardManaValueAtMostControlledTappedCreaturesPredicate,
         CardManaValueAtMostSourcePowerPredicate,
         CardManaValueLessThanSourcePowerPredicate,
         CardManaValueLessThanSourceCountersPredicate,

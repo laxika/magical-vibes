@@ -31,7 +31,9 @@ public interface CounterUnlessEffect extends CardEffect {
         /** Collect evidence (e.g. Axebane Ferox's ward). */
         COLLECT_EVIDENCE,
         /** Get poison counters (e.g. The Serpent Society's ward). */
-        GET_POISON_COUNTERS
+        GET_POISON_COUNTERS,
+        /** Blight a creature (e.g. Auntie Ool, Cursewretch's ward). */
+        BLIGHT
     }
 
     /** Which kind of ransom this effect demands. */
@@ -45,7 +47,8 @@ public interface CounterUnlessEffect extends CardEffect {
      * of cards to discard (currently always 1), the generic mana amount for
      * {@link RansomKind#DISCARD_CARD_OR_PAY_MANA}, 0 for {@link RansomKind#DISCARD_HAND}, 1 for a
      * permanent sacrifice, the evidence threshold for {@link RansomKind#COLLECT_EVIDENCE}, or the
-     * number of poison counters for {@link RansomKind#GET_POISON_COUNTERS}.
+     * number of poison counters for {@link RansomKind#GET_POISON_COUNTERS}, or the number of
+     * -1/-1 counters to place for {@link RansomKind#BLIGHT}.
      */
     int ransomMagnitude();
 }

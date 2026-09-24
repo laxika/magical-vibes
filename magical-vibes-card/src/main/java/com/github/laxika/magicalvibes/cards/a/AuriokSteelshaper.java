@@ -20,7 +20,7 @@ public class AuriokSteelshaper extends Card {
         addEffect(EffectSlot.STATIC, new ReduceEquipCostEffect(1));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new Equipped(),
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER, CardSubtype.KNIGHT)))
         ));
     }

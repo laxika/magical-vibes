@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "255")
+@CardRegistration(set = "ECC", collectorNumber = "162")
 public class RiveteersOverlook extends Card {
 
     public RiveteersOverlook() {
