@@ -47,6 +47,9 @@ class SmogbelcherChariotTest extends BaseCardTest {
     @Test
     void attackTriggerDoesNotExistWithoutAValidCrewer() {
         addReadyChariot();
+        Permanent crewer = addReadyCreature(new SerraAngel());
+        crewChariot(crewer);
+        gd.playerBattlefields.get(player1.getId()).remove(crewer);
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

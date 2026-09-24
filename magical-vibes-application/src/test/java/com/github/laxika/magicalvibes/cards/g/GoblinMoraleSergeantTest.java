@@ -46,6 +46,7 @@ class GoblinMoraleSergeantTest extends BaseCardTest {
     void duplicatePerpetuallyGetsPowerAndHaste() {
         addCreatureReady(player1, new GoblinMoraleSergeant());
         Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
 
         declareAttackers(List.of(0));
@@ -53,12 +54,20 @@ class GoblinMoraleSergeantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player1.getId());
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player1.getId())).contains(0);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -66,7 +75,7 @@ class GoblinMoraleSergeantTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isTokenCard())
                 .findFirst()
                 .orElseThrow();
-        assertThat(duplicate.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, duplicate)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, duplicate, Keyword.HASTE)).isTrue();
     }
 
