@@ -280,6 +280,7 @@ public class EtbTriggerService {
                 : new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
         if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
             triggeredEffects.addAll(enteringPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+            triggeredEffects.addAll(enteringPermanent.getPersistentTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
         }
         int additionalElementalTriggers = enteringPermanent == null ? 0
                 : gameQueryService.countAdditionalTriggeredAbilityTriggers(

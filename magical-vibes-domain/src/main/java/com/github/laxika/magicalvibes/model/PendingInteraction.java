@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.Set;
@@ -56,7 +57,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.EyeOfTheStormCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
-        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.CommandZoneCardChoice, PendingInteraction.CommanderReturnChoice, PendingInteraction.CommanderReplacementChoice,
+        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.HeistCardChoice,
+        PendingInteraction.CommandZoneCardChoice, PendingInteraction.CommanderReturnChoice, PendingInteraction.CommanderReplacementChoice,
         PendingInteraction.LudevicCopyChoice,
          PendingInteraction.KohExiledCreatureChoice,
          PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
@@ -110,7 +112,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ActivatedAbilityGraveyardExileCostChoice,
         PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
-        PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.HandCardChoice, PendingInteraction.PerpetualCreatureCardChoice,
+        PendingInteraction.PerpetualTargetCardChoice,
+        PendingInteraction.RetracedImageCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
@@ -130,6 +134,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.DiscardCostChoice,
         PendingInteraction.PlanarAbilityHandCardChoice,
         PendingInteraction.LibraryRevealChoice,
+        PendingInteraction.SpellbookCardChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.NivMizzetColorPairChoice,
         PendingInteraction.LibrarySearch,
@@ -954,6 +959,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Choose one of the random nonland cards shown by a heist. */
+    record HeistCardChoice(UUID playerId, UUID libraryOwnerId, java.util.List<Card> cards)
+            implements PendingInteraction {
+
+        public HeistCardChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 
@@ -3136,6 +3164,49 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Chooses a creature card in hand to receive a perpetual power and keyword modification. */
+    record PerpetualCreatureCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt,
+                                       int powerBoost, Set<Keyword> keywords)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualCreatureCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+            keywords = Set.copyOf(keywords);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /** Chooses a card in a revealed target hand to receive a perpetual triggered ability. */
+    record PerpetualTargetCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                     java.util.List<Integer> validIndices, String prompt,
+                                     EffectSlot slot, java.util.List<CardEffect> grantedEffects)
+            implements PendingInteraction {
+
+        public PerpetualTargetCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+            grantedEffects = java.util.List.copyOf(grantedEffects);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
     /**
      * Put a card from hand onto the battlefield; normally declinable (CARD_CHOICE), but cloaked
      * card choices are mandatory.
@@ -4452,6 +4523,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     false,
                     false, null, false, null, null, null, true
             );
+        }
+    }
+
+    /** Chooses exactly one card from the cards currently offered by a spellbook. */
+    record SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
+                               DraftFromSpellbookEffect.DraftMode draftMode)
+            implements PendingInteraction {
+
+        public SpellbookCardChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

@@ -306,6 +306,18 @@ public class CastingCostService {
                 .sum();
     }
 
+    /** Returns the generic adjustment to a cost paid to turn a specific permanent face up. */
+    public int getTurnFaceUpCostModifier(GameData gameData, UUID playerId, Card card,
+                                         UUID permanentId) {
+        CostModifierSnapshot snapshot = buildCostModifierSnapshot(gameData, playerId);
+        CostModificationContext context = new CostModificationContext(
+                gameData, playerId, card, false, 0, false, null, false, false, false, permanentId);
+        return snapshot.modifiers().stream()
+                .mapToInt(modifier -> modifier.handler().modifyTurnFaceUpCost(
+                        context, modifier.effect(), modifier.source()))
+                .sum();
+    }
+
     /** Returns the generic cast-cost adjustment for a spell cast face down from hand. */
     public int getCastCostModifierForFaceDownSpell(GameData gameData, UUID playerId, Card card) {
         return getCastCostModifier(gameData, playerId, card,

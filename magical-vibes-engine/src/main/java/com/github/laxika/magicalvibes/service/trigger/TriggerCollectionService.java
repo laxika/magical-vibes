@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.DamagedCreatureDeathTriggerWatcher;
+import com.github.laxika.magicalvibes.model.Boon;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
@@ -2142,18 +2143,7 @@ public class TriggerCollectionService {
 
     /** Fires triggers whenever a player seeks one or more cards. */
     public void checkSeekTriggers(GameData gameData, UUID seekingPlayerId) {
-        if (seekingPlayerId == null) {
-            return;
-        }
-        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(seekingPlayerId);
-        if (ownBattlefield == null) {
-            return;
-        }
-
-        TriggerContext context = new TriggerContext.Seek(seekingPlayerId);
-        for (Permanent permanent : List.copyOf(ownBattlefield)) {
-            dispatchSlot(gameData, permanent, seekingPlayerId, EffectSlot.ON_CONTROLLER_SEEKS, context);
-        }
+        checkSeekTriggers(gameData, seekingPlayerId, List.of());
     }
 
     /** Fires triggers whenever the given player rolls one or more dice. */
@@ -2229,6 +2219,21 @@ public class TriggerCollectionService {
         var context = new TriggerContext.Forage(foragingPlayerId);
         for (Permanent permanent : List.copyOf(battlefield)) {
             dispatchSlot(gameData, permanent, foragingPlayerId, EffectSlot.ON_CONTROLLER_FORAGES, context);
+        }
+    }
+
+    public void checkSeekTriggers(GameData gameData, UUID seekingPlayerId, List<Card> soughtCards) {
+        if (seekingPlayerId == null) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(seekingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        TriggerContext context = new TriggerContext.Seek(
+                seekingPlayerId, soughtCards == null ? List.of() : soughtCards);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, seekingPlayerId, EffectSlot.ON_CONTROLLER_SEEKS, context);
         }
     }
 
@@ -3910,7 +3915,7 @@ public class TriggerCollectionService {
         for (UUID targetId : targetIds) {
             if (gameData.playerIds.contains(targetId)) {
                 if (targetsWithAllyTrigger.add(targetId)) {
-                    collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, targetId, spellEntry);
+                    collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, targetId, null, spellEntry);
                 }
                 if (targetedPlayers.add(targetId)) {
                     collectControllerBecomesTargetOfSpellTriggers(gameData, targetId, spellEntry);
@@ -3926,35 +3931,59 @@ public class TriggerCollectionService {
             if (controllerId == null) continue;
 
             if (targetsWithAllyTrigger.add(targetId)) {
-                collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, spellEntry);
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(
+                                gameData, controllerId, targetPermanent, spellEntry));
             }
-            collectAllyPermanentBecomesTargetOfOpponentTriggers(gameData, controllerId, spellEntry);
-            collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
-                    gameData, targetPermanent, controllerId, spellEntry);
-            collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry);
-            collectAllyCreatureBecomesTargetOfOpponentSpellTriggers(
-                    gameData, targetPermanent, controllerId, spellEntry);
-            collectAllyCreatureOrCreatureSpellBecomesTargetOfOpponentTriggers(
-                    gameData, targetPermanent, controllerId, spellEntry);
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAllyPermanentBecomesTargetOfOpponentTriggers(
+                            gameData, controllerId, targetPermanent, spellEntry));
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
+                            gameData, targetPermanent, controllerId, spellEntry));
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAllyCreatureBecomesTargetOfOpponentTriggers(
+                            gameData, targetPermanent, controllerId, spellEntry));
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAllyCreatureBecomesTargetOfOpponentSpellTriggers(
+                            gameData, targetPermanent, controllerId, spellEntry));
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAllyCreatureOrCreatureSpellBecomesTargetOfOpponentTriggers(
+                            gameData, targetPermanent, controllerId, spellEntry));
             collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent, spellEntry);
             collectOpponentCreatureBecomesTargetOfYourSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
-            collectAnotherAllyCreatureBecomesTargetOfSpellOrAbilityTriggers(
-                    gameData, targetPermanent, controllerId);
-            collectAllyCreatureBecomesTargetOfSpellTriggers(gameData, targetPermanent, controllerId);
-            collectAllyCreatureBecomesTargetOfInstantOrSorceryTriggers(gameData, targetPermanent, controllerId, spellEntry);
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAnotherAllyCreatureBecomesTargetOfSpellOrAbilityTriggers(
+                            gameData, targetPermanent, controllerId));
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAllyCreatureBecomesTargetOfSpellTriggers(
+                            gameData, targetPermanent, controllerId));
+            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                    () -> collectAllyCreatureBecomesTargetOfInstantOrSorceryTriggers(
+                            gameData, targetPermanent, controllerId, spellEntry));
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead — their triggers
             // monitor the enchanted/equipped creature, not themselves (Spectral Prison is not
             // sacrificed when a spell targets the Aura rather than the enchanted creature).
             if (!targetPermanent.isAttached()) {
-                collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent, spellEntry);
-                collectBecomesTargetOfAuraSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
-                collectBecomesTargetOfOpponentCounterTriggers(gameData, targetPermanent, controllerId, spellEntry);
-                collectBecomesTargetOfOpponentSpellOnlyTriggers(gameData, targetPermanent, controllerId,
-                        spellEntry.getControllerId());
-                collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId, spellEntry);
-                collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
-                        gameData, targetPermanent, controllerId, spellEntry.getControllerId());
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetTriggers(
+                                gameData, targetPermanent, controllerId, targetPermanent, spellEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfAuraSpellTriggers(
+                                gameData, targetPermanent, controllerId, spellEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfOpponentCounterTriggers(
+                                gameData, targetPermanent, controllerId, spellEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfOpponentSpellOnlyTriggers(
+                                gameData, targetPermanent, controllerId, spellEntry.getControllerId()));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfSpellOrAbilityTriggers(
+                                gameData, targetPermanent, controllerId, spellEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
+                                gameData, targetPermanent, controllerId, spellEntry.getControllerId()));
             }
 
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -3966,10 +3995,25 @@ public class TriggerCollectionService {
                         // CR 603.3a: the triggered ability is controlled by the controller of the
                         // permanent that has it (the aura/equipment), not the enchanted creature —
                         // the two differ when an Aura like Spectral Prison enchants an opponent's creature.
-                        collectBecomesTargetTriggers(gameData, attached, playerId, targetPermanent, spellEntry);
-                        collectBecomesTargetOfAuraSpellTriggers(gameData, attached, playerId, spellEntry);
-                        collectBecomesTargetOfOpponentCounterTriggers(gameData, attached, playerId, spellEntry);
-                        collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId, spellEntry);
+                        if (playerId.equals(controllerId)) {
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetTriggers(
+                                            gameData, attached, playerId, targetPermanent, spellEntry));
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetOfAuraSpellTriggers(
+                                            gameData, attached, playerId, spellEntry));
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetOfOpponentCounterTriggers(
+                                            gameData, attached, playerId, spellEntry));
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetOfSpellOrAbilityTriggers(
+                                            gameData, attached, playerId, spellEntry));
+                        } else {
+                            collectBecomesTargetTriggers(gameData, attached, playerId, targetPermanent, spellEntry);
+                            collectBecomesTargetOfAuraSpellTriggers(gameData, attached, playerId, spellEntry);
+                            collectBecomesTargetOfOpponentCounterTriggers(gameData, attached, playerId, spellEntry);
+                            collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId, spellEntry);
+                        }
                     }
                 }
             }
@@ -4050,7 +4094,7 @@ public class TriggerCollectionService {
         for (UUID targetId : targetIds) {
             if (gameData.playerIds.contains(targetId)) {
                 if (targetsWithAllyTrigger.add(targetId)) {
-                    collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, targetId, abilityEntry);
+                    collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, targetId, null, abilityEntry);
                 }
                 if (targetedPlayers.add(targetId)) {
                     collectControllerBecomesTargetOfOpponentTriggers(gameData, targetId, abilityEntry);
@@ -4065,32 +4109,47 @@ public class TriggerCollectionService {
 
             if (controllerId != null) {
                 if (targetsWithAllyTrigger.add(targetId)) {
-                    collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, abilityEntry);
+                    collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                            () -> collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(
+                                    gameData, controllerId, targetPermanent, abilityEntry));
                 }
-                collectAllyPermanentBecomesTargetOfOpponentTriggers(gameData, controllerId, abilityEntry);
-                collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
-                        gameData, targetPermanent, controllerId, abilityEntry);
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectAllyPermanentBecomesTargetOfOpponentTriggers(
+                                gameData, controllerId, targetPermanent, abilityEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
+                                gameData, targetPermanent, controllerId, abilityEntry));
             }
 
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead.
             if (!targetPermanent.isAttached() && controllerId != null) {
-                collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId, abilityEntry);
-                collectBecomesTargetOfOpponentCounterTriggers(gameData, targetPermanent, controllerId, abilityEntry);
-                collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
-                        gameData, targetPermanent, controllerId, abilityEntry.getControllerId());
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfSpellOrAbilityTriggers(
+                                gameData, targetPermanent, controllerId, abilityEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfOpponentCounterTriggers(
+                                gameData, targetPermanent, controllerId, abilityEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
+                                gameData, targetPermanent, controllerId, abilityEntry.getControllerId()));
             }
 
             // Check for "whenever a creature you control becomes the target of opponent's spell or ability"
             if (controllerId != null) {
-                collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, abilityEntry);
-                collectAllyCreatureOrCreatureSpellBecomesTargetOfOpponentTriggers(
-                        gameData, targetPermanent, controllerId, abilityEntry);
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectAllyCreatureBecomesTargetOfOpponentTriggers(
+                                gameData, targetPermanent, controllerId, abilityEntry));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectAllyCreatureOrCreatureSpellBecomesTargetOfOpponentTriggers(
+                                gameData, targetPermanent, controllerId, abilityEntry));
                 collectOpponentCreatureBecomesTargetOfYourSpellTriggers(gameData, targetPermanent, controllerId, abilityEntry);
-                collectAnotherAllyCreatureBecomesTargetOfSpellOrAbilityTriggers(
-                        gameData, targetPermanent, controllerId);
-                collectAllyCreatureBecomesTargetOfBackupAbilityTriggers(
-                        gameData, targetPermanent, controllerId, abilityEntry);
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectAnotherAllyCreatureBecomesTargetOfSpellOrAbilityTriggers(
+                                gameData, targetPermanent, controllerId));
+                collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                        () -> collectAllyCreatureBecomesTargetOfBackupAbilityTriggers(
+                                gameData, targetPermanent, controllerId, abilityEntry));
             }
 
             collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent, abilityEntry);
@@ -4102,8 +4161,17 @@ public class TriggerCollectionService {
                     if (attached.isAttached()
                             && attached.getAttachedTo().equals(targetPermanent.getId())) {
                         // CR 603.3b: triggered ability controlled by the aura/equipment's controller
-                        collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId, abilityEntry);
-                        collectBecomesTargetOfOpponentCounterTriggers(gameData, attached, playerId, abilityEntry);
+                        if (playerId.equals(controllerId)) {
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetOfSpellOrAbilityTriggers(
+                                            gameData, attached, playerId, abilityEntry));
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetOfOpponentCounterTriggers(
+                                            gameData, attached, playerId, abilityEntry));
+                        } else {
+                            collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId, abilityEntry);
+                            collectBecomesTargetOfOpponentCounterTriggers(gameData, attached, playerId, abilityEntry);
+                        }
                     }
                 }
             }
@@ -4115,7 +4183,8 @@ public class TriggerCollectionService {
      * one of their permanents becoming the target of an opponent's spell or ability.
      */
     private void collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(
-            GameData gameData, UUID targetControllerId, StackEntry triggeringEntry) {
+            GameData gameData, UUID targetControllerId, Permanent targetPermanent,
+            StackEntry triggeringEntry) {
         if (targetControllerId.equals(triggeringEntry.getControllerId())) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
@@ -4142,7 +4211,7 @@ public class TriggerCollectionService {
                         source.getId()
                 );
                 counterEntry.setSourcePermanentSnapshot(new Permanent(source));
-                gameData.stack.add(counterEntry);
+                enqueueTargetTriggeredAbility(gameData, targetPermanent, targetControllerId, source, counterEntry);
 
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
                 log.info("Game {} - {} ally-permanent-or-player counter trigger queued",
@@ -4163,7 +4232,7 @@ public class TriggerCollectionService {
                     triggeringEntry.getControllerId(),
                     source.getId()
             );
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, targetPermanent, targetControllerId, source, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} ally-permanent-or-player-becomes-target-of-opponent trigger queued",
@@ -4199,7 +4268,7 @@ public class TriggerCollectionService {
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(targetPermanent.getId());
             entry.setTriggeringPermanentControllerId(targetControllerId);
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, targetPermanent, targetControllerId, source, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} another-ally-permanent-becomes-target-of-opponent trigger queued",
@@ -4208,7 +4277,8 @@ public class TriggerCollectionService {
     }
 
     private void collectAllyPermanentBecomesTargetOfOpponentTriggers(
-            GameData gameData, UUID targetControllerId, StackEntry triggeringEntry) {
+            GameData gameData, UUID targetControllerId, Permanent targetPermanent,
+            StackEntry triggeringEntry) {
         if (targetControllerId.equals(triggeringEntry.getControllerId())) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
@@ -4231,9 +4301,27 @@ public class TriggerCollectionService {
                     null,
                     source.getId()
             );
-            entry.setSourcePermanentSnapshot(new Permanent(source));
-            gameData.stack.add(entry);
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        enqueueTargetTriggeredAbility(gameData, targetPermanent, targetControllerId, source, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        }
+    }
+
+    private void enqueueTargetTriggeredAbility(GameData gameData, Permanent targetCreature,
+                                                UUID targetControllerId, Permanent source,
+                                                StackEntry entry) {
+        gameData.stack.add(entry);
+    }
+
+    private void collectWithAllyCreatureBecomesTargetCopies(GameData gameData, Permanent targetCreature,
+                                                             UUID targetControllerId, Runnable collector) {
+        int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                + gameQueryService.countAdditionalTriggeredAbilityTriggersForAllyCreatureBecomesTarget(
+                gameData, targetControllerId, targetCreature, targetCreature));
+        try {
+            collector.run();
+        } finally {
+            gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
     }
 
@@ -4329,7 +4417,7 @@ public class TriggerCollectionService {
                     source.getId()
             );
             entry.setSourcePermanentSnapshot(new Permanent(source));
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, targetedCreature, controllerId, source, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} becomes-target-of-spell trigger queued", gameData.id, source.getCard().getName());
@@ -4345,7 +4433,7 @@ public class TriggerCollectionService {
             );
             entry.setTriggeringCardId(spellEntry.getCard().getId());
             entry.setTriggeringPermanentControllerId(spellEntry.getControllerId());
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, targetedCreature, controllerId, source, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} becomes-target-of-spell trigger queued against the targeting spell", gameData.id, source.getCard().getName());
@@ -4427,7 +4515,7 @@ public class TriggerCollectionService {
                     null,
                     null
             );
-            gameData.stack.add(counterEntry);
+            enqueueTargetTriggeredAbility(gameData, source, controllerId, source, counterEntry);
             if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
@@ -4454,7 +4542,7 @@ public class TriggerCollectionService {
             );
             entry.setTriggeringCardId(triggeringEntry.getCard().getId());
             entry.setTriggeringPermanentControllerId(triggeringEntry.getControllerId());
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
             if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
@@ -4489,7 +4577,7 @@ public class TriggerCollectionService {
                 null,
                 source.getId()
         );
-        gameData.stack.add(entry);
+        enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
         if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
@@ -4518,7 +4606,7 @@ public class TriggerCollectionService {
                 null,
                 source.getId()
         );
-        gameData.stack.add(entry);
+        enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
         log.info("Game {} - {} becomes-target-of-Aura-spell trigger queued", gameData.id, source.getCard().getName());
@@ -4572,7 +4660,7 @@ public class TriggerCollectionService {
                         source.getId()
                 );
                 entry.setSourcePermanentSnapshot(new Permanent(source));
-                gameData.stack.add(entry);
+                enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
 
                 switch (counterEffect.ransomKind()) {
                     case PAY_MANA -> {
@@ -4658,7 +4746,7 @@ public class TriggerCollectionService {
                 source.getId()
         );
         entry.setSourcePermanentSnapshot(new Permanent(source));
-        gameData.stack.add(entry);
+        enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
     }
 
     private void collectControllerBecomesTargetOfOpponentTriggers(
@@ -4831,7 +4919,8 @@ public class TriggerCollectionService {
                             List.of(resolved),
                             triggeringEntry.getCard().getId(),
                             Zone.STACK);
-                    gameData.stack.add(counterTrigger);
+                    enqueueTargetTriggeredAbility(gameData, targetPermanent, creatureControllerId, source,
+                            counterTrigger);
                     gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                             "'s triggered ability triggers."));
                 } else {
@@ -4862,7 +4951,7 @@ public class TriggerCollectionService {
                     entry.setTriggeringCardId(triggeringEntry.getCard().getId());
                     entry.setTriggeringPermanentControllerId(triggeringEntry.getControllerId());
                 }
-                gameData.stack.add(entry);
+                enqueueTargetTriggeredAbility(gameData, targetPermanent, creatureControllerId, source, entry);
 
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             }
@@ -4923,7 +5012,7 @@ public class TriggerCollectionService {
                     null,
                     source.getId()
             );
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, targetPermanent, creatureControllerId, source, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} ally-creature-becomes-target-of-opponent-spell trigger queued",
@@ -4974,7 +5063,7 @@ public class TriggerCollectionService {
                     source.getId()
             );
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, targetPermanent, creatureControllerId, source, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} ally-creature-becomes-target-of-instant-or-sorcery trigger queued",
@@ -5186,7 +5275,7 @@ public class TriggerCollectionService {
                     targetPermanent.getId(),
                     source.getId());
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            enqueueTargetTriggeredAbility(gameData, targetPermanent, creatureControllerId, source, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} another-ally-creature-becomes-target trigger queued",
@@ -5238,7 +5327,8 @@ public class TriggerCollectionService {
                         source.getId()
                 );
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                enqueueTargetTriggeredAbility(gameData, targetPermanent,
+                        gameQueryService.findPermanentController(gameData, targetPermanent.getId()), source, entry);
 
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
                 log.info("Game {} - {} any-creature-becomes-target trigger queued",
@@ -8895,15 +8985,16 @@ public class TriggerCollectionService {
                     EffectSlot.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
             if (effects.isEmpty()) continue;
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    creatureControllerId,
-                    source.getCard().getName() + "'s triggered ability",
-                    effects,
-                    null,
-                    source.getId()
-            ));
+            enqueueTargetTriggeredAbility(gameData, targetPermanent, creatureControllerId, source,
+                    new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source.getCard(),
+                            creatureControllerId,
+                            source.getCard().getName() + "'s triggered ability",
+                            effects,
+                            null,
+                            source.getId()
+                    ));
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} ally-creature-becomes-target trigger queued",
@@ -8965,6 +9056,9 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
+                if (effect instanceof BatchedCreatureDeathTriggerEffect) {
+                    continue;
+                }
                 CardEffect resolved = unwrapTriggeringCardConditional(
                         effect, dyingCard, gameData, dyingCreatureControllerId);
                 if (resolved == null) continue;
@@ -11326,6 +11420,30 @@ public class TriggerCollectionService {
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+        }
+
+        for (Boon boon : List.copyOf(gameData.boons)) {
+            if (!boon.controllerId().equals(controllerId) || enteringPermanent == null) {
+                continue;
+            }
+
+            gameData.boons.remove(boon);
+            if (boon.remainingUses() > 1) {
+                gameData.boons.add(new Boon(boon.controllerId(), boon.sourceCard(), boon.effect(),
+                        boon.remainingUses() - 1));
+            }
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    boon.sourceCard(),
+                    boon.controllerId(),
+                    boon.sourceCard().getName() + "'s boon",
+                    new ArrayList<>(List.of(boon.effect())));
+            entry.setTargetId(enteringPermanent.getId());
+            entry.setTriggeringPermanentId(enteringPermanent.getId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
 
         // Graveyard-resident creature-enters triggers (GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
@@ -13985,6 +14103,53 @@ public class TriggerCollectionService {
                         dyingCreatures);
                 collectBatchedOncePerTurnAllyNontokenDeathTrigger(
                         gameData, dyingEntry.getValue(), controllerId, dyingCreatures);
+            }
+        }
+        collectBatchedGraveyardAllyCreatureDeathTriggers(gameData, dyingCreatures);
+    }
+
+    private void collectBatchedGraveyardAllyCreatureDeathTriggers(
+            GameData gameData, List<Map.Entry<UUID, Permanent>> dyingCreatures) {
+        for (Map.Entry<UUID, List<Card>> graveyardEntry : gameData.playerGraveyards.entrySet()) {
+            UUID controllerId = graveyardEntry.getKey();
+            Map.Entry<UUID, Permanent> firstAllyDeath = dyingCreatures.stream()
+                    .filter(entry -> controllerId.equals(
+                            gameData.simultaneousDyingControllers.get(entry.getKey())))
+                    .findFirst().orElse(null);
+            if (firstAllyDeath == null) continue;
+
+            Permanent dyingPermanent = firstAllyDeath.getValue();
+            Card dyingCard = dyingPermanent.getCard();
+            for (Card sourceCard : List.copyOf(graveyardEntry.getValue())) {
+                boolean sourceDiedInBatch = dyingCreatures.stream()
+                        .anyMatch(entry -> entry.getValue().getCard().getId().equals(sourceCard.getId()));
+                if (sourceDiedInBatch) continue;
+
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, sourceCard, EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_DIES);
+                if (effects == null || effects.isEmpty()) continue;
+
+                List<CardEffect> stackEffects = new ArrayList<>();
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(
+                            effect, dyingCard, gameData, controllerId);
+                    if (!(resolved instanceof BatchedCreatureDeathTriggerEffect batched)) continue;
+                    resolved = batched.wrapped();
+                    if (resolved instanceof MayEffect may) {
+                        gameData.queueMayAbility(sourceCard, controllerId, may);
+                    } else {
+                        stackEffects.add(resolved);
+                    }
+                }
+                if (stackEffects.isEmpty()) continue;
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        controllerId,
+                        sourceCard.getName() + "'s ability",
+                        stackEffects));
+                gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             }
         }
     }

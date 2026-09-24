@@ -152,11 +152,18 @@ public sealed interface TriggerContext {
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
     /** Context for controller forage triggers. */
     record Forage(UUID foragingPlayerId) implements TriggerContext {}
+    /** Context for cards sought from a library. */
+    record Seek(UUID seekingPlayerId, List<Card> soughtCards) implements TriggerContext {
+        public Seek {
+            soughtCards = List.copyOf(soughtCards);
+        }
+
+        public Seek(UUID seekingPlayerId) {
+            this(seekingPlayerId, List.of());
+        }
+    }
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
-
-    /** Context for controller-seek triggers. */
-    record Seek(UUID seekingPlayerId) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).

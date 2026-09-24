@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostEffe
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostExceptOnControllersTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ModifyFlashbackCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ModifyMorphCostEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceTurnFaceUpCostForPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.MinimumSpellCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForChosenNameSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForChosenSubtypeSpellsEffectHandler;
@@ -59,6 +60,7 @@ public final class CostModificationTestRegistry {
         registry.register(new IncreaseSpellCostExceptOnControllersTurnEffectHandler());
         registry.register(new ModifyFlashbackCostEffectHandler());
         registry.register(new ModifyMorphCostEffectHandler());
+        registry.register(new ReduceTurnFaceUpCostForPermanentEffectHandler());
         registry.register(new IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler(support, amountEvaluationService));
         registry.register(new ReduceCastCostForMatchingSpellsEffectHandler(predicateEvaluationService, amountEvaluationService));

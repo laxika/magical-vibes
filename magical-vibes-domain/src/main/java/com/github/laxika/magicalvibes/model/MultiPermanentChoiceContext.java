@@ -515,6 +515,18 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each opponent chooses a nontoken creature to sacrifice for Replicating Terror. */
+    record EachOpponentSacrificesNontokenCreatureConjuresDuplicates(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachOpponentSacrificesNontokenCreatureConjuresDuplicates {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /** The controller and a target opponent each choose a creature before both are sacrificed. */
     record ControllerAndTargetPlayerChooseCreaturesThenSacrifice(
             java.util.List<PendingForcedSacrifice> remainingChoosers,

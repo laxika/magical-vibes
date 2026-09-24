@@ -154,6 +154,68 @@ public class CardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    /** Applies a perpetual power/keyword modification to a chosen creature card in hand. */
+    public void handlePerpetualCreatureCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualCreatureCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualCreatureCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+        Card card = hand.get(cardIndex);
+        if (!card.hasType(CardType.CREATURE)) {
+            throw new IllegalStateException("That card is no longer a creature");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Card copy = card.createRuntimeCopy();
+        if (copy.getPower() != null) {
+            copy.setPower(copy.getPower() + choice.powerBoost());
+        }
+        Set<Keyword> keywords = java.util.EnumSet.noneOf(Keyword.class);
+        keywords.addAll(copy.getKeywords());
+        keywords.addAll(choice.keywords());
+        copy.setKeywords(Set.copyOf(keywords));
+        copy.freeze();
+        hand.set(cardIndex, copy);
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /** Adds a perpetual triggered ability to a chosen card in a target player's hand. */
+    public void handlePerpetualTargetCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualTargetCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualTargetCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(choice.targetPlayerId());
+        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Card copy = hand.get(cardIndex).createRuntimeCopy();
+        for (CardEffect grantedEffect : choice.grantedEffects()) {
+            copy.addEffect(choice.slot(), grantedEffect);
+        }
+        copy.freeze();
+        hand.set(cardIndex, copy);
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
     public void handleWordOfCommandCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction.WordOfCommandCardChoice choice =
@@ -2364,4 +2426,3 @@ public class CardChoiceHandlerService {
         graveyardService.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
     }
 }
-

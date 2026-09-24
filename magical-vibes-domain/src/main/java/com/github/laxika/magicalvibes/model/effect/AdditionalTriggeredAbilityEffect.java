@@ -13,8 +13,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                                boolean attackOnly, boolean includeSourcePermanent,
                                                boolean allControllers,
-                                               boolean instantSorceryCastOrCopyOnly)
+                                               boolean instantSorceryCastOrCopyOnly,
+                                               boolean allyCreatureBecomesTarget)
         implements CardEffect {
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
+                allControllers, instantSorceryCastOrCopyOnly, false);
+    }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
         this(sourcePredicate, null, false, false, false, false);
@@ -37,5 +45,11 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
     public static AdditionalTriggeredAbilityEffect forInstantOrSorceryCastOrCopy() {
         return new AdditionalTriggeredAbilityEffect(
                 new PermanentTruePredicate(), null, false, true, false, true);
+    }
+
+    /** Makes target-caused triggered abilities of your permanents trigger one additional time. */
+    public static AdditionalTriggeredAbilityEffect forAllyCreatureBecomesTarget() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, false, true);
     }
 }

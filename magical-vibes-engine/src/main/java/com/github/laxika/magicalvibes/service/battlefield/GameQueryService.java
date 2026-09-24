@@ -7662,6 +7662,7 @@ public class GameQueryService {
                 if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()) continue;
                 for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof AdditionalTriggeredAbilityEffect additional)
+                            || additional.allyCreatureBecomesTarget()
                             || (additional.attackOnly() && !attackTrigger)
                             || (additional.instantSorceryCastOrCopyOnly()
                             && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
@@ -7701,6 +7702,51 @@ public class GameQueryService {
 
     private boolean isInstantOrSorcery(Card card) {
         return card != null && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY));
+    }
+
+    /**
+     * Returns the number of additional copies for a triggered ability caused by a creature you
+     * control becoming the target of a spell or ability.
+     */
+    public int countAdditionalTriggeredAbilityTriggersForAllyCreatureBecomesTarget(
+            GameData gameData, UUID creatureControllerId, Permanent targetCreature,
+            Permanent triggeringPermanent) {
+        if (creatureControllerId == null || targetCreature == null || triggeringPermanent == null
+                || !targetCreature.getCard().hasType(CardType.CREATURE)) {
+            return 0;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+
+        int count = 0;
+        for (Permanent staticSource : battlefield) {
+            if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof AdditionalTriggeredAbilityEffect additional)
+                        || !additional.allyCreatureBecomesTarget()
+                        || (!additional.includeSourcePermanent()
+                        && staticSource.getId().equals(triggeringPermanent.getId()))) {
+                    continue;
+                }
+                FilterContext filterContext = FilterContext.of(gameData)
+                        .withSourceControllerId(creatureControllerId)
+                        .withSourcePermanentId(staticSource.getId())
+                        .withSourcePermanentSnapshot(staticSource);
+                if (predicateEvaluationService.matchesPermanentPredicate(
+                        triggeringPermanent, additional.sourcePredicate(), filterContext)
+                        && (additional.condition() == null
+                        || conditionEvaluationService.isMet(gameData, additional.condition(),
+                        ConditionContext.forStaticEffect(staticSource, creatureControllerId)))) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     /**

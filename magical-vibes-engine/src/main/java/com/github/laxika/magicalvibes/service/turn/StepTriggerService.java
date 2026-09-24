@@ -170,6 +170,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqualToAttachedCountEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -3391,6 +3392,11 @@ public class StepTriggerService {
     private boolean isOptionalGraveyardTarget(CardEffect effect) {
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
             return returnEffect.upTo();
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream()
+                    .filter(step -> step.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .allMatch(this::isOptionalGraveyardTarget);
         }
         if (effect instanceof ConditionalEffect conditional) {
             return isOptionalGraveyardTarget(conditional.wrapped());

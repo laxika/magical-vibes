@@ -1500,9 +1500,13 @@ public class GameService {
                             AmountContext.forCasting(player.getId()));
                     morphCostModifier -= reduction;
                 }
-                if (!manifestedOrCloaked && castingCostService != null) {
-                    morphCostModifier += castingCostService.getMorphCostModifier(
-                            gameData, player.getId(), permanent.getCard());
+                if (castingCostService != null) {
+                    morphCostModifier += castingCostService.getTurnFaceUpCostModifier(
+                            gameData, player.getId(), permanent.getCard(), permanent.getId());
+                    if (!manifestedOrCloaked) {
+                        morphCostModifier += castingCostService.getMorphCostModifier(
+                                gameData, player.getId(), permanent.getCard());
+                    }
                 }
                 if (morphCostModifier > 0) {
                     cost = cost.increasedBy(new ManaCost("{" + morphCostModifier + "}"));
@@ -1636,7 +1640,11 @@ public class GameService {
                     gameData, controllerId, permanent);
         }
 
-        List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+        List<CardEffect> effects = new java.util.ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects = effects.stream()
                 .filter(effect -> !(effect instanceof TurnFaceUpReplacementEffect))
                 .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
                 .toList();

@@ -1266,6 +1266,8 @@ public class GameData {
     /** The Ring emblem state for players who have been tempted by the Ring. */
     public final Map<UUID, RingState> ringStates = new ConcurrentHashMap<>();
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
+    /** Finite-use triggered abilities granted directly to players. */
+    public final List<Boon> boons = Collections.synchronizedList(new ArrayList<>());
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
     /** Players who have no maximum hand size until the beginning of their next turn. */
@@ -6631,6 +6633,7 @@ public class GameData {
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
         copy.ringStates.putAll(this.ringStates);
+        copy.boons.addAll(this.boons);
 
         // --- Floating continuous effects (immutable records, safe to share) ---
         copy.floatingEffects.addAll(this.floatingEffects);

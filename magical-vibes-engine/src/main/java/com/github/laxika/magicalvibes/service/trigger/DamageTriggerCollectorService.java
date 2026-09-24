@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
@@ -210,6 +211,54 @@ public class DamageTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers after a source dealt noncombat damage equal to a creature's toughness",
+                gameData.id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
+    private boolean handleAllySourceDealsNoncombatDamageToCreatureConditional(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (match.permanent() == null || (conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId())))) {
+            return false;
+        }
+        return enqueueAllySourceDealsNoncombatDamageToCreature(match, conditional, ctx);
+    }
+
+    @CollectsTrigger(value = PerpetuallyBoostCreatureCardInHandEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
+    private boolean handleAllySourceDealsNoncombatDamageToCreatureBoost(TriggerMatchContext match,
+            PerpetuallyBoostCreatureCardInHandEffect effect, TriggerContext ctx) {
+        return enqueueAllySourceDealsNoncombatDamageToCreature(match, effect, ctx);
+    }
+
+    private boolean enqueueAllySourceDealsNoncombatDamageToCreature(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsNoncombatDamageToCreature damageContext =
+                (TriggerContext.SourceDealsNoncombatDamageToCreature) ctx;
+        Permanent damagedCreature = damageContext.damagedCreature();
+        GameData gameData = match.gameData();
+        if (match.permanent() == null || damagedCreature == null
+                || !gameQueryService.isCreature(gameData, damagedCreature)
+                || damageContext.damageDealt() <= 0) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers after an ally source dealt noncombat damage to a creature",
                 gameData.id, match.permanent().getCard().getName());
         return true;
     }

@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPer
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAnotherCreatureAndConjureRandomCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -162,6 +163,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final DestructionSupport destructionSupport;
     private final LandEquilibriumSupport landEquilibriumSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport exileSupport;
+    private final ExileAnotherCreatureAndConjureRandomCreatureEffectHandler
+            exileAnotherCreatureAndConjureRandomCreatureHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
     private final LifeSupport lifeSupport;
@@ -994,6 +997,13 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handlePermanentYouControlToExile(GameData gameData, UUID permanentId,
             PermanentChoiceContext.PermanentYouControlToExile context) {
         exilePermanentYouControlHandler.completePermanentChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleExileAnotherCreatureAndConjureRandomCreature(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.ExileAnotherCreatureAndConjureRandomCreature context) {
+        exileAnotherCreatureAndConjureRandomCreatureHandler.completePermanentChoice(
+                gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

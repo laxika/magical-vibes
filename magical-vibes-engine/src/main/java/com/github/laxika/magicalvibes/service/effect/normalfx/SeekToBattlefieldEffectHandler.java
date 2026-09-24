@@ -66,6 +66,6 @@ public class SeekToBattlefieldEffectHandler implements NormalEffectHandlerBean {
         battlefieldEntryService.processLandETBEffects(gameData, controllerId, selected);
         gameLogService.append(gameData, GameLog.entersBattlefieldTappedUnder(
                 selected, gameData.playerIdToName.get(controllerId)));
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId);
+        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(selected));
     }
 }

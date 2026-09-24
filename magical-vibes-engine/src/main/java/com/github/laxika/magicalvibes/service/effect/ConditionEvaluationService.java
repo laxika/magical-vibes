@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerControlledSource
 import com.github.laxika.magicalvibes.model.condition.RedSourcesControlledDealtNoncombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotDealtCombatDamageSinceLastTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentSubtypeAtLeastThisTurn;
@@ -1323,6 +1324,10 @@ public class ConditionEvaluationService {
             case ControllerOwnTurnCountAtMost c ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
                             && gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0) <= c.maxTurns();
+            case ControllerIsNotStartingPlayer ignored ->
+                    ctx.controllerId() != null
+                            && gameData.startingPlayerId != null
+                            && !ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerPlayedOrCastFromOutsideHandThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.contains(ctx.controllerId());

@@ -2284,6 +2284,12 @@ public class TriggeredAbilityQueueService {
     private void pushSpellGraveyardTriggeredAbilityWithoutTargets(
             GameData gameData, PermanentChoiceContext.SpellGraveyardTargetTrigger pending) {
         String description = pending.sourceCard().getName() + "'s ability";
+        UUID sourcePermanentId = gameData.playerBattlefields
+                .getOrDefault(pending.controllerId(), List.of()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(pending.sourceCard().getId()))
+                .map(Permanent::getId)
+                .findFirst()
+                .orElse(null);
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 pending.sourceCard(),
@@ -2292,7 +2298,7 @@ public class TriggeredAbilityQueueService {
                 new ArrayList<>(pending.effects()),
                 pending.xValue(),
                 null,
-                null,
+                sourcePermanentId,
                 java.util.Map.of(),
                 null,
                 List.of(),
