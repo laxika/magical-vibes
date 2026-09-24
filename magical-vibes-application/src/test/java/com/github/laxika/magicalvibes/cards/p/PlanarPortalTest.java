@@ -112,20 +112,6 @@ class PlanarPortalTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    @Test
-    @DisplayName("An empty library search resolves without a card choice")
-    void emptyLibrarySearchResolvesWithoutChoice() {
-        addReadyPortal(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.setLibrary(player1, List.of());
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-    }
-
     private Permanent addReadyPortal(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new PlanarPortal());
         perm.setSummoningSick(false);

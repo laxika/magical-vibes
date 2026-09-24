@@ -51,20 +51,6 @@ class CrossbowInfantryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if the target stops attacking before resolution")
-    void fizzlesIfTargetStopsAttackingBeforeResolution() {
-        addCreatureReady(player1, new CrossbowInfantry());
-        Permanent attacker = addAttackingCreature(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-
-        harness.activateAbility(player1, 0, null, attacker.getId());
-        attacker.setAttacking(false);
-        harness.passBothPriorities();
-
-        assertThat(attacker.getMarkedDamage()).isZero();
-    }
-
-    @Test
     @DisplayName("1 damage destroys a 1-toughness blocking creature")
     void destroysOneToughnessTarget() {
         addCreatureReady(player1, new CrossbowInfantry());

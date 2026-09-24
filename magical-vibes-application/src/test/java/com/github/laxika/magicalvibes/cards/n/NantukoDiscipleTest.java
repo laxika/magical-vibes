@@ -126,9 +126,15 @@ class NantukoDiscipleTest extends BaseCardTest {
     }
 
     private void setupDisciple() {
+        setupDisciple(1);
+    }
+
+    private void setupDisciple(int greenMana) {
         addCreatureReady(player1, new NantukoDisciple());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        if (greenMana > 0) {
+            harness.addMana(player1, ManaColor.GREEN, greenMana);
+        }
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }

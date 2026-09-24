@@ -102,7 +102,7 @@ class RainOfBladesTest extends BaseCardTest {
         Permanent player1Attacker = addAttacker(player1, player2, new SilverKnight());
         Permanent player2Attacker = addAttacker(player2, player1, new SilverKnight());
 
-        castRainOfBlades();
+        castRainOfBlades(player2);
 
         assertThat(player1Attacker.getMarkedDamage()).isEqualTo(1);
         assertThat(player2Attacker.getMarkedDamage()).isEqualTo(1);
