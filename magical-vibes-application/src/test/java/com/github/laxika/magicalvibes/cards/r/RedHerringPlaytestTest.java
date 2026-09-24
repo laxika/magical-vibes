@@ -34,9 +34,7 @@ class RedHerringPlaytestTest extends BaseCardTest {
         assertThat(harness.getGameData().playerHands.get(player1.getId())).contains(redHerring);
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-
-        harness.handlePermanentChosen(player1, targetId);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
         assertThat(target.getId()).isEqualTo(targetId);

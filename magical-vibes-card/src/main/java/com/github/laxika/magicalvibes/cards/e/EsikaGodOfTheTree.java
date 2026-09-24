@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "168")
+@CardRegistration(set = "SLD", collectorNumber = "1155")
+@CardRegistration(set = "SLD", collectorNumber = "1208")
 public class EsikaGodOfTheTree extends Card {
 
     public EsikaGodOfTheTree() {

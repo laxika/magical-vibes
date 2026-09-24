@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "153")
+@CardRegistration(set = "SLD", collectorNumber = "1064")
 @CardRegistration(set = "SOA", collectorNumber = "46")
 public class PyreticRitual extends Card {
 

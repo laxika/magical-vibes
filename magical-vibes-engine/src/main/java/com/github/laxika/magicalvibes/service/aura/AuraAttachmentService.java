@@ -302,7 +302,8 @@ public class AuraAttachmentService {
                 && gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
                 .noneMatch(color -> gameQueryService.playerHasProtectionFromColor(gameData, playerId, color))
                 && !gameQueryService.playerHasProtectionFromChosenName(
-                gameData, playerId, auraCard.getName());
+                gameData, playerId, auraCard.getName())
+                && !gameQueryService.playerHasProtectionFromChosenCardType(gameData, playerId, auraCard);
     }
 
     /**
@@ -336,6 +337,10 @@ public class AuraAttachmentService {
                     if (gameQueryService.playerHasProtectionFromColor(gameData, attachedTo, color)) {
                         return "enchanted player has protection from it";
                     }
+                }
+                if (gameQueryService.playerHasProtectionFromChosenCardType(
+                        gameData, attachedTo, attachment.getCard(), attachment)) {
+                    return "enchanted player has protection from the Aura's card type";
                 }
             }
             if (isFortification) {

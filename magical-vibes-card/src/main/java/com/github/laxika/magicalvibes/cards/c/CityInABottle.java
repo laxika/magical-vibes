@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VMA", collectorNumber = "265")
+@CardRegistration(set = "ARN", collectorNumber = "60")
 public class CityInABottle extends Card {
 
     private static final Set<String> ARABIAN_NIGHTS_CARD_NAMES = Set.of(

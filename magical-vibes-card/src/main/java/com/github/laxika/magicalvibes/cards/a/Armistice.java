@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "3")
+@CardRegistration(set = "C14", collectorNumber = "65")
 public class Armistice extends Card {
 
     public Armistice() {

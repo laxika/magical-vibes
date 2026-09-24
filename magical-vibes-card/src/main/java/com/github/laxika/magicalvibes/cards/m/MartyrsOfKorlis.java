@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ATQ", collectorNumber = "6")
 @CardRegistration(set = "ATQ", collectorNumber = "99")
+@CardRegistration(set = "ME4", collectorNumber = "20")
 public class MartyrsOfKorlis extends Card {
 
     public MartyrsOfKorlis() {

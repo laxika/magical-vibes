@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.t.Thoughtcast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MindsEye.class, Thoughtcast.class})
 class MindsEyeTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     @Test
@@ -66,6 +67,21 @@ class MindsEyeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Having no mana does not draw a card")
+    void cannotPayDoesNotDraw() {
+        harness.addToBattlefield(player1, new MindsEye());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
     @DisplayName("Controller draw does not trigger")
     void doesNotTriggerOnControllerDraw() {
         harness.addToBattlefield(player1, new MindsEye());
@@ -84,8 +100,8 @@ class MindsEyeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new Thoughtcast()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
 
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();

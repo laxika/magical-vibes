@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "65")
+@CardRegistration(set = "DBL", collectorNumber = "65")
 public class OminousRoost extends Card {
 
     public OminousRoost() {

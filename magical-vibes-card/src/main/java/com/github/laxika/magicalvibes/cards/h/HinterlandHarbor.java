@@ -18,6 +18,8 @@ import java.util.Set;
 @CardRegistration(set = "DMR", collectorNumber = "248")
 @CardRegistration(set = "MSC", collectorNumber = "250")
 @CardRegistration(set = "MSC", collectorNumber = "480")
+@CardRegistration(set = "TMC", collectorNumber = "69")
+@CardRegistration(set = "YEOE", collectorNumber = "35")
 public class HinterlandHarbor extends Card {
 
     public HinterlandHarbor() {

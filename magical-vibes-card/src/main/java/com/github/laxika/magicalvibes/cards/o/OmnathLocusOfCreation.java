@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "232")
+@CardRegistration(set = "SLD", collectorNumber = "1686")
 public class OmnathLocusOfCreation extends Card {
 
     public OmnathLocusOfCreation() {

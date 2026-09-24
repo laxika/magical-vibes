@@ -48,6 +48,26 @@ class MonologueTaxTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
+    @Test
+    void doesNotTriggerOnOpponentsFirstOrThirdSpell() {
+        harness.addToBattlefield(player1, new MonologueTax());
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        prepareOpponentMainPhase();
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
     private void prepareOpponentMainPhase() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

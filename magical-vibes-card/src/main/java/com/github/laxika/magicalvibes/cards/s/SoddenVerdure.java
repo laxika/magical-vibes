@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -18,6 +19,9 @@ import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "267")
 @CardRegistration(set = "MSC", collectorNumber = "494")
+@CardRegistration(set = "ECC", collectorNumber = "24")
+@CardRegistration(set = "ECC", collectorNumber = "44")
+@CardRegistration(set = "TMC", collectorNumber = "74")
 public class SoddenVerdure extends Card {
 
     public SoddenVerdure() {

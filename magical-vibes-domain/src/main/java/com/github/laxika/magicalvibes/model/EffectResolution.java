@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -618,6 +619,9 @@ public final class EffectResolution {
     }
 
     private static boolean effectUsesManaSpentToCast(CardEffect e) {
+        if (e instanceof EarthbendTargetLandEffect earthbend) {
+            return earthbend.counterCount() instanceof ManaSpentToCast;
+        }
         if (e instanceof EnterWithCountersEffect enterWithCounters) {
             return enterWithCounters.count() instanceof ManaSpentToCast;
         }
@@ -647,6 +651,14 @@ public final class EffectResolution {
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {
+        if (e == null) {
+            return;
+        }
+        if (e instanceof ConditionalReplacementEffect replacement) {
+            collectTargetTypes(replacement.baseEffect(), out);
+            collectTargetTypes(replacement.upgradedEffect(), out);
+            return;
+        }
         TargetSpec spec = e.targetSpec();
         if (spec.admits(TargetPredicate.Kind.PLAYER)) out.add(TargetType.PLAYER);
         if (spec.admits(TargetPredicate.Kind.PERMANENT)) out.add(TargetType.PERMANENT);

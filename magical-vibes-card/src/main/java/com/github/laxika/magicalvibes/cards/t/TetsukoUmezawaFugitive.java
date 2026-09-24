@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "12")
 @CardRegistration(set = "MUL", collectorNumber = "77")
 @CardRegistration(set = "MUL", collectorNumber = "142")
+@CardRegistration(set = "CMM", collectorNumber = "126")
 public class TetsukoUmezawaFugitive extends Card {
 
     public TetsukoUmezawaFugitive() {

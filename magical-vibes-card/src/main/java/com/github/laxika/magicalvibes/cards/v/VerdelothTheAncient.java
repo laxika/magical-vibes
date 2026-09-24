@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "INV", collectorNumber = "220")
 @CardRegistration(set = "TSB", collectorNumber = "88")
 @CardRegistration(set = "MMA", collectorNumber = "172")
+@CardRegistration(set = "CMM", collectorNumber = "330")
 public class VerdelothTheAncient extends Card {
 
     public VerdelothTheAncient() {

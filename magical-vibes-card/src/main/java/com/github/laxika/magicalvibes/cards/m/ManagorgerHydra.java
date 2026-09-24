@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "186")
+@CardRegistration(set = "SLD", collectorNumber = "306")
 public class ManagorgerHydra extends Card {
 
     public ManagorgerHydra() {

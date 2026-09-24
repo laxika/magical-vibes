@@ -1,15 +1,22 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BringerOfTheBlueDawn.class, DrossCrocodile.class})
 class BringerOfTheBlueDawnTest extends BaseCardTest {
 
     @Test
@@ -26,6 +33,30 @@ class BringerOfTheBlueDawnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Bringer of the Blue Dawn");
+    }
+
+    @Test
+    @DisplayName("Trample deals excess combat damage to the defending player")
+    void trampleDealsExcessCombatDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BringerOfTheBlueDawn());
+        Permanent blocker = addCreatureReady(player2, new DrossCrocodile());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 4
+        ));
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
     }
 
     @Test

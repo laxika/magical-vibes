@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "264")
+@CardRegistration(set = "DBL", collectorNumber = "264")
 public class HostileHostel extends Card {
 
     public HostileHostel() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "98")
+@CardRegistration(set = "C13", collectorNumber = "74")
 public class DiscipleOfGriselbrand extends Card {
 
     public DiscipleOfGriselbrand() {

@@ -43,9 +43,9 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
             return;
         }
 
-        Permanent source = entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                : null;
+        Permanent source = entry.getSourcePermanentId() == null
+                ? entry.getSourcePermanentSnapshot()
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }

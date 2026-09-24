@@ -1,20 +1,22 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZethiArcaneBlademaster.class, Fog.class, Forest.class, DarkRitual.class})
+@CardUsed({ZethiArcaneBlademaster.class, ThinkTwice.class, GrizzlyBears.class, Fog.class, Forest.class, DarkRitual.class})
 class ZethiArcaneBlademasterTest extends BaseCardTest {
 
     @Test

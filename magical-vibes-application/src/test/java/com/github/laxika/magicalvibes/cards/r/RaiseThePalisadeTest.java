@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -14,8 +15,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RaiseThePalisade.class, GoblinPiker.class, GrizzlyBears.class, GloriousAnthem.class})
+@CardUsed({RaiseThePalisade.class, GoblinPiker.class, GrizzlyBears.class,
+        GloriousAnthem.class, AvianChangeling.class})
 class RaiseThePalisadeTest extends BaseCardTest {
+
+    @Test
+    void changelingCountsAsChosenType() {
+        harness.addToBattlefield(player1, new AvianChangeling());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castRaiseThePalisade();
+        harness.handleListChoice(player1, "GOBLIN");
+
+        harness.assertOnBattlefield(player1, "Avian Changeling");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
 
     @Test
     @DisplayName("Resolving Raise the Palisade awaits a creature type choice")

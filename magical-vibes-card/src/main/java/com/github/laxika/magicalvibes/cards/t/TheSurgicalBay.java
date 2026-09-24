@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "260")
+@CardRegistration(set = "SLD", collectorNumber = "2163")
 public class TheSurgicalBay extends Card {
 
     public TheSurgicalBay() {

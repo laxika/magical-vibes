@@ -11,9 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 @CardRegistration(set = "USG", collectorNumber = "188")
 @CardRegistration(set = "EMA", collectorNumber = "132")
 @CardRegistration(set = "VMA", collectorNumber = "162")
+@CardRegistration(set = "SLD", collectorNumber = "188")
 @CardRegistration(set = "UMA", collectorNumber = "132")
 @CardRegistration(set = "SPG", collectorNumber = "24")
 @CardRegistration(set = "DMR", collectorNumber = "121")
+@CardRegistration(set = "TLE", collectorNumber = "312")
 public class Gamble extends Card {
 
     public Gamble() {

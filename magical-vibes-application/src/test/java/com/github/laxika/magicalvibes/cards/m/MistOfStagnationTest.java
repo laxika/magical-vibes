@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MistOfStagnation.class, RiftstonePortal.class, SuntailHawk.class})
+@CardUsed({BorderPatrol.class, MistOfStagnation.class, RiftstonePortal.class, SuntailHawk.class})
 class MistOfStagnationTest extends BaseCardTest {
 
     @Test
@@ -140,5 +141,20 @@ class MistOfStagnationTest extends BaseCardTest {
         Permanent permanent = addPermanent(player, card);
         permanent.setSummoningSick(false);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("Does not present a choice when the active player's graveyard is empty")
+    void doesNotPresentChoiceForEmptyActivePlayersGraveyard() {
+        harness.addToBattlefieldAndReturn(player1, new MistOfStagnation());
+        Permanent ownPermanent = addCreatureReady(player1, new BorderPatrol());
+        ownPermanent.tap();
+        harness.setGraveyard(player2, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(ownPermanent.isTapped()).isTrue();
     }
 }

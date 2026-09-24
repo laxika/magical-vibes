@@ -1,26 +1,29 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArmguardFamiliar;
+import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
+import com.github.laxika.magicalvibes.cards.v.VulshokMorningstar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LeoninShikari.class, VulshokMorningstar.class, CrazedGoblin.class, ArmguardFamiliar.class})
 class LeoninShikariTest extends BaseCardTest {
 
     @Test
     @DisplayName("You can activate equip abilities during an opponent's turn")
     void allowsEquipAtInstantSpeed() {
-        addShikariReady(player1);
-        Permanent scimitar = addScimitarReady(player1);
-        Permanent creature = addCreatureReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        addCreatureReady(player1, new LeoninShikari());
+        Permanent morningstar = addCreatureReady(player1, new VulshokMorningstar());
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -29,16 +32,16 @@ class LeoninShikariTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(morningstar.getAttachedTo()).isEqualTo(creature.getId());
     }
 
     @Test
     @DisplayName("Leonin Shikari only affects Equipment its controller controls")
     void onlyAffectsControlledEquipment() {
-        addShikariReady(player2);
-        addScimitarReady(player1);
-        Permanent creature = addCreatureReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        addCreatureReady(player2, new LeoninShikari());
+        addCreatureReady(player1, new VulshokMorningstar());
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -49,24 +52,20 @@ class LeoninShikariTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
-    private Permanent addShikariReady(Player player) {
-        Permanent permanent = new Permanent(new LeoninShikari());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Leonin Shikari does not make reconfigure abilities instant-speed")
+    void doesNotMakeReconfigureInstantSpeed() {
+        addCreatureReady(player1, new LeoninShikari());
+        addCreatureReady(player1, new ArmguardFamiliar());
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-    private Permanent addScimitarReady(Player player) {
-        Permanent permanent = new Permanent(new LeoninScimitar());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
     }
 }

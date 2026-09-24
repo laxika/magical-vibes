@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "114")
+@CardRegistration(set = "DBL", collectorNumber = "114")
 public class MorkrutBehemoth extends Card {
 
     public MorkrutBehemoth() {

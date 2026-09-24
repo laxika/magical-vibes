@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "220")
+@CardRegistration(set = "SLD", collectorNumber = "1645")
 @CardRegistration(set = "SPG", collectorNumber = "83")
 public class FiendArtisan extends Card {
 

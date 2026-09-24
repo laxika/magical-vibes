@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RudeAwakening.class, Forest.class, Mountain.class, GrizzlyBears.class,
+        DrossCrocodile.class, ImprisonedInTheMoon.class})
 class RudeAwakeningTest extends BaseCardTest {
 
     @Test
@@ -43,13 +48,45 @@ class RudeAwakeningTest extends BaseCardTest {
 
         cast(new int[]{1}, false);
 
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(2);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
         assertThat(bears.isAnimatedUntilEndOfTurn()).isFalse();
-        assertThat(opponentMountain.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gqs.isCreature(gd, opponentMountain)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animation mode affects a permanent that is currently a land")
+    void animationModeAnimatesPermanentCurrentlyLand() {
+        Permanent transformedLand = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
+        aura.setAttachedTo(transformedLand.getId());
+
+        assertThat(gqs.isLand(gd, transformedLand)).isTrue();
+
+        cast(new int[]{1}, false);
+
+        assertThat(gqs.isCreature(gd, transformedLand)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, transformedLand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, transformedLand)).isEqualTo(2);
+        assertThat(gqs.isLand(gd, transformedLand)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animation mode wears off at end of turn")
+    void animationModeEndsAtEndOfTurn() {
+        Permanent forest = addLand(player1, new Forest());
+
+        cast(new int[]{1}, false);
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
     }
 
     @Test
@@ -61,9 +98,9 @@ class RudeAwakeningTest extends BaseCardTest {
         cast(new int[]{0, 1}, true);
 
         assertThat(forest.isTapped()).isFalse();
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(2);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 

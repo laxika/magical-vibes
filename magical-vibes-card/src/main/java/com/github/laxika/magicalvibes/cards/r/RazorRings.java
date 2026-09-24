@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "33")
+@CardRegistration(set = "TLE", collectorNumber = "272")
 public class RazorRings extends Card {
 
     public RazorRings() {

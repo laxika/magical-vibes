@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "191")
+@CardRegistration(set = "C14", collectorNumber = "259")
 public class PanicSpellbomb extends Card {
 
     public PanicSpellbomb() {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.UUID;
 public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -39,7 +42,12 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
         UUID controllerId = entry.getControllerId();
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
-        int maximumX = e.capAtEventValue() ? Math.max(0, entry.getEventValue()) : Integer.MAX_VALUE;
+        int maximumX = e.maximumX() != null
+                ? Math.max(0, amountEvaluationService.evaluate(gameData, e.maximumX(),
+                        AmountContext.forStackEntry(entry, null)))
+                : e.capAtEventValue() ? Math.max(0, entry.getEventValue()) : Integer.MAX_VALUE;
+
+        ManaCost cost = new ManaCost("{X}");
 
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
@@ -53,7 +61,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             }
 
             ManaPool pool = gameData.playerManaPools.get(controllerId);
-            if (chosenValue > maximumX || payableFromPool(pool) < chosenValue) {
+            if (chosenValue > maximumX || !cost.canPay(pool, chosenValue)) {
                 gameLogService.append(gameData, GameLog.text(
                         playerName + " can't pay {" + chosenValue + "} for " + cardName
                                 + " (tap mana sources, then choose X again)."));
@@ -61,7 +69,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                 return;
             }
 
-            new ManaCost("{X}").pay(pool, chosenValue);
+            cost.pay(pool, chosenValue);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays {" + chosenValue + "} for " + cardName
                             + " and draws " + chosenValue + " card"
@@ -76,7 +84,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
     }
 
     private void beginXPrompt(GameData gameData, UUID controllerId, String cardName, int maximumX) {
-        int maxX = Math.min(maximumX, maxPotentialX(gameData, controllerId));
+        int maxX = maxPotentialX(gameData, controllerId, maximumX);
         if (maxX <= 0) {
             return;
         }
@@ -89,15 +97,19 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                         true));
     }
 
-    private int maxPotentialX(GameData gameData, UUID controllerId) {
-        ManaPool pool = gameData.playerManaPools.get(controllerId);
-        int untappedSources = potentialManaService.buildVirtualManaPool(gameData, controllerId).getTotal()
-                - pool.getTotal();
-        return Math.max(0, payableFromPool(pool) + untappedSources);
-    }
-
-    private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+    private int maxPotentialX(GameData gameData, UUID controllerId, int lifeGained) {
+        ManaPool pool = potentialManaService.buildVirtualManaPool(gameData, controllerId);
+        ManaCost cost = new ManaCost("{X}");
+        int low = 0;
+        int high = lifeGained;
+        while (low < high) {
+            int mid = low + (int) (((long) high - low + 1) / 2);
+            if (cost.canPay(pool, mid)) {
+                low = mid;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return low;
     }
 }

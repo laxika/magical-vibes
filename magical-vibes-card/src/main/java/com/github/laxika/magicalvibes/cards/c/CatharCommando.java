@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "FDN", collectorNumber = "139")
 @CardRegistration(set = "MID", collectorNumber = "10")
 @CardRegistration(set = "MB2", collectorNumber = "5")
+@CardRegistration(set = "DBL", collectorNumber = "10")
 public class CatharCommando extends Card {
 
     public CatharCommando() {

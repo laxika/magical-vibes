@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "A25", collectorNumber = "214")
+@CardRegistration(set = "SLD", collectorNumber = "1717")
+@CardRegistration(set = "C13", collectorNumber = "204")
 public class ProsshSkyraiderOfKher extends Card {
 
     public ProsshSkyraiderOfKher() {

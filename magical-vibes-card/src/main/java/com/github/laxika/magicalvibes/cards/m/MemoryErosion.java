@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "ALA", collectorNumber = "50")
+@CardRegistration(set = "CMD", collectorNumber = "50")
 public class MemoryErosion extends Card {
 
     public MemoryErosion() {

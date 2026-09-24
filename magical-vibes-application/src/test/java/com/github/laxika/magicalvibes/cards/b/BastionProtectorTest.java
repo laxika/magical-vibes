@@ -19,6 +19,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BastionProtectorTest extends BaseCardTest {
 
     @Test
+    void boostsItselfWhenItIsACommander() {
+        Permanent bastion = harness.addToBattlefieldAndReturn(player1, new BastionProtector());
+        gd.makeCommander(player1.getId(), bastion.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, bastion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bastion)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bastion, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
     void boostsAndProtectsOwnCommanderCreaturesOnly() {
         Card ownCommander = new GrizzlyBears();
         gd.makeCommander(player1.getId(), ownCommander);

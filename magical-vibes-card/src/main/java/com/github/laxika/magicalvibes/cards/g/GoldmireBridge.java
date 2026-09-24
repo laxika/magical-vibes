@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "13")
+@CardRegistration(set = "MH2", collectorNumber = "247")
 public class GoldmireBridge extends Card {
 
     public GoldmireBridge() {

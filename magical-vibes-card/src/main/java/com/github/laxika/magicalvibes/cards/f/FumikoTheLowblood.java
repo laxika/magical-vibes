@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "104")
+@CardRegistration(set = "C15", collectorNumber = "155")
 public class FumikoTheLowblood extends Card {
 
     public FumikoTheLowblood() {

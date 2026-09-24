@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "96")
 @CardRegistration(set = "V16", collectorNumber = "5")
+@CardRegistration(set = "SLD", collectorNumber = "1217")
 public class GlissaTheTraitor extends Card {
 
     public GlissaTheTraitor() {

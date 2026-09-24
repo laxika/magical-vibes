@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "187")
+@CardRegistration(set = "CMM", collectorNumber = "318")
 public class RotShambler extends Card {
 
     public RotShambler() {

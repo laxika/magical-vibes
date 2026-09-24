@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 @CardRegistration(set = "INR", collectorNumber = "268")
 @CardRegistration(set = "INR", collectorNumber = "445")
 @CardRegistration(set = "AER", collectorNumber = "164")
+@CardRegistration(set = "SLD", collectorNumber = "194")
 @CardRegistration(set = "KLR", collectorNumber = "251")
 @CardRegistration(set = "PZA", collectorNumber = "16")
 @CardRegistration(set = "MSC", collectorNumber = "203")

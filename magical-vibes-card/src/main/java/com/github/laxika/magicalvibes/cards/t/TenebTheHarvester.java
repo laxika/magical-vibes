@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "163")
 @CardRegistration(set = "2X2", collectorNumber = "282")
+@CardRegistration(set = "CMD", collectorNumber = "230")
 public class TenebTheHarvester extends Card {
 
     public TenebTheHarvester() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 
 @CardRegistration(set = "MMQ", collectorNumber = "127")
 @CardRegistration(set = "TSB", collectorNumber = "39")
+@CardRegistration(set = "ACR", collectorNumber = "88")
 public class Conspiracy extends Card {
 
     public Conspiracy() {

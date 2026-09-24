@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "141")
+@CardRegistration(set = "DBL", collectorNumber = "141")
 public class FlameChanneler extends Card {
 
     public FlameChanneler() {

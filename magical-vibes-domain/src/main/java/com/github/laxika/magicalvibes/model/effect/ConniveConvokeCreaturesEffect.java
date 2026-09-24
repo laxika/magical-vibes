@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Makes each creature captured as having convoked the resolving spell connive. */
+/** Makes each creature that convoked the resolving spell connive, in cast order. */
 public record ConniveConvokeCreaturesEffect() implements CardEffect {
 }

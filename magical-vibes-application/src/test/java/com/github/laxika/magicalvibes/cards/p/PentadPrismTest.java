@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PentadPrism.class})
 class PentadPrismTest extends BaseCardTest {
 
     @Test
@@ -27,6 +29,30 @@ class PentadPrismTest extends BaseCardTest {
 
         Permanent prism = findPermanent(player1, "Pentad Prism");
         assertThat(prism.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void sunburstCountsEachColorOnlyOnce() {
+        harness.setHand(player1, List.of(new PentadPrism()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent prism = findPermanent(player1, "Pentad Prism");
+        assertThat(prism.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void sunburstDoesNotCountColorlessMana() {
+        harness.setHand(player1, List.of(new PentadPrism()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent prism = findPermanent(player1, "Pentad Prism");
+        assertThat(prism.getCounterCount(CounterType.CHARGE)).isZero();
     }
 
     @Test
@@ -47,7 +73,7 @@ class PentadPrismTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutChargeCounter() {
-        Permanent prism = harness.addToBattlefieldAndReturn(player1, new PentadPrism());
+        harness.addToBattlefieldAndReturn(player1, new PentadPrism());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

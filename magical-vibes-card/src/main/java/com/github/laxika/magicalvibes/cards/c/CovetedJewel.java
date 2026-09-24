@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "196")
 @CardRegistration(set = "MSC", collectorNumber = "429")
+@CardRegistration(set = "SLD", collectorNumber = "799")
 public class CovetedJewel extends Card {
 
     public CovetedJewel() {

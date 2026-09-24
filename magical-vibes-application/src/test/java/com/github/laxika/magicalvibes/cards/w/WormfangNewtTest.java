@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WormfangNewt.class, KrosanVerge.class})
+@CardUsed({KrosanVerge.class, WormfangNewt.class})
 class WormfangNewtTest extends BaseCardTest {
 
     @Test
@@ -108,5 +108,49 @@ class WormfangNewtTest extends BaseCardTest {
         assertThat(gd.exiledCards).anyMatch(entry ->
                 entry.sourcePermanentId().equals(newt.getId())
                         && entry.card().getId().equals(secondLand.getCard().getId()));
+    }
+
+    @Test
+    void returnsExiledLandToItsOwnerWhenNewtLeaves() {
+        KrosanVerge landCard = new KrosanVerge();
+        landCard.setOwnerId(player2.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, landCard);
+
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        resolveAllTriggers();
+
+        Permanent newt = findPermanent(player1, "Wormfang Newt");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.getCardsExiledByPermanent(newt.getId())).containsExactly(landCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, newt));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(landCard.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(landCard.getId()));
+        assertThat(gd.exiledCards)
+                .noneMatch(entry -> entry.card().getId().equals(landCard.getId()));
+    }
+
+    @Test
+    void landExiledAfterNewtLeavesBeforeEnterTriggerResolvesStaysExiled() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        harness.passBothPriorities();
+
+        Permanent newt = findPermanent(player1, "Wormfang Newt");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, newt));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(land.getId()));
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getId().equals(land.getCard().getId())
+                        && newt.getId().equals(entry.sourcePermanentId()));
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CompleteAmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -56,28 +57,32 @@ public class AmassGoblinsEffectHandler implements NormalEffectHandlerBean {
             permanentControlSupport.applyCreateToken(
                     gameData,
                     entry.getControllerId(),
-                    new CreateTokenEffect("Goblin Army", 0, 0, CardColor.BLACK,
-                            List.of(CardSubtype.GOBLIN, CardSubtype.ARMY), java.util.Set.of(), java.util.Set.of()),
+                    new CreateTokenEffect(amass.subtype().getDisplayName() + " Army", 0, 0, CardColor.BLACK,
+                            List.of(amass.subtype(), CardSubtype.ARMY), java.util.Set.of(), java.util.Set.of()),
                     1,
                     entry.getCard().getSetCode());
         }
 
         int index = entry.getEffectsToResolve().indexOf(effect);
         if (index < 0) {
-            index = findConditionalWrapperIndex(entry, effect);
+            index = findWrapperIndex(entry, effect);
         }
         if (index < 0) {
             throw new IllegalStateException("Current effect is not present in its stack entry");
         }
         entry.insertEffectsToResolve(index + 1,
-                List.of(new CompleteAmassGoblinsEffect(entry.getControllerId(), count, false)));
+                List.of(new CompleteAmassGoblinsEffect(entry.getControllerId(), count, false, amass.subtype())));
     }
 
-    private int findConditionalWrapperIndex(StackEntry entry, CardEffect effect) {
+    private int findWrapperIndex(StackEntry entry, CardEffect effect) {
         List<CardEffect> effects = entry.getEffectsToResolve();
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ConditionalEffect conditional
                     && conditional.wrapped() == effect) {
+                return i;
+            }
+            if (effects.get(i) instanceof MayPayManaEffect mayPay
+                    && mayPay.wrapped() == effect) {
                 return i;
             }
         }

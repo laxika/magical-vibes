@@ -55,10 +55,10 @@ class TheSpearOfBashengaTest extends BaseCardTest {
         spear.setAttachedTo(attacker.getId());
 
         Permanent validTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        validTarget.setTapped(true);
+        validTarget.tap();
         Permanent untappedTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Plains());
-        tappedLand.setTapped(true);
+        tappedLand.tap();
         gd.monarchPlayerId = player2.getId();
 
         declareAttackers(List.of(0));
@@ -83,7 +83,7 @@ class TheSpearOfBashengaTest extends BaseCardTest {
         Permanent spear = harness.addToBattlefieldAndReturn(player1, new TheSpearOfBashenga());
         spear.setAttachedTo(attacker.getId());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         gd.monarchPlayerId = player1.getId();
 
         declareAttackers(List.of(0));

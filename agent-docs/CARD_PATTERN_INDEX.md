@@ -1,6 +1,17 @@
 # CARD_PATTERN_INDEX
+| ally creature enters if it was cast; sacrifice it and conjure a perpetually modified duplicate | `p/PrototypeX8.java` | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD TriggeringPermanentConditionalEffect(PermanentCastBySourceControllerThisTurnPredicate, SacrificeTriggeringPermanentThenConjureDuplicateEffect(...))` |
+| perpetually gain selected keywords of another creature that enters under your control | `m/MutablePupa.java` | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD PerpetuallyGainKeywordsOfTriggeringCreatureEffect()` |
+| landfall perpetually grants a random library land a tap-draw trigger | `a/AmbassadorOfEvendo.java` | `ON_ALLY_LAND_ENTERS_BATTLEFIELD PerpetuallyGrantTapDrawToRandomLandInLibraryEffect()` |
+| random opponent gains control of source permanent | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
+| conjure a named card into the top N cards of a library with a perpetual casting option | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
+| choose an opponent, then you and that player each create tokens | `ChooseOpponentEachCreatesTokensEffect` |
+| upkeep creates tokens for each opponent meeting a hand-size threshold | `CreateTokenEffect(new PlayersWithCardsInHandAtLeast(CountScope.OPPONENTS, threshold), ...)` |
+
+- Lich (2ED 114): `LoseLifeEqualToLifeTotalAsEntersEffect` on `ON_ENTER_BATTLEFIELD`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `ON_DEATH`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
 
 Purpose: quickly find a reference card for the pattern you're implementing. One or two examples per archetype. All paths relative to `cards/`.
+
+| as-enters number choice, noncreature spells with chosen mana value can't be cast | `TalionTheKindlyLord` + `NoncreatureSpellsWithChosenManaValueCantBeCastEffect` |
 
 This index has been split into smaller files for faster lookup. Each file is under 10k tokens.
 
@@ -25,12 +36,15 @@ This index has been split into smaller files for faster lookup. Each file is und
 | land, basic, pain, check, fast, manland | CARD_PATTERNS_LANDS_SPELLS.md |
 | burn, damage, shock, bolt, X burn | CARD_PATTERNS_LANDS_SPELLS.md |
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
-| destroy, terror, wrath, board wipe | CARD_PATTERNS_LANDS_SPELLS.md |
+| destroy, terror, wrath, board wipe, total power and toughness target restriction | CARD_PATTERNS_LANDS_SPELLS.md |
+| each player sacrifices artifacts, enchantments, and nonbasic lands, then searches for basics | WaveOfVitriolEffect |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
+| opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | exile top cards, play this turn, unplayed exiled cards to graveyard and tokens | `g/GlimpseTheImpossible.java` |
 | double any effect that doubles, quadruple | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
+| remove any number of counters from among permanents | CARD_PATTERNS_LANDS_SPELLS.md |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -38,33 +52,51 @@ This index has been split into smaller files for faster lookup. Each file is und
 | modal, choose one, fight, bite | CARD_PATTERNS_LANDS_SPELLS.md |
 | Case, solve, solved | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | steal, threaten, extra turn | CARD_PATTERNS_LANDS_SPELLS.md |
+| directional multiplayer creature-choice control spell | CARD_PATTERNS_LANDS_SPELLS.md and EFFECTS_QUICK_REFERENCE.md |
 | auction, bid life | CARD_PATTERNS_LANDS_SPELLS.md |
+| tempting offer, each opponent may accept an effect | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
+| lose a keyword and prevent opponents from gaining it | CARD_PATTERNS_PERMANENTS_STATIC.md and EFFECTS_QUICK_REFERENCE.md |
 | first matching spell cast each turn costs less | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | enchantment spell and Room unlock cost reduction | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |
 | airbend, exile target nonland permanent for a {2} cast | CARD_PATTERNS_CREATURES_ETB.md |
 | airbend all other creatures, opponents can't cast from outside hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | kicker, alternate casting cost | CARD_PATTERNS_CREATURES_ETB.md |
+| Squad, repeatable additional cost, token copies, attacking tokens | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | buyback, return spell to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | attack trigger, death trigger, upkeep trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| attack trigger, memory counter, copy exiled creature cards | CARD_PATTERNS_CREATURES_TRIGGERED.md and EFFECTS_QUICK_REFERENCE.md |
+| controller end-step trigger, memory counter, copy creature card in exile | `t/TheAnimus.java` and EFFECTS_QUICK_REFERENCE.md |
 | combat damage → untap creatures + additional combat + repeat-player attack restriction | `p/PortRazer.java` |
+| combat damage modal, goad damaged player's creature, exile top card and cast with any-color mana | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| counters placed on a creature you don't control | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | beginning-of-combat random counter trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| beginning-of-combat random-opponent attack trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | face-down permanent turns face up | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | suspect a creature / clear suspected creatures | `SuspectEffect(GrantScope.TARGET)` + `UnsuspectAllCreaturesEffect`; for optional non-targeted selection use `MayEffect(SuspectChosenOtherCreatureEffect())` |
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| combat damage to an opponent, same damage to each other opponent | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| cast trigger reveals each player's top card and sets entry counters | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| beginning-of-combat random opponent attack requirement | `r/RuhanOfTheFomori.java` |
+| attack-triggered left/right pile evasion | `r/RagingRiver.java` + `RagingRiverEffectHandler` |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | first instant, sorcery, or subtype spell each turn — exile the triggering spell, dig to a nonland, damage by mana-value difference, and offer a free cast | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | combat damage → random own-graveyard instant/sorcery, free cast at next upkeep | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
+| chosen creature type, reveal until matching creature count, put matches onto battlefield | `RevealUntilChosenCreatureTypeCountToBattlefieldEffect` |
+| encore, graveyard self-exile and attacking token copies for each opponent | `ExileSelfFromGraveyardCost` + `CreateTokenCopiesOfSourceAttackingOpponentsEffect` in a sorcery-speed graveyard ability |
+| destroy target creature, then create two half-sized token copies | `DestroyTargetCreatureAndCreateTokenCopiesEffect` |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| encore, graveyard ability creates hasty copies attacking each opponent | `i/ImpulsivePilferer.java` + `EncoreEffect` |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| each opponent may investigate, opponent choice plus controller Clues | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | commander-only anthem, opponent attacks with two creatures | CARD_PATTERNS_PERMANENTS_STATIC.md and CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | damage prevention into counters | CARD_PATTERNS_PERMANENTS_STATIC.md |
@@ -74,14 +106,17 @@ This index has been split into smaller files for faster lookup. Each file is und
 | quest counter, opponent end step trigger, life-loss condition | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | pay-life trigger, counters from life paid, counter-removal ability | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | protection from modified creatures | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| as-enters card-type choice, controller and own creatures gain protection from chosen card type | `ChooseCardTypeOnEnterEffect` + `GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect` |
 | postcombat main may-pay-life draw based on opponents dealt combat damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| create a token this turn, conditional draw artifact ability | `i/IdolOfOblivion.java` |
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | activated ability, tap ability, sacrifice ability | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | X-paid face-down creature cast from hand with damage/tap turn-up clause | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | base power from target creature, indefinitely | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | mana ability, mana dork | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
+| commander-identity mana plus shared-creature-type spell trigger | CARD_PATTERNS_LANDS_SPELLS.md |
 | planeswalker, loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | template, copy-paste, skeleton | CARD_COPY_PASTE_TEMPLATES.md |
@@ -101,6 +136,7 @@ When implementing a card, use these as the **best** test file to read for each c
 | ETB creature (non-targeted) | `AngelOfMercyTest.java` | Covers ETB trigger resolution |
 | ETB creature (targeted) | `BriarpackAlphaTest.java` | Covers targeted ETB + fizzle + flash |
 | Counterspell | `CancelTest.java` | Covers counter + graveyard |
+| Target creature exile with suspend counters | `s/SuspendTest.java` | Covers exile, suspend countdown, free cast, and creature-only targeting |
 | Draw spell | `CounselOfTheSoratamiTest.java` | Covers draw count + graveyard |
 | Destroy spell | `TerrorTest.java` | Covers destroy + filter + fizzle |
 | Equipment | `LeoninScimitarTest.java` | Covers equip + boost + unequip |

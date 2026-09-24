@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 /** Who mills cards when a {@link MillEffect} resolves, relative to the effect's controller. */
 public enum MillRecipient {
     CONTROLLER,
+    /** The player remembered by the source permanent's as-enters choice. */
+    CHOSEN_PLAYER,
     TARGET_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,

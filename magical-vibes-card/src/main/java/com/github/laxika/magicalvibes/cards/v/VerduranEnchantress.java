@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1004")
 @CardRegistration(set = "4ED", collectorNumber = "281")
 @CardRegistration(set = "9ED", collectorNumber = "279")
 @CardRegistration(set = "6ED", collectorNumber = "264")
@@ -19,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "337")
 @CardRegistration(set = "SUM", collectorNumber = "223")
 @CardRegistration(set = "3ED", collectorNumber = "223")
+@CardRegistration(set = "2ED", collectorNumber = "223")
 public class VerduranEnchantress extends Card {
 
     public VerduranEnchantress() {

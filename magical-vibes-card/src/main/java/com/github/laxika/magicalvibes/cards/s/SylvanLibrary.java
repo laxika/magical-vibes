@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "ME1", collectorNumber = "133")
 @CardRegistration(set = "EMA", collectorNumber = "187")
 @CardRegistration(set = "VMA", collectorNumber = "235")
+@CardRegistration(set = "SLD", collectorNumber = "2058")
 @CardRegistration(set = "SPG", collectorNumber = "155")
 @CardRegistration(set = "DMR", collectorNumber = "179")
 public class SylvanLibrary extends Card {

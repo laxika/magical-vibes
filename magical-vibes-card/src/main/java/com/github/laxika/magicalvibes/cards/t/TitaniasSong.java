@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "220")
 @CardRegistration(set = "ATQ", collectorNumber = "35")
 @CardRegistration(set = "3ED", collectorNumber = "220")
+@CardRegistration(set = "ME4", collectorNumber = "170")
 public class TitaniasSong extends Card {
 
     public TitaniasSong() {

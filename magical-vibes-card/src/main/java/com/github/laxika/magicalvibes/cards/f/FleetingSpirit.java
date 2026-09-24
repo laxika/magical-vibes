@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "14")
+@CardRegistration(set = "DBL", collectorNumber = "281")
 public class FleetingSpirit extends Card {
 
     public FleetingSpirit() {

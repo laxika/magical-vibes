@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "EA3", collectorNumber = "23")
 @CardRegistration(set = "MSC", collectorNumber = "271")
 @CardRegistration(set = "MSC", collectorNumber = "498")
+@CardRegistration(set = "TMC", collectorNumber = "76")
 public class SunkenHollow extends Card {
 
     public SunkenHollow() {

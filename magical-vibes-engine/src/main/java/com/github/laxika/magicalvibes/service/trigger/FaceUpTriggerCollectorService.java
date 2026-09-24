@@ -114,9 +114,9 @@ public class FaceUpTriggerCollectorService {
                 faceUp.turnedPermanent().getId(),
                 match.permanent().getId());
         entry.setTriggeringPermanentId(faceUp.turnedPermanent().getId());
-        if (untapsTurnedPermanent) {
-            entry.setNonTargeting(true);
-        }
+        // This ID records the turn-up event, not a chosen target. The trigger must still
+        // resolve if the turned permanent dies before the ability resolves.
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when {} is turned face up",

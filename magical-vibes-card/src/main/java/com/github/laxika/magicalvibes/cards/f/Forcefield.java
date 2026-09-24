@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSource
 import java.util.List;
 
 @CardRegistration(set = "ME1", collectorNumber = "157")
+@CardRegistration(set = "2ED", collectorNumber = "244")
 public class Forcefield extends Card {
 
     public Forcefield() {

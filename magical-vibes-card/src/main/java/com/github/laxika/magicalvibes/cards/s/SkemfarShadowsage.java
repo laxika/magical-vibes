@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "110")
+@CardRegistration(set = "SLD", collectorNumber = "759")
 public class SkemfarShadowsage extends Card {
 
     public SkemfarShadowsage() {

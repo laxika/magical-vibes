@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "POR", collectorNumber = "70")
+@CardRegistration(set = "ME4", collectorNumber = "65")
 public class SymbolOfUnsummoning extends Card {
 
     public SymbolOfUnsummoning() {

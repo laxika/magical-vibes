@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "349")
 @CardRegistration(set = "5ED", collectorNumber = "401")
 @CardRegistration(set = "ATQ", collectorNumber = "70")
+@CardRegistration(set = "ME4", collectorNumber = "232")
 public class TawnossWeaponry extends Card {
 
     public TawnossWeaponry() {

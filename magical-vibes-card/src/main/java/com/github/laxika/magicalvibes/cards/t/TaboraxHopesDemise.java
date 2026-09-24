@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "129")
+@CardRegistration(set = "CMM", collectorNumber = "189")
 public class TaboraxHopesDemise extends Card {
 
     public TaboraxHopesDemise() {

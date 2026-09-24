@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "120")
+@CardRegistration(set = "SLD", collectorNumber = "584")
+@CardRegistration(set = "CMD", collectorNumber = "239")
 public class WrexialTheRisenDeep extends Card {
 
     public WrexialTheRisenDeep() {

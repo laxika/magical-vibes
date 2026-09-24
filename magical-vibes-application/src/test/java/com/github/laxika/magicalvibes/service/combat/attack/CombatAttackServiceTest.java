@@ -96,6 +96,21 @@ class CombatAttackServiceTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.t.TotalWar.class)
+    void playerAttackSweepUsesTheAttackingPlayerWithoutTargetChoice() {
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.t.TotalWar());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent stayedHome = addCreatureReady(player2, new GrizzlyBears());
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker).doesNotContain(stayedHome);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(defender);
+    }
+
+    @Test
     @CardUsed({KeldonBerserker.class, RhysticCave.class})
     @DisplayName("An attack trigger gated by at most zero matching permanents is skipped when not met")
     void skipsAtMostPermanentAttackTriggerWhenConditionIsNotMet() {
@@ -152,6 +167,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({Juggernaut.class, FormOfTheDragon.class})
         @DisplayName("A must-attack creature with no legal attack target is not offered")
         void mustAttackCreatureWithNoLegalTargetIsNotOffered() {
             addCreatureReady(player1, new Juggernaut());
@@ -574,6 +590,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({GrizzlyBears.class, WindDrake.class, FormOfTheDragon.class})
         @DisplayName("A defender-scoped restriction excludes the barred creature from declaration choices")
         void defenderScopedRestrictionExcludesBarredCreature() {
             // Form of the Dragon: "Creatures without flying can't attack you."

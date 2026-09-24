@@ -361,6 +361,7 @@ public class EffectResolutionService {
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
@@ -374,11 +375,15 @@ public class EffectResolutionService {
 
     private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {
         if (entry.getSourcePermanentId() == null
-                || !(may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy)) {
+                || !entry.isMarkSourceOncePerTurnOnAcceptance()
+                || gameData.resolvedMayAccepted != null) {
             return false;
         }
-        return copy.markSourceOncePerTurnOnAccept()
-                && !copy.accepted()
-                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
+        if (may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy) {
+            return copy.markSourceOncePerTurnOnAccept()
+                    && !copy.accepted()
+                    && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
+        }
+        return gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
     }
 }

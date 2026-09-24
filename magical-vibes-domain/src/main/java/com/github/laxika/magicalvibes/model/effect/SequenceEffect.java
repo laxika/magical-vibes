@@ -112,11 +112,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     }
 
     @Override
-    public boolean hasOptionalTarget() {
-        return optionalTarget;
-    }
-
-    @Override
     public CardEffect boundToDyingCard(UUID dyingCardId) {
         if (steps.stream().noneMatch(DyingCreatureCardAwareEffect.class::isInstance)) {
             return this;
@@ -162,6 +157,17 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
             }
         }
         return implicitSourceSpec;
+    }
+
+    @Override
+    public boolean hasOptionalTarget() {
+        if (optionalTarget) return true;
+        for (CardEffect step : steps) {
+            if (step.targetSpec().declaredTarget() != null) {
+                return step.hasOptionalTarget();
+            }
+        }
+        return false;
     }
 
     @Override

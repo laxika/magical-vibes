@@ -1,21 +1,25 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.e.EngineeredExplosives;
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.f.FeedbackBolt;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.cards.n.NayaCharm;
 import com.github.laxika.magicalvibes.cards.n.NightsWhisper;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SerumVisions;
+import com.github.laxika.magicalvibes.cards.t.TelJiladJustice;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AllSunsDawn.class, AuriokChampion.class, SerumVisions.class, NightsWhisper.class,
+        FeedbackBolt.class, TelJiladJustice.class, NayaCharm.class, EngineeredExplosives.class,
+        MycosynthLattice.class})
 class AllSunsDawnTest extends BaseCardTest {
 
     private void addMana() {
@@ -26,13 +30,13 @@ class AllSunsDawnTest extends BaseCardTest {
     @Test
     void returnsUpToOneCardOfEachColorAndExilesItself() {
         List<Card> cards = List.of(
-                new HolyDay(), new CounselOfTheSoratami(), new NightsWhisper(), new Shock(), new GiantGrowth());
+                new AuriokChampion(), new SerumVisions(), new NightsWhisper(), new FeedbackBolt(),
+                new TelJiladJustice());
         harness.setGraveyard(player1, cards);
         harness.setHand(player1, List.of(new AllSunsDawn()));
         addMana();
 
-        harness.castSorcery(player1, 0, cards.stream().map(Card::getId).toList());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, cards.stream().map(Card::getId).toList());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getId))
@@ -45,22 +49,22 @@ class AllSunsDawnTest extends BaseCardTest {
     void multicoloredCardsCanFillDifferentColorGroups() {
         Card firstNayaCharm = new NayaCharm();
         Card secondNayaCharm = new NayaCharm();
-        Card counsel = new CounselOfTheSoratami();
-        harness.setGraveyard(player1, List.of(firstNayaCharm, secondNayaCharm, counsel));
+        Card blueCard = new SerumVisions();
+        harness.setGraveyard(player1, List.of(firstNayaCharm, secondNayaCharm, blueCard));
         harness.setHand(player1, List.of(new AllSunsDawn()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(counsel.getId(), firstNayaCharm.getId(), secondNayaCharm.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0,
+                List.of(blueCard.getId(), firstNayaCharm.getId(), secondNayaCharm.getId()));
 
         assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getId))
-                .containsExactlyInAnyOrder(counsel.getId(), firstNayaCharm.getId(), secondNayaCharm.getId());
+                .containsExactlyInAnyOrder(blueCard.getId(), firstNayaCharm.getId(), secondNayaCharm.getId());
     }
 
     @Test
     void rejectsTwoCardsThatCanOnlyBeAssignedToTheSameColor() {
-        Card firstWhiteCard = new HolyDay();
-        Card secondWhiteCard = new HolyDay();
+        Card firstWhiteCard = new AuriokChampion();
+        Card secondWhiteCard = new AuriokChampion();
         harness.setGraveyard(player1, List.of(firstWhiteCard, secondWhiteCard));
         harness.setHand(player1, List.of(new AllSunsDawn()));
         addMana();
@@ -80,5 +84,57 @@ class AllSunsDawnTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(colorlessCard.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayResolveWithNoTargetsAndLeaveOtherGraveyardCardsAlone() {
+        Card unselectedCard = new AuriokChampion();
+        harness.setGraveyard(player1, List.of(unselectedCard));
+        harness.setHand(player1, List.of(new AllSunsDawn()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselectedCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId()).stream().map(Card::getName))
+                .contains("All Suns' Dawn");
+    }
+
+    @Test
+    void returnsOnlySelectedColors() {
+        Card whiteCard = new AuriokChampion();
+        Card blackCard = new NightsWhisper();
+        harness.setGraveyard(player1, List.of(whiteCard, blackCard));
+        harness.setHand(player1, List.of(new AllSunsDawn()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(whiteCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getId))
+                .contains(whiteCard.getId())
+                .doesNotContain(blackCard.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(blackCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId()).stream().map(Card::getName))
+                .contains("All Suns' Dawn");
+    }
+
+    @Test
+    void isCounteredIfAllTargetsBecomeColorlessBeforeResolution() {
+        Card whiteCard = new AuriokChampion();
+        Card allSunsDawn = new AllSunsDawn();
+        harness.setGraveyard(player1, List.of(whiteCard));
+        harness.setHand(player1, List.of(allSunsDawn));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of(whiteCard.getId()));
+        harness.enterBattlefieldAndReturn(player1, new MycosynthLattice());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getId))
+                .doesNotContain(whiteCard.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()).stream().map(Card::getId))
+                .containsExactlyInAnyOrder(whiteCard.getId(), allSunsDawn.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()).stream().map(Card::getName))
+                .doesNotContain("All Suns' Dawn");
     }
 }

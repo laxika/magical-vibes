@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWit
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "15")
+@CardRegistration(set = "DBL", collectorNumber = "15")
 public class CurseOfSilence extends Card {
 
     public CurseOfSilence() {

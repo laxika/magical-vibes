@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.ThatcherRevolt;
-import com.github.laxika.magicalvibes.cards.v.VillageRites;
+import com.github.laxika.magicalvibes.cards.b.BarterInBlood;
+import com.github.laxika.magicalvibes.cards.o.OmegaMyr;
+import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,37 +17,49 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Lightning Coils")
+@CardUsed({LightningCoils.class, OmegaMyr.class, RaiseTheAlarm.class, BarterInBlood.class})
 class LightningCoilsTest extends BaseCardTest {
 
     @Test
     @DisplayName("A nontoken creature you control dying adds a charge counter")
     void nontokenCreatureDeathAddsChargeCounter() {
         harness.addToBattlefield(player1, new LightningCoils());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent myr = addCreatureReady(player1, new OmegaMyr());
 
-        harness.setHand(player1, List.of(new VillageRites()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorceryWithSacrifice(player1, 0, bears.getId());
+        harness.castFromHand(player1, new BarterInBlood(), "{2}{B}{B}");
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         Permanent coils = findPermanent(player1, "Lightning Coils");
         assertThat(coils.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(myr.getCard());
     }
 
     @Test
     @DisplayName("A token creature dying does not add a charge counter")
     void tokenCreatureDeathDoesNotAddChargeCounter() {
         harness.addToBattlefield(player1, new LightningCoils());
-        harness.setHand(player1, List.of(new ThatcherRevolt(), new VillageRites()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new RaiseTheAlarm(), "{1}{W}");
         harness.passBothPriorities();
 
-        Permanent token = findPermanent(player1, "Human");
-        harness.castSorceryWithSacrifice(player1, 0, token.getId());
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+        harness.castFromHand(player1, new BarterInBlood(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent coils = findPermanent(player1, "Lightning Coils");
+        assertThat(coils.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's nontoken creature dying does not add a charge counter")
+    void opponentNontokenCreatureDeathDoesNotAddChargeCounter() {
+        harness.addToBattlefield(player1, new LightningCoils());
+        addCreatureReady(player2, new OmegaMyr());
+
+        harness.castFromHand(player1, new BarterInBlood(), "{2}{B}{B}");
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         Permanent coils = findPermanent(player1, "Lightning Coils");
@@ -71,6 +83,20 @@ class LightningCoilsTest extends BaseCardTest {
             assertThat(elemental.getCard().getToughness()).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
         });
+    }
+
+    @Test
+    @DisplayName("More than five charge counters create and then remove all of them")
+    void moreThanFiveCountersCreateThatManyElementals() {
+        harness.addToBattlefield(player1, new LightningCoils());
+        Permanent coils = findPermanent(player1, "Lightning Coils");
+        coils.setCounterCount(CounterType.CHARGE, 7);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(coils.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(findPermanents(player1, "Elemental")).hasSize(7);
     }
 
     @Test

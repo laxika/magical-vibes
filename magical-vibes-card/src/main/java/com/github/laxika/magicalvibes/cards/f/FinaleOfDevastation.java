@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "160")
+@CardRegistration(set = "CMM", collectorNumber = "289")
+@CardRegistration(set = "CMM", collectorNumber = "559")
+@CardRegistration(set = "CMM", collectorNumber = "700")
 public class FinaleOfDevastation extends Card {
 
     public FinaleOfDevastation() {

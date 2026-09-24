@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.b.BronzeSable;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.d.DarksteelPendant;
+import com.github.laxika.magicalvibes.cards.o.Oxidize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArcboundBruiser.class, CrazedGoblin.class, DarksteelGargoyle.class,
+        DarksteelPendant.class, Oxidize.class})
 class ArcboundBruiserTest extends BaseCardTest {
 
     @Test
@@ -35,47 +40,64 @@ class ArcboundBruiserTest extends BaseCardTest {
     void deathTriggerMayPutItsCountersOnTargetArtifactCreature() {
         Permanent bruiser = addCreatureReady(player1, new ArcboundBruiser());
         bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        bruiser.tap();
-        Permanent bronzeSable = addCreatureReady(player1, new BronzeSable());
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
 
         destroyBruiser(player2, bruiser.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bronzeSable.getId());
+        harness.handlePermanentChosen(player1, gargoyle.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void deathTriggerCanTargetOpponentsArtifactCreature() {
+        Permanent bruiser = addCreatureReady(player1, new ArcboundBruiser());
+        bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent gargoyle = addCreatureReady(player2, new DarksteelGargoyle());
+
+        destroyBruiser(player2, bruiser.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId());
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
     void deathTriggerCannotTargetNonArtifactCreature() {
         Permanent bruiser = addCreatureReady(player1, new ArcboundBruiser());
         bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        bruiser.tap();
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent bronzeSable = addCreatureReady(player1, new BronzeSable());
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent pendant = harness.addToBattlefieldAndReturn(player1, new DarksteelPendant());
 
         destroyBruiser(player2, bruiser.getId());
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).contains(bronzeSable.getId()).doesNotContain(bears.getId());
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId())
+                .doesNotContain(goblin.getId(), pendant.getId());
 
-        harness.handlePermanentChosen(player1, bronzeSable.getId());
+        harness.handlePermanentChosen(player1, gargoyle.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void destroyBruiser(com.github.laxika.magicalvibes.model.Player destroyer, UUID bruiserId) {
         harness.forceActivePlayer(destroyer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(destroyer, List.of(new Assassinate()));
-        harness.addMana(destroyer, ManaColor.BLACK, 1);
-        harness.addMana(destroyer, ManaColor.COLORLESS, 3);
+        harness.setHand(destroyer, List.of(new Oxidize()));
+        harness.addMana(destroyer, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, destroyer, 0, 0, bruiserId, null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(destroyer, 0, bruiserId);
     }
 }

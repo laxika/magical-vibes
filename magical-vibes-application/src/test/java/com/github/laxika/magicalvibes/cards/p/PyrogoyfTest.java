@@ -32,7 +32,7 @@ class PyrogoyfTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Pyrogoyf deals the entering Lhurgoyf's power to any target")
+    @DisplayName("The entering Lhurgoyf deals damage equal to its own power")
     void lhurgoyfEntryDealsItsPowerToAnyTarget() {
         harness.addToBattlefield(player1, new Pyrogoyf());
         setThreeCardTypesInGraveyards();
@@ -42,11 +42,12 @@ class PyrogoyfTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveUntilInputOrEmpty();
 
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Lhurgoyf"))).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     @Test

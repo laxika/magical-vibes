@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "228")
 @CardRegistration(set = "ZNE", collectorNumber = "29")
+@CardRegistration(set = "TLE", collectorNumber = "61")
 public class ValakutTheMoltenPinnacle extends Card {
 
     public ValakutTheMoltenPinnacle() {

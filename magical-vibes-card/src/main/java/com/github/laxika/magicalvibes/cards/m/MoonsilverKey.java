@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "255")
+@CardRegistration(set = "DBL", collectorNumber = "255")
 public class MoonsilverKey extends Card {
 
     public MoonsilverKey() {

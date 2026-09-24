@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "168")
+@CardRegistration(set = "SLD", collectorNumber = "1658")
 public class ChaoticGoo extends Card {
 
     public ChaoticGoo() {

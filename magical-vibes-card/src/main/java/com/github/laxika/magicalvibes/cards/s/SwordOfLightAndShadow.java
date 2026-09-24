@@ -21,19 +21,22 @@ import java.util.Set;
 @CardRegistration(set = "MPS", collectorNumber = "30")
 @CardRegistration(set = "2XM", collectorNumber = "298")
 @CardRegistration(set = "AA1", collectorNumber = "14")
+@CardRegistration(set = "ACR", collectorNumber = "100")
+@CardRegistration(set = "ACR", collectorNumber = "125")
 public class SwordOfLightAndShadow extends Card {
 
     public SwordOfLightAndShadow() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
                 Set.of(CardColor.WHITE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new GainLifeEffect(3));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
+                        .upTo(true)
                         .build());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

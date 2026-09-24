@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.r.RiphookRaider;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "VOW", collectorNumber = "203")
+@CardRegistration(set = "DBL", collectorNumber = "470")
 public class HookhandMariner extends Card {
 
     public HookhandMariner() {

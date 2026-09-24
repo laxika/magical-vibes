@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "11")
+@CardRegistration(set = "DBL", collectorNumber = "278")
 public class EstwaldShieldbasher extends Card {
 
     public EstwaldShieldbasher() {

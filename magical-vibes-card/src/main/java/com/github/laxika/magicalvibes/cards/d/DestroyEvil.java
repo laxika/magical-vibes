@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "128")
+@CardRegistration(set = "DMU", collectorNumber = "17")
 public class DestroyEvil extends Card {
 
     public DestroyEvil() {

@@ -26,7 +26,7 @@ class PathOfAncestryTest extends BaseCardTest {
     }
 
     @Test
-    void producesCommanderIdentityManaAndTagsIt() {
+    void producesCommanderIdentityManaAndTracksItsSource() {
         gd.playerCommanders.put(player1.getId(), List.of(commander()));
         Permanent path = harness.addToBattlefieldAndReturn(player1, new PathOfAncestry());
         path.untap();
@@ -38,7 +38,8 @@ class PathOfAncestryTest extends BaseCardTest {
         harness.handleListChoice(player1, ManaColor.RED.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).getPathOfAncestryManaTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSpellCastTriggerManaTotals())
+                .containsEntry(path.getId(), 1);
     }
 
     @Test
@@ -71,6 +72,19 @@ class PathOfAncestryTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void matchingCreatureSpellUsingOtherManaDoesNotCauseScry() {
+        gd.playerCommanders.put(player1.getId(), List.of(commander()));
+        harness.addToBattlefield(player1, new PathOfAncestry());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(creature(CardSubtype.VAMPIRE)));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
     private static Card commander() {

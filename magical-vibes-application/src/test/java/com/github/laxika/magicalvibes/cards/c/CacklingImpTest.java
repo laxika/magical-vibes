@@ -1,16 +1,22 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.HashSet;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed(CacklingImp.class)
 class CacklingImpTest extends BaseCardTest {
 
     @Test
@@ -54,11 +60,31 @@ class CacklingImpTest extends BaseCardTest {
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        addReadyImp(player1);
+        Permanent permanentTarget = addReadyImp(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, permanentTarget.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Target must be a player");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player with protection from black")
+    void cannotTargetPlayerWithProtectionFromBlack() {
+        addReadyImp(player1);
+        gd.playerProtectionFromColorsUntilEndOfTurn
+                .computeIfAbsent(player2.getId(), ignored -> new HashSet<>())
+                .add(CardColor.BLACK);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
     private Permanent addReadyImp(Player player) {
-        CacklingImp card = new CacklingImp();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CacklingImp());
     }
 }

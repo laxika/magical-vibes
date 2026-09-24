@@ -51,6 +51,7 @@ public class SeparateCreaturesIntoPilesAndDestroyEffectHandler implements Normal
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(controllerId, targetPlayerId,
                 creatureIds, List.of(), Map.of(), List.of(), List.of(), CardPileDisposition.DESTROY, false));
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, creatureIds, creatureIds.size(),

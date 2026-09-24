@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.d.DogWalker;
-import com.github.laxika.magicalvibes.cards.e.ExposeTheCulprit;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
+import com.github.laxika.magicalvibes.cards.t.TempleOfTheFalseGod;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,13 +15,13 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AvenFarseer.class, DogWalker.class, ExposeTheCulprit.class, Forest.class})
+@CardUsed({AvenFarseer.class, ScornfulEgotist.class, TempleOfTheFalseGod.class})
 class AvenFarseerTest extends BaseCardTest {
 
     @Test
     void putsCounterOnItselfWhenAnotherCreatureTurnsFaceUp() {
         Permanent farseer = addCreatureReady(player1, new AvenFarseer());
-        harness.setHand(player1, List.of(new DogWalker()));
+        harness.setHand(player1, List.of(new ScornfulEgotist()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
@@ -30,12 +29,21 @@ class AvenFarseerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent dogWalker = findPermanent(player1, "Dog Walker");
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dogWalker));
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        Permanent faceDownEgotist = findPermanent(player1, "Scornful Egotist");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(faceDownEgotist));
+        resolveAllTriggers();
+
+        assertThat(farseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void triggersWhenItTurnsFaceUp() {
+        Permanent farseer = addCreatureReady(player1, new AvenFarseer());
+        farseer.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, farseer);
+        resolveAllTriggers();
 
         assertThat(farseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -43,19 +51,13 @@ class AvenFarseerTest extends BaseCardTest {
     @Test
     void triggersForAnOpponentsFaceDownNoncreaturePermanent() {
         Permanent farseer = addCreatureReady(player1, new AvenFarseer());
-        Permanent faceDownForest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        faceDownForest.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent faceDownTemple = harness.addToBattlefieldAndReturn(player2, new TempleOfTheFalseGod());
+        faceDownTemple.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
-        harness.setHand(player1, List.of(new ExposeTheCulprit()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of(faceDownForest.getId()));
-        harness.passBothPriorities();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, faceDownTemple);
+        resolveAllTriggers();
 
-        assertThat(faceDownForest.isFaceDown()).isFalse();
+        assertThat(faceDownTemple.isFaceDown()).isFalse();
         assertThat(farseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

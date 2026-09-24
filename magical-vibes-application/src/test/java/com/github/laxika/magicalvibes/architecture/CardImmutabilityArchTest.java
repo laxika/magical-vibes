@@ -40,6 +40,7 @@ class CardImmutabilityArchTest {
             "CardPrinting",            // stamps printing data on freshly constructed cards and their back faces
             "GameSetupService",        // stamps ownerId, then freezes
             "SpellCastingService",     // mutates the modal runtime copy it just created
+            "ReduceCastCostForMatchingSpellsEffectHandler", // assembles a fresh face-down card for cost evaluation
             "AbilityActivationService", // records effective sacrificed-land types on a fresh runtime copy
             "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
@@ -54,6 +55,7 @@ class CardImmutabilityArchTest {
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeCopyOfEnteringCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Unstable Shapeshifter)
+            "BecomeCopyOfTargetCreaturePermanentlyEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfTargetPermanentUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService

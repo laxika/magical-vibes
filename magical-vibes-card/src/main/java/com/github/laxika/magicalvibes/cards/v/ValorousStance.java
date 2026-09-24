@@ -23,6 +23,8 @@ import java.util.List;
 @CardRegistration(set = "GN3", collectorNumber = "20")
 @CardRegistration(set = "2XM", collectorNumber = "38")
 @CardRegistration(set = "MSC", collectorNumber = "145")
+@CardRegistration(set = "TLE", collectorNumber = "154")
+@CardRegistration(set = "DBL", collectorNumber = "309")
 public class ValorousStance extends Card {
 
     public ValorousStance() {

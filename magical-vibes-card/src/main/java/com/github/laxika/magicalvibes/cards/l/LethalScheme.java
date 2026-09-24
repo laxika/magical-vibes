@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "157")
 @CardRegistration(set = "MSC", collectorNumber = "353")
+@CardRegistration(set = "SLD", collectorNumber = "2187")
 public class LethalScheme extends Card {
 
     public LethalScheme() {

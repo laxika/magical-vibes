@@ -150,10 +150,6 @@ public class LegendRuleService {
      * and any supertypes granted by static effects (e.g. In Bolas's Clutches).
      */
     private boolean isLegendary(GameData gameData, Permanent perm) {
-        if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
-            return true;
-        }
-        return gameQueryService.computeStaticBonus(gameData, perm)
-                .grantedSupertypes().contains(CardSupertype.LEGENDARY);
+        return gameQueryService.hasEffectiveSupertype(gameData, perm, CardSupertype.LEGENDARY);
     }
 }

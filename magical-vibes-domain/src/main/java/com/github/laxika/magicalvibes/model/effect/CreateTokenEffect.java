@@ -445,6 +445,16 @@ public record CreateTokenEffect(
                 )));
     }
 
+    /** Food token: colorless artifact with "{2}, {T}, Sacrifice this token: You gain 3 life." */
+    public static CreateTokenEffect ofFoodToken(int amount) {
+        return ofArtifactToken(amount, "Food", List.of(CardSubtype.FOOD),
+                List.of(new ActivatedAbility(
+                        true, "{2}",
+                        List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
+                        "{2}, {T}, Sacrifice this token: You gain 3 life."
+                )));
+    }
+
     /**
      * Blood token: colorless artifact with
      * "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."

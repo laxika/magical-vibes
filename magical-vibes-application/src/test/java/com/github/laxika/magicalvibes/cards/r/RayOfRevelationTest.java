@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RayOfRevelation.class, MirarisWake.class, BattlewiseAven.class})
+@CardUsed({BattlewiseAven.class, MirarisWake.class, RayOfRevelation.class})
 class RayOfRevelationTest extends BaseCardTest {
 
     @Test

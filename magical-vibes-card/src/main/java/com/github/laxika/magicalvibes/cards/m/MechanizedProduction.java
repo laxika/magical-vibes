@@ -16,6 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "38")
+@CardRegistration(set = "PIP", collectorNumber = "989")
+@CardRegistration(set = "SLD", collectorNumber = "1841")
+@CardRegistration(set = "SLD", collectorNumber = "2277")
+@CardRegistration(set = "MAR", collectorNumber = "57")
 public class MechanizedProduction extends Card {
 
     public MechanizedProduction() {

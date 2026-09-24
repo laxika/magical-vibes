@@ -74,23 +74,29 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         // Source-relative amounts use the live source permanent when it is still on the
         // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
-        Permanent source = entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+        UUID sourcePermanentId = e.sourceIsTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId != null
+                ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
                 : null;
         if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
+            source = e.sourceIsTriggeringPermanent() && entry.getAttachedPermanentSnapshot() != null
+                    ? entry.getAttachedPermanentSnapshot() : entry.getSourcePermanentSnapshot();
         }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
 
         StackEntry damageEntry = entry;
         if (e.sourceIsTriggeringPermanent()) {
-            damageEntry = new StackEntry(entry);
+            damageEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+                    entry.getDescription(), entry.getEffectsToResolve(), targetId, sourcePermanentId);
+            damageEntry.setXValue(entry.getXValue());
+            damageEntry.setSourcePermanentSnapshot(source == null ? null : new Permanent(source));
             if (source != null) {
                 damageEntry.setDamageSourceCard(source.getCard());
             }
-            UUID sourceControllerId = entry.getSourcePermanentId() == null ? null
-                    : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+            UUID sourceControllerId = sourcePermanentId == null ? null
+                    : gameQueryService.findPermanentController(gameData, sourcePermanentId);
             if (sourceControllerId == null) {
                 sourceControllerId = entry.getTriggeringPermanentControllerId();
             }
@@ -106,7 +112,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         boolean targetIsCreature = false;
         boolean targetIsPlaneswalker = false;
         boolean targetIsBattle = false;
-        int toughnessBefore = 0;
+        int lethalDamageThresholdBefore = 0;
         int markedDamageBefore = 0;
         int loyaltyBefore = 0;
         int defenseBefore = 0;
@@ -117,8 +123,8 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                 targetIsCreature = gameQueryService.isCreature(gameData, excessTarget);
                 targetIsPlaneswalker = excessTarget.getCard().hasType(CardType.PLANESWALKER);
                 targetIsBattle = excessTarget.getCard().hasType(CardType.BATTLE);
-                toughnessBefore = targetIsCreature
-                        ? gameQueryService.getEffectiveToughness(gameData, excessTarget)
+                lethalDamageThresholdBefore = targetIsCreature
+                        ? gameQueryService.getLethalDamageThreshold(gameData, excessTarget)
                         : 0;
                 markedDamageBefore = excessTarget.getMarkedDamage();
                 loyaltyBefore = excessTarget.getCounterCount(CounterType.LOYALTY);
@@ -155,7 +161,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             entry.setEventValue(excessTarget == null
                     ? 0
                     : damageSupport.computeExcessDamageToAnyTarget(damageDealt, targetIsCreature,
-                    toughnessBefore, markedDamageBefore, sourceHasDeathtouch,
+                    lethalDamageThresholdBefore, markedDamageBefore, sourceHasDeathtouch,
                     targetIsPlaneswalker, loyaltyBefore, targetIsBattle, defenseBefore));
         }
         gameOutcomeService.checkWinCondition(gameData);

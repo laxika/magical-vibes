@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BlackMarketConnectionsTest extends BaseCardTest {
 
     private static final String SELL_CONTRABAND =
-            "Sell Contraband — Create a Treasure token. You lose 1 life.";
+            "Sell Contraband â€” Create a Treasure token. You lose 1 life.";
     private static final String BUY_INFORMATION =
-            "Buy Information — Draw a card. You lose 2 life.";
+            "Buy Information â€” Draw a card. You lose 2 life.";
     private static final String HIRE_MERCENARY =
-            "Hire a Mercenary — Create a 3/2 colorless Shapeshifter creature token with changeling. You lose 3 life.";
+            "Hire a Mercenary â€” Create a 3/2 colorless Shapeshifter creature token with changeling. You lose 3 life.";
 
     @Test
     void sellsContrabandForATreasureAndOneLife() {

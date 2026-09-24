@@ -278,6 +278,13 @@ public record FlickerEffect(
                 TurnStep.END_STEP, returnTapped, null, null, 0, false, false);
     }
 
+    /** Exile the target permanent, or this permanent when no target was announced. */
+    public static FlickerEffect exileSelfOrTargetReturnAtControllerNextStep(TurnStep returnStep) {
+        return new FlickerEffect(FlickerScope.SELF_OR_TARGET, null, ReturnTiming.AT_STEP,
+                returnStep, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), false, true);
+    }
+
     /** Exile the enchanted creature and all Auras attached to it, returning them at the next end step. */
     public static FlickerEffect exileEnchantedCreatureAndAurasReturnAtEndStep() {
         return new FlickerEffect(FlickerScope.ENCHANTED_CREATURE_AND_AURAS, null, ReturnTiming.AT_STEP,
@@ -432,7 +439,8 @@ public record FlickerEffect(
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
             return TargetSpec.benign(TargetPredicates.player());
         }
-        if (scope == FlickerScope.SELF || scope == FlickerScope.ENCHANTED_CREATURE_AND_AURAS) {
+        if (scope == FlickerScope.SELF || scope == FlickerScope.SELF_OR_TARGET
+                || scope == FlickerScope.ENCHANTED_CREATURE_AND_AURAS) {
             return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "69")
+@CardRegistration(set = "DBL", collectorNumber = "69")
 public class PatricianGeist extends Card {
 
     public PatricianGeist() {

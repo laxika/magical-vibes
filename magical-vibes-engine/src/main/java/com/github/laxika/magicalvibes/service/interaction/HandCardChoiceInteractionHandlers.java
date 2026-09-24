@@ -58,6 +58,35 @@ public final class HandCardChoiceInteractionHandlers {
 
     /** Retraced Image — reveal one card from hand and conditionally put it onto the battlefield. */
     @Component
+    public static class WordOfCommandCardChoiceInteractionHandler
+            implements InteractionHandler<PendingInteraction.WordOfCommandCardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public WordOfCommandCardChoiceInteractionHandler(CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.WordOfCommandCardChoice> handledType() {
+            return PendingInteraction.WordOfCommandCardChoice.class;
+        }
+
+        @Override
+        public Class<? extends InteractionAnswer> answerType() {
+            return InteractionAnswer.CardIndexChosen.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.WordOfCommandCardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handleWordOfCommandCardChosen(
+                    gameData, player, ((InteractionAnswer.CardIndexChosen) answer).cardIndex());
+        }
+    }
+
+    @Component
     public static class RetracedImageCardChoiceInteractionHandler
             extends Base<PendingInteraction.RetracedImageCardChoice> {
 

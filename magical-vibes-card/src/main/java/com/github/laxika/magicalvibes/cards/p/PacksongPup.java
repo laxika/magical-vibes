@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "213")
+@CardRegistration(set = "DBL", collectorNumber = "480")
 public class PacksongPup extends Card {
 
     public PacksongPup() {

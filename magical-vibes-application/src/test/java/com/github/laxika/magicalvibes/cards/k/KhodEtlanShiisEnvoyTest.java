@@ -41,7 +41,7 @@ class KhodEtlanShiisEnvoyTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, ownForest, CardSubtype.ISLAND)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, opponentForest, CardSubtype.ISLAND)).isTrue();
 
-        harness.activateAbility(player1, 1, 1, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
 
         assertThat(ownForest.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);

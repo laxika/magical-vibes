@@ -252,6 +252,7 @@ public class TurnCleanupService {
             p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
             p.setAllDamageToPlusOnePlusOneCounterPreventionShield(false);
             p.setDamageDestructionShield(0);
+            p.setLandDestructionShield(0);
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
             p.getOpponentDrawRegenerationShieldRecipients().clear();
@@ -330,6 +331,7 @@ public class TurnCleanupService {
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
+        gameData.combatDamagePreventionTokenShields.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersWithDamageFromOpponentCreaturesPrevented.clear();
         gameData.playersWithCombatDamageFromTargetOpponentCreaturesPrevented.clear();
@@ -371,6 +373,7 @@ public class TurnCleanupService {
                         && gameData.activePlayerId.equals(watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
+        gameData.damagedCreatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.chainsDrawReplacementsApplied.clear();
@@ -423,9 +426,11 @@ public class TurnCleanupService {
         gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.clear();
         gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.cardsGrantedWarpUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
+        gameData.playersWithFreeHandCastUntilEndOfTurn.clear();
         gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
@@ -456,6 +461,7 @@ public class TurnCleanupService {
         gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
+        gameData.pendingNextInstantSorceryStormThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
@@ -465,6 +471,14 @@ public class TurnCleanupService {
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
+        for (UUID permanentId : gameData.temporaryChosenSubtypePermanentIds) {
+            gameData.forEachPermanent((ownerId, permanent) -> {
+                if (permanent.getId().equals(permanentId)) {
+                    permanent.setChosenSubtype(null);
+                }
+            });
+        }
+        gameData.temporaryChosenSubtypePermanentIds.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
@@ -505,6 +519,11 @@ public class TurnCleanupService {
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;
+        Set<UUID> expiredDiscordCopies = gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().stream()
+                .filter(entry -> entry.getValue() <= currentTurn)
+                .map(Map.Entry::getKey)
+                .filter(gameData.discordCopySourcePermanents::containsKey)
+                .collect(java.util.stream.Collectors.toSet());
         gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
             if (entry.getValue() <= currentTurn) {
                 gameData.exilePlayPermissions.remove(entry.getKey());
@@ -516,6 +535,12 @@ public class TurnCleanupService {
             }
             return false;
         });
+        for (UUID cardId : expiredDiscordCopies) {
+            if (gameData.findExiledCard(cardId) != null) {
+                gameData.removeFromExile(cardId);
+            }
+            gameData.discordCopySourcePermanents.remove(cardId);
+        }
         gameData.graveyardAdventureCastPermissions.entrySet()
                 .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
 

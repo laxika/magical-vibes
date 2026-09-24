@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AA4", collectorNumber = "14")
+@CardRegistration(set = "CMD", collectorNumber = "79")
 public class DreadCacodemon extends Card {
 
     public DreadCacodemon() {

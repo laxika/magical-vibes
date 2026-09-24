@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "A25", collectorNumber = "70")
+@CardRegistration(set = "C14", collectorNumber = "16")
 public class ReefWorm extends Card {
 
     public ReefWorm() {

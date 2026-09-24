@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTarget
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "182")
+@CardRegistration(set = "DBL", collectorNumber = "182")
 public class DefendTheCelestus extends Card {
 
     public DefendTheCelestus() {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.library;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,9 @@ class ZoneToLibraryServiceTest {
 
     @Mock
     private GraveyardService graveyardService;
+
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
 
     @InjectMocks
     private ZoneToLibraryService sut;
@@ -78,6 +82,7 @@ class ZoneToLibraryServiceTest {
         assertThat(gd.playerDecks.get(player1Id)).hasSize(6);
         assertThat(gd.playerHands.get(player1Id)).isEmpty();
         assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
+        verify(triggerCollectionService).checkCardsPutIntoLibraryTriggers(gd, player1Id, 5);
     }
 
     @Test

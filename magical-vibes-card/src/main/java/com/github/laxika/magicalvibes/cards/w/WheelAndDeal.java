@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "121")
+@CardRegistration(set = "SLD", collectorNumber = "1262")
 public class WheelAndDeal extends Card {
 
     public WheelAndDeal() {

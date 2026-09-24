@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "95")
+@CardRegistration(set = "DBL", collectorNumber = "95")
 public class Defenestrate extends Card {
 
     public Defenestrate() {

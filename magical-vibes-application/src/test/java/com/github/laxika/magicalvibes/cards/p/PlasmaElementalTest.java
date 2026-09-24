@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,16 +13,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PlasmaElemental.class, DrossCrocodile.class})
 class PlasmaElementalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Plasma Elemental can't be blocked")
     void cannotBeBlocked() {
-        Permanent elemental = addCreatureReady(player1, new PlasmaElemental());
-        elemental.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new PlasmaElemental());
+        addCreatureReady(player2, new DrossCrocodile());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -34,15 +34,9 @@ class PlasmaElementalTest extends BaseCardTest {
     void dealsDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent elemental = new Permanent(new PlasmaElemental());
-        elemental.setSummoningSick(false);
+        Permanent elemental = addCreatureReady(player1, new PlasmaElemental());
         elemental.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(elemental);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }

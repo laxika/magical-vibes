@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFi
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "186")
+@CardRegistration(set = "DBL", collectorNumber = "186")
 public class HarvesttideSentry extends Card {
 
     public HarvesttideSentry() {

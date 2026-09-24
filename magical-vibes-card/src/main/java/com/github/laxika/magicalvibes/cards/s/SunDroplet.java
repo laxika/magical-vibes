@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "249")
+@CardRegistration(set = "C13", collectorNumber = "261")
 public class SunDroplet extends Card {
 
     public SunDroplet() {

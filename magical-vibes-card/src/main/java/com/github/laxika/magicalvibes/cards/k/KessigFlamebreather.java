@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "164")
+@CardRegistration(set = "DBL", collectorNumber = "431")
 public class KessigFlamebreather extends Card {
 
     public KessigFlamebreather() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEff
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "225")
+@CardRegistration(set = "SLD", collectorNumber = "358")
 public class AlchemistsRefuge extends Card {
 
     public AlchemistsRefuge() {

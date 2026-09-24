@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "MSC", collectorNumber = "268")
 @CardRegistration(set = "MSC", collectorNumber = "495")
+@CardRegistration(set = "CMM", collectorNumber = "427")
+@CardRegistration(set = "CMM", collectorNumber = "618")
+@CardRegistration(set = "CMM", collectorNumber = "664")
 public class SpectatorSeating extends Card {
 
     public SpectatorSeating() {

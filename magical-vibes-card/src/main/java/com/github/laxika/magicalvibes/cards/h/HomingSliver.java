@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "118")
 @CardRegistration(set = "H09", collectorNumber = "19")
+@CardRegistration(set = "SLD", collectorNumber = "640")
 @CardRegistration(set = "TSR", collectorNumber = "171")
 public class HomingSliver extends Card {
 

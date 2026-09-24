@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "EVE", collectorNumber = "108")
 public class NoggleHedgeMage extends Card {
@@ -33,7 +35,7 @@ public class NoggleHedgeMage extends Card {
         // deal 2 damage to target player or planeswalker. Independent intervening-if gate; targets a
         // player or planeswalker (group 1). The two gates fire independently — the ETB multi-target
         // pipeline skips whichever group's effect was gated out.
-        target(new PermanentPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(),
+        target(new AnyTargetPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(), new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"), 1, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),

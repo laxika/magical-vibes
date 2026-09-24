@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "237")
+@CardRegistration(set = "DMU", collectorNumber = "196")
 public class BalmorBattlemageCaptain extends Card {
 
     public BalmorBattlemageCaptain() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "163")
+@CardRegistration(set = "DBL", collectorNumber = "163")
 public class TavernRuffian extends Card {
 
     public TavernRuffian() {

@@ -8,14 +8,18 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
  * the life-gain-capped form used by Well of Lost Dreams; {@link #uncapped()} is used when the
  * oracle text has no event-based upper bound.
  */
-public record PayXManaDrawXCardsEffect(boolean capAtEventValue) implements CardDrawingEffect {
+public record PayXManaDrawXCardsEffect(DynamicAmount maximumX, boolean capAtEventValue) implements CardDrawingEffect {
 
     public PayXManaDrawXCardsEffect() {
-        this(true);
+        this(null, true);
+    }
+
+    public PayXManaDrawXCardsEffect(DynamicAmount maximumX) {
+        this(maximumX, false);
     }
 
     public static PayXManaDrawXCardsEffect uncapped() {
-        return new PayXManaDrawXCardsEffect(false);
+        return new PayXManaDrawXCardsEffect(null, false);
     }
 
     @Override

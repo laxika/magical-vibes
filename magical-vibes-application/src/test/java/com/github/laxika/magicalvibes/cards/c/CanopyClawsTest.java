@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AnuridBrushhopper;
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CanopyClaws.class, BenevolentBodyguard.class, SuntailHawk.class, KrosanVerge.class})
+@CardUsed({AnuridBrushhopper.class, BenevolentBodyguard.class, CanopyClaws.class, KrosanVerge.class, SuntailHawk.class})
 class CanopyClawsTest extends BaseCardTest {
 
     @Test
@@ -93,5 +94,53 @@ class CanopyClawsTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Krosan Verge");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Target creature loses flying until end of turn")
+    void removesFlyingUntilEndOfTurnJudReview() {
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.setHand(player1, List.of(new CanopyClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        Permanent hawk = findPermanent(player2, "Suntail Hawk");
+        assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
+        harness.assertInGraveyard(player1, "Canopy Claws");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(hawk.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the targeted creature loses flying")
+    void onlyTargetedCreatureLosesFlying() {
+        Permanent targetedHawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent otherHawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        harness.setHand(player1, List.of(new CanopyClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, targetedHawk.getId());
+
+        assertThat(targetedHawk.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(otherHawk.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target a creature that does not have flying")
+    void canTargetCreatureWithoutFlyingJudReview() {
+        Permanent groundCreature = harness.addToBattlefieldAndReturn(player2, new AnuridBrushhopper());
+        harness.setHand(player1, List.of(new CanopyClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, groundCreature.getId());
+
+        assertThat(groundCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        harness.assertInGraveyard(player1, "Canopy Claws");
     }
 }

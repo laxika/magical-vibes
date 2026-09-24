@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePow
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "207")
+@CardRegistration(set = "DBL", collectorNumber = "207")
 public class WillowGeist extends Card {
 
     public WillowGeist() {

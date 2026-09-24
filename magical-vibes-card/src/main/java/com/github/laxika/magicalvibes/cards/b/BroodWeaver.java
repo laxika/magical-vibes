@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "173")
+@CardRegistration(set = "DBL", collectorNumber = "173")
 public class BroodWeaver extends Card {
 
     public BroodWeaver() {

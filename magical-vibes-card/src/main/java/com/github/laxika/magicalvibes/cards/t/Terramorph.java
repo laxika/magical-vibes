@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "MSC", collectorNumber = "180")
+@CardRegistration(set = "MH2", collectorNumber = "177")
 public class Terramorph extends Card {
 
     public Terramorph() {

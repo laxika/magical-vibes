@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 /**
- * When resolved, registers a delayed triggered ability for the rest of the turn: "Until end of turn,
- * whenever you cast a [filter] spell, [resolvedEffects]." Registered by Mountain Titan.
+ * When resolved, registers a delayed triggered ability for the rest of the turn or through the
+ * beginning of the controller's next turn: "Until end of turn, whenever you cast a [filter] spell,
+ * [resolvedEffects]." Registered by Mountain Titan and Nightmares and Daydreams.
  *
  * <p>The trigger belongs to the resolving controller and normally remains tied to the source
  * permanent, so it stops firing if that permanent leaves the battlefield. Set
@@ -22,51 +23,73 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  * @param sourceMustRemainOnBattlefield whether the source permanent must still be on the battlefield
  * @param targetFilter                 optional permanent/player target filter used when the delayed
  *                                     trigger goes on the stack
+ * @param untilNextTurn                whether the registration lasts through the controller's
+ *                                     next turn's beginning instead of through turn cleanup
  */
 public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                                StackEntryPredicate stackEntryFilter,
                                                                List<CardEffect> resolvedEffects,
-                                                               boolean oneShot,
-                                                               boolean sourceMustRemainOnBattlefield,
-                                                               TargetFilter targetFilter)
+                                                                boolean oneShot,
+                                                                boolean sourceMustRemainOnBattlefield,
+                                                               TargetFilter targetFilter,
+                                                               boolean untilNextTurn)
         implements CardEffect {
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects) {
-        this(spellFilter, null, resolvedEffects, false, true, null);
+        this(spellFilter, null, resolvedEffects, false, true, null, false);
     }
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects,
                                                             boolean sourceMustRemainOnBattlefield) {
-        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, null);
+        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, null, false);
     }
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects,
                                                             boolean sourceMustRemainOnBattlefield,
                                                             TargetFilter targetFilter) {
-        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, targetFilter);
+        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, targetFilter, false);
     }
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects,
                                                             boolean oneShot,
                                                             boolean sourceMustRemainOnBattlefield) {
-        this(spellFilter, null, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null);
+        this(spellFilter, null, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null, false);
+    }
+
+    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
+                                                            StackEntryPredicate stackEntryFilter,
+                                                            List<CardEffect> resolvedEffects,
+                                                            boolean oneShot,
+                                                            boolean sourceMustRemainOnBattlefield,
+                                                            TargetFilter targetFilter) {
+        this(spellFilter, stackEntryFilter, resolvedEffects, oneShot,
+                sourceMustRemainOnBattlefield, targetFilter, false);
     }
 
     public static RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(
             StackEntryPredicate stackEntryFilter, List<CardEffect> resolvedEffects,
             boolean sourceMustRemainOnBattlefield) {
         return new RegisterDelayedControllerSpellCastTriggerEffect(
-                null, stackEntryFilter, resolvedEffects, false, sourceMustRemainOnBattlefield, null);
+                null, stackEntryFilter, resolvedEffects, false, sourceMustRemainOnBattlefield, null, false);
     }
 
     public static RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(
             StackEntryPredicate stackEntryFilter, List<CardEffect> resolvedEffects,
             boolean oneShot, boolean sourceMustRemainOnBattlefield) {
         return new RegisterDelayedControllerSpellCastTriggerEffect(
-                null, stackEntryFilter, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null);
+                null, stackEntryFilter, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null, false);
+    }
+
+    /** Registers a controller spell-cast trigger through the beginning of that controller's next turn. */
+    public static RegisterDelayedControllerSpellCastTriggerEffect untilNextTurn(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects,
+            boolean sourceMustRemainOnBattlefield, TargetFilter targetFilter) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(
+                spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield,
+                targetFilter, true);
     }
 }

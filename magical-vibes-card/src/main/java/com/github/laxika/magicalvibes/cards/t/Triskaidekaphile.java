@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "81")
+@CardRegistration(set = "SLD", collectorNumber = "1829")
+@CardRegistration(set = "DBL", collectorNumber = "81")
 public class Triskaidekaphile extends Card {
 
     public Triskaidekaphile() {
