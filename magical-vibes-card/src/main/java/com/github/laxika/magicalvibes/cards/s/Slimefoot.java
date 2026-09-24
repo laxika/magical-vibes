@@ -18,6 +18,8 @@ import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "205")
 @CardRegistration(set = "TSR", collectorNumber = "386")
+@CardRegistration(set = "CMM", collectorNumber = "356")
+@CardRegistration(set = "CMM", collectorNumber = "686")
 public class Slimefoot extends Card {
 
     public Slimefoot() {

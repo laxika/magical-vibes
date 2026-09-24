@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "226")
 @CardRegistration(set = "MH2", collectorNumber = "128")
 public class Gargadon extends Card {
 

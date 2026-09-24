@@ -202,6 +202,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             com.github.laxika.magicalvibes.model.effect.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffect effect)
             implements PermanentChoiceContext {}
 
+    /** Descendants' Fury: choose a creature from the triggering combat-damage event. */
+    record SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
+            UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
+
     /** Eddie Brock: choose another creature to sacrifice before drawing and putting a permanent. */
     record SacrificeAnotherCreatureDrawAndMayPutPermanent(
             UUID controllerId, Card sourceCard, SacrificeAnotherCreatureDrawAndMayPutPermanentEffect effect)
@@ -985,6 +989,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Winota: choose the player or planeswalker for the selected Human to attack. */
     record ChosenPermanentAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
 
+    /** Portal Mage: choose a new player or permanent for an attacking creature to attack. */
+    record ReselectAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
+
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
             implements PermanentChoiceContext {
@@ -1628,26 +1635,33 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                StackEntryType spellType, int xValue, boolean castForMadnessCost,
-                               boolean exileInsteadOfGraveyard)
+                               boolean exileInsteadOfGraveyard, Zone sourceZone)
             implements PermanentChoiceContext {
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, 0, false, false);
+            this(cardToCast, controllerId, spellEffects, spellType, 0, false, false, Zone.HAND);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue) {
-            this(cardToCast, controllerId, spellEffects, spellType, xValue, false, false);
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, false, false, Zone.HAND);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue, boolean castForMadnessCost) {
-            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost, false);
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost, false, Zone.HAND);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue, boolean castForMadnessCost,
                                    boolean exileInsteadOfGraveyard) {
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost,
+                    exileInsteadOfGraveyard, Zone.HAND);
+        }
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                   StackEntryType spellType, int xValue, boolean castForMadnessCost,
+                                   boolean exileInsteadOfGraveyard, Zone sourceZone) {
             this.cardToCast = cardToCast;
             this.controllerId = controllerId;
             this.spellEffects = spellEffects;
@@ -1655,6 +1669,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this.xValue = xValue;
             this.castForMadnessCost = castForMadnessCost;
             this.exileInsteadOfGraveyard = exileInsteadOfGraveyard;
+            this.sourceZone = sourceZone;
         }
     }
 

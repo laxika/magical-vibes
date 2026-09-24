@@ -459,6 +459,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleRevealUntilCardPredicateAttackTarget(gameData, permanentId, revealAttack);
         } else if (context instanceof PermanentChoiceContext.ChosenPermanentAttackTarget chosenAttackTarget) {
             triggerHandler.handleChosenPermanentAttackTarget(gameData, permanentId, chosenAttackTarget);
+        } else if (context instanceof PermanentChoiceContext.ReselectAttackTarget reselectAttackTarget) {
+            triggerHandler.handleReselectedAttackTarget(gameData, permanentId, reselectAttackTarget);
         } else if (context instanceof PermanentChoiceContext.ExileReturnAttackTarget erat) {
             triggerHandler.handleExileReturnAttackTarget(gameData, permanentId, erat);
         } else if (context instanceof PermanentChoiceContext.EntersTriggerTarget ett) {

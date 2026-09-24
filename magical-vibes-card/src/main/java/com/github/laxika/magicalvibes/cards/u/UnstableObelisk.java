@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "416")
 @CardRegistration(set = "C14", collectorNumber = "58")
 public class UnstableObelisk extends Card {
 
@@ -18,7 +19,7 @@ public class UnstableObelisk extends Card {
         // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
-        // {7}, {T}, Sacrifice Unstable Obelisk: Destroy target permanent.
+        // {7}, {T}, Sacrifice this artifact: Destroy target permanent.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{7}",

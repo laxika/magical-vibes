@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilOppo
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSR", collectorNumber = "298")
+@CardRegistration(set = "CMM", collectorNumber = "47")
 public class PalaceJailer extends Card {
 
     public PalaceJailer() {

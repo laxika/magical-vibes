@@ -92,6 +92,8 @@ import java.util.Set;
  *                             (e.g. Night Nurse, Healer of Heroes); reads the
  *                             {@code cardsPutIntoGraveyardFromAnywhereThisTurn} tracking of the graveyard's
  *                             owner and is only meaningful when {@link #targetGraveyard} is {@code true}
+ * @param targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn {@code true} to restrict the <b>targeted</b>
+ *                             graveyard card to one discarded or put into a graveyard from a library this turn
  * @param targetNotPutIntoGraveyardThisCombat {@code true} to exclude targeted graveyard cards put into
  *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
  *                             only meaningful when {@link #targetGraveyard} is {@code true}
@@ -282,6 +284,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean discardedByOpponentThisTurn,
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
         boolean targetPutIntoGraveyardFromAnywhereThisTurn,
+        boolean targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn,
         boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
         boolean chooseAuraAttachment,
@@ -420,7 +423,7 @@ public record ReturnCardFromGraveyardEffect(
         EffectDuration battlefieldEffectGrantDuration,
         int targetGroup
 ) {
-            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false);
+            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false);
         }
 
 
@@ -445,15 +448,18 @@ public record ReturnCardFromGraveyardEffect(
         // Only the targeted-graveyard variant participates in cast/activation-time targeting; the
         // resolution-time variants pick their card later. The declared scope is source(): it is the
         // one place the own/opponent/all narrowing lives, so the kept validator and every
-        // enumeration path read the same value.
+        // enumeration path read the same value. Include filter() here as well: this effect is often
+        // wrapped in a cost/follow-up effect, where the class-specific validator is not visited.
         if (!targetGraveyard) {
             return TargetSpec.NONE;
         }
+        TargetPredicate graveyardTarget = filter == null
+                ? TargetPredicates.graveyardCard(source)
+                : TargetPredicates.graveyardCards(filter, source);
         if (targetGroup >= 0) {
-            return TargetSpec.benign(TargetPredicates.anyOf(
-                    TargetPredicates.graveyardCard(source), TargetPredicates.anyTarget()));
+            return TargetSpec.benign(TargetPredicates.anyOf(graveyardTarget, TargetPredicates.anyTarget()));
         }
-        return TargetSpec.benign(TargetPredicates.graveyardCard(source));
+        return TargetSpec.benign(graveyardTarget);
     }
 
     @Override

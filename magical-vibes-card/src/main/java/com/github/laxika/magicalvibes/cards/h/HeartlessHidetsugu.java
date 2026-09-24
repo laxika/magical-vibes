@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEqualTo
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "107")
+@CardRegistration(set = "CMM", collectorNumber = "231")
+@CardRegistration(set = "CMM", collectorNumber = "539")
 public class HeartlessHidetsugu extends Card {
 
     public HeartlessHidetsugu() {

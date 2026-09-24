@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.LethalDamageModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
 import com.github.laxika.magicalvibes.model.effect.RequireFlagbearerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
@@ -4386,6 +4387,27 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the amount of marked damage that is lethal to this creature. Zilortha-style effects
+     * use power, but a creature with zero or negative power still needs at least one damage marked
+     * on it before damage is lethal.
+     */
+    public int getLethalDamageThreshold(GameData gameData, Permanent creature) {
+        if (usesPowerForLethalDamage(gameData, creature)) {
+            return Math.max(1, getEffectivePower(gameData, creature));
+        }
+        return getEffectiveToughness(gameData, creature);
+    }
+
+    private boolean usesPowerForLethalDamage(GameData gameData, Permanent creature) {
+        StaticBonus bonus = computeStaticBonus(gameData, creature);
+        return !bonus.losesAllAbilities()
+                && bonus.grantedEffects().stream()
+                .filter(LethalDamageModifierEffect.class::isInstance)
+                .map(LethalDamageModifierEffect.class::cast)
+                .anyMatch(LethalDamageModifierEffect::usesPowerForLethalDamage);
+    }
+
+    /**
      * Returns {@code true} if the creature's controller has a permanent on the battlefield
      * with an {@link AssignCombatDamageWithToughnessEffect} whose scope covers this creature
      * ({@link GrantScope#OWN_CREATURES} or {@link GrantScope#ALL_OWN_CREATURES}).
@@ -5578,6 +5600,30 @@ public class GameQueryService {
             }
         }
         return getEffectivePower(gameData, permanent) == greatest;
+    }
+
+    /**
+     * Returns {@code true} when the given creature's supplied power is strictly greater than
+     * every other creature's effective power on the battlefield. The supplied power also allows
+     * callers to use a last-known power snapshot when the triggering creature has left play.
+     */
+    public boolean hasUniqueGreatestPowerAmongAllCreatures(GameData gameData, Permanent permanent,
+                                                            int permanentPower) {
+        if (gameData == null || !isCreature(gameData, permanent)) {
+            return false;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (!candidate.getId().equals(permanent.getId())
+                        && isCreature(gameData, candidate)
+                        && getEffectivePower(gameData, candidate) >= permanentPower) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -7288,12 +7334,13 @@ public class GameQueryService {
         if (controllerId == null) {
             return false;
         }
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean grantedByPermanent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .map(effect -> staticEffectConditionResolver.resolve(
                         gameData, permanent, controllerId, effect))
                 .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance)
                 || playerEmblemHasActiveStaticEffect(
                         gameData, controllerId, AllowLoyaltyActivationAtInstantSpeedEffect.class);
+        return grantedByPermanent;
     }
 
     /**

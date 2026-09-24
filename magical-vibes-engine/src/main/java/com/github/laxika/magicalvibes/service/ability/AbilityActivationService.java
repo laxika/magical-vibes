@@ -687,6 +687,9 @@ public class AbilityActivationService {
         if (choice.context() instanceof ChoiceContext.RestrictedManaColorChoice) {
             return true;
         }
+        if (choice.context() instanceof ChoiceContext.CommanderManaColorChoice) {
+            return true;
+        }
         if (!(choice.context() instanceof ChoiceContext.ManaColorChoice manaChoice)) {
             return false;
         }

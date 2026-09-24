@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 @CardRegistration(set = "MUL", collectorNumber = "45")
 @CardRegistration(set = "MUL", collectorNumber = "110")
 @CardRegistration(set = "MUL", collectorNumber = "175")
+@CardRegistration(set = "CMM", collectorNumber = "341")
 public class JudithTheScourgeDiva extends Card {
 
     private static final DealDamageToAnyTargetEffect DEATH_DAMAGE = new DealDamageToAnyTargetEffect(1);

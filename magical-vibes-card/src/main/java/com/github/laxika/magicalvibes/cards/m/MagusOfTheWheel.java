@@ -13,6 +13,9 @@ import java.util.List;
 
 @CardRegistration(set = "A25", collectorNumber = "142")
 @CardRegistration(set = "C15", collectorNumber = "27")
+@CardRegistration(set = "CMM", collectorNumber = "241")
+@CardRegistration(set = "CMM", collectorNumber = "544")
+@CardRegistration(set = "CMM", collectorNumber = "643")
 public class MagusOfTheWheel extends Card {
 
     public MagusOfTheWheel() {

@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "115")
+@CardRegistration(set = "CMM", collectorNumber = "260")
+@CardRegistration(set = "CMM", collectorNumber = "644")
 public class StormKilnArtist extends Card {
 
     public StormKilnArtist() {

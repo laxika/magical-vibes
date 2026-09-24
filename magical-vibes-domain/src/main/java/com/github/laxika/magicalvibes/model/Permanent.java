@@ -190,6 +190,8 @@ public class Permanent {
     @Setter private UUID chosenPermanentId;
     /** Player targeted by a linked enter-the-battlefield ability. */
     @Setter private UUID rememberedTargetPlayerId;
+    /** Players chosen by an as-enters ability that remembers more than one player. */
+    @Getter private final List<UUID> rememberedTargetPlayerIds = new ArrayList<>();
     /** Players chosen by an as-enters effect such as Bitter Feud. */
     private final List<UUID> chosenPlayerIds = new ArrayList<>();
     /** Life lost by the controller when this permanent's Soulgorger Orgg-style ETB resolved. */
@@ -779,6 +781,7 @@ public class Permanent {
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
+        this.rememberedTargetPlayerIds.addAll(source.rememberedTargetPlayerIds);
         this.chosenPlayerIds.addAll(source.chosenPlayerIds);
         this.lifeLostWhenEntered = source.lifeLostWhenEntered;
         this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
@@ -1053,13 +1056,13 @@ public class Permanent {
         }
     }
 
-    /** True when at least one source has marked damage greater than or equal to {@code toughness}. */
-    public boolean hasLethalDamageFromSingleSource(int toughness) {
-        if (toughness <= 0) {
+    /** True when at least one source has marked damage greater than or equal to the lethal threshold. */
+    public boolean hasLethalDamageFromSingleSource(int lethalDamageThreshold) {
+        if (lethalDamageThreshold <= 0) {
             return false;
         }
         for (int amount : markedDamageBySource.values()) {
-            if (amount >= toughness) {
+            if (amount >= lethalDamageThreshold) {
                 return true;
             }
         }

@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatch
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "MH1", collectorNumber = "1")
+@CardRegistration(set = "CMM", collectorNumber = "3")
+@CardRegistration(set = "CMM", collectorNumber = "453")
+@CardRegistration(set = "CMM", collectorNumber = "669")
 public class MorophonTheBoundless extends Card {
 
     public MorophonTheBoundless() {

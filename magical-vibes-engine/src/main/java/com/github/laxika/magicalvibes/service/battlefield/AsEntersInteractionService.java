@@ -303,19 +303,30 @@ public class AsEntersInteractionService {
             }
         }
 
-        boolean needsPlayerChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(ChoosePlayerOnEnterEffect.class::isInstance);
-        if (needsPlayerChoice) {
+        ChoosePlayerOnEnterEffect playerChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChoosePlayerOnEnterEffect.class::isInstance)
+                .map(ChoosePlayerOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (playerChoice != null) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
             List<UUID> validPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
             if (!validPlayerIds.isEmpty()) {
-                gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.ChoosePlayerAsEnter(
-                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
-                                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
-                                convokeCreatureIds));
-                playerInputService.beginPlayerChoice(gameData, controllerId, validPlayerIds,
-                        "Choose a player.");
+                PermanentChoiceContext.ChoosePlayerAsEnter pending = new PermanentChoiceContext.ChoosePlayerAsEnter(
+                        justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                        etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                        convokeCreatureIds);
+                if (playerChoice.playerCount() == 1) {
+                    gameData.interaction.setPermanentChoiceContext(pending);
+                    playerInputService.beginPlayerChoice(gameData, controllerId, validPlayerIds,
+                            "Choose a player.");
+                } else if (playerChoice.playerCount() == 2) {
+                    playerInputService.beginMultiPermanentOrPlayerChoice(gameData, controllerId, List.of(),
+                            validPlayerIds, 2, new MultiPermanentChoiceContext.ChoosePlayersAsEnter(pending),
+                            "Choose two players.");
+                } else {
+                    throw new IllegalStateException("Unsupported number of players to choose as enters: "
+                            + playerChoice.playerCount());
+                }
                 return;
             }
         }

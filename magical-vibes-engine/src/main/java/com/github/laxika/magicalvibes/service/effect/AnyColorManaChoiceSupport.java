@@ -211,8 +211,12 @@ public final class AnyColorManaChoiceSupport {
                 && choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
             choiceContext = subtypeChoice.withCaveSource(true);
         } else if (fromCaveSource
-                && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
+                    && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withCaveSource(true);
+        }
+        if (effect.tracksProducingSourceForSpellCastTriggers()
+                && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withSourceTracking();
         }
         List<ManaColor> allowedColors = switch (effect.restriction()) {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
@@ -242,6 +246,11 @@ public final class AnyColorManaChoiceSupport {
                 manaPool.addCreatureAbilityOnlyMana(effectiveColor, amount);
             } else if (effect.restriction() == ManaSpendRestriction.KICKED_SPELLS) {
                 manaPool.addKickedOnlyMana(effectiveColor, amount);
+            } else if (effect.restriction() == ManaSpendRestriction.COMMANDER_ONLY) {
+                manaPool.addCommanderOnlyMana(effectiveColor, amount);
+            } else if (effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS) {
+                manaPool.add(effectiveColor, amount);
+                manaPool.addCommanderCounterGrantingMana(effectiveColor, amount);
             } else {
                 manaPool.add(effectiveColor, amount);
                 if (effect.grantsCommanderCounter()) {
@@ -348,15 +357,24 @@ public final class AnyColorManaChoiceSupport {
             return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
         }
 
+        if (effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS) {
+            return new ChoiceContext.CommanderIdentityManaColorChoice(
+                    playerId, amount, ManaProductionSupport.commanderColorIdentity(gameData, playerId));
+        }
+
         ChoiceContext choice = switch (effect.restriction()) {
             case NONE, INSTANT_SORCERY_COPY -> effect.restriction() == ManaSpendRestriction.NONE
                     && sourceCard != null
                     && sourceCard.getSubtypes().contains(CardSubtype.TREASURE)
                     ? new ChoiceContext.TreasureManaColorChoice(playerId, amount)
                     : new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
+            case COMMANDER_ONLY -> new ChoiceContext.CommanderManaColorChoice(playerId, fromCreature, amount);
             case COMMANDER_COLOR_IDENTITY -> ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount,
                     ManaProductionSupport.commanderColorIdentity(gameData, playerId));
+            case COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS ->
+                    new ChoiceContext.CommanderIdentityManaColorChoice(
+                            playerId, amount, ManaProductionSupport.commanderColorIdentity(gameData, playerId));
             case COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY ->
                     new ChoiceContext.PathOfAncestryManaColorChoice(playerId, sourcePermanentId, amount);
             case SPELL_ONLY ->

@@ -916,8 +916,8 @@ public class DamageSupport {
         if (sourceHasDeathtouch) {
             return Math.max(0, damageDealt - 1);
         }
-        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
-        int lethalNeeded = Math.max(0, toughness - markedDamageBefore);
+        int lethalDamageThreshold = gameQueryService.getLethalDamageThreshold(gameData, target);
+        int lethalNeeded = Math.max(0, lethalDamageThreshold - markedDamageBefore);
         return Math.max(0, damageDealt - lethalNeeded);
     }
 
@@ -1163,7 +1163,7 @@ public class DamageSupport {
         }
     }
 
-    public int computeExcessDamageToAnyTarget(int damageDealt, boolean creature, int toughnessBefore,
+    public int computeExcessDamageToAnyTarget(int damageDealt, boolean creature, int lethalDamageThresholdBefore,
                                               int markedDamageBefore, boolean sourceHasDeathtouch,
                                               boolean planeswalker, int loyaltyBefore,
                                               boolean battle, int defenseBefore) {
@@ -1171,7 +1171,7 @@ public class DamageSupport {
         int lethalNeeded = Integer.MAX_VALUE;
         if (creature) {
             lethalNeeded = Math.min(lethalNeeded, sourceHasDeathtouch
-                    ? 1 : Math.max(0, toughnessBefore - markedDamageBefore));
+                    ? 1 : Math.max(0, lethalDamageThresholdBefore - markedDamageBefore));
         }
         if (planeswalker) lethalNeeded = Math.min(lethalNeeded, Math.max(0, loyaltyBefore));
         if (battle) lethalNeeded = Math.min(lethalNeeded, Math.max(0, defenseBefore));

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
@@ -189,6 +190,11 @@ public class DrawService {
     }
 
     private void resolveDrawCards(GameData gameData, UUID playerId, int amount, Card cycledCard) {
+        resolveDrawCards(gameData, playerId, amount, cycledCard, false);
+    }
+
+    private void resolveDrawCards(GameData gameData, UUID playerId, int amount, Card cycledCard,
+                                  boolean skipOpponentDrawTwoOrMoreReplacement) {
         if (amount <= 0) {
             return;
         }
@@ -204,9 +210,16 @@ public class DrawService {
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
 
+        Card almsCollector = !skipOpponentDrawTwoOrMoreReplacement && drawAmount >= 2
+                ? findOpponentDrawTwoOrMoreReplacementSourceCard(gameData, playerId) : null;
         if (drawChoicePending(gameData)) {
-            for (int i = 0; i < drawAmount; i++) {
+            if (almsCollector != null) {
                 gameData.pendingCardDraws.addLast(playerId);
+                gameData.pendingCardDraws.addLast(gameQueryService.getOpponentId(gameData, playerId));
+            } else {
+                for (int i = 0; i < drawAmount; i++) {
+                    gameData.pendingCardDraws.addLast(playerId);
+                }
             }
             return;
         }
@@ -214,6 +227,10 @@ public class DrawService {
         List<UUID> laterDraws = new ArrayList<>(gameData.pendingCardDraws);
         gameData.pendingCardDraws.clear();
         try {
+            if (almsCollector != null) {
+                resolveOpponentDrawTwoOrMoreReplacement(gameData, playerId, almsCollector);
+                return;
+            }
             for (int i = 0; i < drawAmount && gameData.status != GameStatus.FINISHED; i++) {
                 resolveDrawCardInternal(gameData, playerId, cycledCard);
                 if (drawChoicePending(gameData)) {
@@ -1133,6 +1150,44 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private Card findOpponentDrawTwoOrMoreReplacementSourceCard(GameData gameData, UUID playerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+        if (opponentId == null) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof OpponentDrawTwoOrMoreReplacedEffect);
+            if (hasEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    private void resolveOpponentDrawTwoOrMoreReplacement(GameData gameData, UUID playerId,
+                                                          Card source) {
+        UUID sourceControllerId = gameQueryService.getOpponentId(gameData, playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+        String controllerName = gameData.playerIdToName.get(sourceControllerId);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + "'s multi-card draw is replaced by ")
+                .card(source)
+                .text("; " + playerName + " and " + controllerName + " each draw a card.")
+                .build());
+
+        resolveDrawCards(gameData, playerId, 1, null, true);
+        if (gameData.status == GameStatus.FINISHED) {
+            return;
+        }
+        resolveDrawCards(gameData, sourceControllerId, 1, null, true);
     }
 
     private Card findDoubleDrawSourceCard(GameData gameData, UUID playerId) {

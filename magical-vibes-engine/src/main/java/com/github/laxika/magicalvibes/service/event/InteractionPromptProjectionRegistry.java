@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -78,6 +79,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.AminatousAuguryChoice.class,
+                this::projectAminatousAuguryChoice);
         register(PendingInteraction.InvokeCalamityCastChoice.class,
                 this::projectInvokeCalamityCastChoice);
         register(PendingInteraction.PlarggAndNassariOpponentChoice.class,
@@ -1509,6 +1512,27 @@ public class InteractionPromptProjectionRegistry {
                 "You may put any number of land cards they own from exile onto the battlefield.");
     }
 
+    private InteractionPromptMessage projectAminatousAuguryChoice(
+            GameData gameData, PendingInteraction.AminatousAuguryChoice interaction) {
+        String prompt = interaction.offeredCardType() == CardType.LAND
+                ? "You may put a land card from among the exiled cards onto the battlefield."
+                : "You may cast " + articleFor(interaction.offeredCardType())
+                        + interaction.offeredCardType().getDisplayName().toLowerCase()
+                        + " spell from among the exiled cards without paying its mana cost.";
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                prompt);
+    }
+
+    private static String articleFor(CardType cardType) {
+        return switch (cardType) {
+            case ARTIFACT, ENCHANTMENT, INSTANT -> "an ";
+            default -> "a ";
+        };
+    }
+
     private InteractionPromptMessage projectETBExiledCardTargetChoice(
             GameData gameData, PendingInteraction.ETBExiledCardTargetChoice interaction) {
         List<UUID> validIds = new ArrayList<>(interaction.validCardIds());
@@ -1617,7 +1641,7 @@ public class InteractionPromptProjectionRegistry {
                 .map(target -> new CombatDamageTargetView(
                         target.id().toString(),
                         target.name(),
-                        target.effectiveToughness(),
+                        target.lethalDamageThreshold(),
                         target.currentDamage(),
                         target.isPlayer()))
                 .toList();

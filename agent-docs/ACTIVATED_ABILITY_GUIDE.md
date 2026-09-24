@@ -429,6 +429,10 @@ activating player controlled or an oil-bearing permanent entering a graveyard, u
 `OilCounterEventThisTurn`. The engine records both event forms centrally and clears them at turn
 progression; `ChurningReservoir` is the reference implementation.
 
+For "Activate only if you created a token this turn," use `ControllerCreatedTokenThisTurn` with
+`.withActivationCondition`. Token creation is recorded when a token enters the battlefield and
+cleared during turn progression; `IdolOfOblivion` is the reference implementation.
+
 For an Aura ability gated on what it is attached to ("Activate only if enchanted creature is white"), use
 `EnchantedPermanentMatches(PermanentPredicate filter, String description)` — false unless the source is an
 attached Aura whose host matches the predicate. Nature's Chosen:
@@ -1197,6 +1201,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_CONTROLLER_LOSES_LIFE` | Controller loses life |
 | `ON_SELF_LEAVES_BATTLEFIELD` | This permanent leaves the battlefield (any means) |
 | `ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD` | Another permanent (any type, any player's) leaves the battlefield by any means. Global watcher fired from every leave path in `PermanentRemovalService`; effects that need the departed permanent's identity implement `LeavingPermanentIdAwareEffect` |
+| `ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` | Another permanent (any type) you control leaves the battlefield by any means. Controller-scoped watcher fired from every leave path in `PermanentRemovalService`; conditional effects are evaluated against the leaving permanent before the trigger is queued |
 | `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` | Another creature (any player's) leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck) — broader than "dies". Global watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`; fires on every permanent with the slot except the leaving creature itself. Non-targeting: a "you may have target player mill two cards" is a `MayEffect(MillEffect(2, TARGET_PLAYER), …)` whose "may" and player target are resolved on the stack (Extractor Demon) |
 | `ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD` | Another artifact **you control** leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck). Controller-scoped watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers`; fires only on the leaving artifact's controller's battlefield, except the leaving artifact itself. Pair with `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` (same effect on both slots) for "whenever another artifact you control enters or leaves the battlefield". Non-targeting: player target + "you may pay {1}" resolve on the stack via `MayPayManaEffect(SequenceEffect.of(LoseLifeEffect(TARGET_PLAYER), GainLifeEffect))` (Sludge Strider) |
 | `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD` | Another creature **you control** leaves the battlefield by any means. Controller-scoped sibling of `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD`. Fired via `TriggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers`; effects needing the departing permanent's counters implement `LeavingPermanentCountersAwareEffect`. Used by Luminous Phantom (`GainLifeEffect(1)`) and The Ooze (`CreateTokensForEachLeavingSourceCounterEffect`) |

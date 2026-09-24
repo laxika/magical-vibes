@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "CMM", collectorNumber = "176")
+@CardRegistration(set = "CMM", collectorNumber = "517")
 @CardRegistration(set = "C14", collectorNumber = "27")
 public class ObNixilisOfTheBlackOath extends Card {
 
@@ -33,7 +35,7 @@ public class ObNixilisOfTheBlackOath extends Card {
                 "+2: Each opponent loses 1 life. You gain life equal to the life lost this way."
         ));
 
-        // -2: Create a 5/5 black Demon creature token with flying. You lose 2 life.
+        // −2: Create a 5/5 black Demon creature token with flying. You lose 2 life.
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
@@ -41,18 +43,15 @@ public class ObNixilisOfTheBlackOath extends Card {
                                 List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), Set.of()),
                         new LoseLifeEffect(2)
                 ),
-                "-2: Create a 5/5 black Demon creature token with flying. You lose 2 life."
+                "−2: Create a 5/5 black Demon creature token with flying. You lose 2 life."
         ));
 
-        // -8: You get an emblem with "{1}{B}, Sacrifice a creature: You gain X life and draw X cards,
+        // −8: You get an emblem with "{1}{B}, Sacrifice a creature: You gain X life and draw X cards,
         // where X is the sacrificed creature's power."
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(),
-                        EMBLEM_TEXT,
-                        EmblemRecipient.CONTROLLER,
-                        List.of(new ActivatedAbility(
+                        List.of(new EmblemActivatedAbilityEffect(new ActivatedAbility(
                                 false,
                                 "{1}{B}",
                                 List.of(
@@ -61,9 +60,9 @@ public class ObNixilisOfTheBlackOath extends Card {
                                         new DrawCardEffect(new XValue())
                                 ),
                                 EMBLEM_TEXT
-                        ))
-                )),
-                "-8: You get an emblem with \"" + EMBLEM_TEXT + "\"."
+                        ))),
+                        EMBLEM_TEXT)),
+                "−8: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));
     }
 }

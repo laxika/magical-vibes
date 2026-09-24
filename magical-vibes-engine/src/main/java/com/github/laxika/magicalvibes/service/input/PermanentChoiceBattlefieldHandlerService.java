@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
@@ -180,6 +181,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffectHandler
             sacrificeOneOfCombatDamageDealersThenRevealHandler;
+    private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler
+            sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler;
     private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
@@ -743,6 +746,19 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         sacrificeOtherCreatureThenRevealHandler.resolveAfterChoice(
                 gameData, context.sourceCard(), context.controllerId(), creature, context.predicate());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        if (creature == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler.resolveAfterChoice(
+                gameData, context.sourceCard(), context.controllerId(), creature);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2729,6 +2745,35 @@ public class PermanentChoiceBattlefieldHandlerService {
         entering.getChosenPlayerIds().add(chosenPlayerId);
         gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
                 " chooses " + gameData.playerIdToName.get(chosenPlayerId) + "."));
+        battlefieldEntryService.processCreatureETBEffects(
+                gameData, context.controllerId(), context.card(), context.targetId(), context.wasCastFromHand(),
+                context.etbMode(), context.xValue(), context.kicked(), context.targetIds(),
+                context.repeatedAdditionalCosts(), context.convokeCreatureIds());
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    public void handleChoosePlayersAsEnter(GameData gameData, List<UUID> chosenPlayerIds,
+                                           PermanentChoiceContext.ChoosePlayerAsEnter context) {
+        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+        if (entering == null) {
+            throw new IllegalStateException("Entering permanent no longer exists");
+        }
+        if (chosenPlayerIds == null || chosenPlayerIds.size() != 2
+                || chosenPlayerIds.get(0).equals(chosenPlayerIds.get(1))
+                || chosenPlayerIds.stream().anyMatch(id -> !gameData.playerIds.contains(id))) {
+            throw new IllegalStateException("Exactly two different players must be chosen");
+        }
+
+        entering.getRememberedTargetPlayerIds().clear();
+        entering.getRememberedTargetPlayerIds().addAll(chosenPlayerIds);
+        gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
+                " chooses " + chosenPlayerIds.stream().map(gameData.playerIdToName::get).toList() + "."));
+        log.info("Game {} - {} chooses players {}", gameData.id,
+                entering.getCard().getName(), chosenPlayerIds.stream()
+                        .map(gameData.playerIdToName::get).toList());
+
         battlefieldEntryService.processCreatureETBEffects(
                 gameData, context.controllerId(), context.card(), context.targetId(), context.wasCastFromHand(),
                 context.etbMode(), context.xValue(), context.kicked(), context.targetIds(),

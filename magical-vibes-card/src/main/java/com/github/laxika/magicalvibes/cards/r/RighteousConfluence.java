@@ -15,21 +15,23 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "CMM", collectorNumber = "53")
+@CardRegistration(set = "CMM", collectorNumber = "470")
 @CardRegistration(set = "C15", collectorNumber = "7")
 public class RighteousConfluence extends Card {
 
     public RighteousConfluence() {
         addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption(
-                        "Create a 2/2 white Knight creature token with vigilance",
-                        new CreateTokenEffect(1, "Knight", 2, 2, CardColor.WHITE,
+                        "Create a 2/2 white Knight creature token with vigilance.",
+                        new CreateTokenEffect(
+                                1, "Knight", 2, 2, CardColor.WHITE,
                                 List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of())),
-                ChooseOneEffect.ChooseOneOption.withEffectFactory(
-                        "Exile target enchantment",
-                        ExileTargetPermanentEffect::new,
-                        TargetFilters.enchantment()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "You gain 5 life",
+                        "Exile target enchantment.",
+                        new ExileTargetPermanentEffect(), TargetFilters.enchantment()),
+                new ChooseOneEffect.ChooseOneOption(
+                        "You gain 5 life.",
                         new GainLifeEffect(5))
         ), 3));
     }

@@ -1244,6 +1244,15 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleReselectedAttackTarget(GameData gameData, UUID attackTargetId,
+                                             PermanentChoiceContext.ReselectAttackTarget context) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, context.permanentId());
+        if (permanent != null && permanent.isAttacking() && gameQueryService.isCreature(gameData, permanent)) {
+            permanent.setAttackTarget(attackTargetId);
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void beginCreateTokensAttackingTargetChoice(
             GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());

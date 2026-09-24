@@ -20,6 +20,8 @@ import java.util.List;
 @CardRegistration(set = "2XM", collectorNumber = "89")
 @CardRegistration(set = "TSR", collectorNumber = "111")
 @CardRegistration(set = "DMR", collectorNumber = "80")
+@CardRegistration(set = "CMM", collectorNumber = "153")
+@CardRegistration(set = "CMM", collectorNumber = "637")
 public class DreadReturn extends Card {
 
     public DreadReturn() {

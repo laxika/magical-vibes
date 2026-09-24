@@ -25,7 +25,10 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadChosenCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -85,6 +88,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final PermanentChoiceTriggerHandlerService triggerHandler;
+    private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
     private final TurnProgressionService turnProgressionService;
     private final CombatBlockService combatBlockService;
     private final CombatAttackService combatAttackService;
@@ -273,6 +277,10 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
+        if (context instanceof MultiPermanentChoiceContext.ChoosePlayersAsEnter
+                && permanentIds.size() != 2) {
+            throw new IllegalStateException("Exactly two players must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.SagaChapterTargetSelection sagaTarget
                 && permanentIds.size() < sagaTarget.minTargets()) {
             throw new IllegalStateException("Too few targets selected");
@@ -641,6 +649,8 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
                     gameData, player, exileArtifactsContext, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.ChoosePlayersAsEnter ctx) {
+            battlefieldHandler.handleChoosePlayersAsEnter(gameData, permanentIds, ctx.pending());
         } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
             triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup ctx) {
@@ -674,6 +684,8 @@ public class MultiPermanentChoiceHandlerService {
             handleRedirectDamageToChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanent ctx) {
             handleTapChosenPermanent(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.GoadDamagedPlayerControls ctx) {
+            handleGoadDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberPermanents) {
             handleTapAnyNumberPermanents(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls ctx) {
@@ -1288,6 +1300,24 @@ public class MultiPermanentChoiceHandlerService {
                     gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                             " won't untap during its controller's next untap step."));
                 }
+            }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleGoadDamagedPlayerControls(GameData gameData, List<UUID> permanentIds,
+                                                 MultiPermanentChoiceContext.GoadDamagedPlayerControls context) {
+        if (!permanentIds.isEmpty()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null && gameQueryService.isCreature(gameData, target)) {
+                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), context.sourceName(), null,
+                        context.controllerId(), new GoadChosenCreatureDamagedPlayerControlsEffect(),
+                        target.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                gameLogService.append(gameData,
+                        GameLog.builder().text(context.sourceName() + " goads ").card(target.getCard()).text(".").build());
+                log.info("Game {} - {} goads {}", gameData.id, context.sourceName(), target.getCard().getName());
             }
         }
 

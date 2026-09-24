@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "67")
 @CardRegistration(set = "MH2", collectorNumber = "36")
 public class UnboundedPotential extends Card {
 
@@ -23,6 +24,6 @@ public class UnboundedPotential extends Card {
                         List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         TargetFilters.creature(), null, 0, 2, false, null),
                 new ChooseOneEffect.ChooseOneOption("Proliferate", new ProliferateEffect())
-        ), false, 1, 2, false));
+        ), false, 1, 2, true));
     }
 }

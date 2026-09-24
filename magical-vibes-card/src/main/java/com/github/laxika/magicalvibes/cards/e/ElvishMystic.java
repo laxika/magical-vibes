@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "DDU", collectorNumber = "7")
 @CardRegistration(set = "EA1", collectorNumber = "13")
 @CardRegistration(set = "TSR", collectorNumber = "360")
+@CardRegistration(set = "CMM", collectorNumber = "284")
+@CardRegistration(set = "CMM", collectorNumber = "648")
 public class ElvishMystic extends Card {
 
     public ElvishMystic() {

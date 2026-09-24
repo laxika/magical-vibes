@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "2X2", collectorNumber = "238")
 @CardRegistration(set = "CMD", collectorNumber = "207")
+@CardRegistration(set = "CMM", collectorNumber = "342")
+@CardRegistration(set = "CMM", collectorNumber = "581")
 public class KaradorGhostChieftain extends Card {
 
     public KaradorGhostChieftain() {

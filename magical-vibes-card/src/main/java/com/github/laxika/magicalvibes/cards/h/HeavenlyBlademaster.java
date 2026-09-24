@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "GN3", collectorNumber = "11")
+@CardRegistration(set = "CMM", collectorNumber = "28")
+@CardRegistration(set = "CMM", collectorNumber = "461")
 public class HeavenlyBlademaster extends Card {
 
     public HeavenlyBlademaster() {

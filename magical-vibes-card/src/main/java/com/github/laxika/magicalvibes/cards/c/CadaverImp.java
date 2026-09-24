@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "PCA", collectorNumber = "31")
 @CardRegistration(set = "DDP", collectorNumber = "48")
 @CardRegistration(set = "DDR", collectorNumber = "41")
+@CardRegistration(set = "CMM", collectorNumber = "141")
 public class CadaverImp extends Card {
 
     public CadaverImp() {

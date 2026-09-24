@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "192")
+@CardRegistration(set = "CMM", collectorNumber = "336")
 public class AryelKnightOfWindgrace extends Card {
 
     public AryelKnightOfWindgrace() {

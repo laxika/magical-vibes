@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "256")
+@CardRegistration(set = "CMM", collectorNumber = "397")
 public class LetterOfAcceptance extends Card {
 
     public LetterOfAcceptance() {

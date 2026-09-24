@@ -713,9 +713,13 @@ public class PermanentChoiceSpellHandlerService {
             );
             entry.setMadness(hct.castForMadnessCost());
             entry.setExileInsteadOfGraveyard(hct.exileInsteadOfGraveyard());
+            entry.setSourceZone(hct.sourceZone());
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(hct.controllerId(), hct.cardToCast());
+            if (hct.sourceZone() == Zone.COMMAND) {
+                gameData.commanderTaxByCardId.merge(hct.cardToCast().getId(), 2, Integer::sum);
+            }
             gameData.priorityPassedBy.clear();
 
             String targetName = isPlayerTarget
@@ -725,22 +729,35 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
-                    hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
+            if (hct.sourceZone() == Zone.COMMAND) {
+                triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
+                        Zone.COMMAND);
+            } else {
+                triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
+                        hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
+            }
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
-            UUID ownerId = hct.cardToCast().getOwnerId() != null
-                    ? hct.cardToCast().getOwnerId() : hct.controllerId();
-            if (hct.exileInsteadOfGraveyard()) {
-                gameData.addToExile(ownerId, hct.cardToCast());
+            if (hct.sourceZone() == Zone.COMMAND) {
+                gameData.playerCommandZones.computeIfAbsent(hct.controllerId(), ignored -> new ArrayList<>())
+                        .add(hct.cardToCast());
             } else {
-                graveyardService.addCardToGraveyard(gameData, ownerId, hct.cardToCast());
+                UUID ownerId = hct.cardToCast().getOwnerId() != null
+                        ? hct.cardToCast().getOwnerId() : hct.controllerId();
+                if (hct.exileInsteadOfGraveyard()) {
+                    gameData.addToExile(ownerId, hct.cardToCast());
+                } else {
+                    graveyardService.addCardToGraveyard(gameData, ownerId, hct.cardToCast());
+                }
             }
-            String destination = hct.exileInsteadOfGraveyard()
+            String destination = hct.sourceZone() == Zone.COMMAND
+                    ? "'s target is no longer valid. It remains in the command zone."
+                    : hct.exileInsteadOfGraveyard()
                     ? "'s target is no longer valid. It is exiled."
                     : "'s target is no longer valid. It is put into the graveyard.";
             gameLogService.append(gameData, GameLog.cardThen(hct.cardToCast(), destination));
-            log.info("Game {} - {} cast-from-hand target no longer exists", gameData.id, hct.cardToCast().getName());
+            log.info("Game {} - {} cast-from-{} target no longer exists", gameData.id, hct.cardToCast().getName(),
+                    hct.sourceZone() == Zone.COMMAND ? "command-zone" : "hand");
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

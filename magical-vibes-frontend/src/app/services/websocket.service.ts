@@ -650,7 +650,7 @@ export interface DraftFinishedNotification {
 export interface CombatDamageTargetView {
   id: string;
   name: string;
-  toughness: number;
+  lethalDamageThreshold: number;
   currentDamage: number;
   isPlayer: boolean;
 }
