@@ -21,6 +21,7 @@ public enum CounterType {
     BURDEN,
     BRICK,
     CARRION,
+    ACORN,
     CHARGE,
     CONQUEROR,
     CHORUS,

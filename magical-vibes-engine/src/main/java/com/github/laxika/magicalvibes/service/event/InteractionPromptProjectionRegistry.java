@@ -70,6 +70,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
+        register(PendingInteraction.SpellbookCardChoice.class, this::projectSpellbookCardChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.TargetPlayerHandOrderChoice.class,
@@ -200,6 +201,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.WordOfCommandCardChoice.class,
                 this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualOffspringCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
@@ -379,6 +382,13 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validPlaneCardIds()), cardViews, 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectSpellbookCardChoice(
+            GameData gameData, PendingInteraction.SpellbookCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.spellbookCards()),
+                1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(

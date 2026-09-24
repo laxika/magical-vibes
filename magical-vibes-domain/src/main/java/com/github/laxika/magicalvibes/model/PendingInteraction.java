@@ -43,7 +43,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TurnFaceUpXValueChoice,
         PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
-        PendingInteraction.PlanarCardChoice,
+        PendingInteraction.PlanarCardChoice, PendingInteraction.SpellbookCardChoice,
         PendingInteraction.SpatialMergingCardOrder,
         PendingInteraction.LibraryReorder,
         PendingInteraction.TargetPlayerHandOrderChoice,
@@ -111,6 +111,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
@@ -598,6 +599,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validPlaneCardIds, 1, 1);
+        }
+    }
+
+    /** Choose one card from a conjured spellbook. */
+    record SpellbookCardChoice(UUID playerId, java.util.List<Card> spellbookCards, String prompt)
+            implements PendingInteraction {
+
+        public SpellbookCardChoice {
+            spellbookCards = java.util.List.copyOf(spellbookCards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return spellbookCards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 
@@ -3023,6 +3047,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         java.util.List<Integer> validIndices();
 
         String prompt();
+    }
+
+    /** Choose a white creature card in hand to permanently gain offspring. */
+    record PerpetualOffspringCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                         String prompt, String offspringCost)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualOffspringCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /** Retraced Image: reveal one card from hand, then conditionally put it onto the battlefield. */

@@ -78,6 +78,8 @@ public class GameData {
     /** Counters retained by a card-specific zone-change ability while the card is off the battlefield. */
     public final Map<UUID, Map<CounterType, Integer>> countersPreservedAcrossZoneChanges =
             new ConcurrentHashMap<>();
+    /** Persistent intensity for digital cards; keyed by physical card identity and retained across zones. */
+    public final Map<UUID, Integer> cardIntensities = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerDecks = new LibraryMap();
     /** The size of each player's deck before the opening hand was drawn. */
     public final Map<UUID, Integer> startingDeckSizes = new ConcurrentHashMap<>();
@@ -1182,6 +1184,9 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Global triggered abilities registered by resolving spells until the current turn ends. */
     public final List<TemporaryGlobalTriggeredAbility> temporaryGlobalTriggeredAbilities =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Finite sacrifice-trigger boons, retained until all of their uses have fired. */
+    public final List<SacrificeBoonWatcher> sacrificeBoonWatchers =
             Collections.synchronizedList(new ArrayList<>());
     /** Active "whenever a creature dies this turn" delayed triggers, cleared at turn cleanup. */
     public final List<CreatureDeathTriggerWatcher> creatureDeathTriggerWatchers =
@@ -5315,6 +5320,16 @@ public class GameData {
         return session.simulationCopy(id);
     }
 
+    public int getCardIntensity(UUID cardId) {
+        return cardId == null ? 0 : cardIntensities.getOrDefault(cardId, 0);
+    }
+
+    public void intensifyCard(Card card, int amount) {
+        if (card != null && amount > 0) {
+            cardIntensities.merge(card.getId(), amount, Integer::sum);
+        }
+    }
+
     private static CombatDamageState copyCombatDamageState(CombatDamageState source,
             java.util.function.Function<Permanent, Permanent> permanentCopy) {
         if (source == null) return null;
@@ -5752,6 +5767,7 @@ public class GameData {
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
+        copy.sacrificeBoonWatchers.addAll(this.sacrificeBoonWatchers);
         copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
@@ -5813,6 +5829,7 @@ public class GameData {
         copy.abilityActivationUsedTreasureMana.putAll(this.abilityActivationUsedTreasureMana);
         copy.playerDeckChoices.putAll(this.playerDeckChoices);
         copy.startingDeckSizes.putAll(this.startingDeckSizes);
+        copy.cardIntensities.putAll(this.cardIntensities);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
         copy.playerMulliganDecisionIds.putAll(this.playerMulliganDecisionIds);

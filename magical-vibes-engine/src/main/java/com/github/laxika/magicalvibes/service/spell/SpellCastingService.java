@@ -4275,6 +4275,13 @@ public class SpellCastingService {
             if (kicked && kickerEffect != null && kickerEffect.hasLifeCost()) {
                 additionalSpellCostService.validatePayLifeCost(gameData, player, card, kickerEffect.lifeCost());
             }
+            if (kicked && kickerEffect != null && kickerEffect.hasForageCost()) {
+                additionalSpellCostService.validateForageOrPayManaCost(
+                        gameData, player, card, kickerEffect.forageCost(),
+                        new AdditionalSpellCostService.CostSelection(
+                                sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
+                                0, cardIndex, additionalCostSacrificePermanentIds), -1);
+            }
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
                 validateKickerSacrificeCost(gameData, player, card, kickerEffect, sacrificePermanentId,
                         additionalCostSacrificePermanentIds);
@@ -4323,6 +4330,9 @@ public class SpellCastingService {
             int delveReduction = additionalSpellCostService.delveReduction(additionalCosts,
                     costSelection.exileGraveyardCardIndices());
             ManaPool preManaPaymentPool = (kicked && kickerEffect != null && kickerEffect.hasManaCost())
+                    || (kicked && kickerEffect != null && kickerEffect.hasForageCost()
+                    && sacrificePermanentId == null
+                    && (exileGraveyardCardIndices == null || exileGraveyardCardIndices.isEmpty()))
                     || (buyback && buybackEffect != null)
                     || (additionalCosts.payLifeOrPayManaCost() != null
                     && !Boolean.TRUE.equals(payLifeForAdditionalCost))
@@ -4382,7 +4392,8 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, discardHandCardIndex,
-                        additionalCostSacrificePermanentIds, cardIndex, preManaPaymentPool, effectiveXValue);
+                        additionalCostSacrificePermanentIds, exileGraveyardCardIndices, cardIndex,
+                        preManaPaymentPool, effectiveXValue);
             }
             if (buyback && buybackEffect != null) {
                 payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId,
@@ -4624,6 +4635,13 @@ public class SpellCastingService {
             if (kicked && kickerEffect != null && kickerEffect.hasLifeCost()) {
                 additionalSpellCostService.validatePayLifeCost(gameData, player, card, kickerEffect.lifeCost());
             }
+            if (kicked && kickerEffect != null && kickerEffect.hasForageCost()) {
+                additionalSpellCostService.validateForageOrPayManaCost(
+                        gameData, player, card, kickerEffect.forageCost(),
+                        new AdditionalSpellCostService.CostSelection(
+                                sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
+                                0, cardIndex, additionalCostSacrificePermanentIds), -1);
+            }
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
                 validateKickerSacrificeCost(gameData, player, card, kickerEffect, sacrificePermanentId,
                         additionalCostSacrificePermanentIds);
@@ -4658,6 +4676,9 @@ public class SpellCastingService {
                         gameData, player, card, costReductionSacrificeIds);
             }
             ManaPool preManaPaymentPool = (kicked && kickerEffect != null && kickerEffect.hasManaCost())
+                    || (kicked && kickerEffect != null && kickerEffect.hasForageCost()
+                    && sacrificePermanentId == null
+                    && (exileGraveyardCardIndices == null || exileGraveyardCardIndices.isEmpty()))
                     || (buyback && buybackEffect != null)
                     || !pendingSpliceCosts.isEmpty()
                     || (additionalCosts.payLifeOrPayManaCost() != null
@@ -4704,7 +4725,8 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, discardHandCardIndex,
-                        additionalCostSacrificePermanentIds, cardIndex, preManaPaymentPool, resolvedXValue);
+                        additionalCostSacrificePermanentIds, exileGraveyardCardIndices, cardIndex,
+                        preManaPaymentPool, resolvedXValue);
             }
             if (buyback && buybackEffect != null) {
                 payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId,
@@ -11567,11 +11589,13 @@ public class SpellCastingService {
 
     private void payKickerCost(GameData gameData, Player player, Card card, KickerEffect kickerEffect,
                                UUID sacrificePermanentId, Integer discardHandCardIndex,
-                               List<UUID> sacrificePermanentIds, int spellCardIndex,
+                               List<UUID> sacrificePermanentIds, List<Integer> exileGraveyardCardIndices,
+                               int spellCardIndex,
                                ManaPool preManaPaymentPool, int kickerXValue) {
         try {
             gameData.addSpellCastManaSpent(card.getId(), computeKickerManaPayment(gameData, player, card, kickerEffect,
-                    sacrificePermanentId, discardHandCardIndex, sacrificePermanentIds, spellCardIndex, kickerXValue));
+                    sacrificePermanentId, discardHandCardIndex, sacrificePermanentIds, exileGraveyardCardIndices,
+                    spellCardIndex, kickerXValue));
         } catch (IllegalStateException e) {
             if (preManaPaymentPool != null) {
                 gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
@@ -11582,7 +11606,8 @@ public class SpellCastingService {
 
     private int computeKickerManaPayment(GameData gameData, Player player, Card card, KickerEffect kickerEffect,
                                          UUID sacrificePermanentId, Integer discardHandCardIndex,
-                                         List<UUID> sacrificePermanentIds, int spellCardIndex,
+                                         List<UUID> sacrificePermanentIds, List<Integer> exileGraveyardCardIndices,
+                                         int spellCardIndex,
                                          int kickerXValue) {
         UUID playerId = player.getId();
         int manaSpent = 0;
@@ -11673,6 +11698,12 @@ public class SpellCastingService {
             payDiscardCost(gameData, player, card,
                     new DiscardCardTypeCost(kickerEffect.discardPredicate(), kickerEffect.discardDescription()),
                     discardHandCardIndex, spellCardIndex);
+        }
+        if (kickerEffect.hasForageCost()) {
+            payForageOrPayManaCost(gameData, player, card, kickerEffect.forageCost(),
+                    new AdditionalSpellCostService.CostSelection(
+                            sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
+                            0, spellCardIndex, sacrificePermanentIds), null);
         }
         return manaSpent;
     }

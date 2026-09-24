@@ -47,10 +47,14 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -115,6 +119,36 @@ public class CardChoiceHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+
+    /** Gives the chosen card in hand a persistent offspring-as-kicker implementation. */
+    public void handlePerpetualOffspringCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualOffspringCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualOffspringCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card modifiedCard = hand.get(cardIndex).createRuntimeCopy();
+        modifiedCard.addEffect(EffectSlot.STATIC,
+                new KickerEffect(choice.offspringCost()));
+        modifiedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ConditionalEffect(new Kicked(),
+                        new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
+
+        gameData.interaction.clearAwaitingInput();
+        hand.set(cardIndex, modifiedCard);
+        gameLogService.append(gameData,
+                GameLog.cardThen(modifiedCard, "perpetually gains offspring " + choice.offspringCost() + "."));
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
 
     /** Answers Retraced Image's mandatory hand reveal and conditional battlefield entry. */
     public void handleRetracedImageCardChosen(GameData gameData, Player player, int cardIndex) {
