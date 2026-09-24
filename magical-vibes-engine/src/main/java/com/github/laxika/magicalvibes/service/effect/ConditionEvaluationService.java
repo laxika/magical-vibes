@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisT
 import com.github.laxika.magicalvibes.model.condition.ControllerControlledSourcesDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.RedSourcesControlledDealtNoncombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotDealtCombatDamageSinceLastTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerWasNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
@@ -350,6 +351,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
@@ -1152,6 +1154,10 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && !gameData.playersDealtCombatDamageLastTurn.contains(ctx.controllerId())
                             && !gameData.playersDealtCombatDamageSinceTheirLastTurn.contains(ctx.controllerId());
+            case ControllerWasNotStartingPlayer ignored ->
+                    ctx.controllerId() != null
+                            && gameData.startingPlayerId != null
+                            && !ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerDealtDamageByAtLeastCreaturesThisTurn c ->
                     countCreatureDamageSourcesToPlayer(gameData, ctx.controllerId())
                             >= Math.max(1, c.minimumCreatures());
@@ -1499,6 +1505,11 @@ public class ConditionEvaluationService {
                                 ? source.getCounters().values().stream().mapToInt(Integer::intValue).sum()
                                 : source.getCounterCount(c.counterType());
                 yield counterCount >= c.threshold();
+            }
+            case SourceIntensityThreshold c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null
+                        && gameData.getCardIntensity(source.getCard().getId()) >= c.threshold();
             }
             case SourceExiledCardsThreshold c ->
                     ctx.sourcePermanentId() != null

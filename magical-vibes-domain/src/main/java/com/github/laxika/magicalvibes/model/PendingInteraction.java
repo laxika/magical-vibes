@@ -113,9 +113,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ActivatedAbilityGraveyardExileCostChoice,
         PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
-        PendingInteraction.HandCardChoice, PendingInteraction.PerpetualCreatureCardChoice,
+        PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.PerpetualOffspringCardChoice,
+        PendingInteraction.PerpetualCreatureCardChoice,
         PendingInteraction.PerpetualTargetCardChoice,
-        PendingInteraction.RetracedImageCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
@@ -3258,6 +3259,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Choose a white creature card in hand to permanently gain offspring. */
+    record PerpetualOffspringCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                         String prompt, String offspringCost)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualOffspringCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
     /** Retraced Image: reveal one card from hand, then conditionally put it onto the battlefield. */
     record RetracedImageCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
             implements PendingInteraction, HandChoice {
@@ -4643,6 +4664,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
                                DraftFromSpellbookEffect.DraftMode draftMode)
             implements PendingInteraction {
+
+        public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt) {
+            this(playerId, cards, prompt, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND);
+        }
 
         public SpellbookCardChoice {
             cards = java.util.List.copyOf(cards);

@@ -212,6 +212,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualOffspringCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.MasterOfPredicamentsCardChoice.class,

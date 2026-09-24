@@ -50,6 +50,11 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDa
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
+import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
+import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -3639,6 +3644,7 @@ public class TriggerCollectionService {
                                                      Card sacrificedCard, Card castingSpell) {
         gameData.playersWhoSacrificedPermanentsThisTurn.add(sacrificingPlayerId);
         gameData.recordSacrificedPermanent(sacrificingPlayerId, sacrificedCard);
+        checkSacrificeBoonTriggers(gameData, sacrificingPlayerId);
         checkGraveyardAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
         List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
         if (battlefield != null || !gameData.simultaneousDyingPermanents.isEmpty()) {
@@ -3691,6 +3697,37 @@ public class TriggerCollectionService {
 
         if (gameData.simultaneousDyingPermanents.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
+        }
+    }
+
+    /** Fires finite digital sacrifice boons once for each successful permanent sacrifice. */
+    private void checkSacrificeBoonTriggers(GameData gameData, UUID sacrificingPlayerId) {
+        if (sacrificingPlayerId == null) {
+            return;
+        }
+        List<SacrificeBoonWatcher> watchers = List.copyOf(gameData.sacrificeBoonWatchers);
+        for (SacrificeBoonWatcher watcher : watchers) {
+            if (!watcher.controllerId().equals(sacrificingPlayerId)
+                    || watcher.remainingUses() <= 0
+                    || !gameData.sacrificeBoonWatchers.remove(watcher)) {
+                continue;
+            }
+
+            int remainingUses = watcher.remainingUses() - 1;
+            if (remainingUses > 0) {
+                gameData.sacrificeBoonWatchers.add(new SacrificeBoonWatcher(
+                        watcher.controllerId(), watcher.sourceCard(), watcher.effect(), remainingUses));
+            }
+
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(watcher.effect()))));
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            log.info("Game {} - {} sacrifice boon triggers ({} use(s) remain)", gameData.id,
+                    watcher.sourceCard().getName(), remainingUses);
         }
     }
 

@@ -4,11 +4,20 @@ import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.Set;
 
-/** Conjures a named card into the controller's hand, optionally removing keywords from it. */
-public record ConjureCardToHandEffect(String cardName, Set<Keyword> removedKeywords) implements CardEffect {
+/** Conjures a full, non-token card by printing or by name into the controller's hand. */
+public record ConjureCardToHandEffect(String setCode, String collectorNumber, String cardName,
+                                     Set<Keyword> removedKeywords) implements CardEffect {
+
+    public ConjureCardToHandEffect(String setCode, String collectorNumber) {
+        this(setCode, collectorNumber, null, Set.of());
+    }
 
     public ConjureCardToHandEffect(String cardName) {
-        this(cardName, Set.of());
+        this(null, null, cardName, Set.of());
+    }
+
+    public ConjureCardToHandEffect(String cardName, Set<Keyword> removedKeywords) {
+        this(null, null, cardName, removedKeywords);
     }
 
     public ConjureCardToHandEffect {
@@ -16,6 +25,6 @@ public record ConjureCardToHandEffect(String cardName, Set<Keyword> removedKeywo
     }
 
     public static ConjureCardToHandEffect withoutKeyword(String cardName, Keyword keyword) {
-        return new ConjureCardToHandEffect(cardName, Set.of(keyword));
+        return new ConjureCardToHandEffect(null, null, cardName, Set.of(keyword));
     }
 }
