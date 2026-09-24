@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "POR", collectorNumber = "138")
+@CardRegistration(set = "ME4", collectorNumber = "126")
 public class LavaFlow extends Card {
 
     public LavaFlow() {

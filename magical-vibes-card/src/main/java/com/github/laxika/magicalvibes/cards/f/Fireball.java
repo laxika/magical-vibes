@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "136")
+@CardRegistration(set = "2ED", collectorNumber = "150")
 @CardRegistration(set = "DD2", collectorNumber = "56")
 @CardRegistration(set = "M12", collectorNumber = "131")
 @CardRegistration(set = "M11", collectorNumber = "138")
@@ -21,9 +22,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "PD2", collectorNumber = "27")
 @CardRegistration(set = "JVC", collectorNumber = "56")
 @CardRegistration(set = "IMA", collectorNumber = "128")
+@CardRegistration(set = "C13", collectorNumber = "106")
 @CardRegistration(set = "SLZ", collectorNumber = "57")
 @CardRegistration(set = "SLZ", collectorNumber = "178")
 @CardRegistration(set = "SLZ", collectorNumber = "299")
+@CardRegistration(set = "ME4", collectorNumber = "115")
 public class Fireball extends Card {
 
     public Fireball() {

@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "95")
 @CardRegistration(set = "SLZ", collectorNumber = "216")
 @CardRegistration(set = "SLZ", collectorNumber = "337")
+@CardRegistration(set = "ME4", collectorNumber = "181")
 @CardRegistration(set = "CMM", collectorNumber = "368")
 public class AshnodsAltar extends Card {
 

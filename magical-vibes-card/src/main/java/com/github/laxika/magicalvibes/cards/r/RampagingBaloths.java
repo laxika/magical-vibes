@@ -12,6 +12,8 @@ import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "178")
 @CardRegistration(set = "IMA", collectorNumber = "184")
+@CardRegistration(set = "C13", collectorNumber = "164")
+@CardRegistration(set = "C14", collectorNumber = "212")
 public class RampagingBaloths extends Card {
 
     public RampagingBaloths() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CMD", collectorNumber = "277")
+@CardRegistration(set = "C13", collectorNumber = "295")
 public class HomewardPath extends Card {
 
     public HomewardPath() {

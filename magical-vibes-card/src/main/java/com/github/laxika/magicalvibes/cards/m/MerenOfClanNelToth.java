@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 @CardRegistration(set = "CMM", collectorNumber = "346")
 @CardRegistration(set = "CMM", collectorNumber = "584")
 @CardRegistration(set = "CMM", collectorNumber = "685")
+@CardRegistration(set = "C15", collectorNumber = "49")
 public class MerenOfClanNelToth extends Card {
 
     public MerenOfClanNelToth() {

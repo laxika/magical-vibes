@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "197")
 @CardRegistration(set = "CMM", collectorNumber = "526")
+@CardRegistration(set = "C14", collectorNumber = "31")
 public class WakeTheDead extends Card {
 
     public WakeTheDead() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 
 @CardRegistration(set = "CMM", collectorNumber = "349")
 @CardRegistration(set = "CMM", collectorNumber = "587")
+@CardRegistration(set = "C13", collectorNumber = "201")
 public class NekusarTheMindrazer extends Card {
 
     public NekusarTheMindrazer() {

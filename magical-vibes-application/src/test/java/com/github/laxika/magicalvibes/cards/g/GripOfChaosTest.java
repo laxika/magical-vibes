@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.p.PeelFromReality;
 import com.github.laxika.magicalvibes.cards.r.ReturnToDust;
 import com.github.laxika.magicalvibes.cards.w.WyluliWolf;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -147,6 +148,28 @@ class GripOfChaosTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(ability.getTargetId()).isNull();
         assertThat(ability.getTargetIds()).containsExactly(originalTarget.getId());
+    }
+
+    @Test
+    void reselectsSingleChosenTargetOfMultiTargetAbilityUsingItsFilter() {
+        harness.addToBattlefield(player1, new GripOfChaos());
+        addCreatureReady(player1, new JoragaAuxiliary());
+        var originalTarget = addCreatureReady(player1, new GrizzlyBears());
+        var replacement = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbilityWithMultiTargets(player1, 1, 0, List.of(originalTarget.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(originalTarget);
+        harness.passBothPriorities();
+
+        StackEntry ability = gd.stack.stream()
+                .filter(entry -> entry.getCard().getName().equals("Joraga Auxiliary"))
+                .findFirst().orElseThrow();
+        assertThat(ability.getTargetId()).isEqualTo(replacement.getId());
+        harness.passBothPriorities();
+        assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

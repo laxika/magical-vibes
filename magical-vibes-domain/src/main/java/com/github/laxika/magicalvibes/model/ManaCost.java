@@ -3090,6 +3090,8 @@ public class ManaCost {
                         && pool.getKickedOnlyMana(entry.getKey()) > 0 && extraGreen > 0) {
                     pool.removeKickedOnlyMana(entry.getKey(), 1);
                     extraGreen--;
+                } else if (artifactContext && pool.getArtifactOnlyMana(entry.getKey()) > 0) {
+                    pool.removeArtifactOnlyMana(entry.getKey(), 1);
                 } else if (artifactContext && pool.getArtifactSpellOnlyMana(entry.getKey()) > 0) {
                     pool.removeArtifactSpellOnlyMana(entry.getKey(), 1);
                 } else if (artifactContext && pool.getArtifactSpellOrAbilityOnlyMana(entry.getKey()) > 0) {
@@ -3135,6 +3137,11 @@ public class ManaCost {
                 int fromGuidelight = Math.min(remainingGeneric, pool.getArtifactSpellOrAbilityOnlyMana(color));
                 pool.removeArtifactSpellOrAbilityOnlyMana(color, fromGuidelight);
                 remainingGeneric -= fromGuidelight;
+            }
+            for (ManaColor color : ManaColor.values()) {
+                int fromArtifact = Math.min(remainingGeneric, pool.getArtifactOnlyMana(color));
+                pool.removeArtifactOnlyMana(color, fromArtifact);
+                remainingGeneric -= fromArtifact;
             }
             int fromRestricted = Math.min(remainingGeneric, pool.getArtifactOnlyColorless());
             pool.removeArtifactOnlyColorless(fromRestricted);

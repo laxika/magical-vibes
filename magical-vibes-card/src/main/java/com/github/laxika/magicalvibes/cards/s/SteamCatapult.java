@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "P02", collectorNumber = "22")
+@CardRegistration(set = "ME4", collectorNumber = "29")
 public class SteamCatapult extends Card {
 
     public SteamCatapult() {

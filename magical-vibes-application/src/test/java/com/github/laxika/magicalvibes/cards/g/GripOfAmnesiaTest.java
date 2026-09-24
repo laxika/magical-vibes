@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GripOfAmnesia.class, BorderPatrol.class})
+@CardUsed({BorderPatrol.class, Forest.class, GripOfAmnesia.class, GrizzlyBears.class})
 class GripOfAmnesiaTest extends BaseCardTest {
 
     @Test
@@ -101,6 +103,46 @@ class GripOfAmnesiaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
+        harness.castInstant(player1, 0, 0, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        return spell;
+    }
+
+    @Test
+    void exilesEveryCardFromTargetSpellControllersGraveyard() {
+        Card firstGraveyardCard = new Forest();
+        Card secondGraveyardCard = new Forest();
+        Card drawCard = new Forest();
+        castAgainstOpponentForJudReview(List.of(firstGraveyardCard, secondGraveyardCard), drawCard);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .contains(firstGraveyardCard, secondGraveyardCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
+    }
+
+    private GrizzlyBears castAgainstOpponentForJudReview(List<Card> graveyard, Card drawCard) {
+        GrizzlyBears spell = new GrizzlyBears();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setGraveyard(player2, graveyard);
+        harness.setLibrary(player1, List.of(drawCard));
+        harness.setHand(player1, List.of(new GripOfAmnesia()));
+
+        harness.castFromHand(player2, spell, "{1}{G}");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passPriority(player2);
         harness.castInstant(player1, 0, 0, spell.getId());
         harness.passBothPriorities();
 

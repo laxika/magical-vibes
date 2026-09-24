@@ -108,6 +108,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 applyReturnRiders(gameData, permanent, effect);
                 returnedCards.add(card);
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+                if (effect.counterType() != null && effect.counterCount() > 0) {
+                    permanentCounterSupport.placeCounterOnPermanent(
+                            gameData, entry, permanent, effect.counterType(), effect.counterCount());
+                }
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);

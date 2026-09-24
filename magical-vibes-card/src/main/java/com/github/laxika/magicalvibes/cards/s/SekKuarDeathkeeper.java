@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CSP", collectorNumber = "131")
+@CardRegistration(set = "C13", collectorNumber = "210")
 @CardRegistration(set = "CMM", collectorNumber = "354")
 @CardRegistration(set = "CMM", collectorNumber = "591")
 public class SekKuarDeathkeeper extends Card {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCardFromGraveyardToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
@@ -20,11 +21,13 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFac
 import com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromChosenOwnPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAllMireCountersFromChosenLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SuspectChosenOtherCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RedHerringExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.InfernalOfferingEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,6 +50,7 @@ public class PermanentChoiceHandlerService {
     private final AbilityActivationService abilityActivationService;
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final OpponentChoosesCardFromGraveyardToHandEffectHandler opponentChoosesCardHandler;
+    private final DawnbreakReclaimerEffectHandler dawnbreakReclaimerEffectHandler;
     private final AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
@@ -64,10 +68,12 @@ public class PermanentChoiceHandlerService {
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
     private final RemoveCounterFromChosenOwnPermanentEffectHandler removeCounterFromChosenOwnPermanentEffectHandler;
+    private final RemoveAllMireCountersFromChosenLandEffectHandler removeAllMireCountersFromChosenLandEffectHandler;
     private final ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler;
     private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
+    private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -178,10 +184,24 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBalduvianWarlordChoosesAttacker(gameData, permanentId, chooseAttacker);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureYouGainControl richesChoice) {
             battlefieldHandler.handleOpponentChoosesCreatureYouGainControl(gameData, permanentId, richesChoice);
+        } else if (context instanceof PermanentChoiceContext.OrderOfSuccession orderOfSuccession) {
+            battlefieldHandler.handleOrderOfSuccessionChoice(gameData, permanentId, orderOfSuccession);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource exileChoice) {
             battlefieldHandler.handleEachOpponentChoosesCreatureToExileWithSource(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentDrawAndUntap chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentDrawAndUntap(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentEachCreatesTokens chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentEachCreatesTokens(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.InfernalOfferingOpponentChoice chooseOpponent) {
+            infernalOfferingEffectHandler.completeOpponentChoice(gameData, permanentId, chooseOpponent);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.InfernalOfferingCreatureChoice creatureChoice) {
+            infernalOfferingEffectHandler.completeCreatureChoice(gameData, permanentId, creatureChoice);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof PermanentChoiceContext.RiskyMoveCreatureChoice riskyMove) {
             riskyMoveEffectHandler.completeCreatureChoice(gameData, permanentId, riskyMove);
         } else if (context instanceof PermanentChoiceContext.RiskyMoveOpponentChoice riskyMove) {
@@ -375,8 +395,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
         } else if (context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue kethek) {
             battlefieldHandler.handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(gameData, permanentId, kethek);
-        } else if (context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType descendantsFury) {
-            battlefieldHandler.handleSacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
+        } else if (context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature descendantsFury) {
+            battlefieldHandler.handleSacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
                     gameData, permanentId, descendantsFury);
         } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent venom) {
             battlefieldHandler.handleSacrificeAnotherCreatureDrawAndMayPutPermanent(gameData, permanentId, venom);
@@ -414,12 +434,16 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleHandCastSpellTarget(gameData, permanentId, hct);
         } else if (context instanceof PermanentChoiceContext.OpponentChosenSpellTarget opponentTarget) {
             spellHandler.handleOpponentChosenSpellTarget(gameData, permanentId, opponentTarget);
+        } else if (context instanceof PermanentChoiceContext.OpponentChosenSpellTargets opponentTargets) {
+            spellHandler.handleOpponentChosenSpellTargets(gameData, permanentId, opponentTargets);
         } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
         } else if (context instanceof PermanentChoiceContext.CreateTokensAttacking createTokens) {
             triggerHandler.handleCreateTokensAttacking(gameData, permanentId, createTokens);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateTokenCopiesAttacking(gameData, permanentId, tokenCopies);
+        } else if (context instanceof PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking tokenCopies) {
+            triggerHandler.handleCreateMemoryCounterTokenCopiesAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.RevealUntilCardPredicateAttackTarget revealAttack) {
             triggerHandler.handleRevealUntilCardPredicateAttackTarget(gameData, permanentId, revealAttack);
         } else if (context instanceof PermanentChoiceContext.ChosenPermanentAttackTarget chosenAttackTarget) {
@@ -440,6 +464,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepAnyTargetTrigger(gameData, permanentId, uat);
         } else if (context instanceof PermanentChoiceContext.UpkeepPermanentTargetTrigger uptt) {
             triggerHandler.handleUpkeepPermanentTargetTrigger(gameData, permanentId, uptt);
+        } else if (context instanceof PermanentChoiceContext.CyclopeanTombUpkeepLandChoice cyclopean) {
+            removeAllMireCountersFromChosenLandEffectHandler.completeChoice(gameData, permanentId, cyclopean);
         } else if (context instanceof PermanentChoiceContext.DayNightTransformAttachment dnta) {
             triggerHandler.handleDayNightTransformAttachment(gameData, permanentId, dnta);
         } else if (context instanceof PermanentChoiceContext.DayNightTriggerTarget dntt) {
@@ -510,12 +536,16 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerAsEnter cpae) {
             battlefieldHandler.handleChoosePlayerAsEnter(gameData, permanentId, cpae);
+        } else if (context instanceof PermanentChoiceContext.ChooseTwoPlayersAsEnter ctpae) {
+            battlefieldHandler.handleChooseTwoPlayersAsEnter(gameData, permanentId, ctpae);
         } else if (context instanceof PermanentChoiceContext.ChooseNonlandPermanentAsEnter ncpae) {
             battlefieldHandler.handleChooseNonlandPermanentAsEnter(gameData, permanentId, ncpae);
         } else if (context instanceof PermanentChoiceContext.ChooseEquipmentToAttachAsEnter equipmentChoice) {
             battlefieldHandler.handleChooseEquipmentToAttachAsEnter(gameData, permanentId, equipmentChoice);
         } else if (context instanceof PermanentChoiceContext.BlightCreatureChoice blight) {
             battlefieldHandler.handleBlightCreatureChoice(gameData, permanentId, blight);
+        } else if (context instanceof PermanentChoiceContext.CounterUnlessBlightsCreatureChoice blight) {
+            battlefieldHandler.handleCounterUnlessBlightsCreatureChoice(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentBlightsCreature blight) {
             battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy) {
@@ -532,6 +562,8 @@ public class PermanentChoiceHandlerService {
             bendOrBreakEffectHandler.completeOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCardFromGraveyardToHand) {
             opponentChoosesCardHandler.completeOpponentChoice(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.DawnbreakReclaimerOpponentChoice) {
+            dawnbreakReclaimerEffectHandler.completeOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.CuratorOpponentChoice) {
             battlefieldHandler.handleCuratorOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.ChooseOwnCreatureGrantKeyword grantKeyword) {

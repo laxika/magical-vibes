@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "227")
+@CardRegistration(set = "C13", collectorNumber = "308")
 public class NayaPanorama extends Card {
 
     public NayaPanorama() {

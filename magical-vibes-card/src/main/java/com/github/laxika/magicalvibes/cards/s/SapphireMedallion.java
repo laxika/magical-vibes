@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "306")
+@CardRegistration(set = "C14", collectorNumber = "266")
 @CardRegistration(set = "CMM", collectorNumber = "407")
 @CardRegistration(set = "CMM", collectorNumber = "614")
 public class SapphireMedallion extends Card {

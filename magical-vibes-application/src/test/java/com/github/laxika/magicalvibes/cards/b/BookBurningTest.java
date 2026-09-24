@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BookBurning.class, BorderPatrol.class})
+@CardUsed({BookBurning.class, BorderPatrol.class, SuntailHawk.class})
 class BookBurningTest extends BaseCardTest {
 
     @Test
@@ -78,5 +79,50 @@ class BookBurningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castSorcery(player1, 0, targetPlayerId);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A player accepting takes 6 damage and prevents the mill")
+    void acceptingDamagePreventsMillJudReview() {
+        harness.setLibrary(player2, List.of(new SuntailHawk(), new SuntailHawk(), new SuntailHawk(),
+                new SuntailHawk(), new SuntailHawk(), new SuntailHawk()));
+        int lifeBefore = gd.getLife(player1.getId());
+        castBookBurning(player2.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 6);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The first accepting player stops the remaining choices")
+    void firstAcceptanceStopsChoicesJudReview() {
+        harness.setLibrary(player2, List.of(new SuntailHawk(), new SuntailHawk(), new SuntailHawk(),
+                new SuntailHawk(), new SuntailHawk(), new SuntailHawk()));
+        int lifeBefore = gd.getLife(player2.getId());
+        castBookBurning(player2.getId());
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("All players declining mills only the cards available in a short library")
+    void allPlayersDecliningMillsAvailableCards() {
+        harness.setLibrary(player2, List.of(new SuntailHawk(), new SuntailHawk()));
+        castBookBurning(player2.getId());
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 }

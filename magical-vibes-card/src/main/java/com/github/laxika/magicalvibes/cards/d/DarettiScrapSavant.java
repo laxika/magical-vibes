@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "213")
 @CardRegistration(set = "CMM", collectorNumber = "531")
+@CardRegistration(set = "C14", collectorNumber = "33")
 public class DarettiScrapSavant extends Card {
 
     private static final String EMBLEM_TEXT =

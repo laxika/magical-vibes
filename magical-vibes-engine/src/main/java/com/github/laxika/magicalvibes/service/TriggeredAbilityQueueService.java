@@ -1961,6 +1961,10 @@ public class TriggeredAbilityQueueService {
                     minTargets = 0;
                     scope = targetEffect.source();
                     break;
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    filter = effect.targetSpec().graveyardCardPredicate().orElse(null);
+                    scope = effect.targetSpec().graveyardScope().orElse(scope);
+                    break;
                 }
             }
 
@@ -2207,6 +2211,8 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
             gameData.graveyardTargetOperation.xValue = pending.xValue();
+            gameData.graveyardTargetOperation.singleGraveyard =
+                    describedTarget != null && describedTarget.singleGraveyard();
             gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger =
                     pending.sourceAlternateCostAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =

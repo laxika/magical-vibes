@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "329")
 @CardRegistration(set = "CMM", collectorNumber = "575")
+@CardRegistration(set = "C15", collectorNumber = "40")
 public class VerdantConfluence extends Card {
 
     public VerdantConfluence() {

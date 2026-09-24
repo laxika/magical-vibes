@@ -4,45 +4,47 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Creates the initial tokens for the controller, then offers each opponent the same token creation
- * in APNAP order; each accepted offer creates another copy of the tokens for the controller.
+ * Tempting offer that creates tokens for the spell's controller, then offers each opponent the
+ * same token creation; an opponent who accepts also gives the spell's controller another batch.
  */
 public record TemptingOfferCreateTokensEffect(
-        CreateTokenEffect token,
+        CreateTokenEffect tokenEffect,
         List<UUID> remainingOpponentIds,
         UUID abilityControllerId
 ) implements TokenCreatingEffect {
 
-    public TemptingOfferCreateTokensEffect(CreateTokenEffect token) {
-        this(token, null, null);
-    }
-
     public TemptingOfferCreateTokensEffect {
+        Objects.requireNonNull(tokenEffect, "tokenEffect is required");
         if (remainingOpponentIds != null) {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
         }
     }
 
+    public TemptingOfferCreateTokensEffect(CreateTokenEffect tokenEffect) {
+        this(tokenEffect, null, null);
+    }
+
     @Override
     public DynamicAmount tokenAmount() {
-        return token.tokenAmount();
+        return tokenEffect.amount();
     }
 
     @Override
     public CardType tokenType() {
-        return token.tokenType();
+        return tokenEffect.primaryType();
     }
 
     @Override
     public int tokenPower() {
-        return token.tokenPower();
+        return tokenEffect.tokenPower();
     }
 
     @Override
     public int tokenToughness() {
-        return token.tokenToughness();
+        return tokenEffect.tokenToughness();
     }
 }

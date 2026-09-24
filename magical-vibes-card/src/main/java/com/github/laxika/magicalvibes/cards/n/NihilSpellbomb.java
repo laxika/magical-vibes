@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "187")
 @CardRegistration(set = "A25", collectorNumber = "226")
+@CardRegistration(set = "C13", collectorNumber = "249")
 public class NihilSpellbomb extends Card {
 
     public NihilSpellbomb() {

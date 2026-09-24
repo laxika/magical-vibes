@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "161")
 @CardRegistration(set = "CMM", collectorNumber = "512")
+@CardRegistration(set = "C14", collectorNumber = "23")
 public class GhoulcallerGisa extends Card {
 
     public GhoulcallerGisa() {

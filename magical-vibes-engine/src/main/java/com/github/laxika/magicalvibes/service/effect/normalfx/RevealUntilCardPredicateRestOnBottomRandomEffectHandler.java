@@ -74,7 +74,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             revealedCards.add(card);
             if (predicateEvaluationService.matchesCardPredicate(
                     card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId,
-                    entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot())) {
+                    entry.getSourcePermanentId(), null, entry.getXValue(), entry.getSourcePermanentSnapshot())) {
                 foundCard = card;
                 break;
             }

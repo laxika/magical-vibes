@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "156")
+@CardRegistration(set = "C13", collectorNumber = "292")
+@CardRegistration(set = "C15", collectorNumber = "288")
 public class GrimBackwoods extends Card {
 
     public GrimBackwoods() {

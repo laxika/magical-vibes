@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -54,18 +53,18 @@ class SoulhunterRakshasaTest extends BaseCardTest {
     @Test
     @DisplayName("Entering from a graveyard does not trigger the hand-cast ability")
     void enteringFromGraveyardDoesNotDealDamage() {
-        harness.setGraveyard(player1, List.of(new SoulhunterRakshasa()));
+        SoulhunterRakshasa target = new SoulhunterRakshasa();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
-        assertThat(harness.getGameData().interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
-        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, target.getName());
 
         harness.assertLife(player2, 20);
     }

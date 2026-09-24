@@ -17,6 +17,8 @@ import java.util.List;
 @CardRegistration(set = "MM3", collectorNumber = "248")
 @CardRegistration(set = "PIO", collectorNumber = "276")
 @CardRegistration(set = "RVR", collectorNumber = "287")
+@CardRegistration(set = "C13", collectorNumber = "323")
+@CardRegistration(set = "C15", collectorNumber = "306")
 public class SimicGuildgate extends Card {
 
     public SimicGuildgate() {

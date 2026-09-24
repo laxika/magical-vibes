@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "122")
 @CardRegistration(set = "CMM", collectorNumber = "497")
+@CardRegistration(set = "C14", collectorNumber = "18")
 public class StormsurgeKraken extends Card {
 
     public StormsurgeKraken() {

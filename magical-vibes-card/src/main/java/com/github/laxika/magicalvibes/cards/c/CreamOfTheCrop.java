@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
 
 @CardRegistration(set = "MOR", collectorNumber = "117")
+@CardRegistration(set = "ECC", collectorNumber = "102")
 public class CreamOfTheCrop extends Card {
 
     public CreamOfTheCrop() {

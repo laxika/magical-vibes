@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -114,7 +115,8 @@ class MayAbilityHandlerServiceTest {
                 validTargetService,
                 targetPredicateEvaluationService,
                 mayEffectHandlerRegistry,
-                mock(TriggerCollectionService.class));
+                mock(TriggerCollectionService.class),
+                mock(RagingRiverEffectHandler.class));
 
         player1 = new Player(PLAYER1_ID, "Alice");
 

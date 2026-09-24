@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -314,6 +315,16 @@ public class ValidTargetService {
                             gameData, trialTargets);
                 });
             }
+            if (card.getMultiTargetConstraint()
+                    == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                validPermanentIds.removeIf(id -> {
+                    List<UUID> trialTargets = new ArrayList<>(alreadySelectedIds);
+                    trialTargets.add(id);
+                    return !targetLegalityService.fitsAtMostOneArtifactCreatureEnchantmentPlaneswalkerAndLand(
+                            gameData, trialTargets);
+                });
+            }
             // Cross-target restriction (Bioshift): later positions may only choose permanents
             // controlled by the first target's controller.
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
@@ -387,6 +398,20 @@ public class ValidTargetService {
                     }
                 }
             }
+        }
+
+        if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+            List<UUID> already = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+            validPermanentIds.removeIf(id -> {
+                List<UUID> trial = new ArrayList<>(already);
+                trial.add(id);
+                return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+            });
+            validPlayerIds.removeIf(id -> {
+                List<UUID> trial = new ArrayList<>(already);
+                trial.add(id);
+                return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+            });
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
@@ -627,6 +652,17 @@ public class ValidTargetService {
                         "Select targets for " + sourceCard.getName() + " ability");
             }
 
+            if (positionFilter instanceof ExiledCardPredicateTargetFilter exiledFilter) {
+                List<UUID> validExiledCardIds = computeValidExiledTargetsForFilter(
+                        gameData, ability, sourceCard, controllerId, abilitySourcePermanentId,
+                        exiledFilter, excludeIds, effectiveTargetScalingValue);
+                return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
+                        validGraveyardCardIds, validExiledCardIds,
+                        ability.getEffectiveMinTargets(effectiveTargetScalingValue),
+                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        "Select targets for " + sourceCard.getName() + " ability");
+            }
+
             if (positionFilter instanceof PlayerPredicateTargetFilter) {
                 // Player-targeting position: add valid players
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
@@ -778,6 +814,19 @@ public class ValidTargetService {
                     List<UUID> trial = new ArrayList<>(already);
                     trial.add(id);
                     return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
+                });
+            }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+                List<UUID> already = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+                validPermanentIds.removeIf(id -> {
+                    List<UUID> trial = new ArrayList<>(already);
+                    trial.add(id);
+                    return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+                });
+                validPlayerIds.removeIf(id -> {
+                    List<UUID> trial = new ArrayList<>(already);
+                    trial.add(id);
+                    return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
                 });
             }
             if (isOnePerControllerConstraint(ability.getMultiTargetConstraint())
@@ -1021,6 +1070,26 @@ public class ValidTargetService {
             }
         }
         return List.copyOf(validIds);
+    }
+
+    private List<UUID> computeValidExiledTargetsForFilter(GameData gameData, ActivatedAbility ability,
+                                                           Card sourceCard, UUID controllerId,
+                                                           UUID sourcePermanentId,
+                                                           ExiledCardPredicateTargetFilter filter,
+                                                           Set<UUID> excludeIds, int xValue) {
+        List<UUID> validIds = computeValidExiledTargetsForAbility(
+                gameData, ability, sourceCard, controllerId, sourcePermanentId, excludeIds, xValue);
+        if (filter.predicate() == null) {
+            return validIds;
+        }
+        return validIds.stream()
+                .filter(id -> {
+                    var entry = gameData.findExiledCard(id);
+                    return entry != null && predicateEvaluationService.matchesCardPredicate(
+                            entry.card(), filter.predicate(), sourceCard.getId(), gameData,
+                            entry.ownerId(), sourcePermanentId, null, xValue);
+                })
+                .toList();
     }
 
     /**

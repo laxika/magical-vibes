@@ -1933,63 +1933,71 @@ public class DrawService {
                     continue;
                 }
 
+                int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                        gameData, drawingPlayerId, perm);
                 if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
+                    }
                 } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                     // Targeted draw trigger: the controller must choose a target before the ability
                     // goes on the stack. This includes player-only targets such as "target opponent".
-                    gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
-                            perm.getCard(),
-                            drawingPlayerId,
-                            new ArrayList<>(List.of(effect)),
-                            perm.getId()
-                    ));
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
+                                perm.getCard(),
+                                drawingPlayerId,
+                                new ArrayList<>(List.of(effect)),
+                                perm.getId()
+                        ));
 
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} controller-draw any-target trigger queued",
-                            gameData.id, perm.getCard().getName());
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} controller-draw any-target trigger queued",
+                                gameData.id, perm.getCard().getName());
+                    }
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         && (perm.getCard().getEffectTargetIndex(effect) >= 0
                         || perm.getCard().getEffectTargetIndex(authoredEffect) >= 0)) {
                     // A permanent-target draw trigger (Mantle of Tides): choose the target as the
                     // ability is put on the stack, using the card's declared target filter.
-                    gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
-                            perm.getCard(),
-                            drawingPlayerId,
-                            new ArrayList<>(List.of(effect)),
-                            perm.getId(),
-                            perm.getCard().getTargetFilter()
-                    ));
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
+                                perm.getCard(),
+                                drawingPlayerId,
+                                new ArrayList<>(List.of(effect)),
+                                perm.getId(),
+                                perm.getCard().getTargetFilter()
+                        ));
 
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} controller-draw permanent-target trigger queued",
-                            gameData.id, perm.getCard().getName());
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} controller-draw permanent-target trigger queued",
+                                gameData.id, perm.getCard().getName());
+                    }
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                            perm.getCard(), drawingPlayerId, new ArrayList<>(List.of(effect)), "draw", perm.getId()));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                                perm.getCard(), drawingPlayerId, new ArrayList<>(List.of(effect)), "draw", perm.getId()));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    }
                 } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            drawingPlayerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
-                            drawingPlayerId,
-                            perm.getId()
-                    ));
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                drawingPlayerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(effect)),
+                                drawingPlayerId,
+                                perm.getId()
+                        ));
 
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} controller-draw trigger pushed onto stack",
-                            gameData.id, perm.getCard().getName());
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} controller-draw trigger pushed onto stack",
+                                gameData.id, perm.getCard().getName());
+                    }
                 }
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
             }
         }
 
@@ -2112,22 +2120,22 @@ public class DrawService {
                             continue;
                         }
                     }
-                    if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may, drawingPlayerId, perm.getId());
-                    } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
-                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                        gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
-                                perm.getCard(),
-                                playerId,
-                                new ArrayList<>(List.of(effect)),
-                                perm.getId()
-                        ));
+                    int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                            gameData, playerId, perm);
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        if (effect instanceof MayEffect may) {
+                            gameData.queueMayAbility(perm.getCard(), playerId, may, drawingPlayerId, perm.getId());
+                        } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
+                                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                            gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
+                                    perm.getCard(),
+                                    playerId,
+                                    new ArrayList<>(List.of(effect)),
+                                    perm.getId()
+                            ));
 
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} opponent-draw any-target trigger queued",
-                                gameData.id, perm.getCard().getName());
-                    } else {
-                        gameData.stack.add(new StackEntry(
+                        } else {
+                            gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
@@ -2135,11 +2143,12 @@ public class DrawService {
                                 new ArrayList<>(List.of(effect)),
                                 drawingPlayerId,
                                 perm.getId()
-                        ));
-                    }
+                            ));
+                        }
 
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
+                    }
                 }
             }
         });
@@ -2221,10 +2230,13 @@ public class DrawService {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
                     }
-                    if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), auraControllerId, may);
-                    } else {
-                        gameData.stack.add(new StackEntry(
+                    int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                            gameData, auraControllerId, perm);
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        if (effect instanceof MayEffect may) {
+                            gameData.queueMayAbility(perm.getCard(), auraControllerId, may);
+                        } else {
+                            gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 auraControllerId,
@@ -2232,11 +2244,12 @@ public class DrawService {
                                 new ArrayList<>(List.of(effect)),
                                 drawingPlayerId,
                                 perm.getId()
-                        ));
-                    }
+                            ));
+                        }
 
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} triggers on enchanted player draw", gameData.id, perm.getCard().getName());
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} triggers on enchanted player draw", gameData.id, perm.getCard().getName());
+                    }
                 }
             }
         });

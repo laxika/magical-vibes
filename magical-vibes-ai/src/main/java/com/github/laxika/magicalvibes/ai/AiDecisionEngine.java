@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
@@ -2974,6 +2975,7 @@ public abstract class AiDecisionEngine {
             // Multi-permanent costs ride on additionalCostSacrificePermanentIds — see
             // selectMultiPermanentCostIds.
             if (effect instanceof SacrificeMultiplePermanentsCost
+                    || effect instanceof SacrificeFractionRoundedUpCost
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
@@ -3080,6 +3082,18 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == cost.count() ? chosen : List.of();
+            }
+            if (effect instanceof SacrificeFractionRoundedUpCost cost) {
+                List<Permanent> matching = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .toList();
+                int required = (matching.size() + cost.divisor() - 1) / cost.divisor();
+                return matching.stream()
+                        .sorted(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
+                                + gameQueryService.getEffectiveToughness(gameData, p)))
+                        .limit(required)
+                        .map(Permanent::getId)
+                        .toList();
             }
             if (effect instanceof TapMultiplePermanentsCost cost
                     && cost.count() instanceof Fixed fixed) {
@@ -3784,7 +3798,7 @@ public abstract class AiDecisionEngine {
                         gameQueryService.getEffectivePower(gameData, permanent)
                                 + gameQueryService.getEffectiveToughness(gameData, permanent)))
                 .toList();
-        boolean sacrificeAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+        boolean sacrificeAllowed = gameQueryService.canSacrificeCreaturesForCosts(gameData);
         int effectiveXValue = xValue != null ? xValue : 0;
         for (int count = 0; count <= creatures.size(); count++) {
             int reduction = count * reductionEffect.reductionPerCreature();

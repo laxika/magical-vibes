@@ -12,19 +12,19 @@ import java.util.UUID;
  */
 public record PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId,
                                                 CardSubtype grantedSubtype, boolean enterTapped,
-                                                boolean enterAttacking)
+                                                boolean enterAttacking, boolean grantHaste)
         implements PendingInteraction {
 
     public PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId) {
-        this(toBattlefield, controllerId, null, false, false);
+        this(toBattlefield, controllerId, null, false, false, false);
     }
 
     public PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId,
                                              CardSubtype grantedSubtype) {
-        this(toBattlefield, controllerId, grantedSubtype, false, false);
+        this(toBattlefield, controllerId, grantedSubtype, false, false, false);
     }
 
     public PendingReturnExiledWithSourceCard() {
-        this(false, null, null, false, false);
+        this(false, null, null, false, false, false);
     }
 }

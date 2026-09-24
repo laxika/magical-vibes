@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPG", collectorNumber = "47")
 @CardRegistration(set = "SPG", collectorNumber = "52")
+@CardRegistration(set = "ECC", collectorNumber = "50")
 public class Fury extends Card {
 
     public Fury() {

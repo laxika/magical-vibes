@@ -27,6 +27,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "290")
 @CardRegistration(set = "CMM", collectorNumber = "560")
+@CardRegistration(set = "C14", collectorNumber = "43")
 public class FreyaliseLlanowarsFury extends Card {
 
     public FreyaliseLlanowarsFury() {

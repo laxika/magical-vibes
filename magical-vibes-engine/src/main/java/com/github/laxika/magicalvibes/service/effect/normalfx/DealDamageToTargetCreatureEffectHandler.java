@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -113,6 +114,10 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         }
         if (effect instanceof ExileTopCardsMayPlayUntilNextTurnEffect exile) {
             return amountEvaluationService.referencesEventValue(exile.count());
+        }
+        if (effect instanceof BoostAllOwnCreaturesEffect boost) {
+            return amountEvaluationService.referencesEventValue(boost.powerBoost())
+                    || amountEvaluationService.referencesEventValue(boost.toughnessBoost());
         }
         if (effect instanceof DealDamageToPlayersEffect playerDamage) {
             return playerDamage.recipient() == DamageRecipient.TARGET_PERMANENT_CONTROLLER

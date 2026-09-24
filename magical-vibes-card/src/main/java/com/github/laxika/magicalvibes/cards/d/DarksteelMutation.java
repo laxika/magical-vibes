@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
 
+@CardRegistration(set = "C13", collectorNumber = "9")
 @CardRegistration(set = "CMM", collectorNumber = "21")
 @CardRegistration(set = "CMM", collectorNumber = "623")
 public class DarksteelMutation extends Card {

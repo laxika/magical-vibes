@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "53")
 @CardRegistration(set = "CMM", collectorNumber = "470")
+@CardRegistration(set = "C15", collectorNumber = "7")
 public class RighteousConfluence extends Card {
 
     public RighteousConfluence() {

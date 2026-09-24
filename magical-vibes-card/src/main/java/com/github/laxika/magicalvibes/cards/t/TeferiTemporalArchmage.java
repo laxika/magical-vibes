@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "125")
 @CardRegistration(set = "CMM", collectorNumber = "500")
+@CardRegistration(set = "C14", collectorNumber = "19")
 public class TeferiTemporalArchmage extends Card {
 
     private static final String EMBLEM_TEXT =

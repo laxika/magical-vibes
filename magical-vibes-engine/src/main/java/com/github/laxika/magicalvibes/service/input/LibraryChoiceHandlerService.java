@@ -172,6 +172,7 @@ public class LibraryChoiceHandlerService {
                 || destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT;
         boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED
                 || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER;
+        boolean finalCardToHand = librarySearch.finalCardToHand() && remainingCount == 1;
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
         String filterCardName = librarySearch.filterCardName();
@@ -179,6 +180,7 @@ public class LibraryChoiceHandlerService {
         List<Card> accumulatedCards = librarySearch.accumulatedCards() != null
                 ? new ArrayList<>(librarySearch.accumulatedCards()) : new ArrayList<>();
         boolean requireDifferentNames = librarySearch.requireDifferentNames();
+        boolean requireDifferentPowers = librarySearch.requireDifferentPowers();
         Integer manaValueBoundValue = librarySearch.manaValueBoundValue();
         boolean manaValueExact = librarySearch.manaValueExact();
         Integer totalManaValueBound = librarySearch.totalManaValueBound();
@@ -638,7 +640,8 @@ public class LibraryChoiceHandlerService {
             }
             // Gifts Ungiven stopped short of four cards: the pool found so far still goes to the
             // opponent for the two-card disposal choice.
-            if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL) {
+            if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
+                    || destination == LibrarySearchDestination.THREATS_UNDETECTED_POOL) {
                 gameLogService.append(gameData, GameLog.text(
                         player.getUsername() + " stops searching. Library is shuffled."));
                 finishGiftsUngivenSearch(gameData, playerId, accumulatedCards);
@@ -727,7 +730,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-            if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+            if (startNextToHandPick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
             if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
@@ -903,9 +906,10 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL) {
-            // Gifts Ungiven: the revealed card leaves the library but enters no zone — it waits in
-            // the pool until the opponent has chosen which two cards go to the graveyard.
+        if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
+                || destination == LibrarySearchDestination.THREATS_UNDETECTED_POOL) {
+            // Gifts-style searches hold revealed cards outside every zone until the opponent has
+            // chosen the cards for the effect's configured destination.
             accumulatedCards.add(chosenCard);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " reveals ", chosenCard, "."));
@@ -913,6 +917,8 @@ public class LibraryChoiceHandlerService {
             java.util.Set<String> excluded = java.util.Set.copyOf(excludedCardNames);
             List<Card> remainingMatches = deck.stream()
                     .filter(c -> !excluded.contains(c.getName()))
+                    .filter(c -> !requireDifferentPowers || accumulatedCards.stream()
+                            .noneMatch(selected -> java.util.Objects.equals(selected.getPower(), c.getPower())))
                     .filter(c -> filterPredicate == null || predicateEvaluationService.matchesCardPredicate(
                             c, filterPredicate, null, gameData, deckOwnerId))
                     .toList();
@@ -923,13 +929,15 @@ public class LibraryChoiceHandlerService {
                                 .remainingCount(newRemaining)
                                 .reveals(true)
                                 .canFailToFind(true)
-                                .destination(LibrarySearchDestination.GIFTS_UNGIVEN_POOL)
+                                .destination(destination)
                                 .filterPredicate(filterPredicate)
-                                .requireDifferentNames(true)
+                                .requireDifferentNames(requireDifferentNames)
+                                .requireDifferentPowers(requireDifferentPowers)
                                 .accumulatedCards(accumulatedCards)
                                 .excludedCardNames(excludedCardNames)
                                 .build(),
-                        "Search your library for a card with a different name to reveal ("
+                        "Search your library for a card with a different "
+                                + (requireDifferentPowers ? "power" : "name") + " to reveal ("
                                 + newRemaining + " remaining).", true));
                 return;
             }
@@ -1179,18 +1187,21 @@ public class LibraryChoiceHandlerService {
 
             // Repeat until the requested count is spent or the library runs out; only the final pick
             // shuffles the pile ("shuffle that pile") and then the library ("then shuffle your library").
-            if (remainingCount > 1 && !deck.isEmpty()) {
+            List<Card> remainingPileCards = searchCards.stream()
+                    .filter(card -> deck.contains(card))
+                    .toList();
+            if (remainingCount > 1 && !remainingPileCards.isEmpty()) {
                 int newRemaining = remainingCount - 1;
                 beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
-                        LibrarySearchParams.builder(playerId, new ArrayList<>(deck))
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(remainingPileCards))
                                 .remainingCount(newRemaining)
-                                .canFailToFind(true)
+                                .canFailToFind(canFailToFind)
                                 .destination(LibrarySearchDestination.EXILE_FACE_DOWN_PILE)
                                 .sourcePermanentId(pileSourceId)
                                 .shuffleAfterSelection(shuffleAfterSelection)
                                 .build(),
                         "Search your library for a card to exile in the face-down pile ("
-                                + newRemaining + " remaining).", true));
+                                + newRemaining + " remaining).", canFailToFind));
                 return;
             }
 
@@ -1416,7 +1427,14 @@ public class LibraryChoiceHandlerService {
                 triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
             }
         } else {
-            if (remainingCount > 1) {
+            if (finalCardToHand) {
+                if (!accumulatedCards.isEmpty()) {
+                    placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, battlefieldControllerId,
+                            toBattlefieldTapped, grantHaste, exileAtEndStep, returnToHandAtEndStep,
+                            animateFound, battlefieldCounter, enterWithCounters);
+                }
+                gameData.addCardToHand(handOwnerId, chosenCard);
+            } else if (remainingCount > 1) {
                 // CR 608.2f: Accumulate for simultaneous battlefield entry
                 accumulatedCards.add(chosenCard);
             } else {
@@ -1465,6 +1483,12 @@ public class LibraryChoiceHandlerService {
                         .filter(c -> !excluded.contains(c.getName()))
                         .toList();
             }
+            if (requireDifferentPowers && !accumulatedCards.isEmpty()) {
+                newSearchCards = newSearchCards.stream()
+                        .filter(c -> accumulatedCards.stream()
+                                .noneMatch(selected -> java.util.Objects.equals(selected.getPower(), c.getPower())))
+                        .toList();
+            }
 
             if (newSearchCards.isEmpty()) {
                 // CR 608.2f: Place any accumulated battlefield cards before finishing
@@ -1502,7 +1526,9 @@ public class LibraryChoiceHandlerService {
                 String destinationDesc = toGraveyard ? "their graveyard" : "their hand";
                 prompt = "Search " + targetName + "'s library for a card to put into " + destinationDesc + " (" + newRemaining + " remaining).";
             } else {
-                String destinationDesc = toBattlefieldTapped ? "onto the battlefield tapped"
+                String destinationDesc = librarySearch.finalCardToHand() && newRemaining == 1
+                        ? "into their hand"
+                        : toBattlefieldTapped ? "onto the battlefield tapped"
                         : toBattlefield ? "onto the battlefield" : "into your hand";
                 String distinct = requireDifferentNames ? " with a different name" : "";
                 prompt = "Search your library for a matching card" + distinct + " to put " + destinationDesc + " (" + newRemaining + " remaining).";
@@ -1522,6 +1548,7 @@ public class LibraryChoiceHandlerService {
                     .battlefieldControllerId(battlefieldControllerId)
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
+                    .requireDifferentPowers(requireDifferentPowers)
                     .manaValueBound(manaValueBoundValue, manaValueExact)
                     .totalManaValueBound(totalManaValueBound)
                     .excludedCardNames(excludedCardNames)
@@ -1534,6 +1561,7 @@ public class LibraryChoiceHandlerService {
                     .battlefieldIfChosenBeholdType(battlefieldIfChosenBeholdType)
                     .battlefieldIfChosenPredicate(battlefieldIfChosenPredicate)
                     .battlefieldIfChosenTapped(battlefieldIfChosenTapped)
+                    .finalCardToHand(librarySearch.finalCardToHand())
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 
@@ -1543,6 +1571,12 @@ public class LibraryChoiceHandlerService {
 
         if (shuffleAfterSelection) {
             LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+        }
+
+        if (finalCardToHand) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard,
+                    " and puts it into their hand."));
         }
 
         // When simultaneous placement was done, individual entry logs were already emitted
@@ -1597,6 +1631,7 @@ public class LibraryChoiceHandlerService {
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
                 case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");
                 case GIFTS_UNGIVEN_POOL -> throw new IllegalStateException("GIFTS_UNGIVEN_POOL should be handled earlier");
+                case THREATS_UNDETECTED_POOL -> throw new IllegalStateException("THREATS_UNDETECTED_POOL should be handled earlier");
                 case SIGNAL_THE_CLANS_POOL -> throw new IllegalStateException("SIGNAL_THE_CLANS_POOL should be handled earlier");
             };
             GameLogEntry logEntry;
@@ -1644,7 +1679,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-        if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+        if (startNextToHandPick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         if (followUp.grimReminderSearch() != null && gameData.pendingEffectResolutionEntry != null) {
@@ -1654,6 +1689,13 @@ public class LibraryChoiceHandlerService {
                             chosenCard.getName(), followUp.grimReminderSearch().lifeLoss())));
         }
         finishSearchAndResume(gameData);
+    }
+
+    private boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
+        // Basic-land queues have their own end-of-queue shuffle; the generic descriptor helper
+        // treats an absent empty descriptor queue as an exhausted queue and would shuffle here.
+        return followUp.basicLandSearchQueue() == null
+                && librarySearchSupport.startNextToHandPick(gameData, playerId, followUp);
     }
 
     private void handleOppositionAgentChoice(GameData gameData, Player player,
@@ -1709,7 +1751,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-        if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+        if (startNextToHandPick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
@@ -3362,7 +3404,7 @@ public class LibraryChoiceHandlerService {
                 if (chosenIds.contains(card.getId())) {
                     returnCardExiledWithSourceToBattlefieldEffectHandler.returnToBattlefield(
                             gameData, returnControllerId, card, "exile", pending.grantedSubtype(),
-                            pending.enterTapped(), pending.enterAttacking());
+                            pending.enterTapped(), pending.enterAttacking(), pending.grantHaste());
                     break;
                 }
             }

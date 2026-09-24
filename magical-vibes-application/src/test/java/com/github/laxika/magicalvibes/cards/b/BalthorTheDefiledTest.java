@@ -18,8 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BalthorTheDefiled.class, CabalTrainee.class, DwarvenBloodboiler.class,
-        GiantWarthog.class, KrosanVerge.class})
+@CardUsed({BalthorTheDefiled.class, CabalTrainee.class, DwarvenBloodboiler.class, GiantWarthog.class, KrosanVerge.class, Xenograft.class})
 class BalthorTheDefiledTest extends BaseCardTest {
 
     @Test
@@ -82,5 +81,16 @@ class BalthorTheDefiledTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Dwarven Bloodboiler");
         harness.assertInGraveyard(player2, "Giant Warthog");
         harness.assertInGraveyard(player2, "Krosan Verge");
+    }
+
+    @Test
+    @DisplayName("The Minion bonus also applies to Balthor if it becomes a Minion")
+    void boostsBalthorIfItBecomesAMinion() {
+        Permanent balthor = harness.addToBattlefieldAndReturn(player1, new BalthorTheDefiled());
+        Permanent xenograft = harness.addToBattlefieldAndReturn(player1, new Xenograft());
+        xenograft.setChosenSubtype(CardSubtype.MINION);
+
+        assertThat(gqs.getEffectivePower(gd, balthor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, balthor)).isEqualTo(3);
     }
 }

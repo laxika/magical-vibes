@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,8 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FistsOfTheAnvil.class, GrizzlyBears.class, Forest.class})
 class FistsOfTheAnvilTest extends BaseCardTest {
-
 
     private void setupBearAndFists() {
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -36,11 +36,9 @@ class FistsOfTheAnvilTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearId);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Fists of the Anvil");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
         assertThat(entry.getTargetId()).isEqualTo(bearId);
     }
@@ -51,10 +49,9 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         setupBearAndFists();
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
         assertThat(bear.getPowerModifier()).isEqualTo(4);
@@ -67,15 +64,14 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         setupBearAndFists();
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(0);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
         assertThat(bear.getEffectivePower()).isEqualTo(2);
@@ -99,7 +95,7 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
 
         assertThat(harness.getGameData().stack).hasSize(1);
-        assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Fists of the Anvil");
+        assertThat(harness.getGameData().stack.getFirst().getTargetId()).isEqualTo(bearId);
     }
 
     @Test
@@ -127,21 +123,16 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         // Remove summoning sickness
-        harness.getGameData().playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(false);
+        findPermanent(player1, "Grizzly Bears").setSummoningSick(false);
 
         // Cast and resolve Fists of the Anvil
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // Move to declare attackers
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        harness.getGameService().declareAttackers(harness.getGameData(), player1, List.of(0));
+        declareAttackers(List.of(0));
 
         // Opponent life should be reduced by 6 (2 base + 4 boost)
-        int opponentLife = harness.getGameData().playerLifeTotals.get(player2.getId());
-        assertThat(opponentLife).isEqualTo(20 - 6);
+        harness.assertLife(player2, 20 - 6);
     }
 
     @Test
@@ -153,13 +144,11 @@ class FistsOfTheAnvilTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(10);    // 2 + 4 + 4
         assertThat(bear.getEffectiveToughness()).isEqualTo(2); // unchanged
     }
@@ -173,10 +162,9 @@ class FistsOfTheAnvilTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }
@@ -205,6 +193,18 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid target");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new FistsOfTheAnvil()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
     }
 }
 

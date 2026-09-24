@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "CMM", collectorNumber = "435")
 @CardRegistration(set = "CMM", collectorNumber = "620")
 @CardRegistration(set = "CMM", collectorNumber = "666")
+@CardRegistration(set = "TMC", collectorNumber = "80")
 public class UndergrowthStadium extends Card {
 
     public UndergrowthStadium() {

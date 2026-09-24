@@ -24,6 +24,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "200")
 @CardRegistration(set = "CMM", collectorNumber = "527")
+@CardRegistration(set = "C15", collectorNumber = "23")
 public class WretchedConfluence extends Card {
 
     public WretchedConfluence() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
+@CardRegistration(set = "C14", collectorNumber = "45")
 @CardRegistration(set = "CMM", collectorNumber = "303")
 @CardRegistration(set = "CMM", collectorNumber = "565")
 public class LifebloodHydra extends Card {

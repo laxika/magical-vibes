@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "320")
 @CardRegistration(set = "CMM", collectorNumber = "571")
 @CardRegistration(set = "CMM", collectorNumber = "681")
+@CardRegistration(set = "ECC", collectorNumber = "116")
 public class SelvalaHeartOfTheWilds extends Card {
 
     public SelvalaHeartOfTheWilds() {

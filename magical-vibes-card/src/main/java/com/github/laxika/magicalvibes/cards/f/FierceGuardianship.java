@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "CMM", collectorNumber = "94")
 @CardRegistration(set = "CMM", collectorNumber = "489")
 @CardRegistration(set = "CMM", collectorNumber = "694")
+@CardRegistration(set = "TLE", collectorNumber = "307")
 public class FierceGuardianship extends Card {
 
     public FierceGuardianship() {

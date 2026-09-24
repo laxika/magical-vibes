@@ -22,6 +22,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "45")
 @CardRegistration(set = "CMM", collectorNumber = "467")
+@CardRegistration(set = "C14", collectorNumber = "10")
 public class NahiriTheLithomancer extends Card {
 
     public NahiriTheLithomancer() {

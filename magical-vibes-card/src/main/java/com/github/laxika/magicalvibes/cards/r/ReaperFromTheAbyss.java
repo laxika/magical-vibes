@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "112")
+@CardRegistration(set = "C14", collectorNumber = "159")
 public class ReaperFromTheAbyss extends Card {
 
     public ReaperFromTheAbyss() {

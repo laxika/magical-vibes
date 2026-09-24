@@ -149,6 +149,7 @@ combat damage step is processed.
 | `ON_BLOCK` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect's `targetSpec()` includes permanents (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental — "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
 | `ON_ALLY_CREATURE_BECOMES_BLOCKED` (targeting variants) | `CombatBlockService.checkAllyBecomesBlockedTriggers` queues effects whose `targetSpec()` includes permanents or players through the shared `AttackTriggerTarget` pipeline; the watching permanent is the source for damage and other source-dependent effects. Non-targeting effects retain the blocked creature as `sourcePermanentId`. | Declare blockers |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; unblocked creature stored as non-targeting `sourcePermanentId`) | Non-targeting |
+| `EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; scans the controller's face-up exile cards and stores the unblocked creature as non-targeting `targetId`, its attack destination as `attackedTargetId`, and any exile source ID as `sourcePermanentId`) | Non-targeting |
 | `ON_CREATURE_ATTACKS_YOU` | `CombatAttackService.declareAttackers` (defender's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
 | `ON_CREATURE_ATTACKS_YOU_DIRECTLY` | `CombatAttackService.declareAttackers` (directly attacked player's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
 | `ON_ANY_PLAYER_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any attacking player; attacking player stored as non-targeting `targetId`) | Non-targeting (Total War) |
@@ -269,6 +270,8 @@ card-specific effects such as Hedge Shredder),
 `ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Dreadhound; fires once for each non-token
 creature card that actually enters any player's graveyard from a library, after replacement effects;
 checked in `GraveyardService.addCardToGraveyard`),
+`ON_ANY_CARDS_PUT_INTO_LIBRARY` (Dutiful Knowledge Seeker; fires once when one or more cards enter any
+player's library from another zone, with the library owner preserved in `TriggerContext.CardsPutIntoLibrary`),
 `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Soulcipher Board; fires on every permanent the
 graveyard owner controls whenever a non-token creature card enters their graveyard from any zone — uses
 printed card types, not battlefield creature-ness; checked in `GraveyardService.addCardToGraveyard`),
@@ -318,6 +321,7 @@ reuses `TriggerTargetCollector.Options.END_STEP`)),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
+`ON_ANY_PLAYER_SHUFFLES_LIBRARY`,
 `ON_OPPONENT_SEARCHES_LIBRARY` (Ob Nixilis, Unshackled; fired by `LibrarySearchTriggerHelper` from
 `LibrarySearchSupport.sendLibrarySearchToPlayer` — the choke point every card-presenting search passes
 through — plus the empty-library / no-match early returns of `performLibrarySearch`, which are searches
@@ -335,7 +339,8 @@ with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Wheneve
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER`,
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT`,
 `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
-`ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD`,
+`ON_OPPONENT_MILLS` (Lo and Li, Royal Advisors; fires once when an opponent mills one or more
+cards in a single mill event), `ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD`,
 `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` (Extractor Demon; global watcher — fires on every permanent
 with the slot whenever another creature leaves the battlefield by any means, checked in
 `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`.
@@ -383,6 +388,9 @@ actually places the +1/+1 counter),
 every permanent with this slot, under that permanent's controller, once per individual -1/-1 counter put
 on any creature from any source, via `PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers`;
 non-targeting — a "you may create …" is a `MayEffect` resolved on the stack),
+`ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE` (Auntie Ool, Cursewretch; global watcher — fires
+once per creature per -1/-1 counter-placement event regardless of the number of counters placed;
+the affected creature is carried as the trigger's target and its trigger-time controller is retained),
 `ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE` (Nest of Scarabs; controller-restricted variant of
 the above — same firing method and per-counter cadence, but a permanent only triggers when its controller
 is the player who put the counters. The placing player is `gameData.currentlyResolvingControllerId` for
@@ -396,6 +404,7 @@ counters were placed at once; non-targeting — the Snake creation is a plain `C
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`, `GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
 `GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` (graveyard mirror of `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD`;
 `TriggeringCardConditionalEffect` subtype-gate + `MayPayManaEffect` pay-to-return — Unconventional Tactics),
+`GRAVEYARD_ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (graveyard watcher for any non-token land card entering any graveyard from any zone; `MayPayManaEffect` pay-to-return — Centaur Vinecrasher),
 `GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD` (graveyard watcher for any creature entering;
 `TriggeringCardConditionalEffect` can gate on the entering card's mana value — Dragon Scales),
 `GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD` (scans each graveyard for
@@ -733,3 +742,5 @@ current-combat relationship and the legality check must be repeated when the abi
 When a planar slot contains one standalone single-target effect bound to a later declared group,
 the planar trigger path uses that group's filter directly rather than walking unrelated groups
 belonging to the plane's other abilities.
+
+`ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER` fires only when the equipped creature deals combat damage to a player. It uses the Equipment controller and the same targeting pipeline as `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, which also fires for damage to permanents.

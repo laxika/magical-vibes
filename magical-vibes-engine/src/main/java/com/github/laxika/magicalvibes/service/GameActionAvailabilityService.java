@@ -339,11 +339,15 @@ public class GameActionAvailabilityService {
                                           int extraConvokeMana, int additionalGenericCost,
                                           SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
         if (card.getType() != null && card.getType().isPlanar()) return false;
-        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                && !pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()) {
+        boolean instantOrSorcery = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
+        if (instantOrSorcery
+                && (!pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()
+                || pool.getKickedOrInstantSorceryOnlyManaTotal() > 0)) {
             pool = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(true);
+            pool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(false);
+            pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(true);
         }
         if (card.getCastingOption(ForetellCast.class).isPresent()
                 && pool.getForetellSpellOnlyManaTotal() > 0) {
@@ -603,7 +607,7 @@ public class GameActionAvailabilityService {
             return false;
         }
         if (kicker.hasLifeCost()
-                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && (!gameQueryService.canPayLifeForCosts(gameData)
                 || gameData.getLife(playerId) < kicker.lifeCost().effectiveAmount(gameData.getLife(playerId)))) {
             return false;
         }
@@ -628,9 +632,17 @@ public class GameActionAvailabilityService {
         }
 
         ManaPool paymentPool = pool;
-        if (isColoredSpellWithoutX(gameData, card) && pool.getColoredSpellWithoutXOnlyColorless() > 0) {
+        boolean hasKickedOrInstantSorceryMana = pool.getKickedOrInstantSorceryOnlyManaTotal() > 0;
+        if ((isColoredSpellWithoutX(gameData, card) && pool.getColoredSpellWithoutXOnlyColorless() > 0)
+                || hasKickedOrInstantSorceryMana) {
             paymentPool = new ManaPool(pool);
-            paymentPool.promoteColoredSpellWithoutXOnlyMana();
+            if (isColoredSpellWithoutX(gameData, card) && pool.getColoredSpellWithoutXOnlyColorless() > 0) {
+                paymentPool.promoteColoredSpellWithoutXOnlyMana();
+            }
+            if (hasKickedOrInstantSorceryMana) {
+                paymentPool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(false);
+                paymentPool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(true);
+            }
         }
 
         String combinedManaCost = card.getManaCost() + kicker.cost();
@@ -656,7 +668,7 @@ public class GameActionAvailabilityService {
         boolean powerstoneContext = isArtifact && paymentPool.getPowerstoneOnlyColorless() > 0;
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
-        boolean kickedOnlyGreen = pool.getKickedOnlyManaTotal() > 0;
+        boolean kickedOnlyGreen = paymentPool.getKickedOnlyManaTotal() > 0;
         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE)
@@ -668,6 +680,10 @@ public class GameActionAvailabilityService {
                 : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || card.hasKeyword(Keyword.FREERUNNING)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -877,6 +893,10 @@ public class GameActionAvailabilityService {
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || card.hasKeyword(Keyword.FREERUNNING)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -1663,7 +1683,7 @@ public class GameActionAvailabilityService {
                                                             List<CastingCost> costs) {
         for (CastingCost cost : costs) {
             if (cost instanceof LifeCastingCost lifeCost) {
-                if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                if (!gameQueryService.canPayLifeForCosts(gameData)
                         || gameData.getLife(playerId) < lifeCost.amount()) {
                     return false;
                 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "191")
 @CardRegistration(set = "MMA", collectorNumber = "132")
+@CardRegistration(set = "C15", collectorNumber = "164")
 public class StinkdrinkerDaredevil extends Card {
 
     public StinkdrinkerDaredevil() {

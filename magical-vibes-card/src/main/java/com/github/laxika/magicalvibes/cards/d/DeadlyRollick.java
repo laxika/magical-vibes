@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "147")
 @CardRegistration(set = "CMM", collectorNumber = "507")
 @CardRegistration(set = "CMM", collectorNumber = "695")
+@CardRegistration(set = "TLE", collectorNumber = "309")
 public class DeadlyRollick extends Card {
 
     public DeadlyRollick() {

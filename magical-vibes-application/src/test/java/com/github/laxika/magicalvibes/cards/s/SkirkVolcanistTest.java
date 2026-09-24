@@ -43,6 +43,8 @@ class SkirkVolcanistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, secondTarget.getId());
         harness.handlePermanentChosen(player1, thirdTarget.getId());
 
+        harness.passBothPriorities();
+
         PendingInteraction.XValueChoice firstDamageChoice =
                 gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
         assertThat(firstDamageChoice).isNotNull();
@@ -51,7 +53,6 @@ class SkirkVolcanistTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 1);
         harness.handleXValueChosen(player1, 1);
         harness.handleXValueChosen(player1, 1);
-        harness.passBothPriorities();
 
         assertThat(firstTarget.getMarkedDamage()).isEqualTo(1);
         assertThat(secondTarget.getMarkedDamage()).isEqualTo(1);
@@ -71,13 +72,14 @@ class SkirkVolcanistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.handlePermanentChosen(player1, player1.getId());
 
+        harness.passBothPriorities();
+
         PendingInteraction.XValueChoice damageChoice =
                 gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
         assertThat(damageChoice).isNotNull();
         assertThat(damageChoice.minValue()).isEqualTo(3);
         assertThat(damageChoice.maxValue()).isEqualTo(3);
         harness.handleXValueChosen(player1, 3);
-        harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
@@ -97,6 +99,8 @@ class SkirkVolcanistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, secondTarget.getId());
         harness.handlePermanentChosen(player1, player1.getId());
 
+        harness.passBothPriorities();
+
         PendingInteraction.XValueChoice firstDamageChoice =
                 gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
         assertThat(firstDamageChoice).isNotNull();
@@ -110,7 +114,6 @@ class SkirkVolcanistTest extends BaseCardTest {
         assertThat(secondDamageChoice.minValue()).isEqualTo(1);
         assertThat(secondDamageChoice.maxValue()).isEqualTo(1);
         harness.handleXValueChosen(player1, 1);
-        harness.passBothPriorities();
 
         assertThat(firstTarget.getMarkedDamage()).isEqualTo(2);
         assertThat(secondTarget.getMarkedDamage()).isEqualTo(1);
@@ -137,8 +140,6 @@ class SkirkVolcanistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         return findPermanent(player1, "Skirk Volcanist");

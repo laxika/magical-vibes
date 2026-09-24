@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "17")
+@CardRegistration(set = "C14", collectorNumber = "72")
 public class GeistHonoredMonk extends Card {
 
     public GeistHonoredMonk() {

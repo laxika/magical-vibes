@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "422")
+@CardRegistration(set = "ECC", collectorNumber = "156")
+@CardRegistration(set = "C13", collectorNumber = "310")
 public class OpalPalace extends Card {
 
     public OpalPalace() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "82")
+@CardRegistration(set = "TLE", collectorNumber = "23")
 @CardRegistration(set = "CMM", collectorNumber = "139")
 @CardRegistration(set = "CMM", collectorNumber = "504")
 @CardRegistration(set = "CMM", collectorNumber = "636")

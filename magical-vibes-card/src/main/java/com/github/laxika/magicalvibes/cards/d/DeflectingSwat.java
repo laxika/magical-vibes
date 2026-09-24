@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "214")
 @CardRegistration(set = "CMM", collectorNumber = "532")
 @CardRegistration(set = "CMM", collectorNumber = "698")
+@CardRegistration(set = "TLE", collectorNumber = "311")
 public class DeflectingSwat extends Card {
 
     public DeflectingSwat() {

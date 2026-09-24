@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForUpToTwoBasicL
 import java.util.List;
 
 @CardRegistration(set = "A25", collectorNumber = "243")
+@CardRegistration(set = "C14", collectorNumber = "61")
 @CardRegistration(set = "CMM", collectorNumber = "421")
 @CardRegistration(set = "CMM", collectorNumber = "660")
 public class MyriadLandscape extends Card {

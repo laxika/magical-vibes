@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "308")
 @CardRegistration(set = "CMM", collectorNumber = "566")
 @CardRegistration(set = "CMM", collectorNumber = "701")
+@CardRegistration(set = "TLE", collectorNumber = "313")
 public class ObscuringHaze extends Card {
 
     public ObscuringHaze() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "7")
+@CardRegistration(set = "C13", collectorNumber = "7")
 public class CradleOfVitality extends Card {
 
     public CradleOfVitality() {

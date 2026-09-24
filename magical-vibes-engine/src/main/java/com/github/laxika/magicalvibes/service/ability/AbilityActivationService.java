@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -148,6 +149,7 @@ import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
@@ -304,10 +306,15 @@ public class AbilityActivationService {
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
+        payAdditionalTapAbilityCosts(gameData, playerId, permanent);
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> poolBefore = snapshotPoolColors(manaPool);
+        boolean nonTreasureArtifactSource = gameQueryService.isArtifact(gameData, permanent)
+                && !GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE);
+        EnumMap<ManaColor, Integer> artifactSourceTagsBefore = nonTreasureArtifactSource
+                ? manaPool.getArtifactSourceManaTotals() : null;
         EnumMap<ManaColor, Integer> creatureManaBefore = snapshotCreatureManaColors(manaPool);
         EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
         int totalManaBefore = manaPool.getTotalAllMana();
@@ -343,7 +350,8 @@ public class AbilityActivationService {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                             .withCaveSource(caveSource)
-                            .withBasicLandSource(basicLandSource);
+                            .withBasicLandSource(basicLandSource)
+                            .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null, choiceContext, colors,
@@ -396,7 +404,8 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                 .withCaveSource(caveSource)
-                                .withBasicLandSource(basicLandSource);
+                                .withBasicLandSource(basicLandSource)
+                                .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors,
@@ -437,7 +446,8 @@ public class AbilityActivationService {
                     ChoiceContext.ManaColorChoice choiceContext =
                             new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                     .withCaveSource(caveSource)
-                                    .withBasicLandSource(basicLandSource);
+                                    .withBasicLandSource(basicLandSource)
+                                    .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = twistedColors.stream().map(Enum::name).toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, colors,
@@ -465,7 +475,8 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                                 .withCaveSource(caveSource)
-                                .withBasicLandSource(basicLandSource);
+                                .withBasicLandSource(basicLandSource)
+                                .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors,
@@ -577,10 +588,61 @@ public class AbilityActivationService {
             gameData.pendingRevertableManaActivation = new PendingManaActivation(
                     playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred));
         } else {
+            if (nonTreasureArtifactSource) {
+                recordArtifactManaProduced(manaPool, poolBefore, artifactSourceTagsBefore);
+            }
             recordRevertableManaActivation(gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
         }
 
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    private void payAdditionalTapAbilityCosts(GameData gameData, UUID playerId, Permanent permanent) {
+        List<CostEffect> additionalCosts = castingCostService.getActivatedAbilityAdditionalCosts(gameData, permanent);
+        if (additionalCosts.isEmpty()) {
+            return;
+        }
+
+        List<PayLifeCost> lifeCosts = new ArrayList<>();
+        for (CostEffect additionalCost : additionalCosts) {
+            if (!(additionalCost instanceof PayLifeCost payLifeCost)) {
+                throw new IllegalStateException("Unsupported additional cost for a direct tap ability");
+            }
+            lifeCosts.add(payLifeCost);
+        }
+
+        if (!gameQueryService.canPayLifeForCosts(gameData, true)
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            throw new IllegalStateException("Players can't pay life to activate abilities");
+        }
+
+        int life = gameData.getLife(playerId);
+        List<Integer> amounts = new ArrayList<>(lifeCosts.size());
+        for (PayLifeCost lifeCost : lifeCosts) {
+            int amount = lifeCost.effectiveAmount(life, sourceCounterCount(permanent, lifeCost));
+            if (life < amount) {
+                throw new IllegalStateException("Not enough life to pay (need " + amount + ", have " + life + ")");
+            }
+            amounts.add(amount);
+            life -= amount;
+        }
+        for (int amount : amounts) {
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+            }
+        }
+    }
+
+    private static void recordArtifactManaProduced(ManaPool manaPool,
+                                                    EnumMap<ManaColor, Integer> manaBefore,
+                                                    EnumMap<ManaColor, Integer> artifactSourceTagsBefore) {
+        EnumMap<ManaColor, Integer> artifactSourceTagsAfter = manaPool.getArtifactSourceManaTotals();
+        for (ManaColor color : ManaColor.values()) {
+            int produced = Math.max(0, manaPool.get(color) - manaBefore.getOrDefault(color, 0));
+            int alreadyTagged = Math.max(0, artifactSourceTagsAfter.getOrDefault(color, 0)
+                    - artifactSourceTagsBefore.getOrDefault(color, 0));
+            manaPool.addArtifactSourceManaTag(color, Math.max(0, produced - alreadyTagged));
+        }
     }
 
     private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
@@ -617,6 +679,9 @@ public class AbilityActivationService {
             return false;
         }
         if (choice.context() instanceof ChoiceContext.DevotionManaColorChoice) {
+            return true;
+        }
+        if (choice.context() instanceof ChoiceContext.CommanderCounterManaColorChoice) {
             return true;
         }
         if (choice.context() instanceof ChoiceContext.RestrictedManaColorChoice) {
@@ -1176,6 +1241,46 @@ public class AbilityActivationService {
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null, null);
+    }
+
+    /** Activates an activated ability belonging to one of the activating player's emblems. */
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        List<Emblem> ownedEmblems = gameData.emblems.stream()
+                .filter(emblem -> player.getId().equals(emblem.controllerId()))
+                .toList();
+        if (emblemIndex < 0 || emblemIndex >= ownedEmblems.size()) {
+            throw new IllegalStateException("Invalid emblem index");
+        }
+        Emblem emblem = ownedEmblems.get(emblemIndex);
+        int effectiveAbilityIndex = effectiveAbilityIndex(abilityIndex);
+        if (effectiveAbilityIndex < 0 || effectiveAbilityIndex >= emblem.activatedAbilities().size()) {
+            throw new IllegalStateException("Emblem has no activated ability at that index");
+        }
+        if (emblem.sourceCard() == null) {
+            throw new IllegalStateException("Emblem has no source card");
+        }
+
+        // ActivatedAbilityExecutionService already handles the complete activation sequence for a
+        // Permanent. A mutable runtime copy gives the emblem ability that same path without
+        // mutating the frozen card that originally created the emblem.
+        Card sourceCopy = emblem.sourceCard().createRuntimeCopy();
+        sourceCopy.getActivatedAbilities().clear();
+        sourceCopy.getActivatedAbilities().addAll(emblem.activatedAbilities());
+        activateAbilityInternal(gameData, player, -1, effectiveAbilityIndex, xValue, targetId, targetZone,
+                null, null, targetIds, damageAssignments, new Permanent(sourceCopy), null);
+    }
+
+    /** Activates an ability printed on a card in its controller's command zone. */
+    public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
+        List<Card> commandZone = gameData.playerCommandZones.getOrDefault(player.getId(), List.of());
+        Card card = commandZone.stream()
+                .filter(candidate -> candidate.getId().equals(cardId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("That card is not in your command zone"));
+        activateAbilityInternal(gameData, player, -1, abilityIndex, null, null, null,
+                null, null, null, null, new Permanent(card, Zone.COMMAND), null);
     }
 
     /** Activates an ability printed on a spell while that spell is on the stack. */
@@ -2105,7 +2210,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (payLifeCost != null) {
-            if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+            if (!gameQueryService.canPayLifeForCosts(gameData, isManaAbility(ability, abilityEffects))
                     || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 throw new IllegalStateException("Players can't pay life to activate abilities");
             }
@@ -5904,11 +6009,15 @@ public class AbilityActivationService {
             }
         }
 
-        // Angel of Jubilation: life payments and creature sacrifices can't be used as ability costs
-        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+        // Angel of Jubilation and Karn's Sylex: life payments and creature sacrifices can't be
+        // used as the applicable ability costs.
+        boolean manaAbility = isManaAbility(ability, abilityEffects);
+        if (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
+                || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                if (effect instanceof PayLifeCost || effect instanceof PayLifeForEachCardInHandCost
-                        || effect instanceof PayXLifeCost) {
+                if ((effect instanceof PayLifeCost || effect instanceof PayLifeForEachCardInHandCost
+                        || effect instanceof PayXLifeCost)
+                        && !gameQueryService.canPayLifeForCosts(gameData, manaAbility)) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
                 }
                 if (effect instanceof SacrificeCreatureCost
@@ -7741,6 +7850,9 @@ public class AbilityActivationService {
         if (!gameQueryService.getEffectiveColors(gameData, permanent).isEmpty()) {
             subtypes.remove(CardSubtype.ELDRAZI);
         }
+        if (subtypes.contains(CardSubtype.ASSASSIN)) {
+            subtypes.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         return subtypes;
     }
 
@@ -8991,7 +9103,8 @@ public class AbilityActivationService {
     /**
      * Returns true if an activated ability is a mana ability per CR 605.1a: no target, no spell
      * target, no loyalty cost, at least one mana-producing effect, and no cost or effect that moves
-     * a card to or from a library.
+     * a card to or from a library, except for a controller-only MillEffect used as an inline
+     * reflexive mana-ability rider.
      */
     public static boolean isManaAbility(ActivatedAbility ability) {
         return isManaAbility(ability, ability.getEffects());
@@ -9016,7 +9129,7 @@ public class AbilityActivationService {
         // Registering a delayed upkeep draw does not move a card during this ability's resolution.
         return (effect instanceof CardDrawingEffect
                 && !(effect instanceof RegisterDrawCardsAtNextUpkeepEffect))
-                || effect instanceof MillEffect
+                || (effect instanceof MillEffect mill && mill.recipient() != MillRecipient.CONTROLLER)
                 || effect instanceof DrawCardsCost
                 || effect instanceof ExileTopCardOfLibraryCost
                 || effect instanceof MillControllerCost

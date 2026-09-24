@@ -4,24 +4,22 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TemptingOfferCreateTokensEffect;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
-/** Resolves a Tempting offer token creation sequence in APNAP order. */
+/** Resolves Tempt with Vengeance's sequential opponent token choices. */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandlerBean {
 
     private final CreateTokenEffectHandler createTokenEffectHandler;
-
-    public TemptingOfferCreateTokensEffectHandler(CreateTokenEffectHandler createTokenEffectHandler) {
-        this.createTokenEffectHandler = createTokenEffectHandler;
-    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,74 +29,59 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         TemptingOfferCreateTokensEffect offer = (TemptingOfferCreateTokensEffect) effect;
-        createTokenEffectHandler.resolve(gameData, entry, offer.token());
-
-        List<UUID> opponents = offer.remainingOpponentIds() == null
-                ? apnapOpponents(gameData, entry.getControllerId())
-                : new ArrayList<>(offer.remainingOpponentIds());
-        opponents.removeIf(id -> !gameData.playerIds.contains(id));
-        if (opponents.isEmpty()) {
+        UUID controllerId = offer.abilityControllerId() != null
+                ? offer.abilityControllerId() : entry.getControllerId();
+        if (controllerId == null) {
             return;
         }
 
-        promptNext(gameData, entry.getCard(), entry.getSourcePermanentId(), entry.getXValue(),
-                new TemptingOfferCreateTokensEffect(offer.token(), opponents,
-                        entry.getControllerId()));
+        createTokens(gameData, entry, offer, controllerId);
+
+        List<UUID> opponents = offer.remainingOpponentIds() == null
+                ? new ArrayList<>(AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+                        .apnapOpponents(gameData, controllerId))
+                : new ArrayList<>(offer.remainingOpponentIds());
+        opponents.removeIf(id -> !gameData.playerIds.contains(id));
+        if (!opponents.isEmpty()) {
+            promptNext(gameData, entry.getCard(), new TemptingOfferCreateTokensEffect(
+                    offer.tokenEffect(), List.copyOf(opponents), controllerId));
+        }
+    }
+
+    public void promptNext(GameData gameData, Card sourceCard, TemptingOfferCreateTokensEffect effect) {
+        UUID opponentId = effect.remainingOpponentIds().getFirst();
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                sourceCard,
+                opponentId,
+                List.of(effect),
+                "Create X 1/1 red Elemental creature tokens? If you do, "
+                        + sourceCard.getName() + "'s controller creates X more."));
+        log.info("Game {} - offering {} the {} token choice", gameData.id,
+                gameData.playerIdToName.get(opponentId), sourceCard.getName());
     }
 
     public void completeChoice(GameData gameData, PendingMayAbility ability,
-        TemptingOfferCreateTokensEffect effect, boolean accepted) {
-        UUID controllerId = effect.abilityControllerId();
-        StackEntry tokenEntry = sourceEntry(ability.sourceCard(), controllerId,
-                ability.sourcePermanentId(), ability.xValue());
-
-        if (accepted) {
-            createTokenEffectHandler.resolveForController(gameData, tokenEntry, effect.token(), ability.controllerId());
-            createTokenEffectHandler.resolveForController(gameData, tokenEntry, effect.token(), controllerId);
+                               TemptingOfferCreateTokensEffect effect, boolean accepted) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (accepted && entry != null) {
+            createTokens(gameData, entry, effect, ability.controllerId());
+            createTokens(gameData, entry, effect, effect.abilityControllerId());
         }
 
         List<UUID> remaining = new ArrayList<>(effect.remainingOpponentIds());
         remaining.remove(ability.controllerId());
         remaining.removeIf(id -> !gameData.playerIds.contains(id));
         if (!remaining.isEmpty()) {
-            promptNext(gameData, ability.sourceCard(), ability.sourcePermanentId(), ability.xValue(),
-                    new TemptingOfferCreateTokensEffect(effect.token(), remaining,
-                            controllerId));
+            promptNext(gameData, ability.sourceCard(), new TemptingOfferCreateTokensEffect(
+                    effect.tokenEffect(), List.copyOf(remaining), effect.abilityControllerId()));
         }
     }
 
-    private void promptNext(GameData gameData, Card sourceCard, UUID sourcePermanentId,
-                            int xValue, TemptingOfferCreateTokensEffect effect) {
-        UUID opponentId = effect.remainingOpponentIds().getFirst();
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                sourceCard,
-                opponentId,
-                List.of(effect),
-                sourceCard.getName() + " - Create the offered tokens?",
-                sourcePermanentId,
-                null,
-                xValue));
-    }
-
-    private StackEntry sourceEntry(Card sourceCard, UUID controllerId, UUID sourcePermanentId, Integer xValue) {
-        return new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(),
-                xValue == null ? 0 : xValue,
-                sourcePermanentId);
-    }
-
-    private List<UUID> apnapOpponents(GameData gameData, UUID controllerId) {
-        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
-        int activeIndex = ordered.indexOf(gameData.activePlayerId);
-        if (activeIndex > 0) {
-            List<UUID> rotated = new ArrayList<>(ordered.subList(activeIndex, ordered.size()));
-            rotated.addAll(ordered.subList(0, activeIndex));
-            ordered = rotated;
+    private void createTokens(GameData gameData, StackEntry entry,
+                              TemptingOfferCreateTokensEffect offer, UUID controllerId) {
+        if (controllerId == null) {
+            return;
         }
-        return ordered.stream().filter(id -> !id.equals(controllerId)).toList();
+        createTokenEffectHandler.resolveForController(gameData, entry, offer.tokenEffect(), controllerId);
     }
 }

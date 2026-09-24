@@ -556,6 +556,24 @@ public class LibrarySearchSupport {
             LibrarySearchFollowUp followUp,
             UUID attachToPermanentId,
             Integer mayCastManaValueAtMost) {
+        return performLibrarySearch(gameData, controllerId, filter, noMatchDescription, prompt,
+                reveals, canFailToFind, destination, followUp, attachToPermanentId,
+                mayCastManaValueAtMost, true);
+    }
+
+    public boolean performLibrarySearch(
+            GameData gameData,
+            UUID controllerId,
+            Predicate<Card> filter,
+            String noMatchDescription,
+            String prompt,
+            boolean reveals,
+            boolean canFailToFind,
+            LibrarySearchDestination destination,
+            LibrarySearchFollowUp followUp,
+            UUID attachToPermanentId,
+            Integer mayCastManaValueAtMost,
+            boolean shuffleAfterSelection) {
         if (isSearchPrevented(gameData, controllerId)) return false;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -565,7 +583,8 @@ public class LibrarySearchSupport {
             // Searching an empty library is still a search, so opponent-search triggers fire here too
             // (the interaction-starting path fires them in sendLibrarySearchToPlayer).
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            String logMsg = playerName + " searches their library but it is empty."
+                    + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));
             return false;
         }
@@ -574,8 +593,11 @@ public class LibrarySearchSupport {
 
         if (matchingCards.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            String logMsg = playerName + " searches their library but finds no " + noMatchDescription + ". Library is shuffled.";
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
+            String logMsg = playerName + " searches their library but finds no " + noMatchDescription + "."
+                    + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDescription);
             return false;
@@ -586,6 +608,7 @@ public class LibrarySearchSupport {
                 .canFailToFind(canFailToFind)
                 .prompt(prompt)
                 .destination(destination)
+                .shuffleAfterSelection(shuffleAfterSelection)
                 .followUp(followUp)
                 .attachToPermanentId(attachToPermanentId)
                 .mayCastManaValueAtMost(mayCastManaValueAtMost)
@@ -776,7 +799,8 @@ public class LibrarySearchSupport {
                 String searcherName = gameData.playerIdToName.get(params.playerId());
                 gameLogService.append(gameData, GameLog.text(
                         searcherName + " finds no matching card among the top " + topLimit
-                                + " cards. Library is shuffled."));
+                                + " cards."
+                                + (params.shuffleAfterSelection() ? " Library is shuffled." : "")));
                 return;
             }
             params = params.withCards(restricted);

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesOfChosenTypeFromGraveyardEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "98")
+@CardRegistration(set = "ECC", collectorNumber = "75")
 public class HauntingVoyage extends Card {
 
     public HauntingVoyage() {

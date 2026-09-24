@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -1015,11 +1017,15 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
             entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             if (att.triggeringPermanentId() != null) {
                 Permanent triggeringCreature = gameQueryService.findPermanentById(
                         gameData, att.triggeringPermanentId());
                 if (triggeringCreature != null) {
+                    entry.setAttachedPermanentSnapshot(new Permanent(triggeringCreature));
+                    entry.setTriggeringPermanentControllerId(
+                            gameQueryService.findPermanentController(gameData, triggeringCreature.getId()));
                     triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                             gameData, triggeringCreature, entry);
                 }
@@ -1090,6 +1096,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setAttackedTargetId(att.attackedTargetId());
         }
         entry.setTriggeringPermanentId(att.triggeringPermanentId());
+        entry.setActivePlayerId(gameData.activePlayerId);
         pushTriggeredEntry(gameData, entry);
         if (att.triggeringPermanentId() != null) {
             Permanent triggeringCreature = gameQueryService.findPermanentById(
@@ -1183,6 +1190,42 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleCreateMemoryCounterTokenCopiesAttacking(
+            GameData gameData, UUID attackTargetId,
+            PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking context) {
+        List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
+        chosenTargets.add(attackTargetId);
+
+        if (context.cardIndex() + 1 < context.sourceCards().size()) {
+            beginCreateMemoryCounterTokenCopiesAttackingTargetChoice(gameData,
+                    new PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking(
+                            context.controllerId(), context.sourceCard(), context.sourcePermanentId(),
+                            context.sourceCards(), context.cardIndex() + 1, chosenTargets));
+            return;
+        }
+
+        Permanent source = context.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s ability",
+                List.of(new CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect()),
+                null,
+                context.sourcePermanentId());
+        tokenCopySupport.createTokenCopies(
+                gameData,
+                entry,
+                context.sourceCards(),
+                source,
+                context.controllerId(),
+                CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat(),
+                chosenTargets);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleRevealUntilCardPredicateAttackTarget(
             GameData gameData, UUID attackTargetId,
             PermanentChoiceContext.RevealUntilCardPredicateAttackTarget context) {
@@ -1239,6 +1282,23 @@ public class PermanentChoiceTriggerHandlerService {
         playerInputService.beginAnyTargetChoice(
                 gameData, context.controllerId(), planeswalkerIds, opponentIds,
                 "Choose the player or planeswalker for the token to attack.");
+    }
+
+    private void beginCreateMemoryCounterTokenCopiesAttackingTargetChoice(
+            GameData gameData, PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking context) {
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(context.controllerId()))
+                .toList();
+        List<UUID> planeswalkerIds = opponentIds.stream()
+                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+
+        gameData.interaction.setPermanentChoiceContext(context);
+        playerInputService.beginAnyTargetChoice(
+                gameData, context.controllerId(), planeswalkerIds, opponentIds,
+                "Choose the player or planeswalker for the next token to attack.");
     }
 
     public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,
@@ -2122,6 +2182,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 entry.setSpectacle(sourcePermanent.isSpectacle());
                 entry.setCollectEvidenceCostPaid(sourcePermanent.isCollectEvidenceCostPaid());
+                entry.setWaterbendCostPaid(sourcePermanent.isWaterbendCostPaid());
                 entry.setRevealCardFromHandCostPaid(sourcePermanent.isRevealCardFromHandCostPaid());
                 entry.setControlledDragonAsCast(sourcePermanent.isControlledDragonAsCast());
             }
@@ -2200,6 +2261,25 @@ public class PermanentChoiceTriggerHandlerService {
                 declined ? null : permanentId,
                 est.sourcePermanentId()
         );
+        Permanent source = est.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, est.sourcePermanentId());
+        if (source != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+        }
+        if (!declined && gameQueryService.findCardInExileById(gameData, permanentId) != null) {
+            entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    est.sourceCard(),
+                    est.controllerId(),
+                    est.sourceCard().getName() + "'s end step ability",
+                    new ArrayList<>(est.effects()),
+                    permanentId,
+                    Zone.EXILE,
+                    est.sourcePermanentId());
+            if (source != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
+        }
         pushTriggeredEntry(gameData, entry);
 
         if (declined) {

@@ -961,6 +961,7 @@ public class EnterTriggerCollectorService {
         if (enteringPermanent == null) {
             return true;
         }
+        Integer enteringPowerAtTrigger = gameQueryService.getEffectivePower(match.gameData(), enteringPermanent);
 
         Card sourceCard = match.sourceCard();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
@@ -988,7 +989,7 @@ public class EnterTriggerCollectorService {
                         new Permanent(enteringPermanent),
                         pe.enteringControllerId(),
                         enteringPermanentId,
-                        gameQueryService.getEffectivePower(match.gameData(), enteringPermanent)
+                        enteringPowerAtTrigger
                 );
             }
         }

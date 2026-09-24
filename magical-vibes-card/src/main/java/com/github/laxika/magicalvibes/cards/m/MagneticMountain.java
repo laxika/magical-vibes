@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "4ED", collectorNumber = "209")
 @CardRegistration(set = "SUM", collectorNumber = "163")
 @CardRegistration(set = "3ED", collectorNumber = "163")
+@CardRegistration(set = "ARN", collectorNumber = "41")
 public class MagneticMountain extends Card {
 
     public MagneticMountain() {

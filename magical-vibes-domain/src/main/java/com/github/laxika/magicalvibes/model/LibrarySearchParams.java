@@ -41,6 +41,7 @@ public record LibrarySearchParams(
         UUID sourcePermanentId,
         LibrarySearchFollowUp followUp,
         boolean requireDifferentNames,
+        boolean requireDifferentPowers,
         Integer manaValueBoundValue,
         boolean manaValueExact,
         Integer totalManaValueBound,
@@ -60,6 +61,7 @@ public record LibrarySearchParams(
         CardPredicate battlefieldIfChosenPredicate,
         boolean battlefieldIfChosenTapped,
         boolean placeBattlefieldCardsSimultaneously,
+        boolean finalCardToHand,
         boolean allowCastFromLibraryWhileSearching,
         boolean grantExilePlayPermission,
         boolean allowAnyManaType,
@@ -89,12 +91,12 @@ public record LibrarySearchParams(
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
-                filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
-                placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
+                placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
@@ -105,12 +107,12 @@ public record LibrarySearchParams(
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
-                filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
-                placeBattlefieldCardsSimultaneously, allow,
+                placeBattlefieldCardsSimultaneously, finalCardToHand, allow,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
@@ -120,12 +122,12 @@ public record LibrarySearchParams(
                 count, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 battlefieldIfChosenPredicate, battlefieldIfChosenTapped, placeBattlefieldCardsSimultaneously,
-                allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
@@ -134,12 +136,12 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 battlefieldIfChosenPredicate, battlefieldIfChosenTapped, placeBattlefieldCardsSimultaneously,
-                allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
@@ -148,12 +150,12 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, names, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 battlefieldIfChosenPredicate, battlefieldIfChosenTapped, placeBattlefieldCardsSimultaneously,
-                allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
@@ -185,6 +187,7 @@ public record LibrarySearchParams(
         private UUID sourcePermanentId;
         private LibrarySearchFollowUp followUp = LibrarySearchFollowUp.NONE;
         private boolean requireDifferentNames;
+        private boolean requireDifferentPowers;
         private Integer manaValueBoundValue;
         private boolean manaValueExact;
         private Integer totalManaValueBound;
@@ -204,6 +207,7 @@ public record LibrarySearchParams(
         private CardPredicate battlefieldIfChosenPredicate;
         private boolean battlefieldIfChosenTapped;
         private boolean placeBattlefieldCardsSimultaneously;
+        private boolean finalCardToHand;
         private boolean allowCastFromLibraryWhileSearching;
         private boolean grantExilePlayPermission = true;
         private boolean allowAnyManaType = true;
@@ -341,6 +345,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder requireDifferentPowers(boolean requireDifferentPowers) {
+            this.requireDifferentPowers = requireDifferentPowers;
+            return this;
+        }
+
         public Builder manaValueBound(Integer manaValueBoundValue, boolean manaValueExact) {
             this.manaValueBoundValue = manaValueBoundValue;
             this.manaValueExact = manaValueExact;
@@ -438,6 +447,12 @@ public record LibrarySearchParams(
             return this;
         }
 
+        /** Puts the final selected card into hand after the accumulated battlefield cards. */
+        public Builder finalCardToHand(boolean finalCardToHand) {
+            this.finalCardToHand = finalCardToHand;
+            return this;
+        }
+
         public Builder grantExilePlayPermission(boolean grantExilePlayPermission) {
             this.grantExilePlayPermission = grantExilePlayPermission;
             return this;
@@ -469,12 +484,12 @@ public record LibrarySearchParams(
                     restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     battlefieldControllerId,
-                    filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                    filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                     manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                     returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                     battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
-                    placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
+                    placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
                     grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
                     mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
         }

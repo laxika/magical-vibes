@@ -646,7 +646,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             int lookCount, int chooseCount, boolean randomRemaining) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
-        if (result == null) return;
+        if (result == null) {
+            insertEffectAfterCurrent(entry, e, e.effectIfNoCardChosen());
+            return;
+        }
 
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
@@ -709,6 +712,19 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             boolean randomRemaining) {
         List<Card> eligibleCards = filterEligibleCards(topCards, e.choosePredicate(),
                 entry, gameData, controllerId);
+
+        if (eligibleCards.isEmpty()) {
+            if (randomRemaining) {
+                java.util.Collections.shuffle(topCards);
+                gameData.playerDecks.get(controllerId).addAll(topCards);
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " puts the rest on the bottom of their library in a random order."));
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            }
+            insertEffectAfterCurrent(entry, e, e.effectIfNoCardChosen());
+            return;
+        }
 
         if (eligibleCards.size() > chooseCount) {
             List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();

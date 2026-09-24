@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "46")
 @CardRegistration(set = "TSR", collectorNumber = "85")
+@CardRegistration(set = "C14", collectorNumber = "125")
 public class ShaperParasite extends Card {
 
     public ShaperParasite() {

@@ -390,6 +390,22 @@ class StackResolutionServiceTest {
     class CreatureSpellResolution {
 
         @Test
+        void preservesWaterbendPaymentOnEnteringPermanentAndItsSnapshot() {
+            Card card = createCreature("Waterbend creature");
+            StackEntry entry = new StackEntry(card, PLAYER1_ID);
+            entry.setWaterbendCostPaid(true);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+            Permanent permanent = permanentCaptor.getValue();
+            assertThat(permanent.isWaterbendCostPaid()).isTrue();
+            assertThat(new Permanent(permanent).isWaterbendCostPaid()).isTrue();
+        }
+
+        @Test
         @DisplayName("Creature enters the battlefield under controller's control")
         void creatureEntersBattlefield() {
             Card card = createCreature("Test Creature");

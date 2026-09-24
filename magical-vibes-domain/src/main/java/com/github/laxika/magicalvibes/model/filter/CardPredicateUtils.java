@@ -41,10 +41,13 @@ public final class CardPredicateUtils {
             return "card sharing a creature type with this creature";
         }
         if (predicate instanceof CardSharesCreatureTypeWithCommanderPredicate) {
-            return "card sharing a creature type with your commander";
+            return "creature card sharing a creature type with your commander";
         }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
+        }
+        if (predicate instanceof CardHasSourceChosenNamePredicate) {
+            return "card with the chosen name";
         }
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');

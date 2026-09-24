@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -117,6 +118,21 @@ class TargetLegalityServiceTest {
         gd.playerLifeTotals.put(player2Id, 10);
 
         assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+    }
+
+    @Test
+    void playerProtectionChecksEverySourceColor() {
+        Card source = new Card();
+        when(gameQueryService.getEffectiveCardColors(gd, source))
+                .thenReturn(Set.of(CardColor.BLUE, CardColor.BLACK));
+        when(gameQueryService.playerHasProtectionFromColor(eq(gd), eq(player2Id), any(CardColor.class)))
+                .thenAnswer(invocation -> invocation.getArgument(2) == CardColor.BLACK);
+        var filter = new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
+
+        assertThatThrownBy(() -> sut.validateSpellPlayerTarget(gd, player2Id, player1Id, source, filter))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
     }
 
     @Mock
@@ -2310,6 +2326,28 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        void sourceCounterPredicateCountsEveryXSymbol() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 4);
+            Card spell = createCreature("Double X", CardColor.GREEN);
+            spell.setManaCost("{X}{X}");
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, spell, player2Id,
+                    "Double X", List.of(), 2);
+            var predicate = new com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate(
+                    com.github.laxika.magicalvibes.model.CounterType.CHARGE);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, predicate, player1Id, source)).isTrue();
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 2);
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, predicate, player1Id, source)).isFalse();
+            Card noCostSpell = createCreature("No mana cost", CardColor.GREEN);
+            noCostSpell.setManaCost(null);
+            StackEntry noCostEntry = new StackEntry(StackEntryType.CREATURE_SPELL, noCostSpell, player2Id,
+                    "No mana cost", List.of(), 0);
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 0);
+            assertThat(sut.matchesStackEntryPredicate(gd, noCostEntry, predicate, player1Id, source)).isTrue();
+        }
+
+        @Test
         @DisplayName("matches a spell whose mana value equals the source power")
         void matchesManaValueEqualToSourcePower() {
             Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
@@ -2776,5 +2814,18 @@ class TargetLegalityServiceTest {
                 new PlayerControlsMoreCreaturesThanControllerPredicate())).isTrue();
         assertThat(sut.matchesPlayerPredicate(gd, player1Id, player1Id,
                 new PlayerControlsMoreCreaturesThanControllerPredicate())).isFalse();
+    }
+
+    @Test
+    void sourceOwnerPredicateExcludesOwnerButAllowsNonOwnerController() {
+        Card sourceCard = new Card();
+        sourceCard.setOwnerId(player1Id);
+        Permanent source = new Permanent(sourceCard);
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+
+        PlayerOtherThanSourceOwnerPredicate predicate = new PlayerOtherThanSourceOwnerPredicate();
+
+        assertThat(sut.matchesPlayerPredicate(gd, player2Id, player1Id, predicate, source.getId())).isFalse();
+        assertThat(sut.matchesPlayerPredicate(gd, player2Id, player2Id, predicate, source.getId())).isTrue();
     }
 }

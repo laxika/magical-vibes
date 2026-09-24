@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "24")
 @CardRegistration(set = "CMM", collectorNumber = "459")
 @CardRegistration(set = "CMM", collectorNumber = "692")
+@CardRegistration(set = "TLE", collectorNumber = "306")
 public class FlawlessManeuver extends Card {
 
     public FlawlessManeuver() {

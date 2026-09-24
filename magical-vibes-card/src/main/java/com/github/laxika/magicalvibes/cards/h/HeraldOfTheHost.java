@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "30")
+@CardRegistration(set = "C15", collectorNumber = "4")
 public class HeraldOfTheHost extends Card {
 
     public HeraldOfTheHost() {

@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "176")
 @CardRegistration(set = "CMM", collectorNumber = "517")
+@CardRegistration(set = "C14", collectorNumber = "27")
 public class ObNixilisOfTheBlackOath extends Card {
 
     private static final String EMBLEM_TEXT =

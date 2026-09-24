@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "121")
 @CardRegistration(set = "CMM", collectorNumber = "496")
+@CardRegistration(set = "C14", collectorNumber = "17")
 public class StitcherGeralf extends Card {
 
     public StitcherGeralf() {
