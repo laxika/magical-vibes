@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "37")
 @CardRegistration(set = "MUL", collectorNumber = "102")
 @CardRegistration(set = "MUL", collectorNumber = "167")
+@CardRegistration(set = "SOC", collectorNumber = "305")
 public class DinaSoulSteeper extends Card {
 
     public DinaSoulSteeper() {

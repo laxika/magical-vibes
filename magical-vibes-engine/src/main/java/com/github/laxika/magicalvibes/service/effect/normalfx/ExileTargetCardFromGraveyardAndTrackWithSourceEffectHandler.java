@@ -58,6 +58,10 @@ public class ExileTargetCardFromGraveyardAndTrackWithSourceEffectHandler impleme
                 exileService.exileCard(gameData, graveyardOwnerId, targetCard, sourcePermanentId);
             } else {
                 exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+                // A resolving spell has no source permanent, but its later delayed trigger may
+                // still need to identify this particular exiled card after the spell reaches its
+                // final zone (e.g. Surge to Victory).
+                gameData.setImprintedCard(entry.getCard(), targetCard);
             }
         }
 

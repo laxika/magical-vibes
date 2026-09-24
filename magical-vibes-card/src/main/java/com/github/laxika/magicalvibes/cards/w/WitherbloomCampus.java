@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "275")
+@CardRegistration(set = "SOC", collectorNumber = "423")
 public class WitherbloomCampus extends Card {
 
     public WitherbloomCampus() {

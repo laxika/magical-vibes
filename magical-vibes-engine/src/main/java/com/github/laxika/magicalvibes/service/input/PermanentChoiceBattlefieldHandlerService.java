@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToCreatureSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AuspiciousStarrixSupport;
@@ -133,6 +134,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final GameQueryService gameQueryService;
     private final AuraAttachmentService auraAttachmentService;
     private final EquipSupport equipSupport;
+    private final AttachOneOfEquipmentToCreatureSupport attachOneOfEquipmentToCreatureSupport;
     private final AttachOneOfEquipmentToSamuraiSupport attachOneOfEquipmentToSamuraiSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final CloneService cloneService;
@@ -492,6 +494,35 @@ public class PermanentChoiceBattlefieldHandlerService {
             attachOneOfEquipmentToSamuraiSupport.attach(gameData, equipmentId, samurai.getId());
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAttachOneOfEquipmentToCreature(
+            GameData gameData, UUID controllerId, UUID creatureId,
+            PermanentChoiceContext.AttachOneOfEquipmentToCreature context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+        if (creature == null
+                || !attachOneOfEquipmentToCreatureSupport.legalCreatureIds(
+                gameData, controllerId, context.equipmentPermanentIds()).contains(creatureId)) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<UUID> legalEquipmentIds = attachOneOfEquipmentToCreatureSupport.legalEquipmentIds(
+                gameData, controllerId, creature, context.equipmentPermanentIds());
+        if (legalEquipmentIds.isEmpty()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (legalEquipmentIds.size() == 1) {
+            attachOneOfEquipmentToCreatureSupport.attach(
+                    gameData, legalEquipmentIds.getFirst(), creatureId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.AttachControlledEquipmentToTargetCreature(
+                            creatureId, controllerId, gameData.pendingEffectResolutionEntry.getCard(),
+                            legalEquipmentIds, false));
+            playerInputService.beginPermanentChoice(gameData, controllerId, legalEquipmentIds,
+                    "Choose an Equipment to attach.");
+        }
     }
 
     public void handleCreateTokensAndAttachEquipment(GameData gameData, UUID chosenId,
@@ -1573,7 +1604,8 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen creature token no longer exists");
         }
 
-        populateSupport.createCopy(gameData, context.controllerId(), chosen);
+        populateSupport.createCopy(gameData, context.controllerId(), chosen,
+                gameData.pendingEffectResolutionEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

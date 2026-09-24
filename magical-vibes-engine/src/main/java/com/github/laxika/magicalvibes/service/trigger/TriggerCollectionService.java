@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -335,6 +336,7 @@ import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
@@ -381,11 +383,11 @@ public class TriggerCollectionService {
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
-    private final AmountEvaluationService amountEvaluationService;
     @Autowired
     private ObjectProvider<StateTriggerService> stateTriggerService;
 
@@ -625,6 +627,9 @@ public class TriggerCollectionService {
                     null,
                     delayed.sourcePermanentId());
             entry.setTriggeringCardId(spellCard.getId());
+            if (spellEntry != null) {
+                entry.setXValue(spellEntry.getXValue());
+            }
             entry.setEventValue(spellCard.getManaValue());
             entry.setSourcePermanentSnapshot(delayed.sourcePermanentSnapshot());
             entry.setNonTargeting(true);
@@ -1224,8 +1229,11 @@ public class TriggerCollectionService {
         Integer pendingTurnCopies = gameData.pendingNextInstantSorceryCopyThisTurnCount.get(castingPlayerId);
         List<Integer> pendingMaxManaValues =
                 gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.get(castingPlayerId);
+        List<DynamicAmount> pendingDynamicCounts =
+                gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.get(castingPlayerId);
         if ((pendingTurnCopies != null && pendingTurnCopies > 0
-                || pendingMaxManaValues != null && !pendingMaxManaValues.isEmpty())
+                || pendingMaxManaValues != null && !pendingMaxManaValues.isEmpty()
+                || pendingDynamicCounts != null && !pendingDynamicCounts.isEmpty())
                 && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
@@ -1252,7 +1260,15 @@ public class TriggerCollectionService {
                     }
                 }
                 int unrestrictedCopies = pendingTurnCopies == null ? 0 : pendingTurnCopies;
-                int totalCopies = unrestrictedCopies + limitedCopies;
+                int dynamicCopies = 0;
+                if (pendingDynamicCounts != null) {
+                    for (DynamicAmount dynamicCount : pendingDynamicCounts) {
+                        dynamicCopies += Math.max(0, amountEvaluationService.evaluate(
+                                gameData, dynamicCount, AmountContext.forCasting(castingPlayerId)));
+                    }
+                    gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.remove(castingPlayerId);
+                }
+                int totalCopies = unrestrictedCopies + limitedCopies + dynamicCopies;
                 if (totalCopies > 0) {
                     StackEntry snapshot = new StackEntry(spellEntry);
                     List<CardEffect> copyEffects = new ArrayList<>(totalCopies);
@@ -1614,7 +1630,7 @@ public class TriggerCollectionService {
                         castingPlayerId,
                         spellCard.getName() + "'s ability",
                         new ArrayList<>(List.of(new StormCopyEffect(
-                                new StackEntry(spellEntry), castingPlayerId, copies, false)))
+                                new StackEntry(spellEntry), castingPlayerId, copies, replicate.tokenCopy())))
                 ));
                 log.info("Game {} - {} replicate trigger queued ({} copies) for {}",
                         gameData.id, spellCard.getName(), copies, castingPlayerId);
@@ -6449,7 +6465,10 @@ public class TriggerCollectionService {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (watcher.slot() != slot
                     || (slot == EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES
-                    && !watcher.controllerId().equals(targetId))) {
+                    && !watcher.controllerId().equals(targetId))
+                    || (slot == EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
+                    && !watcher.controllerId().equals(
+                    gameQueryService.findPermanentController(gameData, targetId)))) {
                 continue;
             }
 
@@ -11139,10 +11158,15 @@ public class TriggerCollectionService {
     }
 
     public void checkControllerCardsLeaveGraveyardTriggers(GameData gameData, UUID graveyardOwnerId) {
+        checkControllerCardsLeaveGraveyardTriggers(gameData, graveyardOwnerId, List.of());
+    }
+
+    public void checkControllerCardsLeaveGraveyardTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                           List<Card> cards) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
         if (battlefield == null) return;
 
-        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(graveyardOwnerId);
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(graveyardOwnerId, cards);
 
         for (Permanent perm : battlefield) {
             dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, ctx);
@@ -11266,10 +11290,15 @@ public class TriggerCollectionService {
 
     public void checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(
             GameData gameData, UUID graveyardOwnerId) {
+        checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(gameData, graveyardOwnerId, List.of());
+    }
+
+    public void checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(
+            GameData gameData, UUID graveyardOwnerId, List<Card> cards) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
         if (battlefield == null) return;
 
-        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(graveyardOwnerId);
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(graveyardOwnerId, cards);
         for (Permanent perm : battlefield) {
             dispatchSlot(gameData, perm, graveyardOwnerId,
                     EffectSlot.ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD, ctx);
@@ -13982,6 +14011,23 @@ public class TriggerCollectionService {
                     ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED,
                     ON_ANY_CREATURE_ATTACKS, ON_ANY_PLAYER_ATTACKS -> true;
             default -> false;
+        };
+    }
+
+    private UUID instantOrSorceryCastOrCopyController(TriggerContext context) {
+        Card spellCard = switch (context) {
+            case TriggerContext.SpellCast spellCast -> spellCast.spellCard();
+            case TriggerContext.SpellCopy spellCopy -> spellCopy.spellCard();
+            default -> null;
+        };
+        if (spellCard == null
+                || (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY))) {
+            return null;
+        }
+        return switch (context) {
+            case TriggerContext.SpellCast spellCast -> spellCast.castingPlayerId();
+            case TriggerContext.SpellCopy spellCopy -> spellCopy.copyingPlayerId();
+            default -> null;
         };
     }
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "33")
+@CardRegistration(set = "SOC", collectorNumber = "164")
 public class RemorsefulCleric extends Card {
 
     public RemorsefulCleric() {

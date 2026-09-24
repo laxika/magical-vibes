@@ -680,6 +680,7 @@ public class LayerSystemService {
             }
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
             h = mix(h, gameData.turnsTakenByPlayer.getOrDefault(playerId, 0));
+            h = mix(h, gameData.commanderCastsFromCommandZoneThisGame.getOrDefault(playerId, 0));
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());

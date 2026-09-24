@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "3")
+@CardRegistration(set = "SOC", collectorNumber = "137")
 public class ArchonOfSunsGrace extends Card {
 
     public ArchonOfSunsGrace() {

@@ -156,6 +156,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | first instant, sorcery, or subtype spell each turn — exile the triggering spell, dig to a nonland, damage by mana-value difference, and offer a free cast | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | combat damage → random own-graveyard instant/sorcery, free cast at next upkeep | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
+| demonstrate a spell copy for you and one chosen opponent | `MayEffect(new DemonstrateEffect(), "Copy [spell name]?")` in `ON_SELF_CAST` + the spell's normal effects |
 | chosen creature type, reveal until matching creature count, put matches onto battlefield | `RevealUntilChosenCreatureTypeCountToBattlefieldEffect` |
 | encore, graveyard self-exile and attacking token copies for each opponent | `ExileSelfFromGraveyardCost` + `CreateTokenCopiesOfSourceAttackingOpponentsEffect` in a sorcery-speed graveyard ability |
 | destroy target creature, then create two half-sized token copies | `DestroyTargetCreatureAndCreateTokenCopiesEffect` |
@@ -167,6 +168,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | commander-only anthem, opponent attacks with two creatures | CARD_PATTERNS_PERMANENTS_STATIC.md and CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | damage prevention into counters | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| damage prevention into tokens | `i/Inkshield.java` — `PreventAllCombatDamageToControllerAndCreateTokensEffect(CreateTokenEffect token)` |
 | aura, enchant creature, pacifism | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | curse, enchant player | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | metalcraft, morbid, conditional | CARD_PATTERNS_PERMANENTS_STATIC.md |

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "7")
+@CardRegistration(set = "SOC", collectorNumber = "144")
 public class EidolonOfCountlessBattles extends Card {
 
     public EidolonOfCountlessBattles() {

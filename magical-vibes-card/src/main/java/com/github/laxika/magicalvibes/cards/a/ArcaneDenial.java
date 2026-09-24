@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 @CardRegistration(set = "ALL", collectorNumber = "22b")
 @CardRegistration(set = "ME1", collectorNumber = "31")
 @CardRegistration(set = "A25", collectorNumber = "41")
+@CardRegistration(set = "SOC", collectorNumber = "187")
 @CardRegistration(set = "MSC", collectorNumber = "147")
 @CardRegistration(set = "SLD", collectorNumber = "1545")
 @CardRegistration(set = "C13", collectorNumber = "28")

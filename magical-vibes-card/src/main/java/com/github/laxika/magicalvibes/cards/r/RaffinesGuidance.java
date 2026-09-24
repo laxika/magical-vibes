@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SNC", collectorNumber = "25")
+@CardRegistration(set = "SOC", collectorNumber = "162")
 public class RaffinesGuidance extends Card {
 
     public RaffinesGuidance() {

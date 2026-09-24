@@ -911,7 +911,7 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.sourceCard();
-        if (!mayInterveningIfIsMet(match, may)) {
+        if (!mayInterveningIfIsMet(match, may, pe.defaultTargetPlayerId())) {
             return false;
         }
         boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
@@ -978,7 +978,7 @@ public class EnterTriggerCollectorService {
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleTokenEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        if (!mayInterveningIfIsMet(match, may)) {
+        if (!mayInterveningIfIsMet(match, may, null)) {
             return false;
         }
 
@@ -994,11 +994,13 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    private boolean mayInterveningIfIsMet(TriggerMatchContext match, MayEffect may) {
-        return !(may.wrapped() instanceof ConditionalEffect conditional)
-                || !conditional.interveningIf()
-                || conditionEvaluationService.isInterveningIfMet(
-                match.gameData(), conditional, match.permanent(), match.controllerId());
+    private boolean mayInterveningIfIsMet(TriggerMatchContext match, MayEffect may, UUID targetPlayerId) {
+        if (!(may.wrapped() instanceof ConditionalEffect conditional) || !conditional.interveningIf()) {
+            return true;
+        }
+        ConditionContext context = ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                .withTargetId(targetPlayerId);
+        return conditionEvaluationService.isMet(match.gameData(), conditional.condition(), context);
     }
 
     @CollectsTrigger(value = MayEffect.class,

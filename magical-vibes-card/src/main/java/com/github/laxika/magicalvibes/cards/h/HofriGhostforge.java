@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "192")
+@CardRegistration(set = "SOC", collectorNumber = "314")
 public class HofriGhostforge extends Card {
 
     public HofriGhostforge() {
