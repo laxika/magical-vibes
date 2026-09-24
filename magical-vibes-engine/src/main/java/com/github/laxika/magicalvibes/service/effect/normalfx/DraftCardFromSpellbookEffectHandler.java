@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftCardRecipient;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,6 +31,7 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
 
     private final CardCatalog cardCatalog;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,30 +41,46 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var draft = (DraftCardFromSpellbookEffect) effect;
-        List<Card> spellbook = new ArrayList<>();
-        for (String cardName : draft.cardNames()) {
-            spellbook.add(findCard(cardName));
-        }
+        List<Card> spellbook = draft.cardNames().stream()
+                .map(this::findCard)
+                .filter(card -> card != null)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         if (spellbook.isEmpty()) {
             return;
         }
 
         Collections.shuffle(spellbook);
         List<Card> offeredCards = new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
-        UUID controllerId = entry.getControllerId();
-        offeredCards.forEach(card -> card.setOwnerId(controllerId));
-        List<UUID> offeredCardIds = offeredCards.stream().map(Card::getId).toList();
-        boolean selectedToBattlefield = draft.destination() == LibrarySearchDestination.BATTLEFIELD;
+        UUID draftPlayerId = draft.recipient() == DraftCardRecipient.TARGET_PLAYER
+                ? entry.getTargetId() : entry.getControllerId();
 
+        if (draft.makeSelectedArtifactCreature() || draft.battlefieldSelectionFollowUp() != null) {
+            beginSelectionWithFollowUp(gameData, draft, draftPlayerId, offeredCards);
+            return;
+        }
+
+        gameLogService.append(gameData, GameLog.text(
+                gameData.playerIdToName.get(entry.getControllerId()) + " drafts a card from "
+                        + entry.getCard().getName() + "'s spellbook."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookDraftChoice(
+                draftPlayerId, offeredCards, entry.getCard().getName(), draft.revealChosenCard(),
+                draft.exileChosenCard(), draft.putChosenCardOntoBattlefield(), draft.chosenCardEffects()));
+    }
+
+    private void beginSelectionWithFollowUp(GameData gameData, DraftCardFromSpellbookEffect draft,
+                                            UUID playerId, List<Card> offeredCards) {
+        offeredCards.forEach(card -> card.setOwnerId(playerId));
+        List<UUID> offeredCardIds = offeredCards.stream().map(Card::getId).toList();
+        boolean selectedToBattlefield = draft.putChosenCardOntoBattlefield();
         PendingInteraction.LibraryRevealChoice choice = new PendingInteraction.LibraryRevealChoice(
-                controllerId, offeredCards, offeredCardIds,
+                playerId, offeredCards, offeredCardIds,
                 false, !selectedToBattlefield, false, false, true,
                 0, null, 1, "Choose a card from this spellbook.",
                 false, 1, false, null,
                 false, false, false, draft.battlefieldSelectionFollowUp(),
                 false, false, false, false, null,
                 false, null);
-        if (!selectedToBattlefield) {
+        if (draft.makeSelectedArtifactCreature()) {
             choice = choice.withSelectedCardFollowUp(
                     new CardTruePredicate(),
                     new PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect(offeredCardIds));
@@ -82,6 +101,6 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
                 }
             }
         }
-        throw new IllegalStateException("Cannot draft unimplemented card: " + cardName);
+        return null;
     }
 }

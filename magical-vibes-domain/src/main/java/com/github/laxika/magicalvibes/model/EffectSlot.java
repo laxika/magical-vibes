@@ -985,6 +985,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever a card is put from the controller's graveyard into their hand. */
+    ON_CONTROLLER_CARD_RETURNED_FROM_GRAVEYARD_TO_HAND,
     /** Triggers once for each instant or sorcery card that leaves the controller's graveyard. */
     ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */

@@ -907,6 +907,10 @@ public class GameQueryService {
      */
     public boolean cardHasType(Card card, CardType type, GameData gameData, UUID playerId) {
         if (card.hasType(type)) return true;
+        if (gameData != null && gameData.perpetualCardTypes
+                .getOrDefault(card.getId(), Set.of()).contains(type)) {
+            return true;
+        }
         if (type == CardType.CREATURE && isOutsideBattlefieldCreature(card, gameData)) {
             return true;
         }
@@ -950,6 +954,10 @@ public class GameQueryService {
      */
     public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
         if (card.getSubtypes().contains(subtype)) return true;
+        if (gameData != null && gameData.perpetualCardSubtypes
+                .getOrDefault(card.getId(), Set.of()).contains(subtype)) {
+            return true;
+        }
         if (cardHasType(card, CardType.CREATURE, gameData, cardOwnerId) && isCreatureSubtype(subtype)
                 && (card.hasKeyword(Keyword.CHANGELING) || hasSelfAllCreatureTypesEffect(card)
                 || selfAllZoneGrantedSubtypes(card).contains(subtype)
@@ -1056,6 +1064,9 @@ public class GameQueryService {
      */
     public Set<CardSubtype> getCardSubtypes(Card card, GameData gameData, UUID cardOwnerId) {
         Set<CardSubtype> subtypes = new java.util.HashSet<>(card.getSubtypes());
+        if (gameData != null) {
+            subtypes.addAll(gameData.perpetualCardSubtypes.getOrDefault(card.getId(), Set.of()));
+        }
         boolean creature = cardHasType(card, CardType.CREATURE, gameData, cardOwnerId);
         if (creature && hasSelfAllCreatureTypesEffect(card)) {
             for (CardSubtype subtype : CardSubtype.values()) {
@@ -1222,6 +1233,10 @@ public class GameQueryService {
                     }
                 }
             }
+        }
+        List<ActivatedAbility> perpetualAbilities = gameData.perpetualGraveyardAbilities.get(card.getId());
+        if (perpetualAbilities != null) {
+            result.addAll(perpetualAbilities);
         }
         if (card != null && gameData.cardsGrantedEmbalmUntilEndOfTurn.contains(card.getId())
                 && card.getManaCost() != null && !card.getManaCost().isBlank()) {
@@ -2085,6 +2100,12 @@ public class GameQueryService {
     /** Returns true when a global static effect lets the player spend mana as any color. */
     public boolean canSpendManaAsAnyColor(GameData gameData, UUID playerId) {
         return anyBattlefieldHasStaticEffect(gameData, SpendManaAsAnyColorEffect.class);
+    }
+
+    /** Returns whether the given card's own perpetual permission allows any mana to cast it. */
+    public boolean canSpendManaAsAnyColorToCastCard(GameData gameData, UUID playerId, Card card) {
+        return canSpendManaAsAnyColor(gameData, playerId)
+                || card != null && gameData.perpetualAnyColorManaForCastCardIds.contains(card.getId());
     }
 
     /** Returns whether the player controls a permanent allowing black mana to be paid with life. */
@@ -9594,6 +9615,15 @@ public class GameQueryService {
             return 0;
         }
         return gameData.controllerNoncombatDamageBonusThisTurn.getOrDefault(controllerId, 0);
+    }
+
+    /** Returns the perpetual noncombat damage bonus granted to the resolving spell card. */
+    public int getPerpetualNoncombatDamageBonus(GameData gameData, StackEntry entry) {
+        if (entry == null || entry.getEffectiveDamageSourceCard() == null) {
+            return 0;
+        }
+        return gameData.perpetualNoncombatDamageBonuses.getOrDefault(
+                entry.getEffectiveDamageSourceCard().getId(), 0);
     }
 
     /**

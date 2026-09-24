@@ -599,6 +599,10 @@ public class LandTapTriggerCollectorService {
     private boolean handleAddManaWhenLandTapped(TriggerMatchContext match,
             AddManaWhenLandTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (trigger.sourceOnly()
+                && (match.permanent() == null || !match.permanent().getId().equals(lt.tappedLandId()))) {
+            return false;
+        }
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
         var gameData = match.gameData();

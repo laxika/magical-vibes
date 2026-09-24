@@ -533,6 +533,7 @@ public class CastingCostService {
                 ? gameData.commanderTaxByCardId.getOrDefault(commanderId, 0) : 0;
         delta -= PerpetualCardCastCostSupport.reductionFor(gameData, card);
         delta += PerpetualCardCastCostSupport.increaseFor(gameData, card);
+        delta += gameData.perpetualGenericCastCostIncreases.getOrDefault(card.getId(), 0);
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
         if (exilePlayCostModifier != null
@@ -1580,6 +1581,11 @@ public class CastingCostService {
      * source only counts when it applies to all players (Aluren).
      */
     private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
+        FreeCastSource cardSelfSource = findCardSelfFreeCastSource(card, sourceZone);
+        if (cardSelfSource != null) {
+            return cardSelfSource;
+        }
+
         if (sourceZone == Zone.HAND && gameData.playersWithFreeHandCastUntilEndOfTurn.contains(playerId)) {
             return new FreeCastSource(null, null, null);
         }
@@ -1617,6 +1623,7 @@ public class CastingCostService {
                     AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
                             gameData, effect, perm, ownerId);
                     if (altCost != null
+                            && !altCost.appliesToSpellItself()
                             && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
                             && isApplicableZeroAlternative(gameData, playerId, card, sourceZone, altCost, perm)
                             && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
@@ -1631,6 +1638,25 @@ public class CastingCostService {
             }
         }
         return oncePerTurnFallback;
+    }
+
+    private FreeCastSource findCardSelfFreeCastSource(Card card, Zone sourceZone) {
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (!(effect instanceof AlternativeCostForSpellsEffect altCost)
+                    || !altCost.appliesToSpellItself()
+                    || altCost.oncePerTurn()
+                    || altCost.manaValueCapCounter() != null
+                    || altCost.manaValueCapAmount() != null
+                    || altCost.nonManaCost() != null
+                    || altCost.controllerTurnOnly()
+                    || (altCost.allowedZones() != null && !altCost.allowedZones().contains(sourceZone))
+                    || new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() != 0
+                    || !predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                continue;
+            }
+            return new FreeCastSource(null, altCost, null);
+        }
+        return null;
     }
 
     private boolean isApplicableZeroAlternative(GameData gameData, UUID playerId, Card card, Zone sourceZone,

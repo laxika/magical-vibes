@@ -648,6 +648,8 @@ public class LayerSystemService {
         h = mix(h, gameData.ringStates.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        h = mix(h, gameData.cardIntensities.hashCode());
+        h = mix(h, gameData.cardIntensities.size());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
         if (gameData.planechase != null) {
             h = mix(h, java.util.Objects.hashCode(gameData.planechase.controllerId));

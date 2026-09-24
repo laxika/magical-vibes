@@ -572,6 +572,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
             implements PermanentChoiceContext {}
 
+    /** Gitrog, Horror of Zhava: the accepting opponent is picking which nontoken creature to sacrifice. */
+    record AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect effect)
+            implements PermanentChoiceContext {}
+
     /** Innocent Traveler: the accepting opponent is picking which creature to sacrifice. */
     record AnyOpponentSacrificeCreatureForTransform(
             UUID sacrificingPlayerId, Card sourceCard,
@@ -1127,6 +1133,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(sourceCard, controllerId, effects, sourcePermanentId, 0);
         }
     }
+
+    /** Gutmorn: the player who discarded the triggering card chooses another player to receive its duplicate. */
+    record GutmornDiscardedCardPlayerChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                             UUID discardingPlayerId, Card discardedCard)
+            implements PermanentChoiceContext {}
 
     record SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        boolean playerTargetOnly, TargetFilter targetFilter,
@@ -1707,6 +1718,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
+
+    record ChooseOpponentPermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                                           boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                           List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                           List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChooseOpponentPermanentAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
 
     record ChoosePlayerAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,

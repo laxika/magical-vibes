@@ -730,7 +730,12 @@ public sealed interface TriggerContext {
      * @param creatureCard      the creature card that was put into the graveyard from anywhere
      * @param graveyardOwnerId  the owner of the graveyard the card was put into
      */
-    record CreatureCardPutIntoGraveyard(Card creatureCard, UUID graveyardOwnerId) implements TriggerContext {}
+    record CreatureCardPutIntoGraveyard(Card creatureCard, UUID graveyardOwnerId, Zone sourceZone)
+            implements TriggerContext {
+        public CreatureCardPutIntoGraveyard(Card creatureCard, UUID graveyardOwnerId) {
+            this(creatureCard, graveyardOwnerId, null);
+        }
+    }
 
     /**
      * Context for ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers.
@@ -774,6 +779,10 @@ public sealed interface TriggerContext {
      * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
      */
     record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
+
+    /** Context for a card put from the controller's graveyard into their hand. */
+    record ControllerCardReturnedFromGraveyardToHand(UUID graveyardOwnerId, Card returnedCard)
+            implements TriggerContext {}
 
     /** Context for one instant or sorcery card leaving the controller's graveyard. */
     record ControllerInstantOrSorceryCardLeavesGraveyard(UUID graveyardOwnerId, Card card)

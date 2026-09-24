@@ -2932,7 +2932,7 @@ public class GraveyardReturnSupport {
                 for (Card card : state.cards()) {
                     if (!chosenCardIds.contains(card.getId())
                             && graveyard.removeIf(graveyardCard -> graveyardCard.getId().equals(card.getId()))) {
-                        gameData.addCardToHand(controllerId, card);
+                        addCardToHandFromGraveyard(gameData, controllerId, controllerId, card);
                         graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                         returnedCards.add(card);
                     }

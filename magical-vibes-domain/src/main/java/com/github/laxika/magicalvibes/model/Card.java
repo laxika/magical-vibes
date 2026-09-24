@@ -343,6 +343,11 @@ public class Card {
         this(source, source.id);
     }
 
+    /** Creates a mutable copy with a fresh card identity for conjured/duplicated cards. */
+    public Card createCardCopy() {
+        return new Card(this, UUID.randomUUID());
+    }
+
     private Card(Card source, UUID id) {
         this.id = id;
         this.ownerId = source.ownerId;

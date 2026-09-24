@@ -65,6 +65,18 @@ import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CanBeholdSubtype;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
+import com.github.laxika.magicalvibes.model.condition.CardsInExileAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInExileMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandGraveyardAndLibraryMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
@@ -99,6 +111,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedA
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
@@ -122,6 +135,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisT
 import com.github.laxika.magicalvibes.model.condition.ControllerControlledSourcesDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.RedSourcesControlledDealtNoncombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotDealtCombatDamageSinceLastTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerWasNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
@@ -339,6 +353,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
@@ -897,6 +912,9 @@ public class ConditionEvaluationService {
                     gameData.cardPutIntoExileThisTurn;
             case CardsInHandMatchingAtLeast c ->
                     countMatchingCardsInHand(gameData, ctx.controllerId(), c.filter()) >= c.threshold();
+            case CardsInHandGraveyardAndLibraryMatchingAtLeast c ->
+                    countMatchingCardsInHandGraveyardAndLibrary(gameData, ctx.controllerId(), c.filter())
+                            >= c.threshold();
             case ActivePlayerControlsPermanent c ->
                     activePlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case ActivePlayerControlsMoreLandsThanEachOtherPlayer ignored ->
@@ -1138,6 +1156,10 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && !gameData.playersDealtCombatDamageLastTurn.contains(ctx.controllerId())
                             && !gameData.playersDealtCombatDamageSinceTheirLastTurn.contains(ctx.controllerId());
+            case ControllerWasNotStartingPlayer ignored ->
+                    ctx.controllerId() != null
+                            && gameData.startingPlayerId != null
+                            && !ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerDealtDamageByAtLeastCreaturesThisTurn c ->
                     countCreatureDamageSourcesToPlayer(gameData, ctx.controllerId())
                             >= Math.max(1, c.minimumCreatures());
@@ -1315,6 +1337,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
             case ControllerIsMonarch ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.monarchPlayerId);
+            case ControllerIsStartingPlayer ignored ->
+                    ctx.controllerId() != null && ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerIsNotStartingPlayer ignored ->
                     ctx.controllerId() != null && gameData.startingPlayerId != null
                             && !ctx.controllerId().equals(gameData.startingPlayerId);
@@ -1485,6 +1509,11 @@ public class ConditionEvaluationService {
                                 ? source.getCounters().values().stream().mapToInt(Integer::intValue).sum()
                                 : source.getCounterCount(c.counterType());
                 yield counterCount >= c.threshold();
+            }
+            case SourceIntensityThreshold c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null
+                        && gameData.getCardIntensity(source.getCard().getId()) >= c.threshold();
             }
             case SourceExiledCardsThreshold c ->
                     ctx.sourcePermanentId() != null
@@ -3757,6 +3786,24 @@ public class ConditionEvaluationService {
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null) return 0;
         return (int) hand.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, null, gameData, controllerId))
+                .count();
+    }
+
+    private int countMatchingCardsInHandGraveyardAndLibrary(GameData gameData, UUID controllerId,
+                                                            CardPredicate filter) {
+        if (controllerId == null) return 0;
+        return countMatchingCards(gameData.playerHands.get(controllerId), gameData, controllerId, filter)
+                + countMatchingCards(gameData.playerGraveyards.get(controllerId), gameData, controllerId, filter)
+                + countMatchingCards(gameData.playerDecks.get(controllerId), gameData, controllerId, filter);
+    }
+
+    private int countMatchingCards(List<Card> cards, GameData gameData, UUID controllerId,
+                                   CardPredicate filter) {
+        if (cards == null) return 0;
+        return (int) cards.stream()
+                .filter(card -> !card.isToken())
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, controllerId))
                 .count();

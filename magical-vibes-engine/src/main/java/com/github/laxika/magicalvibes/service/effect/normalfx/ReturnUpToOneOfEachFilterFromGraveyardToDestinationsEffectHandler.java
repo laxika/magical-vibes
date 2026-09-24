@@ -72,7 +72,8 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
                 }
             } else if (destination == GraveyardChoiceDestination.HAND) {
                 graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,
-                        (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
+                        (graveyard, card) -> graveyardReturnSupport.addCardToHandFromGraveyard(
+                                gameData, entry.getControllerId(), entry.getControllerId(), card),
                         " returns ", " from graveyard to hand.");
             } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
                 graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,

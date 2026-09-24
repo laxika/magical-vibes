@@ -189,6 +189,7 @@ on what the mana may pay for.
 | Double cascade + dynamic opponent-only creature damage | `c/CallForthTheTempest.java` | two `CascadeEffect()` instances in `ON_SELF_CAST` + `MassDamageEffect(TotalManaValueOfOtherSpellsCastThisTurn(), false, false, PermanentAllOfPredicate(creature, not controlled by source controller))` |
 | Opponent land edict | `y/YawningFissure.java` | SacrificePermanentsEffect(1, PermanentIsLandPredicate, EACH_OPPONENT) — each opponent sacrifices a land, controller unaffected |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
+| Counter + perpetual generic reduction for matching hand cards | `a/AbsorbEnergy.java` | `PerpetuallyReduceCostForHandCardsSharingTargetSpellEffect` followed by `CounterSpellEffect`; the first effect snapshots matching card identities in the controller's hand while the target spell is still on the stack |
 | Counter by life bid | `m/MagesContest.java` | MagesContestEffect (spell target auto-derived); the parked resolution interaction runs a life auction between the caster and the targeted spell's controller |
 | Life-bid draw spell | `p/PainsReward.java` | PainsRewardEffect; the controller chooses the opening bid, then all players bid in turn order; the high bidder loses that much life and draws four cards |
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |

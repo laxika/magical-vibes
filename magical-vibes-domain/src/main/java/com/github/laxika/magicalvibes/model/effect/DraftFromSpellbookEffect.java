@@ -16,7 +16,8 @@ public record DraftFromSpellbookEffect(
 
     public enum DraftMode {
         PERPETUALLY_BECOMES_ENCHANTMENT,
-        MAY_CAST_WITHOUT_PAYING_MANA_COST
+        MAY_CAST_WITHOUT_PAYING_MANA_COST,
+        CONJURE_TO_HAND
     }
 
     public DraftFromSpellbookEffect {

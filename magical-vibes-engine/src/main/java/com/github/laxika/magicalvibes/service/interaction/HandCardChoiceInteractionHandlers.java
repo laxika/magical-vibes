@@ -160,6 +160,29 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    @Component
+    public static class PerpetualOffspringCardChoiceInteractionHandler
+            extends Base<PendingInteraction.PerpetualOffspringCardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public PerpetualOffspringCardChoiceInteractionHandler(CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.PerpetualOffspringCardChoice> handledType() {
+            return PendingInteraction.PerpetualOffspringCardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.PerpetualOffspringCardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handlePerpetualOffspringCardChosen(gameData, player, cardIndex(answer));
+        }
+    }
+
     /** TARGETED_CARD_CHOICE — put an Aura from hand onto the battlefield attached to a target (declinable). */
     @Component
     public static class TargetedHandCardChoiceInteractionHandler extends Base<PendingInteraction.TargetedHandCardChoice> {

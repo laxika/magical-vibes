@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyi
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect;
@@ -1998,7 +1999,9 @@ public class DeathTriggerCollectorService {
         Permanent dyingPermanent = opg.dyingPermanent();
         if (dyingPermanent == null
                 || !predicateEvaluationService.matchesPermanentPredicate(
-                        match.gameData(), dyingPermanent, effect.predicate())) {
+                        dyingPermanent, effect.predicate(), FilterContext.of(match.gameData())
+                                .withSourceControllerId(match.controllerId())
+                                .withSourcePermanentId(match.permanent().getId()))) {
             return false;
         }
 
