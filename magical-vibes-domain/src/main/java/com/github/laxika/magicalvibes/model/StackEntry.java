@@ -43,6 +43,8 @@ public class StackEntry {
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
+    /** Index of the effect currently being dispatched by EffectResolutionService. */
+    @Setter private int resolvingEffectIndex = -1;
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
@@ -213,6 +215,8 @@ public class StackEntry {
     /** Whether this creature spell was cast for its Sneak alternate cost. */
     @Setter private boolean sneak;
     @Setter private boolean castForForetell;
+    /** The foreteller's turn count when this spell was exiled by foretell. */
+    @Setter private int foretellControllerTurnsAtExile = -1;
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
     @Setter private Integer webSlingingReturnedCreatureManaValue;
@@ -309,8 +313,10 @@ public class StackEntry {
      * Last-known card id of the event that produced this triggered ability, when an effect needs to
      * act on "that card" rather than a chosen target — e.g. the creature that died for Seraph's
      * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
-     */
+    */
     @Setter private UUID triggeringCardId;
+    /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
+    @Setter private Card triggeringCardSnapshot;
     @Setter private long triggeringCardGraveyardEntryVersion;
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
@@ -396,6 +402,13 @@ public class StackEntry {
      * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
+    /** Colors granted to the permanent as this spell enters the battlefield. */
+    private final Set<CardColor> grantedColorsOnEntry = EnumSet.noneOf(CardColor.class);
+    /** Creature subtypes granted to the permanent as this spell enters the battlefield. */
+    private final Set<CardSubtype> grantedSubtypesOnEntry = EnumSet.noneOf(CardSubtype.class);
+    /** Base power/toughness overrides carried by this permanent spell onto the battlefield. */
+    @Setter private Integer basePowerOverrideOnEntry;
+    @Setter private Integer baseToughnessOverrideOnEntry;
     /** Keywords this spell gains while it is on the stack. */
     private final Set<Keyword> grantedKeywordsWhileOnStack = EnumSet.noneOf(Keyword.class);
     /**
@@ -665,6 +678,7 @@ public class StackEntry {
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
+        this.resolvingEffectIndex = source.resolvingEffectIndex;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
@@ -735,6 +749,7 @@ public class StackEntry {
         this.spectacle = source.spectacle;
         this.sneak = source.sneak;
         this.castForForetell = source.castForForetell;
+        this.foretellControllerTurnsAtExile = source.foretellControllerTurnsAtExile;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
@@ -777,6 +792,7 @@ public class StackEntry {
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.searchedPermanentIds);
         this.triggeringCardId = source.triggeringCardId;
+        this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
@@ -816,6 +832,10 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.grantedColorsOnEntry.addAll(source.grantedColorsOnEntry);
+        this.grantedSubtypesOnEntry.addAll(source.grantedSubtypesOnEntry);
+        this.basePowerOverrideOnEntry = source.basePowerOverrideOnEntry;
+        this.baseToughnessOverrideOnEntry = source.baseToughnessOverrideOnEntry;
         this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.grantedDevour = source.grantedDevour;
@@ -941,6 +961,10 @@ public class StackEntry {
         this.targetIdsFromAssignments = false;
         this.primaryTargetStoredSeparately = false;
         this.illegalTargetIndices.clear();
+        this.grantedColorsOnEntry.clear();
+        this.grantedSubtypesOnEntry.clear();
+        this.basePowerOverrideOnEntry = null;
+        this.baseToughnessOverrideOnEntry = null;
 
         // Cast-time choices and replacement effects belong to the old spell, not the exchanged card.
         this.modalModeCount = null;

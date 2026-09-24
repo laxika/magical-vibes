@@ -58,6 +58,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentHasExhaustAbilityPredicate` | `()` | permanents with at least one effective exhaust ability; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasTapActivatedAbilityPredicate` | `()` | permanents with at least one effective activated ability whose cost includes `{T}`; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentCouldProduceManaPredicate` | `(ManaColor)` | permanents whose current mana abilities could produce the requested mana type, including basic-land types and applicable mana replacements; needs game data |
@@ -94,8 +95,11 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsAttackingAlonePredicate` | `()` | creatures currently attacking that were the only creatures declared as attackers in the current combat; needs game data |
 | `PermanentIsAttackingEnchantedPlayerPredicate` | `()` | creatures attacking the player enchanted by the source Aura directly; attacks against that player's planeswalker or battle do not match, and the source must be attached to a player (Curse of Hospitality) |
+| `PermanentIsAttackingMonarchPredicate` | `()` | creatures attacking the monarch directly; attacks against the monarch's planeswalker or battle do not match (M'Baku, Jabari Chieftain) |
 | `PermanentAttacksPlayerWithMostLifePredicate` | `()` | attacking creatures whose direct player attack target is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
 | `PermanentAttacksWhileSourceControllerHasMostLifePredicate` | `()` | attacking creatures whose source controller is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
+| `PermanentAttacksPlayerWithMoreLifeThanControllerPredicate` | `()` | attacking creatures whose direct player attack target has more life than that creature's controller; attacks against planeswalkers or battles do not match (Namor, Atlantean King) |
+| `PermanentIsAttackingSameTargetAsSourcePredicate` | `()` | attacking permanents whose attack target matches the source permanent's attack target; requires source permanent context (Namor, Atlantean King) |
 | `PermanentIsAttackingOpponentOfSourceControllerPredicate` | `()` | creatures attacking one of the source controller's opponents directly; attacks against planeswalkers and battles do not match; needs a `FilterContext` with source controller (Oviya, Automech Artisan) |
 | `PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate` | `()` | creatures attacking one of the source controller's opponents directly or attacking a planeswalker controlled by an opponent; needs game data and a `FilterContext` with source controller (Gahiji, Honored One) |
 | `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal). Also usable as a static `StaticBoostEffect`/`GrantKeywordEffect` filter — `matchesStaticFilter` reads the source controller off the context (Boarded Window and Watchdog, "creatures attacking you get -1/-0") |
@@ -111,6 +115,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsTokenPredicate` | `()` | token permanents |
 | `PermanentIsTransformedPredicate` | `()` | permanents currently showing their transformed face |
 | `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
+| `PermanentIsCommanderPredicate` | `()` | permanents whose original card is designated as a commander in `GameData`; requires game data |
 | `PermanentHasAdventurePredicate` | `()` | permanents whose cards have an Adventure, regardless of whether they were cast as an Adventure (Mysterious Pathlighter) |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |
 
@@ -237,6 +242,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentIsCommanderPredicate` | `()` | a permanent whose original card is designated as a commander | `gameData` |
 | `PermanentIsTriggeringPermanentPredicate` | `()` | the permanent whose event caused the resolving ability to trigger, matched by the trigger's captured permanent id | `triggeringPermanentId` |
 | `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence, Zenos yae Galvus) | none |
+| `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller; damaged-creature death trigger conditions also use the triggering permanent's last-known controller | `gameData` + `sourceControllerId` |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
 | `PermanentControlledByMonarchPredicate` | `()` | permanents whose current controller is the monarch; useful for Aura conditions that refer to the enchanted permanent's controller | `gameData` |
 | `PermanentControlledByActivePlayerPredicate` | `()` | permanents controlled by the active player (`gameData.activePlayerId`) | `gameData` |

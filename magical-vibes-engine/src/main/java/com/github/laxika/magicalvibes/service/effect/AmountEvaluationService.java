@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanentsAndSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongCardsExiledWithSource;
@@ -58,6 +59,11 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
+import com.github.laxika.magicalvibes.model.amount.TurnsBegunSinceForetell;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureTypesAmongControlledCreatures;
@@ -177,6 +183,7 @@ import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
+import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
@@ -464,6 +471,8 @@ public class AmountEvaluationService {
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).size();
             case ColorsAmongControlledPermanents count ->
                     countColorsAmongControlledPermanents(gameData, count, ctx);
+            case ColorsAmongControlledPermanentsAndSpellsCastThisTurn ignored ->
+                    countColorsAmongControlledPermanentsAndSpellsCastThisTurn(gameData, ctx);
             case ColorManaSymbolsInGraveyard c ->
                     countColorManaSymbolsInGraveyard(gameData, c, ctx);
             case ColorManaSymbolsInHand c ->
@@ -517,6 +526,16 @@ public class AmountEvaluationService {
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
             case TurnsTakenByController ignored ->
                     ctx.controllerId() == null ? 0 : gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0);
+            case TurnsBegunSinceForetell ignored -> {
+                StackEntry entry = ctx.stackEntry();
+                if (entry == null || !entry.isCastForForetell()
+                        || entry.getForetellControllerTurnsAtExile() < 0
+                        || ctx.controllerId() == null) {
+                    yield 0;
+                }
+                int turnsTaken = gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0);
+                yield Math.max(0, turnsTaken - entry.getForetellControllerTurnsAtExile());
+            }
             case ControllerSpeed ignored ->
                     ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
             case HighestLifeTotalAmongPlayers ignored ->
@@ -707,6 +726,13 @@ public class AmountEvaluationService {
             case SourceCardPower ignored ->
                     ctx.sourceCard() == null || ctx.sourceCard().getPower() == null ? 0
                             : Math.max(0, ctx.sourceCard().getPower());
+            case SourceIntensity ignored -> {
+                Permanent source = ctx.sourcePermanent();
+                if (source == null && ctx.stackEntry() != null) {
+                    source = ctx.stackEntry().getSourcePermanentSnapshot();
+                }
+                yield source == null ? 0 : gameData.getCardIntensity(source.getCard().getId());
+            }
             case SourceManaValueMinusOne ignored ->
                     ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;
             case SourcePower ignored ->
@@ -2213,9 +2239,25 @@ public class AmountEvaluationService {
 
     private int countColorsAmongControlledPermanents(
             GameData gameData, ColorsAmongControlledPermanents count, AmountContext ctx) {
-        if (gameData == null || ctx.controllerId() == null) return 0;
+        return colorsAmongControlledPermanents(gameData, count, ctx).size();
+    }
+
+    private int countColorsAmongControlledPermanentsAndSpellsCastThisTurn(
+            GameData gameData, AmountContext ctx) {
+        Set<CardColor> colors = colorsAmongControlledPermanents(
+                gameData, new ColorsAmongControlledPermanents(), ctx);
+        if (gameData == null || ctx.controllerId() == null) return colors.size();
+        for (Card spell : gameData.getSpellsCastThisTurn(ctx.controllerId())) {
+            colors.addAll(gameQueryService.getEffectiveCardColors(gameData, spell));
+        }
+        return colors.size();
+    }
+
+    private Set<CardColor> colorsAmongControlledPermanents(
+            GameData gameData, ColorsAmongControlledPermanents count, AmountContext ctx) {
+        if (gameData == null || ctx.controllerId() == null) return EnumSet.noneOf(CardColor.class);
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return 0;
+        if (battlefield == null) return EnumSet.noneOf(CardColor.class);
 
         boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
         boolean filterNeedsBoard = staticEvaluation
@@ -2243,7 +2285,7 @@ public class AmountEvaluationService {
                     ? gameQueryService.colorsForStaticEvaluation(permanent)
                     : gameQueryService.getEffectiveColors(gameData, permanent));
         }
-        return colors.size();
+        return colors;
     }
 
     private int countCreaturesEnteredBattlefieldThisTurn(

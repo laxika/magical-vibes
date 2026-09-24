@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "14")
 @CardRegistration(set = "SOC", collectorNumber = "147")
+@CardRegistration(set = "MSC", collectorNumber = "134")
+@CardRegistration(set = "MSC", collectorNumber = "306")
 public class GiftOfImmortality extends Card {
 
     public GiftOfImmortality() {

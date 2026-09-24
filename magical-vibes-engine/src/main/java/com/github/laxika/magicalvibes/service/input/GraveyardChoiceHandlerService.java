@@ -1477,7 +1477,8 @@ public class GraveyardChoiceHandlerService {
             gameData.graveyardTargetOperation.independentTargetGroupIndex++;
             gameData.interaction.clearAwaitingInput();
             if (graveyardTargetingService.beginIndependentGraveyardSpellTargeting(
-                    gameData, player.getId(), independentTargetEffect)) {
+                    gameData, player.getId(), independentTargetEffect,
+                    gameData.graveyardTargetOperation.kicked)) {
                 return;
             }
             cardIds = List.copyOf(gameData.graveyardTargetOperation.independentTargetCardIds);
@@ -1892,6 +1893,8 @@ public class GraveyardChoiceHandlerService {
                         List.of()
                 );
             }
+            triggeredEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
+            triggeredEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
             if (pendingTargetPlayerId != null) {
                 triggeredEntry.setTargetId(pendingTargetPlayerId);
             }

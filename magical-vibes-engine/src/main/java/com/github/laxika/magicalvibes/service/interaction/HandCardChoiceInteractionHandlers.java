@@ -56,7 +56,58 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    /** Pull of the Mist Moon: choose a hand card to receive its perpetual ETB ability. */
+    @Component
+    public static class PerpetualEnterExileHandCardChoiceInteractionHandler
+            extends Base<PendingInteraction.PerpetualEnterExileHandCardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public PerpetualEnterExileHandCardChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.PerpetualEnterExileHandCardChoice> handledType() {
+            return PendingInteraction.PerpetualEnterExileHandCardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.PerpetualEnterExileHandCardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handlePerpetualEnterExileHandCardChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
     /** Retraced Image — reveal one card from hand and conditionally put it onto the battlefield. */
+    @Component
+    public static class PerpetualCastCostHandCardChoiceInteractionHandler
+            extends Base<PendingInteraction.PerpetualCastCostHandCardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public PerpetualCastCostHandCardChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.PerpetualCastCostHandCardChoice> handledType() {
+            return PendingInteraction.PerpetualCastCostHandCardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.PerpetualCastCostHandCardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handlePerpetualCastCostHandCardChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
     @Component
     public static class WordOfCommandCardChoiceInteractionHandler
             implements InteractionHandler<PendingInteraction.WordOfCommandCardChoice> {
@@ -106,6 +157,29 @@ public final class HandCardChoiceInteractionHandlers {
                                  PendingInteraction.RetracedImageCardChoice interaction,
                                  InteractionAnswer answer) {
             cardChoiceHandlerService.handleRetracedImageCardChosen(gameData, player, cardIndex(answer));
+        }
+    }
+
+    @Component
+    public static class PerpetualOffspringCardChoiceInteractionHandler
+            extends Base<PendingInteraction.PerpetualOffspringCardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public PerpetualOffspringCardChoiceInteractionHandler(CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.PerpetualOffspringCardChoice> handledType() {
+            return PendingInteraction.PerpetualOffspringCardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.PerpetualOffspringCardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handlePerpetualOffspringCardChosen(gameData, player, cardIndex(answer));
         }
     }
 

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlaye
 @CardRegistration(set = "EMN", collectorNumber = "70")
 @CardRegistration(set = "SLD", collectorNumber = "1180")
 @CardRegistration(set = "SIR", collectorNumber = "82")
+@CardRegistration(set = "MSC", collectorNumber = "277")
+@CardRegistration(set = "MSC", collectorNumber = "344")
 public class MindsDilation extends Card {
 
     public MindsDilation() {

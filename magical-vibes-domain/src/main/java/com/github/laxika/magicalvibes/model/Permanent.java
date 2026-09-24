@@ -93,6 +93,8 @@ public class Permanent {
      *  is later removed (CR 702.22e). */
     @Setter private UUID bandId;
     private boolean summoningSick;
+    /** Perpetual power modifier attached to this card identity; survives turn cleanup and zone changes. */
+    @Setter private int persistentPowerModifier;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
     @Setter private int damagePreventionShield;
@@ -747,6 +749,7 @@ public class Permanent {
         this.blockingTargetIds.addAll(source.blockingTargetIds);
         this.bandId = source.bandId;
         this.summoningSick = source.summoningSick;
+        this.persistentPowerModifier = source.persistentPowerModifier;
         this.powerModifier = source.powerModifier;
         this.toughnessModifier = source.toughnessModifier;
         this.damagePreventionShield = source.damagePreventionShield;
@@ -1320,12 +1323,13 @@ public class Permanent {
     }
 
     /**
-     * Returns only the modifier portion of power (counters + temporary modifiers),
+     * Returns only the modifier portion of power (perpetual, counter, and temporary modifiers),
      * without the base power. Used by static base P/T override effects (e.g. Deep Freeze)
      * that replace the base but preserve modifiers on top.
      */
     public int getPowerModifiers() {
-        return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+        return persistentPowerModifier + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+                - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
@@ -1360,7 +1364,8 @@ public class Permanent {
      * readers (views' raw term, last-known-information reads, predicate leaves).
      */
     public int getEffectivePower() {
-        return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+        return getBasePower() + persistentPowerModifier + powerModifier
+                + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)

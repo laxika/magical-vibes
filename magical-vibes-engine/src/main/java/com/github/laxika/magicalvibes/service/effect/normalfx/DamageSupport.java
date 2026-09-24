@@ -262,6 +262,7 @@ public class DamageSupport {
                     gameData, entry, targetControllerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, bonusSourceControllerId);
+            rawDamage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
         UUID sourceControllerId = bonusSourceControllerId;
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
@@ -660,7 +661,8 @@ public class DamageSupport {
                 int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
                 if (counters > 0) {
                     target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    permanentCounterSupport.notifyCountersPlaced(gameData, entry, target, counters);
+                    permanentCounterSupport.notifyCountersPlaced(
+                            gameData, entry, target, counters, CounterType.MINUS_ONE_MINUS_ONE);
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                             " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
                     log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());
@@ -736,6 +738,7 @@ public class DamageSupport {
                     gameQueryService.findPermanentController(gameData, target.getId()));
             damage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
+            damage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
 
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn()) {
@@ -1362,6 +1365,7 @@ public class DamageSupport {
                     gameData, entry, playerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
+            rawDamage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
         // Energy Storm and Hidden Retreat: prevent all damage dealt by instant and sorcery spells.
         if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {

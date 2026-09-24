@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetAssassinCreatureCa
 import com.github.laxika.magicalvibes.model.effect.ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTargetCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -199,6 +200,10 @@ public class GraveyardTargetingSupport {
             return new Target(filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                     "to gain flashback", 1, 1);
         }
+        if (effect instanceof PerpetuallyGrantUnearthToTargetCreatureCardEffect) {
+            return new Target(PerpetuallyGrantUnearthToTargetCreatureCardEffect.targetFilter(),
+                    GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to gain unearth", 1, 1);
+        }
         if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets) {
             return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                     "to your hand", returnTargets.maxTargets(), returnTargets.minTargets());
@@ -234,6 +239,11 @@ public class GraveyardTargetingSupport {
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,
                     returnEffect.upTo() ? 0 : 1, returnEffect.dynamicMaxManaValue());
+        }
+        GraveyardSearchScope declaredScope = effect.targetSpec().graveyardScope().orElse(null);
+        if (declaredScope != null) {
+            return new Target(effect.targetSpec().graveyardCardPredicate().orElse(null), declaredScope,
+                    "to exile", 1, 1);
         }
         return null;
     }

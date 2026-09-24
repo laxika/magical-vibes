@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "MSC", collectorNumber = "139")
+@CardRegistration(set = "MSC", collectorNumber = "317")
 @CardRegistration(set = "SLD", collectorNumber = "1838")
 @CardRegistration(set = "SOC", collectorNumber = "157")
 public class MonologueTax extends Card {

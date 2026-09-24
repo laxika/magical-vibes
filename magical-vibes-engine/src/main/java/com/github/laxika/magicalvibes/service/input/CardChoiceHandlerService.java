@@ -46,11 +46,18 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -115,6 +122,36 @@ public class CardChoiceHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+
+    /** Gives the chosen card in hand a persistent offspring-as-kicker implementation. */
+    public void handlePerpetualOffspringCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualOffspringCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualOffspringCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card modifiedCard = hand.get(cardIndex).createRuntimeCopy();
+        modifiedCard.addEffect(EffectSlot.STATIC,
+                new KickerEffect(choice.offspringCost()));
+        modifiedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ConditionalEffect(new Kicked(),
+                        new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
+
+        gameData.interaction.clearAwaitingInput();
+        hand.set(cardIndex, modifiedCard);
+        gameLogService.append(gameData,
+                GameLog.cardThen(modifiedCard, "perpetually gains offspring " + choice.offspringCost() + "."));
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
 
     /** Answers Retraced Image's mandatory hand reveal and conditional battlefield entry. */
     public void handleRetracedImageCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -483,6 +520,58 @@ public class CardChoiceHandlerService {
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    public void handlePerpetualEnterExileHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualEnterExileHandCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualEnterExileHandCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = hand.get(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        gameData.perpetualEnterEffectsByCardId
+                .computeIfAbsent(selectedCard.getId(), ignored ->
+                        java.util.Collections.synchronizedList(new ArrayList<>()))
+                .add(ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler.grantedEnterEffect());
+        gameLogService.append(gameData, GameLog.cardThen(
+                selectedCard, " perpetually gains its exile ability."));
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    public void handlePerpetualCastCostHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualCastCostHandCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualCastCostHandCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = hand.get(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler.remember(
+                gameData, selectedCard, choice.amount());
+        gameLogService.append(gameData, GameLog.cardThen(
+                selectedCard, " perpetually gains \"This spell costs {1} less to cast.\"."));
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
@@ -1619,19 +1708,24 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} puts {} {}", gameData.id, player.getUsername(), cardNames, placement);
         }
 
-        if (revealedHandChoice.chosenCardThenEffect() != null
+        CardEffect chosenCardThenEffect = revealedHandChoice.chosenCardThenEffect();
+        if (chosenCardThenEffect instanceof ChosenCardAwareEffect chosenCardAwareEffect
+                && !chosenCards.isEmpty()) {
+            chosenCardThenEffect = chosenCardAwareEffect.withChosenCard(chosenCards.getLast());
+        }
+        if (chosenCardThenEffect != null
                 && gameData.pendingEffectResolutionEntry != null && !chosenCards.isEmpty()) {
             gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCards.get(chosenCards.size() - 1));
         }
 
-        if (revealedHandChoice.chosenCardThenEffect() != null
+        if (chosenCardThenEffect != null
                 && chosenCards.stream().anyMatch(card -> revealedHandChoice.chosenCardCondition() == null
                 || predicateEvaluationService.matchesCardPredicate(
                 card, revealedHandChoice.chosenCardCondition(), null))
                 && gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
-                    List.of(revealedHandChoice.chosenCardThenEffect()));
+                    List.of(chosenCardThenEffect));
         }
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
@@ -1975,7 +2069,7 @@ public class CardChoiceHandlerService {
             ExiledCardEntry entry = gameData.findExiledCard(cardId);
             if (entry != null) {
                 gameData.removeFromExile(cardId);
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, entry.card());
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, entry.card(), Zone.HAND);
             }
         }
         log.info("Game {} - alternating hand exile finished: {} cards returned, {} to graveyard",
@@ -2393,15 +2487,19 @@ public class CardChoiceHandlerService {
         if (pending == null) {
             return;
         }
+        boolean lastDiscard = pending.remainingDiscards() == 1;
         gameData.pendingConnive = pending.remainingDiscards() > 1
                 ? new PendingConnive(pending.sourcePermanentId(), pending.remainingDiscards() - 1)
                 : null;
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
         if (!discardedCard.hasType(CardType.LAND)) {
-            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-            if (source == null) {
-                return;
-            }
             permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
+        }
+        if (lastDiscard) {
+            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
         }
     }
 

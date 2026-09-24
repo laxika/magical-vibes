@@ -61,7 +61,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         }
 
         Card copyCard = copySupport.createCopyCard(spellCard);
-        if (e.tokenCopy()) {
+        if (e.tokenCopy() || (e.permanentSpellToken() && isPermanentSpell(spellSnapshot.getEntryType()))) {
             copyCard.setToken(true);
         }
         if (!e.additionalTypes().isEmpty()) {

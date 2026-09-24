@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
@@ -24,6 +26,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -37,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -102,6 +106,7 @@ public class TriggeredAbilityQueueService {
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
     private final AmountEvaluationService amountEvaluationService;
     @Lazy private final ETBTokenTargetService etbTokenTargetService;
+    @Lazy private final GraveyardTargetingService graveyardTargetingService;
 
     @Autowired
     void setReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler(
@@ -292,7 +297,8 @@ public class TriggeredAbilityQueueService {
     }
 
     private boolean hasOptionalSingleTarget(Card card, List<CardEffect> effects) {
-        if (effects.stream().anyMatch(OptionalTargetEffect.class::isInstance)) {
+        if (effects.stream().anyMatch(effect -> effect instanceof OptionalTargetEffect
+                || effect.hasOptionalTarget())) {
             return true;
         }
         if (card.getSpellTargets().size() != 1) {
@@ -657,7 +663,9 @@ public class TriggeredAbilityQueueService {
             Set<Integer> compatibleTargetGroups = Arrays.stream(EffectSlot.values())
                     .flatMap(slot -> sourceCard.getEffects(slot).stream())
                     .filter(authored -> effects.stream()
-                            .anyMatch(queued -> authored.getClass().equals(queued.getClass())))
+                            .anyMatch(queued -> authored.getClass().equals(queued.getClass())
+                                    || authored instanceof AllyCombatDamageTriggerEffect ally
+                                    && ally.effect().equals(queued)))
                     .mapToInt(sourceCard::getEffectTargetIndex)
                     .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
                     .boxed()
@@ -1896,9 +1904,11 @@ public class TriggeredAbilityQueueService {
                 return;
             }
 
-            boolean canSkip = group.minTargets() == 0
+            boolean onePerControllerIfAble = pending.sourceCard().getMultiTargetConstraint()
+                    == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
+            boolean canSkip = !onePerControllerIfAble && (group.minTargets() == 0
                     || (pending.targetGroups().size() == 1
-                    && pending.chosenTargetsSoFar().size() >= group.minTargets());
+                    && pending.chosenTargetsSoFar().size() >= group.minTargets()));
             List<UUID> skipChoice = canSkip
                     ? List.of(pending.controllerId()) : List.of();
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), validTargets, skipChoice,
@@ -2064,6 +2074,62 @@ public class TriggeredAbilityQueueService {
                 if (beginOpponentChosenGraveyardTarget(gameData, pending, opponentChoiceEffect)) {
                     return;
                 }
+                continue;
+            }
+
+            IndependentlyTargetedGraveyardCardsEffect independentTargetEffect =
+                    EffectResolution.expandConditionalTargetingEffects(pending.effects()).stream()
+                            .filter(IndependentlyTargetedGraveyardCardsEffect.class::isInstance)
+                            .map(IndependentlyTargetedGraveyardCardsEffect.class::cast)
+                            .findFirst()
+                            .orElse(null);
+            if (independentTargetEffect != null) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+                var operation = gameData.graveyardTargetOperation;
+                operation.card = pending.sourceCard();
+                operation.controllerId = pending.controllerId();
+                operation.effects = new ArrayList<>(pending.effects());
+                operation.xValue = pending.xValue();
+                operation.sourceAlternateCostAtTrigger = pending.sourceAlternateCostAtTrigger();
+                operation.triggeringPermanentPowerAtTrigger = pending.sourcePowerAtTrigger();
+                operation.triggeringPermanentId = pending.triggeringPermanentId();
+                operation.kicked = false;
+                operation.independentTargetGroupIndex = 0;
+                operation.independentTargetCardIds.clear();
+                operation.independentTargetGroupSizes.clear();
+
+                boolean kicked = false;
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pending.controllerId());
+                if (battlefield != null) {
+                    for (Permanent permanent : battlefield) {
+                        if (permanent.getCard().getId().equals(pending.sourceCard().getId())) {
+                            operation.sourcePermanentId = permanent.getId();
+                            kicked = permanent.isKicked();
+                            operation.kicked = kicked;
+                            break;
+                        }
+                    }
+                }
+
+                try {
+                    if (graveyardTargetingService.beginIndependentGraveyardSpellTargeting(
+                            gameData, pending.controllerId(), independentTargetEffect, kicked)) {
+                        return;
+                    }
+                } catch (IllegalStateException noLegalRequiredTarget) {
+                    operation.card = null;
+                    operation.controllerId = null;
+                    operation.effects = null;
+                    operation.sourcePermanentId = null;
+                    operation.independentTargetGroupIndex = -1;
+                    operation.independentTargetCardIds.clear();
+                    operation.independentTargetGroupSizes.clear();
+                    log.info("Game {} - {} graveyard-target trigger skipped (no valid required target)",
+                            gameData.id, pending.sourceCard().getName());
+                    continue;
+                }
+
+                pushSpellGraveyardTriggeredAbilityWithoutTargets(gameData, pending);
                 continue;
             }
 
@@ -2720,11 +2786,22 @@ public class TriggeredAbilityQueueService {
             return validTargets;
         }
 
+        Set<UUID> chosenControllers = pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                || pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
+                ? pending.chosenTargetsSoFar().stream()
+                .map(id -> gameQueryService.findPermanentController(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet())
+                : Set.of();
+
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (pending.chosenTargetsSoFar().contains(permanent.getId())) {
+                    continue;
+                }
+                if (chosenControllers.contains(pid)) {
                     continue;
                 }
                 if (group.filter() == null && !gameQueryService.isCreature(gameData, permanent)) {

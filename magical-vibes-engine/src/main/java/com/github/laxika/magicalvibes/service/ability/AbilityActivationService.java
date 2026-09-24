@@ -1585,8 +1585,10 @@ public class AbilityActivationService {
         // ability cost {N} less to activate; the reduction is floored to the generic portion so the
         // cost never drops below its colored requirements, then threaded through as a negative
         // additional generic cost.
+        boolean maxSpeedFreeUnearth = ability.isUnearthAbility()
+                && gameQueryService.canUseMaxSpeedFreeUnearth(gameData, playerId);
         String abilityCost = ability.getManaCost();
-        if (abilityCost != null) {
+        if (abilityCost != null && !maxSpeedFreeUnearth) {
             ManaCost manaCost = new ManaCost(abilityCost);
             int genericCost = manaCost.getGenericCost();
             int additionalGenericCost = -Math.min(
@@ -1608,6 +1610,9 @@ public class AbilityActivationService {
             }
             payManaCostForSourceCard(gameData, playerId, card, abilityCost, xValue, false, false,
                     additionalGenericCost);
+        }
+        if (maxSpeedFreeUnearth) {
+            gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.add(playerId);
         }
 
         // Pay the mill-controller cost. Milled cards land on top of the graveyard, leaving the
@@ -2416,7 +2421,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
                 discarded = true;
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
@@ -2673,7 +2678,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
             }
@@ -8096,7 +8101,7 @@ public class AbilityActivationService {
             return new PaidHandCard(paid.getName(), manaValue);
         }
 
-        graveyardService.addCardToGraveyard(gameData, player.getId(), paid);
+        graveyardService.addCardToGraveyard(gameData, player.getId(), paid, Zone.HAND);
         gameData.discardCausedByOpponent = false;
         collectDiscardTriggersAsAbilityCost(gameData, player.getId(), paid);
 
@@ -8170,7 +8175,7 @@ public class AbilityActivationService {
         hand.clear();
         gameData.discardCausedByOpponent = false;
         for (Card card : discarded) {
-            graveyardService.addCardToGraveyard(gameData, playerId, card);
+            graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
             collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
         }
 
@@ -8191,7 +8196,7 @@ public class AbilityActivationService {
         for (int i = 0; i < count && !hand.isEmpty(); i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
             lastDiscarded = discarded;
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
             gameData.discardCausedByOpponent = false;
             collectDiscardTriggersAsAbilityCost(gameData, playerId, discarded);
 

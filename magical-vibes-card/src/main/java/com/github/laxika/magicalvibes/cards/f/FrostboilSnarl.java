@@ -12,6 +12,8 @@ import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "265")
 @CardRegistration(set = "SOC", collectorNumber = "374")
+@CardRegistration(set = "MSC", collectorNumber = "246")
+@CardRegistration(set = "MSC", collectorNumber = "475")
 public class FrostboilSnarl extends Card {
 
     public FrostboilSnarl() {

@@ -1542,6 +1542,13 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        triggerCollectionService.checkGoadedCreatureCombatDamageToOpponentTriggers(
+                gameData,
+                defenderId,
+                combatDamageDealtToPlayer.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 0)
+                        .map(Map.Entry::getKey)
+                        .toList());
         triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
                 gameData, attackerId, defenderId,
                 combatDamageDealtToPlayer.entrySet().stream()
@@ -2202,6 +2209,21 @@ public class CombatDamageService {
                                 0, triggerDamage, 0, null, false, perm.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        continue;
+                    }
+                    if ((firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                            && (!(firedEffect instanceof CombatDamageTriggerContextEffect contextEffect)
+                            || contextEffect.combatDamageTriggerContext() == null
+                            || perm.getCard().hasEffectTargetIndex(firedEffect))
+                            && !(firedEffect instanceof CombatOpponentReferencingEffect c
+                            && c.referencesCombatOpponent())) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId,
+                                defenderId, creature.getId()));
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a target."));
                         continue;
                     }
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve

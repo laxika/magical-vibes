@@ -26,6 +26,8 @@ import java.util.Set;
 @CardRegistration(set = "EOS", collectorNumber = "78")
 @CardRegistration(set = "EOS", collectorNumber = "123")
 @CardRegistration(set = "EOS", collectorNumber = "168")
+@CardRegistration(set = "MSC", collectorNumber = "255")
+@CardRegistration(set = "MSC", collectorNumber = "483")
 public class PlazaOfHeroes extends Card {
 
     public PlazaOfHeroes() {

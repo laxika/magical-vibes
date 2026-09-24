@@ -648,7 +648,19 @@ public class LayerSystemService {
         h = mix(h, gameData.ringStates.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        h = mix(h, gameData.cardIntensities.hashCode());
+        h = mix(h, gameData.cardIntensities.size());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> commanders = gameData.playerCommanders.get(playerId);
+            h = mix(h, playerId.hashCode());
+            h = mix(h, commanders == null ? 0 : commanders.size());
+            if (commanders != null) {
+                for (Card commander : commanders) {
+                    h = mix(h, commander.getId().hashCode());
+                }
+            }
+        }
         if (gameData.planechase != null) {
             h = mix(h, java.util.Objects.hashCode(gameData.planechase.controllerId));
             for (var planar : gameData.planechase.faceUp) {
@@ -798,6 +810,7 @@ public class LayerSystemService {
             h = mix(h, timestamp.getKey().ordinal());
             h = mix(h, timestamp.getValue());
         }
+        h = mix(h, p.getPersistentPowerModifier());
         h = mix(h, p.getPowerModifier());
         h = mix(h, p.getToughnessModifier());
         h = mix(h, p.getBasePowerOverride());
@@ -2421,6 +2434,9 @@ public class LayerSystemService {
             state.addKeywords(gameData.perpetualCardKeywords.getOrDefault(
                     permanent.getCard().getId(), Set.of()));
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
+            gameData.perpetualCardRemovedKeywords
+                    .getOrDefault(permanent.getCard().getId(), Set.of())
+                    .forEach(state::removeKeyword);
         }
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
             // Losing all creature types nullifies the Changeling grant (legacy semantics).

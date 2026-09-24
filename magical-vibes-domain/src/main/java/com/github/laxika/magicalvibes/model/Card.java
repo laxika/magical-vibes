@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -343,6 +344,11 @@ public class Card {
         this(source, source.id);
     }
 
+    /** Creates a mutable copy with a fresh card identity for conjured/duplicated cards. */
+    public Card createCardCopy() {
+        return new Card(this, UUID.randomUUID());
+    }
+
     private Card(Card source, UUID id) {
         this.id = id;
         this.ownerId = source.ownerId;
@@ -426,6 +432,11 @@ public class Card {
      */
     public Card createRuntimeCopy() {
         return new Card(this);
+    }
+
+    /** Creates an unfrozen copy with a fresh identity, for a newly conjured card. */
+    public Card createRuntimeCopyWithNewId() {
+        return new Card(this, UUID.randomUUID());
     }
 
     /** Creates a new-identity copy for conjured duplicates. */
@@ -853,6 +864,9 @@ public class Card {
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
+            // preserve its target-group binding for deferred trigger-time target selection.
+            case AllyCombatDamageTriggerEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case RollD20Effect e -> {
                 if (e.zeroOrLess() != null) registerEffectTargetIndex(e.zeroOrLess(), targetIndex);
                 if (e.oneToNine() != null) registerEffectTargetIndex(e.oneToNine(), targetIndex);

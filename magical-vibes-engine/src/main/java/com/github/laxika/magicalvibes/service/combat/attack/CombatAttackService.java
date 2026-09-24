@@ -20,6 +20,22 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
@@ -72,6 +88,29 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyRemoveKeywordEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -874,7 +913,7 @@ public class CombatAttackService {
             return CombatResult.AUTO_PASS_ONLY;
         }
         return finishAttackerDeclaration(gameData, playerId, player.getUsername(), battlefield,
-                attackerIndices, resolvedTargets, declaredAttackers, Map.of());
+                attackerIndices, resolvedTargets, declaredAttackers, Map.of(), Map.of());
     }
 
     /** Completes attack declaration after all Enlist choices have been answered. */
@@ -882,9 +921,10 @@ public class CombatAttackService {
                                                   List<Permanent> battlefield, List<Integer> attackerIndices,
                                                   Map<Integer, UUID> resolvedTargets,
                                                   List<Permanent> declaredAttackers,
-                                                  Map<UUID, Integer> enlistmentBoosts) {
+                                                  Map<UUID, Integer> enlistmentBoosts,
+                                                  Map<UUID, UUID> enlistedSupporters) {
         int stackSizeBeforeAttackTriggers = gameData.stack.size();
-        addEnlistmentTriggers(gameData, playerId, enlistmentBoosts);
+        addEnlistmentTriggers(gameData, playerId, enlistmentBoosts, enlistedSupporters);
 
         String logEntry = playerName + " declares " + attackerIndices.size() +
                 " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
@@ -1073,6 +1113,11 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttackedTargetIsOpponent ? ce.wrapped() : e);
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetIsMonarch
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetIsMonarch ? ce.wrapped() : e);
 
                 // Granted abilities can bundle the opponent/otherwise branches in a SequenceEffect
                 // (e.g. Scriv's Contract). Resolve those event conditions now, while the declared
@@ -1227,6 +1272,58 @@ public class CombatAttackService {
             combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_ATTACK);
         }
 
+        // Engine-level melee triggers: each attacking creature with melee gets +1/+1 until end
+        // of turn for each distinct opponent attacked by this combat. Attacking a planeswalker
+        // counts as attacking its controller, while attacking a battle does not count.
+        Set<UUID> opponentsAttackedThisCombat = new HashSet<>();
+        for (int idx : attackerIndices) {
+            UUID attackTarget = resolvedTargets.get(idx);
+            if (attackTarget == null) {
+                continue;
+            }
+            if (gameData.playerIds.contains(attackTarget)) {
+                opponentsAttackedThisCombat.add(attackTarget);
+                continue;
+            }
+            Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
+            if (attackedPermanent != null && attackedPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, attackTarget);
+                if (controllerId != null) {
+                    opponentsAttackedThisCombat.add(controllerId);
+                }
+            }
+        }
+        if (!opponentsAttackedThisCombat.isEmpty()) {
+            int meleeBoost = opponentsAttackedThisCombat.size();
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.MELEE)) {
+                    continue;
+                }
+                int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
+                try {
+                    StackEntry meleeTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            playerId,
+                            attacker.getCard().getName() + "'s melee",
+                            List.of(new BoostSelfEffect(meleeBoost, meleeBoost)),
+                            null,
+                            attacker.getId()
+                    );
+                    gameData.stack.add(meleeTrigger);
+                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                            gameData, attacker, meleeTrigger);
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(attacker.getCard()).text("'s melee triggers.").build());
+                    log.info("Game {} - {} melee trigger pushed onto stack", gameData.id,
+                            attacker.getCard().getName());
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
+            }
+        }
+
         // Engine-level battle cry triggers (keyword-driven, no manual card wiring needed)
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
@@ -1331,6 +1428,42 @@ public class CombatAttackService {
             gameLogService.append(gameData,
                     GameLog.builder().card(attacker.getCard()).text("'s training triggers.").build());
             log.info("Game {} - {} training trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        }
+
+        // Engine-level double team triggers: a nontoken attacker conjures a copy into its
+        // controller's hand, then both cards lose double team permanently.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.DOUBLE_TEAM)
+                    || attacker.getCard().isToken()) {
+                continue;
+            }
+            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
+            try {
+                List<CardEffect> doubleTeamEffects = List.of(
+                        new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM),
+                        ConjureCardToHandEffect.withoutKeyword(
+                                attacker.getCard().getName(), Keyword.DOUBLE_TEAM));
+                StackEntry doubleTeamTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        playerId,
+                        attacker.getCard().getName() + "'s double team",
+                        doubleTeamEffects,
+                        attacker.getId(),
+                        attacker.getId()
+                );
+                doubleTeamTrigger.setNonTargeting(true);
+                gameData.stack.add(doubleTeamTrigger);
+                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                        gameData, attacker, doubleTeamTrigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(attacker.getCard()).text("'s double team triggers.").build());
+                log.info("Game {} - {} double team trigger pushed onto stack", gameData.id,
+                        attacker.getCard().getName());
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
@@ -1480,10 +1613,21 @@ public class CombatAttackService {
                     log.info("Game {} - {} attack trigger queued for mode selection",
                             gameData.id, perm.getCard().getName());
                 } else {
+                    boolean needsGraveyardTarget = filteredEffects.stream()
+                            .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
+                                    && choosingEffect.choosesGraveyardCards()
+                                    || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                     boolean needsTarget = filteredEffects.stream()
                             .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                     || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                    if (needsTarget) {
+                    if (needsGraveyardTarget) {
+                        graveyardTargetingService.handleAttackGraveyardTargeting(
+                                gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null);
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
+                        log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK graveyard trigger queued",
+                                gameData.id, perm.getCard().getName());
+                    } else if (needsTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
                                 null, attackerIndices.size()));
@@ -2299,7 +2443,7 @@ public class CombatAttackService {
 
         MultiPermanentChoiceContext.Enlistment context = new MultiPermanentChoiceContext.Enlistment(
                 playerId, attackerIndices, resolvedTargets, declaredAttackers, enlistmentAttackers,
-                Set.of(), Map.of());
+                Set.of(), Map.of(), Map.of());
         beginNextEnlistmentChoice(gameData, battlefield, context);
         return true;
     }
@@ -2323,7 +2467,8 @@ public class CombatAttackService {
             remaining = remaining.subList(1, remaining.size());
             context = new MultiPermanentChoiceContext.Enlistment(
                     context.playerId(), context.attackerIndices(), context.resolvedTargets(),
-                    context.declaredAttackers(), remaining, context.usedSupporterIds(), context.boostPowers());
+                    context.declaredAttackers(), remaining, context.usedSupporterIds(), context.boostPowers(),
+                    context.enlistedSupporters());
         }
     }
 
@@ -2346,13 +2491,15 @@ public class CombatAttackService {
             return finishAttackerDeclaration(gameData, context.playerId(),
                     gameData.playerIdToName.get(context.playerId()),
                     gameData.playerBattlefields.get(context.playerId()), context.attackerIndices(),
-                    context.resolvedTargets(), context.declaredAttackers(), context.boostPowers());
+                    context.resolvedTargets(), context.declaredAttackers(), context.boostPowers(),
+                    context.enlistedSupporters());
         }
 
         UUID attackerId = remaining.getFirst();
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         Set<UUID> usedSupporterIds = new HashSet<>(context.usedSupporterIds());
         Map<UUID, Integer> boostPowers = new LinkedHashMap<>(context.boostPowers());
+        Map<UUID, UUID> enlistedSupporters = new LinkedHashMap<>(context.enlistedSupporters());
         if (attacker != null && permanentIds != null && permanentIds.size() == 1) {
             Permanent supporter = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             List<UUID> eligibleIds = eligibleEnlistmentSupporters(gameData, context.playerId(),
@@ -2363,6 +2510,7 @@ public class CombatAttackService {
                         gameData, supporter, context.playerId());
                 usedSupporterIds.add(supporter.getId());
                 boostPowers.put(attacker.getId(), gameQueryService.getEffectivePower(gameData, supporter));
+                enlistedSupporters.put(attacker.getId(), supporter.getId());
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(context.playerId()) + " taps "
                                 + supporter.getCard().getName() + " to enlist "
@@ -2373,7 +2521,7 @@ public class CombatAttackService {
         List<UUID> nextRemaining = remaining.subList(1, remaining.size());
         MultiPermanentChoiceContext.Enlistment nextContext = new MultiPermanentChoiceContext.Enlistment(
                 context.playerId(), context.attackerIndices(), context.resolvedTargets(),
-                context.declaredAttackers(), nextRemaining, usedSupporterIds, boostPowers);
+                context.declaredAttackers(), nextRemaining, usedSupporterIds, boostPowers, enlistedSupporters);
         List<Permanent> battlefield = gameData.playerBattlefields.get(context.playerId());
         if (!nextRemaining.isEmpty()) {
             beginNextEnlistmentChoice(gameData, battlefield, nextContext);
@@ -2383,10 +2531,12 @@ public class CombatAttackService {
         }
         return finishAttackerDeclaration(gameData, context.playerId(),
                 gameData.playerIdToName.get(context.playerId()), battlefield,
-                context.attackerIndices(), context.resolvedTargets(), context.declaredAttackers(), boostPowers);
+                context.attackerIndices(), context.resolvedTargets(), context.declaredAttackers(), boostPowers,
+                enlistedSupporters);
     }
 
-    private void addEnlistmentTriggers(GameData gameData, UUID playerId, Map<UUID, Integer> boostPowers) {
+    private void addEnlistmentTriggers(GameData gameData, UUID playerId, Map<UUID, Integer> boostPowers,
+                                       Map<UUID, UUID> enlistedSupporters) {
         for (Map.Entry<UUID, Integer> boost : boostPowers.entrySet()) {
             Permanent attacker = gameQueryService.findPermanentById(gameData, boost.getKey());
             if (attacker == null) {
@@ -2405,8 +2555,10 @@ public class CombatAttackService {
                 enlistTrigger.setNonTargeting(true);
                 enlistTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
                 gameData.stack.add(enlistTrigger);
+                Permanent enlistedCreature = gameQueryService.findPermanentById(
+                        gameData, enlistedSupporters.get(boost.getKey()));
                 triggerCollectionService.checkEnlistmentTriggeredAbilityTriggers(
-                        gameData, attacker, enlistTrigger);
+                        gameData, attacker, enlistTrigger, enlistedCreature);
                 gameLogService.append(gameData,
                         GameLog.builder().card(attacker.getCard()).text("'s enlist ability triggers.").build());
             } finally {

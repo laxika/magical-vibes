@@ -548,7 +548,9 @@ public class GraveyardReturnSupport {
                 && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())
                 && effect.grantOnDeathEffect() == null
-                && (effect.battlefieldEffectGrants() == null || effect.battlefieldEffectGrants().isEmpty())) {
+                && (effect.battlefieldEffectGrants() == null || effect.battlefieldEffectGrants().isEmpty())
+                && (effect.perpetualBattlefieldEffectGrants() == null
+                || effect.perpetualBattlefieldEffectGrants().isEmpty())) {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -627,6 +629,12 @@ public class GraveyardReturnSupport {
                                     ? EffectDuration.PERMANENT
                                     : effect.battlefieldEffectGrantDuration(), 0));
                 }
+            }
+            if (effect.perpetualBattlefieldEffectGrants() != null) {
+                PerpetualCardBattlefieldEffectSupport.remember(
+                        gameData, card, effect.perpetualBattlefieldEffectGrants());
+                PerpetualCardBattlefieldEffectSupport.apply(
+                        gameData, controllerId, p, effect.perpetualBattlefieldEffectGrants());
             }
             break;
         }
@@ -2978,7 +2986,7 @@ public class GraveyardReturnSupport {
                 for (Card card : state.cards()) {
                     if (!chosenCardIds.contains(card.getId())
                             && graveyard.removeIf(graveyardCard -> graveyardCard.getId().equals(card.getId()))) {
-                        gameData.addCardToHand(controllerId, card);
+                        addCardToHandFromGraveyard(gameData, controllerId, controllerId, card);
                         graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                         returnedCards.add(card);
                     }

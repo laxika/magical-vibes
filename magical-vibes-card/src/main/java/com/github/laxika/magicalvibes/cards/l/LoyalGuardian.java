@@ -4,20 +4,20 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
+@CardRegistration(set = "MSC", collectorNumber = "176")
 @CardRegistration(set = "CMM", collectorNumber = "304")
 public class LoyalGuardian extends Card {
 
     public LoyalGuardian() {
-        // At the beginning of combat on your turn, if you control your commander,
-        // put a +1/+1 counter on each creature you control.
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(
-                        new ControllerControlsCommander(),
+                        new ControlsPermanent(new PermanentIsCommanderPredicate()),
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1,
                                 new PermanentIsCreaturePredicate())));

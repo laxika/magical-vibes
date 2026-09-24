@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "396")
+@CardRegistration(set = "MSC", collectorNumber = "258")
+@CardRegistration(set = "MSC", collectorNumber = "486")
 public class RadiantSummit extends Card {
 
     public RadiantSummit() {
@@ -19,8 +21,10 @@ public class RadiantSummit extends Card {
                 new ControlsPermanentCountAtMost(1, new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
                 new EntersTappedEffect()));
 
-        // {T}: Add {R} or {W}.
+        // {T}: Add {R}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
+
+        // {T}: Add {W}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
     }
 }

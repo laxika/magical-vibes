@@ -45,6 +45,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -1336,7 +1339,6 @@ public class ChoiceHandlerService {
                         new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, 1);
             } else {
                 manaPool.add(manaColor, 1);
-                manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
                 tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
                 if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
                     manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
@@ -1493,8 +1495,12 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} artifact-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else {
             manaPool.add(manaColor, amount);
-            manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, amount);
             tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
+            int pathOfAncestryAmount = gameData.consumePendingPathOfAncestryManaChoice(
+                    ctx.sourcePermanentId(), amount);
+            if (pathOfAncestryAmount > 0) {
+                manaPool.addPathOfAncestryManaTag(manaColor, pathOfAncestryAmount);
+            }
             if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
                 manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, amount);
             }
@@ -2308,15 +2314,60 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (target != null) {
-            target.getGrantedKeywords().add(keyword);
+        if (target != null && !gameQueryService.cantHaveOrGainKeyword(gameData, target, keyword)) {
+            GrantDuration duration = ctx.duration();
+            addChosenKeywordToLegacyBucket(target, keyword, duration);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), ctx.sourceCardName(), sourcePermanentIdFor(ctx), player.getId(),
+                    new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, duration, null),
+                    target.getId(), null, null, floatingDurationFor(duration), 0));
 
             String keywordName = keyword.name().charAt(0) + keyword.name().substring(1).toLowerCase().replace('_', ' ');
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains " + keywordName + " until end of turn."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains " + keywordName + " "
+                    + durationLabel(duration) + "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), keywordName, target.getCard().getName());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void addChosenKeywordToLegacyBucket(Permanent target, Keyword keyword, GrantDuration duration) {
+        switch (duration) {
+            case UNTIL_YOUR_NEXT_TURN -> target.getUntilNextTurnKeywords().add(keyword);
+            case INDEFINITE -> target.getPersistentGrantedKeywords().add(keyword);
+            case END_OF_TURN, UNTIL_END_OF_COMBAT, UNTIL_YOUR_NEXT_UPKEEP,
+                    WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS -> target.getGrantedKeywords().add(keyword);
+        }
+    }
+
+    private UUID sourcePermanentIdFor(ChoiceContext.KeywordGrantChoice context) {
+        return context.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || context.duration() == GrantDuration.WHILE_SOURCE_REMAINS
+                ? context.sourcePermanentId() : null;
+    }
+
+    private EffectDuration floatingDurationFor(GrantDuration duration) {
+        return switch (duration) {
+            case UNTIL_END_OF_COMBAT -> EffectDuration.UNTIL_END_OF_COMBAT;
+            case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
+            case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
+            case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
+            case INDEFINITE -> EffectDuration.PERMANENT;
+            case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+        };
+    }
+
+    private String durationLabel(GrantDuration duration) {
+        return switch (duration) {
+            case UNTIL_END_OF_COMBAT -> "until end of combat";
+            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case UNTIL_YOUR_NEXT_UPKEEP -> "until your next upkeep";
+            case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as its source remains on the battlefield";
+            case WHILE_SOURCE_REMAINS -> "for as long as its source remains on the battlefield";
+            case INDEFINITE -> "indefinitely";
+            case END_OF_TURN -> "until end of turn";
+        };
     }
 
     private void handleLegacyWordChoice(GameData gameData, Player player, String chosenWord,
@@ -3618,7 +3669,7 @@ public class ChoiceHandlerService {
             hand.removeAll(toDiscard);
             triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card card : toDiscard) {
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.HAND);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
             triggerCollectionService.finishDiscardEvent(gameData);
@@ -6437,6 +6488,12 @@ public class ChoiceHandlerService {
         if (ctx.tokenTemplate() != null && handExiledCount > 0) {
             permanentControlSupport.applyCreateToken(gameData, targetPlayerId, ctx.tokenTemplate(),
                     handExiledCount, ctx.sourceSetCode());
+        }
+
+        if (ctx.followUpEffect() != null && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setEventValue(handExiledCount);
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(ctx.followUpEffect()));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

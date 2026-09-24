@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 
 @CardRegistration(set = "SOC", collectorNumber = "54")
 @CardRegistration(set = "SOC", collectorNumber = "102")
+@CardRegistration(set = "MSC", collectorNumber = "264")
+@CardRegistration(set = "MSC", collectorNumber = "492")
 public class ScorchedGeyser extends Card {
 
     public ScorchedGeyser() {
@@ -20,10 +22,7 @@ public class ScorchedGeyser extends Card {
                 new ControlsPermanentCountAtMost(1, new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
                 new EntersTappedEffect()));
 
-        // {T}: Add {U}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
-
-        // {T}: Add {R}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
     }
 }

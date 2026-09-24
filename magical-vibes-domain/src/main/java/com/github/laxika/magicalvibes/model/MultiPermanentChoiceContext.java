@@ -539,6 +539,15 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Speedbrood Stalker: privately choose the target player's creature or planeswalker, then resolve the sacrifices. */
+    record TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen(
+            UUID targetPlayerId,
+            UUID sourceControllerId,
+            UUID chosenPermanentId,
+            String sourceCardName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * "Choose a matching permanent to keep, the rest are destroyed" (destroy-rest flow).
      * {@code remainingChoosers} and {@code protectedIds} advance across re-begins exactly as
@@ -724,7 +733,8 @@ public sealed interface MultiPermanentChoiceContext {
     /** Enlist support selection during attacker declaration, before attack triggers are stacked. */
     record Enlistment(UUID playerId, List<Integer> attackerIndices, Map<Integer, UUID> resolvedTargets,
                       List<Permanent> declaredAttackers, List<UUID> remainingAttackerIds,
-                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers)
+                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers,
+                      Map<UUID, UUID> enlistedSupporters)
             implements MultiPermanentChoiceContext {
 
         public Enlistment {
@@ -734,6 +744,7 @@ public sealed interface MultiPermanentChoiceContext {
             remainingAttackerIds = List.copyOf(remainingAttackerIds);
             usedSupporterIds = Set.copyOf(usedSupporterIds);
             boostPowers = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(boostPowers));
+            enlistedSupporters = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(enlistedSupporters));
         }
     }
 
@@ -980,6 +991,18 @@ public sealed interface MultiPermanentChoiceContext {
             UUID choosingPlayerId, int maxPower, java.util.List<UUID> remainingPlayerIds,
             java.util.List<UUID> accumulatedKeepIds, String sourceName)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** Promise of Loyalty: each player chose the creature that receives a vow counter and survives. */
+    record EachPlayerChoosesCreaturePutsVowCounterChoice(
+            StackEntry resolvingEntry, java.util.List<UUID> playerIds, int playerIndex,
+            java.util.List<UUID> keptIds,
+            String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesCreaturePutsVowCounterChoice {
+            playerIds = List.copyOf(playerIds);
+            keptIds = List.copyOf(keptIds);
+        }
     }
 
     /** Fade Away: the player selected creatures whose controllers will pay instead of sacrificing. */
