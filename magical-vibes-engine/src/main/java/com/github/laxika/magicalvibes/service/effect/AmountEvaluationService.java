@@ -59,6 +59,11 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
+import com.github.laxika.magicalvibes.model.amount.TurnsBegunSinceForetell;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureTypesAmongControlledCreatures;
@@ -510,6 +515,16 @@ public class AmountEvaluationService {
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
             case TurnsTakenByController ignored ->
                     ctx.controllerId() == null ? 0 : gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0);
+            case TurnsBegunSinceForetell ignored -> {
+                StackEntry entry = ctx.stackEntry();
+                if (entry == null || !entry.isCastForForetell()
+                        || entry.getForetellControllerTurnsAtExile() < 0
+                        || ctx.controllerId() == null) {
+                    yield 0;
+                }
+                int turnsTaken = gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0);
+                yield Math.max(0, turnsTaken - entry.getForetellControllerTurnsAtExile());
+            }
             case ControllerSpeed ignored ->
                     ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
             case CommanderCastsFromCommandZoneThisGame ignored ->

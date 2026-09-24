@@ -533,7 +533,7 @@ public class SpellCastingService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card toDiscard = hand.get(effectiveIndex);
         hand.remove(effectiveIndex);
-        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
         if (cost.imprintOnSource()) {
             gameData.setImprintedCard(card, toDiscard);
         }
@@ -612,7 +612,7 @@ public class SpellCastingService {
         for (int effectiveIndex : effectiveIndices) {
             Card toDiscard = hand.get(effectiveIndex);
             hand.remove(effectiveIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
@@ -689,7 +689,7 @@ public class SpellCastingService {
                 .toList();
         Card discarded = eligibleCards.get(ThreadLocalRandom.current().nextInt(eligibleCards.size()));
         hand.remove(discarded);
-        graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+        graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
         gameData.discardCausedByOpponent = false;
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
@@ -725,7 +725,7 @@ public class SpellCastingService {
                 Card toDiscard = eligibleCards.get(ThreadLocalRandom.current().nextInt(eligibleCards.size()));
                 discardedManaValue += toDiscard.getManaValue();
                 hand.remove(toDiscard);
-                graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+                graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
                 gameData.discardCausedByOpponent = false;
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " discards ")
@@ -749,7 +749,7 @@ public class SpellCastingService {
             Card toDiscard = hand.get(effectiveIndex);
             discardedManaValue += toDiscard.getManaValue();
             hand.remove(effectiveIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
@@ -778,7 +778,7 @@ public class SpellCastingService {
         for (int effectiveIndex : effectiveIndices) {
             Card toDiscard = hand.get(effectiveIndex);
             hand.remove(effectiveIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
@@ -2588,7 +2588,7 @@ public class SpellCastingService {
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
         Card toDiscard = hand.remove(effectiveIndex);
-        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
@@ -3001,6 +3001,10 @@ public class SpellCastingService {
         }
 
         Card physicalHandCard = handEarly.get(cardIndex);
+        if (casterPool != null && gameQueryService.canSpendManaAsAnyColorToCastCard(
+                gameData, playerId, physicalHandCard)) {
+            casterPool.setAllManaSpendableAsAnyColor(true);
+        }
         boolean castingFaceDown = usingAlternateCost && physicalHandCard.getMorphCost() != null;
         boolean selectingModalBackFace = physicalHandCard.isModalDoubleFaced()
                 && physicalHandCard.getBackFaceCard() != null
@@ -7129,7 +7133,7 @@ public class SpellCastingService {
         gameData.discardCausedByOpponent = false;
         triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (Card discardedCard : discarded) {
-            graveyardService.addCardToGraveyard(gameData, playerId, discardedCard);
+            graveyardService.addCardToGraveyard(gameData, playerId, discardedCard, Zone.HAND);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard);
         }
         triggerCollectionService.finishDiscardEvent(gameData);
@@ -9636,6 +9640,9 @@ public class SpellCastingService {
                 castingPermissionService.isUsingCleanupSacrificeFlashPermission(
                         gameData, playerId, card));
         stackEntry.setCastForForetell(castForForetell);
+        if (castForForetell && exiledEntry != null) {
+            stackEntry.setForetellControllerTurnsAtExile(exiledEntry.controllerTurnsTakenAtExile());
+        }
         if (!fromOutsideGame && !exiledEntry.ownerId().equals(playerId)) {
             stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         }
@@ -11036,10 +11043,11 @@ public class SpellCastingService {
         boolean pendingAnyManaType = gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId);
         boolean battlefieldAnyManaType = castingPermissionService.canSpendAnyManaTypeFromBattlefield(
                 gameData, playerId, card);
+        boolean cardAnyManaType = castingPermissionService.canSpendAnyManaTypeFromCard(card);
         boolean usesPendingAnyManaType = pendingAnyManaType && !anyManaType && !battlefieldAnyManaType
                 && !baseMana.isEmpty();
         if ((convokeContributions == null || convokeContributions.isEmpty())
-                && (anyManaType || battlefieldAnyManaType || usesPendingAnyManaType)
+                && (anyManaType || cardAnyManaType || battlefieldAnyManaType || usesPendingAnyManaType)
                 && !(blackManaLifePaymentPermission && cost.hasPhyrexianMana())) {
             if (usesPendingAnyManaType && !additionalCostsMana.isEmpty()) {
                 return payBaseManaCostWithPendingAnyManaType(gameData, playerId, card, baseMana,
@@ -11629,7 +11637,7 @@ public class SpellCastingService {
         triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (int i = 0; i < count; i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
             gameData.discardCausedByOpponent = false;
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
             gameLogService.append(gameData, GameLog.builder()
@@ -12255,7 +12263,7 @@ public class SpellCastingService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card toDiscard = hand.get(discardHandCardIndex);
         hand.remove((int) discardHandCardIndex);
-        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
@@ -12539,7 +12547,7 @@ public class SpellCastingService {
                 .sorted(java.util.Comparator.reverseOrder()).toList();
         for (int handIndex : descendingIndices) {
             Card discarded = gameData.playerHands.get(player.getId()).remove(handIndex);
-            graveyardService.addCardToGraveyard(gameData, player.getId(), discarded);
+            graveyardService.addCardToGraveyard(gameData, player.getId(), discarded, Zone.HAND);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(discarded)
@@ -13135,7 +13143,7 @@ public class SpellCastingService {
                 gameData, player.getId(), card, discardHandCardIndex, spellCardIndex);
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card toDiscard = hand.remove(effectiveIndex);
-        graveyardService.addCardToGraveyard(gameData, player.getId(), toDiscard);
+        graveyardService.addCardToGraveyard(gameData, player.getId(), toDiscard, Zone.HAND);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
@@ -13313,7 +13321,7 @@ public class SpellCastingService {
             int effectiveIndex = validateDiscardFromHandAlternateCost(gameData, playerId, card,
                     selection.cost(), selection.handIndex(), spellCardIndex);
             Card toDiscard = hand.remove(effectiveIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard, Zone.HAND);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)

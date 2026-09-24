@@ -37,7 +37,8 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card card = ((BecomeCopyOfCardUntilEndOfTurnEffect) effect).card();
+        BecomeCopyOfCardUntilEndOfTurnEffect copyEffect = (BecomeCopyOfCardUntilEndOfTurnEffect) effect;
+        Card card = copyEffect.card();
         if (card == null || !card.hasType(CardType.CREATURE)) {
             return;
         }
@@ -52,12 +53,11 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
         }
 
         String originalName = source.getCard().getName();
-        BecomeCopyOfCardUntilEndOfTurnEffect copyEffect =
-                (BecomeCopyOfCardUntilEndOfTurnEffect) effect;
-        permanentCopierService.applyCloneCopy(source, card, null, null, copyEffect.additionalTypes());
-        if (!copyEffect.additionalSubtypes().isEmpty()) {
+        permanentCopierService.applyCloneCopy(source, card, null, null,
+                copyEffect.additionalTypesOverride());
+        if (!copyEffect.additionalSubtypesOverride().isEmpty()) {
             ArrayList<CardSubtype> subtypes = new ArrayList<>(source.getCard().getSubtypes());
-            for (CardSubtype subtype : copyEffect.additionalSubtypes()) {
+            for (CardSubtype subtype : copyEffect.additionalSubtypesOverride()) {
                 if (!subtypes.contains(subtype)) {
                     subtypes.add(subtype);
                 }

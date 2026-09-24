@@ -38,9 +38,11 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
                 entry.getSourcePermanentSnapshot(),
                 null,
                 e.untilNextTurn(),
+                e.persistsUntilConsumed(),
                 gameData.turnNumber));
         log.info("Game {} - {} registers a delayed spell-cast trigger {}",
                 gameData.id, entry.getCard().getName(),
-                e.untilNextTurn() ? "until their next turn" : "for this turn");
+                e.persistsUntilConsumed() ? "until it is consumed"
+                        : e.untilNextTurn() ? "until their next turn" : "for this turn");
     }
 }

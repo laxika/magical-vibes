@@ -728,7 +728,8 @@ public sealed interface MultiPermanentChoiceContext {
     /** Enlist support selection during attacker declaration, before attack triggers are stacked. */
     record Enlistment(UUID playerId, List<Integer> attackerIndices, Map<Integer, UUID> resolvedTargets,
                       List<Permanent> declaredAttackers, List<UUID> remainingAttackerIds,
-                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers)
+                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers,
+                      Map<UUID, UUID> enlistedSupporters)
             implements MultiPermanentChoiceContext {
 
         public Enlistment {
@@ -738,6 +739,7 @@ public sealed interface MultiPermanentChoiceContext {
             remainingAttackerIds = List.copyOf(remainingAttackerIds);
             usedSupporterIds = Set.copyOf(usedSupporterIds);
             boostPowers = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(boostPowers));
+            enlistedSupporters = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(enlistedSupporters));
         }
     }
 

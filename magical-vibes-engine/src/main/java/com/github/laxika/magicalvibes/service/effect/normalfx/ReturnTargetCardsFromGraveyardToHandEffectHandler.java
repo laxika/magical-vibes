@@ -190,7 +190,8 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
                                       List<Card> legalTargets, Card handCard) {
         graveyardReturnSupport.processTargetedGraveyardTargets(gameData, entry,
                 List.of(handCard.getId()),
-                (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
+                (graveyard, card) -> graveyardReturnSupport.addCardToHandFromGraveyard(
+                        gameData, entry.getControllerId(), entry.getControllerId(), card),
                 " returns ", " from graveyard to hand.");
 
         legalTargets.stream()

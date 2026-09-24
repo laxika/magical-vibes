@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1629,7 +1630,7 @@ public class MayPenaltyChoiceHandlerService {
                     gameData.id, opponentName, controllerName, revealed.size());
         } else {
             for (Card card : revealed) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
             for (int i = 0; i < 5; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);

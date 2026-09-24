@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -813,7 +814,13 @@ public sealed interface ChoiceContext {
     record DualCardNameChoice(Card card, UUID controllerId, UUID choosingPlayerId,
                               String firstChosenName) implements ChoiceContext {}
 
-    record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
+    record KeywordGrantChoice(UUID targetId, List<Keyword> options,
+                              GrantDuration duration, String sourceCardName,
+                              UUID sourcePermanentId) implements ChoiceContext {
+        public KeywordGrantChoice(UUID targetId, List<Keyword> options) {
+            this(targetId, options, GrantDuration.END_OF_TURN, null, null);
+        }
+    }
 
     record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
         public LegacyWordChoice {

@@ -415,6 +415,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  triggering Vehicle is stored on the resulting stack entry for effects that refer to it.
      *  Checked from {@code CrewCostHandler}. */
     ON_CREWS_VEHICLE,
+    /** Triggers whenever a creature the controller controls is tapped to pay a Vehicle's crew cost.
+     *  The event context carries both the crewing creature and the Vehicle. Checked from
+     *  {@code CrewCostHandler}; the source permanent itself is included. */
+    ON_ALLY_CREATURE_CREWS_VEHICLE,
     /** Triggers whenever this creature is tapped to pay a teamwork cost. */
     ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST,
     /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),
@@ -990,6 +994,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever a card is put from the controller's graveyard into their hand. */
+    ON_CONTROLLER_CARD_RETURNED_FROM_GRAVEYARD_TO_HAND,
     /** Triggers once for each instant or sorcery card that leaves the controller's graveyard. */
     ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
