@@ -123,6 +123,10 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
+        CreateTokenEffect additionalSquirrel = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalSquirrelTokenIfApplicable(
+                        gameData, controllerId, token)
+                : null;
         int additionalSoldierTokenCount = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
                         gameData, controllerId, token)
@@ -135,29 +139,37 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalTreasureTokenCount(
                         gameData, controllerId, token, totalAmount)
                 : 0;
+        List<CreateTokenEffect> academyManufactorTokenBlueprints = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                        gameData, controllerId, token, totalAmount)
+                : List.of();
         boolean addClueToken = applyAdditionalReplacements
                 && totalAmount > 0
                 && hasSolvedClueReplacement(gameData, controllerId);
         CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
-        List<CreateTokenEffect> additionalAcademyManufactorTokens = applyAdditionalReplacements
-                ? TokenCreationReplacementSupport.additionalAcademyManufactorTokens(
-                        gameData, controllerId, evaluatedToken, totalAmount)
-                : List.of();
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
         int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
+        int additionalSquirrelTokenCount = additionalSquirrel != null && totalAmount > 0
+                ? totalAmount
+                : 0;
         if (totalAmount <= 0) {
             additionalSoldierTokenCount = 0;
         }
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
-                totalAmount + additionalMapTokenCount + additionalFrogTokenCount + additionalMutagenTokenCount + additionalTreasureTokenCount + additionalSoldierTokenCount);
-        for (int i = 0; i < totalAmount; i++) {
-            tokenBlueprints.add(evaluatedToken);
+                (academyManufactorTokenBlueprints.isEmpty() ? totalAmount : academyManufactorTokenBlueprints.size())
+                        + additionalMapTokenCount + additionalFrogTokenCount + additionalSquirrelTokenCount
+                        + additionalMutagenTokenCount + additionalTreasureTokenCount + additionalSoldierTokenCount);
+        if (academyManufactorTokenBlueprints.isEmpty()) {
+            for (int i = 0; i < totalAmount; i++) {
+                tokenBlueprints.add(evaluatedToken);
+            }
+        } else {
+            tokenBlueprints.addAll(academyManufactorTokenBlueprints);
         }
-        tokenBlueprints.addAll(additionalAcademyManufactorTokens);
         CreateTokenEffect additionalTreasureToken = additionalTreasureTokenCount > 0
                 ? TokenCreationReplacementSupport.additionalTreasureToken(token)
                 : null;
@@ -169,6 +181,9 @@ public class PermanentControlSupport {
         }
         if (additionalFrogTokenCount > 0) {
             tokenBlueprints.add(additionalFrog);
+        }
+        for (int i = 0; i < additionalSquirrelTokenCount; i++) {
+            tokenBlueprints.add(additionalSquirrel);
         }
         for (int i = 0; i < additionalSoldierTokenCount; i++) {
             tokenBlueprints.add(additionalSoldier);

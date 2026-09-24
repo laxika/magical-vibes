@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -662,8 +663,13 @@ public class AsEntersInteractionService {
                 || limitedGraveyardExile != null
                 || filteredGraveyardExile != null;
         if (needsGraveyardExile) {
-            List<Card> graveyardCards = gameData.playerGraveyards
-                    .getOrDefault(controllerId, List.of()).stream()
+            List<UUID> graveyardOwners = filteredGraveyardExile == null
+                    ? List.of(controllerId)
+                    : filteredGraveyardExile.graveyardScope()
+                    .graveyardOwners(gameData.orderedPlayerIds, controllerId);
+            List<Card> graveyardCards = graveyardOwners.stream()
+                    .flatMap(playerId -> gameData.playerGraveyards
+                            .getOrDefault(playerId, List.of()).stream())
                     .filter(c -> filteredGraveyardExile == null
                             ? c.hasType(CardType.CREATURE)
                             : predicateEvaluationService.matchesCardPredicate(
@@ -689,10 +695,13 @@ public class AsEntersInteractionService {
                                 xValue, kicked, targetIds,
                                 limitedGraveyardExile == null ? 0 : limitedGraveyardExile.countersPerCard(),
                                 requiredGraveyardExile == null ? List.of() : requiredGraveyardExile.counterTypes());
+                String graveyardDescription = filteredGraveyardExile != null
+                        && filteredGraveyardExile.graveyardScope() != GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                        ? "a graveyard" : "your graveyard";
                 playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
                         new ArrayList<>(graveyardCards), maxExiledCards, minExiledCards,
                         filteredGraveyardExile != null
-                                ? card.getName() + " — Exile a matching card from your graveyard."
+                                ? card.getName() + " — Exile a matching card from " + graveyardDescription + "."
                                 : limitedGraveyardExile == null
                                 ? card.getName() + " — Exile any number of creature cards from your graveyard."
                                 : card.getName() + " — Exile up to " + xValue

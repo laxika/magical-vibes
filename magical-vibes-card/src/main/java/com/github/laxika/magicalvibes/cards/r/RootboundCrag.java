@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "459")
 @CardRegistration(set = "ECC", collectorNumber = "163")
 @CardRegistration(set = "TMC", collectorNumber = "72")
+@CardRegistration(set = "YEOE", collectorNumber = "37")
 public class RootboundCrag extends Card {
 
     public RootboundCrag() {

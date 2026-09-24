@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "ME1", collectorNumber = "174")
 @CardRegistration(set = "V10", collectorNumber = "15")
 @CardRegistration(set = "SLD", collectorNumber = "2111")
+@CardRegistration(set = "MH2", collectorNumber = "300")
 public class ZuranOrb extends Card {
 
     public ZuranOrb() {

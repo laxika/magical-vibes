@@ -143,6 +143,7 @@ All paths relative to `cards/`.
 | Protection from colors | `p/PaladinEnVec.java` | STATIC ProtectionFromColorsEffect |
 | Protection from monocolored sources | `g/GuardianOfTheGuildpact.java` | STATIC ProtectionFromMonocoloredEffect |
 | Protection from modified creatures | `l/LouvaqTheAberrant.java` | STATIC ProtectionFromModifiedCreaturesEffect; a modified creature has a counter, attached Equipment, or a controller-controlled Aura |
+| Protection from permanents with a named counter | `g/GeyadroneDihada.java` | STATIC ProtectionFromPermanentsWithCountersEffect(CounterType.CORRUPTION); matches battlefield permanents carrying that counter |
 | Protection from the colors of permanents you control | `e/EmptyShrineKannushi.java` | STATIC ProtectionFromColorsOfPermanentsYouControlEffect — state-dependent colour set, evaluated in `GameQueryService.hasProtectionFrom` |
 | Equipment protection outside commander identity | `c/CommandersPlate.java` | STATIC StaticBoostEffect(3, 3, EQUIPPED_CREATURE) + ProtectionFromColorsOutsideCommanderColorIdentityEffect; the dynamic protection set is derived from the controller's command zone and commander permanents |
 | Aura: protection from colors of permanents you control | `p/PledgeOfLoyalty.java` | `target(TargetFilters.creature())` + STATIC `ProtectionFromColorsOfPermanentsYouControlEffect(ENCHANTED_CREATURE)` — colors are evaluated from the Aura controller's battlefield and the Aura stays attached despite its own white protection |

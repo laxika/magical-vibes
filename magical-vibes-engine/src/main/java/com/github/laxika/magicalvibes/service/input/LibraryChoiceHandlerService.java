@@ -1267,6 +1267,18 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.HEIST) {
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
+            gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+            String targetName = gameData.playerIdToName.get(deckOwnerId);
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " exiles a card face down from "
+                            + targetName + "'s library with Heist."));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
             boolean faceUp = filterPredicate != null
@@ -1601,7 +1613,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
                         EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, HEIST,
                         EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST,
                         EXILE_FOR_MAY_CAST_WITH_NORMAL_COST -> "into exile";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
@@ -3160,6 +3172,7 @@ public class LibraryChoiceHandlerService {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, controllerId, remainingCards, sourceEntry);
             applySelectionLifeLoss(gameData, controllerId, selectedCards.size(),
                     lifeLossPerSelectedCard, sourceEntry);
             applySelectionLifePayment(gameData, controllerId, selectedCards.size(),
@@ -3215,6 +3228,25 @@ public class LibraryChoiceHandlerService {
                 ? sourceEntry.getCard().getName()
                 : "library choice";
         lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, sourceName);
+    }
+
+    private void gainLifeForGreatestPowerOfGraveyardCards(
+            GameData gameData, UUID controllerId, List<Card> cards, StackEntry sourceEntry) {
+        if (sourceEntry == null
+                || !sourceEntry.isGainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) {
+            return;
+        }
+        int greatestPower = cards.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .map(Card::getPower)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(power -> Math.max(0, power))
+                .max()
+                .orElse(0);
+        if (greatestPower > 0) {
+            lifeSupport.applyGainLife(gameData, controllerId, greatestPower,
+                    sourceEntry.getCard().getName(), sourceEntry.getCard(), sourceEntry.getEntryType());
+        }
     }
 
     private void applySelectionLifePayment(GameData gameData, UUID controllerId, int selectedCount,

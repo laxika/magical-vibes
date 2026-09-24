@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "2048")
 @CardRegistration(set = "SLD", collectorNumber = "2053")
+@CardRegistration(set = "MH2", collectorNumber = "121")
 public class DragonsRageChanneler extends Card {
 
     public DragonsRageChanneler() {
@@ -27,9 +28,8 @@ public class DragonsRageChanneler extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new SurveilEffect(1))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Delirium(),
-                new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Delirium(),
-                new MustAttackEffect()));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new Delirium(), new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.SELF)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Delirium(), new MustAttackEffect()));
     }
 }

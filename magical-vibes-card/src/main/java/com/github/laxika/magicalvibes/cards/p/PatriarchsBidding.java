@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "161")
+@CardRegistration(set = "MH2", collectorNumber = "275")
 public class PatriarchsBidding extends Card {
 
     public PatriarchsBidding() {

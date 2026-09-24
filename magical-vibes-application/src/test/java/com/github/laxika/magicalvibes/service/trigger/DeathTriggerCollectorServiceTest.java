@@ -1551,6 +1551,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleAllyNontokenMayPay(match(perm, PLAYER1_ID, mayPay), mayPay, ctx);
 
             assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
             var queued = (MayPayManaEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
             var bound = (ReturnTriggeringCardToOwnerHandEffect) queued.wrapped();
             assertThat(bound.dyingCardId()).isEqualTo(dying.getId());

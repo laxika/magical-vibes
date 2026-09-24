@@ -95,6 +95,8 @@ import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPower
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -127,8 +129,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCouldProduceManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerGraveyardCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
@@ -284,6 +287,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
@@ -319,6 +323,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicat
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
@@ -332,7 +337,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
-import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -342,22 +351,20 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 /**
  * The single evaluation point for the predicate and target-filter hierarchies
  * ({@link CardPredicate}, {@link PermanentPredicate}, {@link StackEntryPredicate},
  * {@link TargetFilter}).
  *
- * <p>Each family is dispatched with a switch that is exhaustive over its sealed hierarchy —
+ * <p>Each family is dispatched with a switch that is exhaustive over its sealed hierarchy â€”
  * adding a predicate without an evaluation is a compile error, never a silent {@code false}.
  * Predicates are pure data in the domain; anything that needs engine-computed state (effective
  * power/toughness with static bonuses, changeling-aware subtype checks, animation-aware
  * creature checks) delegates to {@link GameQueryService}.</p>
  *
  * <p>Several evaluations have an explicit {@code gameData == null} fallback that uses only the
- * permanent's intrinsic values — these are relied on by callers that match predicates outside
+ * permanent's intrinsic values â€” these are relied on by callers that match predicates outside
  * a full game context and must be preserved.</p>
  */
 @Service
@@ -367,6 +374,10 @@ public class PredicateEvaluationService {
     private static final Pattern AWAKEN_ABILITY_PATTERN = Pattern.compile("(?m)^Awaken\\s+\\d+\\s*\\u2014");
 
     private final GameQueryService gameQueryService;
+
+    @Autowired
+    @Lazy
+    private LandManaTypeSupport landManaTypeSupport;
 
     /** Creature leaf built here rather than taken from an ability, so it never reads the CR 613.6 memo. */
     private static final PermanentIsCreaturePredicate STATIC_CREATURE_LEAF = new PermanentIsCreaturePredicate();
@@ -973,6 +984,10 @@ public class PredicateEvaluationService {
                     hasTapActivatedAbility(gameData, permanent);
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
+            case PermanentCouldProduceManaPredicate couldProduceMana ->
+                    gameData != null
+                            && landManaTypeSupport.manaTypesCouldProduce(gameData, permanent)
+                            .contains(couldProduceMana.manaColor());
             case PermanentHasMorphAbilityPredicate ignored ->
                     !permanent.isFaceDown() && permanent.getCard().getMorphCost() != null;
             case PermanentHasNoAbilitiesPredicate ignored ->
@@ -1843,7 +1858,7 @@ public class PredicateEvaluationService {
                                  || card.getId().equals(originalCardId));
             }
             case PermanentCastBySourceControllerThisTurnPredicate ignored -> {
-                // "Target creature you cast this turn" — identity match against the spells the
+                // "Target creature you cast this turn" â€” identity match against the spells the
                 // source's controller cast this turn, so tokens and non-cast arrivals never match.
                 if (gameData == null || sourceControllerId == null) {
                     yield false;
@@ -2464,12 +2479,12 @@ public class PredicateEvaluationService {
      * computed, so every leaf is answered from the in-flight {@link CharacteristicState} while a
      * pass is active and from the permanent's own stored state otherwise.
      *
-     * <p>A {@code null} predicate matches — this evaluates scope filters, where "no filter" means
+     * <p>A {@code null} predicate matches â€” this evaluates scope filters, where "no filter" means
      * "every permanent in scope", not the "no predicate, no match" of a target predicate.
      *
      * <p>Only the predicates that have a recursion-safe answer are accepted. The rest throw rather
      * than degrading to the {@code null}-GameData fallback, which for a predicate that genuinely
-     * needs the board (controlled-by-source, is-blocked) is a silent {@code false} — a wrong answer
+     * needs the board (controlled-by-source, is-blocked) is a silent {@code false} â€” a wrong answer
      * dressed as a legitimate one.
      *
      * <p>The context supplies the board shape and the source's identity, which some predicates
@@ -2481,7 +2496,7 @@ public class PredicateEvaluationService {
         if (predicate == null) return true;
         // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
         // (effect parts of one printed ability share the filter object), every later-layer part
-        // applies to the layer-4-determined set — re-evaluating against the finished states
+        // applies to the layer-4-determined set â€” re-evaluating against the finished states
         // would let a self-referencing filter (Bludgeon Brawl's "non-Equipment artifact")
         // negate its own output.
         Boolean layer4Verdict = LayerSystemService.activeL4FilterVerdict(predicate, permanent.getId());
@@ -3633,7 +3648,7 @@ public class PredicateEvaluationService {
 
     /**
      * Evaluates a {@link StackEntryPredicate} against a stack entry, supporting predicates that
-     * reference the "enchanted player" — the player the evaluating source permanent is attached to.
+     * reference the "enchanted player" â€” the player the evaluating source permanent is attached to.
      *
      * <p>This is the static-effect-context evaluation (e.g. damage multipliers). Targeting-context
      * predicates (single-target, has-target, mana-value, controlled-by, targets-your-permanent,
@@ -3682,6 +3697,7 @@ public class PredicateEvaluationService {
                     !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
+            case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
             case StackEntryIsCopyPredicate ignored -> entry.isCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
@@ -3715,6 +3731,7 @@ public class PredicateEvaluationService {
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
             case StackEntryTargetsYouPredicate ignored -> false;
             case StackEntryTargetsAnyPlayerPredicate ignored -> false;
+            case StackEntryTargetsOnlySinglePermanentOrPlayerPredicate ignored -> false;
             case StackEntryTargetsOnlySingleCreaturePredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;

@@ -1444,6 +1444,13 @@ public class DamageSupport {
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
         }
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.playerHasProtectionFromChosenCardType(
+                gameData, playerId, source, sourcePermanent)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
         // Apply source-specific redirect shields (e.g. Harm's Way) before general prevention
         rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, damageSourceId, rawDamage);
         processSourceRedirectDamage(gameData);

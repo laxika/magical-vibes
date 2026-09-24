@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "130")
+@CardRegistration(set = "MH2", collectorNumber = "296")
 public class Extruder extends Card {
 
     public Extruder() {

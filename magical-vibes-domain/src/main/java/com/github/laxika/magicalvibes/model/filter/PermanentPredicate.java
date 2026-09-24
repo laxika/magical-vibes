@@ -32,6 +32,7 @@ public sealed interface PermanentPredicate permits
         PermanentControlledByDefendingPlayerPredicate,
         PermanentControlledBySourceControllerPredicate,
         PermanentControlledContinuouslySinceBeginningOfTurnPredicate,
+        PermanentCouldProduceManaPredicate,
         PermanentControllerControlsPermanentPredicate,
         PermanentControllerControlsPermanentCountAtMostPredicate,
         PermanentControllerGraveyardCountAtLeastPredicate,

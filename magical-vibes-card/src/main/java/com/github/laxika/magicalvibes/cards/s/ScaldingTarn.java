@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "ZNE", collectorNumber = "7")
 @CardRegistration(set = "SPG", collectorNumber = "112")
 @CardRegistration(set = "SPG", collectorNumber = "117")
+@CardRegistration(set = "MH2", collectorNumber = "254")
 public class ScaldingTarn extends Card {
 
     public ScaldingTarn() {

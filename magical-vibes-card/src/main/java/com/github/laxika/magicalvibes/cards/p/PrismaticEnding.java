@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SPG", collectorNumber = "40")
 @CardRegistration(set = "MB2", collectorNumber = "16")
 @CardRegistration(set = "SOA", collectorNumber = "7")
+@CardRegistration(set = "MH2", collectorNumber = "25")
 public class PrismaticEnding extends Card {
 
     public PrismaticEnding() {

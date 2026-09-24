@@ -358,6 +358,17 @@ public class TriggerCollectionService {
 
     public void checkLoyaltyCounterRemovalTriggers(GameData gameData) {
         gameData.forEachPermanent((controllerId, permanent) -> {
+            int removedCounters = permanent.drainCountersRemovedSinceTriggerCheck();
+            if (removedCounters > 0) {
+                TriggerContext context = new TriggerContext.CountersRemovedFromPermanent(
+                        permanent, removedCounters);
+                for (Permanent watcher : new ArrayList<>(
+                        gameData.playerBattlefields.getOrDefault(controllerId, List.of()))) {
+                    dispatchSlot(gameData, watcher, controllerId,
+                            EffectSlot.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT, context);
+                }
+            }
+
             int amount = permanent.drainLoyaltyCountersRemovedSinceTriggerCheck();
             if (amount <= 0) return;
 
@@ -793,7 +804,7 @@ public class TriggerCollectionService {
                             sourceCard.getName() + "'s emblem",
                             new ArrayList<>(List.of(new StormCopyEffect(
                                     new StackEntry(spellEntry), castingPlayerId, copies,
-                                    storm.tokenCopy())))));
+                                    storm.tokenCopy(), storm.removeLegendary())))));
                 } else if (effect instanceof CopyControllerCastSpellOnSpellCastEffect copyTrigger) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     if (copyTrigger.spellFilter() != null
@@ -938,6 +949,16 @@ public class TriggerCollectionService {
                 for (CardEffect effect : graveyardEffects) {
                     if (effect instanceof SpellCastTriggerEffect trigger) {
                         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) continue;
+                        if (trigger.castSpellTargetCondition() != null) {
+                            StackEntry spellEntry = gameData.stack.stream()
+                                    .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (spellEntry == null || !targetLegalityService.matchesStackEntryPredicate(
+                                    gameData, spellEntry, trigger.castSpellTargetCondition(), castingPlayerId)) {
+                                continue;
+                            }
+                        }
                         if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(gameData, trigger, castingPlayerId)) {
                             continue;
                         }
@@ -1491,7 +1512,7 @@ public class TriggerCollectionService {
                 // "for each spell cast before it this turn" — this spell is already recorded, so
                 // subtract it out. Count is fixed here (spells cast after can't precede this one).
                 queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
-                        storm.instantOrSorceryOnly(), storm.tokenCopy());
+                        storm.instantOrSorceryOnly(), storm.tokenCopy(), storm.removeLegendary());
             } else {
                 selfCastTriggeredEffects.add(effect);
             }
@@ -1690,6 +1711,13 @@ public class TriggerCollectionService {
 
     private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
                                    StackEntry spellEntry, boolean instantOrSorceryOnly, boolean tokenCopy) {
+        queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
+                instantOrSorceryOnly, tokenCopy, false);
+    }
+
+    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                   StackEntry spellEntry, boolean instantOrSorceryOnly,
+                                   boolean tokenCopy, boolean removeLegendary) {
         int copies = Math.max(0, instantOrSorceryOnly
                 ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
                         .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
@@ -1701,7 +1729,8 @@ public class TriggerCollectionService {
                 castingPlayerId,
                 spellCard.getName() + "'s ability",
                 new ArrayList<>(List.of(new StormCopyEffect(
-                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy)))
+                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy,
+                        removeLegendary)))
         ));
         log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
                 gameData.id, spellCard.getName(), copies, castingPlayerId);
@@ -2095,10 +2124,7 @@ public class TriggerCollectionService {
     }
 
     public void checkInvestigateTriggers(GameData gameData, UUID investigatingPlayerId) {
-        if (!gameData.playersWhoInvestigatedThisTurn.add(investigatingPlayerId)) {
-            return;
-        }
-
+        boolean firstInvestigationThisTurn = gameData.playersWhoInvestigatedThisTurn.add(investigatingPlayerId);
         var ctx = new TriggerContext.Investigate(investigatingPlayerId);
         List<Permanent> ownBattlefield = gameData.playerBattlefields.get(investigatingPlayerId);
         if (ownBattlefield == null) {
@@ -2106,7 +2132,27 @@ public class TriggerCollectionService {
         }
 
         for (Permanent perm : List.copyOf(ownBattlefield)) {
-            dispatchSlot(gameData, perm, investigatingPlayerId, EffectSlot.ON_CONTROLLER_INVESTIGATES, ctx);
+            if (firstInvestigationThisTurn) {
+                dispatchSlot(gameData, perm, investigatingPlayerId, EffectSlot.ON_CONTROLLER_INVESTIGATES, ctx);
+            }
+            dispatchSlot(gameData, perm, investigatingPlayerId,
+                    EffectSlot.ON_CONTROLLER_INVESTIGATES_EACH_TIME, ctx);
+        }
+    }
+
+    /** Fires triggers whenever a player seeks one or more cards. */
+    public void checkSeekTriggers(GameData gameData, UUID seekingPlayerId) {
+        if (seekingPlayerId == null) {
+            return;
+        }
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(seekingPlayerId);
+        if (ownBattlefield == null) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.Seek(seekingPlayerId);
+        for (Permanent permanent : List.copyOf(ownBattlefield)) {
+            dispatchSlot(gameData, permanent, seekingPlayerId, EffectSlot.ON_CONTROLLER_SEEKS, context);
         }
     }
 
@@ -7614,7 +7660,8 @@ public class TriggerCollectionService {
                 for (CardEffect effect : effects) {
                     CardEffect toDispatch = effect;
                     if (effect instanceof OncePerTurnTriggerEffect once) {
-                        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                        if (!once.markOnAcceptance()
+                                && gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
                             continue;
                         }
                         toDispatch = once.wrapped();
@@ -7623,9 +7670,13 @@ public class TriggerCollectionService {
                     if (toDispatch == null) {
                         continue;
                     }
-                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
+                    boolean markOnAcceptance = effect instanceof OncePerTurnTriggerEffect once
+                            && once.markOnAcceptance();
+                    var match = new TriggerMatchContext(gameData, perm, playerId, effect,
+                            perm.getCard(), markOnAcceptance);
                     if (dispatch(match, EffectSlot.ON_CONTROLLER_GAINS_LIFE, toDispatch, ctx)
-                            && effect instanceof OncePerTurnTriggerEffect) {
+                            && effect instanceof OncePerTurnTriggerEffect once
+                            && !once.markOnAcceptance()) {
                         gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
                     }
                 }
@@ -9184,8 +9235,9 @@ public class TriggerCollectionService {
                         EffectSlot.ON_ANY_NONCREATURE_ARTIFACT_SACRIFICED_OR_DESTROYED, ctx));
     }
 
-    public void checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId, UUID landControllerId) {
-        var ctx = new TriggerContext.AnyLandGraveyard(graveyardOwnerId, landControllerId);
+    public void checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, Card landCard,
+                                                                    UUID graveyardOwnerId, UUID landControllerId) {
+        var ctx = new TriggerContext.AnyLandGraveyard(landCard, graveyardOwnerId, landControllerId);
 
         gameData.forEachPermanent((playerId, perm) ->
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx));
@@ -10651,17 +10703,18 @@ public class TriggerCollectionService {
     }
 
     public void checkControllerInstantOrSorceryCardLeavesGraveyardTriggers(
-            GameData gameData, UUID graveyardOwnerId, int count) {
-        if (count <= 0) return;
+            GameData gameData, UUID graveyardOwnerId, Card card) {
+        if (card == null || card.isToken()
+                || (!card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY))) {
+            return;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
         if (battlefield == null) return;
 
-        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(graveyardOwnerId);
-        for (int i = 0; i < count; i++) {
-            for (Permanent perm : battlefield) {
-                dispatchSlot(gameData, perm, graveyardOwnerId,
-                        EffectSlot.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD, ctx);
-            }
+        var ctx = new TriggerContext.ControllerInstantOrSorceryCardLeavesGraveyard(graveyardOwnerId, card);
+        for (Permanent perm : battlefield) {
+            dispatchSlot(gameData, perm, graveyardOwnerId,
+                    EffectSlot.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD, ctx);
         }
     }
 
@@ -13800,6 +13853,19 @@ public class TriggerCollectionService {
         for (CardEffect effect : crewedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CREWED)) {
             registry.dispatch(new TriggerMatchContext(gameData, crewedPermanent, controllerId, effect),
                     EffectSlot.ON_SELF_BECOMES_CREWED, effect, context);
+        }
+    }
+
+    /** Collects abilities on a Spacecraft that trigger when a creature stations it. */
+    public void checkStationedTriggers(GameData gameData, Permanent spacecraft,
+                                       Permanent stationingCreature, UUID controllerId) {
+        if (spacecraft == null || stationingCreature == null || controllerId == null) {
+            return;
+        }
+        TriggerContext context = new TriggerContext.CreatureStationed(stationingCreature.getCard());
+        for (CardEffect effect : spacecraft.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_STATIONED)) {
+            registry.dispatch(new TriggerMatchContext(gameData, spacecraft, controllerId, effect),
+                    EffectSlot.ON_SELF_BECOMES_STATIONED, effect, context);
         }
     }
 

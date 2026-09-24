@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "402")
 @CardRegistration(set = "SLD", collectorNumber = "960")
 @CardRegistration(set = "C13", collectorNumber = "79")
+@CardRegistration(set = "MH2", collectorNumber = "274")
 public class Greed extends Card {
 
     public Greed() {

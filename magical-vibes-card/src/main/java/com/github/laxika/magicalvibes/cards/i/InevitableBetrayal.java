@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1935")
+@CardRegistration(set = "MH2", collectorNumber = "47")
 public class InevitableBetrayal extends Card {
 
     public InevitableBetrayal() {

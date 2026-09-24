@@ -12,12 +12,13 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1963")
+@CardRegistration(set = "MH2", collectorNumber = "214")
 public class SythisHarvestsHand extends Card {
 
     public SythisHarvestsHand() {
+        // Whenever you cast an enchantment spell, you gain 1 life and draw a card.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT),
-                List.of(new GainLifeEffect(1), new DrawCardEffect())
-        ));
+                List.of(new GainLifeEffect(1), new DrawCardEffect(1))));
     }
 }

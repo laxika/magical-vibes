@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 public enum CounterType {
+    ACORN,
     AGE,
     ARTIFACT,
     AIM,
@@ -23,6 +24,7 @@ public enum CounterType {
     CARRION,
     CHARGE,
     CONQUEROR,
+    CORRUPTION,
     CHORUS,
     CORPSE,
     CREATURE,
@@ -75,6 +77,7 @@ public enum CounterType {
     HOPE,
     HUNGER,
     INFLUENCE,
+    INTENSITY,
     INTERVENTION,
     INSTANT,
     ICE,

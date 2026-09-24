@@ -2282,13 +2282,44 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               CardEffect declineEffect,
                               com.github.laxika.magicalvibes.model.filter.CardPredicate chosenCardCondition,
                               CardEffect chosenCardThenEffect,
-                              int libraryPosition)
+                              int libraryPosition,
+                              boolean keepInHand)
             implements PendingInteraction {
 
         public RevealedHandChoice {
             if (libraryPosition < 0) {
                 throw new IllegalArgumentException("libraryPosition must not be negative");
             }
+        }
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional,
+                                  boolean gainLifeToChooserEqualToChosenToughness,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
+                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
+                                  boolean exileAllCopiesOfChosenNames,
+                                  boolean imprintOnSource,
+                                  boolean shuffleIntoLibraryMode,
+                                  boolean discardThenDrawMode,
+                                  boolean grantPlayPermission,
+                                  boolean returnAtNextEndStep,
+                                  int exilePlayOpponentTax,
+                                  boolean plot,
+                                  CardEffect declineEffect,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate chosenCardCondition,
+                                  CardEffect chosenCardThenEffect,
+                                  int libraryPosition) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
+                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
+                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
+                    grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, plot,
+                    declineEffect, chosenCardCondition, chosenCardThenEffect, libraryPosition, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -2402,6 +2433,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     discardThenDrawMode, grantPlayPermission, returnAtNextEndStep,
                     exilePlayOpponentTax, plot, effect, chosenCardCondition, chosenCardThenEffect,
                     libraryPosition);
+        }
+
+        public RevealedHandChoice withKeepInHand() {
+            return new RevealedHandChoice(choosingPlayerId, targetPlayerId, validIndices, remainingCount,
+                    discardMode, exileMode, chosenCards, sourcePermanentId, prompt,
+                    bottomThenDrawMode, optional, gainLifeToChooserEqualToChosenToughness,
+                    followUpFilter, followUpPrompt, declineFallbackDiscardCount, choosableFilter,
+                    exileAllCopiesOfChosenNames, imprintOnSource, shuffleIntoLibraryMode,
+                    discardThenDrawMode, grantPlayPermission, returnAtNextEndStep,
+                    exilePlayOpponentTax, plot, declineEffect, chosenCardCondition,
+                    chosenCardThenEffect, libraryPosition, true);
         }
 
         public RevealedHandChoice withChosenCardThen(

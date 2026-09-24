@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "90")
 @CardRegistration(set = "SLZ", collectorNumber = "211")
 @CardRegistration(set = "SLZ", collectorNumber = "332")
+@CardRegistration(set = "MH2", collectorNumber = "197")
 public class GarthOneEye extends Card {
 
     public GarthOneEye() {

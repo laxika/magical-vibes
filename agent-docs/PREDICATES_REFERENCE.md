@@ -60,6 +60,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasTapActivatedAbilityPredicate` | `()` | permanents with at least one effective activated ability whose cost includes `{T}`; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentCouldProduceManaPredicate` | `(ManaColor)` | permanents whose current mana abilities could produce the requested mana type, including basic-land types and applicable mana replacements; needs game data |
 | `PermanentHasMorphAbilityPredicate` | `()` | face-up permanents whose current card has a morph ability |
 | `PermanentHasNoAbilitiesPredicate` | `()` | permanents with no currently effective abilities, including printed text, keywords, granted abilities, and intrinsic basic-land mana abilities when applicable; used by Muraganda Petroglyphs |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
@@ -279,6 +280,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsNthSpellCastThisTurnPredicate` | `(int spellNumber)` | the spell at 1-based position `spellNumber` in this turn's **global** cast order across all players. "counter target spell that's the second spell cast this turn" — Second Guess with `2`. Read from `GameData.getSpellCastOrdinalThisTurn(cardId)` (appended by `recordSpellCast`, cleared each turn), so copies put on the stack without being cast never match |
 | `StackEntryKickedPredicate` | `()` | spells cast with a kicker or at least one multikicker payment |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
+| `StackEntryTargetsOnlySinglePermanentOrPlayerPredicate` | `()` | spells whose target occurrences all identify the same permanent or player; repeated occurrences are allowed (Chef's Kiss) |
 | `StackEntryTargetsOnlySingleCreaturePredicate` | `()` | spells whose target occurrences all identify one creature; repeated occurrences of that creature are allowed (Muck Drubb) |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
@@ -286,6 +288,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsCopyPredicate` | `()` | spells that were put onto the stack as copies rather than cast; used for "spell ... that wasn't cast" (Errant, Street Artist) |
 | `StackEntryNotTargetedByNamedCreatureAbilityPredicate` | `(String creatureName)` | target spells that are not already targeted by an activated or triggered ability from another creature with the given name; source-aware and evaluated by `TargetLegalityService` |
 | `StackEntryCastFromZonePredicate` | `(Zone)` | spells cast from the given zone (via the entry's `sourceZone`); e.g. `Zone.GRAVEYARD` for "casts a spell from a graveyard" (River Kelpie), distinguishing graveyard casts from exile casts |
+| `StackEntryCastWithWarpCostPredicate` | `()` | spells cast using a Warp alternative cost |
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The source aura's attachment is supplied externally by the evaluating service. Used by Curse of Echoes and Curse of Silence |
 | `StackEntrySharesChosenNameWithSourcePredicate` | `()` | spells whose card name equals the chosen name recorded on the source permanent (via a "choose a card name" ETB — `ChooseCardNameOnEnterEffect`). "counter target spell with the chosen name" — Declaration of Naught. Source-dependent: matches nothing unless the source permanent is passed to `TargetLegalityService.matchesStackEntryPredicate(..., source)`; the ability-activation path supplies it automatically |
 | `StackEntrySharesNameWithCardExiledWithSourcePredicate` | `()` | spells whose card name equals the name of a card exiled with the source permanent. "counter target spell with the same name as a card exiled with this creature" — Mindreaver. Source-dependent: the ability-activation path supplies the source automatically |
