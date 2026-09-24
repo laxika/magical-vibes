@@ -37,6 +37,7 @@ class CinderconeSmiteTest extends BaseCardTest {
 
     private void cast(com.github.laxika.magicalvibes.model.Player caster, Permanent target) {
         harness.forceActivePlayer(caster);
+        gd.startingPlayerId = player1.getId();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new CinderconeSmite()));
