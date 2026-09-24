@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "513")
+@CardRegistration(set = "MSC", collectorNumber = "834")
 public class AntManScottLang extends Card {
 
     public AntManScottLang() {

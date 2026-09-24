@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReselectAttackingCreatureEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "2127")
+@CardRegistration(set = "WOC", collectorNumber = "11")
 public class MisleadingSignpost extends Card {
 
     public MisleadingSignpost() {

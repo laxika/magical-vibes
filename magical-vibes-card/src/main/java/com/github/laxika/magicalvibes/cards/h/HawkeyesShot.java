@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "519")
+@CardRegistration(set = "MSC", collectorNumber = "839")
 public class HawkeyesShot extends Card {
 
     public HawkeyesShot() {
