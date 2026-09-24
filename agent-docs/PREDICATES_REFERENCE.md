@@ -58,6 +58,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasTapActivatedAbilityPredicate` | `()` | permanents with at least one effective activated ability whose cost includes `{T}`; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentCouldProduceManaPredicate` | `(ManaColor)` | permanents whose current mana abilities could produce the requested mana type, including basic-land types and applicable mana replacements; needs game data |
 | `PermanentHasMorphAbilityPredicate` | `()` | face-up permanents whose current card has a morph ability |
 | `PermanentHasNoAbilitiesPredicate` | `()` | permanents with no currently effective abilities, including printed text, keywords, granted abilities, and intrinsic basic-land mana abilities when applicable; used by Muraganda Petroglyphs |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
@@ -276,6 +277,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsNthSpellCastThisTurnPredicate` | `(int spellNumber)` | the spell at 1-based position `spellNumber` in this turn's **global** cast order across all players. "counter target spell that's the second spell cast this turn" — Second Guess with `2`. Read from `GameData.getSpellCastOrdinalThisTurn(cardId)` (appended by `recordSpellCast`, cleared each turn), so copies put on the stack without being cast never match |
 | `StackEntryKickedPredicate` | `()` | spells cast with a kicker or at least one multikicker payment |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
+| `StackEntryTargetsOnlySinglePermanentOrPlayerPredicate` | `()` | spells whose target occurrences all identify the same permanent or player; repeated occurrences are allowed (Chef's Kiss) |
 | `StackEntryTargetsOnlySingleCreaturePredicate` | `()` | spells whose target occurrences all identify one creature; repeated occurrences of that creature are allowed (Muck Drubb) |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |

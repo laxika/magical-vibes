@@ -673,6 +673,15 @@ public class EnterTriggerCollectorService {
     private boolean handleTokenEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
         Card sourceCard = match.permanent().getCard();
+        if (isTargeting(effect)) {
+            for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                        match.permanent().getId()));
+            }
+            logTriggered(match);
+            return true;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -1817,7 +1826,7 @@ public class EnterTriggerCollectorService {
         List<CardEffect> effects = new ArrayList<>();
         effects.add(new BoostTargetCreatureEffect(effect.powerBoost(), effect.toughnessBoost()));
         if (!effect.keywords().isEmpty()) {
-            effects.add(new GrantKeywordEffect(effect.keywords(), GrantScope.TARGET));
+            effects.add(new GrantKeywordEffect(effect.keywords(), GrantScope.TARGET, effect.duration()));
         }
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().stack.add(new StackEntry(

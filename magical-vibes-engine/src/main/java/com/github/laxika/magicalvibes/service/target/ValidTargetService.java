@@ -1426,6 +1426,14 @@ public class ValidTargetService {
         boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
                 e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && e.targetSpec().harmful());
         if (dealsDamageOrDestroys) {
+            UUID sourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(
+                    gameData, sourceCard.getId());
+            Permanent sourcePermanent = sourcePermanentId == null
+                    ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (sourcePermanent != null
+                    && gameQueryService.hasProtectionFromSource(gameData, perm, sourcePermanent)) {
+                return false;
+            }
             if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
                 return false;
             }
@@ -1456,7 +1464,9 @@ public class ValidTargetService {
         if (!ability.isMultiTarget()
                 && targetValidationService.checkEffectTargets(ability.getEffects(),
                         new TargetValidationContext(gameData, perm.getId(), null, sourceCard,
-                                0, controllerId, null)).isPresent()) {
+                                0, controllerId, null, false,
+                                targetLegalityService.findSourcePermanentIdByCardId(
+                                        gameData, sourceCard.getId()), null)).isPresent()) {
             return false;
         }
 

@@ -42,6 +42,7 @@ public sealed interface DynamicAmount permits
         GreatestOpponentHandSize,
         ColorManaSymbolsAmongControlledPermanents,
         ColorManaPairsSpentToCast,
+        ColorsSpentToCast,
         ColorsAmongControlledPermanents,
         ColorManaSymbolsInGraveyard,
         ColorManaSymbolsInHand,
@@ -194,7 +195,8 @@ public sealed interface DynamicAmount permits
         WebSlingingReturnedCreatureManaValue,
         XValue,
         TriggeringSpellTargetCount,
-        CardTypesAmongCardsDiscardedThisResolution {
+        CardTypesAmongCardsDiscardedThisResolution,
+        LastDiscardedCardTypeCount {
 
     /**
      * Whether evaluating this amount requires the source ability's resolution count to be tracked.

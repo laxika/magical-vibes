@@ -247,6 +247,7 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
     */
     @Setter private int eventValue;
+    @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
     @Setter private boolean markSourceOncePerTurnOnAcceptance;
     /** The mana type produced by the tap event that created this triggered ability. */
     @Setter private ManaColor producedManaColor;
@@ -744,6 +745,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
         this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;

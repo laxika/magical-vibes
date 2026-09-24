@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "15")
+@CardRegistration(set = "MH2", collectorNumber = "252")
 public class RazortideBridge extends Card {
 
     public RazortideBridge() {

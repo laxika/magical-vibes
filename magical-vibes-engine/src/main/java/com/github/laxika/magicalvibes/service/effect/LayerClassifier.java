@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenColorToPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
@@ -119,6 +120,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermane
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMonocoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromModifiedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
@@ -430,9 +432,11 @@ public final class LayerClassifier {
         map.put(ProtectionFromEnemyColoredMulticoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromMonocoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromModifiedCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(ProtectionFromPermanentsWithCountersEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromChosenColorEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantProtectionFromChosenColorToPermanentsEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantProtectionFromChosenTypeToOwnCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantKeywordToCreaturesOfChosenParityEffect.class, fixed(Layer.L6_ABILITIES));
         // Self ability-scans (Cairn Wanderer family) carry the CDA flag as a modeling decision
         // of the migration plan — see LAYER_SYSTEM.md "Classification notes".

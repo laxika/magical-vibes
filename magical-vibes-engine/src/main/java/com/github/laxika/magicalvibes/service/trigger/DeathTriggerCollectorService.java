@@ -571,8 +571,9 @@ public class DeathTriggerCollectorService {
         // Snapshot the counter count at death — the permanent is off the battlefield by the time this
         // resolves, so bake the fixed amount into the effect carried to target selection.
         int counters = dyingPermanent.getCounterCount(effect.counterType());
+        boolean modular = effect.modular() || dyingPermanent.getCard().hasKeyword(Keyword.MODULAR);
         CardEffect baked = new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                effect.counterType(), counters, effect.optional(), effect.targetPredicate());
+                effect.counterType(), counters, effect.optional(), effect.targetPredicate(), modular);
         // "you may …" (Soulstinger): the target is still chosen now (CR 603.3d), but the controller
         // may decline placing the counters when the trigger resolves — gate it behind a MayEffect.
         CardEffect queued = effect.optional()
@@ -987,7 +988,8 @@ public class DeathTriggerCollectorService {
     boolean handleAllyCreatureMayPay(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), mayPay, null);
+        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), mayPay,
+                null, match.permanent().getId());
         return true;
     }
 
@@ -2933,7 +2935,8 @@ public class DeathTriggerCollectorService {
             mayPay = new MayPayManaEffect(mayPay.manaCost(), wrapped, mayPay.prompt(), mayPay.payer(),
                     elseEffect, mayPay.lifeCost());
         }
-        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), mayPay, null);
+        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), mayPay,
+                null, match.permanent().getId());
         return true;
     }
 

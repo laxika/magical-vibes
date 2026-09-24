@@ -1290,6 +1290,8 @@ public class GameData {
 
     /** Per-player: this player has a temporary targeting keyword until end of turn. */
     public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
+    /** Per-player: this player has a temporary targeting keyword until the beginning of their next turn. */
+    public final Map<UUID, Set<Keyword>> playerKeywordsUntilNextTurn = new ConcurrentHashMap<>();
     /** Static effects granted directly to players until end of turn (e.g. Angel's Grace). */
     public final Map<UUID, List<CardEffect>> playerStaticEffectsUntilEndOfTurn = new ConcurrentHashMap<>();
 
@@ -1827,6 +1829,9 @@ public class GameData {
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
+    /** Instant or sorcery cards leaving each owner's graveyard during a suppressed batch. */
+    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingInstantOrSorceryCards =
+            new ConcurrentHashMap<>();
     /** Owners whose graveyards had creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Counts creature cards leaving each owner's graveyard during a suppressed batch. */
@@ -6457,6 +6462,8 @@ public class GameData {
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
+        this.playerKeywordsUntilNextTurn.forEach((k, v) ->
+                copy.playerKeywordsUntilNextTurn.put(k, new HashSet<>(v)));
         this.playerStaticEffectsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerStaticEffectsUntilEndOfTurn.put(k, new ArrayList<>(v)));
 
@@ -6567,6 +6574,8 @@ public class GameData {
                 .addAll(this.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
+        this.graveyardLeaveNotificationPendingInstantOrSorceryCards.forEach((playerId, cards) ->
+                copy.graveyardLeaveNotificationPendingInstantOrSorceryCards.put(playerId, new ArrayList<>(cards)));
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
         copy.graveyardLeaveNotificationPendingCreatureCardCounts.putAll(this.graveyardLeaveNotificationPendingCreatureCardCounts);
         copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);

@@ -3317,11 +3317,11 @@ public class SpellCastingService {
             }
         }
         boolean targetingSpellOnStack = allSpellTargetsAlsoAllowPermanents
-                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                ? targetLegalityService.isStackEntryOnStack(gameData, targetId)
                 : mixedSpellOrPermanentTarget
-                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                ? targetLegalityService.isStackEntryOnStack(gameData, targetId)
                 : mixedSpellAndPermanentTargets
-                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                ? targetLegalityService.isStackEntryOnStack(gameData, targetId)
                 : unwrappedNeedsSpellTarget;
         if (mixedSpellOrPermanentTarget && targetId == null) {
             throw new IllegalStateException("Spell requires a target");
@@ -8154,6 +8154,15 @@ public class SpellCastingService {
                 ? findSneakAttackTargetId(gameData, sacrificePermanentId)
                 : null;
         gameData.spellAdditionalEnterCounters.remove(card.getId());
+        boolean needsConvergeValue = castHalf.getKeywords().contains(Keyword.SUNBURST)
+                || EffectResolution.hasColorsSpentCounterEffect(castHalf)
+                || (EffectResolution.hasConvergeEffect(castHalf)
+                && (castHalf.getManaCost() == null || !new ManaCost(castHalf.getManaCost()).hasX()));
+        java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
+                ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
+                : null;
+        java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot =
+                gameData.playerManaPools.get(playerId).getColoredManaTotals();
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt,
                 grantedFlashbackOption, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
@@ -8215,6 +8224,23 @@ public class SpellCastingService {
         }
         payForageOrPayManaCost(gameData, player, card, effectiveForageCost,
                 graveyardCostSelection, null);
+        if (convergeSnapshot != null) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int converge = ManaPool.countDistinctColoredManaSpent(
+                    convergeSnapshot, pool.getColoredManaTotals(), convokeContributions);
+            gameData.setSpellCastConvergeValue(card.getId(), converge);
+            effectiveXValue = converge;
+        }
+        if (colorsSpentSnapshot != null) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
+                    colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+            gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
+                    colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+        }
+        if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {
+            effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
+        }
         // Pay sacrifice-a-creature additional cast cost (Finish / aftermath half). Use castHalf so
         // tracking flags on the back-face cost are found (parent split has no SPELL-slot costs).
         if (additionalCosts.sacrificeCreature() || additionalCosts.sacrificePermanentCost() != null) {

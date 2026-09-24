@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "NEM", collectorNumber = "18")
 @CardRegistration(set = "EMA", collectorNumber = "26")
 @CardRegistration(set = "VMA", collectorNumber = "43")
+@CardRegistration(set = "MH2", collectorNumber = "264")
 public class SealOfCleansing extends Card {
 
     public SealOfCleansing() {

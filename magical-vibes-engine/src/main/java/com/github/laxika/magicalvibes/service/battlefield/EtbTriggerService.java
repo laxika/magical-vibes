@@ -59,6 +59,8 @@ import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -86,6 +88,7 @@ public class EtbTriggerService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final EtbEffectResolver etbEffectResolver;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
 
@@ -97,6 +100,7 @@ public class EtbTriggerService {
                              ETBTokenTargetService etbTokenTargetService,
                              EtbEffectResolver etbEffectResolver,
                              AmountEvaluationService amountEvaluationService,
+                             ConditionEvaluationService conditionEvaluationService,
                              PredicateEvaluationService predicateEvaluationService,
                              GraveyardTargetingSupport graveyardTargetingSupport) {
         this.gameQueryService = gameQueryService;
@@ -107,6 +111,7 @@ public class EtbTriggerService {
         this.etbTokenTargetService = etbTokenTargetService;
         this.etbEffectResolver = etbEffectResolver;
         this.amountEvaluationService = amountEvaluationService;
+        this.conditionEvaluationService = conditionEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
     }
@@ -335,17 +340,30 @@ public class EtbTriggerService {
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
             for (ChooseOneAtTriggerTimeEffect triggerTimeChoice : triggerTimeChoices) {
                 ChooseOneEffect choice = triggerTimeChoice.choice();
+                boolean additionalModesAllowed = choice.additionalModesCondition() == null
+                        || conditionEvaluationService.isMet(
+                                gameData,
+                                choice.additionalModesCondition(),
+                                enteringPermanent != null
+                                        ? ConditionContext.forPermanent(enteringPermanent, controllerId)
+                                        : ConditionContext.forCard(card, controllerId));
+                int minimumChoices = choice.choicesRequired();
+                int maximumChoices = choice.effectiveChoicesMax(additionalModesAllowed);
                 if (triggerTimeChoice.maximumChoices() != null) {
-                    int maximumChoices = Math.min(
-                            choice.options().size(),
+                    minimumChoices = 0;
+                    maximumChoices = Math.min(
+                            maximumChoices,
                             Math.max(0, amountEvaluationService.evaluate(gameData,
                                     triggerTimeChoice.maximumChoices(),
                                     new AmountContext(controllerId, enteringPermanent, null, xValue, 0))));
                     if (maximumChoices == 0) {
                         continue;
                     }
-                    choice = new ChooseOneEffect(choice.options(), choice.optional(), 0, maximumChoices,
-                            choice.allModesWhenOptionalCostPaid(), choice.additionalModesCondition());
+                }
+                if (minimumChoices != choice.choicesRequired() || maximumChoices != choice.choicesMax()) {
+                    choice = new ChooseOneEffect(choice.options(), choice.optional(), minimumChoices,
+                            maximumChoices, choice.allModesWhenOptionalCostPaid(), choice.modesMayRepeat(),
+                            choice.additionalModesCondition());
                 }
                 for (int i = 0; i < 1 + extraTriggerCopies; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(

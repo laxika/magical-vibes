@@ -413,6 +413,11 @@ public class PermanentCounterSupport {
 
     public int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
                                        CounterType counterType, int count) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, false);
+    }
+
+    public int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
+                                       CounterType counterType, int count, boolean modularAbility) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
         int previousLoreCount = counterType == CounterType.LORE
@@ -420,7 +425,7 @@ public class PermanentCounterSupport {
         int previousCount = target.getCounterCount(counterType);
         UUID counterPlacingPlayerId = placingPlayerId(gameData, entry, target);
         count = gameQueryService.replaceCounters(gameData, target, counterType, count,
-                counterPlacingPlayerId);
+                counterPlacingPlayerId, modularAbility);
 
         String counterName = switch (counterType) {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }

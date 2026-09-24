@@ -3141,6 +3141,7 @@ public class LibraryChoiceHandlerService {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, controllerId, remainingCards, sourceEntry);
             applySelectionLifeLoss(gameData, controllerId, selectedCards.size(),
                     lifeLossPerSelectedCard, sourceEntry);
             applySelectionLifePayment(gameData, controllerId, selectedCards.size(),
@@ -3196,6 +3197,25 @@ public class LibraryChoiceHandlerService {
                 ? sourceEntry.getCard().getName()
                 : "library choice";
         lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, sourceName);
+    }
+
+    private void gainLifeForGreatestPowerOfGraveyardCards(
+            GameData gameData, UUID controllerId, List<Card> cards, StackEntry sourceEntry) {
+        if (sourceEntry == null
+                || !sourceEntry.isGainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) {
+            return;
+        }
+        int greatestPower = cards.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .map(Card::getPower)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(power -> Math.max(0, power))
+                .max()
+                .orElse(0);
+        if (greatestPower > 0) {
+            lifeSupport.applyGainLife(gameData, controllerId, greatestPower,
+                    sourceEntry.getCard().getName(), sourceEntry.getCard(), sourceEntry.getEntryType());
+        }
     }
 
     private void applySelectionLifePayment(GameData gameData, UUID controllerId, int selectedCount,

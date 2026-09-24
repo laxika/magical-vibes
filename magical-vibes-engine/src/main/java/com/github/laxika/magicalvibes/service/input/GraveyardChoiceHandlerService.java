@@ -1324,11 +1324,15 @@ public class GraveyardChoiceHandlerService {
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
+                    UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (ownerId == null) {
+                        continue;
+                    }
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
-                    exileService.exileCard(gameData, player.getId(), card, context.enteringPermanentId());
+                    exileService.exileCard(gameData, ownerId, card, context.enteringPermanentId());
                     exiledCount++;
                     gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " exiles ", card, " from their graveyard."));
+                        player.getUsername() + " exiles ", card, " from a graveyard."));
                 }
             }
             battlefieldEntryService.applyAsEntersExileCounters(gameData, context.controllerId(),

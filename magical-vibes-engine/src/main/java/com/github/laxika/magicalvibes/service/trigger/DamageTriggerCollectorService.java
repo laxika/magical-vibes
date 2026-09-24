@@ -71,7 +71,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -1940,12 +1939,20 @@ public class DamageTriggerCollectorService {
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
 
         Permanent equipment = match.permanent();
-        if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            boolean optionalTarget = equipment.getCard().getSpellTargets().size() == 1
+                    && equipment.getCard().getSpellTargets().getFirst().getMinTargets() == 0
+                    && equipment.getCard().getSpellTargets().getFirst().getMaxTargets() == 1
+                    && equipment.getCard().getEffectTargetIndex(effect)
+                    == equipment.getCard().getSpellTargets().getFirst().getIndex();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     equipment.getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
-                    false, null, 0, equipment.getId()));
+                    !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                    targetFilterForTriggeredEffect(equipment.getCard(), effect), sd.totalDamage(), equipment.getId(),
+                    optionalTarget));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
-            log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger awaits any target",
+            log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger awaits target",
                     match.gameData().id, equipment.getCard().getName());
             return true;
         }

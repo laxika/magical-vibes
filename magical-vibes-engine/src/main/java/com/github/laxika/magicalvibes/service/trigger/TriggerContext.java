@@ -735,6 +735,10 @@ public sealed interface TriggerContext {
      */
     record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
 
+    /** Context for one instant or sorcery card leaving the controller's graveyard. */
+    record ControllerInstantOrSorceryCardLeavesGraveyard(UUID graveyardOwnerId, Card card)
+            implements TriggerContext {}
+
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
 

@@ -1289,12 +1289,17 @@ public class PlayerInputService {
     }
 
     public void beginSpellNumberChoice(GameData gameData, UUID playerId, int maxNumber) {
+        beginSpellNumberChoice(gameData, playerId, 0, maxNumber);
+    }
+
+    public void beginSpellNumberChoice(GameData gameData, UUID playerId, int minNumber, int maxNumber) {
         ChoiceContext.SpellNumberChoice choiceContext = new ChoiceContext.SpellNumberChoice(playerId);
-        List<String> numbers = java.util.stream.IntStream.rangeClosed(0, Math.max(0, maxNumber))
+        List<String> numbers = java.util.stream.IntStream.rangeClosed(minNumber, maxNumber)
                 .mapToObj(Integer::toString)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, numbers, "Choose a number."));
+                playerId, null, null, choiceContext, numbers,
+                minNumber == 0 ? "Choose a number." : "Choose a number between " + minNumber + " and " + maxNumber + "."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a number for a spell", gameData.id, playerName);

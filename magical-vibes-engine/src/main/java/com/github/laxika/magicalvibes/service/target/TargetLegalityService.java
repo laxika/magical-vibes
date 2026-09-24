@@ -104,6 +104,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
@@ -984,7 +985,8 @@ public class TargetLegalityService {
 
         targetValidationService.validateEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
-                        playerId, null, deferCostDerivedXValueChecks));
+                        playerId, null, deferCostDerivedXValueChecks,
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
 
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -1291,6 +1293,10 @@ public class TargetLegalityService {
                 return Optional.of(gameData.playerIdToName.get(targetId)
                         + " has protection from " + card.getName());
             }
+            if (gameQueryService.playerHasProtectionFromChosenCardType(gameData, targetId, card)) {
+                return Optional.of(gameData.playerIdToName.get(targetId)
+                        + " has protection from the source's card type");
+            }
         }
 
         if (target == null
@@ -1416,6 +1422,9 @@ public class TargetLegalityService {
             return false;
         }
         if (gameQueryService.playerHasProtectionFromChosenName(gameData, candidate, card.getName())) {
+            return false;
+        }
+        if (gameQueryService.playerHasProtectionFromChosenCardType(gameData, candidate, card)) {
             return false;
         }
         if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
@@ -1572,7 +1581,8 @@ public class TargetLegalityService {
         }
         return targetValidationService.checkEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, candidate, Zone.BATTLEFIELD,
-                        sourceCard, xValue, playerId, null)).isEmpty();
+                        sourceCard, xValue, playerId, null, false,
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null)).isEmpty();
     }
 
     private boolean isLegalFlagbearerAbilityTarget(GameData gameData, UUID playerId,
@@ -1624,7 +1634,8 @@ public class TargetLegalityService {
         }
         return targetValidationService.checkEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, candidate.getId(), Zone.BATTLEFIELD,
-                        sourceCard, xValue, playerId, null)).isEmpty();
+                        sourceCard, xValue, playerId, null, false,
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null)).isEmpty();
     }
 
     private void validateFlagbearerTargetChoiceForMultiAbility(GameData gameData, UUID playerId,
@@ -3079,6 +3090,11 @@ public class TargetLegalityService {
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, entry.getTargetId(),
                                     entry.getCard().getName())) {
                         targetFizzled = true;
+                    } else if (gameQueryService.playerHasProtectionFromChosenCardType(
+                            gameData, entry.getTargetId(), entry.getCard(),
+                            entry.getSourcePermanentId() == null
+                                    ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()))) {
+                        targetFizzled = true;
                     }
                     if (!targetFizzled) {
                         targetFizzled = !isBattlefieldTargetLegalOnResolution(gameData, entry,
@@ -3406,6 +3422,12 @@ public class TargetLegalityService {
             }
             if (sourceCard != null
                     && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, sourceCard.getName())) {
+                return false;
+            }
+            if (gameQueryService.playerHasProtectionFromChosenCardType(
+                    gameData, targetId, sourceCard,
+                    entry.getSourcePermanentId() == null
+                            ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()))) {
                 return false;
             }
             if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
@@ -3835,6 +3857,11 @@ public class TargetLegalityService {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof from "
                     + effectiveColor.name().toLowerCase();
         }
+        if (sourceCard != null
+                && gameQueryService.playerHasProtectionFromChosenCardType(gameData, targetPlayerId, sourceCard)) {
+            return gameData.playerIdToName.get(targetPlayerId)
+                    + " has protection from the source's card type and can't be targeted";
+        }
         return null;
     }
 
@@ -4209,6 +4236,10 @@ public class TargetLegalityService {
         return targetId != null && findSpellOnStack(gameData, targetId) != null;
     }
 
+    public boolean isStackEntryOnStack(GameData gameData, UUID targetId) {
+        return targetId != null && findAnyEntryOnStack(gameData, targetId) != null;
+    }
+
     private StackEntry findSpellOnStack(GameData gameData, UUID targetId) {
         return gameData.stack.stream()
                 .filter(se -> se.getTargetableId().equals(targetId)
@@ -4524,6 +4555,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryTargetsOnlySingleCreaturePredicate) {
             return targetsOnlySingleCreature(gameData, stackEntry);
         }
+        if (predicate instanceof StackEntryTargetsOnlySinglePermanentOrPlayerPredicate) {
+            return targetsOnlySinglePermanentOrPlayer(gameData, stackEntry);
+        }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
                 if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue,
@@ -4615,6 +4649,25 @@ public class TargetLegalityService {
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
         return target != null && gameQueryService.isCreature(gameData, target);
+    }
+
+    private boolean targetsOnlySinglePermanentOrPlayer(GameData gameData, StackEntry stackEntry) {
+        if (!stackEntry.getTargetCardIds().isEmpty()) {
+            return false;
+        }
+
+        List<UUID> targetIds = new ArrayList<>();
+        if (stackEntry.getTargetId() != null) {
+            targetIds.add(stackEntry.getTargetId());
+        }
+        targetIds.addAll(stackEntry.getDeclaredTargetIds());
+        if (targetIds.isEmpty() || targetIds.stream().distinct().count() != 1) {
+            return false;
+        }
+
+        UUID targetId = targetIds.getFirst();
+        return gameData.playerIds.contains(targetId)
+                || gameQueryService.findPermanentById(gameData, targetId) != null;
     }
 
     private boolean matchesTarget(GameData gameData, UUID targetId, PermanentPredicate filter, FilterContext ctx) {

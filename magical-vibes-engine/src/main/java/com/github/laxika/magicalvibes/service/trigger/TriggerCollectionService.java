@@ -764,7 +764,7 @@ public class TriggerCollectionService {
                             sourceCard.getName() + "'s emblem",
                             new ArrayList<>(List.of(new StormCopyEffect(
                                     new StackEntry(spellEntry), castingPlayerId, copies,
-                                    storm.tokenCopy())))));
+                                    storm.tokenCopy(), storm.removeLegendary())))));
                 } else if (effect instanceof CopyControllerCastSpellOnSpellCastEffect copyTrigger) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     if (copyTrigger.spellFilter() != null
@@ -1462,7 +1462,7 @@ public class TriggerCollectionService {
                 // "for each spell cast before it this turn" — this spell is already recorded, so
                 // subtract it out. Count is fixed here (spells cast after can't precede this one).
                 queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
-                        storm.instantOrSorceryOnly(), storm.tokenCopy());
+                        storm.instantOrSorceryOnly(), storm.tokenCopy(), storm.removeLegendary());
             } else {
                 selfCastTriggeredEffects.add(effect);
             }
@@ -1661,6 +1661,13 @@ public class TriggerCollectionService {
 
     private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
                                    StackEntry spellEntry, boolean instantOrSorceryOnly, boolean tokenCopy) {
+        queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
+                instantOrSorceryOnly, tokenCopy, false);
+    }
+
+    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                   StackEntry spellEntry, boolean instantOrSorceryOnly,
+                                   boolean tokenCopy, boolean removeLegendary) {
         int copies = Math.max(0, instantOrSorceryOnly
                 ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
                         .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
@@ -1672,7 +1679,8 @@ public class TriggerCollectionService {
                 castingPlayerId,
                 spellCard.getName() + "'s ability",
                 new ArrayList<>(List.of(new StormCopyEffect(
-                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy)))
+                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy,
+                        removeLegendary)))
         ));
         log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
                 gameData.id, spellCard.getName(), copies, castingPlayerId);
@@ -7485,7 +7493,8 @@ public class TriggerCollectionService {
                 for (CardEffect effect : effects) {
                     CardEffect toDispatch = effect;
                     if (effect instanceof OncePerTurnTriggerEffect once) {
-                        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                        if (!once.markOnAcceptance()
+                                && gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
                             continue;
                         }
                         toDispatch = once.wrapped();
@@ -7494,9 +7503,13 @@ public class TriggerCollectionService {
                     if (toDispatch == null) {
                         continue;
                     }
-                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
+                    boolean markOnAcceptance = effect instanceof OncePerTurnTriggerEffect once
+                            && once.markOnAcceptance();
+                    var match = new TriggerMatchContext(gameData, perm, playerId, effect,
+                            perm.getCard(), markOnAcceptance);
                     if (dispatch(match, EffectSlot.ON_CONTROLLER_GAINS_LIFE, toDispatch, ctx)
-                            && effect instanceof OncePerTurnTriggerEffect) {
+                            && effect instanceof OncePerTurnTriggerEffect once
+                            && !once.markOnAcceptance()) {
                         gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
                     }
                 }
@@ -10367,6 +10380,22 @@ public class TriggerCollectionService {
 
         for (Permanent perm : battlefield) {
             dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, ctx);
+        }
+    }
+
+    public void checkControllerInstantOrSorceryCardLeavesGraveyardTriggers(
+            GameData gameData, UUID graveyardOwnerId, Card card) {
+        if (card == null || card.isToken()
+                || (!card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY))) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        var ctx = new TriggerContext.ControllerInstantOrSorceryCardLeavesGraveyard(graveyardOwnerId, card);
+        for (Permanent perm : battlefield) {
+            dispatchSlot(gameData, perm, graveyardOwnerId,
+                    EffectSlot.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD, ctx);
         }
     }
 

@@ -66,6 +66,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
             case MANA_VALUE -> target.getCard().getManaValue();
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
+            case TOTAL_COUNTERS -> target.getTotalCounterCount();
         };
         boolean runThen = e.thenCondition() == null
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());

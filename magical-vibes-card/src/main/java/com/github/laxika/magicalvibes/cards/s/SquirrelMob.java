@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "273")
+@CardRegistration(set = "MH2", collectorNumber = "286")
 public class SquirrelMob extends Card {
 
     public SquirrelMob() {

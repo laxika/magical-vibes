@@ -41,6 +41,7 @@ public sealed interface StackEntryPredicate permits
         StackEntrySharesNameWithCardExiledWithSourcePredicate,
         StackEntrySupertypeInPredicate,
         StackEntryTargetsAnyPlayerPredicate,
+        StackEntryTargetsOnlySinglePermanentOrPlayerPredicate,
         StackEntryTargetsOnlySingleCreaturePredicate,
         StackEntryTargetsPermanentPredicate,
         StackEntryTargetsSourcePredicate,

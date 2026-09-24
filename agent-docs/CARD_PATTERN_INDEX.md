@@ -81,6 +81,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | quest counter, opponent end step trigger, life-loss condition | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | pay-life trigger, counters from life paid, counter-removal ability | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | protection from modified creatures | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| as-enters card-type choice, controller and own creatures gain protection from chosen card type | `ChooseCardTypeOnEnterEffect` + `GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect` |
 | postcombat main may-pay-life draw based on opponents dealt combat damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
@@ -108,6 +109,7 @@ When implementing a card, use these as the **best** test file to read for each c
 | ETB creature (non-targeted) | `AngelOfMercyTest.java` | Covers ETB trigger resolution |
 | ETB creature (targeted) | `BriarpackAlphaTest.java` | Covers targeted ETB + fizzle + flash |
 | Counterspell | `CancelTest.java` | Covers counter + graveyard |
+| Target creature exile with suspend counters | `s/SuspendTest.java` | Covers exile, suspend countdown, free cast, and creature-only targeting |
 | Draw spell | `CounselOfTheSoratamiTest.java` | Covers draw count + graveyard |
 | Destroy spell | `TerrorTest.java` | Covers destroy + filter + fizzle |
 | Equipment | `LeoninScimitarTest.java` | Covers equip + boost + unequip |

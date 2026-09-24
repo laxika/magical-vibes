@@ -284,11 +284,14 @@ public class PermanentChoiceSpellHandlerService {
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
         boolean isSpellTarget = isValidSpellTarget(gameData, ect.cardToCast(), ect.spellEffects(), permanentId,
                 ect.controllerId(), 0);
+        boolean isLegalPlayerTarget = isPlayerTarget
+                && targetLegalityService.checkSpellTargeting(
+                gameData, ect.cardToCast(), permanentId, null, ect.controllerId()).isEmpty();
         // A cipher copy of a graveyard-targeting spell (Midnight Recovery) targets a card in a
         // graveyard, which is neither a permanent nor a player.
         boolean isGraveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
 
-        if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
+        if (target != null || isLegalPlayerTarget || isGraveyardTarget || isSpellTarget) {
             if (ect.resolutionCast() || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 try {
                     spellCastingService.playCardFromExileAsResolutionCast(gameData,

@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.NykthosParagonLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
@@ -1982,6 +1984,31 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = NykthosParagonLifeGainEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleNykthosParagonLifeGain(TriggerMatchContext match,
+            NykthosParagonLifeGainEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
+        var gameData = match.gameData();
+        Permanent source = match.permanent();
+        if (source == null || lifeGain.lifeGainedAmount() <= 0) {
+            return false;
+        }
+
+        MayEffect may = new MayEffect(
+                new PutCounterOnEachControlledPermanentEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE,
+                        new Fixed(lifeGain.lifeGainedAmount()),
+                        new PermanentIsCreaturePredicate()),
+                "Put +1/+1 counters on each creature you control?");
+        gameData.queueMayAbility(source.getCard(), match.controllerId(), may, null, source.getId(),
+                lifeGain.lifeGainedAmount(), match.markSourceOncePerTurnOnAcceptance());
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers on life gain ({} life), once per turn on acceptance",
+                gameData.id, source.getCard().getName(), lifeGain.lifeGainedAmount());
+        return true;
+    }
+
     @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainTargetPlayerLosesLife(TriggerMatchContext match,
             LoseLifeEffect effect, TriggerContext ctx) {
@@ -2829,6 +2856,28 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (cards left graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD)
+    boolean handleControllerInstantOrSorceryCardLeavesGraveyard(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerInstantOrSorceryCardLeavesGraveyard)) {
+            return false;
+        }
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (instant or sorcery card left graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

@@ -970,11 +970,18 @@ public class DestructionSupport {
                         gameData, controllerId, token)
                 : null;
         int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
+        List<CreateTokenEffect> academyManufactorTokenBlueprints =
+                TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                        gameData, controllerId, token, totalAmount);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>();
-        for (int count = 0; count < totalAmount; count++) {
-            tokenBlueprints.add(token);
+        if (academyManufactorTokenBlueprints.isEmpty()) {
+            for (int count = 0; count < totalAmount; count++) {
+                tokenBlueprints.add(token);
+            }
+        } else {
+            tokenBlueprints.addAll(academyManufactorTokenBlueprints);
         }
         if (additionalFrog != null && totalAmount > 0) {
             tokenBlueprints.add(additionalFrog);

@@ -3970,6 +3970,9 @@ public class CombatDamageService {
                     && !(gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, defenderId, atk.getCard().getName()))
                     && !(gameQueryService.isDamagePreventable(gameData, true)
+                            && gameQueryService.playerHasProtectionFromChosenCardType(
+                            gameData, defenderId, atk.getCard(), atk))
+                    && !(gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, defenderId, atk.getCard().getName()))
                     && !(gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.playerHasProtectionFromOpponents(gameData, defenderId,

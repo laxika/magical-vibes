@@ -21,6 +21,7 @@ import java.util.List;
  * does not choose a target.
  */
 @CardRegistration(set = "AA2", collectorNumber = "8")
+@CardRegistration(set = "MH2", collectorNumber = "80")
 public class Damn extends Card {
 
     public Damn() {
