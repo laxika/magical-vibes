@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DOM", collectorNumber = "140")
 @CardRegistration(set = "KHM", collectorNumber = "147")
+@CardRegistration(set = "TLE", collectorNumber = "258")
+@CardRegistration(set = "TLE", collectorNumber = "284")
 public class RunAmok extends Card {
 
     public RunAmok() {

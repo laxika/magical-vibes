@@ -51,6 +51,7 @@ public final class AiInteractionStrategies {
         register(new ExileCardFromHandAndCreateTokenCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
+        register(new WordOfCommandCardChoiceAiStrategy());
         register(new TargetedHandBattlefieldChoiceAiStrategy());
         register(new ExiledCardMayPlayChoiceAiStrategy());
         register(new CommanderReturnChoiceAiStrategy());

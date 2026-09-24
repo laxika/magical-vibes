@@ -189,6 +189,8 @@ public final class AnyColorManaChoiceSupport {
                 choiceContext = spellOnlyChoice.withRecipientPlayerId(recipientPlayerId);
             } else if (choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
                 choiceContext = multicoloredChoice.withRecipientPlayerId(recipientPlayerId);
+            } else if (choiceContext instanceof ChoiceContext.CommanderCounterManaColorChoice commanderChoice) {
+                choiceContext = commanderChoice.withRecipientPlayerId(recipientPlayerId);
             }
         }
         if (fromSnowSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
@@ -302,6 +304,9 @@ public final class AnyColorManaChoiceSupport {
                                                Card sourceCard,
                                                UUID sourcePermanentId,
                                                Set<CardColor> sourceColors) {
+        if (effect.grantsAdditionalPlusOneCounterToNonHuman()) {
+            return new ChoiceContext.NonHumanCreatureCounterManaColorChoice(playerId, fromCreature, amount);
+        }
         if (effect.grantsCommanderCounter()) {
             return new ChoiceContext.CommanderCounterManaColorChoice(playerId, amount);
         }

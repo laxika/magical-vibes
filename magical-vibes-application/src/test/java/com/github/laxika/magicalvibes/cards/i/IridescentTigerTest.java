@@ -34,15 +34,15 @@ class IridescentTigerTest extends BaseCardTest {
     @Test
     @DisplayName("Putting Iridescent Tiger onto the battlefield without casting it adds no mana")
     void puttingItOntoTheBattlefieldWithoutCastingItAddsNoMana() {
-        harness.setGraveyard(player1, List.of(new IridescentTiger()));
+        IridescentTiger target = new IridescentTiger();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Iridescent Tiger");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

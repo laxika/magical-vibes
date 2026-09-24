@@ -99,6 +99,23 @@ class EtbTriggerServiceTest {
     }
 
     @Test
+    void preservesWaterbendPaymentOnEtbTrigger() {
+        Card creature = new Card();
+        creature.setName("Waterbend creature");
+        creature.setType(CardType.CREATURE);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
+        Permanent permanent = new Permanent(creature);
+        permanent.setWaterbendCostPaid(true);
+        gameData.playerBattlefields.get(controllerId).add(permanent);
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        assertThat(gameData.stack).singleElement().satisfies(entry ->
+                assertThat(entry.isWaterbendCostPaid()).isTrue());
+    }
+
+    @Test
     void targetedLandEtbQueuesTargetSelectionAtTriggerTime() {
         Card land = new Card();
         land.setName("Targeted Land");

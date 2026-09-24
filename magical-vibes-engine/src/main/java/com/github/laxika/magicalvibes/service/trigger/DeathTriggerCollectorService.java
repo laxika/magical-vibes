@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -470,7 +471,9 @@ public class DeathTriggerCollectorService {
         }
         // Snapshot the counter count at death — the permanent is already off the battlefield by the
         // time this resolves, so resolve into a plain draw for that fixed amount.
-        int counters = dyingPermanent.getCounterCount(effect.counterType());
+        int counters = effect.counterType() == null
+                ? dyingPermanent.getTotalCounterCount()
+                : dyingPermanent.getCounterCount(effect.counterType());
         if (counters < 1) {
             return false;
         }
@@ -480,7 +483,7 @@ public class DeathTriggerCollectorService {
                 sd.dyingCard(),
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DrawCardEffect(counters)))
+                new ArrayList<>(List.of(drawThen(counters, effect.thenEffect())))
         ));
         return true;
     }
@@ -2571,6 +2574,33 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsEmblemTrigger(EmblemArtifactGraveyardReturnTriggerEffect.class)
+    boolean handleEmblemArtifactGraveyardReturn(EmblemTriggerMatchContext match,
+            EmblemArtifactGraveyardReturnTriggerEffect effect, TriggerContext ctx) {
+        TriggerContext.ArtifactGraveyard artifactGraveyard = (TriggerContext.ArtifactGraveyard) ctx;
+        Card artifactCard = artifactGraveyard.artifactCard();
+        if (artifactCard == null || artifactCard.isToken()) {
+            return false;
+        }
+
+        Card source = match.emblem().sourceCard();
+        String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+        RegisterDelayedReturnDyingCreatureUnderControlEffect delayedReturn =
+                new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                        false, null, 0, null, null, false, true, false,
+                        artifactCard.getId(), false);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source != null ? source : artifactCard,
+                match.controllerId(),
+                description,
+                new ArrayList<>(List.of(delayedReturn)));
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.text(description + " triggers (an artifact was put into a graveyard)."));
+        log.info("Game {} - {} schedules a delayed return of {}", match.gameData().id, description, artifactCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
@@ -2706,6 +2736,41 @@ public class DeathTriggerCollectorService {
         ));
         logAnyCreatureDeath(match);
         return true;
+    }
+
+    @CollectsTrigger(value = DrawCardForEachDyingSourceCounterEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathDrawCardForEachDyingSourceCounter(TriggerMatchContext match,
+            DrawCardForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        Permanent dyingPermanent = death.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        int counters = effect.counterType() == null
+                ? dyingPermanent.getTotalCounterCount()
+                : dyingPermanent.getCounterCount(effect.counterType());
+        if (counters < 1) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(drawThen(counters, effect.thenEffect()))),
+                null,
+                match.permanent().getId()
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    private CardEffect drawThen(int counters, CardEffect thenEffect) {
+        return thenEffect == null
+                ? new DrawCardEffect(counters)
+                : SequenceEffect.of(new DrawCardEffect(counters), thenEffect);
     }
 
     @CollectsTrigger(value = ExileTriggeringCreatureAndReturnSourceToHandEffect.class,
@@ -3264,7 +3329,9 @@ public class DeathTriggerCollectorService {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         Permanent dyingPermanent = cd.dyingPermanent();
         if (dyingPermanent == null
-                || dyingPermanent.getCounterCount(effect.counterType()) < 1) {
+                || (effect.counterType() == CounterType.ANY
+                ? dyingPermanent.getTotalCounterCount()
+                : dyingPermanent.getCounterCount(effect.counterType())) < 1) {
             return false;
         }
         return handleOpponentCreatureDeathDefault(match, effect.tokenTemplate(), ctx);

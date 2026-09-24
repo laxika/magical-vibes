@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPG", collectorNumber = "42")
 @CardRegistration(set = "MH2", collectorNumber = "96")
+@CardRegistration(set = "ECC", collectorNumber = "83")
 public class Persist extends Card {
 
     public Persist() {

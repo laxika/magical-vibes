@@ -9,12 +9,17 @@ import java.util.UUID;
  * Phage the Untouchable's combat-damage trigger); when it is {@code null} the handler falls back to
  * the target chosen for the stack entry, which is what spells and activated abilities use.
  */
-public record TargetPlayerLosesGameEffect(UUID playerId) implements CardEffect {
+public record TargetPlayerLosesGameEffect(UUID playerId) implements CombatDamageTriggerContextEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return playerId == null
                 ? TargetSpec.harmful(TargetPredicates.player())
                 : TargetSpec.NONE;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return playerId == null ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

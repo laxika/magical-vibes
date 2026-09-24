@@ -25,6 +25,7 @@ class FynnTheFangbearerTest extends BaseCardTest {
         addReady(new FynnTheFangbearer()).setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
@@ -36,8 +37,22 @@ class FynnTheFangbearerTest extends BaseCardTest {
         addReady(new AmbushViper()).setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Poison applies to the damaged player without targeting through shroud")
+    void damagedPlayerWithShroudStillGetsPoison() {
+        gd.playersWithShroudThisTurn.add(player2.getId());
+        addReady(new FynnTheFangbearer()).setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 
     @Test

@@ -12,10 +12,13 @@ import java.util.List;
 @CardRegistration(set = "TMC", collectorNumber = "63")
 @CardRegistration(set = "REX", collectorNumber = "26")
 @CardRegistration(set = "C13", collectorNumber = "281")
+@CardRegistration(set = "C15", collectorNumber = "281")
 @CardRegistration(set = "CMD", collectorNumber = "269")
 @CardRegistration(set = "SLZ", collectorNumber = "118")
 @CardRegistration(set = "SLZ", collectorNumber = "239")
 @CardRegistration(set = "SLZ", collectorNumber = "360")
+@CardRegistration(set = "ECC", collectorNumber = "59")
+@CardRegistration(set = "ECC", collectorNumber = "60")
 public class CommandTower extends Card {
 
     public CommandTower() {

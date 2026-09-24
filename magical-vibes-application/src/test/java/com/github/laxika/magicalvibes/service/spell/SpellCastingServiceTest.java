@@ -184,6 +184,32 @@ class SpellCastingServiceTest {
     private SpellCastingService svc;
 
     @Test
+    void graveyardCounterPaymentDoesNotRequireSacrificingTheSelectedCreatures() {
+        var harness = new com.github.laxika.magicalvibes.testutil.GameTestHarness();
+        var player = harness.getPlayer1();
+        var game = harness.getGameData();
+        harness.skipMulligan();
+        game.alwaysOfferPriorityWindows = true;
+        Permanent first = harness.addToBattlefieldAndReturn(player,
+                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player,
+                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        first.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
+        second.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setGraveyard(player, List.of(new com.github.laxika.magicalvibes.cards.q.QuilledGreatwurm()));
+        harness.addMana(player, ManaColor.GREEN, 2);
+        harness.addMana(player, ManaColor.COLORLESS, 4);
+
+        harness.castFromGraveyardWithCounterCost(player, 0,
+                List.of(first.getId(), first.getId(), first.getId(), second.getId(), second.getId(), second.getId()));
+
+        assertThat(game.playerBattlefields.get(player.getId())).contains(first, second);
+        assertThat(first.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(game.playerManaPools.get(player.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
     void preparingRoomDoorPreservesTheUnlockAbilityTargetGroup() {
         Card room = new Card();
         room.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
@@ -289,6 +315,9 @@ class SpellCastingServiceTest {
         lenient().when(castingPermissionService.canCastWithTiming(
                 any(GameData.class), any(UUID.class), any(Card.class),
                 anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(true);
+        lenient().when(castingPermissionService.canCastWithTiming(
+                any(GameData.class), any(UUID.class), any(Card.class),
+                anyBoolean(), anyBoolean(), anyBoolean(), anyInt())).thenReturn(true);
         lenient().when(castingPermissionService.flashTimingRequiresAlternateCast(
                 any(GameData.class), any(UUID.class), any(Card.class))).thenReturn(false);
         lenient().when(castingPermissionService.isOpponentsManaValueSpellCastRestricted(

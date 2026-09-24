@@ -190,6 +190,8 @@ public class Permanent {
     @Setter private UUID chosenPermanentId;
     /** Player targeted by a linked enter-the-battlefield ability. */
     @Setter private UUID rememberedTargetPlayerId;
+    /** Players chosen by an as-enters effect such as Bitter Feud. */
+    private final List<UUID> chosenPlayerIds = new ArrayList<>();
     /** Life lost by the controller when this permanent's Soulgorger Orgg-style ETB resolved. */
     @Setter private int lifeLostWhenEntered;
     /** Player who lost the recorded life when this permanent's Soulgorger Orgg-style ETB resolved. */
@@ -219,6 +221,9 @@ public class Permanent {
     /** When true, this creature must be declared as a blocker this turn if it can block any attacker
      *  (general "blocks this turn if able", e.g. Nacatl Hunt-Pride). Cleared at end of turn. */
     @Setter private boolean mustBlockThisTurnIfAble;
+    /** When true, this creature must block every attacking creature it can legally block this turn.
+     *  Cleared at end of turn. */
+    @Setter private boolean mustBlockEachAttackingCreatureThisTurnIfAble;
     /** When true, this creature must attack during the current combat if able. Cleared when combat ends. */
     @Setter private boolean mustAttackThisCombat;
     @Setter private boolean mustAttackThisTurn;
@@ -432,6 +437,8 @@ public class Permanent {
     private final Set<CardSubtype> protectionFromNonSubtypeCreaturesUntilEndOfTurn = EnumSet.noneOf(CardSubtype.class);
     /** Whether this permanent has protection from creatures controlled by its opponents until end of turn. */
     @Setter private boolean protectionFromOpponentCreaturesUntilEndOfTurn;
+    /** Whether all protection abilities have been removed from this permanent until end of turn. */
+    @Setter private boolean protectionRemovedUntilEndOfTurn;
     /** Blocking restrictions granted until end of turn by one-shot effects (e.g. Dread Charge:
      *  "black creatures you control can't be blocked this turn except by black creatures").
      *  Each entry means this creature can be blocked only by blockers matching the restriction's
@@ -477,6 +484,8 @@ public class Permanent {
      *  layered static effect reads this map, so the grants survive turn resets but end when this
      *  permanent's static effects stop being collected. */
     private final Map<UUID, CardSubtype> landTypesUntilSourceLeaves = new HashMap<>();
+    /** Land permanent ids that this Cyclopean Tomb put mire counters onto while it was on the battlefield. */
+    private final Set<UUID> mireCounterLandIds = new HashSet<>();
     /** Number of untap steps this permanent should skip. Decremented each untap step.
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
@@ -555,6 +564,8 @@ public class Permanent {
     @Setter private boolean spectacle;
     /** Whether this permanent's optional collect-evidence additional cost was paid. */
     @Setter private boolean collectEvidenceCostPaid;
+    /** Whether this permanent's spell had its waterbend additional cost paid. */
+    @Setter private boolean waterbendCostPaid;
     /** Whether the spell's optional reveal-a-card-from-hand additional cost was paid. */
     @Setter private boolean revealCardFromHandCostPaid;
     /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
@@ -767,6 +778,7 @@ public class Permanent {
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
+        this.chosenPlayerIds.addAll(source.chosenPlayerIds);
         this.lifeLostWhenEntered = source.lifeLostWhenEntered;
         this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
@@ -780,6 +792,7 @@ public class Permanent {
         this.suspected = source.suspected;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
+        this.mustBlockEachAttackingCreatureThisTurnIfAble = source.mustBlockEachAttackingCreatureThisTurnIfAble;
         this.mustAttackThisCombat = source.mustAttackThisCombat;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
@@ -863,6 +876,7 @@ public class Permanent {
         this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
+        this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
@@ -875,6 +889,7 @@ public class Permanent {
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
         this.landTypesUntilSourceLeaves.putAll(source.landTypesUntilSourceLeaves);
+        this.mireCounterLandIds.addAll(source.mireCounterLandIds);
         this.skipUntapCount = source.skipUntapCount;
         this.markedDamage = source.markedDamage;
         this.markedDamageBySource.putAll(source.markedDamageBySource);
@@ -905,6 +920,7 @@ public class Permanent {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
+        this.waterbendCostPaid = source.waterbendCostPaid;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
@@ -1628,6 +1644,7 @@ public class Permanent {
         this.cantBlockThisTurn = false;
         this.additionalBlocksUntilEndOfTurn = 0;
         this.mustBlockThisTurnIfAble = false;
+        this.mustBlockEachAttackingCreatureThisTurnIfAble = false;
         this.mustAttackThisCombat = false;
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;
@@ -1664,6 +1681,7 @@ public class Permanent {
         this.protectionFromColorlessUntilEndOfTurn = false;
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.protectionFromOpponentCreaturesUntilEndOfTurn = false;
+        this.protectionRemovedUntilEndOfTurn = false;
         this.blockRestrictionsUntilEndOfTurn.clear();
         this.unblockableIfDefenderControlsUntilEndOfTurn.clear();
         this.exileIfLeavesBattlefieldUntilEndOfTurn = false;

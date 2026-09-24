@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WOT", collectorNumber = "3")
+@CardRegistration(set = "C15", collectorNumber = "3")
 public class GraspOfFate extends Card {
 
     public GraspOfFate() {

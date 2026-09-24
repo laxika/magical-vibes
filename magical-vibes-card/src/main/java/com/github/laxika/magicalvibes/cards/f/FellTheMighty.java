@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesWithPowerG
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OTP", collectorNumber = "1")
+@CardRegistration(set = "C14", collectorNumber = "7")
 public class FellTheMighty extends Card {
 
     public FellTheMighty() {

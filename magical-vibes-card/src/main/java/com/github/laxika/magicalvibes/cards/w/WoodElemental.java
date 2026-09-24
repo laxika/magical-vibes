@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "215")
+@CardRegistration(set = "ME4", collectorNumber = "175")
 public class WoodElemental extends Card {
 
     public WoodElemental() {

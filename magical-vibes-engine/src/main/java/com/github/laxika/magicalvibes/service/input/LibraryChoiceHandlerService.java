@@ -172,6 +172,7 @@ public class LibraryChoiceHandlerService {
                 || destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT;
         boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED
                 || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER;
+        boolean finalCardToHand = librarySearch.finalCardToHand() && remainingCount == 1;
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
         String filterCardName = librarySearch.filterCardName();
@@ -1426,7 +1427,14 @@ public class LibraryChoiceHandlerService {
                 triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
             }
         } else {
-            if (remainingCount > 1) {
+            if (finalCardToHand) {
+                if (!accumulatedCards.isEmpty()) {
+                    placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, battlefieldControllerId,
+                            toBattlefieldTapped, grantHaste, exileAtEndStep, returnToHandAtEndStep,
+                            animateFound, battlefieldCounter, enterWithCounters);
+                }
+                gameData.addCardToHand(handOwnerId, chosenCard);
+            } else if (remainingCount > 1) {
                 // CR 608.2f: Accumulate for simultaneous battlefield entry
                 accumulatedCards.add(chosenCard);
             } else {
@@ -1518,7 +1526,9 @@ public class LibraryChoiceHandlerService {
                 String destinationDesc = toGraveyard ? "their graveyard" : "their hand";
                 prompt = "Search " + targetName + "'s library for a card to put into " + destinationDesc + " (" + newRemaining + " remaining).";
             } else {
-                String destinationDesc = toBattlefieldTapped ? "onto the battlefield tapped"
+                String destinationDesc = librarySearch.finalCardToHand() && newRemaining == 1
+                        ? "into their hand"
+                        : toBattlefieldTapped ? "onto the battlefield tapped"
                         : toBattlefield ? "onto the battlefield" : "into your hand";
                 String distinct = requireDifferentNames ? " with a different name" : "";
                 prompt = "Search your library for a matching card" + distinct + " to put " + destinationDesc + " (" + newRemaining + " remaining).";
@@ -1551,6 +1561,7 @@ public class LibraryChoiceHandlerService {
                     .battlefieldIfChosenBeholdType(battlefieldIfChosenBeholdType)
                     .battlefieldIfChosenPredicate(battlefieldIfChosenPredicate)
                     .battlefieldIfChosenTapped(battlefieldIfChosenTapped)
+                    .finalCardToHand(librarySearch.finalCardToHand())
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 
@@ -1560,6 +1571,12 @@ public class LibraryChoiceHandlerService {
 
         if (shuffleAfterSelection) {
             LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+        }
+
+        if (finalCardToHand) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard,
+                    " and puts it into their hand."));
         }
 
         // When simultaneous placement was done, individual entry logs were already emitted
@@ -3407,7 +3424,7 @@ public class LibraryChoiceHandlerService {
                 if (chosenIds.contains(card.getId())) {
                     returnCardExiledWithSourceToBattlefieldEffectHandler.returnToBattlefield(
                             gameData, returnControllerId, card, "exile", pending.grantedSubtype(),
-                            pending.enterTapped(), pending.enterAttacking());
+                            pending.enterTapped(), pending.enterAttacking(), pending.grantHaste());
                     break;
                 }
             }

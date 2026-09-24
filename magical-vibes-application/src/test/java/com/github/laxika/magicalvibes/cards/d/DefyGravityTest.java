@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefyGravity.class, BenevolentBodyguard.class, KrosanVerge.class})
+@CardUsed({BenevolentBodyguard.class, CabalTrainee.class, DefyGravity.class, KrosanVerge.class})
 class DefyGravityTest extends BaseCardTest {
 
     @Test
@@ -82,5 +83,15 @@ class DefyGravityTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Krosan Verge");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CabalTrainee());
+        harness.setHand(player1, List.of(new DefyGravity()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
     }
 }

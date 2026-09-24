@@ -133,9 +133,8 @@ class ZealousInquisitorTest extends BaseCardTest {
         Permanent protectedCreature = addCreatureReady(player2, new AvenLiberator());
         harness.setHand(player2, List.of(new AvenLiberator()));
         harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
         harness.castCreatureWithMorph(player2, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent faceDownLiberator = gd.playerBattlefields.get(player2.getId()).stream()

@@ -21,6 +21,9 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "25")
 @CardRegistration(set = "SLZ", collectorNumber = "146")
 @CardRegistration(set = "SLZ", collectorNumber = "267")
+@CardRegistration(set = "C14", collectorNumber = "118")
+@CardRegistration(set = "C15", collectorNumber = "97")
+@CardRegistration(set = "ECC", collectorNumber = "67")
 public class Mulldrifter extends Card {
 
     public Mulldrifter() {

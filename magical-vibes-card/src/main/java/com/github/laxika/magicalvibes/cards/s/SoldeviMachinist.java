@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "102")
+@CardRegistration(set = "ME4", collectorNumber = "63")
 public class SoldeviMachinist extends Card {
 
     public SoldeviMachinist() {

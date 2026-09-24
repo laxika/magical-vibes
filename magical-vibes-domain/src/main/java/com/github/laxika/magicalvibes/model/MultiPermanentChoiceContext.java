@@ -121,6 +121,18 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** One pile selection in Camouflage's replacement for normal blocker declaration. */
+    record CamouflagePileChoice(UUID defenderId, List<Integer> attackerIndices,
+                                List<UUID> creatureIds, List<List<UUID>> piles,
+                                Card sourceCard) implements MultiPermanentChoiceContext {
+
+        public CamouflagePileChoice {
+            attackerIndices = List.copyOf(attackerIndices);
+            creatureIds = List.copyOf(creatureIds);
+            piles = piles.stream().map(List::copyOf).toList();
+        }
+    }
+
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, CounterType counterType, int total)
             implements MultiPermanentChoiceContext {
@@ -515,7 +527,7 @@ public sealed interface MultiPermanentChoiceContext {
     record DestroyRestChoice(java.util.List<PendingForcedSacrifice> remainingChoosers,
                              java.util.List<UUID> protectedIds, String sourceName,
                              com.github.laxika.magicalvibes.model.filter.PermanentPredicate destructionFilter,
-                             String choicePrompt, boolean requiresChoice)
+                             String choicePrompt, boolean requiresChoice, int requiredCount)
             implements MultiPermanentChoiceContext {
     }
 

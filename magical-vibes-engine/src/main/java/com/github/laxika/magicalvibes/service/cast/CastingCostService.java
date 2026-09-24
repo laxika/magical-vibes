@@ -532,10 +532,6 @@ public class CastingCostService {
                 delta += modifier.handler().modifyCost(context, modifier.effect(), modifier.source());
             }
         }
-        for (CollectedCostModifier modifier : afterOtherModifiers) {
-            delta += modifier.handler().modifyCostAfterOtherModifiers(
-                    context, modifier.effect(), modifier.source(), delta);
-        }
         List<NextSpellCostReduction> reductions = gameData.nextSpellCostReductionsThisTurn.get(playerId);
         if (reductions != null) {
             synchronized (reductions) {
@@ -543,6 +539,17 @@ public class CastingCostService {
                         .filter(reduction -> reduction.cardTypes().stream().anyMatch(card::hasType))
                         .mapToInt(NextSpellCostReduction::amount)
                         .sum();
+            }
+        }
+        if (!afterOtherModifiers.isEmpty()) {
+            ManaCost printedCost = card.getParsedManaCost();
+            ManaCost coloredCost = printedCost == null ? null : applyColoredManaCostReductions(
+                    gameData, playerId, card, printedCost, snapshot, flashbackCost);
+            int coloredModifier = coloredCost == null ? 0
+                    : coloredCost.getManaValue() - printedCost.getManaValue();
+            for (CollectedCostModifier modifier : afterOtherModifiers) {
+                delta += modifier.handler().modifyCostAfterOtherModifiers(
+                        context, modifier.effect(), modifier.source(), delta + coloredModifier);
             }
         }
         return delta;
@@ -1772,10 +1779,35 @@ public class CastingCostService {
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
+            var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
+            if (grantedEvoke.isPresent()) {
+                AlternateHandCast altCast = grantedEvoke.get();
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
             var grantedProwl = gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card);
             if (grantedProwl.isPresent()) {
                 AlternateHandCast altCast = grantedProwl.get();
                 if (!prowlConditionMet(gameData, playerId, altCast.prowlDamageSubtypes())) {
+                    return false;
+                }
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
+            var grantedFreerunning = gameQueryService.findGrantedFreerunningAlternateCast(gameData, playerId, card);
+            if (grantedFreerunning.isPresent()) {
+                AlternateHandCast altCast = grantedFreerunning.get();
+                if (altCast.availabilityCondition() != null
+                        && !conditionEvaluationService.isMet(gameData, altCast.availabilityCondition(),
+                        ConditionContext.forCasting(playerId))) {
                     return false;
                 }
                 return altCast.getCost(ManaCastingCost.class)

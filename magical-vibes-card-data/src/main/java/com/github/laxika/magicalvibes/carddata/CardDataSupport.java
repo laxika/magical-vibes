@@ -167,6 +167,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Disguise", Keyword.DISGUISE);
         KEYWORD_MAP.put("Alliance", Keyword.ALLIANCE);
         KEYWORD_MAP.put("Station", Keyword.STATION);
+        KEYWORD_MAP.put("Freerunning", Keyword.FREERUNNING);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

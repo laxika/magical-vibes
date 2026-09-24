@@ -209,6 +209,7 @@ public class BattlefieldPlacementService {
         UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
+        gameData.setImprintedCard(permanent.getOriginalCard(), null);
         Set<CardType> enterTappedTypes = request.enterTappedTypes();
         List<Permanent> simultaneouslyEntered = request.simultaneouslyEntered();
         int xValue = request.xValue();
@@ -315,6 +316,12 @@ public class BattlefieldPlacementService {
         }
         int countersPlacedOnEntry = counterCountAfterEntry - counterCountBeforeEntry;
         if (countersPlacedOnEntry > 0) {
+            int loreCountersPlacedOnEntry = permanent.getCounterCount(CounterType.LORE)
+                    - countersBeforeEntry.getOrDefault(CounterType.LORE, 0);
+            for (int i = 0; i < loreCountersPlacedOnEntry; i++) {
+                triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(
+                        gameData, permanent, controllerId);
+            }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlacedOnEntry);
         }
         if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
@@ -1330,6 +1337,7 @@ public class BattlefieldPlacementService {
                 || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         int countersBefore = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
+        int loreCountersBefore = permanent.getCounterCount(CounterType.LORE);
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             if (effect instanceof EnterWithCountersEffect enterWith
                     && matchesEnterWithCountersPredicate(gameData, controllerId, permanent.getCard(), enterWith)
@@ -1340,6 +1348,11 @@ public class BattlefieldPlacementService {
         }
         int countersPlaced = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum() - countersBefore;
         if (countersPlaced > 0) {
+            int loreCountersPlaced = permanent.getCounterCount(CounterType.LORE) - loreCountersBefore;
+            for (int i = 0; i < loreCountersPlaced; i++) {
+                triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(
+                        gameData, permanent, controllerId);
+            }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlaced);
         }
     }

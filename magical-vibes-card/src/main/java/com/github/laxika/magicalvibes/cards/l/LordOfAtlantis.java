@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "TSB", collectorNumber = "24")
 @CardRegistration(set = "SPG", collectorNumber = "1")
 @CardRegistration(set = "MAR", collectorNumber = "56")
+@CardRegistration(set = "2ED", collectorNumber = "63")
 public class LordOfAtlantis extends Card {
 
     public LordOfAtlantis() {

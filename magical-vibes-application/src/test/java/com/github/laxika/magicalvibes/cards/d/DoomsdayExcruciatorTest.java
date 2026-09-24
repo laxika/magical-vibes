@@ -66,15 +66,17 @@ class DoomsdayExcruciatorTest extends BaseCardTest {
         List<Card> player2Library = cards(7);
         harness.setLibrary(player1, player1Library);
         harness.setLibrary(player2, player2Library);
-        harness.setGraveyard(player1, List.of(new DoomsdayExcruciator()));
+        DoomsdayExcruciator target = new DoomsdayExcruciator();
+        harness.setGraveyard(player1, List.of(target));
         BeaconOfUnrest beacon = new BeaconOfUnrest();
         harness.setHand(player1, List.of(beacon));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
-        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, target.getName());
 
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactlyInAnyOrderElementsOf(concatenate(player1Library, List.of(beacon)));

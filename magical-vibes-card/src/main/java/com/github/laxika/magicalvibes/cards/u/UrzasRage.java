@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 @CardRegistration(set = "DDE", collectorNumber = "36")
 @CardRegistration(set = "MH1", collectorNumber = "151")
 @CardRegistration(set = "STA", collectorNumber = "47")
+@CardRegistration(set = "C15", collectorNumber = "169")
 public class UrzasRage extends Card {
 
     public UrzasRage() {

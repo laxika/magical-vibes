@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "11")
+@CardRegistration(set = "TLE", collectorNumber = "2")
 public class DrannithMagistrate extends Card {
 
     public DrannithMagistrate() {

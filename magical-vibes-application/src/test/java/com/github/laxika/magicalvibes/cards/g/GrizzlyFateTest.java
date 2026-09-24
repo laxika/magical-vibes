@@ -13,10 +13,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyFate.class, AvenFogbringer.class})
+@CardUsed({AvenFogbringer.class, GiantWarthog.class, GrizzlyFate.class})
 class GrizzlyFateTest extends BaseCardTest {
 
     @Test
@@ -90,6 +91,34 @@ class GrizzlyFateTest extends BaseCardTest {
         assertThat(bears).hasSize(expectedCount);
         assertThat(bears).allSatisfy(bear -> {
             assertThat(bear.getCard().hasType(CardType.CREATURE)).isTrue();
+            assertThat(bear.getCard().getPower()).isEqualTo(2);
+            assertThat(bear.getCard().getToughness()).isEqualTo(2);
+            assertThat(bear.getCard().getColor()).isEqualTo(CardColor.GREEN);
+            assertThat(bear.getCard().getSubtypes()).contains(CardSubtype.BEAR);
+        });
+    }
+
+    @Test
+    @DisplayName("With six cards in the graveyard, Grizzly Fate does not meet threshold")
+    void withSixCardsDoesNotMeetThreshold() {
+        castFromHand(graveyardWithCardsForJudReview(6));
+
+        assertBearsForJudReview(2);
+    }
+
+    private List<Card> graveyardWithCardsForJudReview(int count) {
+        return IntStream.range(0, count)
+                .mapToObj(ignored -> (Card) new GiantWarthog())
+                .toList();
+    }
+
+    private void assertBearsForJudReview(int expectedCount) {
+        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .filter(permanent -> permanent.getCard().getName().equals("Bear"))
+                .toList();
+        assertThat(bears).hasSize(expectedCount);
+        assertThat(bears).allSatisfy(bear -> {
             assertThat(bear.getCard().getPower()).isEqualTo(2);
             assertThat(bear.getCard().getToughness()).isEqualTo(2);
             assertThat(bear.getCard().getColor()).isEqualTo(CardColor.GREEN);

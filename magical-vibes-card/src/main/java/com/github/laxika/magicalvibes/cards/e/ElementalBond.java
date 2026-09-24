@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "174")
+@CardRegistration(set = "TLE", collectorNumber = "40")
 public class ElementalBond extends Card {
 
     public ElementalBond() {

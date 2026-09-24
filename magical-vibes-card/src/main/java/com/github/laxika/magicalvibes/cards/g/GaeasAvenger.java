@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ATQ", collectorNumber = "33")
+@CardRegistration(set = "ME4", collectorNumber = "155")
 public class GaeasAvenger extends Card {
 
     public GaeasAvenger() {

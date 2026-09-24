@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "MPS", collectorNumber = "54")
 @CardRegistration(set = "2XM", collectorNumber = "308")
 @CardRegistration(set = "BRR", collectorNumber = "63")
+@CardRegistration(set = "C14", collectorNumber = "283")
 public class WurmcoilEngine extends Card {
 
     public WurmcoilEngine() {

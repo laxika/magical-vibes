@@ -60,16 +60,16 @@ class BringerOfTheLastGiftTest extends BaseCardTest {
     @Test
     @DisplayName("When put onto the battlefield without being cast, it does not trigger")
     void nonCastEtbDoesNotTrigger() {
-        harness.setGraveyard(player1, List.of(new BringerOfTheLastGift()));
+        BringerOfTheLastGift target = new BringerOfTheLastGift();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Bringer of the Last Gift");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(countPermanents(player2, "Savannah Lions")).isZero();

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 
 @CardRegistration(set = "ICE", collectorNumber = "289")
 @CardRegistration(set = "ME1", collectorNumber = "145")
+@CardRegistration(set = "ECC", collectorNumber = "54")
 public class FireCovenant extends Card {
 
     public FireCovenant() {

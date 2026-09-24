@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
@@ -313,6 +314,23 @@ public class AsEntersInteractionService {
                                 justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
                                 etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
                                 convokeCreatureIds));
+                playerInputService.beginPlayerChoice(gameData, controllerId, validPlayerIds,
+                        "Choose a player.");
+                return;
+            }
+        }
+
+        boolean needsTwoPlayerChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(TwoPlayerChoiceOnEnterEffect.class::isInstance);
+        if (needsTwoPlayerChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
+            if (validPlayerIds.size() >= 2) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseTwoPlayersAsEnter(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                                convokeCreatureIds, null));
                 playerInputService.beginPlayerChoice(gameData, controllerId, validPlayerIds,
                         "Choose a player.");
                 return;

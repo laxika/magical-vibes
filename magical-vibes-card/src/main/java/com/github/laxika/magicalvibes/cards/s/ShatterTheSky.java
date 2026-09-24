@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "37")
+@CardRegistration(set = "ECC", collectorNumber = "66")
 public class ShatterTheSky extends Card {
 
     public ShatterTheSky() {

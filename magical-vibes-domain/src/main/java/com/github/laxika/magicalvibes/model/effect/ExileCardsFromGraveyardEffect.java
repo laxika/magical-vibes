@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 
 /**
  * Exile up to {@code maxTargets} target cards from graveyard(s) and gain life for it. The targets
@@ -109,6 +110,12 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                 trackWithSource, ownGraveyardOnly, false, 1, false);
     }
 
+    public static ExileCardsFromGraveyardEffect exactFromSingleGraveyard(
+            int count, CardPredicate filter, boolean trackWithSource) {
+        return new ExileCardsFromGraveyardEffect(count, 0, false, filter, false, null,
+                0, 0, true, false, trackWithSource, false, true, 1, false);
+    }
+
     /** Whether the maximum target count is supplied by the ability's X value. */
     public boolean xScaled() {
         return maxTargets == 0;
@@ -121,6 +128,15 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
         }
         long scaled = Math.max(0L, (long) xValue * xTargetMultiplier);
         return (int) Math.min(Integer.MAX_VALUE, scaled);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        if (!exactTargets || !singleGraveyard) return TargetSpec.NONE;
+        GraveyardSearchScope scope = ownGraveyardOnly
+                ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD : GraveyardSearchScope.ALL_GRAVEYARDS;
+        return TargetSpec.benign(filter == null ? TargetPredicates.graveyardCard(scope)
+                : TargetPredicates.graveyardCards(filter, scope));
     }
 
     @Override

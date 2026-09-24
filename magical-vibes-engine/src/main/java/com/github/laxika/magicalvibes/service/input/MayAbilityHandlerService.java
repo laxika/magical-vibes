@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingRagingRiver;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
@@ -62,6 +64,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -108,6 +111,7 @@ public class MayAbilityHandlerService {
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
+    private final RagingRiverEffectHandler ragingRiverEffectHandler;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -133,7 +137,8 @@ public class MayAbilityHandlerService {
                                     ValidTargetService validTargetService,
                                     TargetPredicateEvaluationService targetPredicateEvaluationService,
                                     MayEffectHandlerRegistry mayEffectHandlerRegistry,
-                                    TriggerCollectionService triggerCollectionService) {
+                                    TriggerCollectionService triggerCollectionService,
+                                    RagingRiverEffectHandler ragingRiverEffectHandler) {
         this.inputCompletionService = inputCompletionService;
         this.mayCastHandlerService = mayCastHandlerService;
         this.mayCopyHandlerService = mayCopyHandlerService;
@@ -156,6 +161,7 @@ public class MayAbilityHandlerService {
         this.targetPredicateEvaluationService = targetPredicateEvaluationService;
         this.mayEffectHandlerRegistry = mayEffectHandlerRegistry;
         this.triggerCollectionService = triggerCollectionService;
+        this.ragingRiverEffectHandler = ragingRiverEffectHandler;
     }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
@@ -170,6 +176,20 @@ public class MayAbilityHandlerService {
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
+
+        if (ability.effects().stream().anyMatch(PlayCardFromHandByWordOfCommandEffect.class::isInstance)) {
+            mayCastHandlerService.handleWordOfCommandPlay(gameData, player, accepted, ability);
+            return;
+        }
+
+        if (gameData.peekPendingInteraction(PendingRagingRiver.class) != null) {
+            ragingRiverEffectHandler.completeAttackerChoice(gameData, accepted);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
         // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley, Brilliant Ultimatum,
         // Unesh, Curator of Destinies)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
@@ -311,7 +331,7 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
-            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+            if (ability.sourceControllerId() != null) {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
@@ -382,7 +402,7 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
-            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+            if (ability.sourceControllerId() != null) {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());

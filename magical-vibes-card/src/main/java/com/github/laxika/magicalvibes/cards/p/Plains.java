@@ -6,7 +6,19 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "C15", collectorNumber = "325")
+@CardRegistration(set = "C15", collectorNumber = "326")
+@CardRegistration(set = "ACR", collectorNumber = "101")
+@CardRegistration(set = "ACR", collectorNumber = "102")
 @CardRegistration(set = "10E", collectorNumber = "364")
+@CardRegistration(set = "TLE", collectorNumber = "297")
+@CardRegistration(set = "TLE", collectorNumber = "298")
+@CardRegistration(set = "TLE", collectorNumber = "299")
+@CardRegistration(set = "TLE", collectorNumber = "300")
+@CardRegistration(set = "TLE", collectorNumber = "301")
+@CardRegistration(set = "TLE", collectorNumber = "302")
+@CardRegistration(set = "TLE", collectorNumber = "303")
+@CardRegistration(set = "TLE", collectorNumber = "304")
 @CardRegistration(set = "DMU", collectorNumber = "277")
 @CardRegistration(set = "GNT", collectorNumber = "59")
 @CardRegistration(set = "GNT", collectorNumber = "60")
@@ -60,6 +72,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDG", collectorNumber = "41")
 @CardRegistration(set = "DDG", collectorNumber = "42")
 @CardRegistration(set = "H09", collectorNumber = "37")
+@CardRegistration(set = "2ED", collectorNumber = "288")
+@CardRegistration(set = "2ED", collectorNumber = "289")
 @CardRegistration(set = "3ED", collectorNumber = "292")
 @CardRegistration(set = "3ED", collectorNumber = "293")
 @CardRegistration(set = "3ED", collectorNumber = "294")
@@ -448,10 +462,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "C13", collectorNumber = "338")
 @CardRegistration(set = "C13", collectorNumber = "339")
 @CardRegistration(set = "C13", collectorNumber = "340")
+@CardRegistration(set = "C14", collectorNumber = "318")
+@CardRegistration(set = "C14", collectorNumber = "319")
+@CardRegistration(set = "C14", collectorNumber = "320")
+@CardRegistration(set = "C14", collectorNumber = "321")
 @CardRegistration(set = "CMD", collectorNumber = "299")
 @CardRegistration(set = "CMD", collectorNumber = "300")
 @CardRegistration(set = "CMD", collectorNumber = "301")
 @CardRegistration(set = "CMD", collectorNumber = "302")
+@CardRegistration(set = "C15", collectorNumber = "323")
+@CardRegistration(set = "C15", collectorNumber = "324")
+@CardRegistration(set = "2ED", collectorNumber = "290")
 public class Plains extends Card {
 
     public Plains() {

@@ -307,6 +307,26 @@ public class GameService {
         };
     }
 
+    private boolean isWordOfCommandManaPayment(GameData gameData, Player player) {
+        return gameData.wordOfCommandCastingCard
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(player.getId())
+                && gameData.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice choice
+                && choice.playerId().equals(player.getId())
+                && choice.manaCost() != null;
+    }
+
+    private void requireWordOfCommandLandManaSource(GameData gameData, Player player, int permanentIndex) {
+        if (!isWordOfCommandManaPayment(gameData, player)) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
+        if (permanentIndex < 0 || permanentIndex >= battlefield.size()
+                || !gameQueryService.isLand(gameData, battlefield.get(permanentIndex))
+                || !player.getId().equals(gameQueryService.findPermanentController(
+                gameData, battlefield.get(permanentIndex).getId()))) {
+            throw new IllegalStateException("Only mana abilities of lands you control may be activated");
+        }
+    }
+
     /**
      * the controlled player when the controlled player should be acting (has priority
      * or is the expected respondent for an interaction).
@@ -1645,8 +1665,12 @@ public class GameService {
             boolean targetsPermanent = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (targetsGraveyard) {
+                int minimumGraveyardTargets = effects.stream()
+                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                        .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        permanent.getCard(), controllerId, effects, null, 1, xValue != null ? xValue : 0));
+                        permanent.getCard(), controllerId, effects, null,
+                        minimumGraveyardTargets, xValue != null ? xValue : 0));
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
                 if (autoPass) {
                     turnProgressionService.resolveAutoPass(gameData);
@@ -1847,6 +1871,7 @@ public class GameService {
             if (!isCombatCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
                 requirePriority(gameData, player);
             }
+            requireWordOfCommandLandManaSource(gameData, player, permanentIndex);
             requireCanActivateAbilities(gameData, player);
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
@@ -1943,6 +1968,21 @@ public class GameService {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments, null);
     }
 
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateEmblemAbility(gameData, actionPlayer, emblemIndex, abilityIndex, xValue,
+                        targetId, targetZone, targetIds, damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue,
+                    targetId, targetZone, targetIds, damageAssignments);
+        }
+    }
+
     /**
      * @param paymentIntent what the player is activating this mana ability for, so an "any colour"
      *                      prompt can grey out the colours that would strand it; {@code null} when
@@ -1969,6 +2009,7 @@ public class GameService {
                 if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
                     throw new IllegalStateException("Only mana abilities can be activated while paying a cost");
                 }
+                requireWordOfCommandLandManaSource(gameData, player, permanentIndex);
             } else {
                 requirePriority(gameData, player);
             }

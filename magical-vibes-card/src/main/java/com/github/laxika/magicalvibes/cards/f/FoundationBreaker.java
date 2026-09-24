@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "160")
+@CardRegistration(set = "ECC", collectorNumber = "108")
 public class FoundationBreaker extends Card {
 
     public FoundationBreaker() {
@@ -24,11 +25,14 @@ public class FoundationBreaker extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate())),
-                "Target must be an artifact or enchantment"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new MayEffect(new DestroyTargetPermanentEffect(),
-                                "Destroy target artifact or enchantment?"));
+                        new PermanentIsEnchantmentPredicate()
+                )),
+                "Target must be an artifact or enchantment"
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+                new DestroyTargetPermanentEffect(),
+                "Destroy target artifact or enchantment?"
+        ));
+
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());
     }
 }

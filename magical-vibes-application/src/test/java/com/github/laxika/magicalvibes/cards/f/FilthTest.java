@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Filth.class, Swamp.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Filth.class, Forest.class, GrizzlyBears.class, Swamp.class})
 class FilthTest extends BaseCardTest {
 
     @Test
@@ -103,5 +103,46 @@ class FilthTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+    }
+
+    @Test
+    @DisplayName("Filth requires its graveyard controller to control a Swamp")
+    void requiresSwampControlledByFilthController() {
+        harness.setGraveyard(player2, List.of(new Filth()));
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent playerTwoBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, playerTwoBears, Keyword.SWAMPWALK)).isFalse();
+
+        harness.addToBattlefield(player2, new Swamp());
+        assertThat(gqs.hasKeyword(gd, playerTwoBears, Keyword.SWAMPWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Filth's own swampwalk prevents blocking while the defending player controls a Swamp")
+    void ownSwampwalkPreventsBlockingWithSwamp() {
+        Permanent attacker = addCreatureReady(player1, new Filth());
+        attacker.setAttacking(true);
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Filth's own swampwalk allows blocking while the defending player controls no Swamp")
+    void ownSwampwalkAllowsBlockingWithoutSwamp() {
+        Permanent attacker = addCreatureReady(player1, new Filth());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

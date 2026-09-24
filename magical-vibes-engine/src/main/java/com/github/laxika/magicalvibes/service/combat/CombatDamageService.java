@@ -1548,6 +1548,9 @@ public class CombatDamageService {
                     .add(defenderId);
             gameData.playersDealtCombatDamageSinceTheirLastTurn.add(defenderId);
             gameData.recordCreatureDamageSourceToPlayer(creature.getId(), defenderId);
+            if (gameData.isCommander(creature.getOriginalCard().getId())) {
+                gameData.combatDamageSourcesThatWereCommandersThisTurn.add(creature.getId());
+            }
             if (gameQueryService.hasEffectiveSupertype(gameData, creature, CardSupertype.LEGENDARY)) {
                 gameData.combatDamageSourcesWithLegendaryThisTurn.add(creature.getId());
             }
@@ -1605,7 +1608,8 @@ public class CombatDamageService {
                 if (effect instanceof ConditionalEffect conditional
                         && conditional.interveningIf()
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(creature, attackerId))) {
+                                ConditionContext.forPermanent(creature, attackerId)
+                                        .withTargetId(defenderId))) {
                     log.info("Game {} - {}'s {} combat damage trigger does not fire", gameData.id,
                             creature.getCard().getName(), conditional.conditionName());
                     continue;
@@ -2149,8 +2153,12 @@ public class CombatDamageService {
                     if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
                         firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
                     }
+                    // Player recipients on this trigger slot normally mean "that player":
+                    // bind the damaged player unless the card explicitly declares a target.
                     if (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            || firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && (perm.getCard().hasEffectTargetIndex(authoredEffect)
+                            || perm.getCard().hasEffectTargetIndex(firedEffect)))) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId));
                         OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
@@ -4031,6 +4039,12 @@ public class CombatDamageService {
                 if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
                     damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage);
                     damage = 0;
+                }
+                if (damagePreventionService.applySokraticDialogue(
+                        gameData, atk, damage, sourceControllerId, defenderId)) {
+                    state.combatDamageDealt.merge(atk, 0, Integer::sum);
+                    state.combatDamageDealtToPlayer.merge(atk, 0, Integer::sum);
+                    return;
                 }
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;

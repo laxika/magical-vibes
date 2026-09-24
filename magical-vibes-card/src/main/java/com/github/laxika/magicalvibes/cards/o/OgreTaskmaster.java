@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 @CardRegistration(set = "9ED", collectorNumber = "205")
 @CardRegistration(set = "P02", collectorNumber = "112")
 @CardRegistration(set = "MMQ", collectorNumber = "206")
+@CardRegistration(set = "ME4", collectorNumber = "128")
 public class OgreTaskmaster extends Card {
 
     public OgreTaskmaster() {

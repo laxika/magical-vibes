@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedB
 
 @CardRegistration(set = "CHK", collectorNumber = "212")
 @CardRegistration(set = "2XM", collectorNumber = "171")
+@CardRegistration(set = "TLE", collectorNumber = "42")
 public class HeartbeatOfSpring extends Card {
 
     public HeartbeatOfSpring() {

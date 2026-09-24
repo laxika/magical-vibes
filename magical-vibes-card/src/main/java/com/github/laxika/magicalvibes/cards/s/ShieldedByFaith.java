@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "E02", collectorNumber = "4")
 @CardRegistration(set = "SS2", collectorNumber = "5")
+@CardRegistration(set = "C15", collectorNumber = "8")
 public class ShieldedByFaith extends Card {
 
     public ShieldedByFaith() {

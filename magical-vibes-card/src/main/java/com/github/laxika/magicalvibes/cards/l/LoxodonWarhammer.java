@@ -11,11 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "332")
+@CardRegistration(set = "C14", collectorNumber = "247")
 @CardRegistration(set = "9ED", collectorNumber = "303")
 @CardRegistration(set = "MRD", collectorNumber = "201")
 @CardRegistration(set = "DPA", collectorNumber = "94")
 @CardRegistration(set = "DDG", collectorNumber = "31")
 @CardRegistration(set = "HOP", collectorNumber = "118")
+@CardRegistration(set = "C15", collectorNumber = "258")
 public class LoxodonWarhammer extends Card {
 
     public LoxodonWarhammer() {

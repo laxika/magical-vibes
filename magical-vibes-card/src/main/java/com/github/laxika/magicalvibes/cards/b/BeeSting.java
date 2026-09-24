@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "159")
 @CardRegistration(set = "P02", collectorNumber = "124")
+@CardRegistration(set = "ME4", collectorNumber = "144")
 public class BeeSting extends Card {
 
     public BeeSting() {
