@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -443,6 +445,12 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MillEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleMillOnDiscard(TriggerMatchContext match, MillEffect trigger, TriggerContext ctx) {
+        if (trigger.recipient() != MillRecipient.EACH_OPPONENT) return false;
+        return enqueueDiscardTrigger(match, trigger, "mill each opponent");
+    }
+
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
     private boolean handleSelfBoostOnDiscard(TriggerMatchContext match, BoostSelfEffect trigger, TriggerContext ctx) {
@@ -472,14 +480,21 @@ public class DiscardTriggerCollectorService {
         // this creature.
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId()));
+        if (trigger.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || trigger.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)),
+                    match.permanent().getId()));
+        } else {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(trigger)),
+                    null,
+                    match.permanent().getId()));
+        }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (sequence)", gameData.id, sourceCard.getName());
         return true;
@@ -601,6 +616,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handlePutCountersOnSourceOnDiscard(TriggerMatchContext match,
             PutCountersOnSourceEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();

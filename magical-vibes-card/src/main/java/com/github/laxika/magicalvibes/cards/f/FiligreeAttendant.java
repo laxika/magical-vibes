@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "95")
+@CardRegistration(set = "MH2", collectorNumber = "41")
 public class FiligreeAttendant extends Card {
 
     public FiligreeAttendant() {

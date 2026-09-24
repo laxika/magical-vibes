@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "36")
+@CardRegistration(set = "MH2", collectorNumber = "17")
 public class KnightedMyr extends Card {
 
     public KnightedMyr() {

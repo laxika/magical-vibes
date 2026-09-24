@@ -450,7 +450,8 @@ public class GraveyardTargetValidators {
     }
 
     @ValidatesTarget(ExileTargetCreatureCardCreateTokensEqualToToughnessEffect.class)
-    public void validateExileTargetCreatureCardCreateTokens(TargetValidationContext ctx) {
+    public void validateExileTargetCreatureCardCreateTokens(
+            TargetValidationContext ctx, ExileTargetCreatureCardCreateTokensEqualToToughnessEffect effect) {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Spell requires a graveyard target");
         }
@@ -460,6 +461,15 @@ public class GraveyardTargetValidators {
         Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+        if (effect.graveyardScope() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                && !ctx.sourceControllerId().equals(graveyardOwnerId)) {
+            throw new IllegalStateException("Target must be in your graveyard");
+        }
+        if (effect.graveyardScope() == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                && ctx.sourceControllerId().equals(graveyardOwnerId)) {
+            throw new IllegalStateException("Target must be in an opponent's graveyard");
         }
         if (!graveyardCard.hasType(CardType.CREATURE)) {
             throw new IllegalStateException("Target must be a creature card");

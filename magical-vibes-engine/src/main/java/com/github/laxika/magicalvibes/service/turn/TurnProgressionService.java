@@ -1020,6 +1020,7 @@ public class TurnProgressionService {
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);
         gameData.playersWithProtectionFromEverythingUntilNextTurn.remove(nextActive);
         gameData.playersWithLifeTotalCantChangeUntilNextTurn.remove(nextActive);
+        gameData.playerKeywordsUntilNextTurn.remove(nextActive);
         // Jace, Architect of Thought +1: the delayed "whenever a creature an opponent controls
         // attacks" trigger lasts until its controller's next turn, so it expires here rather than at
         // turn cleanup like the other delayed families.

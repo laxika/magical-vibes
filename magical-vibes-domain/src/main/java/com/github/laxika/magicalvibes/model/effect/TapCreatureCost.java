@@ -16,20 +16,29 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param trackTappedCreatureForSourceAbility when {@code true}, the tapped creature is remembered
  *                                            on the source for an ability that refers to creatures
  *                                            tapped to pay for its abilities
+ * @param stationCost                       whether this cost is the station cost of a Spacecraft
  */
 public record TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
                               boolean trackTappedCreaturePower,
-                              boolean trackTappedCreatureForSourceAbility) implements CostEffect {
+                              boolean trackTappedCreatureForSourceAbility,
+                              boolean stationCost) implements CostEffect {
 
     private static final DynamicAmount ONE = new Fixed(1);
 
     public TapCreatureCost(PermanentPredicate predicate) {
-        this(predicate, false, false, false);
+        this(predicate, false, false, false, false);
     }
 
     public TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
                            boolean trackTappedCreaturePower) {
-        this(predicate, excludeSelf, trackTappedCreaturePower, false);
+        this(predicate, excludeSelf, trackTappedCreaturePower, false, false);
+    }
+
+    public TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
+                           boolean trackTappedCreaturePower,
+                           boolean trackTappedCreatureForSourceAbility) {
+        this(predicate, excludeSelf, trackTappedCreaturePower,
+                trackTappedCreatureForSourceAbility, false);
     }
 
     @Override

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -31,8 +32,11 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -548,6 +552,31 @@ class DiscardTriggerCollectorServiceTest {
         }
     }
 
+    // ===== ON_OPPONENT_DISCARDS — PutCountersOnSourceEffect =====
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DISCARDS — PutCountersOnSourceEffect")
+    class OpponentDiscardPutCounters {
+
+        @Test
+        @DisplayName("queues a source-counter trigger")
+        void queuesSourceCounterTrigger() {
+            Permanent source = createPermanent("Tourach, Dread Cantor");
+            var effect = new PutCountersOnSourceEffect(1, 1, 1);
+            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect), EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            });
+        }
+    }
+
     // ===== ON_CONTROLLER_DISCARDS — ExileDiscardedCardFromGraveyardEffect =====
 
     @Nested
@@ -634,6 +663,31 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(curator.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(ScryEffect.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — MillEffect")
+    class ControllerDiscardMill {
+
+        @Test
+        @DisplayName("queues a mill trigger for each opponent")
+        void queuesMillTrigger() {
+            Permanent source = createPermanent("Mystic Redaction");
+            var effect = new MillEffect(2, MillRecipient.EACH_OPPONENT);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
     }
 
@@ -939,6 +993,25 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(survivor.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(SequenceEffect.class);
+        }
+
+        @Test
+        @DisplayName("queues target selection for a targeted sequence")
+        void queuesTargetChoiceForTargetedSequence() {
+            Permanent source = createPermanent("Feast of Sanity");
+            var effect = SequenceEffect.of(new DealDamageToAnyTargetEffect(1), new GainLifeEffect(1));
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            PermanentChoiceContext.DiscardControllerTriggerTarget pending =
+                    gd.peekPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+            assertThat(pending.sourcePermanentId()).isEqualTo(source.getId());
+            assertThat(pending.effects()).containsExactly(effect);
         }
     }
 

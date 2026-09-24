@@ -18,11 +18,25 @@ import java.util.UUID;
  * @param tokenCopy whether the copies enter the battlefield as tokens when they resolve
  * @param instantOrSorceryOnly whether to count only instant and sorcery spells cast by the
  *                             spell's controller, as used by Show of Confidence
+ * @param removeLegendary whether token copies lose the legendary supertype
  */
-public record StormEffect(boolean tokenCopy, boolean instantOrSorceryOnly) implements SpellCastCopyTrigger {
+public record StormEffect(boolean tokenCopy, boolean instantOrSorceryOnly, boolean removeLegendary)
+        implements SpellCastCopyTrigger {
 
     public StormEffect() {
-        this(false, false);
+        this(false, false, false);
+    }
+
+    public StormEffect(boolean tokenCopy) {
+        this(tokenCopy, false, false);
+    }
+
+    public StormEffect(boolean tokenCopy, boolean instantOrSorceryOnly) {
+        this(tokenCopy, instantOrSorceryOnly, false);
+    }
+
+    public static StormEffect tokenCopyWithoutLegendary() {
+        return new StormEffect(true, false, true);
     }
 
     public static StormEffect forInstantOrSorcery() {
@@ -38,6 +52,6 @@ public record StormEffect(boolean tokenCopy, boolean instantOrSorceryOnly) imple
 
     @Override
     public CardEffect createCopyEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies) {
-        return new StormCopyEffect(spellSnapshot, castingPlayerId, copies, tokenCopy);
+        return new StormCopyEffect(spellSnapshot, castingPlayerId, copies, tokenCopy, removeLegendary);
     }
 }

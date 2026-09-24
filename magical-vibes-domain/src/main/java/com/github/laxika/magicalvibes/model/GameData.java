@@ -1305,6 +1305,8 @@ public class GameData {
 
     /** Per-player: this player has a temporary targeting keyword until end of turn. */
     public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
+    /** Per-player: this player has a temporary targeting keyword until the beginning of their next turn. */
+    public final Map<UUID, Set<Keyword>> playerKeywordsUntilNextTurn = new ConcurrentHashMap<>();
     /** Static effects granted directly to players until end of turn (e.g. Angel's Grace). */
     public final Map<UUID, List<CardEffect>> playerStaticEffectsUntilEndOfTurn = new ConcurrentHashMap<>();
 
@@ -1429,6 +1431,9 @@ public class GameData {
     /** Card IDs that have been granted flashback until end of turn (e.g. Past in Flames).
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
+    /** Card IDs that have been granted Warp {0} until end of turn. Cleared at end of turn. */
+    public final Set<UUID> cardsGrantedWarpUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     /** Card IDs that have been granted harmonize until end of turn. The harmonize cost for these
      * cards equals their mana cost. Cleared at end of turn. */
@@ -1845,6 +1850,9 @@ public class GameData {
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
+    /** Instant or sorcery cards leaving each owner's graveyard during a suppressed batch. */
+    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingInstantOrSorceryCards =
+            new ConcurrentHashMap<>();
     /** Owners whose graveyards had creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Counts creature cards leaving each owner's graveyard during a suppressed batch. */
@@ -2831,6 +2839,16 @@ public class GameData {
      *  of the controller's next turn; next-turn cleanup and next-upkeep durations expire
      *  at their respective cleanup step and end of upkeep. */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
+
+    /** Per-card power/toughness modifiers that remain with a card through zone changes. */
+    public final Map<UUID, PerpetualPowerToughnessModifier> perpetualCardPowerToughnessModifiers =
+            new ConcurrentHashMap<>();
+
+    public record PerpetualPowerToughnessModifier(int power, int toughness) {
+    }
+
+    /** Keywords that remain with a card through zone changes. */
+    public final Map<UUID, Set<Keyword>> perpetualCardKeywords = new ConcurrentHashMap<>();
 
     /**
      * Opaque slot for the engine's memoized CR 613 layered board
@@ -6518,6 +6536,10 @@ public class GameData {
 
         // --- Floating continuous effects (immutable records, safe to share) ---
         copy.floatingEffects.addAll(this.floatingEffects);
+        copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);
+        this.perpetualCardKeywords.forEach((cardId, keywords) ->
+                copy.perpetualCardKeywords.put(cardId, keywords.isEmpty()
+                        ? EnumSet.noneOf(Keyword.class) : EnumSet.copyOf(keywords)));
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
@@ -6551,6 +6573,8 @@ public class GameData {
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
+        this.playerKeywordsUntilNextTurn.forEach((k, v) ->
+                copy.playerKeywordsUntilNextTurn.put(k, new HashSet<>(v)));
         this.playerStaticEffectsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerStaticEffectsUntilEndOfTurn.put(k, new ArrayList<>(v)));
 
@@ -6662,6 +6686,8 @@ public class GameData {
                 .addAll(this.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
+        this.graveyardLeaveNotificationPendingInstantOrSorceryCards.forEach((playerId, cards) ->
+                copy.graveyardLeaveNotificationPendingInstantOrSorceryCards.put(playerId, new ArrayList<>(cards)));
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
         copy.graveyardLeaveNotificationPendingCreatureCardCounts.putAll(this.graveyardLeaveNotificationPendingCreatureCardCounts);
         copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
@@ -6791,6 +6817,7 @@ public class GameData {
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.cardsGrantedWarpUntilEndOfTurn.addAll(this.cardsGrantedWarpUntilEndOfTurn);
         copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNoColoredManaSpentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect;
@@ -517,6 +518,29 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new CounterSpellIfManaValueEqualsSourceCountersEffect(
                         trigger.counterType(), manaValue))),
+                sc.spellCard().getId(),
+                Zone.STACK
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CounterSpellIfNoColoredManaSpentEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCounterSpellIfNoColoredManaSpent(
+            TriggerMatchContext match,
+            CounterSpellIfNoColoredManaSpentEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!match.gameData().getSpellCastColorsSpent(sc.spellCard().getId()).isEmpty()) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CounterSpellIfNoColoredManaSpentEffect())),
                 sc.spellCard().getId(),
                 Zone.STACK
         ));

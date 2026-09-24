@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilChosenLandOrNonlan
 
 @CardRegistration(set = "STA", collectorNumber = "48")
 @CardRegistration(set = "CMM", collectorNumber = "269")
+@CardRegistration(set = "MH2", collectorNumber = "147")
 public class AbundantHarvest extends Card {
 
     public AbundantHarvest() {

@@ -404,6 +404,30 @@ class SpellCastingServiceTest {
     }
 
     @Test
+    @DisplayName("Snapshots converge colors when casting flashback")
+    void snapshotsConvergeColorsWhenCastingFlashback() {
+        Card spell = createSorcery("Converge Flashback Spell", "{1}{R}");
+        spell.setKeywords(EnumSet.of(Keyword.CONVERGE));
+        spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+        spell.addCastingOption(new FlashbackCast("{4}{R}"));
+        gd.playerGraveyards.get(player1Id).add(spell);
+        addMana(player1Id, ManaColor.RED, 1);
+        addMana(player1Id, ManaColor.BLUE, 1);
+        addMana(player1Id, ManaColor.COLORLESS, 3);
+        when(castingPermissionService.canUseFlashback(eq(gd), eq(player1Id), any(FlashbackCast.class)))
+                .thenReturn(true);
+        when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, spell)).thenReturn(true);
+
+        svc.playFlashbackSpell(gd, player1, 0, null, player2Id);
+
+        assertThat(gd.stack).singleElement().satisfies(entry ->
+                assertThat(entry.getXValue()).isEqualTo(2));
+        assertThat(gd.getSpellCastConvergeValue(spell.getId())).isEqualTo(2);
+        assertThat(gd.getSpellCastColorsSpent(spell.getId()))
+                .containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
+    }
+
+    @Test
     void invalidGraveyardDiscardSelectionDoesNotSpendManaOrMoveSpell() {
         Card spell = prepareFlashbackDiscardSpell();
         setHand(player1Id, List.of());

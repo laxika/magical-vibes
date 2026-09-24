@@ -7458,16 +7458,15 @@ public class AbilityActivationService {
             if (effectiveXValue < 0) {
                 throw new IllegalStateException("X value cannot be negative");
             }
-            if (effectiveXValue > permanent.getCounterCount(CounterType.LOYALTY)) {
-                throw new IllegalStateException("Not enough loyalty counters");
-            }
             loyaltyCost = -effectiveXValue;
         } else {
             loyaltyCost = ability.getLoyaltyCost();
-            // For negative loyalty costs, check sufficient loyalty
-            if (loyaltyCost < 0 && permanent.getCounterCount(CounterType.LOYALTY) < Math.abs(loyaltyCost)) {
-                throw new IllegalStateException("Not enough loyalty counters");
-            }
+        }
+        loyaltyCost += castingCostService.getLoyaltyAbilityCostIncrease(
+                gameData, playerId, permanent, ability);
+        // For negative loyalty costs, check sufficient loyalty after all cost modifications.
+        if (loyaltyCost < 0 && permanent.getCounterCount(CounterType.LOYALTY) < Math.abs(loyaltyCost)) {
+            throw new IllegalStateException("Not enough loyalty counters");
         }
         return loyaltyCost;
     }

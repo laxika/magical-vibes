@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "117")
+@CardRegistration(set = "MH2", collectorNumber = "285")
 public class QuirionRanger extends Card {
 
     public QuirionRanger() {

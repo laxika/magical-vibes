@@ -354,6 +354,12 @@ public class TargetValidationService {
     }
 
     public void checkProtection(TargetValidationContext ctx, Permanent target) {
+        Permanent sourcePermanent = ctx.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(ctx.gameData(), ctx.sourcePermanentId());
+        if (sourcePermanent != null && gameQueryService.hasProtectionFromSource(
+                ctx.gameData(), target, sourcePermanent)) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from the source");
+        }
         if (hasProtectionFromSourceController(ctx, target)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
         }

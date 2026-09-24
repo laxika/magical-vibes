@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "226")
+@CardRegistration(set = "MH2", collectorNumber = "128")
 public class Gargadon extends Card {
 
     public Gargadon() {
@@ -15,7 +16,7 @@ public class Gargadon extends Card {
                 false,
                 "{1}{R}",
                 List.of(),
-                "Suspend 4—{1}{R}",
+                "Suspend 4\u2014{1}{R}",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(4));
     }

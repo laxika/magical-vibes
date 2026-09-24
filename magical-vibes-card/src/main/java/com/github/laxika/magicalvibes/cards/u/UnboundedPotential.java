@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "67")
+@CardRegistration(set = "MH2", collectorNumber = "36")
 public class UnboundedPotential extends Card {
 
     public UnboundedPotential() {

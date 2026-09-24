@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "170")
+@CardRegistration(set = "MH2", collectorNumber = "90")
 public class LegionVanguard extends Card {
 
     public LegionVanguard() {

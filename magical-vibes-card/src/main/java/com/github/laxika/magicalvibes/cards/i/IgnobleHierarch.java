@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import java.util.List;
 
 @CardRegistration(set = "AA2", collectorNumber = "14")
+@CardRegistration(set = "MH2", collectorNumber = "166")
 @CardRegistration(set = "ECC", collectorNumber = "52")
 public class IgnobleHierarch extends Card {
 
