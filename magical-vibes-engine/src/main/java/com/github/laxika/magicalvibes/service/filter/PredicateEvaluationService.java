@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceTo
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -121,6 +122,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPr
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCouldProduceManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
@@ -286,6 +288,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
@@ -321,6 +324,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardE
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
@@ -335,6 +339,8 @@ import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -369,6 +375,10 @@ public class PredicateEvaluationService {
     private static final Pattern AWAKEN_ABILITY_PATTERN = Pattern.compile("(?m)^Awaken\\s+\\d+\\s*\\u2014");
 
     private final GameQueryService gameQueryService;
+
+    @Autowired
+    @Lazy
+    private LandManaTypeSupport landManaTypeSupport;
 
     /** Creature leaf built here rather than taken from an ability, so it never reads the CR 613.6 memo. */
     private static final PermanentIsCreaturePredicate STATIC_CREATURE_LEAF = new PermanentIsCreaturePredicate();
@@ -982,6 +992,10 @@ public class PredicateEvaluationService {
                     hasTapActivatedAbility(gameData, permanent);
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
+            case PermanentCouldProduceManaPredicate couldProduceMana ->
+                    gameData != null
+                            && landManaTypeSupport.manaTypesCouldProduce(gameData, permanent)
+                            .contains(couldProduceMana.manaColor());
             case PermanentHasMorphAbilityPredicate ignored ->
                     !permanent.isFaceDown() && permanent.getCard().getMorphCost() != null;
             case PermanentHasNoAbilitiesPredicate ignored ->
@@ -3690,6 +3704,7 @@ public class PredicateEvaluationService {
                     !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
+            case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
             case StackEntryIsCopyPredicate ignored -> entry.isCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
@@ -3723,6 +3738,7 @@ public class PredicateEvaluationService {
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
             case StackEntryTargetsYouPredicate ignored -> false;
             case StackEntryTargetsAnyPlayerPredicate ignored -> false;
+            case StackEntryTargetsOnlySinglePermanentOrPlayerPredicate ignored -> false;
             case StackEntryTargetsOnlySingleCreaturePredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;

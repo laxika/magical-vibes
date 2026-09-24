@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,29 +31,30 @@ public class SeekEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getControllerId();
-        List<Card> library = gameData.playerDecks.get(playerId);
+        SeekEffect seekEffect = (SeekEffect) effect;
+        UUID controllerId = entry.getControllerId();
+        List<Card> library = gameData.playerDecks.get(controllerId);
         if (library == null || library.isEmpty()) {
             return;
         }
 
-        SeekEffect seek = (SeekEffect) effect;
-        List<Card> matching = library.stream()
+        UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        List<Card> matchingCards = library.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, seek.filter(), null, gameData, playerId))
+                        card, seekEffect.predicate(), sourceCardId, gameData, controllerId))
                 .toList();
-        if (matching.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        if (matchingCards.isEmpty()) {
             return;
         }
 
-        Card sought = matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
-        library.remove(sought);
-        gameData.addCardToHand(playerId, sought);
-        LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-        triggerCollectionService.checkSeekTriggers(gameData, playerId, List.of(sought));
-
+        Card selected = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
+        library.remove(selected);
+        gameData.addCardToHand(controllerId, selected);
+        if (seekEffect.storeSelectedCard()) {
+            entry.setChosenObjectCard(selected);
+        }
+        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(selected));
         gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(playerId) + " seeks ", sought, " into their hand."));
+                gameData.playerIdToName.get(controllerId) + " seeks ", selected, " into their hand."));
     }
 }

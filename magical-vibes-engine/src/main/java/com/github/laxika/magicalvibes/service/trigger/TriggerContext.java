@@ -146,6 +146,8 @@ public sealed interface TriggerContext {
     }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     record SelfBecomesCrewed(UUID controllerId) implements TriggerContext {}
+    /** Context for a creature paying a Spacecraft's station cost. */
+    record CreatureStationed(Card creatureCard) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
     /** Context for controller forage triggers. */
@@ -154,6 +156,10 @@ public sealed interface TriggerContext {
     record Seek(UUID seekingPlayerId, List<Card> soughtCards) implements TriggerContext {
         public Seek {
             soughtCards = List.copyOf(soughtCards);
+        }
+
+        public Seek(UUID seekingPlayerId) {
+            this(seekingPlayerId, List.of());
         }
     }
     /** Context for controller-discover triggers. */
@@ -342,6 +348,9 @@ public sealed interface TriggerContext {
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
+    /** Context for counters being removed from a permanent controlled by the watcher. */
+    record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
 
     /** Context for removing a time counter from a suspended card in exile. */
     record TimeCounterRemovedFromExile(int remainingCounters) implements TriggerContext {}
@@ -596,7 +605,8 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Dingus Egg).
      */
-    record AnyLandGraveyard(UUID graveyardOwnerId,
+    record AnyLandGraveyard(Card landCard,
+                            UUID graveyardOwnerId,
                             UUID landControllerId) implements TriggerContext {}
 
     /**
@@ -749,6 +759,10 @@ public sealed interface TriggerContext {
      * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
      */
     record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
+
+    /** Context for one instant or sorcery card leaving the controller's graveyard. */
+    record ControllerInstantOrSorceryCardLeavesGraveyard(UUID graveyardOwnerId, Card card)
+            implements TriggerContext {}
 
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}

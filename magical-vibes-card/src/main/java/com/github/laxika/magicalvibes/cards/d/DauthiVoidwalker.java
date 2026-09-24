@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "MAR", collectorNumber = "63")
 @CardRegistration(set = "AA3", collectorNumber = "8")
+@CardRegistration(set = "MH2", collectorNumber = "81")
 public class DauthiVoidwalker extends Card {
 
     public DauthiVoidwalker() {

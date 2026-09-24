@@ -104,4 +104,26 @@ class FoundationBreakerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or enchantment");
     }
+
+    @Test
+    @DisplayName("ETB may destroy an enchantment")
+    void etbDestroysEnchantment() {
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        castBreaker();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Glorious Anthem"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("ETB does not trigger without an artifact or enchantment")
+    void doesNotTriggerWithoutLegalTarget() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castBreaker();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Foundation Breaker");
+    }
 }

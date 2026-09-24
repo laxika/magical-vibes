@@ -25,7 +25,8 @@ public class GlimmerHoarder extends Card {
                 new DraftFromSpellbookEffect.SpellbookCard("THB", "98"),
                 new DraftFromSpellbookEffect.SpellbookCard("THB", "276"),
                 new DraftFromSpellbookEffect.SpellbookCard("YMID", "31"),
-                new DraftFromSpellbookEffect.SpellbookCard("LCI", "123")));
+                new DraftFromSpellbookEffect.SpellbookCard("LCI", "123")),
+                DraftFromSpellbookEffect.DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT);
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
                 new SurvivalTriggerEffect(new ConditionalEffect(
                         new SourceIsTapped(),

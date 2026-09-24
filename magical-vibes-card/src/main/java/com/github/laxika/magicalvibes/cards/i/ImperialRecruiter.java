@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "61")
 @CardRegistration(set = "SLZ", collectorNumber = "182")
 @CardRegistration(set = "SLZ", collectorNumber = "303")
+@CardRegistration(set = "MH2", collectorNumber = "281")
+@CardRegistration(set = "MH2", collectorNumber = "314")
 public class ImperialRecruiter extends Card {
 
     public ImperialRecruiter() {

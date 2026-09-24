@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import java.util.Set;
 
 /**
- * "Whenever another creature you control enters, that creature gets +X/+Y and gains [keywords]
- * until end of turn" (Ogre Battledriver).
+ * "Whenever another creature you control enters, that creature gets +X/+Y and gains [keywords]"
+ * for the configured duration (Ogre Battledriver uses the default end-of-turn duration).
  *
  * <p>Trigger-materialising marker for {@code ON_ALLY_CREATURE_ENTERS_BATTLEFIELD}. Unlike a plain
  * {@link BoostTargetCreatureEffect} this does not target — "that creature" is the creature that
@@ -15,8 +15,13 @@ import java.util.Set;
  * {@code keywords} is non-empty) onto the stack with {@code targetId} set to that creature and
  * {@code sourcePermanentId} set to this permanent.
  */
-public record BoostEnteringCreatureEffect(int powerBoost, int toughnessBoost, Set<Keyword> keywords)
+public record BoostEnteringCreatureEffect(int powerBoost, int toughnessBoost, Set<Keyword> keywords,
+                                          GrantDuration duration)
         implements CardEffect {
+
+    public BoostEnteringCreatureEffect(int powerBoost, int toughnessBoost, Set<Keyword> keywords) {
+        this(powerBoost, toughnessBoost, keywords, GrantDuration.END_OF_TURN);
+    }
 
     /** Boost with no keyword grant. */
     public BoostEnteringCreatureEffect(int powerBoost, int toughnessBoost) {

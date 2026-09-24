@@ -137,6 +137,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroL
 import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
@@ -266,6 +267,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -3495,6 +3497,15 @@ public class GameQueryService {
                                 int count, boolean affectedPermanentIsCreature,
                                 boolean affectedPermanentIsArtifact, Permanent affectedPermanent,
                                 boolean affectedPermanentIsEntering) {
+        return replaceCounters(gameData, controllerId, counterType, count,
+                affectedPermanentIsCreature, affectedPermanentIsArtifact, affectedPermanent,
+                affectedPermanentIsEntering, false);
+    }
+
+    private int replaceCounters(GameData gameData, UUID controllerId, CounterType counterType,
+                                int count, boolean affectedPermanentIsCreature,
+                                boolean affectedPermanentIsArtifact, Permanent affectedPermanent,
+                                boolean affectedPermanentIsEntering, boolean modularAbility) {
         if (count <= 0 || controllerId == null) {
             return count;
         }
@@ -3505,6 +3516,7 @@ public class GameQueryService {
                 for (CardEffect effect : staticEffectsIncludingTemporary(
                         gameData, permanent, controllerId)) {
                     if (effect instanceof CounterReplacementEffect replacement
+                            && (!replacement.appliesOnlyToModularAbility() || modularAbility)
                             && !replacement.appliesToAllPermanents()
                             && replacement.appliesTo(counterType, affectedPermanentIsCreature,
                             affectedPermanentIsArtifact, permanent, affectedPermanent)) {
@@ -3599,10 +3611,12 @@ public class GameQueryService {
                 for (CardEffect effect : staticEffectsIncludingTemporary(
                         gameData, permanent, controllerId)) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
+                            && !replacement.appliesOnlyToModularAbility()
                             && replacement.appliesToNonCreatureVehicles()) {
                         result = MaroGoneNutsSupport.apply(
                                 gameData, effect, replacement.replace(result));
                     } else if (effect instanceof CounterReplacementEffect replacement
+                            && (!replacement.appliesOnlyToModularAbility())
                             && !replacement.appliesToAllPermanents()
                             && replacement.appliesTo(CounterType.PLUS_ONE_PLUS_ONE, false, true,
                             permanent, affectedPermanent)) {
@@ -3671,6 +3685,11 @@ public class GameQueryService {
 
     public int replaceCounters(GameData gameData, Permanent permanent, CounterType counterType,
                                int count, UUID placingPlayerId) {
+        return replaceCounters(gameData, permanent, counterType, count, placingPlayerId, false);
+    }
+
+    public int replaceCounters(GameData gameData, Permanent permanent, CounterType counterType,
+                               int count, UUID placingPlayerId, boolean modularAbility) {
         UUID affectedControllerId = findPermanentController(gameData, permanent.getId());
         boolean creature = permanent.getCard().hasType(CardType.CREATURE) || isCreature(gameData, permanent);
         boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
@@ -3684,6 +3703,7 @@ public class GameQueryService {
                 for (CardEffect effect : staticEffectsIncludingTemporary(
                         gameData, source, sourceControllerId)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
+                    if (replacement.appliesOnlyToModularAbility() && !modularAbility) continue;
                     boolean applies;
                     if (replacement.appliesToAllPermanents()) {
                         applies = replacement.appliesTo(counterType, creature, artifact);
@@ -3768,6 +3788,13 @@ public class GameQueryService {
 
     public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
                                CounterType counterType, int count, UUID placingPlayerId) {
+        return replaceCounters(gameData, permanent, controllerId, counterType, count,
+                placingPlayerId, false);
+    }
+
+    public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
+                               CounterType counterType, int count, UUID placingPlayerId,
+                               boolean modularAbility) {
         boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
         boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE
                 && permanent != null && !creature
@@ -3781,6 +3808,7 @@ public class GameQueryService {
                 for (CardEffect effect : staticEffectsIncludingTemporary(
                         gameData, source, sourceControllerId)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
+                    if (replacement.appliesOnlyToModularAbility() && !modularAbility) continue;
                     boolean applies;
                     if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
                             && nonCreatureVehicle && plusOneReplacement.appliesToNonCreatureVehicles()) {
@@ -4072,6 +4100,12 @@ public class GameQueryService {
         boolean usesToughnessInsteadOfPower = false;
         int powerBonus = 0;
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
+                usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
+                powerBonus += modifier.powerBonus();
+            }
+        }
+        for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
                 usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
                 powerBonus += modifier.powerBonus();
@@ -4972,6 +5006,12 @@ public class GameQueryService {
                     }
                 }
             }
+        }
+        GameData.PerpetualPowerToughnessModifier perpetualModifier =
+                gameData.perpetualCardPowerToughnessModifiers.get(target.getCard().getId());
+        if (perpetualModifier != null) {
+            accumulator.addPower(perpetualModifier.power());
+            accumulator.addToughness(perpetualModifier.toughness());
         }
         if (beforeIndefinite != null) {
             ModifierLine line = beforeIndefinite.diff("Indefinite buff", accumulator, false);
@@ -5972,6 +6012,7 @@ public class GameQueryService {
                 || hasProtectionFromSourceCardTypes(gameData, target, source)
                 || hasProtectionFromSourceSubtypes(gameData, target, source)
                 || hasProtectionFromModifiedCreatures(gameData, target, source)
+                || hasProtectionFromPermanentsWithCounters(gameData, target, source)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, source)
                 || hasProtectionFromSourceManaValue(target, source.getCard());
     }
@@ -6784,6 +6825,8 @@ public class GameQueryService {
     public boolean playerHasShroud(GameData gameData, UUID playerId) {
         return gameData.playerKeywordsUntilEndOfTurn
                 .getOrDefault(playerId, Set.of()).contains(Keyword.SHROUD)
+                || gameData.playerKeywordsUntilNextTurn
+                .getOrDefault(playerId, Set.of()).contains(Keyword.SHROUD)
                 || playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.SHROUD);
     }
 
@@ -6794,6 +6837,8 @@ public class GameQueryService {
      */
     public boolean playerHasHexproof(GameData gameData, UUID playerId) {
         return gameData.playerKeywordsUntilEndOfTurn
+                .getOrDefault(playerId, Set.of()).contains(Keyword.HEXPROOF)
+                || gameData.playerKeywordsUntilNextTurn
                 .getOrDefault(playerId, Set.of()).contains(Keyword.HEXPROOF)
                 || playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.HEXPROOF);
     }
@@ -6892,6 +6937,75 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    private boolean hasProtectionFromPermanentsWithCounters(GameData gameData, Permanent target,
+                                                             Permanent source) {
+        Set<CounterType> protectedCounterTypes = new HashSet<>();
+        collectProtectedCounterTypes(target.getCard().getEffects(EffectSlot.STATIC), protectedCounterTypes);
+        collectProtectedCounterTypes(computeStaticBonus(gameData, target).grantedEffects(), protectedCounterTypes);
+        return protectedCounterTypes.stream().anyMatch(counterType ->
+                predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, source, new PermanentHasCountersPredicate(counterType)));
+    }
+
+    private void collectProtectedCounterTypes(Iterable<CardEffect> effects, Set<CounterType> counterTypes) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof ProtectionGrantingEffect protection) {
+                counterTypes.addAll(protection.protectionFromPermanentsWithCounters());
+            }
+        }
+    }
+
+    /**
+     * Returns whether the player controls a permanent granting protection from the source's card
+     * type, based on that permanent's chosen card type (Serra's Emissary).
+     */
+    public boolean playerHasProtectionFromChosenCardType(GameData gameData, UUID playerId,
+                                                          Card sourceCard) {
+        return playerHasProtectionFromChosenCardType(gameData, playerId, sourceCard, null);
+    }
+
+    /**
+     * Permanent-source overload for chosen card-type protection. The permanent overload includes
+     * card types granted by the layer system, such as a creature's temporary animation.
+     */
+    public boolean playerHasProtectionFromChosenCardType(GameData gameData, UUID playerId,
+                                                          Card sourceCard, Permanent sourcePermanent) {
+        if (gameData == null || playerId == null || (sourceCard == null && sourcePermanent == null)) {
+            return false;
+        }
+        Set<CardType> sourceTypes = sourcePermanent != null
+                ? getEffectiveCardTypes(gameData, sourcePermanent)
+                : cardTypesOf(sourceCard);
+        if (sourceTypes.isEmpty()) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            if (hasLostPrintedAbilities(gameData, permanent)) {
+                continue;
+            }
+            GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect effect =
+                    permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .filter(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class::isInstance)
+                            .map(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class::cast)
+                            .findFirst().orElse(null);
+            if (effect != null && !permanent.isStaticEffectSuppressed(effect.getClass())
+                    && sourceTypes.contains(permanent.getChosenCardType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<CardType> cardTypesOf(Card card) {
+        Set<CardType> types = EnumSet.of(card.getType());
+        types.addAll(card.getAdditionalTypes());
+        return types;
     }
 
     /**
