@@ -2117,6 +2117,9 @@ public class CombatDamageService {
         if (!battleDamage) {
             triggerCollectionService.checkEmblemAllyCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, damageDealt);
+            triggerCollectionService.collectTemporaryGlobalTriggers(
+                    gameData, EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                    creature.getId(), damageDealt);
         }
         if (attackerBattlefield == null) return;
 

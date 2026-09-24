@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -44,6 +45,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.RetetherAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.RetetherAuraPlacement;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -2602,6 +2605,10 @@ public class GraveyardReturnSupport {
         UUID chooserId = state.controllerChoosesPile() ? controllerId : state.targetPlayerId();
         String chooserName = gameData.playerIdToName.get(chooserId);
         gameLogService.append(gameData, GameLog.text(chooserName + " chooses " + chosenPileName + "."));
+        if (state.disposition() == CardPileDisposition.GRAVEYARD_AND_FREE_CAST_ONE_REST_TO_HAND) {
+            completeAbstractPerformancePileChoice(gameData, state, chosenPileCardIds, otherPileCardIds, allCards);
+            return;
+        }
         if (state.disposition() == CardPileDisposition.OPPONENT_CHOOSES_EXILE) {
             completeDeathOrGloryPileChoice(gameData, state, chosenPileCardIds, otherPileCardIds, allCards, cardOwners,
                     accepted);
@@ -2741,6 +2748,53 @@ public class GraveyardReturnSupport {
                 gameLogService.append(gameData, GameLog.cardThen(card, " returns to " + ownerName + "'s graveyard."));
             }
         }
+    }
+
+    private void completeAbstractPerformancePileChoice(GameData gameData, PendingPileSeparation state,
+                                                        List<UUID> chosenPileCardIds,
+                                                        List<UUID> otherPileCardIds, List<Card> allCards) {
+        UUID controllerId = state.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        for (UUID cardId : chosenPileCardIds) {
+            Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+            if (card == null) {
+                continue;
+            }
+            ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+            if (exiled != null && gameData.removeFromExile(card.getId())) {
+                graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE);
+            }
+        }
+
+        List<Card> otherCards = otherPileCardIds.stream()
+                .map(cardId -> allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ArrayList::new));
+        List<Card> castableCards = otherCards.stream()
+                .filter(card -> !card.hasType(CardType.LAND))
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (otherCards.isEmpty() || castableCards.isEmpty()) {
+            for (Card card : otherCards) {
+                if (gameData.removeFromExile(card.getId())) {
+                    gameData.addCardToHand(controllerId, card);
+                }
+            }
+            return;
+        }
+
+        String prompt = "You may cast a spell from the other pile without paying its mana cost.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, castableCards)
+                        .reveals(false)
+                        .canFailToFind(true)
+                        .sourceCards(otherCards)
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.CAST_ONE_AND_PUT_REST_INTO_HAND)
+                        .build(), prompt, true));
+        gameLogService.append(gameData, GameLog.text(controllerName
+                + " may cast a spell from the other pile without paying its mana cost."));
     }
 
     /** Completes Truth or Tale's one-card choice and starts the ordered bottoming step if needed. */

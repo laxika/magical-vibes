@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "828")
+@CardRegistration(set = "SOC", collectorNumber = "218")
 public class KeenDuelist extends Card {
 
     public KeenDuelist() {

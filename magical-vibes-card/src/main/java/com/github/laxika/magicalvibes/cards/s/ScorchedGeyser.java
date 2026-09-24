@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
+@CardRegistration(set = "SOC", collectorNumber = "54")
+@CardRegistration(set = "SOC", collectorNumber = "102")
 @CardRegistration(set = "MSC", collectorNumber = "264")
 @CardRegistration(set = "MSC", collectorNumber = "492")
 public class ScorchedGeyser extends Card {

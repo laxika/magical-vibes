@@ -64,7 +64,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
 
             gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
 
-            if (!e.tokenCopy() && copyEntry.getTargetId() != null) {
+            if (copyEntry.getTargetId() != null) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(
                         entry.getCard(),
                         castingPlayerId,

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
+@CardRegistration(set = "SOC", collectorNumber = "52")
+@CardRegistration(set = "SOC", collectorNumber = "100")
 @CardRegistration(set = "MSC", collectorNumber = "232")
 @CardRegistration(set = "MSC", collectorNumber = "467")
 public class CoastalPeak extends Card {

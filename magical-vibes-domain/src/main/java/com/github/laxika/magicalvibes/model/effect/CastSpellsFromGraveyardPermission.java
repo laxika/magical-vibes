@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Capability for a static effect that lets its controller cast spells matching {@link #filter()}
@@ -17,6 +19,19 @@ public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermissi
 
     /** Spells matching this predicate may be cast from the controller's graveyard. */
     CardPredicate filter();
+
+    /**
+     * True if the permission is limited to one spell during each of the controller's own turns
+     * (Gisa and Geralf). False grants an unlimited, any-turn permission (Abandoned Sarcophagus).
+     */
+    default boolean oncePerControllerTurn() {
+        return false;
+    }
+
+    /** True if this permission also permits playing a land from the controller's graveyard. */
+    default boolean permitsLandPlayFromGraveyard() {
+        return false;
+    }
 
     /** True if this permission applies only during its controller's turn. */
     default boolean onlyDuringControllerTurn() {
@@ -71,5 +86,10 @@ public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermissi
     /** Number of counters applied by {@link #enterWithCounter()}. */
     default int enterWithCounterCount() {
         return enterWithCounter() == null ? 0 : 1;
+    }
+
+    /** Triggered abilities granted to a permanent as it enters after using this permission. */
+    default Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry() {
+        return Map.of();
     }
 }

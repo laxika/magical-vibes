@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "132")
+@CardRegistration(set = "SOC", collectorNumber = "123")
 public class HarmonicProdigy extends Card {
 
     public HarmonicProdigy() {

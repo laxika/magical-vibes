@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/** Handles the resolution-time opponent choice made by demonstrate. */
 @Slf4j
 @Component
 @RequiredArgsConstructor

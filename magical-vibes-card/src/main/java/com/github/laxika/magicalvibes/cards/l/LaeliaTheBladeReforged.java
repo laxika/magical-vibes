@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "HA6", collectorNumber = "5")
+@CardRegistration(set = "SOC", collectorNumber = "246")
 public class LaeliaTheBladeReforged extends Card {
 
     public LaeliaTheBladeReforged() {

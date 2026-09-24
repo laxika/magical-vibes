@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchin
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler implements CostModificationHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,6 +43,12 @@ public class ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler implements
                 .filter(spell -> !reduce.kickedOnly() || kickedSpellIds.contains(spell.getId()))
                 .anyMatch(spell -> predicateEvaluationService.matchesCardPredicate(
                         spell, reduce.predicate(), sourceCardId, context.gameData(), context.castingPlayerId()));
-        return alreadyCastMatchingSpell ? 0 : -reduce.amount();
+        if (alreadyCastMatchingSpell) {
+            return 0;
+        }
+
+        var amountContext = new AmountContext(context.castingPlayerId(), source.sourcePermanent(),
+                null, 0, 0);
+        return -amountEvaluationService.evaluate(context.gameData(), reduce.amount(), amountContext);
     }
 }

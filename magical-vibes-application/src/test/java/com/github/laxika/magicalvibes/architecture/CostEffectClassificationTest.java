@@ -63,6 +63,7 @@ class CostEffectClassificationTest {
             "PayEchoCost",
             "PayEnergyCost",
             "PayLifeForEachCardInHandCost",
+            "PayLifeForEachCommanderColorCost",
             "PayManaCost",
             "PayMulticoloredSourceManaCost",
             "PutCounterOnSourceCost",

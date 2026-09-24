@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "3")
+@CardRegistration(set = "SOC", collectorNumber = "134")
 public class AngelicDestiny extends Card {
 
     public AngelicDestiny() {

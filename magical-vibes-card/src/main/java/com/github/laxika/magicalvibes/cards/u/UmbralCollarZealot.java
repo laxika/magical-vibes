@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EOE", collectorNumber = "123")
+@CardRegistration(set = "SOC", collectorNumber = "227")
 public class UmbralCollarZealot extends Card {
 
     public UmbralCollarZealot() {

@@ -725,6 +725,9 @@ public class UntapStepService {
             TurnStep step,
             CardEffect effect,
             List<CrossPlayerUntap> result) {
+        if (gameQueryService.hasLostAllAbilities(gameData, source)) {
+            return;
+        }
         if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
                 && configuredEffect.step() == step
                 && configuredEffect.scope() == TapUntapScope.CONTROLLED) {

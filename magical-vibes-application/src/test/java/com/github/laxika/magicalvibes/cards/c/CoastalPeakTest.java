@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,29 +23,29 @@ class CoastalPeakTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Coastal Peak").isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Produces blue mana")
-    void producesBlueMana() {
-        Permanent coastalPeak = harness.addToBattlefieldAndReturn(player1, new CoastalPeak());
+    @DisplayName("Tapping produces one blue mana")
+    void tappingProducesBlueMana() {
+        Permanent land = addPeakReady(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
-        assertThat(coastalPeak.isTapped()).isTrue();
+        assertThat(land.isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Produces red mana")
-    void producesRedMana() {
-        Permanent coastalPeak = harness.addToBattlefieldAndReturn(player1, new CoastalPeak());
+    @DisplayName("Tapping produces one red mana")
+    void tappingProducesRedMana() {
+        Permanent land = addPeakReady(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(coastalPeak.isTapped()).isTrue();
+        assertThat(land.isTapped()).isTrue();
     }
 
     @Test
@@ -52,12 +53,19 @@ class CoastalPeakTest extends BaseCardTest {
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new CoastalPeak()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Coastal Peak");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    private Permanent addPeakReady(Player player) {
+        Permanent land = harness.addToBattlefieldAndReturn(player, new CoastalPeak());
+        land.setSummoningSick(false);
+        return land;
     }
 }

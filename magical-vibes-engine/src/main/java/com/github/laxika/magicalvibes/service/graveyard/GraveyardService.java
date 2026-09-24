@@ -1809,7 +1809,10 @@ public class GraveyardService {
         gameData.graveyardLeaveNotificationDepth--;
         if (gameData.graveyardLeaveNotificationDepth == 0) {
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingOwners) {
-                triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
+                triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(
+                        gameData, ownerId,
+                        gameData.graveyardLeaveNotificationPendingCards
+                                .getOrDefault(ownerId, List.of()));
             }
             for (var pending : gameData.graveyardLeaveNotificationPendingInstantOrSorceryCards.entrySet()) {
                 for (Card card : pending.getValue()) {
@@ -1841,7 +1844,10 @@ public class GraveyardService {
                 }
             }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners) {
-                triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+                triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(
+                        gameData, ownerId,
+                        gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards
+                                .getOrDefault(ownerId, List.of()));
             }
             gameData.graveyardLeaveNotificationPendingOwners.clear();
             gameData.graveyardLeaveNotificationPendingInstantOrSorceryCards.clear();
@@ -1852,6 +1858,7 @@ public class GraveyardService {
             gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
             gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
+            gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards.clear();
         }
     }
 
@@ -1860,10 +1867,14 @@ public class GraveyardService {
      * When inside a batch ({@link #beginGraveyardLeaveBatch}), defers until the batch ends.
      */
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId) {
-        notifyCardsLeftGraveyard(gameData, ownerId, 1);
+        notifyCardsLeftGraveyard(gameData, ownerId, 1, List.of());
     }
 
     private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count) {
+        notifyCardsLeftGraveyard(gameData, ownerId, count, List.of());
+    }
+
+    private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count, List<Card> cards) {
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.
         gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
@@ -1873,9 +1884,14 @@ public class GraveyardService {
         pruneDamagedCreatureDiedTrackingNotInGraveyard(gameData);
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingOwners.add(ownerId);
+            if (!cards.isEmpty()) {
+                gameData.graveyardLeaveNotificationPendingCards
+                        .computeIfAbsent(ownerId, ignored -> new ArrayList<>())
+                        .addAll(cards);
+            }
             return;
         }
-        triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
+        triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId, cards);
     }
 
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
@@ -1894,7 +1910,7 @@ public class GraveyardService {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, 1);
         }
         if (isArtifactOrCreatureCard(leavingCard)) {
-            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
+            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId, List.of(leavingCard));
         }
     }
 
@@ -1920,8 +1936,11 @@ public class GraveyardService {
         if (creatureCardCount > 0) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, creatureCardCount);
         }
-        if (leavingCards.stream().anyMatch(this::isArtifactOrCreatureCard)) {
-            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
+        List<Card> artifactOrCreatureCards = leavingCards.stream()
+                .filter(this::isArtifactOrCreatureCard)
+                .toList();
+        if (!artifactOrCreatureCards.isEmpty()) {
+            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId, artifactOrCreatureCards);
         }
     }
 
@@ -2024,13 +2043,17 @@ public class GraveyardService {
         }
     }
 
-    private void notifyArtifactOrCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+    private void notifyArtifactOrCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId,
+                                                            List<Card> cards) {
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.add(ownerId);
+            gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards
+                    .computeIfAbsent(ownerId, ignored -> new ArrayList<>())
+                    .addAll(cards);
             return;
         }
         triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(
-                gameData, ownerId);
+                gameData, ownerId, cards);
     }
 
     private boolean isArtifactOrCreatureCard(Card card) {

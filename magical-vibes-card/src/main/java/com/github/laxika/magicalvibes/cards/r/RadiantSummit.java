@@ -6,24 +6,19 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
-import java.util.List;
-
+@CardRegistration(set = "SOC", collectorNumber = "396")
 @CardRegistration(set = "MSC", collectorNumber = "258")
 @CardRegistration(set = "MSC", collectorNumber = "486")
 public class RadiantSummit extends Card {
 
     public RadiantSummit() {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new ControlsPermanentCount(2, new PermanentAllOfPredicate(List.of(
-                        new PermanentIsLandPredicate(),
-                        new PermanentHasSupertypePredicate(CardSupertype.BASIC)))),
+                new ControlsPermanentCountAtMost(1, new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
                 new EntersTappedEffect()));
 
         // {T}: Add {R}.

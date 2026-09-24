@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "STX", collectorNumber = "244")
 @CardRegistration(set = "OTP", collectorNumber = "57")
+@CardRegistration(set = "SOC", collectorNumber = "335")
 public class VanishingVerse extends Card {
 
     public VanishingVerse() {
