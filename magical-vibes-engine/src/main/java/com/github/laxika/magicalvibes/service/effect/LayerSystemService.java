@@ -648,6 +648,8 @@ public class LayerSystemService {
         h = mix(h, gameData.ringStates.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        h = mix(h, gameData.cardIntensities.hashCode());
+        h = mix(h, gameData.cardIntensities.size());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> commanders = gameData.playerCommanders.get(playerId);

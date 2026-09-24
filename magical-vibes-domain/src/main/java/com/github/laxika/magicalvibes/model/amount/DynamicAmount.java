@@ -168,6 +168,7 @@ public sealed interface DynamicAmount permits
         SacrificedPermanentPower,
         SacrificedPermanentToughness,
         SourceCardPower,
+        SourceIntensity,
         SourceManaValueMinusOne,
         SourcePower,
         SourceToughness,
