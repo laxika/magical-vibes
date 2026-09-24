@@ -2238,6 +2238,31 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_STATIONED)
+    private boolean handleBecomesStationed(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CreatureStationed stationed)
+                || match.permanent() == null) {
+            return false;
+        }
+
+        GameData gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                stationed.creatureCard().getId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        gameData.pendingActivatedAbilityCostTriggers.add(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers when a creature stations it",
+                gameData.id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_MUTATES)
     private boolean handleSelfMutatesDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

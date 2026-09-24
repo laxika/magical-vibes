@@ -1804,7 +1804,8 @@ public class PermanentRemovalService {
             if (target.getCard().hasType(CardType.LAND) && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkLandPutIntoGraveyardByOpponentTriggers(
                         gameData, target.getOriginalCard(), ownerId, gameData.currentlyResolvingControllerId);
-                triggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
+                triggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(
+                        gameData, target.getCard(), ownerId, controllerId);
             }
             if (destroyedBySpellOrAbility && !wasCreature) {
                 UUID destroyingControllerId = gameData.currentlyResolvingControllerId;

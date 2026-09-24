@@ -1421,6 +1421,9 @@ public class GameData {
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Card IDs that have been granted Warp {0} until end of turn. Cleared at end of turn. */
+    public final Set<UUID> cardsGrantedWarpUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     /** Card IDs that have been granted harmonize until end of turn. The harmonize cost for these
      * cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedHarmonizeUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -2819,6 +2822,16 @@ public class GameData {
      *  of the controller's next turn; next-turn cleanup and next-upkeep durations expire
      *  at their respective cleanup step and end of upkeep. */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
+
+    /** Per-card power/toughness modifiers that remain with a card through zone changes. */
+    public final Map<UUID, PerpetualPowerToughnessModifier> perpetualCardPowerToughnessModifiers =
+            new ConcurrentHashMap<>();
+
+    public record PerpetualPowerToughnessModifier(int power, int toughness) {
+    }
+
+    /** Keywords that remain with a card through zone changes. */
+    public final Map<UUID, Set<Keyword>> perpetualCardKeywords = new ConcurrentHashMap<>();
 
     /**
      * Opaque slot for the engine's memoized CR 613 layered board
@@ -6477,6 +6490,10 @@ public class GameData {
 
         // --- Floating continuous effects (immutable records, safe to share) ---
         copy.floatingEffects.addAll(this.floatingEffects);
+        copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);
+        this.perpetualCardKeywords.forEach((cardId, keywords) ->
+                copy.perpetualCardKeywords.put(cardId, keywords.isEmpty()
+                        ? EnumSet.noneOf(Keyword.class) : EnumSet.copyOf(keywords)));
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
@@ -6749,6 +6766,7 @@ public class GameData {
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.cardsGrantedWarpUntilEndOfTurn.addAll(this.cardsGrantedWarpUntilEndOfTurn);
         copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);

@@ -762,6 +762,9 @@ public class AmountEvaluationService {
             return power == null ? 0 : Math.max(0, power);
         }
         int power = gameQueryService.getEffectivePower(gameData, chosen);
+        if (ctx.sourcePermanent() != null && ctx.sourcePermanent().getCard().hasKeyword(Keyword.STATION)) {
+            power += stationPowerBonus(gameData, chosen);
+        }
         if (usesToughnessForStationing(gameData, ctx)) {
             int toughness = gameQueryService.getEffectiveToughness(gameData, chosen);
             if (toughness > power) {
@@ -769,6 +772,17 @@ public class AmountEvaluationService {
             }
         }
         return Math.max(0, power);
+    }
+
+    private int stationPowerBonus(GameData gameData, Permanent permanent) {
+        int bonus = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(StationPowerModifierEffect.class::isInstance)
+                .mapToInt(effect -> ((StationPowerModifierEffect) effect).powerBonus())
+                .sum();
+        return bonus + gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .filter(StationPowerModifierEffect.class::isInstance)
+                .mapToInt(effect -> ((StationPowerModifierEffect) effect).powerBonus())
+                .sum();
     }
 
     private boolean usesToughnessForStationing(GameData gameData, AmountContext ctx) {

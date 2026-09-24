@@ -336,6 +336,7 @@ public class Permanent {
      *  New counter kinds require only a new {@link CounterType} value — never a new field here.
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    private int countersRemovedSinceTriggerCheck;
     private int loyaltyCountersRemovedSinceTriggerCheck;
     /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
      *  in layer ordering; removing counters does not remove their timestamp. */
@@ -841,6 +842,7 @@ public class Permanent {
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.counters.putAll(source.counters);
+        this.countersRemovedSinceTriggerCheck = source.countersRemovedSinceTriggerCheck;
         this.loyaltyCountersRemovedSinceTriggerCheck = source.loyaltyCountersRemovedSinceTriggerCheck;
         this.counterTimestamps.putAll(source.counterTimestamps);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
@@ -1264,6 +1266,9 @@ public class Permanent {
         }
         int previousCount = counters.getOrDefault(counterType, 0);
         int newCount = Math.max(0, count);
+        if (newCount < previousCount) {
+            countersRemovedSinceTriggerCheck += previousCount - newCount;
+        }
         if (counterType == CounterType.LOYALTY && newCount < previousCount) {
             loyaltyCountersRemovedSinceTriggerCheck += previousCount - newCount;
         }
@@ -1272,6 +1277,12 @@ public class Permanent {
         } else {
             counters.put(counterType, count);
         }
+    }
+
+    public int drainCountersRemovedSinceTriggerCheck() {
+        int removed = countersRemovedSinceTriggerCheck;
+        countersRemovedSinceTriggerCheck = 0;
+        return removed;
     }
 
     public int drainLoyaltyCountersRemovedSinceTriggerCheck() {

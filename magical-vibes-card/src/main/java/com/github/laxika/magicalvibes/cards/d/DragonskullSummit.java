@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "M13", collectorNumber = "222")
 @CardRegistration(set = "XLN", collectorNumber = "252")
 @CardRegistration(set = "TMC", collectorNumber = "64")
+@CardRegistration(set = "YEOE", collectorNumber = "32")
 public class DragonskullSummit extends Card {
 
     public DragonskullSummit() {

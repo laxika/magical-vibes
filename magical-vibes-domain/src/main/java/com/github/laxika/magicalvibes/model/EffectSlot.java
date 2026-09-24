@@ -191,6 +191,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_SCRIES,
     /** Triggers when this permanent's controller investigates for the first time each turn. */
     ON_CONTROLLER_INVESTIGATES,
+    /** Triggers whenever this permanent's controller investigates one or more times. */
+    ON_CONTROLLER_INVESTIGATES_EACH_TIME,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
@@ -205,6 +207,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_COLLECTS_EVIDENCE,
     /** Triggers whenever this permanent's controller completes a discover action. */
     ON_CONTROLLER_DISCOVERS,
+    /** Triggers whenever this permanent's controller seeks one or more cards. */
+    ON_CONTROLLER_SEEKS,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -908,6 +912,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_EVOLVES,
     /** Triggers whenever one or more loyalty counters are removed from this permanent. */
     ON_SELF_LOYALTY_COUNTERS_REMOVED,
+    /** Triggers whenever one or more counters are removed from a permanent the controller controls. */
+    ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT,
     /** Triggers whenever one or more loyalty counters are put on planeswalkers the controller controls. */
     ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS,
     /** Triggers whenever the controller puts one or more -1/-1 counters on this permanent — the -1/-1
@@ -1181,6 +1187,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  triggered ability's stack entry. Checked from {@code CrewCostHandler} as each creature is
      *  tapped to pay the power-based cost. */
     ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE,
+    /** Triggers whenever a creature stations this Spacecraft. */
+    ON_SELF_BECOMES_STATIONED,
     /** Triggers whenever the controller of this permanent activates a non-mana activated ability
      *  (CR 605.1a). Unlike {@link #ON_CONTROLLER_ACTIVATES_ABILITY} this excludes mana abilities and
      *  fires only after the ability has been put on the stack, so the triggering ability can be
