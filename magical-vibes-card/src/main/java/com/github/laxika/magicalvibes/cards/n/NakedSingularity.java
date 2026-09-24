@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.NakedSingularityManaEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "330")
+@CardRegistration(set = "ME4", collectorNumber = "216")
 public class NakedSingularity extends Card {
 
     public NakedSingularity() {

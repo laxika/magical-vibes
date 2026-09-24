@@ -62,6 +62,7 @@ public class BendOrBreakEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingBendOrBreak(
                 entry.getControllerId(), sourceName, playerPiles, 0));
         beginNextLandSeparation(gameData);

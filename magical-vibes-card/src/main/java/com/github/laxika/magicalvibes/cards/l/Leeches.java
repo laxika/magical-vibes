@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllPoisonCountersAndDamageTargetPlayerEffect;
 
 @CardRegistration(set = "HML", collectorNumber = "9")
+@CardRegistration(set = "ME4", collectorNumber = "18")
 public class Leeches extends Card {
 
     public Leeches() {

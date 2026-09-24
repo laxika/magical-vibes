@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "139")
 @CardRegistration(set = "HA3", collectorNumber = "23")
+@CardRegistration(set = "MH2", collectorNumber = "291")
 public class MirarisWake extends Card {
 
     public MirarisWake() {

@@ -2219,6 +2219,19 @@ public class TriggeredAbilityQueueService {
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
                         continue;
                     }
+                    if (returnEffect != null && returnEffect.targetPutIntoGraveyardFromLibraryThisTurn()
+                            && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
+                    if (returnEffect != null
+                            && returnEffect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                            && !gameData.cardsDiscardedOrCycledThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())
+                            && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (manaValueEqualsX
                             && graveyardCard.getManaValue() != pending.xValue() + manaValueXOffset) {
                         continue;
@@ -2262,6 +2275,8 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
             gameData.graveyardTargetOperation.xValue = pending.xValue();
+            gameData.graveyardTargetOperation.singleGraveyard =
+                    describedTarget != null && describedTarget.singleGraveyard();
             gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger =
                     pending.sourceAlternateCostAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
@@ -2328,6 +2343,12 @@ public class TriggeredAbilityQueueService {
     private void pushSpellGraveyardTriggeredAbilityWithoutTargets(
             GameData gameData, PermanentChoiceContext.SpellGraveyardTargetTrigger pending) {
         String description = pending.sourceCard().getName() + "'s ability";
+        UUID sourcePermanentId = gameData.playerBattlefields
+                .getOrDefault(pending.controllerId(), List.of()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(pending.sourceCard().getId()))
+                .map(Permanent::getId)
+                .findFirst()
+                .orElse(null);
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 pending.sourceCard(),
@@ -2336,7 +2357,7 @@ public class TriggeredAbilityQueueService {
                 new ArrayList<>(pending.effects()),
                 pending.xValue(),
                 null,
-                null,
+                sourcePermanentId,
                 java.util.Map.of(),
                 null,
                 List.of(),

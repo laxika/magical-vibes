@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "73")
+@CardRegistration(set = "ME4", collectorNumber = "81")
 public class FoulSpirit extends Card {
 
     public FoulSpirit() {

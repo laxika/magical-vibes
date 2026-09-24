@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "2ED", collectorNumber = "241")
+@CardRegistration(set = "ME4", collectorNumber = "195")
 public class CyclopeanTomb extends Card {
 
     public CyclopeanTomb() {
@@ -33,7 +34,7 @@ public class CyclopeanTomb extends Card {
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.MIRE),
                         new RememberMireCounterLandEffect(),
-                        new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.SWAMP, CounterType.MIRE)
+                        new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.SWAMP, CounterType.MIRE, true)
                 ),
                 "{2}, {T}: Put a mire counter on target non-Swamp land. That land is a Swamp for as long as it has a mire counter on it. Activate only during your upkeep.",
                 new PermanentPredicateTargetFilter(nonSwampLand, "Target must be a non-Swamp land"),

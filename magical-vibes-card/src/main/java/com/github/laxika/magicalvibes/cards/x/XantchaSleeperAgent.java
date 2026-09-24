@@ -5,15 +5,20 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1271")
 @CardRegistration(set = "SLC", collectorNumber = "24")
 @CardRegistration(set = "SLC", collectorNumber = "51")
+@CardRegistration(set = "CMM", collectorNumber = "362")
+@CardRegistration(set = "CMM", collectorNumber = "595")
 public class XantchaSleeperAgent extends Card {
 
     public XantchaSleeperAgent() {

@@ -28,6 +28,10 @@ public sealed interface MultiPermanentChoiceContext {
     record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
 
+    /** Selects the two players remembered by a permanent as it enters the battlefield. */
+    record ChoosePlayersAsEnter(PermanentChoiceContext.ChoosePlayerAsEnter pending)
+            implements MultiPermanentChoiceContext {}
+
     /** Selects an optional graveyard-card target while walking an ETB or planar target group. */
     record EtbGraveyardCardTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
@@ -198,6 +202,11 @@ public sealed interface MultiPermanentChoiceContext {
                                   boolean preventUntapWhileSourceTapped) {
             this(sourceName, sourcePermanentId, preventUntapWhileSourceTapped, false, false);
         }
+    }
+
+    /** Goad the chosen creature controlled by the damaged player until the controller's next turn. */
+    record GoadDamagedPlayerControls(String sourceName, UUID controllerId)
+            implements MultiPermanentChoiceContext {
     }
 
     /** Sacrifice a permanent the damaged player controls (mandatory combat damage trigger, e.g. Ashling, the Extinguisher). */
@@ -506,6 +515,18 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each opponent chooses a nontoken creature to sacrifice for Replicating Terror. */
+    record EachOpponentSacrificesNontokenCreatureConjuresDuplicates(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachOpponentSacrificesNontokenCreatureConjuresDuplicates {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /** The controller and a target opponent each choose a creature before both are sacrificed. */
     record ControllerAndTargetPlayerChooseCreaturesThenSacrifice(
             java.util.List<PendingForcedSacrifice> remainingChoosers,
@@ -577,6 +598,20 @@ public sealed interface MultiPermanentChoiceContext {
                                                      String sourceName) implements MultiPermanentChoiceContext {
 
         public EachPlayerChoosesOpponentPermanentToExile {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
+    /** Each player chooses up to one qualifying permanent controlled by an opponent. */
+    record EachPlayerChoosesOpponentPermanentToDestroy(List<UUID> remainingPlayerIds,
+                                                       List<UUID> chosenIds,
+                                                       PermanentPredicate filter,
+                                                       UUID sourceCardId,
+                                                       UUID sourceControllerId,
+                                                       String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesOpponentPermanentToDestroy {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             chosenIds = List.copyOf(chosenIds);
         }
@@ -1079,8 +1114,16 @@ public sealed interface MultiPermanentChoiceContext {
     record WillOfTheCouncilChoice(UUID effectControllerId,
                                   java.util.List<UUID> remainingPlayerIds,
                                   java.util.Map<UUID, Integer> votes,
-                                  String sourceName)
+                                  String sourceName,
+                                  boolean graveyardCards)
             implements MultiPermanentChoiceContext {
+        public WillOfTheCouncilChoice(UUID effectControllerId,
+                                      java.util.List<UUID> remainingPlayerIds,
+                                      java.util.Map<UUID, Integer> votes,
+                                      String sourceName) {
+            this(effectControllerId, remainingPlayerIds, votes, sourceName, false);
+        }
+
         public WillOfTheCouncilChoice {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);

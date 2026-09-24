@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "4ED", collectorNumber = "67")
 @CardRegistration(set = "SUM", collectorNumber = "56")
 @CardRegistration(set = "3ED", collectorNumber = "56")
+@CardRegistration(set = "ME4", collectorNumber = "46")
 @CardRegistration(set = "2ED", collectorNumber = "57")
 public class DrainPower extends Card {
 

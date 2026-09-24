@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "241")
 @CardRegistration(set = "DTK", collectorNumber = "247")
+@CardRegistration(set = "CMM", collectorNumber = "417")
 public class VialOfDragonfire extends Card {
 
     public VialOfDragonfire() {

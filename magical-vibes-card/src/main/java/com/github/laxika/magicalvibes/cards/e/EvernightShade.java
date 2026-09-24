@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "101")
+@CardRegistration(set = "C14", collectorNumber = "144")
 public class EvernightShade extends Card {
 
     public EvernightShade() {

@@ -68,9 +68,14 @@ public class SacrificeAnyNumberOfPermanentsEffectHandler implements NormalEffect
             return;
         }
 
-        playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
+        int maximumCount = e.maximumCount() == 0
+                ? eligibleIds.size()
+                : Math.min(e.maximumCount(), eligibleIds.size());
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, maximumCount,
                 new MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount(
                         entry, e.recordSacrificedPower()),
-                "Choose any number of permanents to sacrifice.");
+                e.maximumCount() == 0
+                        ? "Choose any number of permanents to sacrifice."
+                        : "Choose up to " + maximumCount + " permanents to sacrifice.");
     }
 }

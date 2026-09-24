@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NomadMythmaker.class, HolyStrength.class, Pacifism.class, GrizzlyBears.class})
+@CardUsed({EvilPresence.class, GrizzlyBears.class, HolyStrength.class, NomadMythmaker.class, Pacifism.class})
 class NomadMythmakerTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -179,7 +177,7 @@ class NomadMythmakerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
 
         GameData gd = harness.getGameData();
-        // Holy Strength gives +1/+2, Grizzly Bears is 2/2 → should be 3/4
+        // Holy Strength gives +1/+2, Grizzly Bears is 2/2 Ă˘â€ â€™ should be 3/4
         // Static bonuses are computed on-the-fly by GameService, not stored on Permanent
         assertThat(harness.getGameQueryService().getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, creature)).isEqualTo(4);
@@ -258,7 +256,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        // Only creature is the Mythmaker itself — remove it before resolution
+        // Only creature is the Mythmaker itself Ă˘â‚¬â€ť remove it before resolution
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -419,5 +417,30 @@ class NomadMythmakerTest extends BaseCardTest {
     private void addToGraveyard(Player player, Card card) {
         harness.getGameData().playerGraveyards.get(player.getId()).add(card);
     }
-}
 
+    @Test
+    @DisplayName("Attachment choice excludes creatures controlled by the opponent")
+    void attachmentChoiceExcludesOpponentsCreatures() {
+        addMythmakerReadyForJudReview(player1);
+        Card holyStrength = new HolyStrength();
+        addToGraveyard(player1, holyStrength);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(ownCreature.getId())
+                .doesNotContain(opponentCreature.getId());
+    }
+
+    private Permanent addMythmakerReadyForJudReview(Player player) {
+        NomadMythmaker card = new NomadMythmaker();
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+}

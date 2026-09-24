@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.NykthosParagonLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1206,6 +1207,32 @@ class MiscTriggerCollectorServiceTest {
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
+    }
+
+    @Test
+    @DisplayName("Nykthos Paragon life-gain trigger is optional and once per turn")
+    void nykthosParagonLifeGainTriggerIsOptionalAndOncePerTurn() {
+        Permanent perm = createPermanent("Nykthos Paragon");
+        var effect = new NykthosParagonLifeGainEffect();
+        var authoredEffect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
+        var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+        boolean result = registry.dispatch(
+                new TriggerMatchContext(gd, perm, player1Id, authoredEffect, perm.getCard(), true),
+                EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
+                .isInstanceOf(MayEffect.class);
+        assertThat(gd.stack.getLast().isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(perm.getId());
+
+        assertThat(registry.dispatch(
+                new TriggerMatchContext(gd, perm, player1Id, authoredEffect, perm.getCard(), true),
+                EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect,
+                new TriggerContext.LifeGain(player1Id, 4))).isTrue();
+        assertThat(gd.stack).hasSize(2);
     }
 
     // ===== ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER) =====

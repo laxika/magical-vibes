@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "43")
+@CardRegistration(set = "SLD", collectorNumber = "2005")
+@CardRegistration(set = "SLD", collectorNumber = "2125")
 @CardRegistration(set = "TLE", collectorNumber = "9")
 public class AgentOfTreachery extends Card {
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "91")
 @CardRegistration(set = "DDU", collectorNumber = "45")
+@CardRegistration(set = "SLD", collectorNumber = "1732")
 @CardRegistration(set = "2XM", collectorNumber = "125")
 @CardRegistration(set = "SPG", collectorNumber = "90")
 @CardRegistration(set = "SPG", collectorNumber = "100")

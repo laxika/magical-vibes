@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "68")
+@CardRegistration(set = "CMM", collectorNumber = "157")
 public class ExtinguishAllHope extends Card {
 
     public ExtinguishAllHope() {

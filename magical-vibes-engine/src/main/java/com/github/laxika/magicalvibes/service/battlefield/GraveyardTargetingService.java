@@ -173,6 +173,14 @@ public class GraveyardTargetingService {
     public void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                   List<CardEffect> allEffects, UUID sourcePermanentId,
                                                   ExileCardsFromGraveyardEffect exile) {
+        handleGraveyardExileETBTargeting(gameData, controllerId, card, allEffects, sourcePermanentId,
+                exile, 0);
+    }
+
+    public void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                  List<CardEffect> allEffects, UUID sourcePermanentId,
+                                                  ExileCardsFromGraveyardEffect exile,
+                                                  int multikickerPaymentCount) {
         List<Card> matchingCards = new ArrayList<>();
         List<UUID> graveyardOwners = exile.ownGraveyardOnly()
                 ? List.of(controllerId) : gameData.orderedPlayerIds;
@@ -187,7 +195,10 @@ public class GraveyardTargetingService {
             }
         }
 
-        if (matchingCards.isEmpty()) {
+        int maxTargets = exile.maxTargetsFromMultikicker()
+                ? exile.maxTargetsForX(multikickerPaymentCount)
+                : exile.maxTargets();
+        if (matchingCards.isEmpty() || maxTargets == 0) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
@@ -199,7 +210,7 @@ public class GraveyardTargetingService {
             gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
             log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no graveyard cards)", gameData.id, card.getName());
         } else {
-            int maxTargets = Math.min(exile.maxTargets(), matchingCards.size());
+            maxTargets = Math.min(maxTargets, matchingCards.size());
             gameData.graveyardTargetOperation.card = card;
             gameData.graveyardTargetOperation.controllerId = controllerId;
             gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);

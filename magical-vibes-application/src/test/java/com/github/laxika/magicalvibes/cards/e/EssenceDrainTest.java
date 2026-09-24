@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,13 +9,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EssenceDrain.class, GrizzlyBears.class, AirElemental.class, Forest.class})
 class EssenceDrainTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -30,7 +34,6 @@ class EssenceDrainTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Essence Drain");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -44,11 +47,24 @@ class EssenceDrainTest extends BaseCardTest {
         harness.setLife(player1, 15);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Essence Drain cannot target a land")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new EssenceDrain()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        var forestId = harness.getPermanentId(player2, "Forest");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, forestId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     // ===== Damage to creature =====
@@ -63,13 +79,12 @@ class EssenceDrainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.setLife(player1, 15);
 
-        harness.castSorcery(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
 
         // 3 damage kills Grizzly Bears (2 toughness)
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Controller gains 3 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -82,13 +97,12 @@ class EssenceDrainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.setLife(player1, 15);
 
-        harness.castSorcery(player1, 0, elemental.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, elemental.getId());
 
         // 3 damage does not kill Air Elemental (4/4)
         harness.assertOnBattlefield(player2, "Air Elemental");
         // Controller still gains 3 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     // ===== Self-target at low life (CR 704.3 loss deferral) =====
@@ -101,12 +115,11 @@ class EssenceDrainTest extends BaseCardTest {
         harness.setLife(player1, 3);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         // 3 damage drops you to 0 mid-resolution, but the +3 life in the same resolution restores
         // you before the loss state-based action is checked (CR 704.3 / 104.3b).
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(3);
+        harness.assertLife(player1, 3);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
@@ -128,7 +141,7 @@ class EssenceDrainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell fizzles — no life gain
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        harness.assertLife(player1, 15);
     }
 }
 

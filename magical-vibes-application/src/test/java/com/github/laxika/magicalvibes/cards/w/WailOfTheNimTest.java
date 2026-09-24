@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.l.LumengridWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WailOfTheNim.class, AlphaMyr.class, LumengridWarden.class})
 class WailOfTheNimTest extends BaseCardTest {
 
     @Test
     @DisplayName("Regeneration mode gives shields to your creatures only")
     void regeneratesOwnCreaturesOnly() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LumengridWarden());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
 
         cast(new int[]{0}, 1);
 
@@ -28,10 +30,24 @@ class WailOfTheNimTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration mode gives a shield to every creature you control")
+    void regeneratesEveryOwnCreature() {
+        Permanent firstOwnCreature = harness.addToBattlefieldAndReturn(player1, new LumengridWarden());
+        Permanent secondOwnCreature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+
+        cast(new int[]{0}, 1);
+
+        assertThat(firstOwnCreature.getRegenerationShield()).isEqualTo(1);
+        assertThat(secondOwnCreature.getRegenerationShield()).isEqualTo(1);
+        assertThat(opponentCreature.getRegenerationShield()).isZero();
+    }
+
+    @Test
     @DisplayName("Damage mode damages each creature and each player")
     void damagesEachCreatureAndPlayer() {
-        Permanent survivingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent dyingCreature = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        Permanent survivingCreature = harness.addToBattlefieldAndReturn(player1, new LumengridWarden());
+        Permanent dyingCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
@@ -46,8 +62,8 @@ class WailOfTheNimTest extends BaseCardTest {
     @Test
     @DisplayName("Entwine pays an additional black mana and resolves both modes")
     void entwineResolvesBothModes() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

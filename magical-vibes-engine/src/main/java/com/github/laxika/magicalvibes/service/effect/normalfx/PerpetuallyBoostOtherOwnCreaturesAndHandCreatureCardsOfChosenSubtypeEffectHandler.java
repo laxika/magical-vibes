@@ -48,8 +48,6 @@ public class PerpetuallyBoostOtherOwnCreaturesAndHandCreatureCardsOfChosenSubtyp
             }
             PerpetualCardPowerToughnessSupport.remember(
                     gameData, permanent.getCard(), boost.powerBoost(), boost.toughnessBoost());
-            PerpetualCardPowerToughnessSupport.applyToPermanent(
-                    gameData, controllerId, permanent, boost.powerBoost(), boost.toughnessBoost());
         }
 
         for (Card card : gameData.playerHands.getOrDefault(controllerId, List.of())) {

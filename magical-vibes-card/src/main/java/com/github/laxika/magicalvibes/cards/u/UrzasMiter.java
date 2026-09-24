@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 
 @CardRegistration(set = "ATQ", collectorNumber = "76")
+@CardRegistration(set = "ME4", collectorNumber = "237")
 public class UrzasMiter extends Card {
 
     public UrzasMiter() {

@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "75")
 @CardRegistration(set = "AKR", collectorNumber = "89")
+@CardRegistration(set = "CMM", collectorNumber = "131")
 public class VizierOfTumblingSands extends Card {
 
     public VizierOfTumblingSands() {

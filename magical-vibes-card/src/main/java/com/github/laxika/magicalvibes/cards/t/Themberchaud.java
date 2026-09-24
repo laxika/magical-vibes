@@ -20,9 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "728")
 @CardRegistration(set = "SLX", collectorNumber = "28")
 public class Themberchaud extends Card {
 

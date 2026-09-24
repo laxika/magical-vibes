@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 public enum CounterType {
+    ACORN,
     AGE,
     ARTIFACT,
     AIM,
@@ -11,6 +12,7 @@ public enum CounterType {
     BAIT,
     BLAZE,
     BLIGHT,
+    BLESSING,
     BLOOD,
     BLOODLINE,
     BLOODSTAIN,
@@ -23,6 +25,7 @@ public enum CounterType {
     CARRION,
     CHARGE,
     CONQUEROR,
+    CORRUPTION,
     CHORUS,
     CORPSE,
     CREATURE,
@@ -34,6 +37,7 @@ public enum CounterType {
     DEATH,
     DEVOTION,
     DELAY,
+    DESCENT,
     DESPAIR,
     DIVINITY,
     DOOM,
@@ -74,6 +78,7 @@ public enum CounterType {
     HOPE,
     HUNGER,
     INFLUENCE,
+    INTENSITY,
     INTERVENTION,
     INSTANT,
     ICE,

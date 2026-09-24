@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "159")
+@CardRegistration(set = "CMM", collectorNumber = "250")
 public class RavagingBlaze extends Card {
 
     public RavagingBlaze() {

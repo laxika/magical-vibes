@@ -34,14 +34,5 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
         PerpetualCardPowerToughnessSupport.remember(
                 gameData, boost.card(), powerBoost, toughnessBoost);
 
-        Permanent target = source;
-        if (entry.getTriggeringPermanentId() != null) {
-            target = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        }
-        if (target != null && target.getCard().getId().equals(boost.card().getId())) {
-            PerpetualCardPowerToughnessSupport.applyToPermanent(
-                    gameData, entry.getControllerId(), target,
-                    powerBoost, toughnessBoost);
-        }
     }
 }

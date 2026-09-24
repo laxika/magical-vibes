@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 @CardRegistration(set = "VMA", collectorNumber = "190")
 @CardRegistration(set = "DDK", collectorNumber = "68")
 @CardRegistration(set = "EMA", collectorNumber = "150")
+@CardRegistration(set = "SLD", collectorNumber = "2210")
 @CardRegistration(set = "DMR", collectorNumber = "144")
 public class SulfuricVortex extends Card {
 

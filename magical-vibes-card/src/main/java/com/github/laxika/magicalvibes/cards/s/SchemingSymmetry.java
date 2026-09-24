@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "113")
+@CardRegistration(set = "SLD", collectorNumber = "1520")
+@CardRegistration(set = "SLD", collectorNumber = "1997")
 public class SchemingSymmetry extends Card {
 
     public SchemingSymmetry() {

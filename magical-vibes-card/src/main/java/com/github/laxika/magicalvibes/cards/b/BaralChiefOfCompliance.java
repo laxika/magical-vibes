@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "28")
+@CardRegistration(set = "SLD", collectorNumber = "1164")
+@CardRegistration(set = "SLD", collectorNumber = "1447")
+@CardRegistration(set = "SLD", collectorNumber = "2168")
 @CardRegistration(set = "TSR", collectorNumber = "306")
 @CardRegistration(set = "KLR", collectorNumber = "42")
 @CardRegistration(set = "MUL", collectorNumber = "8")

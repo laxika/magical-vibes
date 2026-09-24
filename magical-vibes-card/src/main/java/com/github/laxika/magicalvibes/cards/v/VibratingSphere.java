@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ICE", collectorNumber = "345")
+@CardRegistration(set = "ME4", collectorNumber = "238")
 public class VibratingSphere extends Card {
 
     public VibratingSphere() {

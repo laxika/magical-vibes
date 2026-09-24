@@ -14,6 +14,9 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "148")
 @CardRegistration(set = "AKR", collectorNumber = "175")
+@CardRegistration(set = "SLD", collectorNumber = "190")
+@CardRegistration(set = "SLD", collectorNumber = "2039")
+@CardRegistration(set = "SLD", collectorNumber = "2044")
 public class SoulScarMage extends Card {
 
     public SoulScarMage() {

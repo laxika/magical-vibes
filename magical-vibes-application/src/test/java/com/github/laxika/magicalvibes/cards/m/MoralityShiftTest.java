@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.h.HarvesterDruid;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoralityShift.class, GiantWarthog.class, HarvesterDruid.class})
+@CardUsed({BenevolentBodyguard.class, GiantWarthog.class, HarvesterDruid.class, MoralityShift.class})
 class MoralityShiftTest extends BaseCardTest {
 
     @Test
@@ -70,5 +71,21 @@ class MoralityShiftTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(libraryCard);
         harness.assertInGraveyard(player1, "Morality Shift");
+    }
+
+    @Test
+    @DisplayName("Handles an empty graveyard")
+    void handlesEmptyGraveyard() {
+        Card libraryCard = new BenevolentBodyguard();
+        Card moralityShift = new MoralityShift();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of());
+        harness.castFromHand(player1, moralityShift, "{5}{B}{B}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(libraryCard, moralityShift);
     }
 }

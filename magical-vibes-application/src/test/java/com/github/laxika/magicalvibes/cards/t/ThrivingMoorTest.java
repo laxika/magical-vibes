@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,27 +17,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThrivingMoorTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters tapped and lets you choose any color except black")
-    void entersTappedAndRestrictsChosenColor() {
+    @DisplayName("Enters tapped and offers every color except black")
+    void entersTappedAndChoosesNonBlackColor() {
         harness.setHand(player1, List.of(new ThrivingMoor()));
 
         harness.playLand(player1, 0);
 
-        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactly("WHITE", "BLUE", "RED", "GREEN");
-
-        harness.handleListChoice(player1, "BLUE");
-
         Permanent moor = findPermanent(player1, "Thriving Moor");
         assertThat(moor.isTapped()).isTrue();
-        assertThat(moor.getChosenColor()).isEqualTo(CardColor.BLUE);
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE", "RED", "GREEN");
+        assertThat(choice.options()).doesNotContain("BLACK");
+
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(moor.getChosenColor()).isEqualTo(CardColor.GREEN);
     }
 
     @Test
-    @DisplayName("Tapping adds black mana")
-    void tapsForBlackMana() {
-        Permanent moor = addReadyMoor(player1, CardColor.BLUE);
+    @DisplayName("The first mana ability adds black mana")
+    void firstAbilityAddsBlackMana() {
+        Permanent moor = addReadyMoor();
+        moor.setChosenColor(CardColor.GREEN);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -47,9 +48,10 @@ class ThrivingMoorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapping adds one mana of the chosen color")
-    void tapsForChosenColorMana() {
-        Permanent moor = addReadyMoor(player1, CardColor.RED);
+    @DisplayName("The second mana ability adds mana of the chosen color")
+    void secondAbilityAddsChosenColorMana() {
+        Permanent moor = addReadyMoor();
+        moor.setChosenColor(CardColor.RED);
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -57,11 +59,9 @@ class ThrivingMoorTest extends BaseCardTest {
         assertThat(moor.isTapped()).isTrue();
     }
 
-    private Permanent addReadyMoor(Player player, CardColor chosenColor) {
-        Permanent moor = new Permanent(new ThrivingMoor());
+    private Permanent addReadyMoor() {
+        Permanent moor = harness.addToBattlefieldAndReturn(player1, new ThrivingMoor());
         moor.setSummoningSick(false);
-        moor.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player.getId()).add(moor);
         return moor;
     }
 }

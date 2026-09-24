@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "169")
+@CardRegistration(set = "SLD", collectorNumber = "191")
 public class DryadOfTheIlysianGrove extends Card {
 
     public DryadOfTheIlysianGrove() {

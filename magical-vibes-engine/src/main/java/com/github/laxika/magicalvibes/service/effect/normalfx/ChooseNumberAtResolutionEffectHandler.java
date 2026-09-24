@@ -35,13 +35,15 @@ public class ChooseNumberAtResolutionEffectHandler implements NormalEffectHandle
         }
 
         gameData.rerunCurrentEffectAfterInteraction = true;
-        int maxNumber = ((ChooseNumberAtResolutionEffect) effect).maxNumber();
+        ChooseNumberAtResolutionEffect chooseEffect = (ChooseNumberAtResolutionEffect) effect;
+        int minNumber = chooseEffect.minNumber();
+        int maxNumber = chooseEffect.maxNumber();
         if (maxNumber == Integer.MAX_VALUE) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
-                    entry.getControllerId(), 0, maxNumber, "Choose a number.", entry.getCard().getName()));
+                    entry.getControllerId(), minNumber, maxNumber, "Choose a number.", entry.getCard().getName()));
             return;
         }
         playerInputService.beginSpellNumberChoice(
-                gameData, entry.getControllerId(), maxNumber);
+                gameData, entry.getControllerId(), minNumber, maxNumber);
     }
 }

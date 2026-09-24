@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEff
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 
 @CardRegistration(set = "ODY", collectorNumber = "214")
+@CardRegistration(set = "SLD", collectorNumber = "1525")
 public class PriceOfGlory extends Card {
 
     public PriceOfGlory() {

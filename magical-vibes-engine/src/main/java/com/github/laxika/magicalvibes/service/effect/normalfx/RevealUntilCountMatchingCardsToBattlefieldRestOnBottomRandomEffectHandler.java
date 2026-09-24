@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -48,7 +49,13 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var typedEffect = (RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect) effect;
+        resolve(gameData, entry,
+                (RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect) effect, false);
+    }
+
+    void resolve(GameData gameData, StackEntry entry,
+                 RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect typedEffect,
+                 boolean shuffleLibrary) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -80,9 +87,16 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
                         + " from the top of their library."));
 
         if (matchingCards.isEmpty()) {
-            putRevealedCardsOnBottom(gameData, controllerId, revealedCards);
+            if (shuffleLibrary) {
+                putRevealedCardsIntoShuffledLibrary(gameData, controllerId, revealedCards);
+            } else {
+                putRevealedCardsOnBottom(gameData, controllerId, revealedCards);
+            }
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " finds no matching cards. The revealed cards are put on the bottom of their library in a random order."));
+                    playerName + " finds no matching cards. The revealed cards are "
+                            + (shuffleLibrary
+                            ? "shuffled into their library."
+                            : "put on the bottom of their library in a random order.")));
             return;
         }
 
@@ -92,7 +106,11 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
             List<Card> remainingCards = new ArrayList<>(revealedCards);
             remainingCards.removeAll(matchingCards);
             remainingCards.addAll(notPutOntoBattlefield);
-            putRevealedCardsOnBottom(gameData, controllerId, remainingCards);
+            if (shuffleLibrary) {
+                putRevealedCardsIntoShuffledLibrary(gameData, controllerId, remainingCards);
+            } else {
+                putRevealedCardsOnBottom(gameData, controllerId, remainingCards);
+            }
             return;
         }
 
@@ -157,5 +175,11 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
     private void putRevealedCardsOnBottom(GameData gameData, UUID controllerId, List<Card> cards) {
         Collections.shuffle(cards);
         gameData.playerDecks.get(controllerId).addAll(cards);
+    }
+
+    private void putRevealedCardsIntoShuffledLibrary(
+            GameData gameData, UUID controllerId, List<Card> cards) {
+        gameData.playerDecks.get(controllerId).addAll(cards);
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
     }
 }

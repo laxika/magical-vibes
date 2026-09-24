@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
@@ -73,6 +74,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredi
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -432,6 +434,24 @@ class PredicateEvaluationServiceTest {
 
             addPermanent(player1Id, createLand("Swamp"));
             assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardManaValueAtMostControlledTappedCreaturesPredicate counts tapped creatures")
+        void cardManaValueAtMostControlledTappedCreaturesPredicateMatches() {
+            addPermanent(player1Id, createCreature("Tapped One", 2, 2, CardColor.GREEN)).tap();
+            addPermanent(player1Id, createCreature("Tapped Two", 2, 2, CardColor.GREEN)).tap();
+            addPermanent(player1Id, createCreature("Untapped", 2, 2, CardColor.GREEN));
+
+            Card twoMana = createCreature("Two Mana", 2, 2, CardColor.GREEN);
+            twoMana.setManaCost("{2}");
+            Card threeMana = createCreature("Three Mana", 3, 3, CardColor.GREEN);
+            threeMana.setManaCost("{3}");
+            CardManaValueAtMostControlledTappedCreaturesPredicate predicate =
+                    new CardManaValueAtMostControlledTappedCreaturesPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(threeMana, predicate, null, gd, player1Id)).isFalse();
         }
 
         @Test
@@ -896,6 +916,24 @@ class PredicateEvaluationServiceTest {
     @Nested
     @DisplayName("matchesPermanentPredicate")
     class MatchesPermanentPredicate {
+
+        @Test
+        @DisplayName("PermanentControlledByMonarchPredicate follows the permanent's current controller")
+        void controlledByMonarchPredicateMatchesCurrentMonarch() {
+            Permanent permanent = addPermanent(player2Id,
+                    createCreature("Monarch's Creature", 2, 2, CardColor.GREEN));
+            Permanent otherPermanent = addPermanent(player1Id,
+                    createCreature("Other Creature", 2, 2, CardColor.GREEN));
+            PermanentControlledByMonarchPredicate predicate = new PermanentControlledByMonarchPredicate();
+
+            gd.monarchPlayerId = player2Id;
+            assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isFalse();
+
+            gd.monarchPlayerId = player1Id;
+            assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isTrue();
+        }
 
         @Test
         @DisplayName("PermanentIsCreaturePredicate matches creature")

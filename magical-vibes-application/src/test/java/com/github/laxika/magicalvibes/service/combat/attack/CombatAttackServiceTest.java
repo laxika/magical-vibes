@@ -96,6 +96,21 @@ class CombatAttackServiceTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.t.TotalWar.class)
+    void playerAttackSweepUsesTheAttackingPlayerWithoutTargetChoice() {
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.t.TotalWar());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent stayedHome = addCreatureReady(player2, new GrizzlyBears());
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker).doesNotContain(stayedHome);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(defender);
+    }
+
+    @Test
     @CardUsed({KeldonBerserker.class, RhysticCave.class})
     @DisplayName("An attack trigger gated by at most zero matching permanents is skipped when not met")
     void skipsAtMostPermanentAttackTriggerWhenConditionIsNotMet() {

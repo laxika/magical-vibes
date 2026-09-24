@@ -1,50 +1,61 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({DroolingOgre.class, DarksteelIngot.class, CrazedGoblin.class})
 class DroolingOgreTest extends BaseCardTest {
 
     @Test
     @DisplayName("The artifact spell's caster gains control of Drooling Ogre")
     void artifactSpellCasterGainsControl() {
         harness.addToBattlefield(player1, new DroolingOgre());
-        harness.setHand(player2, List.of(new Spellbook()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castArtifact(player2, 0);
-        harness.passBothPriorities();
+        harness.castFromHand(player2, new DarksteelIngot(), "{3}");
+        resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Drooling Ogre"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Drooling Ogre"));
+        harness.assertNotOnBattlefield(player1, "Drooling Ogre");
+        harness.assertOnBattlefield(player2, "Drooling Ogre");
+    }
+
+    @Test
+    @DisplayName("The control change lasts indefinitely")
+    void controlChangeLastsIndefinitely() {
+        harness.addToBattlefield(player1, new DroolingOgre());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new DarksteelIngot(), "{3}");
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player2, "Drooling Ogre");
     }
 
     @Test
     @DisplayName("A nonartifact spell does not trigger the control change")
     void nonartifactSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new DroolingOgre());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CrazedGoblin(), "{R}");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Drooling Ogre"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Drooling Ogre"));
+        harness.assertOnBattlefield(player1, "Drooling Ogre");
+        harness.assertNotOnBattlefield(player2, "Drooling Ogre");
     }
 }

@@ -13,18 +13,28 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "CMM", collectorNumber = "431")
+@CardRegistration(set = "ECC", collectorNumber = "172")
 @CardRegistration(set = "TLE", collectorNumber = "262")
 public class ThrivingHeath extends Card {
 
     public ThrivingHeath() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect(
-                CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
-        addActivatedAbility(new ActivatedAbility(true, null,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ChooseColorOnEnterEffect(CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
+
+        // "Add {W} or one mana of the chosen color" is modeled as two separate mana abilities.
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
                 List.of(new AwardManaEffect(ManaColor.WHITE)),
-                "{T}: Add {W}."));
-        addActivatedAbility(new ActivatedAbility(true, null,
+                "{T}: Add {W}."
+        ));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
                 List.of(new AwardChosenColorManaEffect()),
-                "{T}: Add one mana of the chosen color."));
+                "{T}: Add one mana of the chosen color."
+        ));
     }
 }

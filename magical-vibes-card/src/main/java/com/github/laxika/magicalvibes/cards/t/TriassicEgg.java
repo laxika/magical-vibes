@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "110")
 @CardRegistration(set = "LEG", collectorNumber = "297")
+@CardRegistration(set = "ME4", collectorNumber = "235")
 public class TriassicEgg extends Card {
 
     public TriassicEgg() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "82")
+@CardRegistration(set = "C15", collectorNumber = "229")
 public class NecromancersCovenant extends Card {
 
     public NecromancersCovenant() {

@@ -889,6 +889,23 @@ class CastingCostServiceTest {
         }
 
         @Test
+        void minimumSpellCostIsAppliedAfterColoredReductions() {
+            evaluateCardTypePredicates();
+            Card artifact = new Card();
+            artifact.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
+            artifact.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect(
+                            new CardTypePredicate(CardType.CREATURE),
+                            new com.github.laxika.magicalvibes.model.ManaCost("{B}"), CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(artifact));
+            Card spell = new Card();
+            spell.setType(CardType.CREATURE);
+            spell.setManaCost("{1}{B}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("Tapped minimum-cost source does not affect spells")
         void tappedMinimumCostSourceDoesNotAffectSpells() {
             Card trinisphere = new Card();

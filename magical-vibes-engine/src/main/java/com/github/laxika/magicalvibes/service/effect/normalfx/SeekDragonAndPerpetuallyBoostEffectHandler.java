@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekDragonAndPerpetuallyBoostEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +18,6 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class SeekDragonAndPerpetuallyBoostEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,13 +49,5 @@ public class SeekDragonAndPerpetuallyBoostEffectHandler implements NormalEffectH
                     gameData, found, seek.powerBoost(), seek.toughnessBoost());
         }
 
-        if (entry.getSourcePermanentId() != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source != null) {
-                PerpetualCardPowerToughnessSupport.applyToPermanent(
-                        gameData, entry.getControllerId(), source,
-                        seek.powerBoost(), seek.toughnessBoost());
-            }
-        }
     }
 }

@@ -56,6 +56,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers}. Used by Trespasser's Curse. */
     ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
     STATIC,
+    /** Static cost-modifying effects of cards in the controller's command zone (Eminence). */
+    COMMAND_ZONE_STATIC,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
@@ -189,8 +191,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
+    ON_CONTROLLER_TEMPTS_RING,
     /** Triggers when this permanent's controller investigates for the first time each turn. */
     ON_CONTROLLER_INVESTIGATES,
+    /** Triggers whenever this permanent's controller investigates one or more times. */
+    ON_CONTROLLER_INVESTIGATES_EACH_TIME,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
@@ -205,6 +211,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_COLLECTS_EVIDENCE,
     /** Triggers whenever this permanent's controller completes a discover action. */
     ON_CONTROLLER_DISCOVERS,
+    /** Triggers whenever this permanent's controller seeks one or more cards. */
+    ON_CONTROLLER_SEEKS,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -225,6 +233,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_PERMANENT_SACRIFICED,
     /** Triggers whenever any player sacrifices a permanent. */
     ON_ANY_PERMANENT_SACRIFICED,
+    /** Triggers whenever a noncreature artifact is sacrificed or destroyed. */
+    ON_ANY_NONCREATURE_ARTIFACT_SACRIFICED_OR_DESTROYED,
     /** Triggers whenever an opponent sacrifices a nontoken permanent. */
     ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED,
     /** Global watcher: triggers whenever any player sacrifices a creature ("Whenever a player
@@ -500,6 +510,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_EQUIPPED_CREATURE_DIES,
     /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+    ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers on an Equipment whenever the creature it is attached to transforms, in either
      *  direction. Fired by {@code AnimationSupport.fireEquipmentTransformTriggers} right after the
      *  equipped creature's own transform triggers. Used by Neglected Heirloom. */
@@ -530,6 +541,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     MULLIGAN_ACTION,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
+    ON_ANY_PLAYER_SHUFFLES_LIBRARY,
     /** Triggers whenever an opponent of this permanent's controller searches their own library
      *  ("Whenever an opponent searches their library"). Fired from the unified library-search choke
      *  point ({@code LibrarySearchSupport.performLibrarySearch}) by
@@ -618,6 +630,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GETS_ENERGY,
     /** Triggers whenever this permanent's controller wins a coin flip. */
     ON_CONTROLLER_WINS_COIN_FLIP,
+    /** Triggers whenever any player wins a coin flip. */
+    ON_ANY_PLAYER_WINS_COIN_FLIP,
     /** Triggers whenever this permanent's controller loses a coin flip. */
     ON_CONTROLLER_LOSES_COIN_FLIP,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
@@ -759,6 +773,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
      *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
     ON_CONTROLLER_LOSES_LIFE,
+    /** Triggers when this controller places counters on a creature they do not control. */
+    ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
     /** Triggers whenever this permanent's controller pays life. */
     ON_CONTROLLER_PAYS_LIFE,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
@@ -803,6 +819,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
      *  battlefield during that controller's turn. */
     ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
+    /** Triggers whenever another permanent controlled by this permanent's controller leaves the
+     *  battlefield by any means. */
+    ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */
@@ -824,6 +843,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers from a graveyard when a creature is put into an opponent's graveyard from the
      *  battlefield. Used by Bridge from Below. */
     GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers from any graveyard whenever a land card is put into any graveyard from anywhere.
+     *  Used by Centaur Vinecrasher. */
+    GRAVEYARD_ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers when combat damage is dealt to the controller or to a planeswalker they control,
      *  while this card is in the controller's graveyard. Fired once per combat damage step per
      *  damaged player in {@code CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers}.
@@ -916,6 +938,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_EVOLVES,
     /** Triggers whenever one or more loyalty counters are removed from this permanent. */
     ON_SELF_LOYALTY_COUNTERS_REMOVED,
+    /** Triggers whenever one or more counters are removed from a permanent the controller controls. */
+    ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT,
     /** Triggers whenever one or more loyalty counters are put on planeswalkers the controller controls. */
     ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS,
     /** Triggers whenever the controller puts one or more -1/-1 counters on this permanent — the -1/-1
@@ -935,6 +959,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Gatherer ruling the ability triggers once for each individual -1/-1 counter, so the firing
      *  pushes a separate trigger per counter. Used by Flourishing Defenses. */
     ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE,
+    /** Global watcher: triggers once whenever one or more -1/-1 counters are put on a creature.
+     *  Unlike {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, this fires once per placement
+     *  event regardless of how many counters were placed. */
+    ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE,
     /** Controller-restricted watcher: triggers only when the permanent's controller is the player who
      *  puts one or more -1/-1 counters on a creature (any creature, on any battlefield). Unlike the
      *  global {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, a counter an opponent puts (e.g.
@@ -957,6 +985,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers once for each instant or sorcery card that leaves the controller's graveyard. */
+    ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
     /** Triggers whenever one or more controlled creatures or creature cards in the controller's graveyard are exiled. */
@@ -1007,6 +1037,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  not the trigger's source permanent. Checked in {@code CombatBlockService}. Used by
      *  Stinkdrinker Bandit. */
     ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
+    /** Triggers once per combat when one or more creatures controlled by an opponent attack this
+     *  permanent's controller directly and are not blocked. The attacking player's ID is stored
+     *  as the non-targeting {@code targetId}; checked in {@code CombatBlockService}. */
+    ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      *  or ability controlled by an opponent. Fires on ALL permanents with this slot on the
      *  creature's controller's battlefield (not just the targeted creature).
@@ -1193,6 +1227,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  triggered ability's stack entry. Checked from {@code CrewCostHandler} as each creature is
      *  tapped to pay the power-based cost. */
     ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE,
+    /** Triggers whenever a creature stations this Spacecraft. */
+    ON_SELF_BECOMES_STATIONED,
     /** Triggers whenever the controller of this permanent activates a non-mana activated ability
      *  (CR 605.1a). Unlike {@link #ON_CONTROLLER_ACTIVATES_ABILITY} this excludes mana abilities and
      *  fires only after the ability has been put on the stack, so the triggering ability can be

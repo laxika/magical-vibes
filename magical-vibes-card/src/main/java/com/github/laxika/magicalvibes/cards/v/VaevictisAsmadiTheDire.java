@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentsThen
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M19", collectorNumber = "225")
+@CardRegistration(set = "SLD", collectorNumber = "1812")
+@CardRegistration(set = "SLD", collectorNumber = "2239")
 public class VaevictisAsmadiTheDire extends Card {
 
     public VaevictisAsmadiTheDire() {

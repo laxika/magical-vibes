@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "EVE", collectorNumber = "45")
 @CardRegistration(set = "TD2", collectorNumber = "60")
+@CardRegistration(set = "ECC", collectorNumber = "87")
 public class SoulSnuffers extends Card {
 
     public SoulSnuffers() {

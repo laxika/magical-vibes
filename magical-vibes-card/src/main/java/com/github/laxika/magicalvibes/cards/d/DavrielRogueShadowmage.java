@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "83")
+@CardRegistration(set = "SLD", collectorNumber = "509")
 public class DavrielRogueShadowmage extends Card {
 
     public DavrielRogueShadowmage() {

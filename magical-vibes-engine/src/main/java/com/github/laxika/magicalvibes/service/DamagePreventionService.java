@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
+import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
@@ -1008,6 +1009,15 @@ public class DamagePreventionService {
     private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage,
                                             boolean combatDamage, Permanent damageSource) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
+        if (combatDamage) {
+            CombatDamagePreventionTokenShield tokenShield =
+                    gameData.combatDamagePreventionTokenShields.get(playerId);
+            if (tokenShield != null) {
+                permanentControlSupportProvider.getObject().applyCreateToken(
+                        gameData, playerId, tokenShield.token(), damage, tokenShield.sourceSetCode());
+                return 0;
+            }
+        }
         if (combatDamage && gameData.preventAllCombatDamageToPlayers) return 0;
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
         // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)

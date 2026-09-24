@@ -184,6 +184,32 @@ class SpellCastingServiceTest {
     private SpellCastingService svc;
 
     @Test
+    void graveyardCounterPaymentDoesNotRequireSacrificingTheSelectedCreatures() {
+        var harness = new com.github.laxika.magicalvibes.testutil.GameTestHarness();
+        var player = harness.getPlayer1();
+        var game = harness.getGameData();
+        harness.skipMulligan();
+        game.alwaysOfferPriorityWindows = true;
+        Permanent first = harness.addToBattlefieldAndReturn(player,
+                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player,
+                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        first.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
+        second.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setGraveyard(player, List.of(new com.github.laxika.magicalvibes.cards.q.QuilledGreatwurm()));
+        harness.addMana(player, ManaColor.GREEN, 2);
+        harness.addMana(player, ManaColor.COLORLESS, 4);
+
+        harness.castFromGraveyardWithCounterCost(player, 0,
+                List.of(first.getId(), first.getId(), first.getId(), second.getId(), second.getId(), second.getId()));
+
+        assertThat(game.playerBattlefields.get(player.getId())).contains(first, second);
+        assertThat(first.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(game.playerManaPools.get(player.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
     void preparingRoomDoorPreservesTheUnlockAbilityTargetGroup() {
         Card room = new Card();
         room.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
@@ -375,6 +401,30 @@ class SpellCastingServiceTest {
             assertThat(entry.getCard()).isSameAs(spell);
             assertThat(entry.isCastWithFlashback()).isTrue();
         });
+    }
+
+    @Test
+    @DisplayName("Snapshots converge colors when casting flashback")
+    void snapshotsConvergeColorsWhenCastingFlashback() {
+        Card spell = createSorcery("Converge Flashback Spell", "{1}{R}");
+        spell.setKeywords(EnumSet.of(Keyword.CONVERGE));
+        spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+        spell.addCastingOption(new FlashbackCast("{4}{R}"));
+        gd.playerGraveyards.get(player1Id).add(spell);
+        addMana(player1Id, ManaColor.RED, 1);
+        addMana(player1Id, ManaColor.BLUE, 1);
+        addMana(player1Id, ManaColor.COLORLESS, 3);
+        when(castingPermissionService.canUseFlashback(eq(gd), eq(player1Id), any(FlashbackCast.class)))
+                .thenReturn(true);
+        when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, spell)).thenReturn(true);
+
+        svc.playFlashbackSpell(gd, player1, 0, null, player2Id);
+
+        assertThat(gd.stack).singleElement().satisfies(entry ->
+                assertThat(entry.getXValue()).isEqualTo(2));
+        assertThat(gd.getSpellCastConvergeValue(spell.getId())).isEqualTo(2);
+        assertThat(gd.getSpellCastColorsSpent(spell.getId()))
+                .containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
     }
 
     @Test

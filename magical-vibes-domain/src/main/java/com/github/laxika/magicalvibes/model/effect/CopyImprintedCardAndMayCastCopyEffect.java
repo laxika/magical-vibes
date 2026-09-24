@@ -10,7 +10,7 @@ import java.util.UUID;
  */
 public record CopyImprintedCardAndMayCastCopyEffect(boolean requiresImprintedXCost,
                                                      boolean copyOtherExiledCard,
-                                                     UUID triggeringCardId)
+                                                     UUID matchingExiledCardId)
         implements ImprintedCardXCostEffect {
 
     public CopyImprintedCardAndMayCastCopyEffect() {
@@ -21,8 +21,8 @@ public record CopyImprintedCardAndMayCastCopyEffect(boolean requiresImprintedXCo
         this(requiresImprintedXCost, false, null);
     }
 
-    public static CopyImprintedCardAndMayCastCopyEffect otherExiledCard(UUID triggeringCardId) {
-        return new CopyImprintedCardAndMayCastCopyEffect(false, true, triggeringCardId);
+    public static CopyImprintedCardAndMayCastCopyEffect otherExiledCard(UUID matchingExiledCardId) {
+        return new CopyImprintedCardAndMayCastCopyEffect(false, true, matchingExiledCardId);
     }
 
     @Override

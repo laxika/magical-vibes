@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
  */
 @CardRegistration(set = "AKH", collectorNumber = "223")
 @CardRegistration(set = "AKR", collectorNumber = "231")
+@CardRegistration(set = "SLD", collectorNumber = "367")
 public class CutRibbons extends Card {
 
     public CutRibbons() {

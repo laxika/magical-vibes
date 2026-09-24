@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "53")
 @CardRegistration(set = "DDT", collectorNumber = "1")
+@CardRegistration(set = "SLD", collectorNumber = "1278")
 @CardRegistration(set = "PIO", collectorNumber = "63")
 public class MasterOfWaves extends Card {
 

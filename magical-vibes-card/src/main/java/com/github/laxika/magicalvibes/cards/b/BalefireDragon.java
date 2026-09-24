@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamag
 @CardRegistration(set = "INR", collectorNumber = "479")
 @CardRegistration(set = "UMA", collectorNumber = "124")
 @CardRegistration(set = "SIS", collectorNumber = "37")
+@CardRegistration(set = "CMM", collectorNumber = "207")
+@CardRegistration(set = "CMM", collectorNumber = "530")
+@CardRegistration(set = "CMM", collectorNumber = "697")
 public class BalefireDragon extends Card {
 
     public BalefireDragon() {

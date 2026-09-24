@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.Fireshrieker;
-import com.github.laxika.magicalvibes.cards.f.Frogmite;
+import com.github.laxika.magicalvibes.cards.n.NemesisMask;
+import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
 import com.github.laxika.magicalvibes.cards.s.ShieldOfKaldra;
 import com.github.laxika.magicalvibes.cards.s.SwordOfKaldra;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,14 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HelmOfKaldra.class, ShieldOfKaldra.class, SwordOfKaldra.class,
-        Frogmite.class, Fireshrieker.class})
+        MyrMoonvessel.class, NemesisMask.class})
 class HelmOfKaldraTest extends BaseCardTest {
 
     @Test
     @DisplayName("Equipped creature has first strike, trample, and haste")
     void equippedCreatureHasKeywords() {
         Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfKaldra());
-        Permanent creature = addCreatureReady(player1, new Frogmite());
+        Permanent creature = addCreatureReady(player1, new MyrMoonvessel());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
@@ -93,9 +93,9 @@ class HelmOfKaldraTest extends BaseCardTest {
         Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfKaldra());
         Permanent sword = harness.addToBattlefieldAndReturn(player1, new SwordOfKaldra());
         Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfKaldra());
-        Permanent existingHost = addCreatureReady(player1, new Frogmite());
+        Permanent existingHost = addCreatureReady(player1, new MyrMoonvessel());
         sword.setAttachedTo(existingHost.getId());
-        Permanent unrelatedEquipment = harness.addToBattlefieldAndReturn(player1, new Fireshrieker());
+        Permanent unrelatedEquipment = harness.addToBattlefieldAndReturn(player1, new NemesisMask());
         Permanent opponentSword = harness.addToBattlefieldAndReturn(player2, new SwordOfKaldra());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -123,7 +123,7 @@ class HelmOfKaldraTest extends BaseCardTest {
     @DisplayName("Equip {2} attaches Helm of Kaldra to a creature you control")
     void equipAttachesToCreature() {
         Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfKaldra());
-        Permanent creature = addCreatureReady(player1, new Frogmite());
+        Permanent creature = addCreatureReady(player1, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
@@ -136,7 +136,7 @@ class HelmOfKaldraTest extends BaseCardTest {
     @DisplayName("Equip cannot target a creature controlled by an opponent")
     void equipRequiresCreatureYouControl() {
         harness.addToBattlefieldAndReturn(player1, new HelmOfKaldra());
-        Permanent opponentCreature = addCreatureReady(player2, new Frogmite());
+        Permanent opponentCreature = addCreatureReady(player2, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, opponentCreature.getId()))

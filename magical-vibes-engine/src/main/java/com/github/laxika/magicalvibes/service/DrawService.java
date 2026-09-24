@@ -3,41 +3,44 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.MiracleCast;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
-import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.AlmsCollectorDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
@@ -51,8 +54,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryReplacement;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
@@ -73,35 +74,32 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHand
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawIfEmptyLibraryReplacementEffect;
-import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerReturnsPermanentToHandEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerReturnsPermanentToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
-import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
-import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -109,6 +107,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -190,6 +191,11 @@ public class DrawService {
     }
 
     private void resolveDrawCards(GameData gameData, UUID playerId, int amount, Card cycledCard) {
+        resolveDrawCards(gameData, playerId, amount, cycledCard, false);
+    }
+
+    private void resolveDrawCards(GameData gameData, UUID playerId, int amount, Card cycledCard,
+                                  boolean skipOpponentDrawTwoOrMoreReplacement) {
         if (amount <= 0) {
             return;
         }
@@ -205,9 +211,16 @@ public class DrawService {
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
 
+        Card almsCollector = !skipOpponentDrawTwoOrMoreReplacement && drawAmount >= 2
+                ? findOpponentDrawTwoOrMoreReplacementSourceCard(gameData, playerId) : null;
         if (drawChoicePending(gameData)) {
-            for (int i = 0; i < drawAmount; i++) {
+            if (almsCollector != null) {
                 gameData.pendingCardDraws.addLast(playerId);
+                gameData.pendingCardDraws.addLast(gameQueryService.getOpponentId(gameData, playerId));
+            } else {
+                for (int i = 0; i < drawAmount; i++) {
+                    gameData.pendingCardDraws.addLast(playerId);
+                }
             }
             return;
         }
@@ -215,6 +228,10 @@ public class DrawService {
         List<UUID> laterDraws = new ArrayList<>(gameData.pendingCardDraws);
         gameData.pendingCardDraws.clear();
         try {
+            if (almsCollector != null) {
+                resolveOpponentDrawTwoOrMoreReplacement(gameData, playerId, almsCollector);
+                return;
+            }
             for (int i = 0; i < drawAmount && gameData.status != GameStatus.FINISHED; i++) {
                 resolveDrawCardInternal(gameData, playerId, cycledCard);
                 if (drawChoicePending(gameData)) {
@@ -880,6 +897,29 @@ public class DrawService {
         return null;
     }
 
+    private AlmsCollectorSource findAlmsCollectorSource(GameData gameData, UUID drawingPlayerId) {
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(drawingPlayerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(AlmsCollectorDrawReplacement.class::isInstance);
+                if (hasEffect) {
+                    return new AlmsCollectorSource(permanent, controllerId);
+                }
+            }
+        }
+        return null;
+    }
+
+    private record AlmsCollectorSource(Permanent permanent, UUID controllerId) {
+    }
+
     private Permanent findExileTopCardFaceDownInsteadOfDrawSource(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -1134,6 +1174,44 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private Card findOpponentDrawTwoOrMoreReplacementSourceCard(GameData gameData, UUID playerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+        if (opponentId == null) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof OpponentDrawTwoOrMoreReplacedEffect);
+            if (hasEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    private void resolveOpponentDrawTwoOrMoreReplacement(GameData gameData, UUID playerId,
+                                                          Card source) {
+        UUID sourceControllerId = gameQueryService.getOpponentId(gameData, playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+        String controllerName = gameData.playerIdToName.get(sourceControllerId);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + "'s multi-card draw is replaced by ")
+                .card(source)
+                .text("; " + playerName + " and " + controllerName + " each draw a card.")
+                .build());
+
+        resolveDrawCards(gameData, playerId, 1, null, true);
+        if (gameData.status == GameStatus.FINISHED) {
+            return;
+        }
+        resolveDrawCards(gameData, sourceControllerId, 1, null, true);
     }
 
     private Card findDoubleDrawSourceCard(GameData gameData, UUID playerId) {

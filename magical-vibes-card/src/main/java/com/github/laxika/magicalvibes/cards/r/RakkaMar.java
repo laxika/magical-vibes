@@ -12,6 +12,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CON", collectorNumber = "71")
+@CardRegistration(set = "CMM", collectorNumber = "247")
 public class RakkaMar extends Card {
 
     public RakkaMar() {

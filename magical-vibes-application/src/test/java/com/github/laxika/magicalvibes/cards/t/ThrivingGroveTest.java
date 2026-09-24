@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,27 +17,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThrivingGroveTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters tapped and lets you choose any color except green")
-    void entersTappedAndRestrictsChosenColor() {
+    @DisplayName("Enters tapped and offers every color except green")
+    void entersTappedAndChoosesNonGreenColor() {
         harness.setHand(player1, List.of(new ThrivingGrove()));
 
         harness.playLand(player1, 0);
 
+        Permanent grove = findPermanent(player1, "Thriving Grove");
+        assertThat(grove.isTapped()).isTrue();
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED");
+        assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED");
+        assertThat(choice.options()).doesNotContain("GREEN");
 
         harness.handleListChoice(player1, "BLUE");
 
-        Permanent grove = findPermanent(player1, "Thriving Grove");
-        assertThat(grove.isTapped()).isTrue();
         assertThat(grove.getChosenColor()).isEqualTo(CardColor.BLUE);
     }
 
     @Test
-    @DisplayName("Tapping adds green mana")
-    void tapsForGreenMana() {
-        Permanent grove = addReadyGrove(player1, CardColor.BLUE);
+    @DisplayName("The first mana ability adds green mana")
+    void firstAbilityAddsGreenMana() {
+        Permanent grove = addReadyGrove();
+        grove.setChosenColor(CardColor.BLUE);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -47,9 +48,10 @@ class ThrivingGroveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapping adds one mana of the chosen color")
-    void tapsForChosenColorMana() {
-        Permanent grove = addReadyGrove(player1, CardColor.RED);
+    @DisplayName("The second mana ability adds mana of the chosen color")
+    void secondAbilityAddsChosenColorMana() {
+        Permanent grove = addReadyGrove();
+        grove.setChosenColor(CardColor.RED);
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -57,11 +59,9 @@ class ThrivingGroveTest extends BaseCardTest {
         assertThat(grove.isTapped()).isTrue();
     }
 
-    private Permanent addReadyGrove(Player player, CardColor chosenColor) {
-        Permanent grove = new Permanent(new ThrivingGrove());
+    private Permanent addReadyGrove() {
+        Permanent grove = harness.addToBattlefieldAndReturn(player1, new ThrivingGrove());
         grove.setSummoningSick(false);
-        grove.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player.getId()).add(grove);
         return grove;
     }
 }

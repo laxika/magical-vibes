@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
@@ -24,9 +25,6 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +34,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Canonical projection of every promptable pending interaction to its existing wire message.
@@ -70,6 +70,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
+        register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.TargetPlayerHandOrderChoice.class,
@@ -78,6 +79,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.AminatousAuguryChoice.class,
+                this::projectAminatousAuguryChoice);
         register(PendingInteraction.InvokeCalamityCastChoice.class,
                 this::projectInvokeCalamityCastChoice);
         register(PendingInteraction.PlarggAndNassariOpponentChoice.class,
@@ -98,6 +101,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
+        register(PendingInteraction.HeistCardChoice.class, this::projectHeistCardChoice);
         register(PendingInteraction.LudevicCopyChoice.class, this::projectLudevicCopyChoice);
         register(PendingInteraction.KohExiledCreatureChoice.class,
                 this::projectKohExiledCreatureChoice);
@@ -205,6 +209,10 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualCastCostHandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualCreatureCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualTargetCardChoice.class,
+                this::projectPerpetualTargetCardChoice);
         register(PendingInteraction.WordOfCommandCardChoice.class,
                 this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
@@ -243,6 +251,7 @@ public class InteractionPromptProjectionRegistry {
                 this::projectLibrarySearchDestinationChoice);
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
+        register(PendingInteraction.SpellbookCardChoice.class, this::projectSpellbookCardChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
@@ -387,6 +396,13 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validPlaneCardIds()), cardViews, 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectCommanderChoice(
+            GameData gameData, PendingInteraction.CommanderChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
+                "Choose one of your commanders to put into your hand.");
     }
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(
@@ -535,6 +551,15 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
                 "Choose a card exiled this way to play " + duration + ".");
+    }
+
+    private InteractionPromptMessage projectHeistCardChoice(
+            GameData gameData, PendingInteraction.HeistCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "Choose one nonland card to exile face down and cast for as long as it remains exiled.");
     }
 
     private InteractionPromptMessage projectLudevicCopyChoice(
@@ -1277,6 +1302,13 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(), interaction.prompt(), declinable);
     }
 
+    private InteractionPromptMessage projectPerpetualTargetCardChoice(
+            GameData gameData, PendingInteraction.PerpetualTargetCardChoice interaction) {
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of())),
+                interaction.validIndices(), interaction.prompt(), false);
+    }
+
     private InteractionPromptMessage projectPutCardsFromHandOnLibraryCardChoice(
             GameData gameData,
             PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction) {
@@ -1377,6 +1409,13 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews,
                 interaction.maxCount(),
+                interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectSpellbookCardChoice(
+            GameData gameData, PendingInteraction.SpellbookCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
                 interaction.prompt());
     }
 
@@ -1507,6 +1546,27 @@ public class InteractionPromptProjectionRegistry {
                 "You may put any number of land cards they own from exile onto the battlefield.");
     }
 
+    private InteractionPromptMessage projectAminatousAuguryChoice(
+            GameData gameData, PendingInteraction.AminatousAuguryChoice interaction) {
+        String prompt = interaction.offeredCardType() == CardType.LAND
+                ? "You may put a land card from among the exiled cards onto the battlefield."
+                : "You may cast " + articleFor(interaction.offeredCardType())
+                        + interaction.offeredCardType().getDisplayName().toLowerCase()
+                        + " spell from among the exiled cards without paying its mana cost.";
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                prompt);
+    }
+
+    private static String articleFor(CardType cardType) {
+        return switch (cardType) {
+            case ARTIFACT, ENCHANTMENT, INSTANT -> "an ";
+            default -> "a ";
+        };
+    }
+
     private InteractionPromptMessage projectETBExiledCardTargetChoice(
             GameData gameData, PendingInteraction.ETBExiledCardTargetChoice interaction) {
         List<UUID> validIds = new ArrayList<>(interaction.validCardIds());
@@ -1615,7 +1675,7 @@ public class InteractionPromptProjectionRegistry {
                 .map(target -> new CombatDamageTargetView(
                         target.id().toString(),
                         target.name(),
-                        target.effectiveToughness(),
+                        target.lethalDamageThreshold(),
                         target.currentDamage(),
                         target.isPlayer()))
                 .toList();

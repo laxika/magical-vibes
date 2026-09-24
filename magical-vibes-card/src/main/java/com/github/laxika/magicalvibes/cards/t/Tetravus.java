@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "4ED", collectorNumber = "350")
 @CardRegistration(set = "ATQ", collectorNumber = "71")
+@CardRegistration(set = "ME4", collectorNumber = "233")
 public class Tetravus extends Card {
 
     public Tetravus() {

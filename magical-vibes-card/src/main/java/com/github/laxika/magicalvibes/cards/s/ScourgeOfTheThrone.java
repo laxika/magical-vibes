@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMos
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "VMA", collectorNumber = "184")
+@CardRegistration(set = "SLD", collectorNumber = "1033")
+@CardRegistration(set = "CMM", collectorNumber = "253")
+@CardRegistration(set = "CMM", collectorNumber = "549")
 public class ScourgeOfTheThrone extends Card {
 
     public ScourgeOfTheThrone() {
