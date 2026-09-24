@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "213")
+@CardRegistration(set = "MAR", collectorNumber = "66")
 public class FinalAct extends Card {
 
     public FinalAct() {

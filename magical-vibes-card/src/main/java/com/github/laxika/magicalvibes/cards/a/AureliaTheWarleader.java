@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "MUL", collectorNumber = "35")
 @CardRegistration(set = "MUL", collectorNumber = "100")
 @CardRegistration(set = "MUL", collectorNumber = "165")
+@CardRegistration(set = "MAR", collectorNumber = "86")
 public class AureliaTheWarleader extends Card {
 
     public AureliaTheWarleader() {

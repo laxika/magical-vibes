@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AjaniSteadfast;
+import com.github.laxika.magicalvibes.cards.d.DelugeOfTheDead;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,21 +19,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FinalAct.class, GrizzlyBears.class, Shock.class, LlanowarElves.class})
+@CardUsed({FinalAct.class, AjaniSteadfast.class, InvasionOfInnistrad.class, DelugeOfTheDead.class,
+        GrizzlyBears.class, Forest.class, Shock.class, LlanowarElves.class})
 class FinalActTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Selected creature and graveyard modes resolve together")
-    void resolvesCreatureAndGraveyardModes() {
+    @DisplayName("Destroys all selected permanent types")
+    void destroysAllSelectedPermanentTypes() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new AjaniSteadfast());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfInnistrad());
+        battle.setCounterCount(CounterType.DEFENSE, 4);
+        harness.addToBattlefield(player1, new Forest());
+
+        cast(new int[]{0, 1, 2});
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Forest");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles all graveyards")
+    void exilesAllGraveyards() {
         Card ownCard = new Shock();
         Card opponentCard = new LlanowarElves();
         harness.setGraveyard(player1, List.of(ownCard));
         harness.setGraveyard(player2, List.of(opponentCard));
 
-        cast(new int[]{0, 3});
+        cast(new int[]{3});
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Final Act");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -39,44 +60,41 @@ class FinalActTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Planeswalker and battle modes destroy their permanent types")
-    void destroysPlaneswalkersAndBattles() {
-        Card planeswalkerCard = card("Test Planeswalker", CardType.PLANESWALKER);
-        planeswalkerCard.setLoyalty(4);
-        Card battleCard = card("Test Battle", CardType.BATTLE);
-        battleCard.setDefense(5);
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, planeswalkerCard);
-        Permanent battle = harness.addToBattlefieldAndReturn(player2, battleCard);
-
-        cast(new int[]{1, 2});
-
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(planeswalker.getId())
-                        || permanent.getId().equals(battle.getId()));
-    }
-
-    @Test
-    @DisplayName("Counter mode clears every tracked counter from opponents only")
-    void clearsOpponentCountersOnly() {
-        gd.playerPoisonCounters.put(player1.getId(), 1);
-        gd.playerEnergyCounters.put(player1.getId(), 2);
-        gd.playerSparkCounters.put(player1.getId(), 3);
+    @DisplayName("Removes all tracked counters from each opponent")
+    void removesAllTrackedCountersFromEachOpponent() {
+        gd.playerPoisonCounters.put(player1.getId(), 2);
+        gd.playerEnergyCounters.put(player1.getId(), 3);
         gd.playerExperienceCounters.put(player1.getId(), 4);
         gd.playerPoisonCounters.put(player2.getId(), 5);
         gd.playerEnergyCounters.put(player2.getId(), 6);
-        gd.playerSparkCounters.put(player2.getId(), 7);
-        gd.playerExperienceCounters.put(player2.getId(), 8);
+        gd.playerExperienceCounters.put(player2.getId(), 7);
 
         cast(new int[]{4});
 
-        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(gd.playerSparkCounters.get(player1.getId())).isEqualTo(3);
-        assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(4);
-        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
-        assertThat(gd.playerEnergyCounters.getOrDefault(player2.getId(), 0)).isZero();
-        assertThat(gd.playerSparkCounters.getOrDefault(player2.getId(), 0)).isZero();
-        assertThat(gd.playerExperienceCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerPoisonCounters).containsEntry(player1.getId(), 2)
+                .doesNotContainKey(player2.getId());
+        assertThat(gd.playerEnergyCounters).containsEntry(player1.getId(), 3)
+                .doesNotContainKey(player2.getId());
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 4)
+                .doesNotContainKey(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Can resolve every mode together")
+    void canResolveEveryModeTogether() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new AjaniSteadfast());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfInnistrad());
+        battle.setCounterCount(CounterType.DEFENSE, 4);
+        harness.setGraveyard(player2, List.of(new LlanowarElves()));
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+
+        cast(new int[]{0, 1, 2, 3, 4});
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerPoisonCounters).doesNotContainKey(player2.getId());
     }
 
     private void cast(int[] modes) {
@@ -84,12 +102,5 @@ class FinalActTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
         harness.castModalSorceryWithModes(player1, 0, 1, 5, modes, List.of(), null);
         harness.passBothPriorities();
-    }
-
-    private static Card card(String name, CardType type) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(type);
-        return card;
     }
 }

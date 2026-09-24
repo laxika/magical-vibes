@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "85")
+@CardRegistration(set = "ME4", collectorNumber = "165")
 public class ScarwoodBandits extends Card {
 
     public ScarwoodBandits() {

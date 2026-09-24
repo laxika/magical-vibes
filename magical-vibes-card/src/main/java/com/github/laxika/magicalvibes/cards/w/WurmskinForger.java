@@ -5,14 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "140")
 public class WurmskinForger extends Card {
 
     public WurmskinForger() {
         // When this creature enters, distribute three +1/+1 counters among one, two, or three target creatures.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        target(TargetFilters.creature(), 1, 3).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 DistributeCountersAmongTargetsEffect.chosenAmongTargetCreaturesEtb(
-                        CounterType.PLUS_ONE_PLUS_ONE, 3));
+                        CounterType.PLUS_ONE_PLUS_ONE, 3, new PermanentIsCreaturePredicate()));
     }
 }

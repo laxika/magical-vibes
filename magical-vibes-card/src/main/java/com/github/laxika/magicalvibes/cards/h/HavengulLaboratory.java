@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPerman
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "609")
 @CardRegistration(set = "SLX", collectorNumber = "9")
 public class HavengulLaboratory extends Card {
 

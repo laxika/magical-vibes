@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "125")
+@CardRegistration(set = "ME4", collectorNumber = "149")
 public class DeathcoilWurm extends Card {
 
     public DeathcoilWurm() {

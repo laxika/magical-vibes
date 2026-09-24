@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "119")
+@CardRegistration(set = "SLD", collectorNumber = "671")
+@CardRegistration(set = "SLD", collectorNumber = "672")
 public class QuestingPhelddagrif extends Card {
 
     public QuestingPhelddagrif() {

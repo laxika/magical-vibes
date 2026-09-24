@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
 @CardRegistration(set = "JVC", collectorNumber = "18")
 @CardRegistration(set = "A25", collectorNumber = "47")
 @CardRegistration(set = "TSR", collectorNumber = "55")
+@CardRegistration(set = "C14", collectorNumber = "99")
 public class BrineElemental extends Card {
 
     public BrineElemental() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "140")
+@CardRegistration(set = "SLD", collectorNumber = "857")
 public class NehebDreadhordeChampion extends Card {
 
     public NehebDreadhordeChampion() {

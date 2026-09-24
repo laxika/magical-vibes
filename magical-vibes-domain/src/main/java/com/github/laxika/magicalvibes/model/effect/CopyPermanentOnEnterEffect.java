@@ -125,7 +125,7 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
     }
 
     /** Clone with the embalm exception (Vizier of Many Faces): copy a creature, but an embalm token
-     *  becomes the given color, gains the given creature type, and loses its mana cost. */
+     * becomes the given color, gains the given creature type, and loses its mana cost. */
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       CardColor embalmColorOverride, CardSubtype embalmAddedSubtype,
                                       boolean embalmRemoveManaCost) {
@@ -200,5 +200,13 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
         return new CopyPermanentOnEnterEffect(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false,
                 null, Set.of(), Map.of(), false, false, null, Set.of(), Set.of(), false, true, Set.of(), false, true,
                 null, false);
+    }
+
+    /** Clone-style copy that reverts during cleanup, with optional copy exceptions. */
+    public static CopyPermanentOnEnterEffect temporaryCopy(PermanentPredicate filter, String typeLabel,
+                                                            Set<Keyword> additionalKeywordsOverride) {
+        return new CopyPermanentOnEnterEffect(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false,
+                null, Set.of(), Map.of(), false, false, null, Set.of(), additionalKeywordsOverride, false, true,
+                Set.of(), false, false, null, true);
     }
 }

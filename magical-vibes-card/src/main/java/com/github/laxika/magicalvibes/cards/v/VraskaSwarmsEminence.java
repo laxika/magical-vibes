@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "236")
+@CardRegistration(set = "SLD", collectorNumber = "536")
 public class VraskaSwarmsEminence extends Card {
 
     public VraskaSwarmsEminence() {

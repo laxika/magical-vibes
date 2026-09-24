@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "851")
 @CardRegistration(set = "GNT", collectorNumber = "3")
 public class RotHulk extends Card {
 

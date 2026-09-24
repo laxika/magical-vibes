@@ -14,9 +14,14 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * may use {@code EventValue} for its power and toughness.
  *
  * @param token token blueprint to create
+ * @param attacking whether created attacking creatures attack the trigger's captured target
  */
-public record CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token)
+public record CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token, boolean attacking)
         implements TokenCreatingEffect, TriggeringSpellManaValueEffect {
+
+    public CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token) {
+        this(token, false);
+    }
 
     @Override
     public DynamicAmount tokenAmount() {

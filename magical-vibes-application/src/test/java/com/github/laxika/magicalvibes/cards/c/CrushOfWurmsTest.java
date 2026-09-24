@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CrushOfWurms.class)
+@CardUsed({CrushOfWurms.class})
 class CrushOfWurmsTest extends BaseCardTest {
 
     @Test
@@ -65,5 +65,20 @@ class CrushOfWurmsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInGraveyard(player1, "Crush of Wurms");
         assertThat(findPermanents(player1, "Wurm")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be cast without its full flashback cost")
+    void flashbackRequiresFullCost() {
+        CrushOfWurms crushOfWurms = new CrushOfWurms();
+        harness.setGraveyard(player1, List.of(crushOfWurms));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(crushOfWurms);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -5,12 +5,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "164")
+@CardRegistration(set = "SLD", collectorNumber = "1691")
 @CardRegistration(set = "2X2", collectorNumber = "32")
 @CardRegistration(set = "STA", collectorNumber = "11")
+@CardRegistration(set = "TLE", collectorNumber = "7")
+@CardRegistration(set = "MAR", collectorNumber = "51")
 public class TeferisProtection extends Card {
 
     public TeferisProtection() {

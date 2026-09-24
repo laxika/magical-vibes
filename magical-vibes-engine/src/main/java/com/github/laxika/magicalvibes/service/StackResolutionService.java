@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
@@ -201,6 +202,15 @@ public class StackResolutionService {
             return;
         }
 
+        if (resumeWordOfCommandIfReady(gameData)) {
+            if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
+                if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+                    playerInputService.processNextMayAbility(gameData);
+                }
+                return;
+            }
+        }
+
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         stateBasedActionService.performStateBasedActions(gameData);
 
@@ -297,6 +307,40 @@ public class StackResolutionService {
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
+    /** Completes Word of Command after the card it controlled has finished resolving. */
+    private boolean resumeWordOfCommandIfReady(GameData gameData) {
+        StackEntry pendingEntry = gameData.wordOfCommandPendingResolutionEntry;
+        if (pendingEntry == null || gameData.wordOfCommandCastingCard) {
+            return false;
+        }
+        if (gameData.wordOfCommandAwaitingCardResolution
+                && gameData.stack.stream().anyMatch(entry -> entry.getCard() != null
+                && gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(entry.getCard().getId()))) {
+            return false;
+        }
+
+        gameData.wordOfCommandAwaitingCardResolution = false;
+        gameData.wordOfCommandPendingResolutionEntry = null;
+        gameData.wordOfCommandCardId = null;
+        if (gameData.wordOfCommandControllerPlayerId != null
+                && gameData.wordOfCommandControllerPlayerId.equals(gameData.mindControllerPlayerId)
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(gameData.mindControlledPlayerId)) {
+            gameData.mindControllerPlayerId = null;
+            gameData.mindControlledPlayerId = null;
+            gameData.mindControlUntilEndOfCombat = false;
+        }
+        gameData.wordOfCommandControllerPlayerId = null;
+        gameData.wordOfCommandControlledPlayerId = null;
+        gameData.pendingEffectResolutionEntry = pendingEntry;
+        gameData.pendingEffectResolutionIndex = gameData.wordOfCommandPendingResolutionIndex;
+        gameData.wordOfCommandPendingResolutionIndex = 0;
+        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
+                gameData.pendingEffectResolutionIndex);
+        return true;
+    }
+
     /** CR 702.146 / siege defeat: while cast transformed, the spell has back-face characteristics. */
     private static Card disturbCharacteristics(StackEntry entry, Card card) {
         if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && card.getBackFaceCard() != null) {
@@ -337,6 +381,7 @@ public class StackResolutionService {
         perm.setCast(!entry.isCopy());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
+        perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
@@ -346,6 +391,8 @@ public class StackResolutionService {
         perm.setGrantedDevour(entry.getGrantedDevour());
         entry.getGrantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
                 effects.forEach(effect -> perm.addTemporaryTriggeredEffect(slot, effect)));
+        entry.getPersistentTriggeredEffectsOnEntry().forEach((slot, effects) ->
+                effects.forEach(effect -> perm.addPersistentTriggeredEffect(slot, effect)));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
         if (entry.isCastWhenSorceryCouldNotBeCast() && card.getEffects(EffectSlot.STATIC).stream()
@@ -380,11 +427,11 @@ public class StackResolutionService {
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());
+                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked(), entry);
         } else {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
                     entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
-                    entry.getConvokeCreatureIds().size());
+                    entry.getConvokeCreatureIds().size(), entry);
         }
     }
 
@@ -459,6 +506,7 @@ public class StackResolutionService {
         gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
         if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
             gameData.playerDecks.get(ownerId).add(physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
         } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb()
                 || entry.isCastWithEscape() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
@@ -891,6 +939,19 @@ public class StackResolutionService {
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
 
+            boolean needsTwoPlayerChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(TwoPlayerChoiceOnEnterEffect.class::isInstance);
+            if (needsTwoPlayerChoice && gameData.orderedPlayerIds.size() >= 2) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseTwoPlayersAsEnter(
+                                enchPerm.getId(), controllerId, enteredCard, entry.getTargetId(), true,
+                                entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                                entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds(), null));
+                playerInputService.beginPlayerChoice(gameData, controllerId,
+                        new ArrayList<>(gameData.orderedPlayerIds), "Choose a player.");
+                return;
+            }
+
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (enteredCard.isSaga()) {
                 sagaChapterService.initializeSaga(gameData, enchPerm, enteredCard, controllerId);
@@ -1176,6 +1237,7 @@ public class StackResolutionService {
                 Card dispositionCard = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
                 if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.playerDecks.get(entry.getOwnerId()).add(dispositionCard);
+                    triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
                 } else if (entry.isCastWithFlashback() || entry.isCastWithEscape()
                         || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
@@ -1199,6 +1261,8 @@ public class StackResolutionService {
             if (gameData.pendingEffectResolutionEntry != null) {
                 return;
             }
+
+            checkSagaFinalChapterResolution(gameData, entry);
 
             if (gameData.restartTurnRequested) {
                 gameData.restartTurnRequested = false;
@@ -1234,6 +1298,7 @@ public class StackResolutionService {
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
@@ -1248,7 +1313,28 @@ public class StackResolutionService {
 
     /** Completes disposition for a spell whose effect resolution resumed after player input. */
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
+        checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
+    }
+
+    private void checkSagaFinalChapterResolution(GameData gameData, StackEntry entry) {
+        Card card = entry.getCard();
+        if (card == null || !card.isSaga() || entry.getDescription() == null) return;
+
+        String finalChapter = switch (card.getSagaFinalChapter()) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            default -> null;
+        };
+        if (finalChapter == null
+                || !entry.getDescription().equals(card.getName() + "'s chapter " + finalChapter + " ability")) {
+            return;
+        }
+        triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
+                gameData, entry.getControllerId(), card.getManaValue());
     }
 
     /**
@@ -1330,6 +1416,7 @@ public class StackResolutionService {
         } else if (entry.isCastWithOmen()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.playerDecks.get(ownerId).add(physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
         } else if (entry.isCastWithAdventure()) {
@@ -1358,6 +1445,7 @@ public class StackResolutionService {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             int position = Math.min(entry.getPutIntoLibraryPositionAfterResolving(), deck.size());
             deck.add(position, physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     " is put " + (position + 1) + " from the top of its owner's library."));
         } else if (gameData.pendingReturnToHandOnDiscardType != null) {
@@ -1385,6 +1473,7 @@ public class StackResolutionService {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             if (!deck.contains(physicalCard)) {
                 deck.add(physicalCard);
+                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
                 LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
                 gameLogService.append(gameData, GameLog.cardThen(
                         entry.getCard(), " is shuffled into its owner's library."));
@@ -1394,6 +1483,7 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "95")
+@CardRegistration(set = "CMD", collectorNumber = "134")
 public class Ruination extends Card {
 
     public Ruination() {

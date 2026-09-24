@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "AVR", collectorNumber = "5")
 @CardRegistration(set = "VIS", collectorNumber = "1")
 @CardRegistration(set = "S99", collectorNumber = "4")
+@CardRegistration(set = "C13", collectorNumber = "5")
 public class Archangel extends Card {
 }

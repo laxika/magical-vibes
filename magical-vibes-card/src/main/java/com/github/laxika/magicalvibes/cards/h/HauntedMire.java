@@ -10,14 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "DMU", collectorNumber = "248")
 @CardRegistration(set = "SOC", collectorNumber = "379")
 public class HauntedMire extends Card {
 
     public HauntedMire() {
-        // This land enters tapped.
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-
-        // {T}: Add {B} or {G}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

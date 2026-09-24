@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +21,10 @@ class FesteringThicketTest extends BaseCardTest {
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
         harness.setHand(player1, List.of(new FesteringThicket()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
@@ -28,9 +32,9 @@ class FesteringThicketTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for black mana produces one black")
     void tappingProducesBlackMana() {
-        addThicketReady();
+        addThicketReady(player1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.BLACK.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
@@ -40,9 +44,9 @@ class FesteringThicketTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingProducesGreenMana() {
-        addThicketReady();
+        addThicketReady(player1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.GREEN.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -50,7 +54,7 @@ class FesteringThicketTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cycling {2} discards the card and draws one")
+    @DisplayName("Cycling discards the card and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new FesteringThicket()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
@@ -64,10 +68,10 @@ class FesteringThicketTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    private Permanent addThicketReady() {
-        Permanent permanent = new Permanent(new FesteringThicket());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    private Permanent addThicketReady(Player player) {
+        Permanent perm = new Permanent(new FesteringThicket());
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
     }
 }

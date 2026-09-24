@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 
 @CardRegistration(set = "SHM", collectorNumber = "129")
 @CardRegistration(set = "DDM", collectorNumber = "55")
+@CardRegistration(set = "CMD", collectorNumber = "171")
 public class Spawnwrithe extends Card {
 
     public Spawnwrithe() {

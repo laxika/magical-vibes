@@ -14,11 +14,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "104")
+@CardRegistration(set = "C14", collectorNumber = "142")
 @CardRegistration(set = "PD3", collectorNumber = "23")
 @CardRegistration(set = "DDQ", collectorNumber = "55")
 @CardRegistration(set = "2XM", collectorNumber = "89")
 @CardRegistration(set = "TSR", collectorNumber = "111")
 @CardRegistration(set = "DMR", collectorNumber = "80")
+@CardRegistration(set = "CMM", collectorNumber = "153")
+@CardRegistration(set = "CMM", collectorNumber = "637")
 public class DreadReturn extends Card {
 
     public DreadReturn() {

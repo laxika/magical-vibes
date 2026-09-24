@@ -1,87 +1,102 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
-
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarksteelMutation.class, AirElemental.class, ProdigalPyromancer.class, Forest.class})
+
+
+
+@CardUsed({DarksteelMutation.class, FountainOfYouth.class, SerraAngel.class, Ornithopter.class})
 class DarksteelMutationTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Turns the enchanted creature into an indestructible 0/1 artifact Insect")
-    void mutatesEnchantedCreature() {
-        Permanent target = addCreatureReady(player2, new AirElemental());
-        attachMutation(target);
+    void transformsEnchantedCreatureIntoIndestructibleInsectArtifact() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
-        assertThat(gqs.isArtifact(gd, target)).isTrue();
-        assertThat(gqs.isCreature(gd, target)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, target)).isZero();
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
-        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.INSECT)).isTrue();
-        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        castAndResolve(angel);
+
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardTypes(gd, angel))
+                .containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.INSECT);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
     }
 
     @Test
-    @DisplayName("Removes activated abilities while leaving the Aura-granted indestructible ability")
-    void removesOriginalActivatedAbilities() {
-        Permanent target = addCreatureReady(player1, new ProdigalPyromancer());
-        attachMutation(target);
+    void removingAuraRestoresEnchantedCreature() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
-        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        castAndResolve(angel);
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof DarksteelMutation)
+                .findFirst()
+                .orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveCardTypes(gd, angel)).containsExactly(CardType.CREATURE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.ANGEL);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
 
     @Test
-    @DisplayName("Cannot target a noncreature permanent")
-    void rejectsNoncreatureTarget() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent target = findPermanent(player2, "Forest");
-
+    void cannotTargetNoncreaturePermanent() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new DarksteelMutation()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, target.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
+    private void castAndResolve(Permanent target) {
+        harness.setHand(player1, List.of(new DarksteelMutation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+    }
     @Test
-    @DisplayName("Removing the Aura restores the creature")
-    void removalRestoresCreature() {
-        Permanent target = addCreatureReady(player2, new AirElemental());
-        Permanent mutation = attachMutation(target);
+    void transformsEnchantedCreatureIntoIndestructibleInsectArtifactCreature() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        castDarksteelMutation(angel);
 
-        gd.playerBattlefields.get(player1.getId()).remove(mutation);
-
-        assertThat(gqs.isArtifact(gd, target)).isFalse();
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.INSECT)).isFalse();
-        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
-        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, angel)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveColors(gd, angel)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.getEffectiveCardTypes(gd, angel))
+                .containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.INSECT);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
     }
 
-    private Permanent attachMutation(Permanent target) {
-        Permanent mutation = new Permanent(new DarksteelMutation());
-        mutation.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(player1.getId()).add(mutation);
-        return mutation;
+    private void castDarksteelMutation(Permanent target) {
+        harness.setHand(player1, List.of(new DarksteelMutation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
     }
 
 }

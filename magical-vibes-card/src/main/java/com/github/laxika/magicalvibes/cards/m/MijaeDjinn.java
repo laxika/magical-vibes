@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "SUM", collectorNumber = "166")
 @CardRegistration(set = "3ED", collectorNumber = "166")
+@CardRegistration(set = "ME4", collectorNumber = "127")
+@CardRegistration(set = "ARN", collectorNumber = "42")
 public class MijaeDjinn extends Card {
 
     public MijaeDjinn() {

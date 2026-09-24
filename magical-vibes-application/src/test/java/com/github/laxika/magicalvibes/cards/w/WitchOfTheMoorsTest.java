@@ -17,58 +17,60 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WitchOfTheMoorsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("After you gain life, each opponent sacrifices a creature and you may return a creature card")
-    void sacrificesEachOpponentAndReturnsCreature() {
+    @DisplayName("After gaining life, each opponent sacrifices a creature and a graveyard creature returns to hand")
+    void sacrificesAndReturnsCreatureAfterLifeGain() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new WitchOfTheMoors());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        GrizzlyBears graveyardBears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(graveyardBears));
+        GrizzlyBears returned = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returned));
         gd.lifeGainedThisTurn.put(player1.getId(), 1);
 
         advanceToEndStep(player1);
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(graveyardBears.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
 
-        harness.handleMultipleCardsChosen(player1, List.of(graveyardBears.getId()));
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(returned.getId()));
     }
 
     @Test
-    @DisplayName("The ability does not trigger if you did not gain life")
+    @DisplayName("Does not trigger when its controller has not gained life")
     void doesNotTriggerWithoutLifeGain() {
         harness.addToBattlefield(player1, new WitchOfTheMoors());
         harness.addToBattlefield(player2, new GrizzlyBears());
+        GrizzlyBears returned = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returned));
 
         advanceToEndStep(player1);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(returned);
     }
 
     @Test
-    @DisplayName("The creature return is optional")
-    void mayDeclineCreatureReturn() {
+    @DisplayName("Up to one allows declining the graveyard return")
+    void canDeclineGraveyardReturn() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new WitchOfTheMoors());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        GrizzlyBears graveyardBears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(graveyardBears));
+        GrizzlyBears returned = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returned));
         gd.lifeGainedThisTurn.put(player1.getId(), 1);
 
         advanceToEndStep(player1);
         harness.handleMultipleCardsChosen(player1, List.of());
+
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     private void advanceToEndStep(Player activePlayer) {

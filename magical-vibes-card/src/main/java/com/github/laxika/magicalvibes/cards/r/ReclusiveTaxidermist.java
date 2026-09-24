@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "214")
+@CardRegistration(set = "DBL", collectorNumber = "481")
 public class ReclusiveTaxidermist extends Card {
 
     public ReclusiveTaxidermist() {

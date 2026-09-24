@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "104")
+@CardRegistration(set = "SLD", collectorNumber = "2026")
 public class ConstantMists extends Card {
 
     public ConstantMists() {

@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(DarksteelBrute.class)
 class DarksteelBruteTest extends BaseCardTest {
 
     @Test
@@ -25,12 +27,26 @@ class DarksteelBruteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(brute.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(gqs.isCreature(gd, brute)).isTrue();
         assertThat(gqs.isArtifact(brute)).isTrue();
         assertThat(gqs.getEffectivePower(gd, brute)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, brute)).isEqualTo(2);
-        assertThat(brute.getTransientSubtypes()).contains(CardSubtype.BEAST);
+        assertThat(gqs.hasEffectiveSubtype(gd, brute, CardSubtype.BEAST)).isTrue();
+        assertThat(brute.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activating the ability consumes three generic mana")
+    void manaIsConsumed() {
+        Permanent brute = addBruteReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, indexOf(brute), 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -50,16 +66,12 @@ class DarksteelBruteTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(brute.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, brute)).isFalse();
-        assertThat(brute.getTransientSubtypes()).doesNotContain(CardSubtype.BEAST);
+        assertThat(gqs.hasEffectiveSubtype(gd, brute, CardSubtype.BEAST)).isFalse();
     }
 
     private Permanent addBruteReady() {
-        Permanent permanent = new Permanent(new DarksteelBrute());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new DarksteelBrute());
     }
 
     private int indexOf(Permanent permanent) {

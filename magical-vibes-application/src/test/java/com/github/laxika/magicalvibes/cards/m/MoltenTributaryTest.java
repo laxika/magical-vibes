@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,18 +18,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MoltenTributaryTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters the battlefield tapped")
+    @DisplayName("Enters tapped")
     void entersTapped() {
         harness.setHand(player1, List.of(new MoltenTributary()));
 
         harness.playLand(player1, 0);
 
-        assertThat(findPermanent(player1, "Molten Tributary").isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Choosing blue adds one blue mana")
-    void choosingBlueAddsMana() {
+    @DisplayName("Mana ability prompts for blue or red")
+    void manaAbilityPromptsForBlueOrRed() {
+        addReadyTributary(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        GameData gameData = harness.getGameData();
+        PendingInteraction.ColorChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("BLUE", "RED");
+    }
+
+    @Test
+    void choosingBlueAddsOneBlueMana() {
         Permanent tributary = addReadyTributary(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -38,8 +53,7 @@ class MoltenTributaryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing red adds one red mana")
-    void choosingRedAddsMana() {
+    void choosingRedAddsOneRedMana() {
         Permanent tributary = addReadyTributary(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -50,9 +64,9 @@ class MoltenTributaryTest extends BaseCardTest {
     }
 
     private Permanent addReadyTributary(Player player) {
-        Permanent perm = new Permanent(new MoltenTributary());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent permanent = new Permanent(new MoltenTributary());
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        return permanent;
     }
 }

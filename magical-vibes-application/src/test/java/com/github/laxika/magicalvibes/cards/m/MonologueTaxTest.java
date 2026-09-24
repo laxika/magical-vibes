@@ -1,55 +1,76 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MonologueTax.class, Shock.class})
+@CardUsed({MonologueTax.class, GrizzlyBears.class, LlanowarElves.class})
 class MonologueTaxTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Creates a Treasure when an opponent casts their second spell each turn")
-    void createsTreasureForOpponentsSecondSpell() {
+    void createsATreasureWhenAnOpponentCastsTheirSecondSpell() {
         harness.addToBattlefield(player1, new MonologueTax());
-        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
-        harness.addMana(player2, ManaColor.RED, 3);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        prepareOpponentTurn(List.of(new GrizzlyBears(), new LlanowarElves()));
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castCreature(player2, 0);
         harness.passBothPriorities();
-        assertThat(countPermanents(player1, "Treasure")).isZero();
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
-        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
-
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
-        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
     }
 
     @Test
-    @DisplayName("Does not trigger when the controller casts their second spell")
-    void doesNotTriggerForControllersSecondSpell() {
+    void doesNotTriggerForTheFirstOrThirdOpponentSpell() {
         harness.addToBattlefield(player1, new MonologueTax());
-        harness.setHand(player1, List.of(new Shock(), new Shock()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        prepareOpponentTurn(List.of(new LlanowarElves(), new GrizzlyBears(), new LlanowarElves()));
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castCreature(player2, 0);
         harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerForTheControllerCastingTheirSecondSpell() {
+        harness.addToBattlefield(player1, new MonologueTax());
+        harness.setHand(player1, List.of(new LlanowarElves(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    private void prepareOpponentTurn(List<Card> hand) {
+        harness.setHand(player2, hand);
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
     }
 }

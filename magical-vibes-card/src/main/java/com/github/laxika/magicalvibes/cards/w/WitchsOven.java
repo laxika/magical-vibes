@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "237")
+@CardRegistration(set = "SLD", collectorNumber = "1762")
 public class WitchsOven extends Card {
 
     public WitchsOven() {

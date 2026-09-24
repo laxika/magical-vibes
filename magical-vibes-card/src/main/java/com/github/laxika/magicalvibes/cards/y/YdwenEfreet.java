@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSourceFromCombatAndUnblockSoleBlockersEffect;
 
 @CardRegistration(set = "ME1", collectorNumber = "112")
+@CardRegistration(set = "ARN", collectorNumber = "44")
 public class YdwenEfreet extends Card {
 
     public YdwenEfreet() {

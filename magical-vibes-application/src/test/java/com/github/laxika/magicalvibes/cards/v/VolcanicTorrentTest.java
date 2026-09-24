@@ -1,78 +1,77 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VolcanicTorrent.class, Forest.class, GrizzlyBears.class, HillGiant.class, Shock.class})
+@CardUsed({VolcanicTorrent.class, ChandraNalaar.class, GrizzlyBears.class, HillGiant.class,
+        LightningBolt.class, Mountain.class})
 class VolcanicTorrentTest extends BaseCardTest {
 
     @Test
-    void cascadesToTheFirstLowerManaValueNonlandCard() {
-        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
-        prepareCaster(List.of(new VolcanicTorrent()));
+    @DisplayName("Deals damage to opposing creatures and planeswalkers based on spells cast this turn")
+    void damagesOpposingCreaturesAndPlaneswalkers() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent opposingPlaneswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        opposingPlaneswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningBolt(), new VolcanicTorrent()));
+        harness.addMana(player1, ManaColor.RED, 6);
 
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        PendingInteraction.LibrarySearch cascade =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(cascade.params().cards()).extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(opposingPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
-    void dealsDamageEqualToSpellsCastThisTurnToOpponentsCreaturesAndPlaneswalkers() {
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent opponentPlaneswalker = addPlaneswalker(player2, 5);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-
-        harness.setLibrary(player1, List.of());
-        prepareCaster(List.of(new Shock(), new VolcanicTorrent()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+    @DisplayName("Cascade casts a lesser spell and that spell increases the damage")
+    void cascadeSpellCountsTowardDamage() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new VolcanicTorrent()));
+        harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
+
+        List<String> castable = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().stream().map(Card::getName).toList();
+        assertThat(castable).containsExactly("Grizzly Bears");
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Grizzly Bears")
+                && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
+
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getMarkedDamage()).isEqualTo(2);
-        assertThat(opponentPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        assertThat(ownCreature.getMarkedDamage()).isZero();
-    }
-
-    private void prepareCaster(List<Card> hand) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, hand);
-        harness.addMana(player1, ManaColor.RED, 5);
-    }
-
-    private Permanent addPlaneswalker(com.github.laxika.magicalvibes.model.Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

@@ -18,6 +18,7 @@ import java.util.List;
 public class PrimalWhisperer extends Card {
 
     public PrimalWhisperer() {
+        addMorph("{3}{G}");
         PermanentAllOfPredicate faceDownCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsFaceDownPredicate()));

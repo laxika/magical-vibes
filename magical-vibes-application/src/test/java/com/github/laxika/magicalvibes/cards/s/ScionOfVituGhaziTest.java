@@ -64,17 +64,15 @@ class ScionOfVituGhaziTest extends BaseCardTest {
     @Test
     @DisplayName("Entering from the graveyard rather than a hand cast makes no token")
     void enteringNotFromHandCreatesNothing() {
-        harness.setGraveyard(player1, List.of(new ScionOfVituGhazi()));
+        ScionOfVituGhazi target = new ScionOfVituGhazi();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
-        harness.passBothPriorities();
-
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Scion of Vitu-Ghazi");
         assertThat(birdsOf(player1)).isEmpty();
     }

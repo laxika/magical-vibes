@@ -200,6 +200,7 @@ export interface Card {
   alternateCostDiscardsHandCard?: boolean;
   alternateCostRevealsHandCard?: boolean;
   graveyardCastRequiresDiscard?: boolean;
+  graveyardCastDiscardCount?: number;
   graveyardCastExileCount?: number;
   graveyardCastExileLabel?: string | null;
   additionalBeholdSubtype: string | null;
@@ -366,6 +367,7 @@ export interface Game {
   activePlayerId: string | null;
   turnNumber: number;
   dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
+  monarchPlayerId?: string | null;
   priorityPlayerId: string | null;
   hand: Card[];
   opponentHand: Card[];
@@ -456,6 +458,7 @@ export interface GameStateNotification {
   activePlayerId: string;
   turnNumber: number;
   dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
+  monarchPlayerId?: string | null;
   currentStep: TurnStep;
   priorityPlayerId: string;
   battlefields: Permanent[][];
@@ -649,7 +652,7 @@ export interface DraftFinishedNotification {
 export interface CombatDamageTargetView {
   id: string;
   name: string;
-  toughness: number;
+  lethalDamageThreshold: number;
   currentDamage: number;
   isPlayer: boolean;
 }

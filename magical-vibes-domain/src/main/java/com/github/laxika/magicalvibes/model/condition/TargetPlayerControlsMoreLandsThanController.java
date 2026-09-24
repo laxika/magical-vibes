@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model.condition;
 
-/** True when the targeted player is an opponent who controls more lands than the controller. */
+/** True when the targeted player controls strictly more lands than the condition's controller. */
 public record TargetPlayerControlsMoreLandsThanController() implements Condition {
 
     @Override

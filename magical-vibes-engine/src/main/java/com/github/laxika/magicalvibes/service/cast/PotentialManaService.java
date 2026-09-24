@@ -557,14 +557,10 @@ public class PotentialManaService {
                 }
             } else if (effect instanceof AwardAnyColorManaEffect anyColor
                     && (anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
-                    || anyColor.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTERS
-                    || anyColor.restriction() == ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER
-                    || anyColor.restriction() == ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER_ANY_COLOR)) {
+                    || anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY)) {
                 int amount = estimateManaAmount(anyColor.amount(), permanent, gameData);
                 if (amount > 0) {
-                    List<ManaColor> colors = anyColor.restriction() == ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER_ANY_COLOR
-                            ? ManaColor.COLORS
-                            : ManaProductionSupport.commanderColorIdentity(gameData, playerId);
+                    List<ManaColor> colors = ManaProductionSupport.commanderColorIdentity(gameData, playerId);
                     for (ManaColor color : colors) {
                         EnumMap<ManaColor, Integer> option = new EnumMap<>(ManaColor.class);
                         option.put(color, amount);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "133")
+@CardRegistration(set = "PIP", collectorNumber = "998")
 @CardRegistration(set = "2X2", collectorNumber = "151")
 @CardRegistration(set = "WOT", collectorNumber = "55")
 @CardRegistration(set = "SOC", collectorNumber = "272")

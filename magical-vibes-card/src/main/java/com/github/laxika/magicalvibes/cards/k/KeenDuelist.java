@@ -8,15 +8,16 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "828")
 @CardRegistration(set = "SOC", collectorNumber = "218")
 public class KeenDuelist extends Card {
 
     public KeenDuelist() {
-        PlayerPredicateTargetFilter opponent = new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        );
-        target(opponent).addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect(true));
+        )).addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect
+                        .forControllerAndTarget());
     }
 }

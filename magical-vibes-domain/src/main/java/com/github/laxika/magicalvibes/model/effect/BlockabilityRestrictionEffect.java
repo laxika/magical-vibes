@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code CantBeBlockedByCreaturesWithPowerLessThanIslandCountEffect},
  * {@code CantBeBlockedIfDefenderControlsMatchingPermanentEffect},
  * {@code CantBeBlockedUnlessDefenderControlsCreaturesSharingCreatureTypeEffect},
+ * {@code CantBeBlockedIfDefenderControlsMostCreaturesOrTiedEffect},
  * {@code CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect}, and
  * {@code CantBeBlockedIfAttackingAloneEffect}).
  */
@@ -42,6 +43,11 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
     /** Minimum number of shared-type creatures the defending player must control, when applicable. */
     default Integer defenderControlsCreaturesSharingTypeMinimum() {
         return null;
+    }
+
+    /** Whether this creature can't be blocked while the defending player has the most creatures. */
+    default boolean unblockableIfDefenderControlsMostCreaturesOrTied() {
+        return false;
     }
 
     /**

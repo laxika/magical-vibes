@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "DMU", collectorNumber = "251")
 @CardRegistration(set = "SOC", collectorNumber = "387")
 public class MoltenTributary extends Card {
 
     public MoltenTributary() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
 
-        // {T}: Add {U} or {R}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "7")
+@CardRegistration(set = "DBL", collectorNumber = "7")
 public class BrutalCathar extends Card {
 
     public BrutalCathar() {

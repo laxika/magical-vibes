@@ -13,12 +13,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "2304")
 @CardRegistration(set = "MH1", collectorNumber = "164")
 @CardRegistration(set = "OTP", collectorNumber = "29")
 @CardRegistration(set = "OTP", collectorNumber = "73")
+@CardRegistration(set = "MAR", collectorNumber = "77")
 public class ForceOfVigor extends Card {
 
     public ForceOfVigor() {

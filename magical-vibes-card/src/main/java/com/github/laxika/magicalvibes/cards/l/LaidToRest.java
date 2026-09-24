@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "207")
+@CardRegistration(set = "DBL", collectorNumber = "474")
 public class LaidToRest extends Card {
 
     public LaidToRest() {

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M19", collectorNumber = "107")
+@CardRegistration(set = "SLD", collectorNumber = "161")
+@CardRegistration(set = "SLD", collectorNumber = "1844")
 public class LilianasContract extends Card {
 
     public LilianasContract() {

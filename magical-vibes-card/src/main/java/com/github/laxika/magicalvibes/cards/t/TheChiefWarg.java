@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "150")
+@CardRegistration(set = "HOC", collectorNumber = "150")
 public class TheChiefWarg extends Card {
 
     public TheChiefWarg() {

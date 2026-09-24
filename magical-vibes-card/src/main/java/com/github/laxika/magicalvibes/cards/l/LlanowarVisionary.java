@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "193")
+@CardRegistration(set = "SLD", collectorNumber = "771")
 public class LlanowarVisionary extends Card {
 
     public LlanowarVisionary() {

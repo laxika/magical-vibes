@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "CHR", collectorNumber = "66")
+@CardRegistration(set = "ARN", collectorNumber = "51")
 public class Metamorphosis extends Card {
 
     public Metamorphosis() {

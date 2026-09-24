@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "158")
+@CardRegistration(set = "DBL", collectorNumber = "425")
 public class FlameBlessedBolt extends Card {
 
     public FlameBlessedBolt() {

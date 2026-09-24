@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPred
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "36")
+@CardRegistration(set = "DBL", collectorNumber = "36")
 public class SungoldBarrage extends Card {
 
     public SungoldBarrage() {

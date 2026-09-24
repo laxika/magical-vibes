@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
+import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -203,6 +204,8 @@ public class Card {
      * "target Merfolk", where a Merfolk satisfies both).
      */
     private boolean allowSharedTargets;
+    /** Expanded target positions chosen by an opponent during this spell's announcement. */
+    private List<Integer> opponentChosenSpellTargetIndices = List.of();
     /** Whether this card's targeted attack trigger is chosen by the defending player. */
     private boolean attackTriggerTargetChosenByDefendingPlayer;
     /**
@@ -337,7 +340,11 @@ public class Card {
      * fails on any newly declared field to force this update.
      */
     protected Card(Card source) {
-        this.id = source.id;
+        this(source, source.id);
+    }
+
+    private Card(Card source, UUID id) {
+        this.id = id;
         this.ownerId = source.ownerId;
         this.name = source.name;
         this.type = source.type;
@@ -374,6 +381,7 @@ public class Card {
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
         this.allowSharedTargets = source.allowSharedTargets;
+        this.opponentChosenSpellTargetIndices = source.opponentChosenSpellTargetIndices;
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
@@ -418,6 +426,44 @@ public class Card {
      */
     public Card createRuntimeCopy() {
         return new Card(this);
+    }
+
+    /** Creates a new-identity copy for conjured duplicates. */
+    public Card createConjuredCopy() {
+        return new Card(this, UUID.randomUUID());
+    }
+
+    /**
+     * Creates a runtime copy that keeps this card's non-text-box characteristics and uses the
+     * supplied card's rules text, keywords, abilities, and targeting configuration.
+     */
+    public Card createRuntimeTextBoxCopy(Card textSource) {
+        Card copy = new Card(this);
+        copy.cardText = textSource.cardText;
+        copy.keywords = textSource.keywords.isEmpty()
+                ? Set.of()
+                : EnumSet.copyOf(textSource.keywords);
+
+        copy.effectRegistrations.clear();
+        textSource.effectRegistrations.forEach((slot, registrations) ->
+                copy.effectRegistrations.put(slot, new ArrayList<>(registrations)));
+        copy.effectCache.clear();
+
+        copy.spellTargets.clear();
+        copy.effectTargetIndexMap.clear();
+        copy.copyTargetingFrom(textSource);
+
+        copy.sagaChapterTargetFilters.clear();
+        copy.sagaChapterTargetFilters.putAll(textSource.sagaChapterTargetFilters);
+        copy.sagaChapterTargetGroups.clear();
+        textSource.sagaChapterTargetGroups.forEach((slot, groups) ->
+                copy.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
+
+        copy.activatedAbilities = new ArrayList<>(textSource.activatedAbilities);
+        copy.graveyardActivatedAbilities = new ArrayList<>(textSource.graveyardActivatedAbilities);
+        copy.handActivatedAbilities = new ArrayList<>(textSource.handActivatedAbilities);
+        copy.stackActivatedAbilities = new ArrayList<>(textSource.stackActivatedAbilities);
+        return copy;
     }
 
     /**
@@ -466,6 +512,7 @@ public class Card {
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = face.additionalLifeCostPerTarget;
         this.allowSharedTargets = face.allowSharedTargets;
+        this.opponentChosenSpellTargetIndices = face.opponentChosenSpellTargetIndices;
         this.multiTargetConstraint = face.multiTargetConstraint;
         this.spellTargets.clear();
         this.spellTargets.addAll(face.spellTargets);
@@ -579,6 +626,10 @@ public class Card {
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
     public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
+    public void setOpponentChosenSpellTargetIndices(List<Integer> indices) {
+        assertMutable();
+        this.opponentChosenSpellTargetIndices = indices == null ? List.of() : List.copyOf(indices);
+    }
     public void setAttackTriggerTargetChosenByDefendingPlayer(boolean chosenByDefendingPlayer) {
         assertMutable();
         this.attackTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
@@ -623,6 +674,7 @@ public class Card {
         setAdditionalManaCostPerExtraTarget(null);
         setAdditionalLifeCostPerTarget(0);
         setAllowSharedTargets(false);
+        setOpponentChosenSpellTargetIndices(List.of());
         setAttackTriggerTargetChosenByDefendingPlayer(false);
         setMultiTargetConstraint(null);
         setCastTimeTargetFilter(null);
@@ -707,8 +759,17 @@ public class Card {
      */
     public SpellTarget targetWhenKicked(TargetFilter filter, int minTargets, int maxTargets,
                                         int kickedMinTargets, int kickedMaxTargets) {
+        return targetWhenKicked(filter, filter, minTargets, maxTargets, kickedMinTargets, kickedMaxTargets);
+    }
+
+    /**
+     * Declares a target group whose target filter and bounds can change when the spell is kicked.
+     */
+    public SpellTarget targetWhenKicked(TargetFilter filter, TargetFilter kickedFilter,
+                                        int minTargets, int maxTargets,
+                                        int kickedMinTargets, int kickedMaxTargets) {
         assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets,
+        SpellTarget st = new SpellTarget(this, filter, kickedFilter, minTargets, maxTargets,
                 kickedMinTargets, kickedMaxTargets, spellTargets.size(), false, null, null);
         spellTargets.add(st);
         return st;
@@ -798,6 +859,10 @@ public class Card {
                 if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
                 if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
             }
+            case RollDiceEffect e -> {
+                if (e.oddResult() != null) registerEffectTargetIndex(e.oddResult(), targetIndex);
+                if (e.evenResult() != null) registerEffectTargetIndex(e.evenResult(), targetIndex);
+            }
             // SequenceEffect splices its steps into the resolution list; each step must keep the
             // sequence's target group (fuse halves that bundle multi-step one-target instructions).
             case SequenceEffect e -> {
@@ -838,10 +903,12 @@ public class Card {
     public void appendSpellTargetingFrom(Card source) {
         assertMutable();
         int targetIndexOffset = spellTargets.size();
+        int targetPositionOffset = getMultiTargetFilters().size();
         for (SpellTarget sourceTarget : source.spellTargets) {
             SpellTarget target = new SpellTarget(
                     this,
                     sourceTarget.getFilter(),
+                    sourceTarget.getKickedFilter(),
                     sourceTarget.getMinTargets(),
                     sourceTarget.getMaxTargets(),
                     sourceTarget.getKickedMinTargets(),
@@ -856,6 +923,13 @@ public class Card {
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 targetIndices.forEach(targetIndex ->
                         registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
+        if (!source.opponentChosenSpellTargetIndices.isEmpty()) {
+            List<Integer> appendedIndices = new ArrayList<>(opponentChosenSpellTargetIndices);
+            source.opponentChosenSpellTargetIndices.stream()
+                    .map(index -> index + targetPositionOffset)
+                    .forEach(appendedIndices::add);
+            opponentChosenSpellTargetIndices = List.copyOf(appendedIndices);
+        }
     }
 
     /**
@@ -891,6 +965,7 @@ public class Card {
             spellTargets.add(new SpellTarget(
                     this,
                     sourceTarget.getFilter(),
+                    sourceTarget.getKickedFilter(),
                     sourceTarget.getMinTargets(),
                     sourceTarget.getMaxTargets(),
                     sourceTarget.getKickedMinTargets(),
@@ -924,6 +999,7 @@ public class Card {
         assertMutable();
         spellTargets.clear();
         effectTargetIndexMap.clear();
+        opponentChosenSpellTargetIndices = List.of();
     }
 
     // ── Derived targeting getters (replace old stored fields) ────────
@@ -933,8 +1009,13 @@ public class Card {
      * filter for multi-target spells. For modal spells, returns the cast-time override.
      */
     public TargetFilter getTargetFilter() {
+        return getTargetFilter(false);
+    }
+
+    /** Returns the target filter for the selected kicker branch. */
+    public TargetFilter getTargetFilter(boolean kicked) {
         if (castTimeTargetFilter != null) return castTimeTargetFilter;
-        return getDeclaredTargetFilter();
+        return getDeclaredTargetFilter(kicked);
     }
 
     /**
@@ -943,8 +1024,13 @@ public class Card {
      * filter because a cast-time target restriction is not an ongoing enchant restriction.
      */
     public TargetFilter getDeclaredTargetFilter() {
+        return getDeclaredTargetFilter(false);
+    }
+
+    /** Returns the declared target filter for the selected kicker branch. */
+    public TargetFilter getDeclaredTargetFilter(boolean kicked) {
         if (spellTargets.isEmpty()) return null;
-        return spellTargets.getFirst().getFilter();
+        return spellTargets.getFirst().getFilter(kicked);
     }
 
     /**
@@ -954,10 +1040,15 @@ public class Card {
      * when a group allows multiple targets (e.g. "up to 2 target creatures").
      */
     public List<TargetFilter> getMultiTargetFilters() {
+        return getMultiTargetFilters(false);
+    }
+
+    /** Returns per-position target filters for the selected kicker branch. */
+    public List<TargetFilter> getMultiTargetFilters(boolean kicked) {
         List<TargetFilter> expanded = new ArrayList<>();
         for (SpellTarget st : spellTargets) {
             for (int i = 0; i < Math.max(st.getMaxTargets(), st.getKickedMaxTargets()); i++) {
-                expanded.add(st.getFilter());
+                expanded.add(st.getFilter(kicked));
             }
         }
         return expanded;
@@ -1097,12 +1188,17 @@ public class Card {
      * player targeting from the effects bound to it.
      */
     public boolean doesPositionAllowPlayerTargets(int expandedPosition) {
+        return doesPositionAllowPlayerTargets(expandedPosition, false);
+    }
+
+    /** Returns whether a target position allows players for the selected kicker branch. */
+    public boolean doesPositionAllowPlayerTargets(int expandedPosition, boolean kicked) {
         if (spellTargets.isEmpty()) return false;
         int cumulative = 0;
         for (SpellTarget st : spellTargets) {
-            cumulative += st.getMaxTargets();
+            cumulative += kicked ? st.getKickedMaxTargets() : st.getMaxTargets();
             if (expandedPosition < cumulative) {
-                TargetFilter filter = st.getFilter();
+                TargetFilter filter = st.getFilter(kicked);
                 if (filter != null) {
                     return filter instanceof PlayerPredicateTargetFilter
                             || filter instanceof AnyTargetPredicateTargetFilter;
@@ -1126,13 +1222,15 @@ public class Card {
     public void copyTargetingFrom(Card original) {
         assertMutable();
         for (SpellTarget st : original.spellTargets) {
-            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(),
+            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getKickedFilter(),
+                    st.getMinTargets(), st.getMaxTargets(),
                     st.getKickedMinTargets(), st.getKickedMaxTargets(), st.getIndex(), st.isXScaled(),
                     st.getDynamicMinTargets(), st.getDynamicMaxTargets(),
                     st.getGiftPromisedMinTargets()));
         }
         original.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
+        opponentChosenSpellTargetIndices = original.opponentChosenSpellTargetIndices;
         castTimeTargetFilter = original.castTimeTargetFilter;
     }
 

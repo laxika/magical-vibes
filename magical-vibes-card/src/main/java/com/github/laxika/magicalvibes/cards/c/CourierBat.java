@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "102")
+@CardRegistration(set = "DBL", collectorNumber = "369")
 public class CourierBat extends Card {
 
     public CourierBat() {

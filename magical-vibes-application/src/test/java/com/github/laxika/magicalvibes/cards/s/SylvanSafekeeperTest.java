@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.g.GuidedStrike;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SylvanSafekeeper.class, KrosanVerge.class, GiantWarthog.class, GuidedStrike.class})
+@CardUsed({GiantWarthog.class, GuidedStrike.class, KrosanVerge.class, NantukoMonastery.class, SylvanSafekeeper.class})
 class SylvanSafekeeperTest extends BaseCardTest {
 
     @Test
@@ -90,6 +91,34 @@ class SylvanSafekeeperTest extends BaseCardTest {
         Permanent warthog = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, warthog.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A land you control cannot be targeted")
+    void onlyCreaturesCanBeTargeted() {
+        harness.addToBattlefield(player1, new SylvanSafekeeper());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new NantukoMonastery());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+        harness.assertOnBattlefield(player1, "Nantuko Monastery");
+    }
+
+    @Test
+    @DisplayName("Granted shroud prevents later abilities from targeting the creature")
+    void grantedShroudPreventsLaterTargeting() {
+        harness.addToBattlefield(player1, new SylvanSafekeeper());
+        harness.addToBattlefield(player1, new SylvanSafekeeper());
+        harness.addToBattlefield(player1, new NantukoMonastery());
+        Permanent warthog = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+
+        harness.activateAbility(player1, 0, null, warthog.getId());
+        harness.passBothPriorities();
+
+        assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, warthog.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,14 +11,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
-@CardUsed({Triskelion.class, GrizzlyBears.class})
+@CardUsed({Triskelion.class, Juggernaut.class, GarrukWildspeaker.class})
 class TriskelionTest extends BaseCardTest {
 
     // ===== ETB: enters with three +1/+1 counters =====
@@ -27,10 +24,8 @@ class TriskelionTest extends BaseCardTest {
     void entersWithThreePlusCounters() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Triskelion()));
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castFromHand(player1, new Triskelion(), "{6}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB effect
 
@@ -45,10 +40,8 @@ class TriskelionTest extends BaseCardTest {
     void hasCountersImmediatelyWhenItEnters() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Triskelion()));
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castFromHand(player1, new Triskelion(), "{6}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(findTriskelion(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
@@ -60,24 +53,38 @@ class TriskelionTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability deals 1 damage to target creature")
     void abilityDeals1DamageToCreature() {
-        Permanent triskelion = addReadyTriskelion(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addReadyTriskelion(player1);
+        Permanent target = addCreatureReady(player2, new Juggernaut());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activated ability deals 1 damage to target planeswalker")
+    void abilityDeals1DamageToPlaneswalker() {
+        addReadyTriskelion(player1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Activated ability deals 1 damage to target player")
     void abilityDeals1DamageToPlayer() {
-        Permanent triskelion = addReadyTriskelion(player1);
+        addReadyTriskelion(player1);
         harness.setLife(player2, 20);
 
         harness.forceActivePlayer(player1);

@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1936")
 @CardRegistration(set = "MH1", collectorNumber = "92")
 public class ForceOfDespair extends Card {
 

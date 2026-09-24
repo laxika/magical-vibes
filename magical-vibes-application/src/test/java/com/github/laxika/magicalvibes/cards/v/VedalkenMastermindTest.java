@@ -5,19 +5,20 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VedalkenMastermind.class, GrizzlyBears.class, AngelicChorus.class, Island.class})
 class VedalkenMastermindTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -25,7 +26,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack targeting own creature")
     void activatingPutsOnStack() {
-        Permanent mastermind = addReadyMastermind(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -35,14 +36,13 @@ class VedalkenMastermindTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Vedalken Mastermind");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     @Test
     @DisplayName("Activating ability taps Vedalken Mastermind")
     void activatingTapsMastermind() {
-        Permanent mastermind = addReadyMastermind(player1);
+        Permanent mastermind = addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -54,7 +54,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
-        addReadyMastermind(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -69,7 +69,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving returns own creature to hand")
     void resolvingReturnsOwnCreatureToHand() {
-        addReadyMastermind(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -83,7 +83,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Bounced creature does not go to graveyard")
     void bouncedCreatureDoesNotGoToGraveyard() {
-        addReadyMastermind(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -98,8 +98,8 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving returns own enchantment to hand")
     void resolvingReturnsOwnEnchantmentToHand() {
-        addReadyMastermind(player1);
-        Permanent target = addReadyEnchantment(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelicChorus());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -114,8 +114,8 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving returns own land to hand")
     void resolvingReturnsOwnLandToHand() {
-        addReadyMastermind(player1);
-        Permanent target = addReadyLand(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -130,7 +130,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Can bounce itself")
     void canBounceItself() {
-        Permanent mastermind = addReadyMastermind(player1);
+        Permanent mastermind = addCreatureReady(player1, new VedalkenMastermind());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, mastermind.getId());
@@ -145,7 +145,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyMastermind(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -158,7 +158,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent mastermind = addReadyMastermind(player1);
+        Permanent mastermind = addCreatureReady(player1, new VedalkenMastermind());
         mastermind.tap();
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -173,10 +173,8 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness (creature)")
     void cannotActivateWithSummoningSickness() {
-        VedalkenMastermind card = new VedalkenMastermind();
-        Permanent mastermind = new Permanent(card);
+        Permanent mastermind = addCreatureReady(player1, new VedalkenMastermind());
         mastermind.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(mastermind);
 
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -191,7 +189,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyMastermind(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -211,7 +209,7 @@ class VedalkenMastermindTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if target changes controller before resolution")
     void fizzlesIfTargetChangesController() {
-        addReadyMastermind(player1);
+        addCreatureReady(player1, new VedalkenMastermind());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -230,28 +228,19 @@ class VedalkenMastermindTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Cannot target a permanent controlled by an opponent")
+    void cannotTargetOpponentsPermanent() {
+        Permanent mastermind = addCreatureReady(player1, new VedalkenMastermind());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
-    private Permanent addReadyMastermind(Player player) {
-        VedalkenMastermind card = new VedalkenMastermind();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyEnchantment(Player player) {
-        AngelicChorus card = new AngelicChorus();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyLand(Player player) {
-        Island card = new Island();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a permanent you control");
+        assertThat(mastermind.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
 

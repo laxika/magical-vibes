@@ -11,13 +11,16 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "133")
+@CardRegistration(set = "2ED", collectorNumber = "142")
 @CardRegistration(set = "DRB", collectorNumber = "4")
 @CardRegistration(set = "4ED", collectorNumber = "186")
 @CardRegistration(set = "3ED", collectorNumber = "143")
 @CardRegistration(set = "SUM", collectorNumber = "143")
 @CardRegistration(set = "TSB", collectorNumber = "59")
 @CardRegistration(set = "DDG", collectorNumber = "54")
+@CardRegistration(set = "DMU", collectorNumber = "120")
 @CardRegistration(set = "DMR", collectorNumber = "116")
+@CardRegistration(set = "CMD", collectorNumber = "120")
 public class DragonWhelp extends Card {
 
     public DragonWhelp() {

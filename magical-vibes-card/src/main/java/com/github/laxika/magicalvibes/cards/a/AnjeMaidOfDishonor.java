@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "231")
+@CardRegistration(set = "DBL", collectorNumber = "498")
 public class AnjeMaidOfDishonor extends Card {
 
     public AnjeMaidOfDishonor() {

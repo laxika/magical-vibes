@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "75")
+@CardRegistration(set = "DBL", collectorNumber = "342")
 public class ScreamingSwarm extends Card {
 
     public ScreamingSwarm() {

@@ -22,6 +22,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final TargetRedirectionSupport targetRedirectionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,11 +34,15 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
         UUID triggeringCardId = entry.getTriggeringCardId();
         if (triggeringCardId == null) return;
 
+        CopyTriggeringSpellEffect triggeringSpellEffect = (CopyTriggeringSpellEffect) effect;
         StackEntry spell = gameData.stack.stream()
                 .filter(candidate -> candidate != entry)
                 .filter(candidate -> triggeringCardId.equals(candidate.getCard().getId()))
                 .findFirst()
                 .orElse(null);
+        if (spell == null) {
+            spell = triggeringSpellEffect.spellSnapshot();
+        }
         if (spell == null || spell.isCopy()) return;
 
         Card spellCard = spell.getCard();
@@ -46,18 +51,34 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        var copyCard = effect instanceof CopyTriggeringSpellEffect triggeringSpellEffect
-                && triggeringSpellEffect.tokenCopy()
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (triggeringSpellEffect.retargetToSource()
+                && (sourcePermanentId == null
+                || !targetRedirectionSupport.isValidNewTargetForSpell(gameData, spell, sourcePermanentId))) {
+            return;
+        }
+
+        var copyCard = triggeringSpellEffect.tokenCopy()
                 ? copySupport.createTokenCopyCard(spellCard)
                 : copySupport.createCopyCard(spellCard);
+        UUID copyControllerId = triggeringSpellEffect.retargetToSource()
+                ? entry.getControllerId() : spell.getControllerId();
         StackEntry copyEntry = copySupport.createCopyStackEntry(
-                spell, copyCard, spell.getControllerId(), spell.getTargetId());
+                spell, copyCard, copyControllerId, spell.getTargetId());
+        if (triggeringSpellEffect.retargetToSource()) {
+            if (copyEntry.getTargetId() != null) {
+                copyEntry.setTargetId(sourcePermanentId);
+            }
+            for (int i = 0; i < copyEntry.getDeclaredTargetIds().size(); i++) {
+                copyEntry.replaceTargetIdAt(i, sourcePermanentId);
+            }
+        }
         copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created", gameData.id, spellCard.getName());
 
-        if (copyEntry.getTargetId() != null) {
+        if (!triggeringSpellEffect.retargetToSource() && copyEntry.getTargetId() != null) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(),
                     spell.getControllerId(),

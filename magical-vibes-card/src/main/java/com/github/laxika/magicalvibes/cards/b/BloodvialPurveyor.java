@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "98")
+@CardRegistration(set = "DBL", collectorNumber = "365")
 public class BloodvialPurveyor extends Card {
 
     public BloodvialPurveyor() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SOK", collectorNumber = "87")
+@CardRegistration(set = "CMD", collectorNumber = "94")
 public class RazorjawOni extends Card {
 
     public RazorjawOni() {

@@ -22,6 +22,8 @@ import java.util.List;
 
 @CardRegistration(set = "DMR", collectorNumber = "27")
 @CardRegistration(set = "SOC", collectorNumber = "170")
+@CardRegistration(set = "CMM", collectorNumber = "55")
+@CardRegistration(set = "CMM", collectorNumber = "472")
 public class SevinnesReclamation extends Card {
 
     public SevinnesReclamation() {

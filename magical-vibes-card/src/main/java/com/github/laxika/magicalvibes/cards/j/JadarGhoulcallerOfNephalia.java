@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "108")
 @CardRegistration(set = "SOC", collectorNumber = "217")
+@CardRegistration(set = "DBL", collectorNumber = "108")
 public class JadarGhoulcallerOfNephalia extends Card {
 
     public JadarGhoulcallerOfNephalia() {

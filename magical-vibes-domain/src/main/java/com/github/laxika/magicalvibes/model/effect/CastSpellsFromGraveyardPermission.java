@@ -15,7 +15,7 @@ import java.util.Map;
  * Read by {@code CastingPermissionService} / graveyard cast paths without branching on the concrete
  * effect.
  */
-public interface CastSpellsFromGraveyardPermission extends CardEffect {
+public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermission {
 
     /** Spells matching this predicate may be cast from the controller's graveyard. */
     CardPredicate filter();

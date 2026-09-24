@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "79")
+@CardRegistration(set = "SLD", collectorNumber = "2071")
 public class CulturalExchange extends Card {
 
     public CulturalExchange() {

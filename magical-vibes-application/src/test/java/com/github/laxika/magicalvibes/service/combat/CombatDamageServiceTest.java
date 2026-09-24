@@ -286,6 +286,9 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyChannelHarmPrevention(
                         eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyComeuppancePrevention(
+                        eq(gameData), any(), anyInt(), any(), any(), any(), anyBoolean()))
+                .thenAnswer(inv -> inv.getArgument(2));
         lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
                         eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));

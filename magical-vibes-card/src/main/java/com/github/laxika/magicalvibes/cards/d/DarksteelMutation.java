@@ -13,26 +13,27 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "1836")
+@CardRegistration(set = "C13", collectorNumber = "9")
+@CardRegistration(set = "CMM", collectorNumber = "21")
+@CardRegistration(set = "CMM", collectorNumber = "623")
 @CardRegistration(set = "SOC", collectorNumber = "142")
 public class DarksteelMutation extends Card {
 
     public DarksteelMutation() {
         target(TargetFilters.creature())
-                // Enchanted creature is an artifact creature
-                .addEffect(EffectSlot.STATIC, new SetCardTypesEffect(
-                        Set.of(CardType.ARTIFACT, CardType.CREATURE), GrantScope.ENCHANTED_CREATURE))
-                // Enchanted creature has base power and toughness 0/1
-                .addEffect(EffectSlot.STATIC, new SetBasePowerToughnessEffect(
-                        0, 1, GrantScope.ENCHANTED_CREATURE))
-                // Enchanted creature is an Insect, replacing its other creature types
-                .addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
-                        CardSubtype.INSECT, GrantScope.ENCHANTED_CREATURE, true))
-                // Enchanted creature loses all other abilities
-                .addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                        Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
+                .addEffect(EffectSlot.STATIC,
+                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT, CardType.CREATURE),
+                                GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC,
+                        new GrantSubtypeEffect(CardSubtype.INSECT, GrantScope.ENCHANTED_CREATURE, true))
+                .addEffect(EffectSlot.STATIC,
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC,
+                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC,
+                        new SetBasePowerToughnessEffect(0, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

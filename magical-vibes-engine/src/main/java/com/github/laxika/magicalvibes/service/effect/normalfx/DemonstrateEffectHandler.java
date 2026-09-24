@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -35,74 +33,61 @@ public class DemonstrateEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID spellId = entry.getTriggeringCardId();
-        if (spellId == null) {
+        UUID triggeringCardId = entry.getTriggeringCardId();
+        if (triggeringCardId == null) {
             return;
         }
 
         StackEntry spell = gameData.stack.stream()
                 .filter(candidate -> candidate != entry)
-                .filter(candidate -> spellId.equals(candidate.getTargetableId()))
+                .filter(candidate -> triggeringCardId.equals(candidate.getCard().getId()))
                 .findFirst()
-                .map(StackEntry::new)
                 .orElse(null);
-        if (spell == null) {
-            return;
-        }
-        if (spell.getCard().isCantBeCopied()) {
-            log.info("Game {} - {} can't be copied", gameData.id, spell.getCard().getName());
+        if (spell == null || spell.isCopy()) {
             return;
         }
 
+        Card spellCard = spell.getCard();
+        if (spellCard.isCantBeCopied()) {
+            return;
+        }
+
+        StackEntry spellSnapshot = new StackEntry(spell);
+        createCopy(gameData, spellSnapshot, spellSnapshot.getControllerId());
+
         List<UUID> opponents = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(spell.getControllerId()))
+                .filter(playerId -> !playerId.equals(entry.getControllerId()))
                 .toList();
         if (opponents.isEmpty()) {
             return;
         }
-
-        gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.DemonstrateOpponentChoice(spell));
-        playerInputService.beginPlayerChoice(
-                gameData,
-                spell.getControllerId(),
-                opponents,
-                spell.getCard().getName() + " — Choose an opponent to copy it.");
-    }
-
-    public void completeOpponentChoice(GameData gameData, UUID opponentId,
-                                       PermanentChoiceContext.DemonstrateOpponentChoice context) {
-        StackEntry spell = context.spellSnapshot();
-        UUID controllerId = spell.getControllerId();
-        if (!gameData.playerIds.contains(opponentId) || opponentId.equals(controllerId)) {
-            throw new IllegalStateException("Demonstrate requires an opponent");
-        }
-        if (spell.getCard().isCantBeCopied()) {
-            log.info("Game {} - {} can't be copied", gameData.id, spell.getCard().getName());
+        if (opponents.size() == 1) {
+            createCopy(gameData, spellSnapshot, opponents.getFirst());
             return;
         }
 
-        createCopy(gameData, spell, controllerId);
-        createCopy(gameData, spell, opponentId);
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.DemonstrateOpponentChoice(
+                spellSnapshot, entry.getControllerId()));
+        playerInputService.beginPlayerChoice(gameData, entry.getControllerId(), opponents,
+                spellCard.getName() + " — choose an opponent to copy it.");
     }
 
-    private void createCopy(GameData gameData, StackEntry spell, UUID controllerId) {
-        Card spellCard = spell.getCard();
-        Card copyCard = copySupport.createCopyCard(spellCard);
-        StackEntry copyEntry = copySupport.createCopyStackEntry(
-                spell, copyCard, controllerId, spell.getTargetId());
-        copySupport.addCopyToStack(gameData, copyEntry);
-
-        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
-        log.info("Game {} - copy of {} created for {}", gameData.id, spellCard.getName(), controllerId);
-
-        if (copyEntry.getTargetId() != null) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    spellCard,
-                    controllerId,
-                    List.of(new CopySpellEffect()),
-                    "Choose new targets for the copy of " + spellCard.getName() + "?",
-                    copyCard.getId()));
+    public void completeOpponentChoice(GameData gameData, UUID chosenOpponentId,
+                                       PermanentChoiceContext.DemonstrateOpponentChoice context) {
+        if (!gameData.playerIds.contains(chosenOpponentId)
+                || chosenOpponentId.equals(context.controllerId())) {
+            return;
         }
+        createCopy(gameData, context.spellSnapshot(), chosenOpponentId);
+    }
+
+    private void createCopy(GameData gameData, StackEntry spellSnapshot, UUID controllerId) {
+        Card copyCard = copySupport.createCopyCard(spellSnapshot.getCard());
+        StackEntry copyEntry = copySupport.createCopyStackEntry(
+                spellSnapshot, copyCard, controllerId, spellSnapshot.getTargetId());
+        copySupport.addCopyToStack(gameData, copyEntry);
+        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellSnapshot.getCard(), " is created."));
+        log.info("Game {} - demonstrate creates a copy of {} for {}",
+                gameData.id, spellSnapshot.getCard().getName(), controllerId);
     }
 }

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "109")
+@CardRegistration(set = "C14", collectorNumber = "197")
 public class FreshMeat extends Card {
 
     public FreshMeat() {

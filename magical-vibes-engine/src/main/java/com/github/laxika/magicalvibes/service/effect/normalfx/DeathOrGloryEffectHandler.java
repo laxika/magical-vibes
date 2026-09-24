@@ -54,6 +54,7 @@ public class DeathOrGloryEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         Map<UUID, UUID> cardOwners = new HashMap<>();
         creatureCards.forEach(card -> cardOwners.put(card.getId(), controllerId));
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,

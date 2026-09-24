@@ -27,15 +27,14 @@ public class PreventAllCombatDamageToControllerAndCreateTokensEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (controllerId == null) return;
-
-        var prevention = (PreventAllCombatDamageToControllerAndCreateTokensEffect) effect;
-        gameData.combatDamagePreventionTokenShields.add(new CombatDamagePreventionTokenShield(
-                controllerId, prevention.token(), controllerId, entry.getCard().getSetCode()));
+        if (entry.getControllerId() == null) {
+            return;
+        }
+        var e = (PreventAllCombatDamageToControllerAndCreateTokensEffect) effect;
+        gameData.combatDamagePreventionTokenShields.putIfAbsent(entry.getControllerId(),
+                new CombatDamagePreventionTokenShield(e.token(), entry.getCard().getSetCode()));
         gameLogService.append(gameData, GameLog.text(
-                "All combat damage that would be dealt to "
-                        + gameData.playerIdToName.get(controllerId)
-                        + " this turn will be prevented; create one token for each damage prevented."));
+                "All combat damage that would be dealt to you this turn is prevented. "
+                        + "Create one token for each damage prevented."));
     }
 }

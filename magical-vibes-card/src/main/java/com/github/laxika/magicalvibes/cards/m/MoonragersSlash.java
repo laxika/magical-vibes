@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "148")
+@CardRegistration(set = "DBL", collectorNumber = "148")
 public class MoonragersSlash extends Card {
 
     public MoonragersSlash() {

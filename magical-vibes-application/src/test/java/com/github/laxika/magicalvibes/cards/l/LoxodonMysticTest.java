@@ -1,23 +1,22 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
+import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LoxodonMystic.class, MyrMoonvessel.class, DarksteelIngot.class})
 class LoxodonMysticTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -25,28 +24,19 @@ class LoxodonMysticTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new LoxodonMystic()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castFromHand(player1, new LoxodonMystic(), "{3}{W}{W}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Loxodon Mystic");
     }
 
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new LoxodonMystic()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LoxodonMystic(), "{3}{W}{W}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Loxodon Mystic");
     }
@@ -56,25 +46,23 @@ class LoxodonMysticTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
-        Permanent mystic = addReadyMystic(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Loxodon Mystic");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     @Test
     @DisplayName("Activating ability taps Loxodon Mystic")
     void activatingTapsMystic() {
-        Permanent mystic = addReadyMystic(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent mystic = addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -85,8 +73,8 @@ class LoxodonMysticTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability taps target creature")
     void resolvingTapsTarget() {
-        addReadyMystic(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -98,26 +86,25 @@ class LoxodonMysticTest extends BaseCardTest {
     @Test
     @DisplayName("Can tap own creature")
     void canTapOwnCreature() {
-        addReadyMystic(player1);
-        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent ownMyr = addCreatureReady(player1, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, ownBears.getId());
+        harness.activateAbility(player1, 0, null, ownMyr.getId());
         harness.passBothPriorities();
 
-        assertThat(ownBears.isTapped()).isTrue();
+        assertThat(ownMyr.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
-        addReadyMystic(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
@@ -126,12 +113,37 @@ class LoxodonMysticTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyMystic(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while Loxodon Mystic is tapped")
+    void cannotActivateWhileTapped() {
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     // ===== Fizzle =====
@@ -139,8 +151,8 @@ class LoxodonMysticTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyMystic(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -150,19 +162,8 @@ class LoxodonMysticTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-    }
-
-    // ===== Helpers =====
-
-    private Permanent addReadyMystic(Player player) {
-        LoxodonMystic card = new LoxodonMystic();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }
 

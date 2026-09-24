@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "MBS", collectorNumber = "38")
 @CardRegistration(set = "MID", collectorNumber = "83")
+@CardRegistration(set = "DBL", collectorNumber = "83")
 public class Vivisection extends Card {
 
     public Vivisection() {

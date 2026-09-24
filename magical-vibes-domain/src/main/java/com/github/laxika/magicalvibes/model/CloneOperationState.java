@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,10 +39,10 @@ public class CloneOperationState {
     // Undercover Operative: a shield counter when the copied permanent is controlled by its controller.
     public boolean shieldCounterIfControllerControlsCopiedPermanent;
     public boolean copyColor = true;
+    // Cursed Mirror: the copy replacement expires during cleanup rather than persisting.
+    public boolean copyUntilEndOfTurn;
     // Vesuva: applied only to the chosen copy entry, not retained by the resulting copy.
     public boolean entersTapped;
-    // Cursed Mirror: the copy reverts during cleanup at end of turn.
-    public boolean copyUntilEndOfTurn;
     public boolean ninjutsuEntry;
     public UUID ninjutsuAttackTargetId;
     public boolean landPlay;
@@ -51,6 +50,9 @@ public class CloneOperationState {
     public CardPredicate copyCardFilter;
     public boolean graveyardCopyChoicePending;
     public boolean exileCopiedGraveyardCardAfterEntry;
+    public boolean mimeoplasmGraveyardChoicePending;
+    public boolean mimeoplasmCopyChoicePending;
+    public List<UUID> mimeoplasmSelectedCardIds = List.of();
     public boolean exileTwoAndAddOtherPowerCounters;
     public List<UUID> selectedGraveyardCopyCardIds = List.of();
 }

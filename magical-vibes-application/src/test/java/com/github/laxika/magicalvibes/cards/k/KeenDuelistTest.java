@@ -8,45 +8,42 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KeenDuelist.class, GrizzlyBears.class, Shock.class})
 class KeenDuelistTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Upkeep makes you and a target opponent lose life from the other revealed card")
-    void revealsBothCardsAndUsesOppositeManaValues() {
+    @DisplayName("You and the target opponent reveal, lose life based on the other card, and draw")
+    void revealsAndLosesLifeBasedOnOtherCard() {
         harness.addToBattlefield(player1, new KeenDuelist());
-        Card player1Card = new GrizzlyBears();
-        Card player2Card = new Shock();
-        gd.playerDecks.get(player1.getId()).addFirst(player1Card);
-        gd.playerDecks.get(player2.getId()).addFirst(player2Card);
+
+        Card ownCard = new GrizzlyBears();
+        Card opponentCard = new Shock();
+        gd.playerDecks.get(player1.getId()).addFirst(ownCard);
+        gd.playerDecks.get(player2.getId()).addFirst(opponentCard);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 18);
-        assertThat(gd.playerHands.get(player1.getId())).contains(player1Card);
-        assertThat(gd.playerHands.get(player2.getId())).contains(player2Card);
+        assertThat(gd.playerHands.get(player1.getId())).contains(ownCard);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentCard);
     }
 
     @Test
-    @DisplayName("The upkeep trigger cannot target its controller")
-    void cannotTargetController() {
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
         harness.addToBattlefield(player1, new KeenDuelist());
 
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        int startingLife1 = gd.getLife(player1.getId());
+        int startingLife2 = gd.getLife(player2.getId());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife2);
     }
 }

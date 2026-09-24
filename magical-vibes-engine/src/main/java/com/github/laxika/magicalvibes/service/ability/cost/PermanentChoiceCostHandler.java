@@ -69,6 +69,12 @@ public interface PermanentChoiceCostHandler {
     default int lastPaymentWeight() { return 1; }
 
     /**
+     * Returns a value derived from the most recent payment, or {@code null} when the payment does
+     * not supply a value to the ability.
+     */
+    default Integer lastPaymentValue() { return null; }
+
+    /**
      * Returns {@code true} if the cost can still be paid given the remaining deficit.
      * By default checks that enough valid permanents exist (count-based).
      * For power-based costs, checks that total available power &ge; remaining.

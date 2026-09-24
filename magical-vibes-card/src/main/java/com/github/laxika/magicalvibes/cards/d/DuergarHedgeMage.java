@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "137")
 @CardRegistration(set = "HOP", collectorNumber = "101")
+@CardRegistration(set = "CMD", collectorNumber = "195")
 public class DuergarHedgeMage extends Card {
 
     public DuergarHedgeMage() {

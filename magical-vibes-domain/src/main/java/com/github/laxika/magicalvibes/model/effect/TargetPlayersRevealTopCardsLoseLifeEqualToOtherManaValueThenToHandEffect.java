@@ -6,14 +6,19 @@ package com.github.laxika.magicalvibes.model.effect;
  * The controller may be one of those players implicitly, leaving only one declared target.
  */
 public record TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect(
-        boolean includeController) implements CardEffect {
+        boolean controllerAndTarget) implements CardEffect {
 
     public TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect() {
         this(false);
     }
 
+    public static TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect
+    forControllerAndTarget() {
+        return new TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect(true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(TargetPredicates.player(), true, null, false, includeController ? 1 : 2);
+        return new TargetSpec(TargetPredicates.player(), true, null, false, controllerAndTarget ? 1 : 2);
     }
 }

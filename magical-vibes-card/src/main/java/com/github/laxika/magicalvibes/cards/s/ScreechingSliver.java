@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "75")
+@CardRegistration(set = "SLD", collectorNumber = "622")
 public class ScreechingSliver extends Card {
 
     public ScreechingSliver() {

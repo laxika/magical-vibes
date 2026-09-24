@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "1498")
 @CardRegistration(set = "SPG", collectorNumber = "122")
 public class NexusOfFate extends Card {
 

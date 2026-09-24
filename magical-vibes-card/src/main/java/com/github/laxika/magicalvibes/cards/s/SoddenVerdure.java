@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "ECC", collectorNumber = "24")
+@CardRegistration(set = "ECC", collectorNumber = "44")
+@CardRegistration(set = "TMC", collectorNumber = "74")
 @CardRegistration(set = "SOC", collectorNumber = "406")
 public class SoddenVerdure extends Card {
 
@@ -26,10 +29,7 @@ public class SoddenVerdure extends Card {
                 ))),
                 new EntersTappedEffect()));
 
-        // {T}: Add {G}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
-
-        // {T}: Add {U}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
     }
 }

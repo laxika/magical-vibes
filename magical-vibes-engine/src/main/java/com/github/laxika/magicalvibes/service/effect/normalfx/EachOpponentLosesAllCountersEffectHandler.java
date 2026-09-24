@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/** Resolves "each opponent loses all counters" for the player counters tracked by the engine. */
+/** Resolves the counter-removal mode of Final Act. */
 @Component
 @RequiredArgsConstructor
 public class EachOpponentLosesAllCountersEffectHandler implements NormalEffectHandlerBean {
@@ -26,25 +26,21 @@ public class EachOpponentLosesAllCountersEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
+        if (controllerId == null) {
+            return;
+        }
+
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
                 continue;
             }
 
-            boolean hadCounters = gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerSparkCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerExperienceCounters.getOrDefault(playerId, 0) > 0;
             gameData.playerPoisonCounters.remove(playerId);
             gameData.playerEnergyCounters.remove(playerId);
-            gameData.playerSparkCounters.remove(playerId);
             gameData.playerExperienceCounters.remove(playerId);
-
-            if (hadCounters) {
-                String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
-                gameLogService.append(gameData, GameLog.text(
-                        playerName + " loses all counters (" + entry.getCard().getName() + ")."));
-            }
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.getOrDefault(playerId, "Player")
+                            + " loses all counters from " + entry.getCard().getName() + "."));
         }
     }
 }

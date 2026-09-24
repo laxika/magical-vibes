@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -69,11 +69,17 @@ public class BasicLandSearchQueueSupport {
         List<LibrarySearchFollowUp.BasicLandsPick> remaining = new ArrayList<>(queue.remainingPicks());
         while (!remaining.isEmpty()) {
             LibrarySearchFollowUp.BasicLandsPick pick = remaining.removeFirst();
-            if (startSearch(gameData, pick, followUp.withBasicLandSearchQueue(queue.withRemainingPicks(remaining)))) {
+            LibrarySearchFollowUp.BasicLandSearchQueue nextQueue = queue.withRemainingPicks(remaining);
+            if (!librarySearchSupport.isSearchPrevented(gameData, pick.playerId())) {
+                nextQueue = nextQueue.withSearchedPlayer(pick.playerId());
+            }
+            if (startSearch(gameData, pick, followUp.withBasicLandSearchQueue(nextQueue))) {
                 return true;
             }
+            queue = nextQueue;
         }
 
+        shuffleAfterQueue(gameData, queue);
         return beginSacrifices(gameData, queue);
     }
 
@@ -84,13 +90,15 @@ public class BasicLandSearchQueueSupport {
             return false;
         }
 
+        boolean shuffleAfterQueue = followUp.basicLandSearchQueue().shuffleAfterQueue();
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
-            if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            if (!shuffleAfterQueue && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData,
-                    GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+                    GameLog.text(playerName + " searches their library but it is empty."
+                            + (shuffleAfterQueue ? "" : " Library is shuffled.")));
             return false;
         }
 
@@ -99,13 +107,21 @@ public class BasicLandSearchQueueSupport {
                 .toList();
         if (basicLands.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
-            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " searches their library but finds no basic land cards. Library is shuffled."));
+                    playerName + " searches their library but finds no basic land cards."
+                            + (shuffleAfterQueue ? "" : " Library is shuffled.")));
             return false;
         }
 
         int count = pick.count();
+        if (count <= 0) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " searches their library for up to zero basic land cards. Library is shuffled."));
+            return false;
+        }
         boolean enterTapped = pick.enterTapped();
         String destinationText = enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
         String prompt = "You may search your library for up to " + count + " basic land card"
@@ -116,12 +132,28 @@ public class BasicLandSearchQueueSupport {
                         .remainingCount(count)
                         .canFailToFind(true)
                         .destination(enterTapped
-                                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
-                                : LibrarySearchDestination.BATTLEFIELD)
+                        ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                        : LibrarySearchDestination.BATTLEFIELD)
                         .filterPredicate(BASIC_LAND)
+                        .shuffleAfterSelection(!shuffleAfterQueue)
                         .followUp(followUp)
                         .build(), prompt, true);
         return true;
+    }
+
+    private void shuffleAfterQueue(GameData gameData,
+                                   LibrarySearchFollowUp.BasicLandSearchQueue queue) {
+        if (!queue.shuffleAfterQueue()) {
+            return;
+        }
+        for (UUID playerId : queue.searchedPlayerIds()) {
+            if (gameData.playerDecks.get(playerId) == null) {
+                continue;
+            }
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + "'s library is shuffled."));
+        }
     }
 
     /**

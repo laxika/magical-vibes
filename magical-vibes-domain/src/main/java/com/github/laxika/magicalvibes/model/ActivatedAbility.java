@@ -784,7 +784,8 @@ public class ActivatedAbility {
 
     /** Whether this activated ability is an equip ability. */
     public boolean isEquipAbility() {
-        return effects.stream().anyMatch(EquipEffect.class::isInstance);
+        return effects.stream().anyMatch(effect -> effect instanceof EquipEffect equip
+                && !equip.permitsCreatureEquipment());
     }
 
     /**

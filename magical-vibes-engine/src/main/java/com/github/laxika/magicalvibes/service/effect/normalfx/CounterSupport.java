@@ -136,6 +136,7 @@ public class CounterSupport {
             }
             if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {
@@ -211,6 +212,31 @@ public class CounterSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on top of its owner's library."));
         log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
+                source.getDescription(), target.getDescription());
+    }
+
+    public void counterSpellAndPutOnBottomOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback() || target.isCastWithEscape()
+                || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+            counterSpellAndExile(gameData, source, target);
+            return;
+        }
+        gameData.stack.remove(target);
+
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        if (!target.isCopy()) {
+            // Guile replaces the whole "counter" event: exile and offer a free play.
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return;
+            }
+            gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+        }
+
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on the bottom of its owner's library."));
+        log.info("Game {} - {} countered {} onto the bottom of its owner's library", gameData.id,
                 source.getDescription(), target.getDescription());
     }
 

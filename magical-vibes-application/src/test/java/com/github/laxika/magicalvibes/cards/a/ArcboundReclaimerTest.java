@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.b.BronzeSable;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.o.Oxidize;
+import com.github.laxika.magicalvibes.cards.s.Skullclamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,14 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArcboundReclaimer.class, CrazedGoblin.class, DarksteelGargoyle.class, Oxidize.class,
+        Skullclamp.class})
 class ArcboundReclaimerTest extends BaseCardTest {
 
     @Test
     void entersWithTwoPlusOnePlusOneCounters() {
-        harness.setHand(player1, List.of(new ArcboundReclaimer()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArcboundReclaimer(), "{4}");
         harness.passBothPriorities();
 
         Permanent reclaimer = findPermanent(player1, "Arcbound Reclaimer");
@@ -34,9 +36,9 @@ class ArcboundReclaimerTest extends BaseCardTest {
     void removesACounterAndPutsTargetArtifactFromGraveyardOnTopOfLibrary() {
         Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
         reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        Card artifact = new BronzeSable();
+        Card artifact = new DarksteelGargoyle();
         harness.setGraveyard(player1, List.of(artifact));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CrazedGoblin()));
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
         harness.passBothPriorities();
@@ -50,7 +52,7 @@ class ArcboundReclaimerTest extends BaseCardTest {
     void cannotTargetNonArtifactCardInGraveyard() {
         Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
         reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        Card nonArtifact = new GrizzlyBears();
+        Card nonArtifact = new CrazedGoblin();
         harness.setGraveyard(player1, List.of(nonArtifact));
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
@@ -59,34 +61,90 @@ class ArcboundReclaimerTest extends BaseCardTest {
     }
 
     @Test
+    void cannotActivateWithoutPlusOnePlusOneCounter() {
+        addCreatureReady(player1, new ArcboundReclaimer());
+        Card artifact = new DarksteelGargoyle();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activatedAbilityCannotTargetArtifactInOpponentsGraveyard() {
+        Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
+        reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Card artifact = new DarksteelGargoyle();
+        harness.setGraveyard(player2, List.of(artifact));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void modularMayPutItsCountersOnTargetArtifactCreatureWhenItDies() {
         Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
         reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        reclaimer.tap();
-        Permanent bronzeSable = addCreatureReady(player1, new BronzeSable());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
+        Permanent skullclamp = harness.addToBattlefieldAndReturn(player1, new Skullclamp());
 
         destroyReclaimer(reclaimer);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).contains(bronzeSable.getId()).doesNotContain(bears.getId());
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId())
+                .doesNotContain(goblin.getId(), skullclamp.getId());
 
-        harness.handlePermanentChosen(player1, bronzeSable.getId());
+        harness.handlePermanentChosen(player1, gargoyle.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void modularCanPutItsCountersOnOpponentsArtifactCreature() {
+        Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
+        reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent gargoyle = addCreatureReady(player2, new DarksteelGargoyle());
+
+        destroyReclaimer(reclaimer);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId());
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void modularMayBeDeclined() {
+        Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
+        reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        destroyReclaimer(reclaimer);
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void destroyReclaimer(Permanent reclaimer) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new Assassinate()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Oxidize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player2, 0, 0, reclaimer.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, reclaimer.getId());
     }
 }

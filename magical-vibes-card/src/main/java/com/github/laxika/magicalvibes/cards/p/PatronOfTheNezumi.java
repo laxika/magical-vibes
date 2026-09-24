@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
  */
 @CardRegistration(set = "BOK", collectorNumber = "77")
 @CardRegistration(set = "PHUK", collectorNumber = "25")
+@CardRegistration(set = "CMD", collectorNumber = "93")
 public class PatronOfTheNezumi extends Card {
 
     public PatronOfTheNezumi() {

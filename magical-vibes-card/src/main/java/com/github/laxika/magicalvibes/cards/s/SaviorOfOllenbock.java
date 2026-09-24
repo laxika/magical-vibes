@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "34")
+@CardRegistration(set = "DBL", collectorNumber = "301")
 public class SaviorOfOllenbock extends Card {
 
     public SaviorOfOllenbock() {

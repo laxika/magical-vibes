@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffe
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "188")
+@CardRegistration(set = "SLD", collectorNumber = "1724")
+@CardRegistration(set = "ECC", collectorNumber = "114")
 public class Realmwalker extends Card {
 
     public Realmwalker() {

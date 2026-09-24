@@ -21,6 +21,9 @@ import java.util.Set;
  */
 public sealed interface TriggerContext {
 
+    /** Context for a Saga's final chapter ability finishing resolution. */
+    record SagaFinalChapterAbilityResolved(UUID sagaControllerId, int sagaManaValue) implements TriggerContext {}
+
     record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {
         public Card spellCard() {
             return copiedSpell.getCard();
@@ -107,12 +110,18 @@ public sealed interface TriggerContext {
     /** Context for cycling triggers. */
     record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
 
+    /** Context for opponent-mill triggers. */
+    record Mill(UUID milledPlayerId, int milledCount) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
             this(scryingPlayerId, 0);
         }
     }
+
+    /** Context for triggers caused by a player being tempted by the Ring. */
+    record RingTemptsYou(UUID temptedPlayerId) implements TriggerContext {}
 
     /** Context for controller-investigate triggers. */
     record Investigate(UUID investigatingPlayerId) implements TriggerContext {}
@@ -137,10 +146,22 @@ public sealed interface TriggerContext {
     }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     record SelfBecomesCrewed(UUID controllerId) implements TriggerContext {}
+    /** Context for a creature paying a Spacecraft's station cost. */
+    record CreatureStationed(Card creatureCard) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
     /** Context for controller forage triggers. */
     record Forage(UUID foragingPlayerId) implements TriggerContext {}
+    /** Context for cards sought from a library. */
+    record Seek(UUID seekingPlayerId, List<Card> soughtCards) implements TriggerContext {
+        public Seek {
+            soughtCards = List.copyOf(soughtCards);
+        }
+
+        public Seek(UUID seekingPlayerId) {
+            this(seekingPlayerId, List.of());
+        }
+    }
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
 
@@ -174,6 +195,9 @@ public sealed interface TriggerContext {
             }
         }
     }
+
+    /** Context for triggers caused by choosing a Ring-bearer. */
+    record RingTempted(UUID temptingPlayerId, UUID ringBearerId) implements TriggerContext {}
 
     /** Context for global triggers that watch any permanent being tapped for mana. */
     record PermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
@@ -235,6 +259,10 @@ public sealed interface TriggerContext {
 
     /** Context for global permanent-sacrificed triggers. */
     record PermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+
+    /** Context for global noncreature-artifact sacrifice or destruction triggers. */
+    record NoncreatureArtifactSacrificedOrDestroyed(UUID artifactControllerId, Card artifactCard)
+            implements TriggerContext {}
 
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
@@ -320,10 +348,16 @@ public sealed interface TriggerContext {
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
 
+    /** Context for a lore counter placed on a Saga the placing player controls. */
+    record LoreCounterPlaced(Permanent saga, UUID placingPlayerId) implements TriggerContext {}
+
     /** Context for a controller untapping one or more permanents during their untap step. */
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
+    /** Context for counters being removed from a permanent controlled by the watcher. */
+    record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
 
     /** Context for removing a time counter from a suspended card in exile. */
     record TimeCounterRemovedFromExile(int remainingCounters) implements TriggerContext {}
@@ -486,11 +520,17 @@ public sealed interface TriggerContext {
     record EquippedCreatureDeath(UUID dyingCreatureId,
                                  UUID dyingCreatureControllerId,
                                  Card dyingCard,
-                                 int dyingCreaturePower) implements TriggerContext {
+                                 int dyingCreaturePower,
+                                 Permanent dyingPermanent) implements TriggerContext {
 
         public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
             this(dyingCreatureId, dyingCreatureControllerId, dyingCard,
-                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0);
+                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0, null);
+        }
+
+        public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard,
+                                     int dyingCreaturePower) {
+            this(dyingCreatureId, dyingCreatureControllerId, dyingCard, dyingCreaturePower, null);
         }
 
         @Override
@@ -578,7 +618,8 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Dingus Egg).
      */
-    record AnyLandGraveyard(UUID graveyardOwnerId,
+    record AnyLandGraveyard(Card landCard,
+                            UUID graveyardOwnerId,
                             UUID landControllerId) implements TriggerContext {}
 
     /**
@@ -674,6 +715,9 @@ public sealed interface TriggerContext {
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}
 
+    /** Context for ON_ANY_CARDS_PUT_INTO_LIBRARY triggers. */
+    record CardsPutIntoLibrary(UUID libraryOwnerId, int cardCount) implements TriggerContext {}
+
     /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
     record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,
                                          UUID causeControllerId) implements TriggerContext {}
@@ -737,6 +781,10 @@ public sealed interface TriggerContext {
             cards = List.copyOf(cards);
         }
     }
+
+    /** Context for one instant or sorcery card leaving the controller's graveyard. */
+    record ControllerInstantOrSorceryCardLeavesGraveyard(UUID graveyardOwnerId, Card card)
+            implements TriggerContext {}
 
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
@@ -828,6 +876,10 @@ public sealed interface TriggerContext {
     record Crime(UUID committingPlayerId) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
-    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
-            implements TriggerContext {}
+    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
+                                              boolean enlistment) implements TriggerContext {
+        public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility) {
+            this(attackingCreature, triggeredAbility, false);
+        }
+    }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "4")
+@CardRegistration(set = "CMM", collectorNumber = "15")
 public class BairdStewardOfArgive extends Card {
 
     public BairdStewardOfArgive() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "43")
+@CardRegistration(set = "ME4", collectorNumber = "187")
 public class CandelabraOfTawnos extends Card {
 
     public CandelabraOfTawnos() {

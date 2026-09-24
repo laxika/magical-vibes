@@ -130,15 +130,16 @@ class QuicksilverDragonTest extends BaseCardTest {
     private Permanent castFaceUpDragon() {
         harness.setHand(player2, List.of(new QuicksilverDragon()));
         harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
         harness.castCreatureWithMorph(player2, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent dragon = findPermanent(player2, "Quicksilver Dragon");
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.turnFaceUp(player2, battlefieldIndex(player2, dragon));
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
         return dragon;
     }
 

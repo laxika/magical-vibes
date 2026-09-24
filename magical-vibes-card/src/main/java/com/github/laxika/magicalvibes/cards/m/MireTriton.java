@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "THB", collectorNumber = "105")
+@CardRegistration(set = "CMM", collectorNumber = "174")
 public class MireTriton extends Card {
 
     public MireTriton() {

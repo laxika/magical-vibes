@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "147")
 @CardRegistration(set = "RVR", collectorNumber = "208")
+@CardRegistration(set = "CMD", collectorNumber = "217")
 public class OrzhovGuildmage extends Card {
 
     public OrzhovGuildmage() {

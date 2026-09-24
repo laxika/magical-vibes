@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "63")
+@CardRegistration(set = "SLD", collectorNumber = "1185")
 public class ViolentOutburst extends Card {
 
     public ViolentOutburst() {

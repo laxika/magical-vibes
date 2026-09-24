@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 /**
  * Static effect that makes a triggered ability from another matching permanent under the same
@@ -12,8 +13,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                                boolean attackOnly, boolean includeSourcePermanent,
                                                boolean allControllers,
-                                               boolean onlyForInstantOrSorceryCastOrCopy)
+                                               boolean instantSorceryCastOrCopyOnly,
+                                               boolean allyCreatureBecomesTarget)
         implements CardEffect {
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
+                allControllers, instantSorceryCastOrCopyOnly, false);
+    }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
         this(sourcePredicate, null, false, false, false, false);
@@ -33,14 +42,14 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
         return new AdditionalTriggeredAbilityEffect(sourcePredicate, condition, true, false, false, false);
     }
 
-    /**
-     * Creates the Veyran-style variant: matching permanents' abilities trigger an additional time
-     * only when casting or copying an instant or sorcery causes them to trigger. The source itself
-     * is included because the printed ability applies to every permanent you control, including
-     * the source permanent.
-     */
-    public static AdditionalTriggeredAbilityEffect forInstantOrSorceryCastOrCopy(
-            PermanentPredicate sourcePredicate) {
-        return new AdditionalTriggeredAbilityEffect(sourcePredicate, null, false, true, false, true);
+    public static AdditionalTriggeredAbilityEffect forInstantOrSorceryCastOrCopy() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, true);
+    }
+
+    /** Makes target-caused triggered abilities of your permanents trigger one additional time. */
+    public static AdditionalTriggeredAbilityEffect forAllyCreatureBecomesTarget() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, false, true);
     }
 }

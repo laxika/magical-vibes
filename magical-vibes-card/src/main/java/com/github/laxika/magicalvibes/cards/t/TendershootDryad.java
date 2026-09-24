@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RIX", collectorNumber = "147")
 @CardRegistration(set = "SOC", collectorNumber = "125")
+@CardRegistration(set = "SLD", collectorNumber = "1902")
 public class TendershootDryad extends Card {
 
     public TendershootDryad() {

@@ -11,23 +11,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "2308")
 @CardRegistration(set = "SOC", collectorNumber = "242")
 public class CursedMirror extends Card {
 
     public CursedMirror() {
-        // {T}: Add {R}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.RED));
-
-        // As this artifact enters, you may have it become a copy of any creature on the
-        // battlefield until end of turn, except it has haste.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
-                new PermanentIsCreaturePredicate(),
-                "creature",
-                Set.of(),
-                Set.of(Keyword.HASTE),
-                null,
-                false,
-                true
-        ));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CopyPermanentOnEnterEffect.temporaryCopy(
+                new PermanentIsCreaturePredicate(), "creature", Set.of(Keyword.HASTE)));
     }
 }

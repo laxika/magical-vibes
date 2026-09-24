@@ -119,6 +119,14 @@ public class ExileSupport {
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped,
                                         TurnStep returnStep, int plusOnePlusOneCounters) {
+        exileAndScheduleReturn(gameData, entry, permanent, ownerId, returnTapped, returnStep,
+                plusOnePlusOneCounters, false, null);
+    }
+
+    public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
+                                        Permanent permanent, UUID ownerId, boolean returnTapped,
+                                        TurnStep returnStep, int plusOnePlusOneCounters,
+                                        boolean onlyOnControllersTurn, UUID timingControllerId) {
         List<Card> cards = permanent.cardsLeavingBattlefield();
         Card card = cards.getFirst();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
@@ -130,7 +138,8 @@ public class ExileSupport {
 
         gameData.queueDelayedAction(new PendingExileReturn(
                 card, ownerId, returnTapped, false, returnStep, plusOnePlusOneCounters,
-                cards.size() == 1 ? List.of() : cards.subList(1, cards.size())));
+                cards.size() == 1 ? List.of() : cards.subList(1, cards.size()),
+                onlyOnControllersTurn, false, false, false, timingControllerId, null, false));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

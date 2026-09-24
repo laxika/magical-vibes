@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "159")
+@CardRegistration(set = "DBL", collectorNumber = "159")
 public class SmolderingEgg extends Card {
 
     public SmolderingEgg() {

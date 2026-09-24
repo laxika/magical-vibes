@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToSourceEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "167")
+@CardRegistration(set = "CMM", collectorNumber = "306")
 public class MowuLoyalCompanion extends Card {
 
     public MowuLoyalCompanion() {

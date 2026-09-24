@@ -82,6 +82,8 @@ class BreenaTheDemagogueTest extends BaseCardTest {
         UUID thirdOpponentId = UUID.randomUUID();
         gd.playerIds.add(thirdOpponentId);
         gd.orderedPlayerIds.add(thirdOpponentId);
+        gd.playerNames.add("Third Opponent");
+        gd.playerIdToName.put(thirdOpponentId, "Third Opponent");
         gd.playerBattlefields.put(thirdOpponentId, new ArrayList<>());
         gd.playerDecks.put(thirdOpponentId, new ArrayList<>());
         gd.playerHands.put(thirdOpponentId, new ArrayList<>());

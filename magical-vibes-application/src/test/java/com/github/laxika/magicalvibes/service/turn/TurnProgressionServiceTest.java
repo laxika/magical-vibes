@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.UginNexusReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipExtraTurnReplacementEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -677,6 +678,36 @@ class TurnProgressionServiceTest {
             assertThat(gd.activePlayerId).isEqualTo(player2Id);
             assertThat(gd.extraTurns).isEmpty();
             assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+        }
+
+        @Test
+        @DisplayName("Skips an opponent's extra turn with an opponent-only replacement")
+        void skipsOpponentsExtraTurnWithOpponentOnlyReplacement() {
+            Card stranglehold = new Card();
+            stranglehold.addEffect(EffectSlot.STATIC, new SkipExtraTurnReplacementEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(stranglehold));
+            gd.extraTurns.addLast(player2Id);
+            int turnBefore = gd.turnNumber;
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.extraTurns).isEmpty();
+            assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+        }
+
+        @Test
+        @DisplayName("Does not skip the controller's extra turn with an opponent-only replacement")
+        void doesNotSkipControllersExtraTurnWithOpponentOnlyReplacement() {
+            Card stranglehold = new Card();
+            stranglehold.addEffect(EffectSlot.STATIC, new SkipExtraTurnReplacementEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(stranglehold));
+            gd.extraTurns.addLast(player1Id);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.extraTurns).isEmpty();
         }
 
         @Test

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MH2", collectorNumber = "132")
 @CardRegistration(set = "SOC", collectorNumber = "123")
 public class HarmonicProdigy extends Card {
 
@@ -26,7 +27,6 @@ public class HarmonicProdigy extends Card {
         addEffect(EffectSlot.STATIC, new AdditionalTriggeredAbilityEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.SHAMAN),
-                        new PermanentHasSubtypePredicate(CardSubtype.WIZARD)
-                ))));
+                        new PermanentHasSubtypePredicate(CardSubtype.WIZARD)))));
     }
 }

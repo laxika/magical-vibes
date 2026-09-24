@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M11", collectorNumber = "106")
 @CardRegistration(set = "TOR", collectorNumber = "74")
 @CardRegistration(set = "DMR", collectorNumber = "92")
+@CardRegistration(set = "C14", collectorNumber = "151")
 public class NantukoShade extends Card {
 
     public NantukoShade() {

@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,11 +13,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LifebloodHydra.class, Shock.class, Forest.class})
+@CardUsed({LifebloodHydra.class, LightningBolt.class, GrizzlyBears.class})
 class LifebloodHydraTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Lifeblood Hydra enters with X +1/+1 counters")
+    @DisplayName("Casting with X=3 enters with three +1/+1 counters")
     void entersWithXCounters() {
         harness.setHand(player1, List.of(new LifebloodHydra()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -30,26 +28,26 @@ class LifebloodHydraTest extends BaseCardTest {
 
         Permanent hydra = findPermanent(player1, "Lifeblood Hydra");
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(hydra.getEffectivePower()).isEqualTo(3);
+        assertThat(hydra.getEffectiveToughness()).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("When Lifeblood Hydra dies, its controller gains life and draws cards equal to its power")
-    void deathGainsLifeAndDrawsEqualToPower() {
-        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new LifebloodHydra());
-        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        harness.setLife(player1, 10);
-        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+    @DisplayName("When it dies, its controller gains life and draws cards equal to its power")
+    void deathGainsLifeAndDrawsCardsEqualToPower() {
+        Permanent hydra = addCreatureReady(player1, new LifebloodHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, hydra.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertLife(player1, 12);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
-        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
-                .contains("Forest", "Forest");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+        harness.assertInGraveyard(player1, "Lifeblood Hydra");
     }
 }

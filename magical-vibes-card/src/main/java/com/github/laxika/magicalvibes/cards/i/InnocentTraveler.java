@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureOrTransformSourceEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "121")
+@CardRegistration(set = "DBL", collectorNumber = "388")
 public class InnocentTraveler extends Card {
 
     public InnocentTraveler() {

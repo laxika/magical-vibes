@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEff
 
 @CardRegistration(set = "ELD", collectorNumber = "235")
 @CardRegistration(set = "SOC", collectorNumber = "356")
+@CardRegistration(set = "SLD", collectorNumber = "1226")
 public class StonecoilSerpent extends Card {
 
     public StonecoilSerpent() {

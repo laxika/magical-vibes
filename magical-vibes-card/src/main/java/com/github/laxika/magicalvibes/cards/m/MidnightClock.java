@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleControllerHandAndGrave
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "54")
+@CardRegistration(set = "SLD", collectorNumber = "2217")
 public class MidnightClock extends Card {
 
     public MidnightClock() {

@@ -54,6 +54,7 @@ public class WhimsOfTheFatesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingWhimsOfTheFates(
                 entry.getControllerId(), entry.getCard().getName(), playerPiles, 0, 1));
         beginNextPileSelection(gameData);

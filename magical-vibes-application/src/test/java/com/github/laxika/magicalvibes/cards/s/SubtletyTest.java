@@ -43,7 +43,8 @@ class SubtletyTest extends BaseCardTest {
         Card topCard = new Island();
         harness.setHand(player2, List.of(creatureSpell));
         harness.setLibrary(player2, List.of(topCard));
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.castCreature(player2, 0);
         harness.forceActivePlayer(player1);
@@ -96,7 +97,8 @@ class SubtletyTest extends BaseCardTest {
         GrizzlyBears creatureSpell = new GrizzlyBears();
         MerfolkTrickster blueCard = new MerfolkTrickster();
         harness.setHand(player2, List.of(creatureSpell));
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.castCreature(player2, 0);
         harness.forceActivePlayer(player1);

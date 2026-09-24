@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "257")
+@CardRegistration(set = "DBL", collectorNumber = "524")
 public class HonoredHeirloom extends Card {
 
     public HonoredHeirloom() {

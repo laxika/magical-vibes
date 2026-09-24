@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "171")
+@CardRegistration(set = "DBL", collectorNumber = "438")
 public class MarkovRetribution extends Card {
 
     public MarkovRetribution() {

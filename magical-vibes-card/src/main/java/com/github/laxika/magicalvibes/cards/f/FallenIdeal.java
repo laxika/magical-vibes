@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "109")
 @CardRegistration(set = "SOC", collectorNumber = "117")
+@CardRegistration(set = "C15", collectorNumber = "125")
 public class FallenIdeal extends Card {
 
     public FallenIdeal() {

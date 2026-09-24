@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "S99", collectorNumber = "64")
 @CardRegistration(set = "DDK", collectorNumber = "28")
 @CardRegistration(set = "A25", collectorNumber = "79")
+@CardRegistration(set = "C15", collectorNumber = "114")
 public class AncientCraving extends Card {
 
     public AncientCraving() {

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "244")
+@CardRegistration(set = "DBL", collectorNumber = "511")
 public class OldRutstein extends Card {
 
     private static final MillControllerAndCreateTokensByMilledCardTypeEffect MILL_AND_CREATE_TOKENS =

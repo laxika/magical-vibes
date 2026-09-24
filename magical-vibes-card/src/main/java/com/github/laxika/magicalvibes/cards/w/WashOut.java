@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllPermanentsOfChosenCo
 
 @CardRegistration(set = "INV", collectorNumber = "87")
 @CardRegistration(set = "2X2", collectorNumber = "67")
+@CardRegistration(set = "C13", collectorNumber = "66")
 public class WashOut extends Card {
 
     public WashOut() {

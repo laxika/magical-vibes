@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 @CardRegistration(set = "MID", collectorNumber = "113")
 @CardRegistration(set = "SPG", collectorNumber = "32")
 @CardRegistration(set = "SOC", collectorNumber = "219")
+@CardRegistration(set = "DBL", collectorNumber = "113")
 public class MorbidOpportunist extends Card {
 
     public MorbidOpportunist() {

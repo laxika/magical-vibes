@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "220")
+@CardRegistration(set = "CMM", collectorNumber = "335")
 public class AkiriFearlessVoyager extends Card {
 
     public AkiriFearlessVoyager() {

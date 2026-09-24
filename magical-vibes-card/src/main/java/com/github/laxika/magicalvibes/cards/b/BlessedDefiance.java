@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThi
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "5")
+@CardRegistration(set = "DBL", collectorNumber = "5")
 public class BlessedDefiance extends Card {
 
     public BlessedDefiance() {

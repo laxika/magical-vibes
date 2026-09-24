@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Removes every tracked player counter from each opponent of the effect controller. */
+/** Each opponent of the resolving effect's controller loses all tracked player counters. */
 public record EachOpponentLosesAllCountersEffect() implements CardEffect {
 }

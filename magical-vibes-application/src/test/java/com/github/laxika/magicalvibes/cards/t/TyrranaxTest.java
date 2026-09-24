@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Tyrranax.class)
 class TyrranaxTest extends BaseCardTest {
 
     @Test
@@ -43,6 +45,19 @@ class TyrranaxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can be activated while Tyrranax has summoning sickness")
+    void abilityDoesNotRequireTyrranaxToHaveBeenUnderControlSinceTurnStart() {
+        Permanent tyrranax = harness.addToBattlefieldAndReturn(player1, new Tyrranax());
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(tyrranax.getPowerModifier()).isEqualTo(-1);
+        assertThat(tyrranax.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The ability's effect wears off at end of turn")
     void abilityWearsOffAtEndOfTurn() {
         Permanent tyrranax = addReadyTyrranax(player1);
@@ -71,10 +86,7 @@ class TyrranaxTest extends BaseCardTest {
     }
 
     private Permanent addReadyTyrranax(Player player) {
-        Permanent perm = new Permanent(new Tyrranax());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Tyrranax());
     }
 
     private void addAbilityMana(Player player) {

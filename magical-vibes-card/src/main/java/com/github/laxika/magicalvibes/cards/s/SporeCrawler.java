@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "218")
 @CardRegistration(set = "VOW", collectorNumber = "222")
+@CardRegistration(set = "DBL", collectorNumber = "489")
 public class SporeCrawler extends Card {
 
     public SporeCrawler() {

@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "164")
+@CardRegistration(set = "SLZ", collectorNumber = "119")
+@CardRegistration(set = "SLZ", collectorNumber = "240")
+@CardRegistration(set = "SLZ", collectorNumber = "361")
 public class OboroPalaceInTheClouds extends Card {
 
     public OboroPalaceInTheClouds() {

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "71")
+@CardRegistration(set = "C13", collectorNumber = "46")
 public class HadaSpyPatrol extends Card {
 
     public HadaSpyPatrol() {

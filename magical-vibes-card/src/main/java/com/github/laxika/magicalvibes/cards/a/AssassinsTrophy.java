@@ -21,8 +21,12 @@ import java.util.List;
 @CardRegistration(set = "GRN", collectorNumber = "152")
 @CardRegistration(set = "MKM", collectorNumber = "187")
 @CardRegistration(set = "MKM", collectorNumber = "412")
+@CardRegistration(set = "SLD", collectorNumber = "139")
 @CardRegistration(set = "2X2", collectorNumber = "175")
 @CardRegistration(set = "SOC", collectorNumber = "294")
+@CardRegistration(set = "ECC", collectorNumber = "119")
+@CardRegistration(set = "ACR", collectorNumber = "95")
+@CardRegistration(set = "TMC", collectorNumber = "55")
 public class AssassinsTrophy extends Card {
 
     public AssassinsTrophy() {

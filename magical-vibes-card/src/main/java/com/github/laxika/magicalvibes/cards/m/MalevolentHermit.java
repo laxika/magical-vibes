@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "61")
+@CardRegistration(set = "DBL", collectorNumber = "61")
 public class MalevolentHermit extends Card {
 
     public MalevolentHermit() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "261")
+@CardRegistration(set = "HOC", collectorNumber = "97")
 public class TreasureVault extends Card {
 
     public TreasureVault() {

@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "86")
 @CardRegistration(set = "MM2", collectorNumber = "117")
+@CardRegistration(set = "SLZ", collectorNumber = "59")
+@CardRegistration(set = "SLZ", collectorNumber = "180")
+@CardRegistration(set = "SLZ", collectorNumber = "301")
 public class GutShot extends Card {
 
     public GutShot() {

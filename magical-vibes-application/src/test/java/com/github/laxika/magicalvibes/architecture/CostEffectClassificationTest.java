@@ -104,6 +104,7 @@ class CostEffectClassificationTest {
             "TapTwoCreaturesSharingTypeCost",
             "DiscardLastDrawnCardCost",
             "UnattachSourceEquipmentCost",
+            "UnattachEquipmentFromSourceCost",
             "UntapMultiplePermanentsCost");
 
     /**
@@ -117,12 +118,14 @@ class CostEffectClassificationTest {
             "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
+            "PayLifeEqualToSpellManaValueCost",
             "PayLifeOrPayManaCost",
             "ChooseXValueCost",
             "ChooseCreatureTypeCost",
             "ExileCardFromGraveyardCost",
             "ExileXCardsFromGraveyardCost",
             "ExileAnyNumberOfCardsFromHandCost",
+            "ExileAnyNumberOfCardsFromGraveyardCost",
             "PutOpponentOwnedExiledCardIntoGraveyardCost",
             "CollectEvidenceCost",
             "ExileNCardsFromGraveyardCost",

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "252")
+@CardRegistration(set = "ECC", collectorNumber = "142")
 public class GrimPoppet extends Card {
 
     public GrimPoppet() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "40")
+@CardRegistration(set = "CMM", collectorNumber = "64")
 public class SwiftResponse extends Card {
 
     public SwiftResponse() {

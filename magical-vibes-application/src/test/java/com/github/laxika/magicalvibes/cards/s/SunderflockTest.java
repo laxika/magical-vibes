@@ -60,14 +60,16 @@ class SunderflockTest extends BaseCardTest {
     @Test
     void enteringWithoutBeingCastDoesNotReturnCreatures() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new Sunderflock()));
+        Sunderflock target = new Sunderflock();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
-        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, target.getName());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }

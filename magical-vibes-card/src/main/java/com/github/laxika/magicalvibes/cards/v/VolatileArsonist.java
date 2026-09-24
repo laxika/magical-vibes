@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "181")
+@CardRegistration(set = "DBL", collectorNumber = "448")
 public class VolatileArsonist extends Card {
 
     public VolatileArsonist() {

@@ -24,7 +24,8 @@ public class StudyHall extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.SOURCE_SPELL_CAST_TRIGGER_ANY_COLOR)),
+                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.NONE)
+                        .withProducingSourceForSpellCastTriggers()),
                 "{1}, {T}: Add one mana of any color. When you spend this mana to cast your commander, scry X, where X is the number of times it's been cast from the command zone this game."
         ));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
