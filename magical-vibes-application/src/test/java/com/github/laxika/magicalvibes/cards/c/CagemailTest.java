@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Cagemail.class, KrosanVerge.class, SuntailHawk.class})
+@CardUsed({Cagemail.class, GrizzlyBears.class, KrosanVerge.class, SuntailHawk.class})
 class CagemailTest extends BaseCardTest {
 
     @Test
@@ -103,5 +104,34 @@ class CagemailTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cagemail boosts only the enchanted creature")
+    void doesNotBoostOtherCreatures() {
+        Permanent enchantedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Cagemail());
+        aura.setAttachedTo(enchantedBears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, enchantedBears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enchantedBears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cagemail can enchant a creature an opponent controls")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
 }

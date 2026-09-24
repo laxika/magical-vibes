@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "FUT", collectorNumber = "180")
 @CardRegistration(set = "A25", collectorNumber = "249")
 @CardRegistration(set = "CMD", collectorNumber = "298")
+@CardRegistration(set = "C14", collectorNumber = "317")
 @CardRegistration(set = "C15", collectorNumber = "322")
 public class ZoeticCavern extends Card {
 

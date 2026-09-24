@@ -17,6 +17,8 @@ import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "257")
 @CardRegistration(set = "C15", collectorNumber = "50")
+@CardRegistration(set = "CMM", collectorNumber = "348")
+@CardRegistration(set = "CMM", collectorNumber = "586")
 public class MizzixOfTheIzmagnus extends Card {
 
     public MizzixOfTheIzmagnus() {

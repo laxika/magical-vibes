@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "221")
+@CardRegistration(set = "SLD", collectorNumber = "1765")
 @CardRegistration(set = "TLE", collectorNumber = "51")
 public class KomaCosmosSerpent extends Card {
 

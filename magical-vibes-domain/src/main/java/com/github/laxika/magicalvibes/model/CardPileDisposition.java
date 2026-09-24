@@ -15,6 +15,8 @@ public enum CardPileDisposition {
     HAND_AND_THOPTER,
     /** Curator of Destinies and Fortune's Favor: one pile is face down; the chosen pile goes to hand and the other to the graveyard. */
     HAND_WITH_FACE_DOWN_PILE,
+    /** The Celestial Toymaker: the chosen pile goes to hand and the other remains exiled, with one pile face down. */
+    HAND_AND_EXILE_WITH_FACE_DOWN_PILE,
     /**
      * Phyrexian Portal: the pile the controller picks is searched for one card to put into their
      * hand (the rest of that pile is shuffled into their library); the other pile is exiled. The

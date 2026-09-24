@@ -52,7 +52,7 @@ class SelflessGlyphweaverTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Exactly one permanent");
+                .hasMessageContaining("Exactly 1 permanents");
 
         harness.handleMultiplePermanentsChosen(player1, List.of(keptPlaneswalker.getId()));
 

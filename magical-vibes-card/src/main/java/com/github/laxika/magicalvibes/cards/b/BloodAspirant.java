@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "128")
+@CardRegistration(set = "CMM", collectorNumber = "208")
 public class BloodAspirant extends Card {
 
     public BloodAspirant() {

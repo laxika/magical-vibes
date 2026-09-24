@@ -66,7 +66,7 @@ public class BattlefieldEntryService {
         }
         placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 placementService.snapshotEnterTappedTypes(gameData), List.of(), 0, false, List.of(),
-                0, null, null, landPlayZone));
+                0, null, null, landPlayZone, null));
     }
 
     private boolean beginLandCardNameChoice(GameData gameData, UUID controllerId,
@@ -108,6 +108,12 @@ public class BattlefieldEntryService {
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                            int xValue, boolean kicked, StackEntry stackEntry) {
+        place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
+                List.of(), xValue, kicked, List.of(), 0, stackEntry);
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                             int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
                 List.of(), xValue, kicked, repeatedAdditionalCosts, 0);
@@ -118,12 +124,6 @@ public class BattlefieldEntryService {
                                             int convokeCreatureCount) {
         place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
                 List.of(), xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount);
-    }
-
-    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
-                                            int xValue, boolean kicked, StackEntry sourceStackEntry) {
-        place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
-                List.of(), xValue, kicked, List.of(), 0, sourceStackEntry);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
@@ -163,7 +163,7 @@ public class BattlefieldEntryService {
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         place(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
-                xValue, kicked, repeatedAdditionalCosts, 0);
+                xValue, kicked, repeatedAdditionalCosts, 0, null);
     }
 
     private void place(GameData gameData, UUID controllerId, Permanent permanent,

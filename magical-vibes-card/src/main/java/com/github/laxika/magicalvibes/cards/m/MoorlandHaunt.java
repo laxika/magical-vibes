@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "244")
+@CardRegistration(set = "SLD", collectorNumber = "349")
 public class MoorlandHaunt extends Card {
 
     public MoorlandHaunt() {

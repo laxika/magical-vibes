@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
-import com.github.laxika.magicalvibes.service.GameLogService;
-
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -17,143 +20,142 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
-import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
+import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
-import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
+import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
-import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
-import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
-import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
+import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
+import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
-import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
-import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TrainEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
-import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
+import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TrainEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import java.util.*;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Handles declare-attackers step: computing legal attackers, enforcing attack requirements
@@ -185,6 +187,7 @@ public class CombatAttackService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final StaticEffectConditionResolver staticEffectConditionResolver;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -911,7 +914,6 @@ public class CombatAttackService {
                     }
                 }
 
-
                 // "Whenever this creature attacks for the first time each turn" (Aurelia, the
                 // Warleader): drop the wrapped effects entirely once this permanent has already
                 // attacked this turn, otherwise consume the first-attack marker before any
@@ -1636,6 +1638,11 @@ public class CombatAttackService {
                                 ConditionContext.forPermanent(attacker, playerId)));
 
                 matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksPlayerAlone
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof SourceAttackedThisCombat
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(perm, playerId)));
@@ -1645,6 +1652,8 @@ public class CombatAttackService {
                 // "you may tap target creature") route through the may/mandatory split below.
                 matchingEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
+                matchingEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksPlayerAlone ? ce.wrapped() : e);
 
                 if (matchingEffects.isEmpty()) continue;
 
@@ -2053,6 +2062,8 @@ public class CombatAttackService {
                                 attacker.getId(),
                                 perm.getId()
                         );
+                        anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
+                        anyAttackTrigger.setTriggeringPermanentControllerId(playerId);
                         anyAttackTrigger.setNonTargeting(true);
                         anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                         anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
@@ -2101,14 +2112,25 @@ public class CombatAttackService {
         // Check for "whenever a player attacks with one or more creatures" triggers
         // (ON_ANY_PLAYER_ATTACKS). Unlike ON_ALLY_CREATURES_ATTACK these fire for any attacking
         // player, on every permanent with this slot across all battlefields, and only once per
-        // combat. The attacking player is stored as a non-targeting targetId so player-scoped
-        // effects can act on "that player" (e.g. Total War's sweep of their non-attackers).
+        // combat. PlayerAttacksOneOfYourOpponents is the exception: it queues once per distinct
+        // opponent directly attacked. The attacking player is stored as a non-targeting targetId
+        // so player-scoped effects can act on "that player" (e.g. Total War's sweep of their
+        // non-attackers).
         for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
             UUID permController = bf.getKey();
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
+                Map<UUID, List<CardEffect>> effectsByAttackedOpponent = new LinkedHashMap<>();
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
                     if (effect instanceof ConditionalEffect conditional) {
+                        if (conditional.condition() instanceof PlayerAttacksOneOfYourOpponents) {
+                            for (UUID attackedOpponentId : attackedOpponents(gameData, permController, resolvedTargets)) {
+                                effectsByAttackedOpponent
+                                        .computeIfAbsent(attackedOpponentId, ignored -> new ArrayList<>())
+                                        .add(conditional.wrapped());
+                            }
+                            continue;
+                        }
                         if (conditional.condition() instanceof MinimumAttackers
                                 && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(perm, permController)
@@ -2137,13 +2159,14 @@ public class CombatAttackService {
                         playerAttackEffects.add(effect);
                     }
                 }
-                if (playerAttackEffects.isEmpty()) continue;
+                if (playerAttackEffects.isEmpty() && effectsByAttackedOpponent.isEmpty()) continue;
 
                 int previousCopies = beginAttackTriggerCopies(gameData, permController, perm);
                 try {
                     boolean needsTarget = playerAttackEffects.stream()
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                                    || (perm.getCard().getDeclaredTargetFilter() != null
+                                    && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
                     if (needsTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), permController, playerAttackEffects, perm.getId(),
@@ -2386,7 +2409,6 @@ public class CombatAttackService {
         }
         return indices;
     }
-
 
     /**
      * Song of Blood-style delayed triggers: whenever a creature attacks this turn, it gets
@@ -3173,5 +3195,12 @@ public class CombatAttackService {
     private static String formatBoostPair(int power, int toughness) {
         String sign = (power < 0 || toughness < 0) ? "-" : "+";
         return sign + Math.abs(power) + "/" + sign + Math.abs(toughness);
+    }
+    private Set<UUID> attackedOpponents(GameData gameData, UUID controllerId,
+                                         Map<Integer, UUID> resolvedTargets) {
+        return resolvedTargets.values().stream()
+                .filter(gameData.playerIds::contains)
+                .filter(targetId -> !controllerId.equals(targetId))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 }

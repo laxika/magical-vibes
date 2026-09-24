@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "MRD", collectorNumber = "74")
 @CardRegistration(set = "DDC", collectorNumber = "54")
 @CardRegistration(set = "DVD", collectorNumber = "54")
+@CardRegistration(set = "C14", collectorNumber = "157")
 public class PromiseOfPower extends Card {
 
     public PromiseOfPower() {

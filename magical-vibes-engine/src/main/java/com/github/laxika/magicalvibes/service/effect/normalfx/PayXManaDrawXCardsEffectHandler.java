@@ -47,6 +47,8 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                 : Math.max(0, amountEvaluationService.evaluate(gameData, payEffect.maximumX(),
                         AmountContext.forStackEntry(entry, null)));
 
+        ManaCost cost = new ManaCost("{X}");
+
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
             gameData.chosenXValue = null;
@@ -59,7 +61,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             }
 
             ManaPool pool = gameData.playerManaPools.get(controllerId);
-            if (chosenValue > lifeGained || payableFromPool(pool) < chosenValue) {
+            if (chosenValue > lifeGained || !cost.canPay(pool, chosenValue)) {
                 gameLogService.append(gameData, GameLog.text(
                         playerName + " can't pay {" + chosenValue + "} for " + cardName
                                 + " (tap mana sources, then choose X again)."));
@@ -67,7 +69,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                 return;
             }
 
-            new ManaCost("{X}").pay(pool, chosenValue);
+            cost.pay(pool, chosenValue);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays {" + chosenValue + "} for " + cardName
                             + " and draws " + chosenValue + " card"
@@ -82,7 +84,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
     }
 
     private void beginXPrompt(GameData gameData, UUID controllerId, String cardName, int lifeGained) {
-        int maxX = Math.min(lifeGained, maxPotentialX(gameData, controllerId));
+        int maxX = maxPotentialX(gameData, controllerId, lifeGained);
         if (maxX <= 0) {
             return;
         }
@@ -95,15 +97,19 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                         true));
     }
 
-    private int maxPotentialX(GameData gameData, UUID controllerId) {
-        ManaPool pool = gameData.playerManaPools.get(controllerId);
-        int untappedSources = potentialManaService.buildVirtualManaPool(gameData, controllerId).getTotal()
-                - pool.getTotal();
-        return Math.max(0, payableFromPool(pool) + untappedSources);
-    }
-
-    private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+    private int maxPotentialX(GameData gameData, UUID controllerId, int lifeGained) {
+        ManaPool pool = potentialManaService.buildVirtualManaPool(gameData, controllerId);
+        ManaCost cost = new ManaCost("{X}");
+        int low = 0;
+        int high = lifeGained;
+        while (low < high) {
+            int mid = low + (int) (((long) high - low + 1) / 2);
+            if (cost.canPay(pool, mid)) {
+                low = mid;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return low;
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+@CardRegistration(set = "SLD", collectorNumber = "307")
 @CardRegistration(set = "SPG", collectorNumber = "91")
 @CardRegistration(set = "SPG", collectorNumber = "101")
 @CardRegistration(set = "C15", collectorNumber = "38")

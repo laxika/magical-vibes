@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.a.AvenWarcraft;
 import com.github.laxika.magicalvibes.cards.b.BattleScreech;
 import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.f.FuneralPyre;
+import com.github.laxika.magicalvibes.cards.g.GuidedStrike;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -17,8 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PulsemageAdvocate.class, AvenWarcraft.class, BattleScreech.class, BattlewiseAven.class,
-        BenevolentBodyguard.class})
+@CardUsed({AvenWarcraft.class, BattleScreech.class, BattlewiseAven.class, BenevolentBodyguard.class, FuneralPyre.class, GuidedStrike.class, PulsemageAdvocate.class})
 class PulsemageAdvocateTest extends BaseCardTest {
 
     @Test
@@ -111,5 +112,21 @@ class PulsemageAdvocateTest extends BaseCardTest {
 
     private int index(Permanent advocate) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(advocate);
+    }
+
+    @Test
+    @DisplayName("Rejects a noncreature card for the reanimation target")
+    void rejectsNonCreatureForReanimationTarget() {
+        Permanent advocate = addReadyAdvocate();
+        Card first = new AvenWarcraft();
+        Card second = new GuidedStrike();
+        Card third = new FuneralPyre();
+        Card nonCreature = new AvenWarcraft();
+        harness.setGraveyard(player2, List.of(first, second, third));
+        harness.setGraveyard(player1, List.of(nonCreature));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), third.getId(), nonCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

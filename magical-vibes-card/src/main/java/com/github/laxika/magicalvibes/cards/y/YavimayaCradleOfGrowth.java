@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
  * <p>The additive Forest subtype also grants the intrinsic green mana ability to every land.
  */
 @CardRegistration(set = "AA3", collectorNumber = "25")
+@CardRegistration(set = "MH2", collectorNumber = "261")
 public class YavimayaCradleOfGrowth extends Card {
 
     public YavimayaCradleOfGrowth() {

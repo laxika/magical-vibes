@@ -17,9 +17,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ScytheclawTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Living weapon creates and equips a Phyrexian Germ")
-    void livingWeaponCreatesAndEquipsGerm() {
-        castScytheclaw();
+    @DisplayName("Equipped creature gets +1/+1")
+    void equippedCreatureGetsBoost() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent scytheclaw = addScytheclawReady(player1);
+        scytheclaw.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Living weapon creates and attaches a Phyrexian Germ")
+    void livingWeaponCreatesAndAttachesGerm() {
+        harness.setHand(player1, List.of(new Scytheclaw()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent scytheclaw = findPermanent(player1, "Scytheclaw");
         Permanent germ = findPermanent(player1, "Phyrexian Germ");
@@ -30,7 +46,7 @@ class ScytheclawTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Equipped creature's combat damage makes the player lose half their life, rounded up")
+    @DisplayName("Equipped creature makes a player lose half their life, rounded up")
     void combatDamageMakesPlayerLoseHalfLifeRoundedUp() {
         harness.setLife(player2, 23);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
@@ -40,13 +56,14 @@ class ScytheclawTest extends BaseCardTest {
 
         resolveCombat();
 
+        // 2 combat damage: 23 -> 21. Half of 21 rounded up is 11: 21 -> 10.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
     }
 
     @Test
-    @DisplayName("No life loss trigger occurs when the equipped creature deals no combat damage to a player")
-    void noTriggerWithoutCombatDamageToPlayer() {
-        harness.setLife(player2, 22);
+    @DisplayName("Blocked equipped creature does not trigger the life-loss ability")
+    void blockedCreatureDoesNotTriggerLifeLoss() {
+        harness.setLife(player2, 23);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent scytheclaw = addScytheclawReady(player1);
         scytheclaw.setAttachedTo(creature.getId());
@@ -58,21 +75,13 @@ class ScytheclawTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
-    }
-
-    private void castScytheclaw() {
-        harness.setHand(player1, List.of(new Scytheclaw()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
     }
 
     private Permanent addScytheclawReady(Player player) {
-        Permanent permanent = new Permanent(new Scytheclaw());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        Permanent scytheclaw = new Permanent(new Scytheclaw());
+        scytheclaw.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(scytheclaw);
+        return scytheclaw;
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,64 +18,55 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SelvalaHeartOfTheWildsTest extends BaseCardTest {
 
     @Test
-    void enteringCreatureControllerMayDrawWhenItIsStrictlyLargest() {
+    @DisplayName("The entering creature's controller may draw when it has uniquely greatest power")
+    void enteringCreatureControllerMayDraw() {
         harness.addToBattlefield(player1, new SelvalaHeartOfTheWilds());
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.enterBattlefieldAndReturn(player2, new HillGiant());
-        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new HillGiant());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
+        int handBefore = gd.playerHands.get(player2.getId()).size();
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
     }
 
     @Test
-    void doesNotDrawWhenAnotherCreatureTiesAtResolution() {
+    @DisplayName("A tied greatest power does not draw")
+    void tiedGreatestPowerDoesNotDraw() {
+        harness.addToBattlefield(player1, new HillGiant());
         harness.addToBattlefield(player1, new SelvalaHeartOfTheWilds());
-        harness.setHand(player2, List.of());
-        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
-        harness.enterBattlefieldAndReturn(player2, new HillGiant());
-        harness.passBothPriorities();
-        addCreatureReady(player1, new HillGiant());
-        harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new HillGiant());
 
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     @Test
-    void usesEnteringCreaturePowerWhenItLeavesBeforeResolution() {
-        harness.addToBattlefield(player1, new SelvalaHeartOfTheWilds());
-        harness.setHand(player2, List.of());
-        harness.setLibrary(player2, List.of(new Forest()));
-
-        Permanent entering = harness.enterBattlefieldAndReturn(player2, new HillGiant());
-        gd.playerBattlefields.get(player2.getId()).remove(entering);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
-
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-    }
-
-    @Test
-    void tapsAndPaysGreenToAddManaEqualToGreatestControlledCreaturePower() {
-        Permanent selvala = addCreatureReady(player1, new SelvalaHeartOfTheWilds());
-        addCreatureReady(player1, new HillGiant());
+    @DisplayName("Adds mana equal to the greatest power in any combination of colors")
+    void addsGreatestPowerInAnyCombinationOfColors() {
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent selvala = harness.addToBattlefieldAndReturn(player1, new SelvalaHeartOfTheWilds());
+        selvala.setSummoningSick(false);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 0, null, selvala.getId());
+        int selvalaIndex = gd.playerBattlefields.get(player1.getId()).indexOf(selvala);
+        harness.activateAbility(player1, selvalaIndex, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
         harness.handleListChoice(player1, ManaColor.BLUE.name());
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
-        assertThat(selvala.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }

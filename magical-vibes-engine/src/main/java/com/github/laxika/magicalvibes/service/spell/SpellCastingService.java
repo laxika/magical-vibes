@@ -1,88 +1,69 @@
 package com.github.laxika.magicalvibes.service.spell;
 
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.CloneService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
-import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
-import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
-import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
-import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.AdventureCast;
-import com.github.laxika.magicalvibes.model.BestowCast;
-import com.github.laxika.magicalvibes.model.CastingCost;
-import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
-import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
-import com.github.laxika.magicalvibes.model.DisturbCast;
-import com.github.laxika.magicalvibes.model.ExileCast;
-import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
-import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
-import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
-import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
-import com.github.laxika.magicalvibes.model.ExileXCardsFromGraveyardCastingCost;
-import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.GraveyardCast;
-import com.github.laxika.magicalvibes.model.HarmonizeCast;
-import com.github.laxika.magicalvibes.model.JumpStartCast;
-import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
-import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
-import com.github.laxika.magicalvibes.model.Retrace;
-import com.github.laxika.magicalvibes.model.LifeCastingCost;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.OmenCast;
-import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
-import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
-import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
-import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.BendingType;
+import com.github.laxika.magicalvibes.model.BestowCast;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CastingCost;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
+import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
+import com.github.laxika.magicalvibes.model.DisturbCast;
+import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.ExileCast;
+import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExileXCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.HarmonizeCast;
+import com.github.laxika.magicalvibes.model.JumpStartCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.OmenCast;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
+import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
+import com.github.laxika.magicalvibes.model.Retrace;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
-import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
+import com.github.laxika.magicalvibes.model.effect.BeholdCost;
+import com.github.laxika.magicalvibes.model.effect.BlightCost;
+import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect;
@@ -95,7 +76,6 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardOrExileToHandEffect;
@@ -114,18 +94,19 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTa
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
-import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
-import com.github.laxika.magicalvibes.model.effect.BeholdCost;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
@@ -133,55 +114,54 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GiftEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.BlightCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
-import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
-import com.github.laxika.magicalvibes.model.effect.GiftEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
+import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesForManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -190,14 +170,30 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttacking
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-
+import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -205,8 +201,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
@@ -214,6 +210,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -645,6 +645,36 @@ public class SpellCastingService {
                     .card(card)
                     .text(".")
                     .build());
+        }
+    }
+
+    /** Pays the optional additional cost that exiles selected matching cards from graveyard. */
+    private void payExileAnyNumberOfCardsFromGraveyardCost(
+            GameData gameData, Player player, Card card, ExileAnyNumberOfCardsFromGraveyardCost cost,
+            List<Integer> exileGraveyardCardIndices) {
+        if (cost == null) return;
+        List<Integer> effectiveIndices = new ArrayList<>(
+                additionalSpellCostService.validateExileAnyNumberOfCardsFromGraveyardCost(
+                        gameData, player, card, cost, exileGraveyardCardIndices));
+        effectiveIndices.sort(java.util.Collections.reverseOrder());
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (int effectiveIndex : effectiveIndices) {
+                Card toExile = graveyard.remove(effectiveIndex);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
+                gameData.addToExile(playerId, toExile, card.getId());
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(toExile)
+                        .text(" from graveyard to cast ")
+                        .card(card)
+                        .text(".")
+                        .build());
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
     }
 
@@ -1432,6 +1462,10 @@ public class SpellCastingService {
         List<Card> hand = gameData.castingSourceCards(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
+        if (beginOpponentChosenSpellTargetsIfNeeded(
+                gameData, player, cardIndex, xValue, targetId, targetIds, attempted, buyback)) {
+            return;
+        }
         if (beginOpponentChosenTargetChoiceIfNeeded(
                 gameData, player, cardIndex, xValue, targetId, attempted, buyback)) {
             return;
@@ -1487,11 +1521,82 @@ public class SpellCastingService {
                 .ifPresent(entry -> entry.setOpponentChosenTargetPlayerId(chosenOpponentId));
     }
 
+    public void playCardAfterOpponentChosenTargets(GameData gameData, Player player, int cardIndex,
+                                                   Integer xValue, List<UUID> targetIds, boolean buyback) {
+        playCard(gameData, player, cardIndex, xValue, null, Map.of(), targetIds, List.of(),
+                false, null, null, null, null, null, false, null, null, null, null, null,
+                List.of(), buyback);
+    }
+
     private boolean isOpponentChosenTargetSpell(Card card) {
         return card.getEffects(EffectSlot.SPELL).stream()
                 .filter(GainControlOfTargetEffect.class::isInstance)
                 .map(GainControlOfTargetEffect.class::cast)
                 .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget);
+    }
+
+    private boolean beginOpponentChosenSpellTargetsIfNeeded(
+            GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+            List<UUID> targetIds, Card attempted, boolean buyback) {
+        if (attempted == null || targetId != null
+                || attempted.getOpponentChosenSpellTargetIndices().isEmpty()
+                || targetIds == null) {
+            return false;
+        }
+
+        List<Integer> opponentTargetIndices = attempted.getOpponentChosenSpellTargetIndices();
+        int targetPositionCount = attempted.getMultiTargetFilters().size();
+        int casterTargetCount = targetPositionCount - opponentTargetIndices.size();
+        if (targetIds.size() != casterTargetCount) {
+            return false;
+        }
+
+        Map<Integer, UUID> selectedTargets = new HashMap<>();
+        int casterTargetIndex = 0;
+        for (int positionIndex = 0; positionIndex < targetPositionCount; positionIndex++) {
+            if (opponentTargetIndices.contains(positionIndex)) {
+                continue;
+            }
+            int groupIndex = targetGroupIndexForPosition(attempted, positionIndex);
+            UUID targetIdAtPosition = targetIds.get(casterTargetIndex++);
+            targetLegalityService.validateSpellTargetGroup(
+                    gameData, attempted, groupIndex, List.of(targetIdAtPosition),
+                    player.getId(), xValue != null ? xValue : 0, false);
+            selectedTargets.put(positionIndex, targetIdAtPosition);
+        }
+
+        beginOpponentChosenSpellTargetChoice(gameData, player, cardIndex, xValue, attempted,
+                buyback, selectedTargets, 0);
+        return true;
+    }
+
+    private void beginOpponentChosenSpellTargetChoice(GameData gameData, Player player, int cardIndex,
+                                                      Integer xValue, Card card, boolean buyback,
+                                                      Map<Integer, UUID> selectedTargets,
+                                                      int nextTargetIndex) {
+        int targetPosition = card.getOpponentChosenSpellTargetIndices().get(nextTargetIndex);
+        int groupIndex = targetGroupIndexForPosition(card, targetPosition);
+        List<UUID> validOpponentIds = targetLegalityService.computeValidOpponentChosenTargetGroupPlayers(
+                gameData, card, player.getId(), groupIndex, xValue != null ? xValue : 0, false);
+        if (validOpponentIds.isEmpty()) {
+            throw new IllegalStateException("No legal opponent can choose a target");
+        }
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
+                player, card, cardIndex, xValue, buyback, selectedTargets, nextTargetIndex, null));
+        playerInputService.beginPermanentChoice(gameData, player.getId(), validOpponentIds,
+                "Choose an opponent to choose a target for " + card.getName() + ".");
+    }
+
+    private int targetGroupIndexForPosition(Card card, int positionIndex) {
+        int positionOffset = 0;
+        for (SpellTarget target : card.getSpellTargets()) {
+            int targetCount = target.getMaxTargets();
+            if (positionIndex < positionOffset + targetCount) {
+                return target.getIndex();
+            }
+            positionOffset += targetCount;
+        }
+        throw new IllegalArgumentException("Unknown spell target position");
     }
 
     private boolean beginOpponentChosenTargetChoiceIfNeeded(
@@ -1620,6 +1725,10 @@ public class SpellCastingService {
         List<Card> hand = gameData.castingSourceCards(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
+        if (beginOpponentChosenSpellTargetsIfNeeded(
+                gameData, player, cardIndex, xValue, targetId, targetIds, attempted, buyback)) {
+            return;
+        }
         if (beginOpponentChosenTargetChoiceIfNeeded(
                 gameData, player, cardIndex, xValue, targetId, attempted, buyback)) {
             return;
@@ -1796,12 +1905,13 @@ public class SpellCastingService {
         ManaCost plotCost = plotOption.getCost(ManaCastingCost.class)
                 .map(cost -> new ManaCost(cost.manaCost()))
                 .orElseGet(() -> new ManaCost("{0}"));
+        plotCost = castingCostService.applyManaCostPaymentAlternatives(gameData, playerId, plotCost);
         int modifier = castingCostService.getPlotCostModifier(gameData, playerId, card);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (pool == null || !plotCost.canPay(pool, modifier)) {
             throw new IllegalStateException("Not enough mana to pay plot cost");
         }
-        plotCost.pay(pool, modifier);
+        payManaCostWithPhyrexianAlternatives(gameData, playerId, plotCost, pool, modifier);
 
         hand.remove(cardIndex);
         markCardPlotted(gameData, playerId, card);
@@ -2137,6 +2247,7 @@ public class SpellCastingService {
         }
         entry.setCastWithAdventure(true);
         entry.setSourceZone(Zone.HAND);
+        entry.setDelvedCardIds(additionalCostPayment.delvedCardIds());
         stampSacrificedCostSnapshot(entry, additionalCostPayment);
         if (additionalCostPayment.sacrificedCardSnapshot() != null) {
             entry.setSacrificedCard(additionalCostPayment.sacrificedCardSnapshot());
@@ -2207,7 +2318,9 @@ public class SpellCastingService {
             throw new IllegalStateException("X value cannot be negative");
         }
         if (castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
-                gameData, playerId, adventureCard, effectiveXValue)) {
+                gameData, playerId, adventureCard, effectiveXValue)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, adventureCard, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
 
@@ -2285,6 +2398,17 @@ public class SpellCastingService {
         entry.setSourceZone(Zone.GRAVEYARD);
         gameData.stack.add(entry);
         finishSpellCast(gameData, playerId, player, graveyard, physicalCard, false);
+    }
+
+    /** Pays a cost whose Phyrexian symbols have already been selected by a cost replacement. */
+    public void payManaCostWithPhyrexianAlternatives(GameData gameData, UUID playerId, ManaCost cost,
+                                                     ManaPool pool, int xValue) {
+        int phyrexianLifeCost = cost.hasPhyrexianMana()
+                ? cost.payPhyrexianManaAuto(pool, xValue) : 0;
+        cost.pay(pool, xValue);
+        if (phyrexianLifeCost > 0) {
+            lifeSupport.applyLifePayment(gameData, playerId, phyrexianLifeCost, "Phyrexian mana");
+        }
     }
 
     public void playCardWithMorph(GameData gameData, Player player, int cardIndex, Integer xValue,
@@ -2860,7 +2984,8 @@ public class SpellCastingService {
                 || alternateDiscardHandCardIndex != null
                 || usingSharedColorDiscardAlternativeCost
                 || usingWebSlingingCost;
-        boolean usingWarpAlternativeCost = false;
+        boolean usingWarpAlternativeCost = forceAlternateCost
+                && gameData.cardsGrantedWarpUntilEndOfTurn.contains(handEarly.get(cardIndex).getId());
         Integer webSlingingReturnedCreatureManaValue = null;
         UUID sneakAttackTargetId = null;
 
@@ -2951,6 +3076,10 @@ public class SpellCastingService {
                     && !discardHandCardIndices.isEmpty()
                     && cardCheck.getEffects(EffectSlot.SPELL).stream()
                     .anyMatch(ExileAnyNumberOfCardsFromHandCost.class::isInstance);
+            boolean suppliedExileFromGraveyardAdditionalCost = exileGraveyardCardIndices != null
+                    && !exileGraveyardCardIndices.isEmpty()
+                    && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                    .anyMatch(ExileAnyNumberOfCardsFromGraveyardCost.class::isInstance);
             boolean suppliedTapCreaturesForManaCost = additionalCostSacrificePermanentIds != null
                     && !additionalCostSacrificePermanentIds.isEmpty()
                     && cardCheck.getEffects(EffectSlot.SPELL).stream()
@@ -2989,6 +3118,8 @@ public class SpellCastingService {
                 // Allow optional evidence payment; its graveyard selection and mana reduction are validated below.
             } else if (suppliedExileFromHandAdditionalCost) {
                 // Allow optional hand-card exile to supply generic mana reduction below.
+            } else if (suppliedExileFromGraveyardAdditionalCost) {
+                // Allow optional graveyard-card exile to supply generic mana reduction below.
             } else if (suppliedTapCreaturesForManaCost) {
                 // Allow selected creatures to supply generic mana reduction below.
             } else if (usingAlternateCost && (usingCollectEvidenceAlternativeCost
@@ -3087,7 +3218,9 @@ public class SpellCastingService {
         if (card == null) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
-        AlternateHandCast alternateHandCast = usingGrantedEvoke
+        AlternateHandCast alternateHandCast = usingWarpAlternativeCost
+                ? new AlternateHandCast(List.of(new ManaCastingCost("{0}")))
+                : usingGrantedEvoke
                 ? gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card).orElseThrow(
                 () -> new IllegalStateException("Card does not have a granted evoke cost"))
                 : usingGrantedProwl
@@ -3285,7 +3418,10 @@ public class SpellCastingService {
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
-                || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
+                || castingPermissionService.isOpponentsManaValueSpellCastRestricted(
+                gameData, playerId, card, effectiveXValue)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
 
@@ -3380,11 +3516,11 @@ public class SpellCastingService {
         boolean targetingSpellOnStack = variableMixedTargetGroups
                 ? true
                 : allSpellTargetsAlsoAllowPermanents
-                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                ? targetLegalityService.isStackEntryOnStack(gameData, targetId)
                 : mixedSpellOrPermanentTarget
-                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                ? targetLegalityService.isStackEntryOnStack(gameData, targetId)
                 : mixedSpellAndPermanentTargets
-                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                ? targetLegalityService.isStackEntryOnStack(gameData, targetId)
                 : unwrappedNeedsSpellTarget;
         if (mixedSpellOrPermanentTarget && targetId == null && !variableMixedTargetGroups) {
             throw new IllegalStateException("Spell requires a target");
@@ -3636,6 +3772,10 @@ public class SpellCastingService {
                 ? 0
                 : costSelection.discardHandCardIndices().size()
                 * additionalCosts.exileAnyNumberOfCardsFromHandCost().genericReductionPerCard();
+        int exileFromGraveyardCostReduction = additionalCosts.exileAnyNumberOfCardsFromGraveyardCost() == null
+                ? 0
+                : costSelection.exileGraveyardCardIndices().size()
+                * additionalCosts.exileAnyNumberOfCardsFromGraveyardCost().genericReductionPerCard();
         int tapCreaturesCostReduction = additionalCosts.tapCreaturesForManaCost() == null
                 ? 0
                 : costSelection.sacrificePermanentIds().size();
@@ -3664,7 +3804,7 @@ public class SpellCastingService {
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, card, effectiveXValue, null, kicked, collectEvidenceCostPaid)
                     + targetingTax + (hasXCost ? 0 : perTargetCost) - targetBasedCostReduction
-                    - exileFromHandCostReduction - tapCreaturesCostReduction;
+                    - exileFromHandCostReduction - exileFromGraveyardCostReduction - tapCreaturesCostReduction;
             boolean usingBattlefieldAlternativeCost = false;
             ManaPool.NoncreatureSpellManaState noncreatureMana = !card.hasType(CardType.CREATURE)
                     ? pool.promoteNoncreatureSpellOnlyMana()
@@ -4445,7 +4585,8 @@ public class SpellCastingService {
             } else {
                 phyrexianManaPaidWithLife = paySpellManaCost(gameData, playerId, castCharacteristics, manaCostX, convokeContributions, phyrexianLifeCount, kicked,
                         sacrificeCostReduction + delveReduction + targetSubtypeCostReduction
-                                + exileFromHandCostReduction + tapCreaturesCostReduction, targetingTax,
+                                + exileFromHandCostReduction + exileFromGraveyardCostReduction
+                                + tapCreaturesCostReduction, targetingTax,
                         (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
                         perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid);
             }
@@ -4568,6 +4709,7 @@ public class SpellCastingService {
             if (additionalCostPayment.tappedPermanentId() != null) {
                 entry.setChosenPermanentId(additionalCostPayment.tappedPermanentId());
             }
+            entry.setDelvedCardIds(additionalCostPayment.delvedCardIds());
             stampSacrificedCostSnapshot(entry, additionalCostPayment);
             if (additionalCostPayment.sacrificedCardId() != null) {
                 entry.setSacrificedCardId(additionalCostPayment.sacrificedCardId());
@@ -4767,7 +4909,8 @@ public class SpellCastingService {
                         resolvedXValue + (hasXCost ? perTargetCost : 0), convokeContributions,
                         phyrexianLifeCount, kicked,
                         targetSubtypeCostReduction + sacrificeCostReduction + delveReduction
-                                + exileFromHandCostReduction + tapCreaturesCostReduction, targetingTax,
+                                + exileFromHandCostReduction + exileFromGraveyardCostReduction
+                                + tapCreaturesCostReduction, targetingTax,
                         (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
                         perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid);
             }
@@ -5777,6 +5920,9 @@ public class SpellCastingService {
                 gameData.stack.getLast().setChosenPermanentId(additionalCostPayment.tappedPermanentId());
             }
             if (!gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setDelvedCardIds(additionalCostPayment.delvedCardIds());
+            }
+            if (!gameData.stack.isEmpty()) {
                 stampSacrificedCostSnapshot(gameData.stack.getLast(), additionalCostPayment);
             }
             if (additionalCosts.chooseCreatureOrRevealCreatureCardCost() != null
@@ -6199,10 +6345,13 @@ public class SpellCastingService {
         payExileNCardsFromGraveyardCost(gameData, player, card, costs.exileNCardsCost(), selection.exileGraveyardCardIndices());
         payExileNCardsFromGraveyardOrPayManaCost(gameData, player, card, costs.exileNCardsOrPayManaCost(),
                 selection.exileGraveyardCardIndices(), preManaPaymentPool);
-        payDelveCost(gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
+        List<UUID> delvedCardIds = payDelveCost(
+                gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
         payExileAnyNumberOfCardsFromHandCost(gameData, player, card,
                 costs.exileAnyNumberOfCardsFromHandCost(), selection.discardHandCardIndices(),
                 selection.spellCardIndex());
+        payExileAnyNumberOfCardsFromGraveyardCost(gameData, player, card,
+                costs.exileAnyNumberOfCardsFromGraveyardCost(), selection.exileGraveyardCardIndices());
         payDiscardCardOrPayManaCost(gameData, player, card, costs.discardCardOrPayManaCost(),
                 selection.discardHandCardIndex(), selection.spellCardIndex(), preManaPaymentPool);
         payDiscardCardOrPayLifeCost(gameData, player, card, costs.discardCardOrPayLifeCost(),
@@ -6240,7 +6389,7 @@ public class SpellCastingService {
                 effectiveSacrificePayment.sacrificedPower(), effectiveSacrificePayment.sacrificedToughness(),
                 costs.casualtyCost() != null && selection.sacrificePermanentId() != null,
                 exiledCostPayment.cardId(),
-                exiledCostPayment.cardSnapshot(), tappedPermanentId);
+                exiledCostPayment.cardSnapshot(), tappedPermanentId, delvedCardIds);
     }
 
     private ExiledCostPayment payExileCreatureCost(GameData gameData, Player player, Card card,
@@ -6858,7 +7007,8 @@ public class SpellCastingService {
                                          Permanent sacrificedPermanentSnapshot, int sacrificedPower,
                                          int sacrificedToughness, boolean casualtyCostPaid,
                                          UUID exiledCostCardId,
-                                         Card exiledCostCardSnapshot, UUID tappedPermanentId) {}
+                                         Card exiledCostCardSnapshot, UUID tappedPermanentId,
+                                         List<UUID> delvedCardIds) {}
 
     private record SacrificeCostPayment(int resolvedXValue, UUID sacrificedCardId,
                                         Card sacrificedCardSnapshot,
@@ -7590,17 +7740,17 @@ public class SpellCastingService {
         }
     }
 
-    private void payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
+    private List<UUID> payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
                                List<Integer> exileGraveyardCardIndices) {
-        payDelveCost(gameData, player, card, cost, exileGraveyardCardIndices, -1);
+        return payDelveCost(gameData, player, card, cost, exileGraveyardCardIndices, -1);
     }
 
-    private void payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
+    private List<UUID> payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
                                List<Integer> exileGraveyardCardIndices, int excludedGraveyardIndex) {
-        if (cost == null) return;
+        if (cost == null) return List.of();
         additionalSpellCostService.validateDelveCost(gameData, player, card, cost, exileGraveyardCardIndices);
         List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
-        if (indices.isEmpty()) return;
+        if (indices.isEmpty()) return List.of();
         if (indices.contains(excludedGraveyardIndex)) {
             throw new IllegalStateException("The card being cast cannot be exiled for delve");
         }
@@ -7628,6 +7778,7 @@ public class SpellCastingService {
                     .text(".")
                     .build());
         }
+        return exiledCards.stream().map(Card::getId).toList();
     }
 
     private int maximumDelveReductionForGraveyardCast(GameData gameData, UUID playerId, Card card,
@@ -7866,7 +8017,8 @@ public class SpellCastingService {
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
-                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -8249,6 +8401,15 @@ public class SpellCastingService {
                 ? findSneakAttackTargetId(gameData, sacrificePermanentId)
                 : null;
         gameData.spellAdditionalEnterCounters.remove(card.getId());
+        boolean needsConvergeValue = castHalf.getKeywords().contains(Keyword.SUNBURST)
+                || EffectResolution.hasColorsSpentCounterEffect(castHalf)
+                || (EffectResolution.hasConvergeEffect(castHalf)
+                && (castHalf.getManaCost() == null || !new ManaCost(castHalf.getManaCost()).hasX()));
+        java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
+                ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
+                : null;
+        java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot =
+                gameData.playerManaPools.get(playerId).getColoredManaTotals();
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt,
                 grantedFlashbackOption, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
@@ -8310,6 +8471,23 @@ public class SpellCastingService {
         }
         payForageOrPayManaCost(gameData, player, card, effectiveForageCost,
                 graveyardCostSelection, null);
+        if (convergeSnapshot != null) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int converge = ManaPool.countDistinctColoredManaSpent(
+                    convergeSnapshot, pool.getColoredManaTotals(), convokeContributions);
+            gameData.setSpellCastConvergeValue(card.getId(), converge);
+            effectiveXValue = converge;
+        }
+        if (colorsSpentSnapshot != null) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
+                    colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+            gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
+                    colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+        }
+        if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {
+            effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
+        }
         // Pay sacrifice-a-creature additional cast cost (Finish / aftermath half). Use castHalf so
         // tracking flags on the back-face cost are found (parent split has no SPELL-slot costs).
         if (additionalCosts.sacrificeCreature() || additionalCosts.sacrificePermanentCost() != null) {
@@ -9048,6 +9226,10 @@ public class SpellCastingService {
         } else {
             card = exiledEntry.card();
         }
+        // Discord's copies are represented in exile with the normal temporary play permission,
+        // but they must still be cast as copies so they cease to exist after resolving rather than
+        // going to a graveyard or becoming a permanent card.
+        copy = copy || gameData.discordCopySourcePermanents.containsKey(exileCardId);
         if (card.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from this zone");
         }
@@ -9117,7 +9299,8 @@ public class SpellCastingService {
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
-                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -9269,8 +9452,14 @@ public class SpellCastingService {
                         throw new IllegalStateException("Not enough mana to pay spell");
                     }
                     int manaBefore = pool.getTotalAllMana();
+                    phyrexianManaPaidWithLife = cost.hasPhyrexianMana()
+                            ? cost.payPhyrexianManaAuto(pool, effectiveXValue + additionalCost) : 0;
                     cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
                             false, false, false, false, true);
+                    if (phyrexianManaPaidWithLife > 0) {
+                        lifeSupport.applyLifePayment(
+                                gameData, playerId, phyrexianManaPaidWithLife, "Phyrexian mana");
+                    }
                     gameData.addSpellCastManaSpent(card.getId(), manaBefore - pool.getTotalAllMana());
                 } finally {
                     pool.endForetellPayment(paymentState);
@@ -9736,11 +9925,12 @@ public class SpellCastingService {
             }
             ManaCost plotCost = card.getManaCost() != null
                     ? new ManaCost(card.getManaCost()) : new ManaCost("{0}");
+            plotCost = castingCostService.applyManaCostPaymentAlternatives(gameData, playerId, plotCost);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             if (pool == null || !plotCost.canPay(pool)) {
                 throw new IllegalStateException("Not enough mana to pay plot cost");
             }
-            plotCost.pay(pool);
+            payManaCostWithPhyrexianAlternatives(gameData, playerId, plotCost, pool, 0);
             deck.removeFirst();
             markCardPlotted(gameData, playerId, card);
             gameLogService.append(gameData, GameLog.textCardText(
@@ -9797,7 +9987,8 @@ public class SpellCastingService {
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
-                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -9941,7 +10132,9 @@ public class SpellCastingService {
         int effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, 0);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
-                gameData, playerId, card, effectiveXValue)) {
+                gameData, playerId, card, effectiveXValue)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
 
@@ -10590,6 +10783,10 @@ public class SpellCastingService {
             pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(true);
         }
         final Zone effectiveSourceZone = playerId.equals(gameData.commandCastPlayerId) ? Zone.COMMAND : sourceZone;
+        ManaPool.CommanderOnlyManaState commanderMana = gameData.playerCommanders
+                .getOrDefault(playerId, List.of()).stream()
+                .anyMatch(commander -> commander.getId().equals(card.getId()))
+                ? pool.promoteCommanderOnlyMana() : null;
         ManaPool.NonHandSpellOnlyManaState nonHandMana = effectiveSourceZone != null && effectiveSourceZone != Zone.HAND
                 ? pool.promoteNonHandSpellOnlyMana() : null;
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
@@ -10703,6 +10900,9 @@ public class SpellCastingService {
             }
             if (multicoloredMana != null) {
                 pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
+            }
+            if (commanderMana != null) {
+                pool.restorePromotedCommanderOnlyMana(commanderMana);
             }
         }
     }
@@ -10835,6 +11035,25 @@ public class SpellCastingService {
                     castingCostService.findAffordableAlternativeCostSelection(
                             gameData, playerId, card, pool, additionalCost, sourceZone);
             if (alternativeCost != null) {
+                if (alternativeCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost) {
+                    ManaCost additionalCostMana = additionalCostsMana.isEmpty()
+                            ? null
+                            : castingCostService.applyColoredManaCostReductions(
+                                    gameData, playerId, card, new ManaCost(additionalCostsMana));
+                    if (additionalCostMana != null
+                            && !additionalCostMana.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay additional spell costs");
+                    }
+                    if (additionalCostMana != null) {
+                        additionalCostMana.payWithAdditionalGenericCost(pool, 0, additionalCost);
+                    } else if (!canPayAdditionalGenericCost(pool, additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay additional spell costs");
+                    }
+                    lifeSupport.applyLifePayment(gameData, playerId, card.getManaValue(),
+                            card.getName());
+                    castingCostService.consumeAlternativeCost(alternativeCost, gameData);
+                    return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
+                }
                 ManaCost altCost = castingCostService.applyColoredManaCostReductions(
                         gameData, playerId, card, new ManaCost(alternativeCost.manaCost() + additionalCostsMana));
                 if (blackManaLifePaymentPermission) {
@@ -10844,6 +11063,7 @@ public class SpellCastingService {
                     throw new IllegalStateException("Not enough mana to pay additional spell costs");
                 }
                 altCost.payWithAdditionalGenericCost(pool, 0, additionalCost);
+                castingCostService.consumeAlternativeCost(alternativeCost, gameData);
                 return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
             }
             if (targetingTax > 0) {
@@ -10917,6 +11137,10 @@ public class SpellCastingService {
         int fromPool = before - pool.getTotalAllMana();
         int fromConvoke = convokeContributions != null ? convokeContributions.size() : 0;
         return new SpellManaPayment(fromPool + fromConvoke, phyrexianLifeCost / 2);
+    }
+
+    private boolean canPayAdditionalGenericCost(ManaPool pool, int additionalCost) {
+        return additionalCost <= 0 || pool.getTotalAllMana() >= additionalCost;
     }
 
     private SpellManaPayment payBaseManaCostWithPendingAnyManaType(
@@ -12588,7 +12812,10 @@ public class SpellCastingService {
             UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
             List<UUID> tapPermanentIds) {
         List<UUID> selectedIds = selectedGraveyardCastSacrificeIds(
-                sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds);
+                sacrificePermanentId,
+                graveyardCast.getCost(RemoveCountersFromControlledCreaturesCastingCost.class).isPresent()
+                        ? List.of() : additionalCostSacrificePermanentIds,
+                tapPermanentIds);
         int requiredSacrificeCount = graveyardCast.additionalCosts().stream()
                 .filter(SacrificePermanentsCost.class::isInstance)
                 .mapToInt(cost -> ((SacrificePermanentsCost) cost).count())
@@ -12654,7 +12881,10 @@ public class SpellCastingService {
             UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
             List<UUID> tapPermanentIds) {
         List<UUID> sacrificePermanentIds = selectedGraveyardCastSacrificeIds(
-                sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds);
+                sacrificePermanentId,
+                graveyardCast.getCost(RemoveCountersFromControlledCreaturesCastingCost.class).isPresent()
+                        ? List.of() : additionalCostSacrificePermanentIds,
+                tapPermanentIds);
         int selectedIndex = 0;
         for (CastingCost cost : graveyardCast.additionalCosts()) {
             if (cost instanceof SacrificePermanentsCost sacrificeCost) {

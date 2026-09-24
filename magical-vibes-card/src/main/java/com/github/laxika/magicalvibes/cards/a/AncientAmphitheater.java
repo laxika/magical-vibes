@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 
 
 @CardRegistration(set = "LRW", collectorNumber = "266")
+@CardRegistration(set = "SLD", collectorNumber = "1320")
 @CardRegistration(set = "C15", collectorNumber = "276")
 public class AncientAmphitheater extends Card {
 

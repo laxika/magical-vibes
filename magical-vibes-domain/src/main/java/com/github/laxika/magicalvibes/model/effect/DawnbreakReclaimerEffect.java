@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
 import java.util.UUID;
 
 /** Dawnbreak Reclaimer's sequential graveyard choices and optional return. */

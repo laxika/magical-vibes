@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.EnumSet;
 
 @CardRegistration(set = "AFR", collectorNumber = "239")
+@CardRegistration(set = "SLD", collectorNumber = "1785")
 public class XanatharGuildKingpin extends Card {
 
     public XanatharGuildKingpin() {

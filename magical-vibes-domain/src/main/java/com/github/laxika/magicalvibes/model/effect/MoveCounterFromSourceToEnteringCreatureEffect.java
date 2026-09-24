@@ -17,4 +17,9 @@ public record MoveCounterFromSourceToEnteringCreatureEffect(CounterType counterT
     public TargetSpec targetSpec() {
         return TargetSpec.NONE;
     }
+
+    @Override
+    public boolean usesEnteringPermanentReference() {
+        return true;
+    }
 }

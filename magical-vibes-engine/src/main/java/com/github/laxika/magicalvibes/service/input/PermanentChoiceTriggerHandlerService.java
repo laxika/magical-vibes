@@ -1,56 +1,55 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 /**
  * Handles permanent choice contexts related to triggered ability targeting.
@@ -64,6 +63,7 @@ import java.util.UUID;
 public class PermanentChoiceTriggerHandlerService {
 
     private final GameQueryService gameQueryService;
+    private final AttackLegalityService attackLegalityService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
@@ -934,6 +934,9 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setAttackedTargetId(mat.attackedTargetId());
             entry.setEventValue(mat.eventValue());
             entry.setSacrificedPermanentSnapshot(mat.sacrificedPermanentSnapshot());
+            if (mat.sacrificedPermanentSnapshot() != null) {
+                entry.setSacrificedCardSnapshot(mat.sacrificedPermanentSnapshot().getCard());
+            }
             entry.setSacrificedPower(mat.sacrificedPower());
             entry.setSacrificedColorCount(mat.sacrificedColorCount());
             entry.setSacrificedToughness(mat.sacrificedToughness());
@@ -963,6 +966,23 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleRandomOpponentDamageChoice(GameData gameData, UUID permanentId,
+                                                  PermanentChoiceContext.RandomOpponentDamageChoice choice) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null) {
+            return;
+        }
+
+        pendingEntry.setTargetId(permanentId);
+        gameLogService.append(gameData, GameLog.text(
+                choice.sourceCard().getName() + " chooses " + getTargetDisplayName(gameData, permanentId) + "."));
+        effectResolutionService.resolveEffectsFrom(
+                gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleResolvingModalTarget(GameData gameData, UUID permanentId,
@@ -1239,6 +1259,32 @@ public class PermanentChoiceTriggerHandlerService {
         if (permanent != null && gameQueryService.isCreature(gameData, permanent)) {
             permanent.setAttacking(true);
             permanent.setAttackedOrBlockedSinceLastUpkeep(true);
+            permanent.setAttackTarget(attackTargetId);
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleReselectAttackingCreatureTarget(GameData gameData, UUID attackTargetId,
+                                                       PermanentChoiceContext.ReselectAttackingCreatureTarget context) {
+        Permanent attacker = gameQueryService.findPermanentById(gameData, context.permanentId());
+        UUID attackerControllerId = attacker == null
+                ? null : gameQueryService.findPermanentController(gameData, attacker.getId());
+        boolean validTarget = attackerControllerId != null
+                && attackTargetId != null
+                && !attackerControllerId.equals(attackTargetId)
+                && attackLegalityService.getValidAttackTargetIds(gameData, attackerControllerId)
+                .contains(attackTargetId);
+        if (attacker != null && attacker.isAttacking()
+                && gameQueryService.isCreature(gameData, attacker) && validTarget) {
+            attacker.setAttackTarget(attackTargetId);
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleReselectedAttackTarget(GameData gameData, UUID attackTargetId,
+                                             PermanentChoiceContext.ReselectAttackTarget context) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, context.permanentId());
+        if (permanent != null && permanent.isAttacking() && gameQueryService.isCreature(gameData, permanent)) {
             permanent.setAttackTarget(attackTargetId);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2173,6 +2219,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 entry.setSpectacle(sourcePermanent.isSpectacle());
                 entry.setCollectEvidenceCostPaid(sourcePermanent.isCollectEvidenceCostPaid());
+                entry.setWaterbendCostPaid(sourcePermanent.isWaterbendCostPaid());
                 entry.setRevealCardFromHandCostPaid(sourcePermanent.isRevealCardFromHandCostPaid());
                 entry.setControlledDragonAsCast(sourcePermanent.isControlledDragonAsCast());
             }
@@ -2576,6 +2623,9 @@ public class PermanentChoiceTriggerHandlerService {
                 skipped ? null : permanentId,
                 boct.sourcePermanentId()
         );
+        // Beginning-of-combat triggers have no separate event permanent, so the source is also
+        // the triggering permanent for effects such as attaching an Equipment to the trigger source.
+        entry.setTriggeringPermanentId(boct.sourcePermanentId());
         pushTriggeredEntry(gameData, entry);
 
         if (skipped) {

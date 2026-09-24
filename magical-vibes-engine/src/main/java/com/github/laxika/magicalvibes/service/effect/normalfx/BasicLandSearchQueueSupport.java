@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -115,6 +115,13 @@ public class BasicLandSearchQueueSupport {
         }
 
         int count = pick.count();
+        if (count <= 0) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " searches their library for up to zero basic land cards. Library is shuffled."));
+            return false;
+        }
         boolean enterTapped = pick.enterTapped();
         String destinationText = enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
         String prompt = "You may search your library for up to " + count + " basic land card"

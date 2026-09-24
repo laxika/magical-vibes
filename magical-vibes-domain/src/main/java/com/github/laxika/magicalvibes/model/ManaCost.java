@@ -365,6 +365,24 @@ public class ManaCost {
         return Collections.unmodifiableMap(coloredCosts);
     }
 
+    /**
+     * Returns this cost with each ordinary black mana symbol also payable as Phyrexian mana.
+     * The colored requirement is moved to the existing Phyrexian-payment path, preserving the
+     * symbol's mana value while allowing the caller to charge 2 life when black mana is absent.
+     */
+    public ManaCost withBlackManaPayableWithLife() {
+        int blackCost = coloredCosts.getOrDefault(ManaColor.BLACK, 0);
+        if (blackCost == 0) {
+            return this;
+        }
+        Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        remainingColored.remove(ManaColor.BLACK);
+        Map<ManaColor, Integer> updatedPhyrexian = new EnumMap<>(phyrexianCosts);
+        updatedPhyrexian.merge(ManaColor.BLACK, blackCost, Integer::sum);
+        return new ManaCost(genericCost, remainingColored, updatedPhyrexian, hybridCosts,
+                snowCost, xSymbolCount, cumulativeUpkeepPayment);
+    }
+
     /** The generic (colorless-symbol) portion of the cost, e.g. 5 for "{5}" or "{5}{W}". */
     public int getGenericCost() {
         return genericCost;
@@ -3090,6 +3108,8 @@ public class ManaCost {
                         && pool.getKickedOnlyMana(entry.getKey()) > 0 && extraGreen > 0) {
                     pool.removeKickedOnlyMana(entry.getKey(), 1);
                     extraGreen--;
+                } else if (artifactContext && pool.getArtifactOnlyMana(entry.getKey()) > 0) {
+                    pool.removeArtifactOnlyMana(entry.getKey(), 1);
                 } else if (artifactContext && pool.getArtifactSpellOnlyMana(entry.getKey()) > 0) {
                     pool.removeArtifactSpellOnlyMana(entry.getKey(), 1);
                 } else if (artifactContext && pool.getArtifactSpellOrAbilityOnlyMana(entry.getKey()) > 0) {
@@ -3135,6 +3155,11 @@ public class ManaCost {
                 int fromGuidelight = Math.min(remainingGeneric, pool.getArtifactSpellOrAbilityOnlyMana(color));
                 pool.removeArtifactSpellOrAbilityOnlyMana(color, fromGuidelight);
                 remainingGeneric -= fromGuidelight;
+            }
+            for (ManaColor color : ManaColor.values()) {
+                int fromArtifact = Math.min(remainingGeneric, pool.getArtifactOnlyMana(color));
+                pool.removeArtifactOnlyMana(color, fromArtifact);
+                remainingGeneric -= fromArtifact;
             }
             int fromRestricted = Math.min(remainingGeneric, pool.getArtifactOnlyColorless());
             pool.removeArtifactOnlyColorless(fromRestricted);

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "111")
+@CardRegistration(set = "SLD", collectorNumber = "2290")
 public class DramaticEntrance extends Card {
 
     public DramaticEntrance() {

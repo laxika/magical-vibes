@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "327")
+@CardRegistration(set = "SLD", collectorNumber = "1462")
 public class UnholyGrotto extends Card {
 
     public UnholyGrotto() {

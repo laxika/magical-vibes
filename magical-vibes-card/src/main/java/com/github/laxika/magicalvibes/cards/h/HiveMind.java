@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "54")
+@CardRegistration(set = "SLD", collectorNumber = "822")
 public class HiveMind extends Card {
 
     public HiveMind() {

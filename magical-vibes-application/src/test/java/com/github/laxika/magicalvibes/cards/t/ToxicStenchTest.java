@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AnuridBarkripper;
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ToxicStench.class, GiantWarthog.class, CabalTrainee.class, KrosanVerge.class})
+@CardUsed({AnuridBarkripper.class, CabalTrainee.class, GiantWarthog.class, KrosanVerge.class, MentalNote.class, ToxicStench.class})
 class ToxicStenchTest extends BaseCardTest {
 
     @Test
@@ -129,6 +131,35 @@ class ToxicStenchTest extends BaseCardTest {
         harness.setGraveyard(player1, List.<Card>of(
                 new GiantWarthog(), new GiantWarthog(), new GiantWarthog(), new GiantWarthog(),
                 new GiantWarthog(), new GiantWarthog(), new GiantWarthog()
+        ).subList(0, size));
+    }
+
+    @Test
+    @DisplayName("Keeps the -1/-1 effect at exactly six graveyard cards")
+    void keepsMinusOneMinusOneAtSixCards() {
+        Permanent target = addCreatureForJudReview();
+        setGraveyardSizeForJudReview(6);
+
+        castAndResolveForJudReview(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        harness.assertOnBattlefield(player2, "Anurid Barkripper");
+    }
+
+    private Permanent addCreatureForJudReview() {
+        return harness.addToBattlefieldAndReturn(player2, new AnuridBarkripper());
+    }
+
+    private void castAndResolveForJudReview(Permanent target) {
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    private void setGraveyardSizeForJudReview(int size) {
+        harness.setGraveyard(player1, List.<Card>of(
+                new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote(),
+                new MentalNote(), new MentalNote(), new MentalNote()
         ).subList(0, size));
     }
 }

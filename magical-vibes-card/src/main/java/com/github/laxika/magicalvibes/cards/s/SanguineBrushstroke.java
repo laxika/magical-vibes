@@ -19,7 +19,7 @@ public class SanguineBrushstroke extends Card {
     public SanguineBrushstroke() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 CreateTokenEffect.ofBloodToken(1),
-                new ConjureCardNamedOntoBattlefieldEffect("Blood Artist")));
+                new ConjureCardNamedOntoBattlefieldEffect("AVR", "86")));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.BLOOD),

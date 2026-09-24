@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,59 +19,60 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RighteousConfluenceTest extends BaseCardTest {
 
     @Test
-    void resolvesAllThreeModes() {
-        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
-        harness.setLife(player1, 20);
+    void repeatedKnightModeCreatesThreeVigilantKnights() {
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
 
-        cast(new int[]{0, 1, 2}, List.of(enchantment.getId()));
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 0, 0);
+        harness.castSorcery(player1, 0, modes);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(enchantment.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard().getName().equals("Knight"))
-                .singleElement()
-                .satisfies(knight -> {
-                    assertThat(knight.getEffectivePower()).isEqualTo(2);
-                    assertThat(knight.getEffectiveToughness()).isEqualTo(2);
-                    assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
-                });
-    }
-
-    @Test
-    void repeatedTokenModeCreatesThreeVigilantKnights() {
-        cast(new int[]{0, 0, 0}, List.of());
-        harness.passBothPriorities();
-
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard().getName().equals("Knight"))
-                .hasSize(3)
-                .allSatisfy(knight -> assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3)
+                .allMatch(permanent -> gqs.isCreature(gd, permanent)
+                        && gqs.getEffectivePower(gd, permanent) == 2
+                        && gqs.getEffectiveToughness(gd, permanent) == 2
+                        && gqs.hasKeyword(gd, permanent, Keyword.VIGILANCE));
     }
 
     @Test
     void repeatedLifeModeGainsFifteenLife() {
-        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
 
-        cast(new int[]{2, 2, 2}, List.of());
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 2, 2, 2);
+        harness.castSorcery(player1, 0, modes);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(35);
+        harness.assertLife(player1, 35);
     }
 
     @Test
-    void exileModeRejectsCreatureTargets() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+    void enchantmentModeExilesTargetEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
 
-        assertThatThrownBy(() -> cast(new int[]{1, 1, 1}, List.of(creature.getId(), creature.getId(), creature.getId())))
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 0, 2);
+        harness.castSorcery(player1, 0, modes, List.of(enchantment.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchantment);
+        assertThat(gd.findExiledCard(enchantment.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    void enchantmentModeRejectsNonenchantmentPermanent() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 0, 2);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, modes, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void cast(int[] modeIndices, List<UUID> targetIds) {
-        harness.setHand(player1, List.of(new RighteousConfluence()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castSorcery(player1, 0,
-                ChooseOneEffect.encodeRepeatedModeSelection(3, modeIndices), targetIds);
+    private void addMana() {
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
     }
 }

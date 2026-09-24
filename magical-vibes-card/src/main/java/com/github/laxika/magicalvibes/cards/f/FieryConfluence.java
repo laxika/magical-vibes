@@ -16,6 +16,8 @@ import java.util.List;
 @CardRegistration(set = "TLE", collectorNumber = "165")
 @CardRegistration(set = "AA2", collectorNumber = "10")
 @CardRegistration(set = "C15", collectorNumber = "26")
+@CardRegistration(set = "CMM", collectorNumber = "222")
+@CardRegistration(set = "CMM", collectorNumber = "536")
 public class FieryConfluence extends Card {
 
     public FieryConfluence() {

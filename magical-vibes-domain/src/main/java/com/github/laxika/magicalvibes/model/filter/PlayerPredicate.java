@@ -18,5 +18,6 @@ public sealed interface PlayerPredicate permits
         PlayerHasMoreLifeThanControllerPredicate,
         PlayerLostLifeThisTurnPredicate,
         PlayerRelationPredicate,
-        PlayerIdPredicate {
+        PlayerIdPredicate,
+        PlayerOtherThanSourceOwnerPredicate {
 }

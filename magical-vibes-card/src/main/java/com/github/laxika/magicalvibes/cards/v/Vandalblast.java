@@ -25,11 +25,15 @@ import java.util.List;
  * chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "111")
+@CardRegistration(set = "SLD", collectorNumber = "404")
+@CardRegistration(set = "SLD", collectorNumber = "1757")
 @CardRegistration(set = "TSR", collectorNumber = "352")
 @CardRegistration(set = "SLZ", collectorNumber = "69")
 @CardRegistration(set = "SLZ", collectorNumber = "190")
 @CardRegistration(set = "SLZ", collectorNumber = "311")
 @CardRegistration(set = "C15", collectorNumber = "170")
+@CardRegistration(set = "CMM", collectorNumber = "267")
+@CardRegistration(set = "CMM", collectorNumber = "646")
 public class Vandalblast extends Card {
 
     public Vandalblast() {

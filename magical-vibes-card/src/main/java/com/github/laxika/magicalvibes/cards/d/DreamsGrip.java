@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
-import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,11 +21,11 @@ public class DreamsGrip extends Card {
         addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap target permanent",
-                        new TapOrUntapTargetPermanentEffect(),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         TargetFilters.permanent()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap target permanent",
-                        new TapOrUntapTargetPermanentEffect(),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         TargetFilters.permanent())
         )));
     }

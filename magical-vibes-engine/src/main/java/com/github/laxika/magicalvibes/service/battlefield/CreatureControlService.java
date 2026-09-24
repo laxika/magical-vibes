@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -181,6 +182,10 @@ public class CreatureControlService {
         if (derived == null || derived.equals(current)) {
             return;
         }
+        gameData.ringStates.replaceAll((playerId, ringState) ->
+                permanent.getId().equals(ringState.bearerId())
+                        ? new RingState(ringState.level(), null)
+                        : ringState);
         if (triggerCollectionService != null) {
             triggerCollectionService.checkOpponentGainsControlTriggers(
                     gameData, permanent, current, derived);

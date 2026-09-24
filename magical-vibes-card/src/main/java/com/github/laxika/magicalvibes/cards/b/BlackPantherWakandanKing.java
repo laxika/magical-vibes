@@ -6,14 +6,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfEventValueAtLeastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveAllCountersFromTargetPermanentToTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MoveAllCountersOfTypeFromTargetPermanentToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1747")
 @CardRegistration(set = "MAR", collectorNumber = "87")
 public class BlackPantherWakandanKing extends Card {
 

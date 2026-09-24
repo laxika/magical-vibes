@@ -135,6 +135,24 @@ class DamageTriggerCollectorServiceTest {
 
     // ===== Helpers =====
 
+    @Test
+    void playerCombatDamageEquipmentTriggerUsesEquipmentController() {
+        Permanent equipment = createPermanent("Equipment");
+        Permanent attacker = createPermanent("Attacker");
+        DrawCardEffect effect = new DrawCardEffect(1);
+
+        registry.dispatch(match(equipment, player1Id, effect),
+                EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect,
+                new TriggerContext.SourceDealsCombatDamage(attacker.getCard(), player2Id,
+                        attacker.getId(), 3, 3));
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(equipment.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
+
     private static Card createCard(String name) {
         Card card = new Card();
         card.setName(name);

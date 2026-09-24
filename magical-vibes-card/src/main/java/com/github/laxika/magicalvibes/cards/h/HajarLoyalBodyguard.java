@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "211")
+@CardRegistration(set = "SLD", collectorNumber = "987")
 public class HajarLoyalBodyguard extends Card {
 
     public HajarLoyalBodyguard() {

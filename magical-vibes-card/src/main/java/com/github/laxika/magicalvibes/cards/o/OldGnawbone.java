@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "197")
+@CardRegistration(set = "SLD", collectorNumber = "1016")
 public class OldGnawbone extends Card {
 
     public OldGnawbone() {

@@ -149,6 +149,11 @@ Room-door unlock-cost modifiers use the same battlefield handler registry. A han
 `modifyRoomUnlockCost` for the generic mana component of a Room door's unlock cost; ordinary
 spell-cost modifiers do not affect Room-door unlocks. `CastingCostService.getRoomUnlockCost` is
 the shared path for previews and payment.
+
+Payment replacements that change how a mana cost may be paid, without changing its mana value,
+use `CostModificationHandlerBean.applyManaCostPaymentAlternatives`. `MayPayLifeForBlackManaEffect`
+is the reusable model for K'rrik, Son of Yawgmoth; its handler converts black mana symbols to the
+existing Phyrexian-payment path for that source's controller.
 ## Alternate-cost reductions
 
 Effects that reduce a named alternate cost, rather than a spell's normal mana cost, use the

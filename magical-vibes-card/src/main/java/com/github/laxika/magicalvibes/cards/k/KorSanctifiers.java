@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "22")
 @CardRegistration(set = "HOP", collectorNumber = "3")
+@CardRegistration(set = "C14", collectorNumber = "76")
 @CardRegistration(set = "C15", collectorNumber = "73")
 public class KorSanctifiers extends Card {
 

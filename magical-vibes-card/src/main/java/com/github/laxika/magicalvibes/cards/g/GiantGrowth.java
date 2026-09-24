@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "GVL", collectorNumber = "14")
 @CardRegistration(set = "A25", collectorNumber = "172")
 @CardRegistration(set = "E02", collectorNumber = "32")
+@CardRegistration(set = "SLD", collectorNumber = "717")
 @CardRegistration(set = "MB1", collectorNumber = "200")
 @CardRegistration(set = "SOA", collectorNumber = "52")
 @CardRegistration(set = "2ED", collectorNumber = "198")

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DawnbreakReclaimerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "1346")
 @CardRegistration(set = "C15", collectorNumber = "2")
 public class DawnbreakReclaimer extends Card {
 

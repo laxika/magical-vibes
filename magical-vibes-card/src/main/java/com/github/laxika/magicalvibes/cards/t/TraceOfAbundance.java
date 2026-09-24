@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ARB", collectorNumber = "142")
+@CardRegistration(set = "SLD", collectorNumber = "1849")
 public class TraceOfAbundance extends Card {
 
     public TraceOfAbundance() {

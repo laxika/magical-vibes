@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
-import java.util.List;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -183,6 +182,8 @@ public class GraveyardTargetOperationState {
     public UUID defendingPlayerChoosesCardFromGraveyardChosenCardId;
     /** Whether a resolution-time attack-trigger graveyard choice is awaiting an answer. */
     public boolean resolutionTimeDefendingPlayerChoosesCardFromGraveyardResume;
+    /** In-progress Dawnbreak Reclaimer cross-graveyard choices. */
+    public DawnbreakReclaimerContext dawnbreakReclaimer;
     /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
     public boolean resolutionTimeOpponentChoosesCardToHandResume;
     /** Opponent selected by the controller for the resolution-time graveyard choice. */
@@ -199,6 +200,17 @@ public class GraveyardTargetOperationState {
     public UUID dawnbreakReclaimerChosenOpponentCardId;
     /** Creature card chosen from the controller's graveyard by Dawnbreak Reclaimer. */
     public UUID dawnbreakReclaimerChosenOwnCardId;
+
+    public enum DawnbreakReclaimerChoiceStage {
+        OPPONENT_CARD,
+        CONTROLLER_CARD,
+        READY
+    }
+
+    public record DawnbreakReclaimerContext(UUID opponentCardId, UUID opponentPlayerId,
+                                             UUID controllerCardId,
+                                             DawnbreakReclaimerChoiceStage stage) {
+    }
     /**
      * As-enters graveyard exile choice. When set,
      * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen cards
@@ -210,7 +222,9 @@ public class GraveyardTargetOperationState {
     /** As-enters choice that moves two opponent-owned exiled cards to their owners' graveyards. */
     public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
+    public MilledCreatureExileContext milledCreatureExile;
     public MilledCreaturesToHandContext milledCreaturesToHand;
+    public MilledCreaturesToExileForTokenContext milledCreaturesToExileForToken;
     /** Resolution-time choice state for cards milled by Eivor, Wolf-Kissed. */
     public MilledSagaAndLandReturnContext milledSagaAndLandReturn;
 
@@ -260,8 +274,21 @@ public class GraveyardTargetOperationState {
         }
     }
 
+    public record MilledCreatureExileContext(List<UUID> eligibleCardIds, List<UUID> chosenCardIds) {
+        public MilledCreatureExileContext {
+            eligibleCardIds = List.copyOf(eligibleCardIds);
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
     public record MilledCreaturesToHandContext(List<UUID> chosenCardIds) {
         public MilledCreaturesToHandContext {
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
+    public record MilledCreaturesToExileForTokenContext(List<UUID> chosenCardIds) {
+        public MilledCreaturesToExileForTokenContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }

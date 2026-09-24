@@ -34,12 +34,11 @@ class MastersGuidanceTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(konda),
                 gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(isamaru.getId(), konda.getId(), bears.getId());
 
-        harness.handlePermanentChosen(player1, isamaru.getId());
-        harness.handlePermanentChosen(player1, konda.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(isamaru.getId(), konda.getId()));
         harness.passBothPriorities();
 
         assertThat(isamaru.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();

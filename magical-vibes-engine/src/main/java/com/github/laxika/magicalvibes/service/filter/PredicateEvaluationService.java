@@ -1,56 +1,54 @@
 package com.github.laxika.magicalvibes.service.filter;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DisturbCast;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithControlledLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasExactlyNColorsPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasKickerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithControlledLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAwakenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasColorManaSymbolPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasExactlyNColorsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasKickerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasManaAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNonManaActivatedAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
@@ -59,182 +57,178 @@ import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsDoubleFacedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameStartsWithPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithLegendaryControlledPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPowerPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithLegendaryControlledPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
-import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringControllersLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksWhileSourceControllerHasMostLifePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCouldProduceManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerGraveyardCountAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentDealtNoncombatDamageThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisCombatPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToSourceControllerThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtNoncombatDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastAttachedAurasPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongControllerCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNoAbilitiesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongAllCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongControllerCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEnchantedCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentBlockedThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingAlonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAttacksWhileSourceControllerHasMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsKindredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControllerGraveyardCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanSourceManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanSourceManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueColorsSpentToCastPredicate;
@@ -243,41 +237,51 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNameInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastSourceControllerLifeTotalPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledSubtypeCountPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanActivePlayerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanBasePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentProtectedByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentProtectedByOpponentOfSourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEnchantedCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentThatSaddledSourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostControlledSubtypeCountPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanBasicLandTypesAmongControlledLandsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostXWhenMadnessOtherwisePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanBasicLandTypesAmongControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentThatSaddledSourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -285,55 +289,61 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterThanControllerExperienceCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterThanControllerExperienceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
-import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -342,8 +352,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -351,14 +361,14 @@ import java.util.stream.Stream;
  * ({@link CardPredicate}, {@link PermanentPredicate}, {@link StackEntryPredicate},
  * {@link TargetFilter}).
  *
- * <p>Each family is dispatched with a switch that is exhaustive over its sealed hierarchy —
+ * <p>Each family is dispatched with a switch that is exhaustive over its sealed hierarchy â€”
  * adding a predicate without an evaluation is a compile error, never a silent {@code false}.
  * Predicates are pure data in the domain; anything that needs engine-computed state (effective
  * power/toughness with static bonuses, changeling-aware subtype checks, animation-aware
  * creature checks) delegates to {@link GameQueryService}.</p>
  *
  * <p>Several evaluations have an explicit {@code gameData == null} fallback that uses only the
- * permanent's intrinsic values — these are relied on by callers that match predicates outside
+ * permanent's intrinsic values â€” these are relied on by callers that match predicates outside
  * a full game context and must be preserved.</p>
  */
 @Service
@@ -368,6 +378,10 @@ public class PredicateEvaluationService {
     private static final Pattern AWAKEN_ABILITY_PATTERN = Pattern.compile("(?m)^Awaken\\s+\\d+\\s*\\u2014");
 
     private final GameQueryService gameQueryService;
+
+    @Autowired
+    @Lazy
+    private LandManaTypeSupport landManaTypeSupport;
 
     /** Creature leaf built here rather than taken from an ability, so it never reads the CR 613.6 memo. */
     private static final PermanentIsCreaturePredicate STATIC_CREATURE_LEAF = new PermanentIsCreaturePredicate();
@@ -471,18 +485,6 @@ public class PredicateEvaluationService {
                 }
                 yield source != null && gameQueryService.isCreature(gameData, source)
                         && gameQueryService.shareCreatureType(gameData, source, card);
-            }
-            case CardSharesCreatureTypeWithCommanderPredicate ignored -> {
-                if (gameData == null || cardOwnerId == null || !card.hasType(CardType.CREATURE)) {
-                    yield false;
-                }
-                UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId;
-                yield gameData.playerCommanders.getOrDefault(cardOwnerId, List.of()).stream()
-                        .filter(commander -> gameQueryService.cardHasType(
-                                commander, CardType.CREATURE, gameData, commander.getOwnerId()))
-                        .anyMatch(commander -> sharesCreatureType(
-                                gameData, card, ownerId, commander,
-                                commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId));
             }
             case CardHasSourceChosenCardTypePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -620,6 +622,13 @@ public class PredicateEvaluationService {
                             .getOrDefault(cardOwnerId, List.of()).stream()
                             .filter(permanent -> gameQueryService.isLand(gameData, permanent))
                             .count();
+            case CardManaValueAtMostControlledTappedCreaturesPredicate ignored ->
+                    gameData != null && cardOwnerId != null
+                            && card.getManaValue() <= gameData.playerBattlefields
+                            .getOrDefault(cardOwnerId, List.of()).stream()
+                            .filter(permanent -> permanent.isTapped()
+                                    && gameQueryService.isCreature(gameData, permanent))
+                            .count();
             case CardManaValueAtMostSourcePowerPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -748,6 +757,19 @@ public class PredicateEvaluationService {
                                 graveyardCard, graveyardCard.getOwnerId() != null
                                         ? graveyardCard.getOwnerId() : cardOwnerId));
                 yield sharesWithControlledCreature || sharesWithGraveyardCreature;
+            }
+            case CardSharesCreatureTypeWithCommanderPredicate ignored -> {
+                if (gameData == null || cardOwnerId == null
+                        || !gameQueryService.cardHasType(card, CardType.CREATURE, gameData, cardOwnerId)) {
+                    yield false;
+                }
+                yield gameData.playerCommanders.getOrDefault(cardOwnerId, List.of()).stream()
+                        .filter(commander -> gameQueryService.cardHasType(
+                                commander, CardType.CREATURE, gameData,
+                                commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId))
+                        .anyMatch(commander -> sharesCreatureType(
+                                gameData, card, card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId,
+                                commander, commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId));
             }
             case CardToughnessLessThanSourceToughnessPredicate ignored -> {
                 if (gameData == null || sourceCardId == null || card.getToughness() == null) {
@@ -974,6 +996,10 @@ public class PredicateEvaluationService {
                     hasTapActivatedAbility(gameData, permanent);
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
+            case PermanentCouldProduceManaPredicate couldProduceMana ->
+                    gameData != null
+                            && landManaTypeSupport.manaTypesCouldProduce(gameData, permanent)
+                            .contains(couldProduceMana.manaColor());
             case PermanentHasMorphAbilityPredicate ignored ->
                     !permanent.isFaceDown() && permanent.getCard().getMorphCost() != null;
             case PermanentHasNoAbilitiesPredicate ignored ->
@@ -1779,6 +1805,9 @@ public class PredicateEvaluationService {
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
                 yield controllerBattlefield != null && controllerBattlefield.contains(permanent);
             }
+            case PermanentControlledByMonarchPredicate ignored ->
+                    gameData != null && gameData.monarchPlayerId != null
+                            && gameData.monarchPlayerId.equals(gameData.findControllerOf(permanent));
             case PermanentControlledByPlayerPredicate p ->
                     gameData != null && p.playerId() != null
                             && p.playerId().equals(gameData.findControllerOf(permanent));
@@ -1844,7 +1873,7 @@ public class PredicateEvaluationService {
                                  || card.getId().equals(originalCardId));
             }
             case PermanentCastBySourceControllerThisTurnPredicate ignored -> {
-                // "Target creature you cast this turn" — identity match against the spells the
+                // "Target creature you cast this turn" â€” identity match against the spells the
                 // source's controller cast this turn, so tokens and non-cast arrivals never match.
                 if (gameData == null || sourceControllerId == null) {
                     yield false;
@@ -2465,12 +2494,12 @@ public class PredicateEvaluationService {
      * computed, so every leaf is answered from the in-flight {@link CharacteristicState} while a
      * pass is active and from the permanent's own stored state otherwise.
      *
-     * <p>A {@code null} predicate matches — this evaluates scope filters, where "no filter" means
+     * <p>A {@code null} predicate matches â€” this evaluates scope filters, where "no filter" means
      * "every permanent in scope", not the "no predicate, no match" of a target predicate.
      *
      * <p>Only the predicates that have a recursion-safe answer are accepted. The rest throw rather
      * than degrading to the {@code null}-GameData fallback, which for a predicate that genuinely
-     * needs the board (controlled-by-source, is-blocked) is a silent {@code false} — a wrong answer
+     * needs the board (controlled-by-source, is-blocked) is a silent {@code false} â€” a wrong answer
      * dressed as a legitimate one.
      *
      * <p>The context supplies the board shape and the source's identity, which some predicates
@@ -2482,7 +2511,7 @@ public class PredicateEvaluationService {
         if (predicate == null) return true;
         // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
         // (effect parts of one printed ability share the filter object), every later-layer part
-        // applies to the layer-4-determined set — re-evaluating against the finished states
+        // applies to the layer-4-determined set â€” re-evaluating against the finished states
         // would let a self-referencing filter (Bludgeon Brawl's "non-Equipment artifact")
         // negate its own output.
         Boolean layer4Verdict = LayerSystemService.activeL4FilterVerdict(predicate, permanent.getId());
@@ -2504,6 +2533,11 @@ public class PredicateEvaluationService {
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
                 UUID currentControllerId = gameData == null ? null : gameData.findControllerOf(permanent);
                 yield sourceControllerId != null && sourceControllerId.equals(currentControllerId);
+            }
+            case PermanentControlledByMonarchPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && gameData.monarchPlayerId != null
+                        && gameData.monarchPlayerId.equals(gameData.findControllerOf(permanent));
             }
             case PermanentAllOfPredicate p ->
                     p.predicates().stream().allMatch(nested -> matchesStaticFilter(permanent, nested, context));
@@ -3444,6 +3478,7 @@ public class PredicateEvaluationService {
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentIsCreaturePredicate ignored ->
                     state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
+            case PermanentIsCommanderPredicate ignored -> permanent.isCommander();
             case PermanentIsArtifactPredicate ignored ->
                     state.hasCardType(CardType.ARTIFACT);
             case PermanentIsLandPredicate ignored ->
@@ -3633,7 +3668,7 @@ public class PredicateEvaluationService {
 
     /**
      * Evaluates a {@link StackEntryPredicate} against a stack entry, supporting predicates that
-     * reference the "enchanted player" — the player the evaluating source permanent is attached to.
+     * reference the "enchanted player" â€” the player the evaluating source permanent is attached to.
      *
      * <p>This is the static-effect-context evaluation (e.g. damage multipliers). Targeting-context
      * predicates (single-target, has-target, mana-value, controlled-by, targets-your-permanent,
@@ -3682,11 +3717,13 @@ public class PredicateEvaluationService {
                     !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
+            case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
             case StackEntryIsCopyPredicate ignored -> entry.isCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
             case StackEntryIsSingleTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;
+            case StackEntryHasSourceChosenSubtypePredicate ignored -> false;
             case StackEntryHasXInManaCostPredicate ignored ->
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
@@ -3715,10 +3752,12 @@ public class PredicateEvaluationService {
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
             case StackEntryTargetsYouPredicate ignored -> false;
             case StackEntryTargetsAnyPlayerPredicate ignored -> false;
+            case StackEntryTargetsOnlySinglePermanentOrPlayerPredicate ignored -> false;
             case StackEntryTargetsOnlySingleCreaturePredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
             case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;
+            case StackEntrySourceIsColorlessPredicate ignored -> false;
         };
     }
 

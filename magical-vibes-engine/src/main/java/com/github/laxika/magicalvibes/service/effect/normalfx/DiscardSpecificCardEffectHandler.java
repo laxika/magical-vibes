@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,9 +18,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DiscardSpecificCardEffectHandler implements NormalEffectHandlerBean {
 
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,27 +29,27 @@ public class DiscardSpecificCardEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        DiscardSpecificCardEffect discard = (DiscardSpecificCardEffect) effect;
-        var hand = gameData.playerHands.get(entry.getControllerId());
+        var e = (DiscardSpecificCardEffect) effect;
+        List<Card> hand = gameData.playerHands.get(entry.getControllerId());
         if (hand == null) {
             return;
         }
-
-        Card card = hand.stream()
-                .filter(candidate -> discard.cardId().equals(candidate.getId()))
-                .findFirst()
-                .orElse(null);
+        Card card = hand.stream().filter(c -> c.getId().equals(e.cardId())).findFirst().orElse(null);
         if (card == null) {
             return;
         }
 
+        hand.remove(card);
         gameData.discardCausedByOpponent = false;
         triggerCollectionService.beginDiscardEvent(gameData, entry.getControllerId());
-        hand.remove(card);
-        graveyardService.discardCard(gameData, entry.getControllerId(), card);
-        gameLogService.append(gameData, GameLog.cardThen(card, " is discarded."));
-        triggerCollectionService.checkDiscardTriggers(gameData, entry.getControllerId(), card);
-        triggerCollectionService.finishDiscardEvent(gameData);
+        try {
+            graveyardService.discardCard(gameData, entry.getControllerId(), card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(entry.getControllerId()) + " discards ", card, "."));
+            triggerCollectionService.checkDiscardTriggers(gameData, entry.getControllerId(), card);
+        } finally {
+            triggerCollectionService.finishDiscardEvent(gameData);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);

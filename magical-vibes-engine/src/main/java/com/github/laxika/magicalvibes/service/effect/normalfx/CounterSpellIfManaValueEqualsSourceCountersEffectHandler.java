@@ -30,7 +30,9 @@ public class CounterSpellIfManaValueEqualsSourceCountersEffectHandler implements
 
         CounterSpellIfManaValueEqualsSourceCountersEffect counterEffect =
                 (CounterSpellIfManaValueEqualsSourceCountersEffect) effect;
-        int targetManaValue = targetEntry.getCard().getManaValue() + targetEntry.getXValue();
+        int targetManaValue = targetEntry.getCard().getManaValue()
+                + (targetEntry.getCard().getParsedManaCost() == null ? 0
+                        : targetEntry.getXValue() * targetEntry.getCard().getParsedManaCost().getXSymbolCount());
         if (targetManaValue == counterEffect.manaValueAtTrigger()) {
             counterSupport.counterSpell(gameData, entry, targetEntry);
         }

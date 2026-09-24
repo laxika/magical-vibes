@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "139")
 @CardRegistration(set = "HOP", collectorNumber = "132")
+@CardRegistration(set = "MH2", collectorNumber = "301")
 public class CabalCoffers extends Card {
 
     public CabalCoffers() {

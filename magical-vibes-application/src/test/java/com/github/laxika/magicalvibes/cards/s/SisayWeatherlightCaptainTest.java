@@ -2,25 +2,28 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.d.DanithaCapashenParagon;
+import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KethisTheHiddenHand;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
+import com.github.laxika.magicalvibes.cards.t.TsaboTavoc;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SisayWeatherlightCaptain.class, AdelizTheCinderWind.class,
-        DanithaCapashenParagon.class, GrizzlyBears.class, KethisTheHiddenHand.class,
-        MoxAmber.class, Shock.class})
+@CardUsed({SisayWeatherlightCaptain.class, EmpressGalina.class, TsaboTavoc.class, GrizzlyBears.class, AdelizTheCinderWind.class, DanithaCapashenParagon.class, KethisTheHiddenHand.class, MoxAmber.class, Shock.class})
 class SisayWeatherlightCaptainTest extends BaseCardTest {
 
     @Test

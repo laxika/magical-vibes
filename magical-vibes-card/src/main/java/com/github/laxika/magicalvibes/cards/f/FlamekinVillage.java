@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "C14", collectorNumber = "60")
 @CardRegistration(set = "ECC", collectorNumber = "149")
 public class FlamekinVillage extends Card {
 
@@ -27,12 +28,9 @@ public class FlamekinVillage extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
 
         // {R}, {T}: Target creature gains haste until end of turn.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                "{R}",
+        addActivatedAbility(new ActivatedAbility(true, "{R}",
                 List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
                 "{R}, {T}: Target creature gains haste until end of turn.",
-                TargetFilters.creature()
-        ));
+                TargetFilters.creature()));
     }
 }

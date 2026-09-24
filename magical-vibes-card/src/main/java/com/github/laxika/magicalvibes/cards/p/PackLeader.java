@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "29")
+@CardRegistration(set = "SLD", collectorNumber = "2258")
+@CardRegistration(set = "SLD", collectorNumber = "2268")
+@CardRegistration(set = "SLD", collectorNumber = "2270")
 public class PackLeader extends Card {
 
     public PackLeader() {

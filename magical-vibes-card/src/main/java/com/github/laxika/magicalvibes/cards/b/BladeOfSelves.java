@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCre
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "1570")
+@CardRegistration(set = "SLD", collectorNumber = "1864")
+@CardRegistration(set = "SLD", collectorNumber = "1884")
 @CardRegistration(set = "C15", collectorNumber = "51")
 public class BladeOfSelves extends Card {
 

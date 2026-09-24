@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "64")
 @CardRegistration(set = "ME2", collectorNumber = "58")
+@CardRegistration(set = "CMM", collectorNumber = "110")
+@CardRegistration(set = "CMM", collectorNumber = "493")
+@CardRegistration(set = "CMM", collectorNumber = "633")
 public class PersonalTutor extends Card {
 
     public PersonalTutor() {

@@ -149,9 +149,12 @@ combat damage step is processed.
 | `ON_BLOCK` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect's `targetSpec()` includes permanents (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental — "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
 | `ON_ALLY_CREATURE_BECOMES_BLOCKED` (targeting variants) | `CombatBlockService.checkAllyBecomesBlockedTriggers` queues effects whose `targetSpec()` includes permanents or players through the shared `AttackTriggerTarget` pipeline; the watching permanent is the source for damage and other source-dependent effects. Non-targeting effects retain the blocked creature as `sourcePermanentId`. | Declare blockers |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; unblocked creature stored as non-targeting `sourcePermanentId`) | Non-targeting |
-| `EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; scans the controller's face-up exile cards and stores the unblocked creature as non-targeting `targetId`, its attack destination as `attackedTargetId`, and any exile source ID as `sourcePermanentId`) | Non-targeting |
+| `ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED` | `CombatBlockService` (declare-blockers step; fires once per defending permanent when an opponent's creature attacks the player directly and at least one such attacker is unblocked; attacking player stored as non-targeting `targetId`) | Declare blockers |
 | `ON_CREATURE_ATTACKS_YOU` | `CombatAttackService.declareAttackers` (defender's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
 | `ON_CREATURE_ATTACKS_YOU_DIRECTLY` | `CombatAttackService.declareAttackers` (directly attacked player's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
+| `ON_ANY_PLAYER_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any attacking player; attacking player stored as non-targeting `targetId`; `PlayerAttacksOneOfYourOpponents` additionally queues once per distinct opponent directly attacked and captures that opponent) | Non-targeting (Total War) |
+| `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`; `TriggeringPermanentConditionalEffect` filters which attackers trigger) | Non-targeting (Caltrops, Windreader Sphinx) |
+| `EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; scans the controller's face-up exile cards and stores the unblocked creature as non-targeting `targetId`, its attack destination as `attackedTargetId`, and any exile source ID as `sourcePermanentId`) | Non-targeting |
 | `ON_ANY_PLAYER_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any attacking player; attacking player stored as non-targeting `targetId`) | Non-targeting (Total War) |
 | `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`, attack target stored as `attackedTargetId`; `TriggeringPermanentConditionalEffect` filters which attackers trigger) | Non-targeting (Caltrops, Windreader Sphinx) |
 | `ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (spell controller's battlefield; targeted creature stored as non-targeting `targetId`, listener as `sourcePermanentId`) | Becomes-target |
@@ -172,8 +175,10 @@ combat damage step is processed.
 | `OPPONENT_END_STEP_TRIGGERED` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
 | `ON_SELF_LEAVES_BATTLEFIELD` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfTriggeredAbilityTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or admits a graveyard card — `admits(Kind.GRAVEYARD_CARD)`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfTriggeredAbilityTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
 | `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
+| `ON_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkCreatureExiledFromBattlefieldTriggers`; global watcher for any creature exiled from the battlefield, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
+| `ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
 | `ON_SELF_BECOMES_MONSTROUS` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
 | `ON_SELF_CYCLED` | `TriggerCollectionService.checkCycleTriggers` | Self-cycle (non-targeting → stack; targeted → `DiscardControllerTriggerTarget` with no source permanent) |
 | `ON_SELF_DISCARDED` | `TriggerCollectionService.checkDiscardTriggers` | Discard-self (any cause; non-targeting → stack, any-target → `DiscardTriggerAnyTarget`) |
@@ -183,7 +188,9 @@ combat damage step is processed.
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
+| `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_SURVEILS` | `MiscTriggerCollectorService` | Controller surveils; non-targeting effects enqueue directly |
+| `ON_CONTROLLER_SEEKS` | `SeekTriggerCollectorService` | Controller seeks one or more cards; the sought cards are carried in `TriggerContext.Seek` and non-targeting effects enqueue directly |
 | `ON_CONTROLLER_DISCARD_EVENT` | `TriggerCollectionService.checkDiscardEventTriggers` → `DiscardTriggerCollectorService` | One trigger for a one-or-more-card discard event; the count is carried by the trigger context and stack entry |
 | `ON_BECOMES_TARGET_OF_SPELL` / `…_OR_ABILITY` / `…_OF_OPPONENT_SPELL` / `…_OF_OPPONENT_SPELL_ONLY` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `ON_CONTROLLER_BECOMES_TARGET_OF_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted player; spell path only) | Spell-target |
@@ -203,7 +210,7 @@ combat damage step is processed.
 | `ON_OPPONENT_DRAWS` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
 | `ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (targeting effects) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects on `ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` also queue this choice because the entering player's identity is not a default target; other player-targeting enter effects may use their pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — permanents honouring the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`; true "any target" effects are narrowed by evaluating `TargetPredicates.anyTarget()`) |
-| `ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token | Token creation (non-targeting) |
+| `ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token. Permanent-targeting effects queue `EntersTriggerTarget` for target choice before the trigger is put on the stack. | Token creation |
 | `ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` → `EntersTriggerTarget` (queued when the resolved effect's `targetSpec()` includes permanents — including a `MayEffect` wrapper, whose spec delegates to the wrapped effect; Oath of the Ancient Wood's "you may put a +1/+1 counter on target creature"). Non-targeting effects still push straight to the stack with `triggeringCardId` set. | Enters (same `Options.ATTACK` target list; honours the card's `PermanentPredicateTargetFilter`) |
 | `GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` scans the entering player's graveyard; a `MayEffect` is queued as a may-ability and other effects are pushed onto the stack. | None (graveyard-resident, non-targeting) |
 | `ON_AURA_ATTACHED_TO_SELF` (non-targeting only) | `TriggerCollectionService.checkAuraAttachedTriggers` — called after `setAttachedTo` from `StackResolutionService` (Aura spell resolving, incl. reanimation Auras), `AttachSourceAuraToTargetCreatureEffectHandler`, `AttachTargetAuraToTargetCreatureEffectHandler`, and the Aura-move player choices in `PermanentChoiceBattlefieldHandlerService` (Aura Graft, attach-all-Auras, reattach-after-sacrifice). Fires on the newly enchanted permanent for **its** controller, so an opponent's Aura triggers it. Brood Keeper. | — (pushes a non-targeting entry straight to the stack) |
@@ -246,7 +253,8 @@ non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget`
 whenever an enchantment is put into a graveyard from the battlefield — checked in `PermanentRemovalService`),
 `ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Dingus Egg; fires on every permanent with the slot
 whenever a land is put into a graveyard from the battlefield — checked in `PermanentRemovalService`; the
-collector pre-sets the damage target to the land's controller),
+collector pre-sets the damage target to the land's controller; `TriggeringCardConditionalEffect`
+can filter the triggering land card and preserve its controller for resolution),
 `ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD`,
 `ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` (Sacred Ground; fires only on permanents the
 graveyard owner controls, and only when `GameData.currentlyResolvingControllerId` — the controller of
@@ -321,6 +329,7 @@ reuses `TriggerTargetCollector.Options.END_STEP`)),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
+`ON_ANY_PLAYER_SHUFFLES_LIBRARY`,
 `ON_OPPONENT_SEARCHES_LIBRARY` (Ob Nixilis, Unshackled; fired by `LibrarySearchTriggerHelper` from
 `LibrarySearchSupport.sendLibrarySearchToPlayer` — the choke point every card-presenting search passes
 through — plus the empty-library / no-match early returns of `performLibrarySearch`, which are searches
@@ -343,9 +352,13 @@ cards in a single mill event), `ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED
 `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` (Extractor Demon; global watcher — fires on every permanent
 with the slot whenever another creature leaves the battlefield by any means, checked in
 `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`.
+`ON_CREATURE_EXILED_FROM_BATTLEFIELD` (Soulherder; global watcher — fires on every permanent with
+the slot whenever a creature is exiled from the battlefield, checked after the card enters exile).
 `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD` is the controller-scoped sibling; effects implementing
 `LeavingCreatureCountersAwareEffect` receive a snapshot of the leaving creature's concrete
 counters before the trigger is queued.
+`ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
+use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
@@ -362,7 +375,8 @@ counters are put on a Human the controller controls, including counters the Huma
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
 `ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE` (Knight of Wundagore; fires once when
 the controller puts one or more +1/+1 counters on a creature other than the watcher, regardless of
-that creature's controller),
+that creature's controller; it also accepts a `TriggeringPermanentConditionalEffect` wrapper for
+event-subject restrictions such as "another colorless creature"),
 `ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO` (Invisible Woman, Sue Storm; fires once when
 the controller puts one or more +1/+1 counters on another Hero they control),
 `ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE` (Enduring Scalelord; fires once when
@@ -738,3 +752,5 @@ current-combat relationship and the legality check must be repeated when the abi
 When a planar slot contains one standalone single-target effect bound to a later declared group,
 the planar trigger path uses that group's filter directly rather than walking unrelated groups
 belonging to the plane's other abilities.
+
+`ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER` fires only when the equipped creature deals combat damage to a player. It uses the Equipment controller and the same targeting pipeline as `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, which also fires for damage to permanents.

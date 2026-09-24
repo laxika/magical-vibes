@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachAurasToSourceEffect;
  * cards that could enchant it from your graveyard and/or hand."
  */
 @CardRegistration(set = "AVR", collectorNumber = "208")
+@CardRegistration(set = "SLD", collectorNumber = "1221")
 public class BrunaLightOfAlabaster extends Card {
 
     public BrunaLightOfAlabaster() {

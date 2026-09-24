@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Creates a fresh card with the named card's characteristics directly on the battlefield. */
-public record ConjureCardNamedOntoBattlefieldEffect(String cardName) implements CardEffect {
+/** Conjures a card from a known printing directly onto the controller's battlefield. */
+public record ConjureCardNamedOntoBattlefieldEffect(
+        String setCode,
+        String collectorNumber
+) implements CardEffect {
 }

@@ -22,7 +22,7 @@ import java.util.Set;
 public sealed interface TriggerContext {
 
     /** Context for a Saga's final chapter ability finishing resolution. */
-    record SagaFinalChapterAbilityResolved(UUID sagaControllerId) implements TriggerContext {}
+    record SagaFinalChapterAbilityResolved(UUID sagaControllerId, int sagaManaValue) implements TriggerContext {}
 
     record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {
         public Card spellCard() {
@@ -146,10 +146,22 @@ public sealed interface TriggerContext {
     }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     record SelfBecomesCrewed(UUID controllerId) implements TriggerContext {}
+    /** Context for a creature paying a Spacecraft's station cost. */
+    record CreatureStationed(Card creatureCard) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
     /** Context for controller forage triggers. */
     record Forage(UUID foragingPlayerId) implements TriggerContext {}
+    /** Context for cards sought from a library. */
+    record Seek(UUID seekingPlayerId, List<Card> soughtCards) implements TriggerContext {
+        public Seek {
+            soughtCards = List.copyOf(soughtCards);
+        }
+
+        public Seek(UUID seekingPlayerId) {
+            this(seekingPlayerId, List.of());
+        }
+    }
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
 
@@ -183,6 +195,9 @@ public sealed interface TriggerContext {
             }
         }
     }
+
+    /** Context for triggers caused by choosing a Ring-bearer. */
+    record RingTempted(UUID temptingPlayerId, UUID ringBearerId) implements TriggerContext {}
 
     /** Context for global triggers that watch any permanent being tapped for mana. */
     record PermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
@@ -244,6 +259,10 @@ public sealed interface TriggerContext {
 
     /** Context for global permanent-sacrificed triggers. */
     record PermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+
+    /** Context for global noncreature-artifact sacrifice or destruction triggers. */
+    record NoncreatureArtifactSacrificedOrDestroyed(UUID artifactControllerId, Card artifactCard)
+            implements TriggerContext {}
 
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
@@ -336,6 +355,9 @@ public sealed interface TriggerContext {
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
+    /** Context for counters being removed from a permanent controlled by the watcher. */
+    record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
 
     /** Context for removing a time counter from a suspended card in exile. */
     record TimeCounterRemovedFromExile(int remainingCounters) implements TriggerContext {}
@@ -498,11 +520,17 @@ public sealed interface TriggerContext {
     record EquippedCreatureDeath(UUID dyingCreatureId,
                                  UUID dyingCreatureControllerId,
                                  Card dyingCard,
-                                 int dyingCreaturePower) implements TriggerContext {
+                                 int dyingCreaturePower,
+                                 Permanent dyingPermanent) implements TriggerContext {
 
         public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
             this(dyingCreatureId, dyingCreatureControllerId, dyingCard,
-                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0);
+                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0, null);
+        }
+
+        public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard,
+                                     int dyingCreaturePower) {
+            this(dyingCreatureId, dyingCreatureControllerId, dyingCard, dyingCreaturePower, null);
         }
 
         @Override
@@ -590,7 +618,8 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Dingus Egg).
      */
-    record AnyLandGraveyard(UUID graveyardOwnerId,
+    record AnyLandGraveyard(Card landCard,
+                            UUID graveyardOwnerId,
                             UUID landControllerId) implements TriggerContext {}
 
     /**
@@ -751,6 +780,10 @@ public sealed interface TriggerContext {
 
     /** Context for a card put from the controller's graveyard into their hand. */
     record ControllerCardReturnedFromGraveyardToHand(UUID graveyardOwnerId, Card returnedCard)
+            implements TriggerContext {}
+
+    /** Context for one instant or sorcery card leaving the controller's graveyard. */
+    record ControllerInstantOrSorceryCardLeavesGraveyard(UUID graveyardOwnerId, Card card)
             implements TriggerContext {}
 
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */

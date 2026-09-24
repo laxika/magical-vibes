@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
  * Whenever you draw a card, each opponent mills two cards.
  */
 @CardRegistration(set = "M19", collectorNumber = "68")
+@CardRegistration(set = "SLD", collectorNumber = "1669")
 public class PsychicCorrosion extends Card {
 
     public PsychicCorrosion() {

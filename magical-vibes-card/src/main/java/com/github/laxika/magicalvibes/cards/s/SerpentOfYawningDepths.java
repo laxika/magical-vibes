@@ -5,22 +5,29 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
-import java.util.Set;
+import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "291")
+@CardRegistration(set = "SLD", collectorNumber = "1489")
 public class SerpentOfYawningDepths extends Card {
 
     public SerpentOfYawningDepths() {
-        // Krakens, Leviathans, Octopuses, and Serpents you control can't be blocked except by
-        // Krakens, Leviathans, Octopuses, and Serpents.
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
-                new PermanentHasAnySubtypePredicate(Set.of(
-                        CardSubtype.KRAKEN,
-                        CardSubtype.LEVIATHAN,
-                        CardSubtype.OCTOPUS,
-                        CardSubtype.SERPENT)),
-                "Krakens, Leviathans, Octopuses, and Serpents"));
+        PermanentAnyOfPredicate seaMonster = new PermanentAnyOfPredicate(List.of(
+                new PermanentHasSubtypePredicate(CardSubtype.KRAKEN),
+                new PermanentHasSubtypePredicate(CardSubtype.LEVIATHAN),
+                new PermanentHasSubtypePredicate(CardSubtype.OCTOPUS),
+                new PermanentHasSubtypePredicate(CardSubtype.SERPENT)
+        ));
+
+        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                new CanBeBlockedOnlyByFilterEffect(seaMonster,
+                        "Krakens, Leviathans, Octopuses, and Serpents"),
+                GrantScope.ALL_OWN_CREATURES,
+                seaMonster));
     }
 }

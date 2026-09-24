@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "193")
+@CardRegistration(set = "SLD", collectorNumber = "1308")
 public class SharedSummons extends Card {
 
     public SharedSummons() {

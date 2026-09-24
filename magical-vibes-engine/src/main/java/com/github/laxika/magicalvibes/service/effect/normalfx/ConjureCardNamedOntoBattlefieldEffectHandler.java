@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,17 +11,19 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
+/** Resolves a named-card conjure by creating the requested printing and entering it normally. */
 @Component
 @RequiredArgsConstructor
 public class ConjureCardNamedOntoBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final CardCatalog cardCatalog;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GameQueryService gameQueryService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -32,32 +33,23 @@ public class ConjureCardNamedOntoBattlefieldEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ConjureCardNamedOntoBattlefieldEffect conjure =
-                (ConjureCardNamedOntoBattlefieldEffect) effect;
-        Card card = createCardByName(conjure.cardName());
-        if (card == null) {
+        var conjure = (ConjureCardNamedOntoBattlefieldEffect) effect;
+        CardSet set = CardSet.findByCode(conjure.setCode());
+        if (set == null) {
+            throw new IllegalArgumentException("Unknown card set code: " + conjure.setCode());
+        }
+
+        Card card = cardCatalog.findByCollectorNumber(set, conjure.collectorNumber()).createCard();
+        Permanent permanent = new Permanent(card);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
+        if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
             return;
         }
 
-        UUID controllerId = entry.getControllerId();
-        card.setOwnerId(controllerId);
-        card.freeze();
-        Permanent permanent = new Permanent(card);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
-        gameLogService.append(gameData,
-                GameLog.entersBattlefieldUnder(card, gameData.playerIdToName.get(controllerId)));
-    }
-
-    private Card createCardByName(String cardName) {
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                Card card = printing.createCard();
-                if (cardName.equals(card.getName())) {
-                    return card;
-                }
-            }
-        }
-        return null;
+        graveyardReturnSupport.handleCreatureEtbAndLegendRule(
+                gameData, entry.getControllerId(), permanent, card);
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(entry.getControllerId()) + " conjures ",
+                card, " onto the battlefield."));
     }
 }

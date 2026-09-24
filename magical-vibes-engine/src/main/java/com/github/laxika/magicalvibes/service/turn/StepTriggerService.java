@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefield
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
+import com.github.laxika.magicalvibes.model.action.DelayedReturnSourceAuraToCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
@@ -168,6 +170,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqualToAttachedCountEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -382,7 +385,8 @@ public class StepTriggerService {
      * <p>Handles slots: {@code UPKEEP_TRIGGERED}, {@code COMMAND_ZONE_UPKEEP_TRIGGERED},
      * {@code GRAVEYARD_UPKEEP_TRIGGERED},
      * {@code EACH_UPKEEP_TRIGGERED}, {@code OPPONENT_UPKEEP_TRIGGERED},
-     * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED}, and
+     * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED},
+     * {@code COMMAND_ZONE_UPKEEP_TRIGGERED}, and
      * {@code ON_OPENING_HAND_REVEAL} (Chancellor cycle, turn 1 only).
      *
      * @param gameData the current game state to modify
@@ -1495,6 +1499,42 @@ public class StepTriggerService {
             }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        }
+
+        if (commandZone != null) {
+            for (Card card : new ArrayList<>(commandZone)) {
+                List<CardEffect> commandZoneUpkeepEffects = card.getEffects(
+                        EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED);
+                if (commandZoneUpkeepEffects.isEmpty()) continue;
+
+                for (CardEffect effect : commandZoneUpkeepEffects) {
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forCard(card, activePlayerId))) {
+                        continue;
+                    }
+
+                    if (effect instanceof MayPayManaEffect mayPay) {
+                        gameData.queueMayAbility(card, activePlayerId, mayPay, null);
+                    } else if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, activePlayerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                activePlayerId,
+                                card.getName() + "'s command zone upkeep ability",
+                                new ArrayList<>(List.of(effect))
+                        ));
+
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(card, "'s command zone upkeep ability triggers."));
+                        log.info("Game {} - {} command zone upkeep trigger pushed onto stack",
+                                gameData.id, card.getName());
+                    }
+                }
             }
         }
 
@@ -3353,6 +3393,11 @@ public class StepTriggerService {
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
             return returnEffect.upTo();
         }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream()
+                    .filter(step -> step.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .allMatch(this::isOptionalGraveyardTarget);
+        }
         if (effect instanceof ConditionalEffect conditional) {
             return isOptionalGraveyardTarget(conditional.wrapped());
         }
@@ -4830,6 +4875,31 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(DelayedReturnSourceAuraToCreature.class)) {
+            List<DelayedReturnSourceAuraToCreature> pendingReturns =
+                    gameData.drainDelayedActions(DelayedReturnSourceAuraToCreature.class);
+            for (DelayedReturnSourceAuraToCreature pending : pendingReturns) {
+                Card auraCard = gameQueryService.findCardInGraveyardById(gameData, pending.auraCardId());
+                if (auraCard == null) {
+                    continue;
+                }
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        auraCard,
+                        pending.controllerId(),
+                        auraCard.getName() + "'s delayed return ability",
+                        new ArrayList<>(List.of(new ReturnSourceAuraToCreatureOnDeathEffect())));
+                entry.setNonTargeting(true);
+                entry.setTriggeringCardId(auraCard.getId());
+                entry.setTriggeringCardGraveyardEntryVersion(
+                        gameData.graveyardEntryVersion(auraCard.getId()));
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(auraCard, "'s delayed return ability triggers."));
+            }
+        }
+
         // Process delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal, Lifeline)
         if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldUnderControl.class)) {
             List<DelayedGraveyardToBattlefieldUnderControl> pendingReturns =
@@ -6039,7 +6109,7 @@ public class StepTriggerService {
     }
 
     /**
-     * Scans battlefields and the active player's graveyard for beginning-of-combat triggered
+     * Scans the active player's battlefield, command zone, and graveyard for beginning-of-combat triggered
      * abilities and pushes them onto the stack.
      * {@code BEGINNING_OF_COMBAT_TRIGGERED} fires only for the active player's permanents
      * (CR 507.1: "At the beginning of combat on your turn").
@@ -6064,6 +6134,18 @@ public class StepTriggerService {
                         gameData, perm, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
                 queueBeginningOfCombatTriggers(gameData, activePlayerId, perm,
                         combatEffects);
+            }
+        }
+
+        List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
+        if (commandZone != null) {
+            for (Card card : new ArrayList<>(commandZone)) {
+                List<CardEffect> combatEffects = new ArrayList<>(
+                        card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
+                if (!combatEffects.isEmpty()) {
+                    queueBeginningOfCombatTriggers(gameData, activePlayerId, new Permanent(card),
+                            combatEffects);
+                }
             }
         }
 

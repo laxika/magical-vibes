@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "117")
+@CardRegistration(set = "SLD", collectorNumber = "2002")
+@CardRegistration(set = "SLD", collectorNumber = "2021")
 public class PeerIntoTheAbyss extends Card {
 
     public PeerIntoTheAbyss() {

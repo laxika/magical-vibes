@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(MirrorWall.class)
+@CardUsed({MirrorWall.class})
 class MirrorWallTest extends BaseCardTest {
 
     private Permanent addWallReady() {
@@ -92,6 +92,32 @@ class MirrorWallTest extends BaseCardTest {
     @DisplayName("Cannot activate the ability without white mana")
     void cannotActivateWithoutMana() {
         addWallReady();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Activation only lets the activated wall attack")
+    void abilityOnlyAffectsActivatedWall() {
+        addCreatureReady(player1, new MirrorWall());
+        addCreatureReady(player1, new MirrorWall());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the ability with only nonwhite mana")
+    void cannotActivateWithOnlyNonWhiteMana() {
+        addCreatureReady(player1, new MirrorWall());
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

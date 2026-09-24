@@ -73,6 +73,7 @@ public sealed interface DelayedAction permits
         DelayedGraveyardToBattlefieldUnderControl,
         DelayedGraveyardCardsToBattlefieldUnderControl,
         DelayedReturnAuraAttachedToPermanent,
+        DelayedReturnSourceAuraToCreature,
         DelayedCombatDamageDraw,
         DelayedCombatDamageLookAtHandAndDraw,
         DelayedCombatDamageLoot,
@@ -133,6 +134,7 @@ public sealed interface DelayedAction permits
         TargetPlayerHandExileReturnAtNextTurnEndStep,
         ExpireControlAtEndOfNextTurn,
         DelayedDamageDoubling,
+        DelayedSourceDamageMultiplication,
         DelayedVehicleAttack,
         UnattachEquipmentAtNextEndStep {
 }

@@ -239,6 +239,27 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    void classifiesCloakingAndCombatReassignment() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.ExileTargetNontokenCreatureAndTopCardsThenCloakEffect(),
+                aiPlayerId)).isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.FalseOrdersEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1),
+                aiPlayerId)).isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.MustBlockEachAttackingCreatureThisTurnEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+    }
+
+    @Test
     void everyPermanentTargetingSpellOrEtbEffectClassifies() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();

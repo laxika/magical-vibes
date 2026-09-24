@@ -80,4 +80,16 @@ class LavaDartTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentMountain);
         harness.assertInGraveyard(player1, "Lava Dart");
     }
+
+    @Test
+    @DisplayName("Flashback cannot sacrifice an opponent's Mountain")
+    void flashbackRejectsOpponentsMountainSacrifice() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setGraveyard(player1, List.of(new LavaDart()));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), mountain.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(mountain);
+        harness.assertInGraveyard(player1, "Lava Dart");
+    }
 }

@@ -13,10 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "143")
+@CardRegistration(set = "SLD", collectorNumber = "966")
 @CardRegistration(set = "SLX", collectorNumber = "18")
 public class GreymondAvacynsStalwart extends Card {
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BreakingPoint;
 import com.github.laxika.magicalvibes.cards.c.CabalTherapy;
+import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SolitaryConfinement.class, BreakingPoint.class, CabalTherapy.class, SuntailHawk.class})
+@CardUsed({BreakingPoint.class, CabalTherapy.class, LavaDart.class, SolitaryConfinement.class, SuntailHawk.class})
 class SolitaryConfinementTest extends BaseCardTest {
 
     @Test
@@ -168,5 +169,20 @@ class SolitaryConfinementTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Controller cannot target themselves while Solitary Confinement is on the battlefield")
+    void controllerCannotTargetThemselfWithShroud() {
+        harness.addToBattlefield(player1, new SolitaryConfinement());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 }

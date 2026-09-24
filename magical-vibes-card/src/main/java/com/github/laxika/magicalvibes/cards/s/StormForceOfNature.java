@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantStormToNextInstantOrSorceryCastThisTurnEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "1742")
 @CardRegistration(set = "MAR", collectorNumber = "94")
 public class StormForceOfNature extends Card {
 

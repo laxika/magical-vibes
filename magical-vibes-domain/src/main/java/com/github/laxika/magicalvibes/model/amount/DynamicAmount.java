@@ -32,6 +32,7 @@ public sealed interface DynamicAmount permits
         DistinctPowersAmongControlledCreatures,
         CardsDiscardedByTargetPlayerThisTurn,
         CardsDiscardedOrCycledThisTurn,
+        CardsDelved,
         CardsExiledWithSource,
         CardsInExile,
         ForetoldCardsInExile,
@@ -42,6 +43,7 @@ public sealed interface DynamicAmount permits
         GreatestOpponentHandSize,
         ColorManaSymbolsAmongControlledPermanents,
         ColorManaPairsSpentToCast,
+        ColorsSpentToCast,
         ColorsAmongControlledPermanents,
         ColorManaSymbolsInGraveyard,
         ColorManaSymbolsInHand,
@@ -86,6 +88,7 @@ public sealed interface DynamicAmount permits
         NoncombatDamageDealtToOpponentsThisTurn,
         DamageDealtToSourceThisTurn,
         DamageDealtToTargetPermanentThisTurn,
+        GreatestDamageDealtBySourceThisTurn,
         DamageDealtToSourcePermanentBySourceNameThisTurn,
         DamageDealtToTargetPlayerThisTurn,
         DamageDealtByTargetPlayerSorceryThisTurn,
@@ -96,6 +99,7 @@ public sealed interface DynamicAmount permits
         EnchantedPermanentPower,
         EventValue,
         Fixed,
+        PileGroupingOrGuessCountThisTurn,
         FixedIfCondition,
         FixedIfControlMoreCreaturesThanEachOtherPlayer,
         FixedIfControlledCreaturesTotalToughnessAtLeast,
@@ -153,6 +157,7 @@ public sealed interface DynamicAmount permits
         PermanentCounterSum,
         PermanentManaValueSum,
         PlayersInGame,
+        PlayersWithCardsInHandAtLeast,
         PlayersWhoDiscardedThisTurn,
         PlayersWithCardsInHandAtMost,
         RepeatedAdditionalCostCount,
@@ -165,6 +170,7 @@ public sealed interface DynamicAmount permits
         SourceManaValueMinusOne,
         SourcePower,
         SourceToughness,
+        CommanderCastsFromCommandZoneThisGame,
         SpellsCastThisTurn,
         Sum,
         TargetPlayerLifeTotal,
@@ -198,7 +204,8 @@ public sealed interface DynamicAmount permits
         WebSlingingReturnedCreatureManaValue,
         XValue,
         TriggeringSpellTargetCount,
-        CardTypesAmongCardsDiscardedThisResolution {
+        CardTypesAmongCardsDiscardedThisResolution,
+        LastDiscardedCardTypeCount {
 
     /**
      * Whether evaluating this amount requires the source ability's resolution count to be tracked.
