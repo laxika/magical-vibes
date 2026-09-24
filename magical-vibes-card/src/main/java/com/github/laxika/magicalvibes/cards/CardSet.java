@@ -310,7 +310,8 @@ public enum CardSet {
     SET_AA4("AA4"),
     SET_PA1("PA1"),
     SET_CN2("CN2"),
-    SET_PZA("PZA");
+    SET_PZA("PZA"),
+    SET_YDFT("YDFT");
 
     @Getter
     private final String code;

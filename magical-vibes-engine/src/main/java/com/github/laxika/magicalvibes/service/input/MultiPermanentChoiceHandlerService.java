@@ -168,6 +168,9 @@ public class MultiPermanentChoiceHandlerService {
             .ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
             controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentEffectHandler
+            targetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPermanentEffectHandler
             eachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -300,6 +303,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature or planeswalker must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature
                 && permanentIds.size() != 1) {
@@ -805,6 +812,12 @@ public class MultiPermanentChoiceHandlerService {
             }
         } else if (context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice ctx) {
             controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler.completeChoice(gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+        } else if (context instanceof MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen ctx) {
+            targetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentHandler.completeChoice(
+                    gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }

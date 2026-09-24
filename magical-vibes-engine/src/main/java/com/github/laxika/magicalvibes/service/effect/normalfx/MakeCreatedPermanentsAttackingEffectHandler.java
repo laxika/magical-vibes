@@ -27,6 +27,7 @@ public class MakeCreatedPermanentsAttackingEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var makeAttacking = (MakeCreatedPermanentsAttackingEffect) effect;
         Permanent source = entry.getSourcePermanentId() == null ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
@@ -37,6 +38,9 @@ public class MakeCreatedPermanentsAttackingEffectHandler implements NormalEffect
             Permanent created = gameQueryService.findPermanentById(gameData, createdId);
             if (created != null) {
                 created.setAttacking(true);
+                if (makeAttacking.tapped()) {
+                    created.tap();
+                }
                 created.setAttackTarget(attackTarget);
             }
         }

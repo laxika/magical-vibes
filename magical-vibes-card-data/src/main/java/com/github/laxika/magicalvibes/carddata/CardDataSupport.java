@@ -168,6 +168,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Alliance", Keyword.ALLIANCE);
         KEYWORD_MAP.put("Station", Keyword.STATION);
         KEYWORD_MAP.put("Freerunning", Keyword.FREERUNNING);
+        KEYWORD_MAP.put("Double team", Keyword.DOUBLE_TEAM);
+        KEYWORD_MAP.put("Intensity", Keyword.INTENSITY);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

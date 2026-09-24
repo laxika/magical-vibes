@@ -22,6 +22,7 @@ public sealed interface CardPredicate permits
         CardHasAdventurePredicate,
         CardHasMorphAbilityPredicate,
         CardHasEmbalmOrEternalizePredicate,
+        CardHasUnearthPredicate,
         CardHasForetellPredicate,
         CardHasFlashbackPredicate,
         CardHasKickerPredicate,

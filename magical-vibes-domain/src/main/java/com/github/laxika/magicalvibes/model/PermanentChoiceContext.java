@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -422,6 +423,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Resolution-time choice of a permanent controlled by the ability's controller to copy. */
     record ChosenPermanentCopyChoice(UUID controllerId, Card sourceCard, PermanentPredicate filter)
+            implements PermanentChoiceContext {}
+
+    /** The controller chooses one matching permanent for a permanent animation. */
+    record AnimateChosenOwnPermanent(AnimatePermanentsEffect animation, UUID controllerId)
             implements PermanentChoiceContext {}
 
     /** Mister Hyde: choose a creature you control from which to remove a counter, then draw a card. */

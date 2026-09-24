@@ -88,6 +88,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardHasUnearthPredicate) {
+            return "card with unearth";
+        }
         if (predicate instanceof CardHasXInManaCostPredicate) {
             return "card with {X} in its mana cost";
         }

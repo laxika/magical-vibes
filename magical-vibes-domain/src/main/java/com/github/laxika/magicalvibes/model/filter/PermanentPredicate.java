@@ -51,6 +51,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasAttachedPermanentPredicate,
         PermanentHasAtLeastAttachedAurasPredicate,
         PermanentHasAtLeastCountersPredicate,
+        PermanentHasExhaustAbilityPredicate,
         PermanentHasManaAbilityPredicate,
         PermanentHasMorphAbilityPredicate,
         PermanentHasNonManaActivatedAbilityPredicate,

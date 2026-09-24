@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
@@ -183,6 +184,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler anyPlayerMaySacrificeCreatureToCounterSpellHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseControlledArtifactOrCreatureTokenCopyEffectHandler chooseControlledArtifactOrCreatureTokenCopyEffectHandler;
+    private final AnimationSupport animationSupport;
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
     private final OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler brudicladTokenHandler;
@@ -1001,6 +1003,18 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleChooseControlledArtifactOrCreatureToCopy(GameData gameData, UUID permanentId,
             PermanentChoiceContext.ChooseControlledArtifactOrCreatureToCopy context) {
         chooseControlledArtifactOrCreatureTokenCopyEffectHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAnimateChosenOwnPermanent(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.AnimateChosenOwnPermanent context) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (entry != null && target != null
+                && gameData.playerBattlefields.getOrDefault(context.controllerId(), List.of()).contains(target)) {
+            entry.setChosenPermanentId(permanentId);
+            animationSupport.animateChosen(gameData, entry, context.animation());
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

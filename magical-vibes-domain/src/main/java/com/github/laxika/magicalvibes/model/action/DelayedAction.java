@@ -101,6 +101,7 @@ public sealed interface DelayedAction permits
         DelayedSacrificeSourceWhenTargetLeaves,
         DelayedSacrificeTargetWhenSourceLeaves,
         DelayedDestroyTargetWhenSourceLeaves,
+        DiscardSpecificCardAtNextEndStep,
         DelayedExileReturnCounterTrigger,
         DelayedSacrificeTargetPermanentAtEndStep,
         DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost,

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetAssassinCreatureCa
 import com.github.laxika.magicalvibes.model.effect.ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTargetCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -190,6 +191,10 @@ public class GraveyardTargetingSupport {
                     .toList());
             return new Target(filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                     "to gain flashback", 1, 1);
+        }
+        if (effect instanceof PerpetuallyGrantUnearthToTargetCreatureCardEffect) {
+            return new Target(PerpetuallyGrantUnearthToTargetCreatureCardEffect.targetFilter(),
+                    GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to gain unearth", 1, 1);
         }
         if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets) {
             return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,

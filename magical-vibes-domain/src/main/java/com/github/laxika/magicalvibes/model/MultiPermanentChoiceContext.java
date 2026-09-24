@@ -518,6 +518,15 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Speedbrood Stalker: privately choose the target player's creature or planeswalker, then resolve the sacrifices. */
+    record TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen(
+            UUID targetPlayerId,
+            UUID sourceControllerId,
+            UUID chosenPermanentId,
+            String sourceCardName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * "Choose a matching permanent to keep, the rest are destroyed" (destroy-rest flow).
      * {@code remainingChoosers} and {@code protectedIds} advance across re-begins exactly as

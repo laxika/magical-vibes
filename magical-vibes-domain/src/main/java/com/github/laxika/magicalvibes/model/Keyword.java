@@ -138,7 +138,9 @@ public enum Keyword {
     UNDERDOG,
     DISGUISE,
     STATION,
-    FREERUNNING;
+    FREERUNNING,
+    DOUBLE_TEAM,
+    INTENSITY;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

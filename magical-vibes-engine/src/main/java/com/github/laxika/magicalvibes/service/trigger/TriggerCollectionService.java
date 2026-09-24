@@ -7363,6 +7363,9 @@ public class TriggerCollectionService {
                 if (trigger.loyaltyAbilityOnly() && ability.getLoyaltyCost() == null) {
                     continue;
                 }
+                if (trigger.exhaustAbilityOnly() && !ability.isExhaustAbility()) {
+                    continue;
+                }
 
                 StackEntry snapshot = new StackEntry(abilityEntry);
                 // CR 707.10 — the copy is controlled by the controller of the effect that created it.
@@ -8590,45 +8593,65 @@ public class TriggerCollectionService {
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(
                     effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
             if (resolvedEffect == null) continue;
+            CardEffect authoredEffect = resolvedEffect;
+            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
+            if (resolvedEffect == null) continue;
             if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware && dyingCard != null) {
                 resolvedEffect = aware.boundToDyingCard(dyingCardId);
             }
             if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
             var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
+            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+            }
         }
         for (CardEffect effect : temporaryDeathEffects) {
             if (effect.onlyTriggersOnSacrifice()) continue;
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(
                     effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
             if (resolvedEffect == null) continue;
+            CardEffect authoredEffect = resolvedEffect;
+            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
+            if (resolvedEffect == null) continue;
             if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware && dyingCard != null) {
                 resolvedEffect = aware.boundToDyingCard(dyingCardId);
             }
             if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
             var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
+            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+            }
         }
         for (CardEffect effect : persistentDeathEffects) {
             if (effect.onlyTriggersOnSacrifice()) continue;
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(
                     effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
             if (resolvedEffect == null) continue;
+            CardEffect authoredEffect = resolvedEffect;
+            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
+            if (resolvedEffect == null) continue;
             if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
             var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
+            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+            }
         }
         for (CardEffect effect : grantedDeathEffects) {
             if (effect.onlyTriggersOnSacrifice()) continue;
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(
                     effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
             if (resolvedEffect == null) continue;
+            CardEffect authoredEffect = resolvedEffect;
+            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
+            if (resolvedEffect == null) continue;
             if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware && dyingCard != null) {
                 resolvedEffect = aware.boundToDyingCard(dyingCardId);
             }
             if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
             var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
+            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+            }
         }
     }
 

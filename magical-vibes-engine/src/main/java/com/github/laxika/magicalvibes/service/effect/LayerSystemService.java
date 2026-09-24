@@ -772,6 +772,7 @@ public class LayerSystemService {
             h = mix(h, timestamp.getKey().ordinal());
             h = mix(h, timestamp.getValue());
         }
+        h = mix(h, p.getPersistentPowerModifier());
         h = mix(h, p.getPowerModifier());
         h = mix(h, p.getToughnessModifier());
         h = mix(h, p.getBasePowerOverride());
@@ -1002,7 +1003,7 @@ public class LayerSystemService {
             // Legacy one-shot color/keyword state is seeded before ANY layer runs so filter
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
-            seedLegacyColorAndAbilityState(permanent, state, globalWordChange);
+            seedLegacyColorAndAbilityState(gameData, permanent, state, globalWordChange);
             // Layer 3 on the object's own type line: a text change replacing a basic land
             // type word (Mind Bend targeting a Forest) rewrites the printed subtype itself,
             // and with it the land's intrinsic mana ability (CR 612, 305.6).
@@ -2340,7 +2341,7 @@ public class LayerSystemService {
      * legacy "loses all abilities until end of turn" flag clears everything at seed time (so
      * later-timestamp layered grants still apply, matching the old accumulator behavior).
      */
-    private void seedLegacyColorAndAbilityState(Permanent permanent, CharacteristicState state,
+    private void seedLegacyColorAndAbilityState(GameData gameData, Permanent permanent, CharacteristicState state,
                                                 List<TextReplacement> globalWordChange) {
         if ((permanent.isAnimatedUntilEndOfTurn() || permanent.isAnimatedUntilEndOfCombat())
                 && permanent.getAnimatedColor() != null) {
@@ -2392,6 +2393,9 @@ public class LayerSystemService {
             state.addKeywords(permanent.getPersistentGrantedKeywords());
             state.addKeywords(permanent.getUntilNextTurnKeywords());
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
+            gameData.perpetualCardRemovedKeywords
+                    .getOrDefault(permanent.getCard().getId(), Set.of())
+                    .forEach(state::removeKeyword);
         }
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
             // Losing all creature types nullifies the Changeling grant (legacy semantics).
