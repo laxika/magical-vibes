@@ -1323,7 +1323,6 @@ public class ChoiceHandlerService {
                         new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, 1);
             } else {
                 manaPool.add(manaColor, 1);
-                manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
                 tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
                 if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
                     manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);

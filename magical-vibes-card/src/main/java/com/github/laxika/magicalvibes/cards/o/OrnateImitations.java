@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureOfEachMa
 public class OrnateImitations extends Card {
 
     public OrnateImitations() {
+        setMinimumXValue(1);
         addEffect(EffectSlot.SPELL,
                 new ConjureRandomCreatureOfEachManaValueToBattlefieldEffect(new XValue()));
     }

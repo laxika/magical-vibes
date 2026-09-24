@@ -5897,6 +5897,9 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetId, null
                 ));
             }
+            if (!gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setConvokeCreatureIds(convokeCreatureIds);
+            }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
                     && !targetIds.isEmpty()) {
                 gameData.stack.getLast().setRequiredTargetControllerId(

@@ -213,11 +213,7 @@ public final class AnyColorManaChoiceSupport {
                     && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withCaveSource(true);
         }
-        if (effect.usesCommanderColorIdentity()) {
-            choiceContext = new ChoiceContext.SourceTrackedManaColorChoice(
-                    playerId, sourcePermanentId, recipientPlayerId, fromCreature, amount,
-                    fromSnowSource, fromCaveSource);
-        } else if (effect.tracksProducingSourceForSpellCastTriggers()
+        if (effect.tracksProducingSourceForSpellCastTriggers()
                 && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withSourceTracking();
         }
@@ -273,7 +269,8 @@ public final class AnyColorManaChoiceSupport {
                 if (isNonTreasureArtifactSource(sourceCard)) {
                     manaPool.addArtifactSourceManaTag(effectiveColor, amount);
                 }
-                if (effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY
+                if ((effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY
+                        || effect.tracksProducingSourceForSpellCastTriggers())
                         && sourcePermanentId != null) {
                     manaPool.addSpellCastTriggerMana(sourcePermanentId, effectiveColor, amount);
                 }
