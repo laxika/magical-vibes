@@ -189,6 +189,16 @@ public class GraveyardTargetOperationState {
     public UUID opponentChoosesCardToHandChosenOpponentId;
     /** Card selected by the opponent for the resolution-time graveyard choice. */
     public UUID opponentChoosesCardToHandChosenCardId;
+    /** Whether Dawnbreak Reclaimer is awaiting the controller's opponent-graveyard card choice. */
+    public boolean resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume;
+    /** Whether Dawnbreak Reclaimer is awaiting the chosen opponent's own-graveyard card choice. */
+    public boolean resolutionTimeDawnbreakReclaimerOwnCardChoiceResume;
+    /** Opponent chosen to make the second Dawnbreak Reclaimer choice. */
+    public UUID dawnbreakReclaimerChosenOpponentId;
+    /** Creature card chosen from an opponent's graveyard by Dawnbreak Reclaimer. */
+    public UUID dawnbreakReclaimerChosenOpponentCardId;
+    /** Creature card chosen from the controller's graveyard by Dawnbreak Reclaimer. */
+    public UUID dawnbreakReclaimerChosenOwnCardId;
     /**
      * As-enters graveyard exile choice. When set,
      * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen cards
@@ -200,6 +210,7 @@ public class GraveyardTargetOperationState {
     /** As-enters choice that moves two opponent-owned exiled cards to their owners' graveyards. */
     public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
+    public MilledCreatureExileContext milledCreatureExile;
     public MilledCreaturesToHandContext milledCreaturesToHand;
     /** Resolution-time choice state for cards milled by Eivor, Wolf-Kissed. */
     public MilledSagaAndLandReturnContext milledSagaAndLandReturn;
@@ -246,6 +257,13 @@ public class GraveyardTargetOperationState {
 
     public record MilledCreatureReturnContext(List<UUID> chosenCardIds) {
         public MilledCreatureReturnContext {
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
+    public record MilledCreatureExileContext(List<UUID> eligibleCardIds, List<UUID> chosenCardIds) {
+        public MilledCreatureExileContext {
+            eligibleCardIds = List.copyOf(eligibleCardIds);
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }

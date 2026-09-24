@@ -38,6 +38,16 @@ class JuggernautTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Juggernaut does not have to attack while it has summoning sickness")
+    void doesNotHaveToAttackWithSummoningSickness() {
+        Permanent juggernaut = harness.addToBattlefieldAndReturn(player1, new Juggernaut());
+
+        declareAttackers(List.of());
+
+        assertThat(juggernaut.isAttacking()).isFalse();
+    }
+
+    @Test
     void doesNotHaveToAttackWhenTapped() {
         Permanent juggernaut = addCreatureReady(player1, new Juggernaut());
         juggernaut.tap();
@@ -61,12 +71,10 @@ class JuggernautTest extends BaseCardTest {
     @Test
     @DisplayName("Juggernaut cannot be blocked by a Wall")
     void cannotBeBlockedByWall() {
-        Permanent juggernaut = addCreatureReady(player1, new Juggernaut());
-        juggernaut.setAttacking(true);
-
+        addCreatureReady(player1, new Juggernaut());
         addCreatureReady(player2, new WallOfSwords());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -76,12 +84,10 @@ class JuggernautTest extends BaseCardTest {
     @Test
     @DisplayName("Juggernaut can be blocked by a non-Wall creature")
     void canBeBlockedByNonWall() {
-        Permanent juggernaut = addCreatureReady(player1, new Juggernaut());
-        juggernaut.setAttacking(true);
-
+        addCreatureReady(player1, new Juggernaut());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

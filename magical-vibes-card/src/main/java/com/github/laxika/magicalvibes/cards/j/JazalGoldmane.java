@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "497")
+@CardRegistration(set = "C14", collectorNumber = "9")
 public class JazalGoldmane extends Card {
 
     public JazalGoldmane() {

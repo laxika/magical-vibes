@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARN", collectorNumber = "26")
+@CardRegistration(set = "ME4", collectorNumber = "85")
 public class GuardianBeast extends Card {
 
     public GuardianBeast() {

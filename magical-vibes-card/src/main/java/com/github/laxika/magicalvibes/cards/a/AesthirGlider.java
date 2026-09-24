@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 @CardRegistration(set = "ALL", collectorNumber = "116a")
 @CardRegistration(set = "ALL", collectorNumber = "116b")
 @CardRegistration(set = "ATH", collectorNumber = "67")
+@CardRegistration(set = "ME4", collectorNumber = "176")
 public class AesthirGlider extends Card {
 
     public AesthirGlider() {

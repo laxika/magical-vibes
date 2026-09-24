@@ -1462,7 +1462,7 @@ public class CardChoiceHandlerService {
                 sourcePermanentId = valkiChoice.sourcePermanentId();
             }
             for (Card exiled : chosenCards) {
-                if (valkiChoice != null) {
+                if (valkiChoice != null || revealedHandChoice.imprintOnSource()) {
                     exileService.exileCard(gameData, targetPlayerId, exiled, sourcePermanentId);
                 } else {
                     exileService.exileCard(gameData, targetPlayerId, exiled);
@@ -1967,9 +1967,9 @@ public class CardChoiceHandlerService {
         Card card = hand.remove(cardIndex);
 
         if (imprintChoice.faceDown()) {
-            exileService.exileCardFaceDown(gameData, playerId, card, null);
+            exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
         } else {
-            exileService.exileCard(gameData, playerId, card);
+            exileService.exileCard(gameData, playerId, card, sourcePermanentId);
         }
 
         // "You may cast that card for as long as it remains exiled" (Ice Cauldron) — no expiry.

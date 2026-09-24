@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterTha
 import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "257")
+@CardRegistration(set = "C15", collectorNumber = "50")
 public class MizzixOfTheIzmagnus extends Card {
 
     public MizzixOfTheIzmagnus() {

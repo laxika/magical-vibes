@@ -190,6 +190,8 @@ public class Permanent {
     @Setter private UUID chosenPermanentId;
     /** Player targeted by a linked enter-the-battlefield ability. */
     @Setter private UUID rememberedTargetPlayerId;
+    /** Players chosen by an as-enters effect such as Bitter Feud. */
+    private final List<UUID> chosenPlayerIds = new ArrayList<>();
     /** Life lost by the controller when this permanent's Soulgorger Orgg-style ETB resolved. */
     @Setter private int lifeLostWhenEntered;
     /** Player who lost the recorded life when this permanent's Soulgorger Orgg-style ETB resolved. */
@@ -563,6 +565,8 @@ public class Permanent {
     @Setter private boolean spectacle;
     /** Whether this permanent's optional collect-evidence additional cost was paid. */
     @Setter private boolean collectEvidenceCostPaid;
+    /** Whether this permanent's spell had its waterbend additional cost paid. */
+    @Setter private boolean waterbendCostPaid;
     /** Whether the spell's optional reveal-a-card-from-hand additional cost was paid. */
     @Setter private boolean revealCardFromHandCostPaid;
     /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
@@ -775,6 +779,7 @@ public class Permanent {
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
+        this.chosenPlayerIds.addAll(source.chosenPlayerIds);
         this.lifeLostWhenEntered = source.lifeLostWhenEntered;
         this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
@@ -917,6 +922,7 @@ public class Permanent {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
+        this.waterbendCostPaid = source.waterbendCostPaid;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;

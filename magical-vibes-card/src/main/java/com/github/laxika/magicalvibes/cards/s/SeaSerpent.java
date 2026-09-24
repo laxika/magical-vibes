@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "98")
 @CardRegistration(set = "SUM", collectorNumber = "78")
 @CardRegistration(set = "3ED", collectorNumber = "78")
+@CardRegistration(set = "ME4", collectorNumber = "60")
 @CardRegistration(set = "2ED", collectorNumber = "77")
 public class SeaSerpent extends Card {
 
@@ -28,7 +29,7 @@ public class SeaSerpent extends Card {
                 "an Island"
         ));
 
-        // "When you control no Islands, sacrifice this creature." —
+        // "When you control no Islands, sacrifice this creature." â€”
         // State-triggered ability (MTG rule 603.8).
         addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
                 new PermanentAllOfPredicate(List.of(

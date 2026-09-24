@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "305")
+@CardRegistration(set = "C14", collectorNumber = "265")
 public class RubyMedallion extends Card {
 
     public RubyMedallion() {

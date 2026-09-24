@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 
 @CardRegistration(set = "ALL", collectorNumber = "73a")
 @CardRegistration(set = "ALL", collectorNumber = "73b")
+@CardRegistration(set = "ME4", collectorNumber = "124")
 public class GorillaWarCry extends Card {
 
     public GorillaWarCry() {

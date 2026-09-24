@@ -1665,8 +1665,12 @@ public class GameService {
             boolean targetsPermanent = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (targetsGraveyard) {
+                int minimumGraveyardTargets = effects.stream()
+                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                        .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        permanent.getCard(), controllerId, effects, null, 1, xValue != null ? xValue : 0));
+                        permanent.getCard(), controllerId, effects, null,
+                        minimumGraveyardTargets, xValue != null ? xValue : 0));
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
                 if (autoPass) {
                     turnProgressionService.resolveAutoPass(gameData);
@@ -1962,6 +1966,21 @@ public class GameService {
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments, null);
+    }
+
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateEmblemAbility(gameData, actionPlayer, emblemIndex, abilityIndex, xValue,
+                        targetId, targetZone, targetIds, damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue,
+                    targetId, targetZone, targetIds, damageAssignments);
+        }
     }
 
     /**

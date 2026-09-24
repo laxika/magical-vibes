@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "16")
+@CardRegistration(set = "C15", collectorNumber = "67")
 public class DawnglareInvoker extends Card {
 
     public DawnglareInvoker() {

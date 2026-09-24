@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "2ED", collectorNumber = "6")
+@CardRegistration(set = "ME4", collectorNumber = "7")
 public class BlazeOfGlory extends Card {
 
     public BlazeOfGlory() {

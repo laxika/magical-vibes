@@ -197,6 +197,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenPlayersDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
@@ -227,6 +228,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardsLoseAllAbilitie
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProwlGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.EvokeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.FreerunningGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerFlagbearerEffect;
@@ -1312,6 +1314,30 @@ public class GameQueryService {
                     return Optional.of(new AlternateHandCast(
                             List.of(new ManaCastingCost(grant.freerunningCost())),
                             new Freerunning(), false));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Returns the evoke alternate cast granted to a matching permanent spell by a permanent its controller controls. */
+    public Optional<AlternateHandCast> findGrantedEvokeAlternateCast(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || card == null || card.isToken()) {
+            return Optional.empty();
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                        gameData, permanent, playerId, effect);
+                if (activeEffect instanceof EvokeGrantingEffect grant
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, grant.evokeGrantFilter(), null, gameData, playerId)) {
+                    return Optional.of(new AlternateHandCast(
+                            List.of(new ManaCastingCost(grant.evokeCost()))));
                 }
             }
         }
@@ -5562,11 +5588,11 @@ public class GameQueryService {
             if (battlefield == null) continue;
             for (Permanent candidate : battlefield) {
                 if (!isLand(gameData, candidate)) {
-                    lowest = Math.min(lowest, candidate.getCard().getManaValue());
+                    lowest = Math.min(lowest, candidate.isFaceDown() ? 0 : candidate.getCard().getManaValue());
                 }
             }
         }
-        return permanent.getCard().getManaValue() == lowest;
+        return (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) == lowest;
     }
 
     /**
@@ -7163,7 +7189,9 @@ public class GameQueryService {
         return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .map(effect -> staticEffectConditionResolver.resolve(
                         gameData, permanent, controllerId, effect))
-                .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance);
+                .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance)
+                || playerEmblemHasActiveStaticEffect(
+                        gameData, controllerId, AllowLoyaltyActivationAtInstantSpeedEffect.class);
     }
 
     /**
@@ -8427,8 +8455,13 @@ public class GameQueryService {
                     if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
                             && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
                         multiplier[0] *= MaroGoneNutsSupport.apply(
-                            gameData, effect, multiplyingEffect.damageMultiplier());
+                                gameData, effect, multiplyingEffect.damageMultiplier());
                     }
+                } else if (sourceControllerId != null
+                        && effect instanceof ChosenPlayersDamageMultiplyingEffect multiplyingEffect
+                        && multiplyingEffect.appliesTo(sourceControllerId, recipientPlayerId, p)) {
+                    multiplier[0] *= MaroGoneNutsSupport.apply(
+                            gameData, effect, multiplyingEffect.damageMultiplier());
                 }
             }
         });

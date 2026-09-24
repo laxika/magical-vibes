@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "145")
+@CardRegistration(set = "ME4", collectorNumber = "90")
 public class LimDLsCohort extends Card {
 
     public LimDLsCohort() {

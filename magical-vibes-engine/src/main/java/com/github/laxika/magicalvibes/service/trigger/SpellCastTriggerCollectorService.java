@@ -286,7 +286,9 @@ public class SpellCastTriggerCollectorService {
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new MayEffect(
-                        CopyImprintedCardAndMayCastCopyEffect.otherExiledCard(sc.spellCard().getId()),
+                        CopyImprintedCardAndMayCastCopyEffect.otherExiledCard(exiledCards.stream()
+                                .filter(card -> card.getName().equals(sc.spellCard().getName()))
+                                .findFirst().orElseThrow().getId()),
                         "You may copy the other exiled card and cast it without paying its mana cost?"
                 ))),
                 null,
@@ -505,7 +507,9 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
-        int manaValue = spellEntry.getCard().getManaValue() + spellEntry.getXValue();
+        int manaValue = spellEntry.getCard().getManaValue()
+                + (spellEntry.getCard().getParsedManaCost() == null ? 0
+                        : spellEntry.getXValue() * spellEntry.getCard().getParsedManaCost().getXSymbolCount());
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -2363,6 +2367,13 @@ public class SpellCastTriggerCollectorService {
         // the active player when the spell is cast (Eyes of the Wisent).
         if (trigger.onlyDuringControllerTurn()
                 && !match.controllerId().equals(match.gameData().activePlayerId)) return false;
+
+        // Check the timing of the cast event itself, rather than the timing at which this
+        // triggered ability resolves.
+        if (trigger.onlyDuringCombat()
+                && (match.gameData().currentStep == null || !match.gameData().currentStep.isCombatPhase())) {
+            return false;
+        }
 
         StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
         Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();

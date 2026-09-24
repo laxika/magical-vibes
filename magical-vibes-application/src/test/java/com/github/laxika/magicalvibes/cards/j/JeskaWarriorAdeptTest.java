@@ -5,15 +5,19 @@ import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JeskaWarriorAdept.class, SuntailHawk.class, DwarvenDriller.class, ChandraNalaar.class})
+@CardUsed({ChandraNalaar.class, DwarvenDriller.class, JeskaWarriorAdept.class, SuntailHawk.class})
 class JeskaWarriorAdeptTest extends BaseCardTest {
 
     @Test
@@ -87,4 +91,22 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("First strike lets Jeska survive combat with a 2/2 blocker")
+    void firstStrikeLetsJeskaSurviveCombat() {
+        Permanent jeska = addReadyJeskaForJudReview(player1);
+        harness.addToBattlefield(player2, new DwarvenDriller());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jeska);
+        harness.assertInGraveyard(player2, "Dwarven Driller");
+    }
+
+    private Permanent addReadyJeskaForJudReview(Player player) {
+        return addCreatureReady(player, new JeskaWarriorAdept());
+    }
 }

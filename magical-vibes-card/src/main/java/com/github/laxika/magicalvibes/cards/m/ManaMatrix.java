@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "285")
+@CardRegistration(set = "ME4", collectorNumber = "213")
 public class ManaMatrix extends Card {
 
     public ManaMatrix() {

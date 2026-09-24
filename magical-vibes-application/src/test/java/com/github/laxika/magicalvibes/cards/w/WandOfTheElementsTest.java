@@ -1,18 +1,26 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.a.AquitectsWill;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WandOfTheElements.class, Island.class, Mountain.class})
 class WandOfTheElementsTest extends BaseCardTest {
 
     @Test
@@ -59,5 +67,40 @@ class WandOfTheElementsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each ability requires Wand of the Elements to be untapped")
+    void abilitiesRequireWandToBeUntapped() {
+        harness.addToBattlefield(player1, new WandOfTheElements());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Mountain());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed({MarchOfTheMachines.class, AshayaSoulOfTheWild.class, AquitectsWill.class})
+    @DisplayName("The Wand itself may be sacrificed when it is an Island")
+    void canSacrificeItselfWhenItIsAnIsland() {
+        Permanent wand = addCreatureReady(player1, new WandOfTheElements());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+
+        harness.setHand(player1, List.of(new AquitectsWill()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castSorcery(player1, 0, wand.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, wand)).contains(CardSubtype.ISLAND);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Wand of the Elements");
     }
 }

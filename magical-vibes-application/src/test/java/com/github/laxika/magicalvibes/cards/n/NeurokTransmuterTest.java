@@ -1,34 +1,33 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.a.AuriokGlaivemaster;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NeurokTransmuter.class, AuriokGlaivemaster.class,
+        DarksteelGargoyle.class, DarksteelIngot.class})
 class NeurokTransmuterTest extends BaseCardTest {
 
     @Test
     @DisplayName("The first ability makes a creature an artifact until end of turn")
     void makesCreatureAnArtifact() {
         harness.addToBattlefield(player1, new NeurokTransmuter());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AuriokGlaivemaster());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.isArtifact(gd, target)).isTrue();
 
@@ -42,11 +41,10 @@ class NeurokTransmuterTest extends BaseCardTest {
     @DisplayName("The first ability only targets creatures")
     void firstAbilityRequiresCreature() {
         harness.addToBattlefield(player1, new NeurokTransmuter());
-        harness.addToBattlefield(player2, new DarksteelIngot());
-        UUID targetId = harness.getPermanentId(player2, "Darksteel Ingot");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -55,14 +53,12 @@ class NeurokTransmuterTest extends BaseCardTest {
     @DisplayName("The second ability makes an artifact creature blue and nonartifact")
     void makesArtifactCreatureBlueAndNonartifact() {
         harness.addToBattlefield(player1, new NeurokTransmuter());
-        harness.addToBattlefield(player2, new IronMyr());
-        UUID targetId = harness.getPermanentId(player2, "Iron Myr");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        Permanent target = findPermanent(player2, "Iron Myr");
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.isArtifact(gd, target)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
@@ -78,12 +74,36 @@ class NeurokTransmuterTest extends BaseCardTest {
     @DisplayName("The second ability only targets artifact creatures")
     void secondAbilityRequiresArtifactCreature() {
         harness.addToBattlefield(player1, new NeurokTransmuter());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AuriokGlaivemaster());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact creature");
+    }
+
+    @Test
+    @DisplayName("The second ability replaces an existing color")
+    void secondAbilityReplacesExistingColor() {
+        harness.addToBattlefield(player1, new NeurokTransmuter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AuriokGlaivemaster());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
+
+        gd.expireEndOfTurnFloatingEffects();
+        target.resetModifiers();
+
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
     }
 }

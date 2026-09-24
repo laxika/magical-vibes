@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "218")
+@CardRegistration(set = "TLE", collectorNumber = "55")
 public class SundialOfTheInfinite extends Card {
 
     public SundialOfTheInfinite() {

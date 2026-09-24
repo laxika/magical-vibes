@@ -53,6 +53,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentBlockedBySourceThisTurnPredicate` | `()` | creatures that were blocked by the source permanent this turn (attacker direction only). Reads `GameData.creaturesBlockedThisTurn` and the source's recorded combat-opponent IDs, so it remains usable after combat state is cleared; requires a `FilterContext` source permanent ID or source snapshot. Wall of Nets |
 | `PermanentThatSaddledSourceThisTurnPredicate` | `()` | creatures that saddled the source Mount during the current turn; requires the source permanent context and reads `GameData.creaturesThatSaddledPermanentThisTurn` |
 | `PermanentIsCreaturePredicate` | `()` | creatures |
+| `PermanentIsCommanderPredicate` | `()` | permanents whose physical card is designated as a commander in `GameData`; needs game data |
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
@@ -375,6 +376,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `PlayerAttackedThisTurnPredicate` | `()` | players who declared at least one attacker this turn (evaluated against `GameData.playersDeclaredAttackersThisTurn`). Used by Fire and Brimstone's "target player who attacked this turn" |
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerIdPredicate` | `(UUID)` | exactly the specified player; useful after an effect has randomly selected a player |
+| `PlayerOtherThanSourceOwnerPredicate` | `()` | any player other than the owner of the ability's source permanent; source-relative |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerCastSorceryThisTurnPredicate` | `()` | players who cast at least one sorcery spell this turn (evaluated against `GameData.getSpellsCastThisTurn`). Used by Backdraft's player target |
 | `OpponentPreviouslyDamagedBySourcePredicate` | `()` | opponents previously dealt damage by the ability's own source permanent during the game (evaluated against the durable `GameData.damageRecipientsBySource` record). Source-relative; used by Diseased Vermin's upkeep trigger |
@@ -424,7 +426,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardManaValueLessThanXPredicate` | `()` | a card with mana value strictly less than the resolving spell or ability's X; useful when a prior cost snapshots a comparison value into X |
 | `CardSharesCardTypeWithImprintedCardPredicate` | `()` or `(boolean requireImprintedCard)` | a card sharing at least one card type with the card imprinted on the source; without game state it matches broadly, and the boolean form can require an actual imprint for resolution-time triggers (Holistic Wisdom, Cemetery Protector) |
 | `CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate` | `()` | a card sharing a creature type with a creature controlled by the perspective player or a creature card in that player's graveyard; requires the `GameData` overload and honors Changeling/effective controlled creature types (Volo, Guide to Monsters) |
-| `CardSharesCreatureTypeWithCommanderPredicate` | `()` | a creature card sharing a creature type with one of the perspective player's commanders; requires the `GameData` overload and honors Changeling/effective all-zone creature types (Path of Ancestry) |
+| `CardSharesCreatureTypeWithCommanderPredicate` | `()` | a creature card sharing an effective creature type with one of the perspective player's commanders; requires the `GameData` overload and honors Changeling/effective commander and card creature types (Path of Ancestry) |
 | `CardSharesNameWithAPermanentPredicate` | `()` | a card with the same name as any permanent on any battlefield (Mitotic Manipulation via `LookAtTopCardsEffect.mayPutMatchingOntoBattlefield`). Needs the `GameData` overload of `matchesCardPredicate`; matches nothing without game state |
 | `CardSharesNameWithLegendaryControlledPermanentPredicate` | `()` | a legendary card with the same name as a legendary permanent controlled by the perspective player; needs the `GameData` overload of `matchesCardPredicate` (Key to the Side-Door) |
 | `CardNameInControllerGraveyardPredicate` | `()` | a card with the same name as a card in the perspective player's graveyard; the perspective player is `cardOwnerId` during predicate evaluation (Pyromancer Ascension) |

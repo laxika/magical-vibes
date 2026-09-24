@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "POR", collectorNumber = "192")
 @CardRegistration(set = "S99", collectorNumber = "149")
+@CardRegistration(set = "ME4", collectorNumber = "173")
 public class WhiptailWurm extends Card {
 }

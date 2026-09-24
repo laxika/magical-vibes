@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "266")
+@CardRegistration(set = "C15", collectorNumber = "260")
 public class OrochiHatchery extends Card {
 
     public OrochiHatchery() {

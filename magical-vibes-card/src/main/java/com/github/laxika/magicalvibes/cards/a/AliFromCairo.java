@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 
+@CardRegistration(set = "ME4", collectorNumber = "107")
 @CardRegistration(set = "ARN", collectorNumber = "36")
 public class AliFromCairo extends Card {
 

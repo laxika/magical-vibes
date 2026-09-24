@@ -1501,6 +1501,12 @@ public class DamageTriggerCollectorService {
         return queueControllerDealtDamageByOpponentTrigger(match, may, ctx);
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    private boolean handleControllerDealtDamageByOpponentDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        return queueControllerDealtDamageByOpponentTrigger(match, effect, ctx);
+    }
+
     private boolean queueControllerDealtDamageByOpponentTrigger(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1961,6 +1967,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)

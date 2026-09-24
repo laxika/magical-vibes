@@ -110,6 +110,9 @@ public sealed interface TriggerContext {
     /** Context for cycling triggers. */
     record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
 
+    /** Context for opponent-mill triggers. */
+    record Mill(UUID milledPlayerId, int milledCount) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
@@ -691,6 +694,9 @@ public sealed interface TriggerContext {
     /** Context for ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}
+
+    /** Context for ON_ANY_CARDS_PUT_INTO_LIBRARY triggers. */
+    record CardsPutIntoLibrary(UUID libraryOwnerId, int cardCount) implements TriggerContext {}
 
     /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
     record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,

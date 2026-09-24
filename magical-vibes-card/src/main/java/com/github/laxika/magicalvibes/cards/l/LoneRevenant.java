@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "64")
+@CardRegistration(set = "C15", collectorNumber = "96")
 public class LoneRevenant extends Card {
 
     public LoneRevenant() {

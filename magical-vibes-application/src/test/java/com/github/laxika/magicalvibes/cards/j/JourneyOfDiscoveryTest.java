@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +15,46 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JourneyOfDiscovery.class, Forest.class, Island.class, YotianSoldier.class})
 class JourneyOfDiscoveryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Search mode puts up to two basic lands into your hand")
     void searchesForBasicLands() {
         cast(new int[]{0}, false, List.of(new JourneyOfDiscovery()),
-                List.of(new Forest(), new Island(), new GrizzlyBears()));
+                List.of(new Forest(), new Island(), new YotianSoldier()));
 
-        chooseLibraryCard();
-        chooseLibraryCard();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Forest");
         harness.assertInHand(player1, "Island");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Yotian Soldier");
+    }
+
+    @Test
+    @DisplayName("Search mode can choose only one available basic land")
+    void searchesForOneAvailableBasicLand() {
+        Forest forest = new Forest();
+        cast(new int[]{0}, false, List.of(new JourneyOfDiscovery()), List.of(forest));
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Search mode may find no basic lands")
+    void mayFindNoBasicLands() {
+        Forest forest = new Forest();
+        cast(new int[]{0}, false, List.of(new JourneyOfDiscovery()), List.of(forest));
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
     }
 
     @Test
@@ -59,8 +84,8 @@ class JourneyOfDiscoveryTest extends BaseCardTest {
                 List.of(new JourneyOfDiscovery(), new Forest(), new Forest(), new Forest()),
                 List.of(new Forest(), new Island()));
 
-        chooseLibraryCard();
-        chooseLibraryCard();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         harness.playLand(player1, 0);
         harness.playLand(player1, 0);
@@ -91,7 +116,4 @@ class JourneyOfDiscoveryTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void chooseLibraryCard() {
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-    }
 }

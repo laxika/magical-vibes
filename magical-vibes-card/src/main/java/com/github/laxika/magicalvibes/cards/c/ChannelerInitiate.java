@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "160")
+@CardRegistration(set = "ECC", collectorNumber = "101")
 public class ChannelerInitiate extends Card {
 
     public ChannelerInitiate() {

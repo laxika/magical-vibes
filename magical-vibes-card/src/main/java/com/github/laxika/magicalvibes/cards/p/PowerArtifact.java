@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "11")
+@CardRegistration(set = "ME4", collectorNumber = "57")
 public class PowerArtifact extends Card {
 
     public PowerArtifact() {

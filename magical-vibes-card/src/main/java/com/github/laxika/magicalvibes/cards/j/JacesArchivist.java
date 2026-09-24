@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "59")
 @CardRegistration(set = "C13", collectorNumber = "48")
+@CardRegistration(set = "C15", collectorNumber = "95")
 public class JacesArchivist extends Card {
 
     public JacesArchivist() {

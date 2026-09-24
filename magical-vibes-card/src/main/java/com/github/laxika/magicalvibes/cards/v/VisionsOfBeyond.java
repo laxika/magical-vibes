@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "80")
 @CardRegistration(set = "UMA", collectorNumber = "81")
+@CardRegistration(set = "TLE", collectorNumber = "21")
 public class VisionsOfBeyond extends Card {
 
     public VisionsOfBeyond() {

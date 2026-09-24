@@ -17,5 +17,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SLZ", collectorNumber = "9")
 @CardRegistration(set = "SLZ", collectorNumber = "130")
 @CardRegistration(set = "SLZ", collectorNumber = "251")
+@CardRegistration(set = "ME4", collectorNumber = "24")
 public class SavannahLions extends Card {
 }

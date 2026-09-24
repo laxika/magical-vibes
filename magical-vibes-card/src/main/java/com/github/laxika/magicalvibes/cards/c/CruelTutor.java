@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "87")
+@CardRegistration(set = "TLE", collectorNumber = "24")
 public class CruelTutor extends Card {
 
     public CruelTutor() {

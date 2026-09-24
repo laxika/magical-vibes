@@ -1454,44 +1454,54 @@ public class CombatAttackService {
 
             int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
             try {
-                boolean needsTarget = filteredEffects.stream()
-                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                if (needsTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
-                            null, attackerIndices.size()));
+                if (filteredEffects.size() == 1
+                        && filteredEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
+                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                            perm.getCard(), playerId, modal.choice(), perm.getId()));
                     gameLogService.append(gameData,
-                            GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
-                    log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
+                            GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                    log.info("Game {} - {} attack trigger queued for mode selection",
                             gameData.id, perm.getCard().getName());
                 } else {
-                    StackEntry attackTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s attack trigger",
-                            filteredEffects,
-                            attackerIndices.size(),
-                            null,
-                            perm.getId(),
-                            null,
-                            null,
-                            null,
-                            null
-                    );
-                    if (matchingAttackerCount != null) {
-                        attackTrigger.setEventValue(matchingAttackerCount);
+                    boolean needsTarget = filteredEffects.stream()
+                            .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                    || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                    if (needsTarget) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
+                                null, attackerIndices.size()));
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
+                        log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
+                                gameData.id, perm.getCard().getName());
+                    } else {
+                        StackEntry attackTrigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s attack trigger",
+                                filteredEffects,
+                                attackerIndices.size(),
+                                null,
+                                perm.getId(),
+                                null,
+                                null,
+                                null,
+                                null
+                        );
+                        if (matchingAttackerCount != null) {
+                            attackTrigger.setEventValue(matchingAttackerCount);
+                        }
+                        attackTrigger.setMarkSourceOncePerTurnOnAcceptance(markOncePerTurnOnAcceptance);
+                        gameData.stack.add(attackTrigger);
+                        if (oncePerTurn && !markOncePerTurnOnAcceptance) {
+                            gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                        }
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
+                        log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
+                                gameData.id, perm.getCard().getName(), attackerIndices.size());
                     }
-                    attackTrigger.setMarkSourceOncePerTurnOnAcceptance(markOncePerTurnOnAcceptance);
-                    gameData.stack.add(attackTrigger);
-                    if (oncePerTurn && !markOncePerTurnOnAcceptance) {
-                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
-                    }
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
-                    log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
-                            gameData.id, perm.getCard().getName(), attackerIndices.size());
                 }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
@@ -2131,21 +2141,35 @@ public class CombatAttackService {
 
                 int previousCopies = beginAttackTriggerCopies(gameData, permController, perm);
                 try {
-                    StackEntry playerAttackTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            permController,
-                            perm.getCard().getName() + "'s trigger",
-                            new ArrayList<>(playerAttackEffects),
-                            attackerIndices.size(),
-                            perm.getId());
-                    playerAttackTrigger.setTargetId(playerId);
-                    playerAttackTrigger.setNonTargeting(true);
-                    gameData.stack.add(playerAttackTrigger);
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                    log.info("Game {} - {} ON_ANY_PLAYER_ATTACKS trigger for attacking player {}",
-                            gameData.id, perm.getCard().getName(), playerId);
+                    boolean needsTarget = playerAttackEffects.stream()
+                            .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                    || (perm.getCard().getDeclaredTargetFilter() != null
+                                    && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
+                    if (needsTarget) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), permController, playerAttackEffects, perm.getId(),
+                                permController, null, null, attackerIndices.size()));
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                        log.info("Game {} - {} targeted ON_ANY_PLAYER_ATTACKS trigger queued for target selection",
+                                gameData.id, perm.getCard().getName());
+                    } else {
+                        StackEntry playerAttackTrigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                permController,
+                                perm.getCard().getName() + "'s trigger",
+                                new ArrayList<>(playerAttackEffects),
+                                attackerIndices.size(),
+                                perm.getId());
+                        playerAttackTrigger.setTargetId(playerId);
+                        playerAttackTrigger.setNonTargeting(true);
+                        gameData.stack.add(playerAttackTrigger);
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                        log.info("Game {} - {} ON_ANY_PLAYER_ATTACKS trigger for attacking player {}",
+                                gameData.id, perm.getCard().getName(), playerId);
+                    }
                 } finally {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
@@ -2891,7 +2915,7 @@ public class CombatAttackService {
     }
 
     private boolean hasCantAttackOrBlockAlone(GameData gameData, Permanent creature) {
-        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        return gameQueryService.getActiveStaticEffects(gameData, creature).stream()
                 .anyMatch(effect -> effect instanceof CantAttackOrBlockAloneEffect restriction
                         && restriction.restrictsAttacking())
                 || gameQueryService.hasAuraWithEffect(gameData, creature,
