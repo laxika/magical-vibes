@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JOU", collectorNumber = "67")
+@CardRegistration(set = "C15", collectorNumber = "122")
 public class DreadbringerLampads extends Card {
 
     public DreadbringerLampads() {

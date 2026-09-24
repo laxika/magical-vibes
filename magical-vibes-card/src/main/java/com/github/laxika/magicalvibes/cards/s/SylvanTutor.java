@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "188")
 @CardRegistration(set = "SPG", collectorNumber = "59")
+@CardRegistration(set = "ME4", collectorNumber = "169")
 public class SylvanTutor extends Card {
 
     public SylvanTutor() {

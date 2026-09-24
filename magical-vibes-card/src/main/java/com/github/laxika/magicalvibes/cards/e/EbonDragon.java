@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "91")
 @CardRegistration(set = "DRB", collectorNumber = "6")
+@CardRegistration(set = "ME4", collectorNumber = "80")
 public class EbonDragon extends Card {
 
     public EbonDragon() {

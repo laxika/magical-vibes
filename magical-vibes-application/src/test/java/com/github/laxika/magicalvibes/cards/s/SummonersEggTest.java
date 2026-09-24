@@ -106,6 +106,23 @@ class SummonersEggTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Conjurer's Bauble");
     }
 
+    @Test
+    @DisplayName("Death trigger does not return an imprinted card that has left exile")
+    void deathTriggerDoesNotReturnCardThatLeftExile() {
+        Permanent egg = harness.addToBattlefieldAndReturn(player1, new SummonersEgg());
+        GoblinBrawler imprintedCard = new GoblinBrawler();
+        gd.setImprintedCard(egg.getCard(), imprintedCard);
+        gd.addToExile(player1.getId(), imprintedCard, egg.getId(), true);
+        destroyEgg(egg.getId());
+        gd.removeFromExile(imprintedCard.getId());
+        harness.setHand(player1, List.of(imprintedCard));
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Goblin Brawler");
+        harness.assertNotOnBattlefield(player1, "Goblin Brawler");
+    }
+
     private void destroyEgg(UUID eggId) {
         harness.setHand(player2, List.of(new DevourInShadow()));
         harness.addMana(player2, ManaColor.BLACK, 2);

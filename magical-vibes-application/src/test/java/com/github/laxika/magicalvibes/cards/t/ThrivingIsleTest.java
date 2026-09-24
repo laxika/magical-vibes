@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThrivingIsleTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters tapped and allows choosing any color other than blue")
-    void entersTappedAndRestrictsColorChoice() {
+    @DisplayName("Enters tapped and offers every color except blue")
+    void entersTappedAndChoosesNonBlueColor() {
         harness.setHand(player1, List.of(new ThrivingIsle()));
 
         harness.playLand(player1, 0);
@@ -28,31 +28,40 @@ class ThrivingIsleTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLACK", "RED", "GREEN");
+        assertThat(choice.options()).doesNotContain("BLUE");
 
-        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
 
-        assertThat(isle.getChosenColor()).isEqualTo(CardColor.RED);
+        assertThat(isle.getChosenColor()).isEqualTo(CardColor.GREEN);
     }
 
     @Test
-    @DisplayName("The two mana abilities add blue or the chosen color")
-    void addsBlueOrChosenColorMana() {
-        Permanent isle = addReadyIsle(CardColor.GREEN);
+    @DisplayName("The first mana ability adds blue mana")
+    void firstAbilityAddsBlueMana() {
+        Permanent isle = addReadyIsle();
+        isle.setChosenColor(CardColor.GREEN);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
 
-        isle.untap();
-        harness.activateAbility(player1, 0, 1, null, null);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(isle.isTapped()).isTrue();
     }
 
-    private Permanent addReadyIsle(CardColor chosenColor) {
-        Permanent isle = new Permanent(new ThrivingIsle());
+    @Test
+    @DisplayName("The second mana ability adds mana of the chosen color")
+    void secondAbilityAddsChosenColorMana() {
+        Permanent isle = addReadyIsle();
+        isle.setChosenColor(CardColor.RED);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(isle.isTapped()).isTrue();
+    }
+
+    private Permanent addReadyIsle() {
+        Permanent isle = harness.addToBattlefieldAndReturn(player1, new ThrivingIsle());
         isle.setSummoningSick(false);
-        isle.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player1.getId()).add(isle);
         return isle;
     }
 }

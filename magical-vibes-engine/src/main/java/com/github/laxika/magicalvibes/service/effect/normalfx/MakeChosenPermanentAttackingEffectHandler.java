@@ -46,6 +46,13 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
                 .map(Permanent::getId)
                 .toList();
 
+        if (opponentIds.size() == 1 && planeswalkerIds.isEmpty()) {
+            permanent.setAttacking(true);
+            permanent.setAttackedOrBlockedSinceLastUpkeep(true);
+            permanent.setAttackTarget(opponentIds.getFirst());
+            return;
+        }
+
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.ChosenPermanentAttackTarget(makeAttacking.permanentId()));
         playerInputService.beginAnyTargetChoice(
@@ -53,6 +60,6 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
                 entry.getControllerId(),
                 planeswalkerIds,
                 opponentIds,
-                "Choose the player or planeswalker for the Human to attack.");
+                "Choose the player or planeswalker for " + permanent.getCard().getName() + " to attack.");
     }
 }

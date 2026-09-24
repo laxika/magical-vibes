@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "118")
+@CardRegistration(set = "CMM", collectorNumber = "239")
 public class LivingLightning extends Card {
 
     public LivingLightning() {

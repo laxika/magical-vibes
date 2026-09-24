@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +16,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BarbedLightning.class, DarksteelGargoyle.class})
 class BarbedLightningTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creature mode deals 3 damage to target creature")
     void creatureModeDealsDamageToCreature() {
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
         cast(new int[]{0}, List.of(giant.getId()));
 
         assertThat(giant.getMarkedDamage()).isEqualTo(3);
@@ -33,6 +37,17 @@ class BarbedLightningTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(ElspethKnightErrant.class)
+    @DisplayName("Player mode deals 3 damage to target planeswalker")
+    void playerModeDealsDamageToPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        cast(new int[]{1}, List.of(planeswalker.getId()));
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Player mode can target the controller")
     void playerModeCanDamageController() {
         cast(new int[]{1}, List.of(player1.getId()));
@@ -43,7 +58,7 @@ class BarbedLightningTest extends BaseCardTest {
     @Test
     @DisplayName("Entwine pays {2} and resolves both modes")
     void entwinedResolvesBothModes() {
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
         addMana(2);
 
         harness.setHand(player1, List.of(new BarbedLightning()));
@@ -70,7 +85,7 @@ class BarbedLightningTest extends BaseCardTest {
     @Test
     @DisplayName("Entwine is rejected without its additional mana")
     void entwineRequiresAdditionalMana() {
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
         harness.setHand(player1, List.of(new BarbedLightning()));
         addMana(0);
 

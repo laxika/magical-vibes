@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.c.ChitteringRats;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.t.TangleSpider;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +14,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DrossGolem.class, Swamp.class, TangleSpider.class, DarksteelGargoyle.class,
+        ChitteringRats.class})
 class DrossGolemTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Affinity for Swamps reduces the generic mana cost")
+    @DisplayName("Affinity for Swamps reduces the generic mana cost even when Swamps are tapped")
     void affinityForSwampsReducesGenericCost() {
         for (int i = 0; i < 5; i++) {
-            harness.addToBattlefield(player1, new Swamp());
+            harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
         }
         harness.setHand(player1, List.of(new DrossGolem()));
 
@@ -44,16 +45,25 @@ class DrossGolemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Affinity counts Swamps rather than other permanents")
+    void affinityCountsSwampsRatherThanOtherPermanents() {
+        for (int i = 0; i < 5; i++) {
+            addCreatureReady(player1, new TangleSpider());
+        }
+        harness.setHand(player1, List.of(new DrossGolem()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
     @DisplayName("Fear stops a nonblack, nonartifact creature from blocking Dross Golem")
     void fearStopsNonblackNonartifactCreature() {
-        Permanent golem = attackingGolem();
-        gd.playerBattlefields.get(player1.getId()).add(golem);
+        addCreatureReady(player1, new DrossGolem());
+        addCreatureReady(player2, new TangleSpider());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -63,24 +73,24 @@ class DrossGolemTest extends BaseCardTest {
     @Test
     @DisplayName("Fear allows an artifact creature to block Dross Golem")
     void fearAllowsArtifactCreatureToBlock() {
-        Permanent golem = attackingGolem();
-        gd.playerBattlefields.get(player1.getId()).add(golem);
+        addCreatureReady(player1, new DrossGolem());
+        addCreatureReady(player2, new DarksteelGargoyle());
 
-        Permanent ornithopter = new Permanent(new Ornithopter());
-        ornithopter.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(ornithopter);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
-    private Permanent attackingGolem() {
-        Permanent golem = new Permanent(new DrossGolem());
-        golem.setSummoningSick(false);
-        golem.setAttacking(true);
-        return golem;
+    @Test
+    @DisplayName("Fear allows a black creature to block Dross Golem")
+    void fearAllowsBlackCreatureToBlock() {
+        addCreatureReady(player1, new DrossGolem());
+        addCreatureReady(player2, new ChitteringRats());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 }

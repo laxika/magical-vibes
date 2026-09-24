@@ -51,6 +51,7 @@ public class SeparateCreaturesIntoPilesAndChooseAttackersEffectHandler implement
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(entry.getControllerId(), activePlayerId,
                 creatureIds, List.of(), Map.of(), List.of(), List.of(), CardPileDisposition.ATTACKERS, false));
         playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), creatureIds,

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "164")
+@CardRegistration(set = "C14", collectorNumber = "302")
 public class JungleBasin extends Card {
 
     private static final PermanentAllOfPredicate UNTAPPED_FOREST = new PermanentAllOfPredicate(List.of(

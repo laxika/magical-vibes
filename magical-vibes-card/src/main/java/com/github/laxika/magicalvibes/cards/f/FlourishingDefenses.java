@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "114")
+@CardRegistration(set = "ECC", collectorNumber = "107")
 public class FlourishingDefenses extends Card {
 
     public FlourishingDefenses() {

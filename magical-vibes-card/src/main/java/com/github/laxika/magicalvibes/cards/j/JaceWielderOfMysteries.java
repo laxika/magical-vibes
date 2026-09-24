@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffe
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "54")
+@CardRegistration(set = "SLD", collectorNumber = "506")
+@CardRegistration(set = "SLD", collectorNumber = "1576")
 public class JaceWielderOfMysteries extends Card {
 
     public JaceWielderOfMysteries() {

@@ -33,7 +33,9 @@ public class GrantChosenKeywordEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        playerInputService.beginKeywordChoice(gameData, entry.getControllerId(), recipient.getId(), e.options());
+        playerInputService.beginKeywordChoice(gameData, entry.getControllerId(), recipient.getId(), e.options(),
+                e.duration(), entry.getCard() == null ? null : entry.getCard().getName(),
+                entry.getSourcePermanentId());
     }
 
     /**

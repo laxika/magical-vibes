@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "SLD", collectorNumber = "428")
 @CardRegistration(set = "SLX", collectorNumber = "10")
 public class BaldinCenturyHerdmaster extends Card {
 

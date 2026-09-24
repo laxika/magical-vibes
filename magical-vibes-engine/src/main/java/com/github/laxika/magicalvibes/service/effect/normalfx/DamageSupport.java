@@ -262,6 +262,7 @@ public class DamageSupport {
                     gameData, entry, targetControllerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, bonusSourceControllerId);
+            rawDamage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
         UUID sourceControllerId = bonusSourceControllerId;
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
@@ -490,6 +491,9 @@ public class DamageSupport {
             graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
         } else if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+        } else {
+            graveyardService.recordCreatureDamagedBySource(
+                    gameData, damageSourceKey(entry, null), target, damage);
         }
 
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
@@ -499,6 +503,7 @@ public class DamageSupport {
                     sourcePermanentForBonus, sourceControllerId, damage);
             gameData.recordNoncombatDamageToPermanent(target.getId(), damage);
             recordDamageToPermanent(gameData, target.getId(), damage, entry, effectiveDamageSource);
+            recordExcessDamageToCreatureIfAny(gameData, entry, target, damageSource, damage);
             if (damageSource == null) {
                 recordSorcerySpellDamage(gameData, entry, damage);
             }
@@ -656,7 +661,8 @@ public class DamageSupport {
                 int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
                 if (counters > 0) {
                     target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    permanentCounterSupport.notifyCountersPlaced(gameData, entry, target, counters);
+                    permanentCounterSupport.notifyCountersPlaced(
+                            gameData, entry, target, counters, CounterType.MINUS_ONE_MINUS_ONE);
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                             " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
                     log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());
@@ -732,6 +738,7 @@ public class DamageSupport {
                     gameQueryService.findPermanentController(gameData, target.getId()));
             damage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
+            damage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
 
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn()) {
@@ -759,9 +766,13 @@ public class DamageSupport {
 
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+        } else {
+            graveyardService.recordCreatureDamagedBySource(
+                    gameData, damageSourceKey(entry, null), target, damage);
         }
 
         if (damage > 0) {
+            recordExcessDamageToCreatureIfAny(gameData, entry, target, sourcePermanent, damage);
             accumulateSourceDamageForReflection(gameData, entry.getEffectiveDamageSourceCard(),
                     entry.getControllerId(), entry.getSourcePermanentId(), damage,
                     null, gameQueryService.findPermanentController(gameData, target.getId()), target.getId(), entry);
@@ -840,6 +851,10 @@ public class DamageSupport {
                 ? gameQueryService.getEffectiveName(gameData, damageSource)
                 : sourceCard == null ? null : sourceCard.getName();
         gameData.recordDamageToPermanentFromSource(targetId, amount, sourceId, sourceName);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target != null && gameQueryService.isCreature(gameData, target)) {
+            gameData.recordDamageDealtToCreatureBySource(sourceId, targetId);
+        }
     }
 
     private void queueEnchantedCreatureDealsDamageTrigger(GameData gameData, StackEntry entry,
@@ -910,9 +925,22 @@ public class DamageSupport {
         if (sourceHasDeathtouch) {
             return Math.max(0, damageDealt - 1);
         }
-        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
-        int lethalNeeded = Math.max(0, toughness - markedDamageBefore);
+        int lethalDamageThreshold = gameQueryService.getLethalDamageThreshold(gameData, target);
+        int lethalNeeded = Math.max(0, lethalDamageThreshold - markedDamageBefore);
         return Math.max(0, damageDealt - lethalNeeded);
+    }
+
+    private void recordExcessDamageToCreatureIfAny(GameData gameData, StackEntry entry,
+                                                    Permanent target, Permanent damageSource, int damage) {
+        if (damage <= 0 || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+        boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(
+                gameData, entry, damageSource, Keyword.DEATHTOUCH);
+        if (computeExcessDamageToCreature(gameData, target, damage,
+                target.getMarkedDamage(), sourceHasDeathtouch) > 0) {
+            gameData.recordExcessDamageToPermanent(target.getId());
+        }
     }
 
     public boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
@@ -1157,7 +1185,7 @@ public class DamageSupport {
         }
     }
 
-    public int computeExcessDamageToAnyTarget(int damageDealt, boolean creature, int toughnessBefore,
+    public int computeExcessDamageToAnyTarget(int damageDealt, boolean creature, int lethalDamageThresholdBefore,
                                               int markedDamageBefore, boolean sourceHasDeathtouch,
                                               boolean planeswalker, int loyaltyBefore,
                                               boolean battle, int defenseBefore) {
@@ -1165,7 +1193,7 @@ public class DamageSupport {
         int lethalNeeded = Integer.MAX_VALUE;
         if (creature) {
             lethalNeeded = Math.min(lethalNeeded, sourceHasDeathtouch
-                    ? 1 : Math.max(0, toughnessBefore - markedDamageBefore));
+                    ? 1 : Math.max(0, lethalDamageThresholdBefore - markedDamageBefore));
         }
         if (planeswalker) lethalNeeded = Math.min(lethalNeeded, Math.max(0, loyaltyBefore));
         if (battle) lethalNeeded = Math.min(lethalNeeded, Math.max(0, defenseBefore));
@@ -1337,6 +1365,7 @@ public class DamageSupport {
                     gameData, entry, playerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
+            rawDamage += gameQueryService.getPerpetualNoncombatDamageBonus(gameData, entry);
         }
         // Energy Storm and Hidden Retreat: prevent all damage dealt by instant and sorcery spells.
         if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
@@ -1415,6 +1444,13 @@ public class DamageSupport {
         if (gameQueryService.isDamagePreventable(gameData)
                 && (gameQueryService.playerHasProtectionFromChosenName(gameData, playerId, cardName)
                         || gameQueryService.isDamageFromChosenNamePreventedForController(gameData, playerId, cardName))) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.playerHasProtectionFromChosenCardType(
+                gameData, playerId, source, sourcePermanent)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;

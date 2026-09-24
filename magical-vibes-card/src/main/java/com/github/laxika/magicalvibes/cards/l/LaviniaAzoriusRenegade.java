@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "189")
+@CardRegistration(set = "SLD", collectorNumber = "1685")
 @CardRegistration(set = "TSR", collectorNumber = "380")
 @CardRegistration(set = "RVR", collectorNumber = "195")
 public class LaviniaAzoriusRenegade extends Card {

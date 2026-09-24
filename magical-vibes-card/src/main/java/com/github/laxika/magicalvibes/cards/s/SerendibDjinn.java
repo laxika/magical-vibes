@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARN", collectorNumber = "19")
+@CardRegistration(set = "ME4", collectorNumber = "61")
 public class SerendibDjinn extends Card {
 
     public SerendibDjinn() {

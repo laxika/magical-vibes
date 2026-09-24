@@ -48,12 +48,13 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         try {
             switch (e.recipient()) {
                 case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER,
-                     TRIGGERING_PLAYER ->
+                     TRIGGERING_PLAYER, CHOSEN_PLAYER ->
                         resolveSingleTargetPlayer(gameData, entry, e);
                 case TRIGGERING_PERMANENT_CONTROLLER -> resolveTriggeringPermanentController(gameData, entry, e);
                 case CONTROLLER -> resolveController(gameData, entry, e);
                 case DEFENDING_PLAYER -> resolveDefendingPlayer(gameData, entry, e);
                 case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
+                case EACH_OTHER_OPPONENT -> resolveEachOtherOpponent(gameData, entry, e);
                 case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
                 case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
                 case TARGET_SPELL_CONTROLLER -> resolveTargetSpellController(gameData, entry, e);
@@ -141,6 +142,19 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             int evaluated = opponentsOnly
                     ? evaluateAmount(gameData, entry, e, controllerId)
                     : evaluateAmount(gameData, entry, e, playerId);
+            int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+            damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
+        }
+    }
+
+    private void resolveEachOtherOpponent(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
+        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        UUID controllerId = entry.getControllerId();
+        UUID excludedPlayerId = entry.getTargetId();
+        int evaluated = evaluateAmount(gameData, entry, e, controllerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId) || playerId.equals(excludedPlayerId)) continue;
             int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }

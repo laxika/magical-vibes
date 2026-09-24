@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArcSlogger.class, AlphaMyr.class, Island.class})
 @DisplayName("Arc-Slogger")
 class ArcSloggerTest extends BaseCardTest {
 
@@ -20,9 +21,9 @@ class ArcSloggerTest extends BaseCardTest {
     @DisplayName("Exiles ten cards and deals 2 damage to a target creature")
     void exilesTenAndDamagesTargetCreature() {
         harness.addToBattlefield(player1, new ArcSlogger());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AlphaMyr());
         GameData gd = harness.getGameData();
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Alpha Myr");
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
         int exileBefore = gd.exiledCards.size();
 
@@ -32,8 +33,30 @@ class ArcSloggerTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 10);
         assertThat(gd.exiledCards).hasSize(exileBefore + 10);
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Alpha Myr");
+        harness.assertInGraveyard(player2, "Alpha Myr");
+    }
+
+    @Test
+    @DisplayName("Pays the exile cost before the damage resolves")
+    void paysExileCostBeforeDamageResolves() {
+        var slogger = harness.addToBattlefieldAndReturn(player1, new ArcSlogger());
+        harness.setLife(player2, 20);
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        int exileBefore = gd.exiledCards.size();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 10);
+        assertThat(gd.exiledCards).hasSize(exileBefore + 10);
+        harness.assertLife(player2, 20);
+        assertThat(slogger.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -46,7 +69,7 @@ class ArcSloggerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -55,10 +78,29 @@ class ArcSloggerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ArcSlogger());
         gd.playerDecks.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.RED, 1);
+        int manaAfterAdding = gd.playerManaPools.get(player1.getId()).getTotal();
+        int exileBefore = gd.exiledCards.size();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough cards in library to exile");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(manaAfterAdding);
+        assertThat(gd.exiledCards).hasSize(exileBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without red mana")
+    void cannotActivateWithoutRedMana() {
+        harness.addToBattlefield(player1, new ArcSlogger());
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        int exileBefore = gd.exiledCards.size();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+        assertThat(gd.exiledCards).hasSize(exileBefore);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

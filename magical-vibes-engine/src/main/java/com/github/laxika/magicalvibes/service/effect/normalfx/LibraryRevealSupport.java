@@ -30,10 +30,14 @@ import java.util.UUID;
 public class LibraryRevealSupport {
 
     private final GameLogService gameLogService;
-    @lombok.Setter(onMethod_ = @org.springframework.beans.factory.annotation.Autowired(required = false))
     private CardCatalog cardCatalog;
     private volatile List<String> catalogCreatureNames;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setCardCatalog(CardCatalog cardCatalog) {
+        this.cardCatalog = cardCatalog;
+    }
 
     public record TopCardsResult(UUID controllerId, List<Card> topCards, String playerName) {}
 

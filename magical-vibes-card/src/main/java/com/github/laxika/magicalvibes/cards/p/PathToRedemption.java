@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TLA", collectorNumber = "31")
+@CardRegistration(set = "TLE", collectorNumber = "271")
 public class PathToRedemption extends Card {
 
     public PathToRedemption() {

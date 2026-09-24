@@ -21,6 +21,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public interface CostEffect extends CardEffect {
 
+    enum PermanentChoiceKind {
+        NONE,
+        UNATTACH_EQUIPMENT_FROM_SOURCE
+    }
+
     /**
      * True when paying this cost puts one card an opponent owns from exile into that player's
      * graveyard.
@@ -35,6 +40,26 @@ public interface CostEffect extends CardEffect {
      */
     default boolean tapsGrantingEquipment() {
         return false;
+    }
+
+    /**
+     * True when paying this cost derives the ability's X value from the selected permanent.
+     * The activation flow defers divided-damage amount validation until that payment is complete.
+     */
+    default boolean derivesXValueFromPayment() {
+        return false;
+    }
+
+    /**
+     * True when the payer may choose a permanent controlled by another player to pay this cost.
+     */
+    default boolean allowsOpponentControlledPermanentChoice() {
+        return false;
+    }
+
+    /** Identifies a non-sacrifice permanent-choice payment shape for the activation flow. */
+    default PermanentChoiceKind permanentChoiceKind() {
+        return PermanentChoiceKind.NONE;
     }
 
     /**

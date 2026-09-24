@@ -21,6 +21,6 @@ public class RegisterDelayedAttackTokenCreationEffectHandler implements NormalEf
                 (RegisterDelayedAttackTokenCreationEffect) effect;
         gameData.queueDelayedAction(new DelayedAttackTokenCreation(
                 entry.getControllerId(), registration.amount(), registration.tokenEffect(),
-                registration.sacrificeAtEndStep(), entry.getCard()));
+                registration.sacrificeAtEndStep(), entry.getCard(), registration.attackerPredicate()));
     }
 }

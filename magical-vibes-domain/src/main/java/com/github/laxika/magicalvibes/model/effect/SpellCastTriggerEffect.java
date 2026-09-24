@@ -46,6 +46,8 @@ import java.util.List;
  *                                   than only the emblem controller's spells
  * @param requiresTreasureMana       only fire when mana produced by a Treasure was spent to cast the spell
  * @param requiresTwoOrMoreCardTypes only fire when the cast spell has at least two card types
+ * @param onlyWhenCasterNotActiveTurn only fire when the casting player is not the active player
+ * @param onlyDuringCombat           only fire when the spell is cast during combat
  */
 public record SpellCastTriggerEffect(
         CardPredicate spellFilter,
@@ -62,8 +64,25 @@ public record SpellCastTriggerEffect(
         boolean requiresManaProducedBySource,
         int expendThreshold,
         boolean requiresTreasureMana,
-        boolean requiresTwoOrMoreCardTypes
+        boolean requiresTwoOrMoreCardTypes,
+        boolean onlyWhenCasterNotActiveTurn,
+        boolean onlyDuringCombat
 ) implements CardEffect {
+
+    public SpellCastTriggerEffect(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
+            TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
+            boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
+            Condition intervening, int nthSpellNumber, int minimumSpellNumber,
+            boolean triggersOnAnyPlayer, boolean requiresManaProducedBySource,
+            int expendThreshold, boolean requiresTreasureMana,
+            boolean requiresTwoOrMoreCardTypes, boolean onlyWhenCasterNotActiveTurn) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
+                minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource,
+                expendThreshold, requiresTreasureMana, requiresTwoOrMoreCardTypes,
+                onlyWhenCasterNotActiveTurn, false);
+    }
 
     /** Backward-compatible full constructor without a card-type-count restriction. */
     public SpellCastTriggerEffect(
@@ -76,7 +95,22 @@ public record SpellCastTriggerEffect(
         this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
                 onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
                 minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource,
-                expendThreshold, requiresTreasureMana, false);
+                expendThreshold, requiresTreasureMana, false, false);
+    }
+
+    /** Backward-compatible full constructor without the caster-turn restriction. */
+    public SpellCastTriggerEffect(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
+            TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
+            boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
+            Condition intervening, int nthSpellNumber, int minimumSpellNumber,
+            boolean triggersOnAnyPlayer, boolean requiresManaProducedBySource,
+            int expendThreshold, boolean requiresTreasureMana,
+            boolean requiresTwoOrMoreCardTypes) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
+                minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource,
+                expendThreshold, requiresTreasureMana, requiresTwoOrMoreCardTypes, false);
     }
 
     public SpellCastTriggerEffect(
@@ -87,7 +121,7 @@ public record SpellCastTriggerEffect(
             boolean triggersOnAnyPlayer, boolean requiresManaProducedBySource) {
         this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
                 onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
-                minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource, 0, false);
+                minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource, 0, false, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
@@ -199,6 +233,19 @@ public record SpellCastTriggerEffect(
     /** Trigger that only fires when the spell is cast during the source controller's own turn (e.g. Eyes of the Wisent). */
     public static SpellCastTriggerEffect duringYourTurn(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
         return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null, false, true, null, 0, 0, false, false);
+    }
+
+    /** Trigger that only fires when the casting player casts outside that player's own turn. */
+    public static SpellCastTriggerEffect whenCasterIsNotActiveTurn(List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(null, resolvedEffects, null, null, null,
+                false, false, null, 0, 0, false, false, 0, false, false, true);
+    }
+
+    /** Trigger that only fires when the spell is cast during combat. */
+    public static SpellCastTriggerEffect duringCombat(CardPredicate spellFilter,
+                                                      List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
+                false, false, null, 0, 0, false, false, 0, false, false, false, true);
     }
 
     public static SpellCastTriggerEffect wheneverYouExpend(int threshold, List<CardEffect> resolvedEffects) {

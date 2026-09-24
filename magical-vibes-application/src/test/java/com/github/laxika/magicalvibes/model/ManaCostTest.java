@@ -17,6 +17,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ManaCostTest {
 
     @Test
+    void artifactRestrictedManaPaysColoredAndGenericCostsWithModifiers() {
+        ManaPool pool = new ManaPool();
+        pool.addArtifactOnlyMana(ManaColor.BLUE, 3);
+        ManaCost cost = new ManaCost("{1}{U}");
+
+        assertThat(cost.canPayWithAdditionalGenericCost(pool, 0, 1,
+                true, false, false, false, false)).isTrue();
+        cost.payWithAdditionalGenericCost(pool, 0, 1,
+                true, false, false, false, false);
+
+        assertThat(pool.getTotalAllMana()).isZero();
+    }
+
+
+    @Test
     void virtualManaTotalIsCorrectedOnlyOnceForPayment() {
         VirtualManaPool pool = new VirtualManaPool();
         pool.add(ManaColor.RED, 1);

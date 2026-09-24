@@ -32,7 +32,8 @@ public class DestructionTargetValidators {
     // this guard cannot be expressed declaratively.
     @ValidatesTarget(SacrificePermanentsEffect.class)
     public void validateSacrificePermanents(TargetValidationContext ctx, SacrificePermanentsEffect effect) {
-        if (effect.recipient() == SacrificeRecipient.TARGET_PLAYER) {
+        if (effect.recipient() == SacrificeRecipient.TARGET_PLAYER
+                || effect.recipient() == SacrificeRecipient.CONTROLLER_AND_TARGET_PLAYER) {
             tvs.requireTargetPlayer(ctx);
         }
     }

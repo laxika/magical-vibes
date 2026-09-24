@@ -353,10 +353,14 @@ public class AnimationSupport {
         boolean untilNextTurn = effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN;
 
         for (Permanent perm : battlefield) {
-            if (!perm.getCard().hasType(CardType.LAND)) {
+            if (!gameQueryService.isLand(gameData, perm)) {
                 continue;
             }
 
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), perm.getId(), null, null,
+                    effect.duration(), 0));
             if (untilNextTurn) {
                 perm.setAnimatedUntilNextTurn(true);
                 perm.setUntilNextTurnAnimatedPower(power);
@@ -562,8 +566,10 @@ public class AnimationSupport {
             return;
         }
         AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
-        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
-        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        int power = effect.power() == null ? printedPower(chosen)
+                : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = effect.toughness() == null ? printedToughness(chosen)
+                : amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
         animatePermanently(gameData, chosen, effect, power, toughness,
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
     }

@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "160")
 @CardRegistration(set = "CMD", collectorNumber = "146")
+@CardRegistration(set = "C15", collectorNumber = "180")
 public class CobraTrap extends Card {
 
     public CobraTrap() {

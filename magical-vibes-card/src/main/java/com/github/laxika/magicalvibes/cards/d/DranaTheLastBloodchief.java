@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "98")
+@CardRegistration(set = "SLD", collectorNumber = "1684")
 public class DranaTheLastBloodchief extends Card {
 
     public DranaTheLastBloodchief() {

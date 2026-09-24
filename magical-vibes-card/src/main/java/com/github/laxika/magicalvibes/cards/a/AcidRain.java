@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "44")
+@CardRegistration(set = "ME4", collectorNumber = "36")
 public class AcidRain extends Card {
 
     public AcidRain() {

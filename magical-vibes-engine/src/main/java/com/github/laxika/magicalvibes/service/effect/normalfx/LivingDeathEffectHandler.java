@@ -44,6 +44,7 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        LivingDeathEffect livingDeathEffect = (LivingDeathEffect) effect;
         Map<UUID, List<Card>> exiledByPlayer = new LinkedHashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
@@ -53,11 +54,11 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
 
-                List<Card> creatureCards = graveyard.stream()
-                        .filter(card -> card.hasType(CardType.CREATURE))
+                List<Card> affectedCards = graveyard.stream()
+                        .filter(card -> card.hasType(livingDeathEffect.cardType()))
                         .toList();
                 List<Card> exiled = new ArrayList<>();
-                for (Card card : creatureCards) {
+                for (Card card : affectedCards) {
                     if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, card.getId(), card)) {
                         exiled.add(card);
                     }
@@ -68,13 +69,13 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
-        List<UUID> creatureIdsToSacrifice = new ArrayList<>();
+        List<UUID> permanentIdsToSacrifice = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (gameQueryService.isCreature(gameData, permanent)) {
-                creatureIdsToSacrifice.add(permanent.getId());
+            if (matchesCardType(gameData, permanent, livingDeathEffect.cardType())) {
+                permanentIdsToSacrifice.add(permanent.getId());
             }
         });
-        destructionSupport.performSimultaneousSacrifice(gameData, creatureIdsToSacrifice);
+        destructionSupport.performSimultaneousSacrifice(gameData, permanentIdsToSacrifice);
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
@@ -99,5 +100,13 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
             graveyardReturnSupport.handleCreatureEtbAndLegendRule(
                     gameData, permanentEntry.getValue(), permanent, permanent.getCard());
         }
+    }
+
+    private boolean matchesCardType(GameData gameData, Permanent permanent, CardType cardType) {
+        return switch (cardType) {
+            case ARTIFACT -> gameQueryService.isArtifact(gameData, permanent);
+            case CREATURE -> gameQueryService.isCreature(gameData, permanent);
+            default -> permanent.getCard().hasType(cardType);
+        };
     }
 }

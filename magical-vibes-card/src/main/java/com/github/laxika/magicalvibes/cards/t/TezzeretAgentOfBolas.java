@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "97")
+@CardRegistration(set = "SLD", collectorNumber = "1043")
 public class TezzeretAgentOfBolas extends Card {
 
     public TezzeretAgentOfBolas() {

@@ -22,6 +22,9 @@ import java.util.List;
 @CardRegistration(set = "DDF", collectorNumber = "1")
 @CardRegistration(set = "MD1", collectorNumber = "13")
 @CardRegistration(set = "MMA", collectorNumber = "13")
+@CardRegistration(set = "SLD", collectorNumber = "639")
+@CardRegistration(set = "SLD", collectorNumber = "701")
+@CardRegistration(set = "SLD", collectorNumber = "1001")
 public class ElspethKnightErrant extends Card {
 
     public ElspethKnightErrant() {

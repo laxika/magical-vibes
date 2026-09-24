@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 
 @CardRegistration(set = "RAV", collectorNumber = "87")
 @CardRegistration(set = "DDJ", collectorNumber = "48")
+@CardRegistration(set = "SLD", collectorNumber = "7")
+@CardRegistration(set = "SLD", collectorNumber = "937")
+@CardRegistration(set = "SLD", collectorNumber = "2126")
 @CardRegistration(set = "UMA", collectorNumber = "98")
 @CardRegistration(set = "RVR", collectorNumber = "76")
 public class GolgariThug extends Card {

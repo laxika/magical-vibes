@@ -2,11 +2,16 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.cards.b.BattleScreech;
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.f.FlashOfInsight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyFate;
+import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
+import com.github.laxika.magicalvibes.cards.r.RayOfRevelation;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({QuietSpeculation.class, AvenFogbringer.class, BattleScreech.class, FlashOfInsight.class, GrizzlyFate.class})
+@CardUsed({AvenFogbringer.class, BattleScreech.class, FlaringPain.class, FlashOfInsight.class, GrizzlyFate.class, PrismaticStrands.class, QuietSpeculation.class, RayOfRevelation.class, SuntailHawk.class})
 class QuietSpeculationTest extends BaseCardTest {
 
     @Test
@@ -115,5 +120,30 @@ class QuietSpeculationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castSorcery(player1, 0, targetPlayerId);
+    }
+
+    @Test
+    @DisplayName("Never puts more than three flashback cards into the target player's graveyard")
+    void capsSelectionAtThreeCards() {
+        Card battleScreech = new BattleScreech();
+        Card rayOfRevelation = new RayOfRevelation();
+        Card prismaticStrands = new PrismaticStrands();
+        Card flaringPain = new FlaringPain();
+        Card suntailHawk = new SuntailHawk();
+        harness.setLibrary(player2,
+                List.of(battleScreech, rayOfRevelation, prismaticStrands, flaringPain, suntailHawk));
+
+        castQuietSpeculation(player2.getId());
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactly(battleScreech, rayOfRevelation, prismaticStrands);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactlyInAnyOrder(flaringPain, suntailHawk);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 }

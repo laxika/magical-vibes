@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.BlockabilityPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -326,7 +325,9 @@ public class BlockLegalityService {
             return BlockDenial.INTIMIDATE;
         }
         // Skulk: can't be blocked by creatures with greater power (CR 702.129a).
-        if (atk.skulk() && gameQueryService.getEffectivePower(gameData, blocker) > gameQueryService.getEffectivePower(gameData, attacker)) {
+        if ((atk.skulk() || atk.ringBearerCantBeBlockedByGreaterPower())
+                && gameQueryService.getEffectivePower(gameData, blocker)
+                > gameQueryService.getEffectivePower(gameData, attacker)) {
             return BlockDenial.SKULK;
         }
         // Shrill Howler: creatures with power less than this creature's power can't block it.
@@ -338,9 +339,12 @@ public class BlockLegalityService {
                 && gameQueryService.getEffectivePower(gameData, blocker) < countIslandsControlledBy(gameData, attacker)) {
             return BlockDenial.CANT_BE_BLOCKED_BY_LESS_POWER;
         }
-        for (CanBlockOnlyIfAttackerMatchesPredicateEffect restriction : blk.attackerFilterRestrictions()) {
-            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
-                return new BlockDenial(BlockDenial.Reason.BLOCKER_LIMITED_TO_ATTACKERS, restriction.allowedAttackersDescription());
+        for (BlockingRestrictionEffect restriction : blk.attackerFilterRestrictions()) {
+            if (restriction.canBlockOnlyAttackersMatching() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, attacker, restriction.canBlockOnlyAttackersMatching())) {
+                return new BlockDenial(BlockDenial.Reason.BLOCKER_LIMITED_TO_ATTACKERS,
+                        restriction.canBlockOnlyAttackersDescription());
             }
         }
         // Board-wide "creatures matching X can't block creatures matching Y" restrictions
@@ -361,6 +365,14 @@ public class BlockLegalityService {
         for (CanBeBlockedOnlyByFilterEffect restriction : attacker.getBlockRestrictionsUntilEndOfTurn()) {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
                 return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
+            }
+        }
+        for (Set<UUID> chosenGroundPile : gameData.ragingRiverBlockRestrictionsThisCombat
+                .getOrDefault(attacker.getId(), List.of())) {
+            if (!gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
+                    && !chosenGroundPile.contains(blocker.getId())) {
+                return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS,
+                        "creatures with flying or creatures in the chosen pile");
             }
         }
         if (!gameData.matchingCreatureBlockRestrictionsThisTurn.isEmpty()) {
@@ -654,6 +666,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.FEAR),
                 intimidate,
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SKULK),
+                gameQueryService.isRingBearer(gameData, attacker),
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SHADOW),
                 cantBeBlockedByLessPower,
                 cantBeBlockedByPowerLessThanIslandCount,
@@ -667,7 +680,7 @@ public class BlockLegalityService {
     private BlockLegalityContext.BlockerFacts buildBlockerFacts(BlockLegalityContext context, Permanent blocker) {
         GameData gameData = context.gameData;
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, blocker);
-        List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions = null;
+        List<BlockingRestrictionEffect> attackerFilterRestrictions = null;
         boolean cantBlockStatic = false;
         boolean cantBlockPowerAtLeastOwnToughnessStatic = false;
         boolean blocksShadowAsThoughShadow = false;
@@ -687,7 +700,8 @@ public class BlockLegalityService {
                         blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
                         addReachPermission(blocksAsThoughReachForAttackers, permission);
                     }
-                    if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
+                    if (effect instanceof BlockingRestrictionEffect restriction
+                            && restriction.canBlockOnlyAttackersMatching() != null) {
                         if (attackerFilterRestrictions == null) {
                             attackerFilterRestrictions = new ArrayList<>(2);
                         }
@@ -733,8 +747,10 @@ public class BlockLegalityService {
             blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
             addReachPermission(blocksAsThoughReachForAttackers, permission);
         }
-        List<CanBlockOnlyIfAttackerMatchesPredicateEffect> auraRestrictions =
-                gameQueryService.collectAuraEffects(gameData, blocker, CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
+        List<BlockingRestrictionEffect> auraRestrictions =
+                gameQueryService.collectAuraEffects(gameData, blocker, BlockingRestrictionEffect.class).stream()
+                        .filter(restriction -> restriction.canBlockOnlyAttackersMatching() != null)
+                        .toList();
         if (!auraRestrictions.isEmpty()) {
             if (attackerFilterRestrictions == null) {
                 attackerFilterRestrictions = new ArrayList<>(auraRestrictions.size());

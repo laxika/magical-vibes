@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.w.WeldingJar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Glimmervoid.class, WeldingJar.class})
 class GlimmervoidTest extends BaseCardTest {
 
     @Test
@@ -44,32 +46,49 @@ class GlimmervoidTest extends BaseCardTest {
     @DisplayName("Survives the end step while its controller controls an artifact")
     void survivesWithArtifact() {
         harness.addToBattlefield(player1, new Glimmervoid());
-        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new WeldingJar());
 
         advanceToEndStep(player2);
 
         harness.assertOnBattlefield(player1, "Glimmervoid");
-        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertOnBattlefield(player1, "Welding Jar");
     }
 
     @Test
     @DisplayName("An opponent's artifact does not satisfy the condition")
     void opponentArtifactDoesNotCount() {
         harness.addToBattlefield(player1, new Glimmervoid());
-        harness.addToBattlefield(player2, new Spellbook());
+        harness.addToBattlefield(player2, new WeldingJar());
 
         advanceToEndStep(player2);
 
         harness.assertNotOnBattlefield(player1, "Glimmervoid");
         harness.assertInGraveyard(player1, "Glimmervoid");
-        harness.assertOnBattlefield(player2, "Spellbook");
+        harness.assertOnBattlefield(player2, "Welding Jar");
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice if its controller gains an artifact before the trigger resolves")
+    void conditionIsRecheckedOnResolution() {
+        harness.addToBattlefield(player1, new Glimmervoid());
+
+        reachEndStep(player2);
+
+        harness.addToBattlefield(player1, new WeldingJar());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glimmervoid");
+        harness.assertOnBattlefield(player1, "Welding Jar");
     }
 
     private void advanceToEndStep(Player activePlayer) {
+        reachEndStep(activePlayer);
+        harness.passBothPriorities();
+    }
+
+    private void reachEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }

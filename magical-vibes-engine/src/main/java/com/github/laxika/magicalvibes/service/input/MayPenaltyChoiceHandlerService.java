@@ -24,11 +24,13 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
@@ -600,6 +602,56 @@ public class MayPenaltyChoiceHandlerService {
             counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessBlightsChoice(GameData gameData, Player player,
+                                                 boolean accepted, PendingMayAbility ability) {
+        CounterUnlessBlightsEffect effect = ability.effects().stream()
+                .filter(CounterUnlessBlightsEffect.class::isInstance)
+                .map(CounterUnlessBlightsEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getTargetableId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            UUID payingPlayerId = targetEntry.getControllerId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(payingPlayerId);
+            List<UUID> validIds = battlefield == null
+                    ? List.of()
+                    : battlefield.stream()
+                            .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                            .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
+                            .filter(permanent -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                            .map(Permanent::getId)
+                            .toList();
+            if (!validIds.isEmpty()) {
+                UUID sourceControllerId = ability.sourceControllerId() != null
+                        ? ability.sourceControllerId()
+                        : ability.controllerId();
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.CounterUnlessBlightsCreatureChoice(
+                                payingPlayerId, sourceControllerId, ability.sourceCard(), targetCardId,
+                                effect.count()));
+                playerInputService.beginPermanentChoice(gameData, payingPlayerId, validIds,
+                        "Choose a creature to blight.");
+                return;
+            }
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1578,7 +1630,7 @@ public class MayPenaltyChoiceHandlerService {
                     gameData.id, opponentName, controllerName, revealed.size());
         } else {
             for (Card card : revealed) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
             for (int i = 0; i < 5; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);

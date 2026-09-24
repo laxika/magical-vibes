@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThrivingMoorTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters tapped and allows choosing any color other than black")
-    void entersTappedAndRestrictsColorChoice() {
+    @DisplayName("Enters tapped and offers every color except black")
+    void entersTappedAndChoosesNonBlackColor() {
         harness.setHand(player1, List.of(new ThrivingMoor()));
 
         harness.playLand(player1, 0);
@@ -28,26 +28,40 @@ class ThrivingMoorTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE", "RED", "GREEN");
+        assertThat(choice.options()).doesNotContain("BLACK");
 
-        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "GREEN");
 
-        assertThat(moor.getChosenColor()).isEqualTo(CardColor.BLUE);
+        assertThat(moor.getChosenColor()).isEqualTo(CardColor.GREEN);
     }
 
     @Test
-    @DisplayName("The two mana abilities add black or the chosen color")
-    void addsBlackOrChosenColorMana() {
-        Permanent moor = new Permanent(new ThrivingMoor());
-        moor.setSummoningSick(false);
-        moor.setChosenColor(CardColor.RED);
-        gd.playerBattlefields.get(player1.getId()).add(moor);
+    @DisplayName("The first mana ability adds black mana")
+    void firstAbilityAddsBlackMana() {
+        Permanent moor = addReadyMoor();
+        moor.setChosenColor(CardColor.GREEN);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
 
-        moor.untap();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(moor.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The second mana ability adds mana of the chosen color")
+    void secondAbilityAddsChosenColorMana() {
+        Permanent moor = addReadyMoor();
+        moor.setChosenColor(CardColor.RED);
+
         harness.activateAbility(player1, 0, 1, null, null);
+
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(moor.isTapped()).isTrue();
+    }
+
+    private Permanent addReadyMoor() {
+        Permanent moor = harness.addToBattlefieldAndReturn(player1, new ThrivingMoor());
+        moor.setSummoningSick(false);
+        return moor;
     }
 }

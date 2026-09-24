@@ -15,11 +15,14 @@ package com.github.laxika.magicalvibes.model.effect;
  *       battlefield, with no target at all.</li>
  *   <li>{@code ENCHANTED_CREATURE_AND_AURAS} - the permanent attached to the source Aura and all
  *       Auras attached to it (Flickerform).</li>
+ *   <li>{@code SELF_OR_TARGET} â€” the chosen target permanent, or the source permanent when no
+ *       target was announced (Kaya, Ghost Assassin-style).</li>
  * </ul>
  */
 public enum FlickerScope {
     TARGET,
     SELF,
+    SELF_OR_TARGET,
     TARGET_PLAYERS_PERMANENTS,
     CONTROLLERS_PERMANENTS,
     ALL_PLAYERS_PERMANENTS,

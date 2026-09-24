@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "120")
+@CardRegistration(set = "SLD", collectorNumber = "491")
+@CardRegistration(set = "SLD", collectorNumber = "899")
 public class GlissaSunseeker extends Card {
 
     public GlissaSunseeker() {

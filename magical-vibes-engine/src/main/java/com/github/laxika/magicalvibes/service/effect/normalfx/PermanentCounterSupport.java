@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSameCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
@@ -76,9 +77,136 @@ public class PermanentCounterSupport {
     }
 
     public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target, int amount) {
-        if (triggerCollectionService != null && target != null && amount > 0) {
-            triggerCollectionService.checkYouPutCountersTriggers(
-                    gameData, placingPlayerId(gameData, entry, target), amount);
+        if (target == null || amount <= 0) {
+            return;
+        }
+        UUID placingPlayerId = placingPlayerId(gameData, entry, target);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        }
+        fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
+    }
+
+    /** Fires "whenever you put one or more counters on a creature you don't control" watchers. */
+    private void fireCountersPutOnCreatureYouDontControlTriggers(
+            GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
+        if (count <= 0 || creature == null || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+
+        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (creatureControllerId == null || placingPlayerId.equals(creatureControllerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            Card card = source.getCard();
+            List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    placingPlayerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId()
+            );
+            trigger.setEventValue(count);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} opponent-creature counter trigger fires", gameData.id, card.getName());
+        }
+    }
+
+    public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
+                                     CounterType counterType, int amount) {
+        if (target == null || amount <= 0) return;
+        UUID placingPlayerId = placingPlayerId(gameData, entry, target);
+        if (triggerCollectionService != null) {
+            if (counterType == CounterType.LORE) {
+                for (int i = 0; i < amount; i++) {
+                    triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(
+                            gameData, target, placingPlayerId);
+                }
+            }
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        }
+        fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
+        fireYouPutCountersOnAnotherCreatureTriggers(
+                gameData, target, counterType, amount, placingPlayerId);
+    }
+
+    public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
+                                     int amount, CounterType counterType) {
+        notifyCountersPlaced(gameData, entry, target, counterType, amount);
+    }
+
+    /** Fires Captain Marvel-style triggers once per counter-placement event. */
+    public void fireYouPutCountersOnAnotherCreatureTriggers(
+            GameData gameData, Permanent target, CounterType counterType, int amount,
+            UUID placingPlayerId) {
+        if (target == null || counterType == null || amount <= 0 || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, target)
+                || gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.KREE)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            if (source.getId().equals(target.getId())) {
+                continue;
+            }
+
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            List<CardEffect> boundEffects = new ArrayList<>();
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayEffect may
+                        && may.wrapped() instanceof PutSameCountersOnSourceEffect) {
+                    boundEffects.add(new MayEffect(
+                            new PutSameCountersOnSourceEffect(counterType, amount, target.getId()),
+                            may.prompt(), may.elseEffect(), may.choicePlayer()));
+                } else if (effect instanceof PutSameCountersOnSourceEffect) {
+                    boundEffects.add(new PutSameCountersOnSourceEffect(
+                            counterType, amount, target.getId()));
+                }
+            }
+            if (boundEffects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    placingPlayerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    boundEffects,
+                    null,
+                    source.getId());
+            trigger.setTriggeringPermanentId(target.getId());
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(
+                    source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} counter-on-another-creature trigger fires", gameData.id,
+                    source.getCard().getName());
         }
     }
 
@@ -184,7 +312,15 @@ public class PermanentCounterSupport {
             boolean markOnAcceptance = false;
             boolean markImmediately = false;
             for (CardEffect effect : effects) {
-                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
+                CardEffect resolved = effect;
+                if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, target, conditional.predicate())) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                if (resolved instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
                     if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
                         continue;
                     }
@@ -195,7 +331,7 @@ public class PermanentCounterSupport {
                     }
                     effectsToResolve.add(oncePerTurnTrigger.wrapped());
                 } else {
-                    effectsToResolve.add(effect);
+                    effectsToResolve.add(resolved);
                 }
             }
             if (effectsToResolve.isEmpty()) {
@@ -301,7 +437,7 @@ public class PermanentCounterSupport {
             return;
         }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
-        notifyCountersPlaced(gameData, entry, target, counters);
+        notifyCountersPlaced(gameData, entry, target, counters, CounterType.PLUS_ONE_PLUS_ONE);
         notifySelfCountersPlaced(gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, previousCount, counters);
         recordPlusOnePlusOneCounterPlacedOnCreature(gameData, target, placingPlayerId);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId);
@@ -349,7 +485,7 @@ public class PermanentCounterSupport {
                 if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
                     recordPlusOnePlusOneCounterPlacedOnCreature(gameData, perm, placingPlayerId);
                 }
-                notifyCountersPlaced(gameData, entry, perm, placed);
+                notifyCountersPlaced(gameData, entry, perm, placed, counterType);
                 notifySelfCountersPlaced(gameData, entry, perm, counterType, previousCount, placed);
                 fireCounterPutOnControlledCreatureTriggers(gameData, perm, placed, placingPlayerId);
                 affectedCards.add(perm.getCard());
@@ -382,7 +518,8 @@ public class PermanentCounterSupport {
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(controllerId);
+                .withSourceControllerId(controllerId)
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId());
 
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent p : battlefield) {
@@ -413,6 +550,11 @@ public class PermanentCounterSupport {
 
     public int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
                                        CounterType counterType, int count) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, false);
+    }
+
+    public int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
+                                       CounterType counterType, int count, boolean modularAbility) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
         int previousLoreCount = counterType == CounterType.LORE
@@ -420,7 +562,7 @@ public class PermanentCounterSupport {
         int previousCount = target.getCounterCount(counterType);
         UUID counterPlacingPlayerId = placingPlayerId(gameData, entry, target);
         count = gameQueryService.replaceCounters(gameData, target, counterType, count,
-                counterPlacingPlayerId);
+                counterPlacingPlayerId, modularAbility);
 
         String counterName = switch (counterType) {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
@@ -611,7 +753,7 @@ public class PermanentCounterSupport {
         };
         if (counterName == null || count <= 0) return 0;
 
-        notifyCountersPlaced(gameData, entry, target, count);
+        notifyCountersPlaced(gameData, entry, target, count, counterType);
         notifySelfCountersPlaced(gameData, entry, target, counterType, previousCount, count);
         recordCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
@@ -794,7 +936,10 @@ public class PermanentCounterSupport {
      * putting the counters. Per the Gatherer ruling that ability triggers once for each individual
      * counter, so a separate trigger is pushed per counter.
      *
-     * <p>Permanents carrying {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE}
+     * <p>Permanents carrying {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE}
+     * (Auntie Ool, Cursewretch) are the global "one or more counters, do it once" variant: they
+     * trigger once for each affected creature and placement event, regardless of {@code count}.
+     * Permanents carrying {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE}
      * (Hapatra, Vizier of Poisons) are the "one or more counters, do it once" variant: they also trigger
      * only when their controller equals {@code placingPlayerId}, but fire exactly once for this creature
      * regardless of {@code count}. No-op unless {@code creature} is a creature.</p>
@@ -804,6 +949,7 @@ public class PermanentCounterSupport {
             return;
         }
         recordCounterPlacedOnCreature(gameData, creature, placingPlayerId);
+        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             boolean placedByThisController = controllerId.equals(placingPlayerId);
             for (Permanent source : new ArrayList<>(battlefield)) {
@@ -831,6 +977,29 @@ public class PermanentCounterSupport {
                         gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                     }
                     log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
+                }
+
+                // Global once-per-placement watcher (Auntie Ool): one trigger for this creature,
+                // even when the placement put multiple -1/-1 counters on it. The affected creature
+                // is carried as the trigger target so the resolving ability can inspect its current
+                // controller, with its controller at trigger time retained for zone changes.
+                List<CardEffect> globalOnceEffects = card.getEffects(
+                        EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE);
+                if (!globalOnceEffects.isEmpty()) {
+                    StackEntry triggerEntry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s triggered ability",
+                            new ArrayList<>(globalOnceEffects),
+                            creature.getId(),
+                            source.getId());
+                    triggerEntry.setTriggeringPermanentId(creature.getId());
+                    triggerEntry.setTriggeringPermanentControllerId(creatureControllerId);
+                    gameData.stack.add(triggerEntry);
+                    gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                    log.info("Game {} - {} once-per-placement global -1/-1-counter watcher fires",
+                            gameData.id, card.getName());
                 }
 
                 // Once-per-creature you-put watcher (Hapatra): fires a single trigger regardless of count.

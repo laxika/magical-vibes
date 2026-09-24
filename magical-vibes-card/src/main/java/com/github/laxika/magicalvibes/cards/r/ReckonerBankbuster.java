@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "255")
+@CardRegistration(set = "SLD", collectorNumber = "1967")
 public class ReckonerBankbuster extends Card {
 
     public ReckonerBankbuster() {

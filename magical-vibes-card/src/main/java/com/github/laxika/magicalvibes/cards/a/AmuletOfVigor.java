@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.UntapEnteringPermanentEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "121")
+@CardRegistration(set = "SLD", collectorNumber = "167")
 public class AmuletOfVigor extends Card {
 
     public AmuletOfVigor() {

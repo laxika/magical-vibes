@@ -10,10 +10,12 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "155")
 @CardRegistration(set = "MM3", collectorNumber = "224")
+@CardRegistration(set = "SLD", collectorNumber = "294")
 @CardRegistration(set = "GK2", collectorNumber = "48")
 @CardRegistration(set = "AA1", collectorNumber = "9")
 @CardRegistration(set = "RVR", collectorNumber = "263")
 @CardRegistration(set = "CMD", collectorNumber = "255")
+@CardRegistration(set = "C15", collectorNumber = "262")
 public class OrzhovSignet extends Card {
 
     public OrzhovSignet() {

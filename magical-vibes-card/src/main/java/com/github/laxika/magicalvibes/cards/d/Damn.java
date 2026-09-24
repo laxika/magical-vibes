@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 
 /**
@@ -20,7 +19,10 @@ import java.util.List;
  * <p>Overload replaces the targeted destruction with destruction of every creature and therefore
  * does not choose a target.
  */
+
+@CardRegistration(set = "SLD", collectorNumber = "1870")
 @CardRegistration(set = "AA2", collectorNumber = "8")
+@CardRegistration(set = "MH2", collectorNumber = "80")
 public class Damn extends Card {
 
     public Damn() {

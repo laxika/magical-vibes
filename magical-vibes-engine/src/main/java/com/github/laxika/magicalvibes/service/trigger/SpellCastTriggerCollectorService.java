@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromLibraryTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -31,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
@@ -60,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNoColoredManaSpentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect;
@@ -67,6 +71,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToC
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscordCopyCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
@@ -137,9 +143,14 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverVoluteTriggerEffect;
@@ -154,6 +165,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLe
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -286,7 +298,9 @@ public class SpellCastTriggerCollectorService {
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new MayEffect(
-                        CopyImprintedCardAndMayCastCopyEffect.otherExiledCard(sc.spellCard().getId()),
+                        CopyImprintedCardAndMayCastCopyEffect.otherExiledCard(exiledCards.stream()
+                                .filter(card -> card.getName().equals(sc.spellCard().getName()))
+                                .findFirst().orElseThrow().getId()),
                         "You may copy the other exiled card and cast it without paying its mana cost?"
                 ))),
                 null,
@@ -505,7 +519,9 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
-        int manaValue = spellEntry.getCard().getManaValue() + spellEntry.getXValue();
+        int manaValue = spellEntry.getCard().getManaValue()
+                + (spellEntry.getCard().getParsedManaCost() == null ? 0
+                        : spellEntry.getXValue() * spellEntry.getCard().getParsedManaCost().getXSymbolCount());
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -513,6 +529,29 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new CounterSpellIfManaValueEqualsSourceCountersEffect(
                         trigger.counterType(), manaValue))),
+                sc.spellCard().getId(),
+                Zone.STACK
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CounterSpellIfNoColoredManaSpentEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCounterSpellIfNoColoredManaSpent(
+            TriggerMatchContext match,
+            CounterSpellIfNoColoredManaSpentEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!match.gameData().getSpellCastColorsSpent(sc.spellCard().getId()).isEmpty()) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CounterSpellIfNoColoredManaSpentEffect())),
                 sc.spellCard().getId(),
                 Zone.STACK
         ));
@@ -752,6 +791,20 @@ public class SpellCastTriggerCollectorService {
         return singleTargetId;
     }
 
+    private UUID soleCreatureTargetId(GameData gameData, StackEntry spellEntry) {
+        if (spellEntry == null) return null;
+
+        List<UUID> targetIds = new ArrayList<>(spellEntry.getDeclaredTargetIds());
+        if (spellEntry.getTargetId() != null) {
+            targetIds.add(spellEntry.getTargetId());
+        }
+        if (targetIds.isEmpty() || targetIds.stream().distinct().count() != 1) return null;
+
+        UUID targetId = targetIds.getFirst();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        return target != null && gameQueryService.isCreature(gameData, target) ? targetId : null;
+    }
+
     @CollectsTrigger(value = CopySpellForEachOtherPlayerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherPlayer(TriggerMatchContext match,
             CopySpellForEachOtherPlayerEffect trigger, TriggerContext ctx) {
@@ -919,6 +972,77 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleGainControlOfSingleTargetCreatureSpell(TriggerMatchContext match,
+            GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        UUID targetId = soleCreatureTargetId(match.gameData(), spellEntry);
+        if (targetId == null) return false;
+
+        CardEffect untapAndHaste = ConditionalEffect.unless(new ControllerTurn(),
+                SequenceEffect.of(
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        untapAndHaste)),
+                targetId,
+                match.permanent().getId());
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleControllerSpellCastFromHandTrigger(TriggerMatchContext match,
+            SpellCastFromHandTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.castFromHand()) {
+            return false;
+        }
+        return handleGenericSpellCastTrigger(match,
+                new SpellCastTriggerEffect(trigger.spellFilter(), trigger.resolvedEffects()),
+                sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = DiscordCopyCastTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleDiscordCopyCastTrigger(TriggerMatchContext match,
+            DiscordCopyCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        UUID sourcePermanentId = match.gameData().discordCopySourcePermanents.get(sc.spellCard().getId());
+        if (sourcePermanentId == null || !sourcePermanentId.equals(match.permanent().getId())) {
+            return false;
+        }
+
+        if (findStackEntryForCard(match.gameData(), sc.spellCard().getId()) == null) {
+            return false;
+        }
+        match.gameData().discordCopySourcePermanents.remove(sc.spellCard().getId());
+
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DiscordRandomCardCopyEffect())),
+                null,
+                match.permanent().getId());
+        triggerEntry.setNonTargeting(true);
+        match.gameData().stack.add(triggerEntry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
     }
 
     @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnOnSpellCastEffect.class,
@@ -1134,7 +1258,8 @@ public class SpellCastTriggerCollectorService {
         CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
                         trigger.additionalTypes(), trigger.tokenCopy(), trigger.mayChooseNewTargets(),
-                        trigger.grantHasteToPermanentSpell(), markOnAcceptance);
+                        trigger.grantHasteToPermanentSpell(), markOnAcceptance,
+                        trigger.permanentSpellToken());
         if (trigger.beforeCopyEffect() != null) {
             copyEffect = SequenceEffect.of(trigger.beforeCopyEffect(), copyEffect);
         }
@@ -1504,6 +1629,31 @@ public class SpellCastTriggerCollectorService {
             ));
         }
         log.info("Game {} - {} cast-from-graveyard trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CastFromLibraryTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCastFromLibraryTrigger(TriggerMatchContext match,
+            CastFromLibraryTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (sc.castZone() != Zone.LIBRARY || !sc.spellCard().hasType(CardType.CREATURE)) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(trigger.resolvedEffects()),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        log.info("Game {} - {} cast-from-library trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
@@ -2364,6 +2514,18 @@ public class SpellCastTriggerCollectorService {
         if (trigger.onlyDuringControllerTurn()
                 && !match.controllerId().equals(match.gameData().activePlayerId)) return false;
 
+        // "Whenever a player casts a spell, if it isn't that player's turn" — compare the
+        // caster with the active player, rather than the trigger source's controller.
+        if (trigger.onlyWhenCasterNotActiveTurn()
+                && match.gameData().activePlayerId != null
+                && match.gameData().activePlayerId.equals(castingPlayerId)) return false;
+        // Check the timing of the cast event itself, rather than the timing at which this
+        // triggered ability resolves.
+        if (trigger.onlyDuringCombat()
+                && (match.gameData().currentStep == null || !match.gameData().currentStep.isCombatPhase())) {
+            return false;
+        }
+
         StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
         Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(),
@@ -2714,7 +2876,7 @@ public class SpellCastTriggerCollectorService {
             return new SequenceEffect(sequence.steps().stream()
                     .map(step -> snapshotTriggeringSpell(step, spellSnapshot, castingPlayerId,
                             gameData, sourceControllerId)).toList(),
-                    sequence.controllerDrawCount(), sequence.onlyIfSacrificed());
+                    sequence.controllerDrawCount(), sequence.onlyIfSacrificed(), sequence.optionalTarget());
         }
         if (effect instanceof ConditionalEffect conditional) {
             return new ConditionalEffect(conditional.condition(),
@@ -2780,7 +2942,11 @@ public class SpellCastTriggerCollectorService {
 
     private int spellManaValue(com.github.laxika.magicalvibes.model.GameData gameData, Card spellCard) {
         StackEntry spellEntry = findStackEntryForCard(gameData, spellCard.getId());
-        return spellCard.getManaValue() + (spellEntry == null ? 0 : spellEntry.getXValue());
+        if (spellEntry != null && spellEntry.isCastFaceDown()) {
+            return 0;
+        }
+        return spellCard.getManaValue() + (spellEntry == null || spellCard.getParsedManaCost() == null
+                ? 0 : spellEntry.getXValue() * spellCard.getParsedManaCost().getXSymbolCount());
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {

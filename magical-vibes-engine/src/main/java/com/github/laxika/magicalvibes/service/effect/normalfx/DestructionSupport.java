@@ -138,6 +138,22 @@ public class DestructionSupport {
                                            List<UUID> protectedIds, String sourceName,
                                            PermanentPredicate destructionFilter, String choicePrompt,
                                            boolean requiresChoice) {
+        beginNextDestroyRestChoice(gameData, choosers, protectedIds, sourceName,
+                destructionFilter, choicePrompt, requiresChoice, requiresChoice ? 1 : 0);
+    }
+
+    public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                           List<UUID> protectedIds, String sourceName,
+                                           PermanentPredicate destructionFilter, String choicePrompt,
+                                           int requiredCount) {
+        beginNextDestroyRestChoice(gameData, choosers, protectedIds, sourceName,
+                destructionFilter, choicePrompt, requiredCount > 0, requiredCount);
+    }
+
+    private void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                           List<UUID> protectedIds, String sourceName,
+                                           PermanentPredicate destructionFilter, String choicePrompt,
+                                           boolean requiresChoice, int requiredCount) {
         if (choosers.isEmpty()) return;
         PendingForcedSacrifice next = choosers.getFirst();
         List<PendingForcedSacrifice> remainingChoosers = List.copyOf(choosers.subList(1, choosers.size()));
@@ -145,7 +161,7 @@ public class DestructionSupport {
                 next.count(),
                 new MultiPermanentChoiceContext.DestroyRestChoice(
                         remainingChoosers, List.copyOf(protectedIds), sourceName,
-                        destructionFilter, choicePrompt, requiresChoice),
+                        destructionFilter, choicePrompt, requiresChoice, requiredCount),
                 choicePrompt + " The rest will be destroyed.");
     }
 
@@ -158,7 +174,7 @@ public class DestructionSupport {
         if (!context.remainingChoosers().isEmpty()) {
             // More players need to choose — prompt the next one
             beginNextDestroyRestChoice(gameData, context.remainingChoosers(), protectedIds, context.sourceName(),
-                    context.destructionFilter(), context.choicePrompt(), context.requiresChoice());
+                    context.destructionFilter(), context.choicePrompt(), context.requiredCount());
             return;
         }
 
@@ -200,7 +216,7 @@ public class DestructionSupport {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerFilter != null && !playerFilter.contains(playerId)) return;
             for (Permanent perm : battlefield) {
-                if (perm.getCard().hasType(CardType.LAND)) {
+                if (gameQueryService.isLand(gameData, perm)) {
                     continue;
                 }
                 if (perm.getCard().getManaValue() == targetManaValue) {
@@ -970,11 +986,18 @@ public class DestructionSupport {
                         gameData, controllerId, token)
                 : null;
         int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
+        List<CreateTokenEffect> academyManufactorTokenBlueprints =
+                TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                        gameData, controllerId, token, totalAmount);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>();
-        for (int count = 0; count < totalAmount; count++) {
-            tokenBlueprints.add(token);
+        if (academyManufactorTokenBlueprints.isEmpty()) {
+            for (int count = 0; count < totalAmount; count++) {
+                tokenBlueprints.add(token);
+            }
+        } else {
+            tokenBlueprints.addAll(academyManufactorTokenBlueprints);
         }
         if (additionalFrog != null && totalAmount > 0) {
             tokenBlueprints.add(additionalFrog);

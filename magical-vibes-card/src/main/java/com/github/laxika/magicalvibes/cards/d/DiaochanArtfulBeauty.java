@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "108")
+@CardRegistration(set = "TLE", collectorNumber = "27")
 public class DiaochanArtfulBeauty extends Card {
 
     public DiaochanArtfulBeauty() {

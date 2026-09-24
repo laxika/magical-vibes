@@ -40,12 +40,14 @@ public enum Keyword {
     DESERTWALK,
     HEXPROOF,
     WARD,
+    DOCTORS_COMPANION,
     INFECT,
     POISONOUS,
     WITHER,
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
+    MELEE,
     ENLIST,
     AGGRESSIVE,
     DETHRONE,
@@ -87,6 +89,7 @@ public enum Keyword {
     MUTATE,
     SKULK,
     SOULBOND,
+    PARTNER,
     MIRACLE,
     MADNESS,
     ESCALATE,
@@ -131,13 +134,16 @@ public enum Keyword {
     ASSEMBLE,
     WATERBEND,
     FIREBENDING,
+    INTENSITY,
     BLOW_UP,
     ALLIANCE,
     RECRUIT,
     STORIED,
     UNDERDOG,
     DISGUISE,
-    STATION;
+    STATION,
+    FREERUNNING,
+    DOUBLE_TEAM;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "182")
+@CardRegistration(set = "MH2", collectorNumber = "277")
 public class ChanceEncounter extends Card {
 
     public ChanceEncounter() {

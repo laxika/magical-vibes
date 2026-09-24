@@ -21,6 +21,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "174")
+@CardRegistration(set = "CMM", collectorNumber = "365")
+@CardRegistration(set = "CMM", collectorNumber = "598")
+@CardRegistration(set = "CMM", collectorNumber = "691")
 public class ZacamaPrimalCalamity extends Card {
 
     public ZacamaPrimalCalamity() {

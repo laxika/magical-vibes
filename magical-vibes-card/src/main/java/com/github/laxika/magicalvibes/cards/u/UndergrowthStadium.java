@@ -10,12 +10,17 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
+@CardRegistration(set = "CMM", collectorNumber = "435")
+@CardRegistration(set = "CMM", collectorNumber = "620")
+@CardRegistration(set = "CMM", collectorNumber = "666")
 @CardRegistration(set = "TMC", collectorNumber = "80")
 public class UndergrowthStadium extends Card {
 
     public UndergrowthStadium() {
+        // This land enters tapped unless you have two or more opponents.
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new NotCondition(new ControllerHasAtLeastOpponents(2)), new EntersTappedEffect()));
+                new NotCondition(new ControllerHasAtLeastOpponents(2)),
+                new EntersTappedEffect()));
 
         // {T}: Add {B} or {G}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));

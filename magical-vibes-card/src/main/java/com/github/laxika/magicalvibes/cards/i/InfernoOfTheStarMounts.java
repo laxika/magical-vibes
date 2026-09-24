@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "151")
+@CardRegistration(set = "SLD", collectorNumber = "1015")
 public class InfernoOfTheStarMounts extends Card {
 
     public InfernoOfTheStarMounts() {

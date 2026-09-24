@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MorphicTideBottomCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MorphicTideEffect;
+import com.github.laxika.magicalvibes.model.effect.MorphicTideAuraEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -46,17 +47,21 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        MorphicTideEffect tide = (MorphicTideEffect) effect;
+        List<UUID> affectedPlayers = tide.allPlayers()
+                ? gameData.orderedPlayerIds
+                : List.of(entry.getControllerId());
         Map<UUID, Integer> shuffledPermanentCounts = new LinkedHashMap<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : affectedPlayers) {
             shuffledPermanentCounts.put(playerId,
                     zoneToLibraryService.moveOwnedPermanentsIntoLibrary(gameData, playerId));
         }
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : affectedPlayers) {
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
         }
 
         Map<UUID, List<Card>> revealedByPlayer = new LinkedHashMap<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : affectedPlayers) {
             List<Card> library = gameData.playerDecks.get(playerId);
             int revealCount = Math.min(shuffledPermanentCounts.get(playerId), library.size());
             if (revealCount == 0) {
@@ -75,11 +80,28 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
 
         for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
             putFirstBatch(gameData, playerCards.getKey(), playerCards.getValue(), enterTappedTypes,
-                    simultaneouslyEntered, enteredByController, acceptedCardIds, rejectedCardIds);
+                    simultaneouslyEntered, enteredByController, acceptedCardIds, rejectedCardIds,
+                    tide.auraCardsLast());
         }
-        for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
-            putEnchantmentBatch(gameData, playerCards.getKey(), playerCards.getValue(), enterTappedTypes,
-                    simultaneouslyEntered, enteredByController, acceptedCardIds, rejectedCardIds);
+        List<CardEffect> followUps = new ArrayList<>();
+        if (tide.auraCardsLast()) {
+            for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
+                for (Card card : playerCards.getValue()) {
+                    if (!card.isAura()) {
+                        continue;
+                    }
+                    acceptedCardIds.computeIfAbsent(playerCards.getKey(), ignored -> java.util.HashSet.newHashSet(1))
+                            .add(card.getId());
+                    followUps.add(new MorphicTideAuraEffect(
+                            playerCards.getKey(), card, tide.randomBottomOrder()));
+                }
+            }
+        } else {
+            for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
+                putEnchantmentBatch(gameData, playerCards.getKey(), playerCards.getValue(), enterTappedTypes,
+                        simultaneouslyEntered, enteredByController, acceptedCardIds, rejectedCardIds,
+                        false);
+            }
         }
 
         enteredByController.forEach((controllerId, permanents) -> permanents.forEach(permanent ->
@@ -90,14 +112,14 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
             gameData.orderedPlayerIds.forEach(playerId -> legendRuleService.checkLegendRule(gameData, playerId));
         }
 
-        List<CardEffect> followUps = new ArrayList<>();
         for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
             Set<UUID> accepted = acceptedCardIds.getOrDefault(playerCards.getKey(), Set.of());
             List<Card> rest = playerCards.getValue().stream()
                     .filter(card -> !accepted.contains(card.getId()))
                     .toList();
             if (!rest.isEmpty()) {
-                followUps.add(new MorphicTideBottomCardsEffect(playerCards.getKey(), rest));
+                followUps.add(new MorphicTideBottomCardsEffect(
+                        playerCards.getKey(), rest, tide.randomBottomOrder()));
             }
         }
         if (!followUps.isEmpty()) {
@@ -111,9 +133,10 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
     private void putFirstBatch(GameData gameData, UUID ownerId, List<Card> cards,
                                Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                Map<UUID, List<Permanent>> enteredByController,
-                               Map<UUID, Set<UUID>> acceptedCardIds, Map<UUID, Set<UUID>> rejectedCardIds) {
+                               Map<UUID, Set<UUID>> acceptedCardIds, Map<UUID, Set<UUID>> rejectedCardIds,
+                               boolean auraCardsLast) {
         for (Card card : cards) {
-            if (!matchesAnyType(card, FIRST_BATCH_TYPES)) {
+            if (!matchesFirstBatchType(card, auraCardsLast)) {
                 continue;
             }
             putCardIfAllowed(gameData, ownerId, card, enterTappedTypes, simultaneouslyEntered,
@@ -121,12 +144,19 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    private boolean matchesFirstBatchType(Card card, boolean auraCardsLast) {
+        return auraCardsLast
+                ? isPermanentCard(card) && !card.isAura()
+                : matchesAnyType(card, FIRST_BATCH_TYPES);
+    }
+
     private void putEnchantmentBatch(GameData gameData, UUID ownerId, List<Card> cards,
                                      Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                      Map<UUID, List<Permanent>> enteredByController,
-                                     Map<UUID, Set<UUID>> acceptedCardIds, Map<UUID, Set<UUID>> rejectedCardIds) {
+                                     Map<UUID, Set<UUID>> acceptedCardIds, Map<UUID, Set<UUID>> rejectedCardIds,
+                                     boolean auraCardsLast) {
         for (Card card : cards) {
-            if (!card.hasType(CardType.ENCHANTMENT)
+            if (!(auraCardsLast ? card.isAura() : card.hasType(CardType.ENCHANTMENT))
                     || acceptedCardIds.getOrDefault(ownerId, Set.of()).contains(card.getId())
                     || rejectedCardIds.getOrDefault(ownerId, Set.of()).contains(card.getId())) {
                 continue;
@@ -159,6 +189,15 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
 
     private boolean matchesAnyType(Card card, Set<CardType> types) {
         return types.stream().anyMatch(card::hasType);
+    }
+
+    private boolean isPermanentCard(Card card) {
+        return card.hasType(CardType.LAND)
+                || card.hasType(CardType.CREATURE)
+                || card.hasType(CardType.ENCHANTMENT)
+                || card.hasType(CardType.ARTIFACT)
+                || card.hasType(CardType.PLANESWALKER)
+                || card.hasType(CardType.BATTLE);
     }
 
     private void initializeStartingCounters(Permanent permanent, Card card) {

@@ -55,7 +55,7 @@ class AcquireTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grafted Wargear");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2)
                 .anyMatch(card -> card.getName().equals("Grafted Wargear"));
-        assertThat(gameLogContains(gd.playerIdToName.get(player2.getId()) + "'s library is shuffled.")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Acquire");
     }
@@ -74,7 +74,7 @@ class AcquireTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grafted Wargear");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1)
                 .anyMatch(card -> card.getName().equals("Early Frost"));
-        assertThat(gameLogContains(gd.playerIdToName.get(player2.getId()) + "'s library is shuffled.")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         harness.assertInGraveyard(player1, "Acquire");
     }
 

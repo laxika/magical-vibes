@@ -24,6 +24,7 @@ class HoverguardSweepersTest extends BaseCardTest {
         Permanent crocodile1 = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
         Permanent crocodile2 = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
         castHoverguardSweepers(List.of(crocodile1.getId(), crocodile2.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Dross Crocodile");
         assertThat(gd.playerHands.get(player2.getId()))
@@ -36,6 +37,7 @@ class HoverguardSweepersTest extends BaseCardTest {
     void returnsOneCreature() {
         Permanent crocodile = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
         castHoverguardSweepers(List.of(crocodile.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Dross Crocodile");
         harness.assertInHand(player2, "Dross Crocodile");

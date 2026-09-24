@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
@@ -51,6 +52,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -131,6 +134,24 @@ class DamageTriggerCollectorServiceTest {
     }
 
     // ===== Helpers =====
+
+    @Test
+    void playerCombatDamageEquipmentTriggerUsesEquipmentController() {
+        Permanent equipment = createPermanent("Equipment");
+        Permanent attacker = createPermanent("Attacker");
+        DrawCardEffect effect = new DrawCardEffect(1);
+
+        registry.dispatch(match(equipment, player1Id, effect),
+                EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect,
+                new TriggerContext.SourceDealsCombatDamage(attacker.getCard(), player2Id,
+                        attacker.getId(), 3, 3));
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(equipment.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
 
     private static Card createCard(String name) {
         Card card = new Card();
@@ -1104,6 +1125,31 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("ON_CONTROLLER_DEALT_DAMAGE — SacrificePermanentsOrLoseGameEffect")
+    class ControllerDealtDamageSacrificeOrLose {
+
+        @Test
+        @DisplayName("enqueues a non-targeting trigger with the damage amount")
+        void enqueuesTriggerWithDamageAmount() {
+            Permanent lich = createPermanent("Lich");
+            var effect = new SacrificePermanentsOrLoseGameEffect(
+                    new EventValue(), new PermanentNotPredicate(new PermanentIsTokenPredicate()));
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(lich, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
+    @Nested
     @DisplayName("ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT source exclusion")
     class AllySourceDealtDamageToOpponentSourceExclusion {
 
@@ -1212,6 +1258,23 @@ class DamageTriggerCollectorServiceTest {
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("queues an unrecognized opponent-damage effect through the default handler")
+    void queuesUnrecognizedControllerDealtDamageByOpponentEffect() {
+        Permanent watcher = createPermanent("Awaken the Sky Tyrant");
+        var effect = new SacrificeSelfThenEffect(new DrawCardEffect());
+        var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3, player2Id);
+
+        boolean result = registry.dispatch(
+                match(watcher, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
     }
 
     @Test

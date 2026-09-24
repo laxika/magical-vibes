@@ -75,11 +75,13 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Desertwalk", Keyword.DESERTWALK);
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
         KEYWORD_MAP.put("Ward", Keyword.WARD);
+        KEYWORD_MAP.put("Doctor's companion", Keyword.DOCTORS_COMPANION);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
         KEYWORD_MAP.put("Poisonous", Keyword.POISONOUS);
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
         KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
+        KEYWORD_MAP.put("Melee", Keyword.MELEE);
         KEYWORD_MAP.put("Enlist", Keyword.ENLIST);
         KEYWORD_MAP.put("Dethrone", Keyword.DETHRONE);
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
@@ -114,6 +116,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Mutate", Keyword.MUTATE);
         KEYWORD_MAP.put("Skulk", Keyword.SKULK);
         KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
+        KEYWORD_MAP.put("Partner", Keyword.PARTNER);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Exploit", Keyword.EXPLOIT);
         KEYWORD_MAP.put("Miracle", Keyword.MIRACLE);
@@ -153,6 +156,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
         KEYWORD_MAP.put("Camouflage", Keyword.CAMOUFLAGE);
         KEYWORD_MAP.put("Double", Keyword.DOUBLE);
+        KEYWORD_MAP.put("Double team", Keyword.DOUBLE);
         KEYWORD_MAP.put("Amass", Keyword.AMASS);
         KEYWORD_MAP.put("Plot", Keyword.PLOT);
         KEYWORD_MAP.put("Cleave", Keyword.CLEAVE);
@@ -160,6 +164,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Assemble", Keyword.ASSEMBLE);
         KEYWORD_MAP.put("Waterbend", Keyword.WATERBEND);
         KEYWORD_MAP.put("Firebending", Keyword.FIREBENDING);
+        KEYWORD_MAP.put("Intensity", Keyword.INTENSITY);
         KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
         KEYWORD_MAP.put("Recruit", Keyword.RECRUIT);
         KEYWORD_MAP.put("Storied", Keyword.STORIED);
@@ -167,6 +172,9 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Disguise", Keyword.DISGUISE);
         KEYWORD_MAP.put("Alliance", Keyword.ALLIANCE);
         KEYWORD_MAP.put("Station", Keyword.STATION);
+        KEYWORD_MAP.put("Freerunning", Keyword.FREERUNNING);
+        KEYWORD_MAP.put("Double team", Keyword.DOUBLE_TEAM);
+        KEYWORD_MAP.put("Intensity", Keyword.INTENSITY);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

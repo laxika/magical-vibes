@@ -1,30 +1,29 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
+import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
-import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.Permanent;
 
-
-
-
-@CardUsed({GoblinEngineer.class, GolemsHeart.class, GrimMonolith.class, GrizzlyBears.class,
-        SolRing.class, WurmcoilEngine.class})
+@CardUsed({GoblinEngineer.class, BraidwoodCup.class, SolemnSimulacrum.class, Spellbook.class, GolemsHeart.class, GrimMonolith.class, GrizzlyBears.class, SolRing.class, WurmcoilEngine.class, DarksteelIngot.class, NevinyrralsDisk.class})
 class GoblinEngineerTest extends BaseCardTest {
 
     @Test
@@ -97,8 +96,6 @@ class GoblinEngineerTest extends BaseCardTest {
     }
 }
 
-@CardUsed({GoblinEngineer.class, Spellbook.class, GrizzlyBears.class, DarksteelIngot.class,
-        NevinyrralsDisk.class})
 class Mh1GoblinEngineerTest extends BaseCardTest {
 
     @Test

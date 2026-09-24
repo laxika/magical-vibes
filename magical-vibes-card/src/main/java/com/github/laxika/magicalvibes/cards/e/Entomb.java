@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 @CardRegistration(set = "MP2", collectorNumber = "23")
 @CardRegistration(set = "UMA", collectorNumber = "94")
 @CardRegistration(set = "DMR", collectorNumber = "82")
+@CardRegistration(set = "TLE", collectorNumber = "310")
 public class Entomb extends Card {
 
     public Entomb() {
