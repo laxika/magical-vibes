@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "118")
+@CardRegistration(set = "DDJ", collectorNumber = "31")
+@CardRegistration(set = "GK1", collectorNumber = "40")
 public class InvokeTheFiremind extends Card {
 
     public InvokeTheFiremind() {

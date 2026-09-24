@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AmaranthineWall;
 import com.github.laxika.magicalvibes.cards.s.SkitterEel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,6 +13,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BiomancersFamiliarTest extends BaseCardTest {
+
+    @Test
+    void keepsOneManaMinimumForGenericOnlyAbility() {
+        harness.addToBattlefield(player1, new BiomancersFamiliar());
+        harness.addToBattlefield(player1, new AmaranthineWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+    }
 
     @Test
     void reducesCreatureActivatedAbilityCost() {

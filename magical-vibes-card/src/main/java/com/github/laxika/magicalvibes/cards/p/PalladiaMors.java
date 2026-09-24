@@ -11,6 +11,8 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "82")
 @CardRegistration(set = "LEG", collectorNumber = "247")
+@CardRegistration(set = "ME3", collectorNumber = "164")
+@CardRegistration(set = "SLD", collectorNumber = "1071")
 public class PalladiaMors extends Card {
 
     public PalladiaMors() {

@@ -14,6 +14,13 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "211")
+@CardRegistration(set = "EXP", collectorNumber = "24")
+@CardRegistration(set = "MM3", collectorNumber = "229")
+@CardRegistration(set = "ZNE", collectorNumber = "9")
+@CardRegistration(set = "SLU", collectorNumber = "4")
+@CardRegistration(set = "SPG", collectorNumber = "109")
+@CardRegistration(set = "SPG", collectorNumber = "114")
+@CardRegistration(set = "MH2", collectorNumber = "244")
 public class AridMesa extends Card {
 
     public AridMesa() {

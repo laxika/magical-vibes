@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAnyNumberCardsFromHandOnBo
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "174")
+@CardRegistration(set = "PIO", collectorNumber = "158")
 public class ValakutAwakening extends Card {
 
     public ValakutAwakening() {

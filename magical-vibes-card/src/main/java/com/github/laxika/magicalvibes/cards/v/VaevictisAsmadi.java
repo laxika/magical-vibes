@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "89")
 @CardRegistration(set = "LEG", collectorNumber = "269")
+@CardRegistration(set = "ME3", collectorNumber = "185")
+@CardRegistration(set = "SLD", collectorNumber = "1070")
 public class VaevictisAsmadi extends Card {
 
     public VaevictisAsmadi() {

@@ -136,6 +136,7 @@ public class CounterSupport {
             }
             if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {
@@ -191,6 +192,10 @@ public class CounterSupport {
     }
 
     public void counterSpellAndPutOnTopOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback()) {
+            counterSpellAndExile(gameData, source, target);
+            return;
+        }
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -210,12 +215,41 @@ public class CounterSupport {
                 source.getDescription(), target.getDescription());
     }
 
+    public void counterSpellAndPutOnBottomOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback() || target.isCastWithEscape()
+                || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+            counterSpellAndExile(gameData, source, target);
+            return;
+        }
+        gameData.stack.remove(target);
+
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        if (!target.isCopy()) {
+            // Guile replaces the whole "counter" event: exile and offer a free play.
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return;
+            }
+            gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+        }
+
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on the bottom of its owner's library."));
+        log.info("Game {} - {} countered {} onto the bottom of its owner's library", gameData.id,
+                source.getDescription(), target.getDescription());
+    }
+
     /**
      * Hinder: counters {@code target} and puts the countered card on top of its owner's library,
      * returning it so the caller can offer the top-or-bottom choice. Returns {@code null} when there
      * is no card to place (a copy, or a controlled-counter replacement such as Guile applied).
      */
     public Card counterSpellOntoLibraryPendingEndChoice(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback()) {
+            counterSpellAndExile(gameData, source, target);
+            return null;
+        }
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -245,6 +279,10 @@ public class CounterSupport {
      * controlled-counter effect (Guile).
      */
     public Card counterSpellGainingArtifactOrCreatureControl(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback()) {
+            counterSpellAndExile(gameData, source, target);
+            return null;
+        }
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -259,9 +297,14 @@ public class CounterSupport {
                 return null;
             }
             Card spell = target.getCard();
+            if ((target.isCastWithDisturb() || target.isCastTransformed()) && spell.getBackFaceCard() != null) {
+                spell = spell.getBackFaceCard();
+            }
             Card physicalCard = target.getPhysicalCard();
             if (sharesCardType(spell, Set.of(CardType.ARTIFACT, CardType.CREATURE))) {
                 gained = physicalCard;
+            } else if (target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+                exileService.exileCard(gameData, target.getOwnerId(), physicalCard);
             } else {
                 graveyardService.addCardToGraveyardFromSpell(gameData, target.getOwnerId(),
                         physicalCard, target.getControllerId());
@@ -378,6 +421,7 @@ public class CounterSupport {
 
     public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {
         if (target == null || isAbility(target)) return;
+        triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, target);
         if (!target.isCopy()
                 && target.getCard() != null
                 && target.getCard().hasType(CardType.CREATURE)

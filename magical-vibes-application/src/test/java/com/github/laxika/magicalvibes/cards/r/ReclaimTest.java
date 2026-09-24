@@ -49,6 +49,19 @@ class ReclaimTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot cast without a card in your graveyard to target")
+    void cannotCastWithoutCardInOwnGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Reclaim()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Fizzles if targeted card leaves graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyardBeforeResolution() {
         Card target = new Resuscitate();

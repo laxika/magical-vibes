@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "8")
+@CardRegistration(set = "DDL", collectorNumber = "18")
 public class DailyRegimen extends Card {
 
     public DailyRegimen() {

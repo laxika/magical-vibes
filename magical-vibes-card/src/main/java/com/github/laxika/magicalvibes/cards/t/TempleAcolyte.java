@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "23")
 @CardRegistration(set = "DDF", collectorNumber = "9")
+@CardRegistration(set = "ME4", collectorNumber = "31")
 public class TempleAcolyte extends Card {
 
     public TempleAcolyte() {

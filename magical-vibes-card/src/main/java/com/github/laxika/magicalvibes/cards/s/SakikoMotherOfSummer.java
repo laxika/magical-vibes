@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 
 @CardRegistration(set = "BOK", collectorNumber = "141")
+@CardRegistration(set = "CMM", collectorNumber = "319")
+@CardRegistration(set = "CMM", collectorNumber = "570")
 public class SakikoMotherOfSummer extends Card {
 
     public SakikoMotherOfSummer() {

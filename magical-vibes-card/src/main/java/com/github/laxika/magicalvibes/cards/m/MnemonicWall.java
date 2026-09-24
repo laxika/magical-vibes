@@ -14,6 +14,8 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "55")
 @CardRegistration(set = "ROE", collectorNumber = "78")
+@CardRegistration(set = "IMA", collectorNumber = "67")
+@CardRegistration(set = "C13", collectorNumber = "50")
 public class MnemonicWall extends Card {
 
     public MnemonicWall() {

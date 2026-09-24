@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "138")
+@CardRegistration(set = "MMA", collectorNumber = "173")
+@CardRegistration(set = "DDR", collectorNumber = "24")
+@CardRegistration(set = "UMA", collectorNumber = "191")
+@CardRegistration(set = "C13", collectorNumber = "175")
 public class WalkerOfTheGrove extends Card {
 
     public WalkerOfTheGrove() {

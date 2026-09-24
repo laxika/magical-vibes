@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.Knighthood;
-import com.github.laxika.magicalvibes.cards.b.BouncingBeebles;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BeastOfBurden.class, BouncingBeebles.class, Knighthood.class})
+@CardUsed({BeastOfBurden.class, GrizzlyBears.class, Knighthood.class})
 class BeastOfBurdenTest extends BaseCardTest {
 
     @Test
@@ -26,10 +26,10 @@ class BeastOfBurdenTest extends BaseCardTest {
     @DisplayName("Beast of Burden counts creatures controlled by any player")
     void countsCreaturesOfAllPlayers() {
         Permanent beast = addCreatureReady(player1, new BeastOfBurden());
-        harness.addToBattlefield(player1, new BouncingBeebles());
-        harness.addToBattlefield(player2, new BouncingBeebles());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
-        // Beast + two Bouncing Beebles = 3 creatures on the battlefield.
+        // Beast + two Grizzly Bears = 3 creatures on the battlefield.
         assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(3);
     }
@@ -38,13 +38,13 @@ class BeastOfBurdenTest extends BaseCardTest {
     @DisplayName("Beast of Burden power and toughness update as creatures enter and leave")
     void ptUpdatesAsCreaturesChange() {
         Permanent beast = addCreatureReady(player1, new BeastOfBurden());
-        harness.addToBattlefield(player2, new BouncingBeebles());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(2);
 
         gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Bouncing Beebles"));
+                .removeIf(p -> p.getCard().getName().equals("Grizzly Bears"));
         assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(1);
     }

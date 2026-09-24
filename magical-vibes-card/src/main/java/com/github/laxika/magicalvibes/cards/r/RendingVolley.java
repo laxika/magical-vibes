@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "150")
+@CardRegistration(set = "EA2", collectorNumber = "14")
+@CardRegistration(set = "TLE", collectorNumber = "34")
 public class RendingVolley extends Card {
 
     public RendingVolley() {

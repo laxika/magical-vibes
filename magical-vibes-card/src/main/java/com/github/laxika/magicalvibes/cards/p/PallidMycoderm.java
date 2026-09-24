@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "10")
+@CardRegistration(set = "MMA", collectorNumber = "24")
+@CardRegistration(set = "TSR", collectorNumber = "31")
 public class PallidMycoderm extends Card {
 
     public PallidMycoderm() {

@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "GTC", collectorNumber = "175")
+@CardRegistration(set = "GK1", collectorNumber = "91")
+@CardRegistration(set = "2X2", collectorNumber = "249")
+@CardRegistration(set = "PIO", collectorNumber = "232")
 public class MartialGlory extends Card {
 
     public MartialGlory() {

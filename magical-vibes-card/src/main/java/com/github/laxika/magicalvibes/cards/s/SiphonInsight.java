@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "241")
+@CardRegistration(set = "OTP", collectorNumber = "54")
+@CardRegistration(set = "DBL", collectorNumber = "241")
 public class SiphonInsight extends Card {
 
     public SiphonInsight() {

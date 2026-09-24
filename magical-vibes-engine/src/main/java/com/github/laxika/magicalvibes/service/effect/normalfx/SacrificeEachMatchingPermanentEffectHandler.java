@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -37,13 +39,16 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
         var e = (SacrificeEachMatchingPermanentEffect) effect;
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId());
 
         List<Permanent> toSacrifice = new ArrayList<>();
         List<UUID> controllerIds = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId())) return;
             for (Permanent perm : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                if (!gameQueryService.cantBeSacrificed(gameData, perm)
+                        && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     toSacrifice.add(perm);
                     controllerIds.add(playerId);
                 }

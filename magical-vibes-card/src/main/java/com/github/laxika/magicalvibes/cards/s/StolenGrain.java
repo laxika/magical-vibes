@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "83")
+@CardRegistration(set = "ME3", collectorNumber = "75")
 public class StolenGrain extends Card {
 
     public StolenGrain() {

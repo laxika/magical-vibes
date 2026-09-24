@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GatherTheTownsfolk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -80,6 +81,20 @@ class HallowedMoonlightTest extends BaseCardTest {
         castGatherTheTownsfolk(player1);
 
         assertThat(humanTokenCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevented tokens do not trigger abilities on an occupied battlefield")
+    void preventedTokensDoNotTriggerEtbAbilities() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setLife(player1, 20);
+        castHallowedMoonlight(player1);
+
+        castGatherTheTownsfolk(player1);
+
+        assertThat(humanTokenCount(player1)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 
     @Test

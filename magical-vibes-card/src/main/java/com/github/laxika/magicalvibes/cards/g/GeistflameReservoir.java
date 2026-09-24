@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "142")
+@CardRegistration(set = "DBL", collectorNumber = "142")
 public class GeistflameReservoir extends Card {
 
     public GeistflameReservoir() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +66,8 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.discardCausedByOpponent = e.recipient() != DiscardRecipient.CONTROLLER;
+        gameData.discardCausedByOpponent = e.recipient() != DiscardRecipient.CONTROLLER
+                && !Objects.equals(entry.getControllerId(), discardPlayerId);
         if (gameData.discardCausedByOpponent
                 && gameQueryService.isDiscardPrevented(gameData, discardPlayerId)) {
             return;

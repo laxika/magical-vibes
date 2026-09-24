@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "85")
+@CardRegistration(set = "MD1", collectorNumber = "9")
+@CardRegistration(set = "DDK", collectorNumber = "23")
+@CardRegistration(set = "EMA", collectorNumber = "213")
+@CardRegistration(set = "E02", collectorNumber = "41")
 public class ZealousPersecution extends Card {
 
     public ZealousPersecution() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "3")
+@CardRegistration(set = "PIO", collectorNumber = "8")
+@CardRegistration(set = "C15", collectorNumber = "64")
 public class CelestialArchon extends Card {
 
     public CelestialArchon() {

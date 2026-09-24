@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "249")
+@CardRegistration(set = "DBL", collectorNumber = "249")
 public class VampireSocialite extends Card {
 
     public VampireSocialite() {

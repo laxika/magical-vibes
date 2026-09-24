@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "75")
+@CardRegistration(set = "VMA", collectorNumber = "147")
 public class YawgmothsBargain extends Card {
 
     public YawgmothsBargain() {

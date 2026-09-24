@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
+import com.github.laxika.magicalvibes.cards.m.ManaCylix;
+import com.github.laxika.magicalvibes.cards.v.VolcanoImp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Hobble.class, AlphaKavu.class, ManaCylix.class, VolcanoImp.class})
 class HobbleTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Hobble enters, its controller draws a card")
     void drawsCardWhenItEnters() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new FountainOfYouth()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlphaKavu());
+        harness.setLibrary(player1, List.of(new ManaCylix()));
         harness.setHand(player1, List.of(new Hobble()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -38,15 +40,21 @@ class HobbleTest extends BaseCardTest {
     @Test
     @DisplayName("Hobble prevents the enchanted creature from attacking")
     void enchantedCreatureCannotAttack() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AlphaKavu());
         attachAura(player2, creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Hobble also prevents a black enchanted creature from attacking")
+    void blackEnchantedCreatureCannotAttack() {
+        Permanent creature = addCreatureReady(player1, new VolcanoImp());
+        attachAura(player2, creature);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -54,9 +62,9 @@ class HobbleTest extends BaseCardTest {
     @Test
     @DisplayName("Hobble prevents a black enchanted creature from blocking")
     void blackEnchantedCreatureCannotBlock() {
-        Permanent creature = addCreatureReady(player2, new ScatheZombies());
+        Permanent creature = addCreatureReady(player2, new VolcanoImp());
         attachAura(player1, creature);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new AlphaKavu());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player1);
@@ -70,9 +78,9 @@ class HobbleTest extends BaseCardTest {
     @Test
     @DisplayName("Hobble allows a nonblack enchanted creature to block")
     void nonblackEnchantedCreatureCanBlock() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new AlphaKavu());
         attachAura(player1, creature);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new AlphaKavu());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player1);
@@ -84,7 +92,7 @@ class HobbleTest extends BaseCardTest {
     @Test
     @DisplayName("Hobble cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
         harness.setHand(player1, List.of(new Hobble()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -94,10 +102,9 @@ class HobbleTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void attachAura(com.github.laxika.magicalvibes.model.Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new Hobble());
+    private void attachAura(Player controller, Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new Hobble());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
 }

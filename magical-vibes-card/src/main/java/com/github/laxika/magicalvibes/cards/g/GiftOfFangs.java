@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "113")
+@CardRegistration(set = "DBL", collectorNumber = "380")
 public class GiftOfFangs extends Card {
 
     public GiftOfFangs() {

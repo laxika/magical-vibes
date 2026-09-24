@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "83")
+@CardRegistration(set = "EMA", collectorNumber = "122")
 public class Carbonize extends Card {
 
     public Carbonize() {

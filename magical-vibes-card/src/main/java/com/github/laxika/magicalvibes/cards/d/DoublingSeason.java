@@ -10,6 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 @CardRegistration(set = "FDN", collectorNumber = "438")
 @CardRegistration(set = "FDN", collectorNumber = "428")
 @CardRegistration(set = "RAV", collectorNumber = "158")
+@CardRegistration(set = "MMA", collectorNumber = "141")
+@CardRegistration(set = "2XM", collectorNumber = "164")
+@CardRegistration(set = "WOT", collectorNumber = "52")
+@CardRegistration(set = "WOT", collectorNumber = "81")
+@CardRegistration(set = "WOT", collectorNumber = "101")
+@CardRegistration(set = "PZA", collectorNumber = "11")
+@CardRegistration(set = "CMM", collectorNumber = "283")
+@CardRegistration(set = "CMM", collectorNumber = "557")
 public class DoublingSeason extends Card {
 
     public DoublingSeason() {

@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "56")
+@CardRegistration(set = "A25", collectorNumber = "55")
+@CardRegistration(set = "MH1", collectorNumber = "48")
+@CardRegistration(set = "C14", collectorNumber = "108")
+@CardRegistration(set = "CMM", collectorNumber = "90")
 public class Exclude extends Card {
 
     public Exclude() {

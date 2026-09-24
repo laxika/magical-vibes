@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "78")
+@CardRegistration(set = "DMR", collectorNumber = "53")
 public class HermeticStudy extends Card {
 
     public HermeticStudy() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AngelOfRetribution;
+import com.github.laxika.magicalvibes.cards.c.CabalCoffers;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,32 +16,51 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FloatingShield.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({FloatingShield.class, AngelOfRetribution.class, CabalCoffers.class})
 class FloatingShieldTest extends BaseCardTest {
+
+    private Permanent attachShield(Permanent host, CardColor chosenColor) {
+        Permanent shield = new Permanent(new FloatingShield());
+        shield.setAttachedTo(host.getId());
+        shield.setChosenColor(chosenColor);
+        gd.playerBattlefields.get(player1.getId()).add(shield);
+        return shield;
+    }
 
     @Test
     @DisplayName("Choosing a color gives the enchanted creature protection from it")
     void enchantedCreatureHasProtectionFromChosenColor() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent angel = addCreatureReady(player1, new AngelOfRetribution());
         harness.setHand(player1, List.of(new FloatingShield()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, angel.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, angel, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, angel, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Protection from the chosen color does not remove the Aura")
+    void protectionDoesNotRemoveAura() {
+        Permanent host = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent shield = attachShield(host, CardColor.WHITE);
+
+        harness.runStateBasedActions();
+
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.WHITE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shield);
+        assertThat(shield.getAttachedTo()).isEqualTo(host.getId());
     }
 
     @Test
     @DisplayName("Sacrificing the Aura grants its chosen-color protection to the target creature")
     void sacrificeGrantsChosenColorProtection() {
-        Permanent host = addCreatureReady(player1, new GrizzlyBears());
-        Permanent shield = new Permanent(new FloatingShield());
-        shield.setAttachedTo(host.getId());
-        shield.setChosenColor(CardColor.RED);
-        gd.playerBattlefields.get(player1.getId()).add(shield);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent host = addCreatureReady(player1, new AngelOfRetribution());
+        attachShield(host, CardColor.RED);
+        Permanent target = addCreatureReady(player2, new AngelOfRetribution());
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();
@@ -52,12 +72,9 @@ class FloatingShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifice protection wears off at end of turn")
     void sacrificeProtectionWearsOff() {
-        Permanent host = addCreatureReady(player1, new GrizzlyBears());
-        Permanent shield = new Permanent(new FloatingShield());
-        shield.setAttachedTo(host.getId());
-        shield.setChosenColor(CardColor.BLUE);
-        gd.playerBattlefields.get(player1.getId()).add(shield);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent host = addCreatureReady(player1, new AngelOfRetribution());
+        attachShield(host, CardColor.BLUE);
+        Permanent target = addCreatureReady(player2, new AngelOfRetribution());
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();
@@ -72,15 +89,12 @@ class FloatingShieldTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice ability cannot target a noncreature permanent")
     void sacrificeAbilityCannotTargetNoncreature() {
-        Permanent host = addCreatureReady(player1, new GrizzlyBears());
-        Permanent shield = new Permanent(new FloatingShield());
-        shield.setAttachedTo(host.getId());
-        shield.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(shield);
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent artifact = findPermanent(player2, "Fountain of Youth");
+        Permanent host = addCreatureReady(player1, new AngelOfRetribution());
+        attachShield(host, CardColor.GREEN);
+        harness.addToBattlefield(player2, new CabalCoffers());
+        Permanent land = findPermanent(player2, "Cabal Coffers");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, artifact.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

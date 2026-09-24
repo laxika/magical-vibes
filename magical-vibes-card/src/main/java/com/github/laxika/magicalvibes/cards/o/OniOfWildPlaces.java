@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOK", collectorNumber = "108")
+@CardRegistration(set = "DDN", collectorNumber = "19")
+@CardRegistration(set = "CMD", collectorNumber = "130")
 public class OniOfWildPlaces extends Card {
 
     public OniOfWildPlaces() {

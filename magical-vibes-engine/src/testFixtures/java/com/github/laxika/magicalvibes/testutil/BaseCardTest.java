@@ -72,16 +72,25 @@ public abstract class BaseCardTest {
      * where every spell cast from Improvisation Capstone happened to need no target choice. This
      * runs the same invariant deterministically on every card test. A test that legitimately ends
      * at a prompt is skipped — the parked entry is exactly what answering it will resume.
+     * Suspended subgame parents are also resumable; the invariant still checks the active frame.
      */
     @AfterEach
     void assertNoDanglingEffectResolutionPark() {
-        if (gd == null || gd.status == GameStatus.FINISHED) {
+        if (gd == null) return;
+        for (GameData frame : gd.session.frames()) {
+            if (frame.waitingForSubgame && gd.session.active() != frame) continue;
+            assertNoDanglingEffectResolutionPark(frame);
+        }
+    }
+
+    private void assertNoDanglingEffectResolutionPark(GameData frame) {
+        if (frame.status == GameStatus.FINISHED) {
             return;
         }
-        if (gd.interaction.isAwaitingInput() || !gd.pendingInteractions.isEmpty()) {
+        if (frame.interaction.isAwaitingInput() || !frame.pendingInteractions.isEmpty()) {
             return;
         }
-        StackEntry parked = gd.pendingEffectResolutionEntry;
+        StackEntry parked = frame.pendingEffectResolutionEntry;
         if (parked != null) {
             Card card = parked.getCard();
             throw new AssertionError("Test ended with '" + (card != null ? card.getName() : "<no card>")
@@ -150,6 +159,17 @@ public abstract class BaseCardTest {
         declareAttackers(player1, attackerIndices);
     }
 
+    /** Declares attackers without letting auto-pass finish combat before block validation. */
+    protected void declareAttackersAndPrepareBlockers(Player activePlayer, List<Integer> attackerIndices) {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(activePlayer, attackerIndices));
+        prepareDeclareBlockers(activePlayer);
+    }
+
+    protected void declareAttackersAndPrepareBlockers(List<Integer> attackerIndices) {
+        declareAttackersAndPrepareBlockers(player1, attackerIndices);
+    }
+
     /**
      * Advances from declare-blockers through combat damage with neither player responding. Note that
      * this resolves the damage itself but not any ability it triggers — pass priority again for that.
@@ -193,9 +213,10 @@ public abstract class BaseCardTest {
         harness.beginBlockerDeclarationInput();
     }
 
-    /** Passes priority until the stack is empty, resolving every waiting trigger. */
+    /** Passes priority until the stack is empty or a trigger asks for player input. */
     protected void resolveAllTriggers() {
-        while (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()) {
+        while (!gd.interaction.isAwaitingInput()
+                && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty())) {
             harness.passBothPriorities();
         }
     }

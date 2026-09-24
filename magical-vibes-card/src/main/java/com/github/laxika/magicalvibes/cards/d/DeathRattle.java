@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "82")
+@CardRegistration(set = "MMA", collectorNumber = "78")
 public class DeathRattle extends Card {
 
     public DeathRattle() {

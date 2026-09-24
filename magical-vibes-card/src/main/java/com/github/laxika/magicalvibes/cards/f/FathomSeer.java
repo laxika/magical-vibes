@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "62")
 @CardRegistration(set = "DD2", collectorNumber = "3")
+@CardRegistration(set = "JVC", collectorNumber = "3")
+@CardRegistration(set = "DDN", collectorNumber = "45")
+@CardRegistration(set = "A25", collectorNumber = "56")
+@CardRegistration(set = "TSR", collectorNumber = "68")
+@CardRegistration(set = "C14", collectorNumber = "109")
 public class FathomSeer extends Card {
 
     public FathomSeer() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "P02", collectorNumber = "83")
+@CardRegistration(set = "ME4", collectorNumber = "93")
 public class ProwlingNightstalker extends Card {
 
     public ProwlingNightstalker() {

@@ -18,6 +18,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "JUD", collectorNumber = "3")
+@CardRegistration(set = "VMA", collectorNumber = "15")
+@CardRegistration(set = "MH1", collectorNumber = "4")
+@CardRegistration(set = "DMR", collectorNumber = "2")
+@CardRegistration(set = "CMM", collectorNumber = "17")
 public class BattleScreech extends Card {
 
     public BattleScreech() {

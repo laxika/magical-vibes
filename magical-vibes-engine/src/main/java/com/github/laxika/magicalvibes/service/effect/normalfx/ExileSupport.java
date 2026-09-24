@@ -119,6 +119,14 @@ public class ExileSupport {
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped,
                                         TurnStep returnStep, int plusOnePlusOneCounters) {
+        exileAndScheduleReturn(gameData, entry, permanent, ownerId, returnTapped, returnStep,
+                plusOnePlusOneCounters, false, null);
+    }
+
+    public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
+                                        Permanent permanent, UUID ownerId, boolean returnTapped,
+                                        TurnStep returnStep, int plusOnePlusOneCounters,
+                                        boolean onlyOnControllersTurn, UUID timingControllerId) {
         List<Card> cards = permanent.cardsLeavingBattlefield();
         Card card = cards.getFirst();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
@@ -130,7 +138,8 @@ public class ExileSupport {
 
         gameData.queueDelayedAction(new PendingExileReturn(
                 card, ownerId, returnTapped, false, returnStep, plusOnePlusOneCounters,
-                cards.size() == 1 ? List.of() : cards.subList(1, cards.size())));
+                cards.size() == 1 ? List.of() : cards.subList(1, cards.size()),
+                onlyOnControllersTurn, false, false, false, timingControllerId, null, false));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
@@ -144,6 +153,7 @@ public class ExileSupport {
      * that turn by {@code TurnCleanupService}.
      */
     public void grantPlayUntilOwnersNextTurn(GameData gameData, UUID cardId, UUID ownerId) {
+        gameData.clearExilePlayPermissionGroup(cardId);
         int expireTurn = gameData.turnNumber + (ownerId.equals(gameData.activePlayerId) ? 2 : 1);
         gameData.exilePlayPermissions.put(cardId, ownerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
@@ -151,6 +161,7 @@ public class ExileSupport {
 
     /** Grants an owner permission to play a card from exile for as long as it remains exiled. */
     public void grantPlayWhileExiled(GameData gameData, UUID cardId, UUID ownerId) {
+        gameData.clearExilePlayPermissionGroup(cardId);
         gameData.exilePlayPermissions.put(cardId, ownerId);
     }
 
@@ -179,6 +190,7 @@ public class ExileSupport {
      * current end step has already begun, the permission lasts through their following turn.
      */
     public void grantPlayUntilOwnersNextEndStep(GameData gameData, UUID cardId, UUID ownerId) {
+        gameData.clearExilePlayPermissionGroup(cardId);
         boolean ownerIsActive = ownerId.equals(gameData.activePlayerId);
         boolean currentEndStepHasBegun = gameData.currentStep != null
                 && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();
@@ -192,6 +204,7 @@ public class ExileSupport {
     /** Grants {@code permissionPlayerId} permission until {@code endStepPlayerId}'s next end step. */
     public void grantPlayUntilNextEndStepOfPlayer(GameData gameData, UUID cardId,
                                                    UUID permissionPlayerId, UUID endStepPlayerId) {
+        gameData.clearExilePlayPermissionGroup(cardId);
         boolean endStepPlayerIsActive = endStepPlayerId.equals(gameData.activePlayerId);
         boolean currentEndStepHasBegun = gameData.currentStep != null
                 && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();

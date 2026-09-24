@@ -10,6 +10,14 @@ import java.util.List;
 @CardRegistration(set = "DOM", collectorNumber = "215")
 @CardRegistration(set = "M13", collectorNumber = "206")
 @CardRegistration(set = "MRD", collectorNumber = "175")
+@CardRegistration(set = "V13", collectorNumber = "12")
+@CardRegistration(set = "SLD", collectorNumber = "205")
+@CardRegistration(set = "SLD", collectorNumber = "909")
+@CardRegistration(set = "BRR", collectorNumber = "17")
+@CardRegistration(set = "MSC", collectorNumber = "199")
+@CardRegistration(set = "MSC", collectorNumber = "434")
+@CardRegistration(set = "CMM", collectorNumber = "387")
+@CardRegistration(set = "CMM", collectorNumber = "605")
 public class GildedLotus extends Card {
 
     public GildedLotus() {

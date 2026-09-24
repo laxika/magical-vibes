@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Target creature gets -5/-5 until end of turn.
  */
 @CardRegistration(set = "BFZ", collectorNumber = "108")
+@CardRegistration(set = "DDR", collectorNumber = "43")
+@CardRegistration(set = "MB1", collectorNumber = "108")
 public class DemonsGrasp extends Card {
 
     public DemonsGrasp() {

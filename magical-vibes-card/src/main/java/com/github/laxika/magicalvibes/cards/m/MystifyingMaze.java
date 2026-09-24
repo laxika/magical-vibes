@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "226")
+@CardRegistration(set = "EOS", collectorNumber = "29")
+@CardRegistration(set = "EOS", collectorNumber = "74")
+@CardRegistration(set = "EOS", collectorNumber = "119")
+@CardRegistration(set = "EOS", collectorNumber = "164")
 public class MystifyingMaze extends Card {
 
     public MystifyingMaze() {

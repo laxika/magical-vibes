@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.GlobalLegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsLegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledSubtypeLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -56,10 +58,12 @@ public class LegendRuleService {
 
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
             if (entry.getValue().size() >= 2 && !hasGlobalExemption(gameData)
+                    && !hasControlledPermanentsExemption(gameData, controllerId)
                     && !allExempt(gameData, battlefield, entry.getKey())) {
                 List<UUID> nonExemptPermanents = entry.getValue().stream()
                         .filter(id -> findPermanent(battlefield, id)
-                                .map(perm -> !hasControlledSubtypeExemption(gameData, battlefield, perm))
+                                .map(perm -> !hasControlledSubtypeExemption(gameData, battlefield, perm)
+                                        && !hasControlledCreaturesExemption(gameData, controllerId, perm))
                                 .orElse(false))
                         .toList();
                 if (nonExemptPermanents.size() < 2) {
@@ -79,6 +83,13 @@ public class LegendRuleService {
                 .flatMap(List::stream)
                 .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance));
+    }
+
+    private boolean hasControlledPermanentsExemption(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        return battlefield != null && battlefield.stream()
+                .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(ControlledPermanentsLegendRuleExemptionEffect.class::isInstance);
     }
 
     /**
@@ -123,15 +134,22 @@ public class LegendRuleService {
                 .anyMatch(exemption -> effectiveSubtypes.contains(exemption.exemptedSubtype()));
     }
 
+    private boolean hasControlledCreaturesExemption(GameData gameData, UUID controllerId,
+                                                    Permanent permanent) {
+        if (!gameQueryService.isCreature(gameData, permanent)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        return battlefield != null && battlefield.stream()
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(ControlledCreaturesLegendRuleExemptionEffect.class::isInstance);
+    }
+
     /**
      * Checks whether a permanent is legendary, considering both its natural supertypes
      * and any supertypes granted by static effects (e.g. In Bolas's Clutches).
      */
     private boolean isLegendary(GameData gameData, Permanent perm) {
-        if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
-            return true;
-        }
-        return gameQueryService.computeStaticBonus(gameData, perm)
-                .grantedSupertypes().contains(CardSupertype.LEGENDARY);
+        return gameQueryService.hasEffectiveSupertype(gameData, perm, CardSupertype.LEGENDARY);
     }
 }

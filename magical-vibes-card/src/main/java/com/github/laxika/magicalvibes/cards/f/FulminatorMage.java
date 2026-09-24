@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "188")
+@CardRegistration(set = "MM2", collectorNumber = "193")
+@CardRegistration(set = "UMA", collectorNumber = "215")
+@CardRegistration(set = "2XM", collectorNumber = "196")
 public class FulminatorMage extends Card {
 
     public FulminatorMage() {

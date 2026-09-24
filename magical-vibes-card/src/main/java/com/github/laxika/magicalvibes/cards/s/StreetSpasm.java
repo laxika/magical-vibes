@@ -29,6 +29,8 @@ import java.util.List;
  * (CR 107.3b), so the damage is X, not 2X.
  */
 @CardRegistration(set = "RTR", collectorNumber = "106")
+@CardRegistration(set = "DDJ", collectorNumber = "30")
+@CardRegistration(set = "C13", collectorNumber = "123")
 public class StreetSpasm extends Card {
 
     public StreetSpasm() {

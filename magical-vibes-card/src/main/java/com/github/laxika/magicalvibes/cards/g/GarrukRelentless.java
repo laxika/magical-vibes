@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "181")
 @CardRegistration(set = "INR", collectorNumber = "197")
+@CardRegistration(set = "SLD", collectorNumber = "2169")
+@CardRegistration(set = "V17", collectorNumber = "9")
+@CardRegistration(set = "SIS", collectorNumber = "49")
 public class GarrukRelentless extends Card {
 
     public GarrukRelentless() {

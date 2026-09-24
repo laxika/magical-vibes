@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "92")
+@CardRegistration(set = "ME3", collectorNumber = "140")
 public class WormwoodTreefolk extends Card {
 
     public WormwoodTreefolk() {

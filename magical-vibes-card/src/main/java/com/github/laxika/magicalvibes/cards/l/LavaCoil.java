@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInstea
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "108")
+@CardRegistration(set = "2X2", collectorNumber = "116")
 public class LavaCoil extends Card {
 
     public LavaCoil() {

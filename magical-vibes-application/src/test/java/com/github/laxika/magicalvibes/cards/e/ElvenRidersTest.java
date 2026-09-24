@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfFire;
+import com.github.laxika.magicalvibes.cards.g.GoblinSkyRaider;
+import com.github.laxika.magicalvibes.cards.s.SilklashSpider;
+import com.github.laxika.magicalvibes.cards.w.WallOfMulch;
+import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,14 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElvenRiders.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class, WallOfFire.class})
+@CardUsed({ElvenRiders.class, GoblinSkyRaider.class, SilklashSpider.class, WallOfMulch.class, WirewoodElf.class})
 class ElvenRidersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Elven Riders cannot be blocked by non-Wall non-flying creature")
     void cannotBeBlockedByNormalCreature() {
-        Permanent riders = attackingRiders();
-        addCreatureReady(player2, new GrizzlyBears());
+        attackingRiders();
+        addCreatureReady(player2, new WirewoodElf());
 
         prepareDeclareBlockers();
 
@@ -36,8 +36,8 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders can be blocked by a Wall")
     void canBeBlockedByWall() {
-        Permanent riders = attackingRiders();
-        addCreatureReady(player2, new WallOfFire());
+        attackingRiders();
+        addCreatureReady(player2, new WallOfMulch());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -48,8 +48,8 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders can be blocked by a creature with flying")
     void canBeBlockedByFlyingCreature() {
-        Permanent riders = attackingRiders();
-        Permanent flyer = addCreatureReady(player2, new AirElemental());
+        attackingRiders();
+        Permanent flyer = addCreatureReady(player2, new GoblinSkyRaider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -60,8 +60,8 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Reach is not enough to block Elven Riders")
     void reachIsNotEnoughToBlock() {
-        Permanent riders = attackingRiders();
-        addCreatureReady(player2, new GiantSpider());
+        attackingRiders();
+        addCreatureReady(player2, new SilklashSpider());
 
         prepareDeclareBlockers();
 
@@ -70,9 +70,8 @@ class ElvenRidersTest extends BaseCardTest {
                 .hasMessageContaining("can only be blocked by creatures with flying or Walls");
     }
 
-    private Permanent attackingRiders() {
+    private void attackingRiders() {
         Permanent riders = addCreatureReady(player1, new ElvenRiders());
         riders.setAttacking(true);
-        return riders;
     }
 }

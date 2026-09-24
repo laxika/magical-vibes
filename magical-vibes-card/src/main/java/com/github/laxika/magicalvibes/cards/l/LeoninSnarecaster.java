@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "23")
+@CardRegistration(set = "DDN", collectorNumber = "4")
 public class LeoninSnarecaster extends Card {
 
     public LeoninSnarecaster() {

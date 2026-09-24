@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "26")
+@CardRegistration(set = "VMA", collectorNumber = "48")
+@CardRegistration(set = "UMA", collectorNumber = "37")
 public class SpiritCairn extends Card {
 
     public SpiritCairn() {

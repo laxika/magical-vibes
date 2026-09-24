@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Tariff.class, BenalishInfantry.class, BenalishKnight.class, RedwoodTreefolk.class})
+@CardUsed({BenalishInfantry.class, BenalishKnight.class, GiantSpider.class, GrizzlyBears.class, RedwoodTreefolk.class, Tariff.class})
 class TariffTest extends BaseCardTest {
 
     @Test
@@ -151,5 +153,30 @@ class TariffTest extends BaseCardTest {
                 .extracting(Permanent::getId)
                 .containsExactly(second.getId());
         harness.assertInGraveyard(player1, "Benalish Infantry");
+    }
+
+    @Test
+    @DisplayName("It selects the creature with greatest mana value")
+    void selectsGreatestManaValueCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GiantSpider());
+
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player1, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("A player with no creatures is not prompted")
+    void noCreaturesNeedsNoChoice() {
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Tariff");
     }
 }

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "20")
+@CardRegistration(set = "EMA", collectorNumber = "21")
+@CardRegistration(set = "C15", collectorNumber = "76")
 public class MonkIdealist extends Card {
 
     public MonkIdealist() {

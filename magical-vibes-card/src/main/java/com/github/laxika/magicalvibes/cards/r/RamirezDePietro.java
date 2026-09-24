@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "LEG", collectorNumber = "251")
+@CardRegistration(set = "ME3", collectorNumber = "168")
 public class RamirezDePietro extends Card {
 }

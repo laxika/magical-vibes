@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -317,6 +318,39 @@ class LibraryChoiceHandlerServiceTest {
         Card card = createCard(name);
         card.setType(type);
         return card;
+    }
+
+    @Test
+    void playableCardFromOpponentsLibraryKeepsOwnerAndSearcherVisibility() {
+        Card chosen = createCard("Chosen card", CardType.SORCERY);
+        gd.playerDecks.get(player2Id).add(chosen);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(chosen))
+                .targetPlayerId(player2Id)
+                .destination(LibrarySearchDestination.EXILE_PLAYABLE)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(exileService).exileCardFaceDown(gd, player2Id, chosen, null, player1Id);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
+        assertThat(gd.playerDecks.get(player2Id)).doesNotContain(chosen);
+    }
+
+    @Test
+    void playableUntilNextUpkeepCardIsExiledFaceUpUnderItsOwner() {
+        Card chosen = createCard("Chosen card", CardType.SORCERY);
+        gd.playerDecks.get(player2Id).add(chosen);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(chosen))
+                .targetPlayerId(player2Id)
+                .destination(LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(exileService).exileCard(gd, player2Id, chosen);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
     }
 
     @Test
@@ -825,6 +859,37 @@ class LibraryChoiceHandlerServiceTest {
 
             verify(effectResolutionService, never()).resolveEffectsFrom(any(), any(), anyInt());
             verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+        }
+
+        @Test
+        @DisplayName("Passes the paused entry's X value to a selected-card follow-up predicate")
+        void selectedCardFollowUpReceivesPausedEntryXValue() {
+            Card found = createCard("Found");
+            CardEffect followUpEffect = new DrawCardEffect(1);
+            gd.playerDecks.get(player1Id).add(found);
+            gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                    LibrarySearchParams.builder(player1Id, List.of(found))
+                            .canFailToFind(true)
+                            .destination(LibrarySearchDestination.HAND)
+                            .followUp(LibrarySearchFollowUp.forSelectedCard(
+                                    new CardManaValueLessThanXPredicate(), followUpEffect))
+                            .build(),
+                    "Choose a card", true));
+
+            StackEntry paused = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Source"),
+                    player1Id, "Source", List.of(), 3);
+            gd.pendingEffectResolutionEntry = paused;
+            gd.pendingEffectResolutionIndex = 0;
+            when(predicateEvaluationService.matchesCardPredicate(eq(found),
+                    any(CardManaValueLessThanXPredicate.class), isNull(), eq(gd), eq(player1Id),
+                    isNull(), isNull(), eq(3))).thenReturn(true);
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            verify(predicateEvaluationService).matchesCardPredicate(eq(found),
+                    any(CardManaValueLessThanXPredicate.class), isNull(), eq(gd), eq(player1Id),
+                    isNull(), isNull(), eq(3));
+            assertThat(paused.getEffectsToResolve()).containsExactly(followUpEffect);
         }
     }
 

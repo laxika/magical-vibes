@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "51")
+@CardRegistration(set = "MM2", collectorNumber = "57")
 public class SomberHoverguard extends Card {
 
     public SomberHoverguard() {

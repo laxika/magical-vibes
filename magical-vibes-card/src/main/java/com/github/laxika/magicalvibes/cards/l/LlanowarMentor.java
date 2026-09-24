@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "131")
+@CardRegistration(set = "TSR", collectorNumber = "216")
 public class LlanowarMentor extends Card {
 
     public LlanowarMentor() {

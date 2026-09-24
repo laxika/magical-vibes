@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KondaLordOfEiganjo;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Terror.class, GrizzlyBears.class, ScatheZombies.class, Ornithopter.class, Mountain.class})
+@CardUsed({Terror.class, GrizzlyBears.class, ScatheZombies.class, Ornithopter.class, Mountain.class,
+        KondaLordOfEiganjo.class})
 class TerrorTest extends BaseCardTest {
 
     @Test
@@ -87,6 +89,19 @@ class TerrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot target players");
+    }
+
+    @Test
     @DisplayName("Resolving Terror destroys target creature and moves it to graveyard")
     void resolvingDestroysTargetCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -94,11 +109,25 @@ class TerrorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Terror");
+    }
+
+    @Test
+    @DisplayName("Terror can destroy a qualifying creature controlled by its caster")
+    void canDestroyQualifyingCreatureControlledByCaster() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Terror");
     }
 
@@ -111,11 +140,25 @@ class TerrorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Terror cannot destroy an indestructible qualifying creature")
+    void cannotDestroyIndestructibleCreature() {
+        harness.addToBattlefield(player2, new KondaLordOfEiganjo());
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Konda, Lord of Eiganjo"));
+
+        harness.assertOnBattlefield(player2, "Konda, Lord of Eiganjo");
+        harness.assertNotInGraveyard(player2, "Konda, Lord of Eiganjo");
+        harness.assertInGraveyard(player1, "Terror");
     }
 
     @Test

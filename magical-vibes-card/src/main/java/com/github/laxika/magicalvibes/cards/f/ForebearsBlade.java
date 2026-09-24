@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DOM", collectorNumber = "214")
+@CardRegistration(set = "CMM", collectorNumber = "384")
 public class ForebearsBlade extends Card {
 
     public ForebearsBlade() {

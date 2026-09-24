@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "144")
+@CardRegistration(set = "SLD", collectorNumber = "1391")
+@CardRegistration(set = "SLD", collectorNumber = "2194")
+@CardRegistration(set = "SPG", collectorNumber = "12")
 public class Polyraptor extends Card {
 
     public Polyraptor() {

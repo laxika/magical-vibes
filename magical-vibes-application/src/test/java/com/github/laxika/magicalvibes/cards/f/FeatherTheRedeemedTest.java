@@ -35,9 +35,33 @@ class FeatherTheRedeemedTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(growth);
         assertThat(gd.playerHands.get(player1.getId())).contains(growth);
+    }
+
+    @Test
+    void delayedReturnKeepsItsControllerWhenTheSpellHasAnotherOwner() {
+        harness.addToBattlefield(player1, new FeatherTheRedeemed());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GiantGrowth growth = new GiantGrowth();
+        growth.setOwnerId(player2.getId());
+        gd.addToExile(player2.getId(), growth);
+        gd.exilePlayPermissions.put(growth.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castFromExile(player1, growth.getId(), bears.getId());
+        resolveAllTriggers();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(growth);
+
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(growth);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(growth);
     }
 
     @Test

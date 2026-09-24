@@ -1,30 +1,30 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SpireOwl.class)
 class SpireOwlTest extends BaseCardTest {
 
     @Test
     void enteringBattlefieldLetsControllerReorderTopFourCards() {
-        harness.setHand(player1, List.of(new SpireOwl()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        Card top0 = new SpireOwl();
+        Card top1 = new SpireOwl();
+        Card top2 = new SpireOwl();
+        Card top3 = new SpireOwl();
+        harness.setLibrary(player1, List.of(top0, top1, top2, top3));
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        Card top0 = deck.get(0);
-        Card top1 = deck.get(1);
-        Card top2 = deck.get(2);
-        Card top3 = deck.get(3);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SpireOwl(), "{1}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -40,17 +40,12 @@ class SpireOwlTest extends BaseCardTest {
 
     @Test
     void enteringWithFewerThanFourCardsReordersAvailableCards() {
-        harness.setHand(player1, List.of(new SpireOwl()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         Card cardA = new SpireOwl();
         Card cardB = new SpireOwl();
-        deck.add(cardA);
-        deck.add(cardB);
+        harness.setLibrary(player1, List.of(cardA, cardB));
+        List<Card> deck = gd.playerDecks.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SpireOwl(), "{1}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -60,5 +55,32 @@ class SpireOwlTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(deck).containsExactly(cardB, cardA);
+    }
+
+    @Test
+    void enteringWithOneLibraryCardLooksAtThatCardWithoutPromptingForOrder() {
+        Card onlyCard = new SpireOwl();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.castFromHand(player1, new SpireOwl(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gameLogContains("looks at the top card")).isTrue();
+    }
+
+    @Test
+    void enteringWithEmptyLibraryDoesNotPromptForOrder() {
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new SpireOwl(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("library is empty")).isTrue();
     }
 }

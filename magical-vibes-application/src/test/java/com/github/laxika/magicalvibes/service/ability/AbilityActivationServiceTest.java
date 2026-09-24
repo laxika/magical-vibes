@@ -84,13 +84,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class AbilityActivationServiceTest {
@@ -127,6 +125,16 @@ class AbilityActivationServiceTest {
     private UUID player1Id;
     private UUID player2Id;
 
+    @Test
+    void removedPrintedAbilitiesAreUnavailableForActivation() {
+        Card card = createArtifactWithOnceOnlyAbility();
+        Permanent permanent = new Permanent(card);
+        when(gameQueryService.computeStaticBonus(gameData, permanent)).thenReturn(EMPTY_BONUS);
+        when(gameQueryService.hasLostAllAbilities(gameData, permanent)).thenReturn(true);
+
+        assertThat(service.getEffectiveActivatedAbilities(gameData, permanent)).isEmpty();
+    }
+
     @BeforeEach
     void setUp() {
         player1Id = UUID.randomUUID();
@@ -161,6 +169,10 @@ class AbilityActivationServiceTest {
         // No Angel of Jubilation — life payments and creature sacrifices are legal ability costs.
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))
                 .thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData)).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData, false)).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData, true)).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(true);
     }
 
     @Test
@@ -261,6 +273,7 @@ class AbilityActivationServiceTest {
         void tappingLandAwardsMana() {
             Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
             Permanent perm = addReadyPermanent(player1Id, island);
+            when(gameQueryService.isLand(gameData, perm)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
@@ -274,7 +287,7 @@ class AbilityActivationServiceTest {
 
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
             assertThat(perm.isTapped()).isTrue();
-            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId());
+            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId(), Set.of(ManaColor.BLUE));
             verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
             verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
@@ -288,6 +301,7 @@ class AbilityActivationServiceTest {
             land.addEffect(EffectSlot.ON_TAP,
                     new ModeledManaEffect(ManaColor.RED, new Fixed(2)));
             Permanent perm = addReadyPermanent(player1Id, land);
+            when(gameQueryService.isLand(gameData, perm)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
@@ -1118,6 +1132,34 @@ class AbilityActivationServiceTest {
     }
 
     @Nested
+    @DisplayName("activateHandAbility — graveyard targets")
+    class ActivateHandAbilityGraveyardTargets {
+
+        @Test
+        @DisplayName("Applies dynamic cost reductions before paying a graveyard-targeted hand ability")
+        void appliesDynamicCostReduction() {
+            Card source = new Card();
+            source.setName("Graveyard Target Hand Ability");
+            source.addHandActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{3}{B}",
+                    List.of(new ReduceActivationCostEffect(new Fixed(2)), new DrawCardEffect()),
+                    "{3}{B}: Draw a card."));
+            gameData.playerHands.get(player1Id).add(source);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+            when(amountEvaluationService.evaluate(eq(gameData), any(), any())).thenReturn(2);
+
+            service.activateHandAbilityWithGraveyardTargets(
+                    gameData, player1, 0, 0, List.of(UUID.randomUUID()));
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gameData.stack).hasSize(1);
+        }
+    }
+
+    @Nested
     @DisplayName("activateHandAbility — timing restrictions")
     class ActivateHandAbilityTimingRestrictions {
 
@@ -1626,6 +1668,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
             when(gameQueryService.findPermanentById(gameData, husk.getId())).thenReturn(husk);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -1654,6 +1697,8 @@ class AbilityActivationServiceTest {
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
             when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, bears)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1720,7 +1765,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)).thenReturn(false);
+            when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)

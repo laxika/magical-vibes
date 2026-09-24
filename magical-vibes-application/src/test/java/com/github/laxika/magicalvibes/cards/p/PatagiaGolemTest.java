@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,6 +31,20 @@ class PatagiaGolemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving the ability grants flying only to the source creature")
+    void resolvingGrantsFlyingOnlyToSource() {
+        Permanent golem = addCreatureReady(player1, new PatagiaGolem());
+        Permanent otherGolem = addCreatureReady(player1, new PatagiaGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherGolem, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Can activate without tapping the summoning-sick creature")
     void canActivateWithoutTappingOrHaste() {
         Permanent golem = addCreatureReady(player1, new PatagiaGolem());
@@ -42,6 +57,21 @@ class PatagiaGolemTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
         assertThat(golem.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed(GrizzlyBears.class)
+    @DisplayName("Grants flying only to itself")
+    void grantsFlyingOnlyToItself() {
+        Permanent golem = addCreatureReady(player1, new PatagiaGolem());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isFalse();
     }
 
     @Test

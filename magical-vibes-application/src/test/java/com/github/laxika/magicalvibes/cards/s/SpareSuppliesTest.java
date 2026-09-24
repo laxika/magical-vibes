@@ -24,6 +24,7 @@ class SpareSuppliesTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent supplies = findPermanent(player1, "Spare Supplies");
         assertThat(supplies.isTapped()).isTrue();
@@ -41,6 +42,7 @@ class SpareSuppliesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Spare Supplies");
         harness.assertInGraveyard(player1, "Spare Supplies");

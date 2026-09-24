@@ -128,7 +128,7 @@ class PlayCardRequestDispatchServiceTest {
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playCardWithAlternateCost(
-                eq(gameData), eq(player), eq(2), isNull(), isNull(), isNull(), eq(List.of()));
+                eq(gameData), eq(player), eq(2), isNull(), isNull(), isNull(), eq(List.of()), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -147,7 +147,7 @@ class PlayCardRequestDispatchServiceTest {
 
         verify(gameService).playFlashbackSpell(eq(gameData), eq(player), eq(2), eq(1), eq(targetId),
                 eq(List.of()), eq(List.of(4)), eq(CardType.CREATURE), eq(List.of(tapPayment)), eq(3), isNull(),
-                eq(List.of()), isNull(), eq(List.of()), eq(List.of()), isNull());
+                eq(List.of()), isNull(), eq(List.of()), eq(List.of()), isNull(), eq(List.of()));
         verifyNoMoreInteractions(gameService);
     }
 

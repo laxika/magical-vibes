@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "DGM", collectorNumber = "106")
+@CardRegistration(set = "MM3", collectorNumber = "188")
 public class SpikeJester extends Card {
 }

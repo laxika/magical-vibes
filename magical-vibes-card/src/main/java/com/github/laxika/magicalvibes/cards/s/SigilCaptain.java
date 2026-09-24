@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsCon
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "77")
+@CardRegistration(set = "CMD", collectorNumber = "225")
 public class SigilCaptain extends Card {
 
     public SigilCaptain() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "44")
+@CardRegistration(set = "C13", collectorNumber = "29")
 public class ArcaneMelee extends Card {
 
     public ArcaneMelee() {

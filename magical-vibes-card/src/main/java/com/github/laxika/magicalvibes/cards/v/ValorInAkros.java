@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "39")
+@CardRegistration(set = "A25", collectorNumber = "38")
+@CardRegistration(set = "2XM", collectorNumber = "37")
 public class ValorInAkros extends Card {
 
     public ValorInAkros() {

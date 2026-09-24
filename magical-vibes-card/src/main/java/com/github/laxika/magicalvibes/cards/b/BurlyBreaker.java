@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "174")
+@CardRegistration(set = "DBL", collectorNumber = "174")
 public class BurlyBreaker extends Card {
 
     public BurlyBreaker() {

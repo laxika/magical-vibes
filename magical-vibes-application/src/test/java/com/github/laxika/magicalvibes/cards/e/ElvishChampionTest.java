@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -22,26 +21,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ElvishChampion.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
 class ElvishChampionTest extends BaseCardTest {
 
+
     @Test
     @DisplayName("Casting Elvish Champion puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new ElvishChampion()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ElvishChampion(), "{1}{G}{G}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(entry.getCard()).isInstanceOf(ElvishChampion.class);
     }
 
     @Test
     @DisplayName("Resolving puts Elvish Champion onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new ElvishChampion()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ElvishChampion(), "{1}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -51,10 +46,8 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Other Elf creatures get +1/+1 and forestwalk")
     void buffsOtherElves() {
-        harness.addToBattlefield(player1, new LlanowarElves());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new ElvishChampion());
-
-        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
@@ -64,9 +57,7 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Elvish Champion does not buff itself")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new ElvishChampion());
-
-        Permanent champion = findPermanent(player1, "Elvish Champion");
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new ElvishChampion());
 
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
@@ -76,10 +67,8 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff non-Elf creatures")
     void doesNotBuffNonElves() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new ElvishChampion());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -90,9 +79,7 @@ class ElvishChampionTest extends BaseCardTest {
     @DisplayName("Buffs opponent's Elf creatures too")
     void buffsOpponentElves() {
         harness.addToBattlefield(player1, new ElvishChampion());
-        harness.addToBattlefield(player2, new LlanowarElves());
-
-        Permanent opponentElf = findPermanent(player2, "Llanowar Elves");
+        Permanent opponentElf = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         assertThat(gqs.getEffectivePower(gd, opponentElf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentElf)).isEqualTo(2);
@@ -102,13 +89,10 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Two Elvish Champions buff each other")
     void twoChampionsBuffEachOther() {
-        harness.addToBattlefield(player1, new ElvishChampion());
-        harness.addToBattlefield(player1, new ElvishChampion());
+        Permanent firstChampion = harness.addToBattlefieldAndReturn(player1, new ElvishChampion());
+        Permanent secondChampion = harness.addToBattlefieldAndReturn(player1, new ElvishChampion());
 
-        List<Permanent> champions = findPermanents(player1, "Elvish Champion");
-
-        assertThat(champions).hasSize(2);
-        for (Permanent champion : champions) {
+        for (Permanent champion : List.of(firstChampion, secondChampion)) {
             assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, champion, Keyword.FORESTWALK)).isTrue();
@@ -120,9 +104,7 @@ class ElvishChampionTest extends BaseCardTest {
     void twoChampionsStackBonuses() {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player1, new ElvishChampion());
-        harness.addToBattlefield(player1, new LlanowarElves());
-
-        Permanent elf = findPermanent(player1, "Llanowar Elves");
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
@@ -131,15 +113,12 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus is removed when Elvish Champion leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new ElvishChampion());
-        harness.addToBattlefield(player1, new LlanowarElves());
-
-        Permanent elf = findPermanent(player1, "Llanowar Elves");
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new ElvishChampion());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Elvish Champion"));
+        gd.playerBattlefields.get(player1.getId()).remove(champion);
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
@@ -149,15 +128,11 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Elvish Champion resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.setHand(player1, List.of(new ElvishChampion()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        Permanent elf = findPermanent(player1, "Llanowar Elves");
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ElvishChampion(), "{1}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
@@ -169,9 +144,7 @@ class ElvishChampionTest extends BaseCardTest {
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new ElvishChampion());
-        harness.addToBattlefield(player1, new LlanowarElves());
-
-        Permanent elf = findPermanent(player1, "Llanowar Elves");
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         elf.setPowerModifier(elf.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(7);
@@ -191,10 +164,9 @@ class ElvishChampionTest extends BaseCardTest {
 
         Permanent elfAttacker = addCreatureReady(player1, new LlanowarElves());
         elfAttacker.setAttacking(true);
-
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        prepareDeclareBlockers(player1);
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(elfAttacker);
@@ -211,10 +183,29 @@ class ElvishChampionTest extends BaseCardTest {
 
         Permanent elfAttacker = addCreatureReady(player1, new LlanowarElves());
         elfAttacker.setAttacking(true);
-
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        prepareDeclareBlockers(player1);
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(elfAttacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Elf with forestwalk can be blocked when only the attacking player controls a Forest")
+    void forestwalkIgnoresAttackingPlayersForest() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new ElvishChampion());
+
+        Permanent elfAttacker = addCreatureReady(player1, new LlanowarElves());
+        elfAttacker.setAttacking(true);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers(player1);
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(elfAttacker);
@@ -227,14 +218,13 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Elvish Champion itself does not have forestwalk when alone")
     void championDoesNotHaveForestwalkItself() {
-        Permanent champion = addCreatureReady(player1, new ElvishChampion());
         harness.addToBattlefield(player2, new Forest());
 
+        Permanent champion = addCreatureReady(player1, new ElvishChampion());
         champion.setAttacking(true);
-
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        prepareDeclareBlockers(player1);
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(champion);
@@ -247,15 +237,14 @@ class ElvishChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Forestwalk is lost when Elvish Champion leaves the battlefield")
     void forestwalkLostWhenChampionLeaves() {
-        harness.addToBattlefield(player1, new ElvishChampion());
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new ElvishChampion());
         harness.addToBattlefield(player2, new Forest());
 
         Permanent elfAttacker = addCreatureReady(player1, new LlanowarElves());
 
         assertThat(gqs.hasKeyword(gd, elfAttacker, Keyword.FORESTWALK)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Elvish Champion"));
+        gd.playerBattlefields.get(player1.getId()).remove(champion);
 
         assertThat(gqs.hasKeyword(gd, elfAttacker, Keyword.FORESTWALK)).isFalse();
     }

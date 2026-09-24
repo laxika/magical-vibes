@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -51,6 +52,7 @@ public class SagaChapterService {
         sagaPermanent.setCounterCount(CounterType.LORE, loreCounters);
         gameLogService.append(gameData, GameLog.cardThen(card, " gets a lore counter (1)."));
         log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
+        triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, sagaPermanent, controllerId);
         triggerSagaChapter(gameData, sagaPermanent, card, controllerId, 1);
     }
 
@@ -80,6 +82,14 @@ public class SagaChapterService {
             case 5 -> "V";
             default -> String.valueOf(loreCount);
         };
+
+        if (chapterEffects.size() == 1
+                && chapterEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
+            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    card, controllerId, modal.choice(), sagaPermanent.getId()));
+            appendChapterTrigger(gameData, card, chapterName, "mode selection");
+            return;
+        }
 
         boolean needsPlayerTarget = chapterEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "233")
+@CardRegistration(set = "DBL", collectorNumber = "233")
 public class LudevicNecrogenius extends Card {
 
     public LudevicNecrogenius() {

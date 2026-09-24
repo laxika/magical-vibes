@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Manabarbs.class, Forest.class, Mountain.class, FurnaceOfRath.class, MindStone.class})
+@CardUsed({Manabarbs.class, Forest.class, Mountain.class, FurnaceOfRath.class, MindStone.class,
+        AdarkarWastes.class})
 class ManabarbsTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -43,7 +46,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Manabarbs");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     // ===== Trigger: controller taps a land =====
@@ -72,6 +75,19 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A land's activated mana ability also triggers Manabarbs")
+    void activatedLandManaAbilityTriggersDamage() {
+        harness.addToBattlefield(player1, new Manabarbs());
+        harness.addToBattlefield(player2, new AdarkarWastes());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 0, null, null);
         resolveAllTriggers();
 
         harness.assertLife(player2, 19);
@@ -137,7 +153,7 @@ class ManabarbsTest extends BaseCardTest {
     @Test
     @DisplayName("Removing Manabarbs stops the land-tap damage")
     void removingManabarbsStopsDamage() {
-        harness.addToBattlefield(player1, new Manabarbs());
+        Permanent manabarbs = harness.addToBattlefieldAndReturn(player1, new Manabarbs());
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Mountain());
         harness.setLife(player1, 20);
@@ -148,8 +164,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.assertLife(player1, 19);
 
         // Remove Manabarbs from battlefield
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Manabarbs"));
+        gd.playerBattlefields.get(player1.getId()).remove(manabarbs);
 
         // After removing Manabarbs (was index 0), Mountains are now at indices 0 (tapped) and 1 (untapped)
         // Tap second Mountain (index 1) — no damage since Manabarbs is gone

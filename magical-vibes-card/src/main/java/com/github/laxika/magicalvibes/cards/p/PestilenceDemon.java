@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "124")
+@CardRegistration(set = "DDR", collectorNumber = "56")
+@CardRegistration(set = "C14", collectorNumber = "153")
 public class PestilenceDemon extends Card {
 
     public PestilenceDemon() {

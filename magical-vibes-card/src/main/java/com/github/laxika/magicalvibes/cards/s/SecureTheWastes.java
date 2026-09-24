@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "36")
+@CardRegistration(set = "SLD", collectorNumber = "1748")
+@CardRegistration(set = "PIO", collectorNumber = "30")
 public class SecureTheWastes extends Card {
 
     public SecureTheWastes() {

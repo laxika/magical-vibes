@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FirestormPhoenixReplacementEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "147")
+@CardRegistration(set = "ME3", collectorNumber = "99")
 public class FirestormPhoenix extends Card {
 
     public FirestormPhoenix() {

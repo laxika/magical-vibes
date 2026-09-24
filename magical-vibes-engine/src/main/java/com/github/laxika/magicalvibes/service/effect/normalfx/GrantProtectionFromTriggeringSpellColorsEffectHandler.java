@@ -34,11 +34,16 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         StackEntry triggeringSpell = gameQueryService.findStackEntryByCardId(
                 gameData, entry.getTriggeringCardId());
-        if (source == null || triggeringSpell == null) {
+        if (source == null) {
             return;
         }
 
-        Set<CardColor> colors = Set.copyOf(triggeringSpell.getCard().getColors());
+        Set<CardColor> colors = triggeringSpell != null
+                ? gameQueryService.getEffectiveCardColors(gameData, triggeringSpell.getCard())
+                : ((GrantProtectionFromTriggeringSpellColorsEffect) effect).triggeringColors();
+        if (colors == null) {
+            colors = Set.of();
+        }
         if (colors.isEmpty()) {
             return;
         }

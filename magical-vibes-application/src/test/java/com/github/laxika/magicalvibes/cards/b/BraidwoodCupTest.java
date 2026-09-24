@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BraidwoodCup.class})
 class BraidwoodCupTest extends BaseCardTest {
 
     @Test
@@ -17,7 +19,7 @@ class BraidwoodCupTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.assertLife(player1, lifeBefore + 1);
         assertThat(cup.isTapped()).isTrue();
     }
 

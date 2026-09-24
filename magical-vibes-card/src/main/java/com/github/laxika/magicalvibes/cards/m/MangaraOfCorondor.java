@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "28")
+@CardRegistration(set = "TSR", collectorNumber = "27")
 public class MangaraOfCorondor extends Card {
 
     public MangaraOfCorondor() {

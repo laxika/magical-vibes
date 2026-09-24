@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "56")
+@CardRegistration(set = "SIR", collectorNumber = "63")
 public class DrownyardExplorers extends Card {
 
     public DrownyardExplorers() {

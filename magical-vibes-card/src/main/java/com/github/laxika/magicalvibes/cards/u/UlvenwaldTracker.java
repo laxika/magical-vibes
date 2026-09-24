@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "200")
+@CardRegistration(set = "MM3", collectorNumber = "144")
+@CardRegistration(set = "SLD", collectorNumber = "1283")
 public class UlvenwaldTracker extends Card {
 
     public UlvenwaldTracker() {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "24")
+@CardRegistration(set = "VMA", collectorNumber = "56")
+@CardRegistration(set = "DMR", collectorNumber = "38")
 public class Aquamoeba extends Card {
 
     public Aquamoeba() {

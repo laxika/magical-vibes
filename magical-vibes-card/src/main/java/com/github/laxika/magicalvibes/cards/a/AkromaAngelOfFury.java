@@ -13,6 +13,11 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "94")
+@CardRegistration(set = "V15", collectorNumber = "1")
+@CardRegistration(set = "A25", collectorNumber = "119")
+@CardRegistration(set = "SLD", collectorNumber = "1287")
+@CardRegistration(set = "TSR", collectorNumber = "150")
+@CardRegistration(set = "CMD", collectorNumber = "108")
 public class AkromaAngelOfFury extends Card {
 
     public AkromaAngelOfFury() {

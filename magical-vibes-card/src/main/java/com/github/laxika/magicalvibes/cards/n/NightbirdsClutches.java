@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "154")
+@CardRegistration(set = "UMA", collectorNumber = "141")
 public class NightbirdsClutches extends Card {
 
     public NightbirdsClutches() {

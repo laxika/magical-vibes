@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "33")
+@CardRegistration(set = "MM3", collectorNumber = "13")
+@CardRegistration(set = "SLD", collectorNumber = "1289")
 public class LinvalaKeeperOfSilence extends Card {
 
     public LinvalaKeeperOfSilence() {

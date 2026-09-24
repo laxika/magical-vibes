@@ -87,7 +87,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text("'s damage to " + cardName + " is prevented.").build());
         }
 
-        if (sourceIsCreature && targetIsCreature) {
+        if (fight.requiresSourceOnBattlefield() && sourceIsCreature && targetIsCreature) {
             triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, source, sourceControllerId);
             triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, target, targetControllerId);
         }

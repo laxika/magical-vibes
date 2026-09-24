@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "32")
+@CardRegistration(set = "PC2", collectorNumber = "13")
+@CardRegistration(set = "PCA", collectorNumber = "13")
+@CardRegistration(set = "TLE", collectorNumber = "8")
 public class ThreeDreams extends Card {
 
     public ThreeDreams() {

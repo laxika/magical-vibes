@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ALA", collectorNumber = "42")
+@CardRegistration(set = "MMA", collectorNumber = "44")
+@CardRegistration(set = "DDU", collectorNumber = "37")
+@CardRegistration(set = "SLD", collectorNumber = "443")
 public class EtheriumSculptor extends Card {
 
     public EtheriumSculptor() {

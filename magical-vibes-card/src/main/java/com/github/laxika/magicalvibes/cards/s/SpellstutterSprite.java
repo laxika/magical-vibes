@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "89")
+@CardRegistration(set = "MMA", collectorNumber = "65")
+@CardRegistration(set = "SLD", collectorNumber = "117")
 public class SpellstutterSprite extends Card {
 
     public SpellstutterSprite() {

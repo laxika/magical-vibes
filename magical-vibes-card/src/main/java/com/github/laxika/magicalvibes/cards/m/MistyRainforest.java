@@ -14,6 +14,14 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "220")
+@CardRegistration(set = "EXP", collectorNumber = "25")
+@CardRegistration(set = "MM3", collectorNumber = "240")
+@CardRegistration(set = "SLD", collectorNumber = "2267")
+@CardRegistration(set = "ZNE", collectorNumber = "10")
+@CardRegistration(set = "SLU", collectorNumber = "5")
+@CardRegistration(set = "SPG", collectorNumber = "111")
+@CardRegistration(set = "SPG", collectorNumber = "116")
+@CardRegistration(set = "MH2", collectorNumber = "250")
 public class MistyRainforest extends Card {
 
     public MistyRainforest() {

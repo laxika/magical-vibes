@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BattleScreech;
+import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,39 +16,55 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FuneralPyre.class, GrizzlyBears.class, Shock.class})
+@CardUsed({BattleScreech.class, BenevolentBodyguard.class, FuneralPyre.class, SuntailHawk.class})
 class FuneralPyreTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles any target card and its owner creates a 1/1 white flying Spirit")
     void exilesAnyCardAndCreatesTokenForOwner() {
-        Card shock = new Shock();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(shock)));
+        Card target = new BattleScreech();
+        target.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(target));
 
-        castFuneralPyre(shock);
+        castFuneralPyre(target);
 
-        harness.assertNotInGraveyard(player2, "Shock");
+        harness.assertNotInGraveyard(player2, "Battle Screech");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Shock"));
+                .anyMatch(card -> card.getName().equals("Battle Screech"));
         assertSpiritToken(player2);
         harness.assertNotOnBattlefield(player1, "Spirit");
     }
 
     @Test
+    @DisplayName("Creates the token for the card owner even when the card is in another graveyard")
+    void createsTokenForCardOwner() {
+        Card target = new BattleScreech();
+        target.setOwnerId(player1.getId());
+        harness.setGraveyard(player2, List.of(target));
+
+        castFuneralPyre(target);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Battle Screech"));
+        assertSpiritToken(player1);
+        harness.assertNotOnBattlefield(player2, "Spirit");
+    }
+
+    @Test
     @DisplayName("Fizzles if the target leaves the graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyard() {
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(bears)));
+        Card target = new BattleScreech();
+        target.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(target));
         harness.setHand(player1, List.of(new FuneralPyre()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
+        harness.castInstant(player1, 0, target.getId());
         gd.playerGraveyards.get(player2.getId()).clear();
         harness.passBothPriorities();
 
@@ -59,20 +76,19 @@ class FuneralPyreTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent instead of a graveyard card")
     void cannotTargetPermanent() {
-        Card bears = new GrizzlyBears();
-        harness.addToBattlefield(player2, bears);
+        Card permanent = new BenevolentBodyguard();
+        harness.addToBattlefield(player2, permanent);
         harness.setHand(player1, List.of(new FuneralPyre()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private void castFuneralPyre(Card target) {
         harness.setHand(player1, List.of(new FuneralPyre()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void assertSpiritToken(Player owner) {
@@ -85,5 +101,40 @@ class FuneralPyreTest extends BaseCardTest {
                         && permanent.getCard().getToughness() == 1
                         && permanent.getCard().getSubtypes().contains(CardSubtype.SPIRIT)
                         && permanent.getCard().getKeywords().contains(Keyword.FLYING));
+    }
+
+    @Test
+    @DisplayName("Creates the Spirit for the exiled card's owner")
+    void createsTokenForCardOwnerJudReview() {
+        Card target = new SuntailHawk();
+        target.setOwnerId(player1.getId());
+        harness.setGraveyard(player2, List.of(target));
+
+        castFuneralPyre(target);
+
+        harness.assertNotInGraveyard(player2, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Suntail Hawk"));
+        assertSpiritToken(player1);
+        harness.assertNotOnBattlefield(player2, "Spirit");
+    }
+
+    @Test
+    @DisplayName("Does not affect a card that leaves and returns to the graveyard")
+    void fizzlesIfTargetLeavesAndReturnsToGraveyard() {
+        Card target = new SuntailHawk();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new FuneralPyre()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerGraveyards.get(player2.getId()).clear();
+        gd.markGraveyardEntry(target);
+        gd.playerGraveyards.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Spirit");
     }
 }

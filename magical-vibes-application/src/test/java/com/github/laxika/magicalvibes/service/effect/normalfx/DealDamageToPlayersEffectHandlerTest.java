@@ -26,6 +26,62 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
 
     private DealDamageToPlayersEffectHandler handler;
 
+    @Test
+    void damageUsesTriggeringPermanentsCurrentController() {
+        Card source = createCard("Damage source");
+        Permanent land = new Permanent(createCard("Land"));
+        StackEntry entry = createEntry(source, player1Id, player1Id);
+        entry.setTriggeringPermanentId(land.getId());
+        entry.setTriggeringPermanentControllerId(player1Id);
+        when(gameQueryService.findPermanentController(gd, land.getId())).thenReturn(player2Id);
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubPlayerDamageCore(player2Id);
+        stubNoInfectOnSource(entry);
+
+        handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
+                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+
+        assertThat(gd.getLife(player1Id)).isEqualTo(20);
+        assertThat(gd.getLife(player2Id)).isEqualTo(18);
+    }
+
+    @Test
+    void recordsActualDamageForFollowingEffect() {
+        StackEntry entry = createEntry(createCard("Damage source"), player1Id, player2Id);
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubPlayerDamageCore(player2Id);
+        stubNoInfectOnSource(entry);
+
+        handler.resolve(gd, entry,
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT).recordingDamageDealt());
+
+        assertThat(entry.getEventValue()).isEqualTo(2);
+    }
+
+    @Test
+    void damageUsesLastKnownControllerWhenTriggeringPermanentHasLeft() {
+        StackEntry entry = createEntry(createCard("Damage source"), player1Id, player1Id);
+        UUID landId = UUID.randomUUID();
+        entry.setTriggeringPermanentId(landId);
+        entry.setTriggeringPermanentControllerId(player1Id);
+        entry.getRemovedPermanentControllers().put(landId, player2Id);
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubPlayerDamageCore(player2Id);
+        stubNoInfectOnSource(entry);
+
+        handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
+                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+
+        assertThat(gd.getLife(player1Id)).isEqualTo(20);
+        assertThat(gd.getLife(player2Id)).isEqualTo(18);
+    }
+
     @Override
     protected void setUpHandler() {
         handler = new DealDamageToPlayersEffectHandler(
@@ -135,6 +191,52 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
             verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
                     eq(gd), eq(player1Id), any(), eq(3));
+        }
+    }
+
+    @Nested
+    @DisplayName("DEFENDING_PLAYER recipient")
+    class DefendingPlayer {
+
+        @Test
+        @DisplayName("Deals damage to the player attacked by the source")
+        void dealsDamageToDefendingPlayer() {
+            Card sourceCard = createCard("Ghost-Spider, Gwen Stacy");
+            StackEntry entry = createEntry(sourceCard, player1Id, null);
+            entry.setAttackedTargetId(player2Id);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(3,
+                    DamageRecipient.DEFENDING_PLAYER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("Deals damage to a planeswalker's controller rather than the planeswalker")
+        void dealsDamageToAttackedPlaneswalkersController() {
+            Card sourceCard = createCard("Ghost-Spider, Gwen Stacy");
+            Permanent planeswalker = addPermanent(player2Id, createCard("Jace Beleren"));
+            StackEntry entry = createEntry(sourceCard, player1Id, null);
+            entry.setAttackedTargetId(planeswalker.getId());
+            when(gameQueryService.findPermanentController(gd, planeswalker.getId())).thenReturn(player2Id);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(3,
+                    DamageRecipient.DEFENDING_PLAYER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
         }
     }
 

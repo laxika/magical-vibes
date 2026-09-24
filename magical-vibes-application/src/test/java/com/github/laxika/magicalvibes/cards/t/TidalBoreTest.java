@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TidalBore.class, Forest.class, GrizzlyBears.class, Island.class})
 class TidalBoreTest extends BaseCardTest {
 
     @Test
@@ -79,6 +81,18 @@ class TidalBoreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Alternate cost requires an Island controlled by the caster")
+    void alternateCostRequiresIslandTheCasterControls() {
+        Permanent opposingIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TidalBore()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, target.getId(), List.of(opposingIsland.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Only creatures are legal targets")
     void onlyCreaturesAreLegalTargets() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -90,12 +104,28 @@ class TidalBoreTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castForMana(Permanent target) {
+    @Test
+    @DisplayName("Fizzles if the target leaves the battlefield before resolution")
+    void fizzlesIfTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TidalBore()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player1, "Tidal Bore");
+    }
+
+    private void castForMana(Permanent target) {
+        harness.setHand(player1, List.of(new TidalBore()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

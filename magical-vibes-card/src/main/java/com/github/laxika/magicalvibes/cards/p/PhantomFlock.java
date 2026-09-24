@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "16")
+@CardRegistration(set = "DMR", collectorNumber = "20")
 public class PhantomFlock extends Card {
 
     public PhantomFlock() {

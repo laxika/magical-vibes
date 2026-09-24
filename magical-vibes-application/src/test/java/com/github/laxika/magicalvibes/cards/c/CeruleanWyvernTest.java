@@ -29,8 +29,7 @@ class CeruleanWyvernTest extends BaseCardTest {
         addCreatureReady(player1, new CeruleanWyvern());
         addCreatureReady(player2, new ViashinoWarrior());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -44,8 +43,7 @@ class CeruleanWyvernTest extends BaseCardTest {
         addCreatureReady(player1, new CeruleanWyvern());
         addCreatureReady(player2, new UktabiFaerie());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

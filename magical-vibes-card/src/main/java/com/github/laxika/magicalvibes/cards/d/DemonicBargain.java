@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffec
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "103")
+@CardRegistration(set = "DBL", collectorNumber = "370")
 public class DemonicBargain extends Card {
 
     public DemonicBargain() {

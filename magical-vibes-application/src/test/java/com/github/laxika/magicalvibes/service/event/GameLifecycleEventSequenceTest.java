@@ -96,8 +96,7 @@ class GameLifecycleEventSequenceTest {
                 turns,
                 mock(BattlefieldEntryService.class),
                 mock(PlayerInputService.class),
-                coordinator,
-                outcomeService);
+                coordinator);
 
         coordinator.mutate(gameData, () -> mulligans.mulligan(gameData, player1));
         assertThat(lastFacts())

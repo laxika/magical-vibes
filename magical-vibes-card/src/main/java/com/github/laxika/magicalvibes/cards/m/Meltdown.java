@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPred
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "203")
+@CardRegistration(set = "SLD", collectorNumber = "2296")
 public class Meltdown extends Card {
 
     public Meltdown() {

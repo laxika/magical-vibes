@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "228")
+@CardRegistration(set = "SLD", collectorNumber = "2240")
 public class SarulfRealmEater extends Card {
 
     public SarulfRealmEater() {

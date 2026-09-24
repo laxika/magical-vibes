@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "147")
+@CardRegistration(set = "KLR", collectorNumber = "156")
 public class BristlingHydra extends Card {
 
     public BristlingHydra() {

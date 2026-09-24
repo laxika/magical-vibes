@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "5ED", collectorNumber = "309")
 @CardRegistration(set = "BRB", collectorNumber = "36")
 @CardRegistration(set = "DKM", collectorNumber = "29")
+@CardRegistration(set = "CMD", collectorNumber = "165")
 public class Lhurgoyf extends Card {
 
     public Lhurgoyf() {

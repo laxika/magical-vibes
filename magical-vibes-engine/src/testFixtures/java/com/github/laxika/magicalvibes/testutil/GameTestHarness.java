@@ -408,6 +408,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    public void castCreatureWithRepeatedCosts(Player player, int cardIndex,
+                                               List<String> repeatedAdditionalCosts) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
     public void castCreatureTappingPermanents(Player player, int cardIndex, List<UUID> tapPermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
@@ -538,6 +546,15 @@ public class GameTestHarness {
     public void castFromGraveyard(Player player, int graveyardCardIndex) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null);
+    }
+
+    public void castFromGraveyardWithDiscards(Player player, int graveyardCardIndex,
+                                              int firstDiscardHandCardIndex,
+                                              List<Integer> additionalDiscardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), null, null,
+                List.of(), firstDiscardHandCardIndex, null, List.of(), Map.of(), List.of(), List.of(),
+                additionalDiscardHandCardIndices);
     }
 
     public void castFromGraveyardWithCounterCost(Player player, int graveyardCardIndex,
@@ -803,6 +820,13 @@ public class GameTestHarness {
     public void castEnchantment(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of(), false, null);
+    }
+
+    public void castEnchantmentWithRepeatedCosts(Player player, int cardIndex,
+                                                   List<String> repeatedAdditionalCosts) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, repeatedAdditionalCosts, false);
     }
 
     public void castArtifact(Player player, int cardIndex) {
@@ -1303,6 +1327,17 @@ public class GameTestHarness {
                 null, null, null, sacrificePermanentIds);
     }
 
+    /** Casts a modal sorcery while paying a single creature sacrifice cost and supplying targets. */
+    public void castModalSorceryWithModesAndSacrifice(Player player, int cardIndex,
+                                                      int choicesRequired, int choicesMax,
+                                                      int[] modeIndices, List<UUID> targetIds,
+                                                      UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                null, null, targetIds, List.of(), false, sacrificePermanentId);
+    }
+
     /** Casts a modal sorcery while paying a conditional multi-permanent tap cost. */
     public void castModalSorceryWithModesAndTaps(Player player, int cardIndex,
                                                  int choicesRequired, int choicesMax,
@@ -1351,6 +1386,12 @@ public class GameTestHarness {
     public void castSorcery(Player player, int cardIndex, UUID targetId, Map<UUID, Integer> damageAssignments) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, damageAssignments);
+    }
+
+    public void castSorcery(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                             Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, damageAssignments, targetIds, List.of());
     }
 
     /** Cast an X instant whose damage is divided as you choose (Fire Covenant). */
@@ -1629,6 +1670,11 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
     }
 
+    public void activateEmblemAbility(Player player, int emblemIndex, int abilityIndex, Integer xValue, UUID targetId) {
+        ensurePriority(player);
+        gameService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue, targetId, null, null, null);
+    }
+
     public void activateStackAbility(Player player, UUID stackCardId, int abilityIndex, int discardHandCardIndex) {
         ensurePriority(player);
         gameService.activateStackAbility(gameData, player, stackCardId, abilityIndex, discardHandCardIndex);
@@ -1725,6 +1771,11 @@ public class GameTestHarness {
         gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId, xValue);
     }
 
+    public void activateHandAbilityWithMultiTargets(Player player, int handCardIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.activateHandAbility(gameData, player, handCardIndex, 0, null, null, targetIds);
+    }
+
     public void activateExiledAbility(Player player, UUID exiledCardId) {
         ensurePriority(player);
         gameService.activateExiledAbility(gameData, player, exiledCardId, 0, null, null);
@@ -1733,6 +1784,13 @@ public class GameTestHarness {
     public void activateHandAbilityWithGraveyardTargets(Player player, int handCardIndex, List<UUID> graveyardCardIds) {
         ensurePriority(player);
         gameService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, 0, graveyardCardIds);
+    }
+
+    public void activateHandAbilityWithGraveyardTargets(Player player, int handCardIndex, int xValue,
+                                                        List<UUID> graveyardCardIds) {
+        ensurePriority(player);
+        gameService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, 0, xValue,
+                graveyardCardIds);
     }
 
     public void handlePermanentChosen(Player player, UUID permanentId) {
@@ -1823,6 +1881,22 @@ public class GameTestHarness {
      */
     public void passUntil(TurnStep targetStep) {
         passUntil(null, targetStep);
+    }
+
+    /** Runs an action with a temporary priority stop, preserving each player's configured stops. */
+    public void withAutoStop(TurnStep step, Runnable action) {
+        Map<UUID, Set<TurnStep>> originalStops = new HashMap<>(gameData.playerAutoStopSteps);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            Set<TurnStep> stops = new HashSet<>(originalStops.getOrDefault(playerId, Set.of()));
+            stops.add(step);
+            gameData.playerAutoStopSteps.put(playerId, stops);
+        }
+        try {
+            action.run();
+        } finally {
+            gameData.playerAutoStopSteps.clear();
+            gameData.playerAutoStopSteps.putAll(originalStops);
+        }
     }
 
     /**

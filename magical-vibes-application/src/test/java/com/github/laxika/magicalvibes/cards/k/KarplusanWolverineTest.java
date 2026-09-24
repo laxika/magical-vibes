@@ -22,10 +22,11 @@ class KarplusanWolverineTest extends BaseCardTest {
         Permanent blocker = addBlocker();
 
         declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, blocker.getId());
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
     }
@@ -38,10 +39,11 @@ class KarplusanWolverineTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -53,6 +55,8 @@ class KarplusanWolverineTest extends BaseCardTest {
         Permanent blocker = addBlocker();
 
         declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -100,6 +104,5 @@ class KarplusanWolverineTest extends BaseCardTest {
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
-        harness.passBothPriorities();
     }
 }

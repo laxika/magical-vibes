@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "103")
+@CardRegistration(set = "TSR", collectorNumber = "179")
 public class PactOfTheTitan extends Card {
 
     public PactOfTheTitan() {

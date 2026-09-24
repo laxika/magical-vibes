@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "103")
 @CardRegistration(set = "DDH", collectorNumber = "59")
+@CardRegistration(set = "UMA", collectorNumber = "198")
 public class Countersquall extends Card {
 
     public Countersquall() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "91")
+@CardRegistration(set = "EMA", collectorNumber = "85")
 public class DeadbridgeShaman extends Card {
 
     public DeadbridgeShaman() {

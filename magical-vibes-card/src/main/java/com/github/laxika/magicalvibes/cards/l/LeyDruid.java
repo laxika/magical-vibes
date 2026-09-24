@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "256")
 @CardRegistration(set = "SUM", collectorNumber = "206")
 @CardRegistration(set = "3ED", collectorNumber = "206")
+@CardRegistration(set = "2ED", collectorNumber = "206")
 public class LeyDruid extends Card {
 
     public LeyDruid() {

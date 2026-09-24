@@ -20,11 +20,26 @@ class CephalidPathmageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be blocked")
     void cannotBeBlocked() {
-        Permanent pathmage = addCreatureReady(player1, new CephalidPathmage());
-
+        addCreatureReady(player1, new CephalidPathmage());
         addCreatureReady(player2, new GrizzlyBears());
-        pathmage.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Target creature cannot be blocked this turn")
+    void targetCreatureCannotBeBlockedThisTurn() {
+        addCreatureReady(player1, new CephalidPathmage());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

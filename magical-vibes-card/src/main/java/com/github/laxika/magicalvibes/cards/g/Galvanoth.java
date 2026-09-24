@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "62")
+@CardRegistration(set = "DDJ", collectorNumber = "10")
 public class Galvanoth extends Card {
 
     public Galvanoth() {

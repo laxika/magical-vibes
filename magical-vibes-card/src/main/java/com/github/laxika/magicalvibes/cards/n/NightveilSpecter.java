@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 
 @CardRegistration(set = "GTC", collectorNumber = "222")
+@CardRegistration(set = "GK1", collectorNumber = "19")
+@CardRegistration(set = "PIO", collectorNumber = "314")
 public class NightveilSpecter extends Card {
 
     public NightveilSpecter() {

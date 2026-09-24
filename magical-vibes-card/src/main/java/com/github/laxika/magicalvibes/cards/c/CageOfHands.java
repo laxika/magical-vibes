@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "3")
+@CardRegistration(set = "PC2", collectorNumber = "4")
+@CardRegistration(set = "PCA", collectorNumber = "4")
+@CardRegistration(set = "C15", collectorNumber = "62")
 public class CageOfHands extends Card {
 
     public CageOfHands() {

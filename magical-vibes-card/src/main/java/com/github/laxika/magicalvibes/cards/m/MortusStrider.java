@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "179")
+@CardRegistration(set = "RVR", collectorNumber = "203")
 public class MortusStrider extends Card {
 
     public MortusStrider() {

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "245")
+@CardRegistration(set = "MM2", collectorNumber = "200")
+@CardRegistration(set = "2X2", collectorNumber = "294")
 public class WiltLeafLiege extends Card {
 
     public WiltLeafLiege() {

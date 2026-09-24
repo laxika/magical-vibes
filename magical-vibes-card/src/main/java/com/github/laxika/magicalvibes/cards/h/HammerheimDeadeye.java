@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "101")
+@CardRegistration(set = "MMA", collectorNumber = "119")
 public class HammerheimDeadeye extends Card {
 
     public HammerheimDeadeye() {

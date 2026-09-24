@@ -57,6 +57,19 @@ class PradeshGypsiesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        setupGypsies();
+        Permanent gypsies = findPermanent(player1, "Pradesh Gypsies");
+
+        harness.activateAbility(player1, 0, null, gypsies.getId());
+        harness.passBothPriorities();
+
+        assertThat(gypsies.getPowerModifier()).isEqualTo(-2);
+        assertThat(gypsies.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreaturePermanent() {
         setupGypsies();
@@ -65,6 +78,57 @@ class PradeshGypsiesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Pays the full activation cost")
+    void paysActivationCost() {
+        setupGypsies();
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        harness.activateAbility(player1, 0, null, targetId);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without enough mana")
+    void cannotActivateWithoutEnoughMana() {
+        setupGypsies();
+        gd.playerManaPools.get(player1.getId()).clear();
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when already tapped")
+    void cannotActivateWhenAlreadyTapped() {
+        setupGypsies();
+        findPermanent(player1, "Pradesh Gypsies").tap();
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while it has summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent gypsies = harness.addToBattlefieldAndReturn(player1, new PradeshGypsies());
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gypsies.isTapped()).isFalse();
     }
 
     @Test

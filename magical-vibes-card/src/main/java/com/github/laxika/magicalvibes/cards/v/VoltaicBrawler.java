@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "189")
+@CardRegistration(set = "KLR", collectorNumber = "213")
 public class VoltaicBrawler extends Card {
 
     public VoltaicBrawler() {

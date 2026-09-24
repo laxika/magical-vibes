@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 public class OrderOfYawgmoth extends Card {
 
     public OrderOfYawgmoth() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false));
     }
 }

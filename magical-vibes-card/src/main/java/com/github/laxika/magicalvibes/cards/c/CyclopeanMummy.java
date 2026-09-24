@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardE
 
 @CardRegistration(set = "4ED", collectorNumber = "128")
 @CardRegistration(set = "LEG", collectorNumber = "93")
+@CardRegistration(set = "ME4", collectorNumber = "72")
 public class CyclopeanMummy extends Card {
 
     public CyclopeanMummy() {

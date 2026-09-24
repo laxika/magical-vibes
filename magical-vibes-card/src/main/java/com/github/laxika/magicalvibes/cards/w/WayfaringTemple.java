@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "209")
+@CardRegistration(set = "MM3", collectorNumber = "202")
 public class WayfaringTemple extends Card {
 
     public WayfaringTemple() {

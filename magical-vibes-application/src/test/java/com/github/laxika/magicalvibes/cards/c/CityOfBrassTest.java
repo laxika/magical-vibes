@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AmberPrison;
 import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -7,14 +8,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CityOfBrass.class, Twiddle.class})
+@CardUsed({AmberPrison.class, CityOfBrass.class, Twiddle.class})
 class CityOfBrassTest extends BaseCardTest {
 
     @Test
@@ -62,30 +61,96 @@ class CityOfBrassTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "RED");
 
-        // The "becomes tapped" trigger is deferred (CR 603.3) until a player next receives
-        // priority; passing priority puts it on the stack and resolves it.
-        for (int i = 0; i < 4 && gd.playerLifeTotals.get(player1.getId()) != 19; i++) {
-            harness.passBothPriorities();
-        }
+        harness.assertLife(player1, 20);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 19);
     }
 
     @Test
-    @DisplayName("Tapping one City of Brass by another spell deals damage only for that City")
-    void tappingOneCityByAnotherSpellTriggersOnlyThatCity() {
-        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+    @DisplayName("Tapping City of Brass for mana deals 1 damage to its controller")
+    void becomingTappedDealsOneDamageToControllerUpstreamReview() {
         harness.addToBattlefield(player1, new CityOfBrass());
-        harness.setHand(player1, List.of(new Twiddle()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
         harness.setLife(player1, 20);
 
-        harness.castAndResolveInstant(player1, 0, city.getId());
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(city.isTapped()).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
 
         resolveAllTriggers();
 
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Tapping an opponent's City of Brass damages that land's controller")
+    void tappingOpponentsCityDamagesItsController() {
+        Permanent city = harness.addToBattlefieldAndReturn(player2, new CityOfBrass());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, city.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Tapping one City of Brass by another ability deals damage only for that City")
+    void tappingOneCityByAnotherAbilityTriggersOnlyThatCity() {
+        harness.addToBattlefield(player1, new AmberPrison());
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        Permanent otherCity = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, city.getId());
+        resolveAllTriggers();
+
+        assertThat(city.isTapped()).isTrue();
+        assertThat(otherCity.isTapped()).isFalse();
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Tapping a City of Brass controlled by another player damages its controller")
+    void tappingCityByOpponentAbilityDamagesItsController() {
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        harness.addToBattlefield(player2, new AmberPrison());
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, city.getId());
+        resolveAllTriggers();
+
+        assertThat(city.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Tapping an already-tapped City of Brass does not trigger its damage ability")
+    void tappingAlreadyTappedCityDoesNotTrigger() {
+        Permanent amberPrison = harness.addToBattlefieldAndReturn(player1, new AmberPrison());
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        city.tap();
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, city.getId());
+        resolveAllTriggers();
+
+        assertThat(amberPrison.isTapped()).isTrue();
+        assertThat(city.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
     }
 }

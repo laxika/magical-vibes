@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SCG", collectorNumber = "8")
+@CardRegistration(set = "VMA", collectorNumber = "22")
+@CardRegistration(set = "DDO", collectorNumber = "7")
+@CardRegistration(set = "A25", collectorNumber = "11")
+@CardRegistration(set = "C14", collectorNumber = "70")
 public class DecreeOfJustice extends Card {
 
     public DecreeOfJustice() {

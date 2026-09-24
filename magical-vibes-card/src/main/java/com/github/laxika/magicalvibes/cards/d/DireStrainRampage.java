@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "219")
+@CardRegistration(set = "DBL", collectorNumber = "219")
 public class DireStrainRampage extends Card {
 
     public DireStrainRampage() {

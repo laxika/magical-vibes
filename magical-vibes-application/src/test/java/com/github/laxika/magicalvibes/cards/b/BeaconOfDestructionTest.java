@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.c.CranialPlating;
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BeaconOfDestruction.class, DrossCrocodile.class, ChandraNalaar.class, CranialPlating.class})
 class BeaconOfDestructionTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -33,26 +37,35 @@ class BeaconOfDestructionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Beacon of Destruction");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
     @DisplayName("Casting Beacon of Destruction targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsItOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
         harness.setHand(player1, List.of(new BeaconOfDestruction()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = creature.getId();
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Beacon of Destruction");
         assertThat(entry.getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CranialPlating());
+        harness.setHand(player1, List.of(new BeaconOfDestruction()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -75,8 +88,7 @@ class BeaconOfDestructionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfDestruction()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -88,8 +100,7 @@ class BeaconOfDestructionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfDestruction()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
@@ -99,17 +110,28 @@ class BeaconOfDestructionTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 5 damage to target creature, destroying it")
     void deals5DamageToCreatureDestroysIt() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
         harness.setHand(player1, List.of(new BeaconOfDestruction()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        // Grizzly Bears (2/2) should be destroyed by 5 damage
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Dross Crocodile");
+        harness.assertInGraveyard(player2, "Dross Crocodile");
+    }
+
+    @Test
+    @DisplayName("Deals 5 damage to target planeswalker")
+    void deals5DamageToPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new BeaconOfDestruction()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).contains(planeswalker);
     }
 
     // ===== Shuffle into library =====
@@ -118,46 +140,37 @@ class BeaconOfDestructionTest extends BaseCardTest {
     @DisplayName("Beacon is shuffled into library instead of going to graveyard")
     void shuffledIntoLibraryNotGraveyard() {
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new BeaconOfDestruction()));
+        BeaconOfDestruction beacon = new BeaconOfDestruction();
+        harness.setHand(player1, List.of(beacon));
         harness.addMana(player1, ManaColor.RED, 5);
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
-        // Not in graveyard
-        harness.assertNotInGraveyard(player1, "Beacon of Destruction");
-        // In library (deck size increased by 1)
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(beacon);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
-        // Card exists somewhere in the deck
-        assertThat(gd.playerDecks.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Beacon of Destruction"));
-        // Log confirms shuffle
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled into its owner's library"));
+        assertThat(gd.playerDecks.get(player1.getId())).contains(beacon);
+        assertThat(gameLogContains("shuffled into its owner's library")).isTrue();
     }
 
     @Test
     @DisplayName("Beacon is shuffled into library even when targeting a creature")
     void shuffledIntoLibraryWhenTargetingCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BeaconOfDestruction()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        BeaconOfDestruction beacon = new BeaconOfDestruction();
+        harness.setHand(player1, List.of(beacon));
         harness.addMana(player1, ManaColor.RED, 5);
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         GameData gd = harness.getGameData();
-        // Not in graveyard
-        harness.assertNotInGraveyard(player1, "Beacon of Destruction");
-        // In library
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(beacon);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
-        assertThat(gd.playerDecks.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Beacon of Destruction"));
+        assertThat(gd.playerDecks.get(player1.getId())).contains(beacon);
     }
 
     // ===== Stack cleanup =====
@@ -169,8 +182,7 @@ class BeaconOfDestructionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfDestruction()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().stack).isEmpty();
     }

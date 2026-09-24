@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "CON", collectorNumber = "101")
+@CardRegistration(set = "V14", collectorNumber = "4")
+@CardRegistration(set = "SLD", collectorNumber = "1599")
+@CardRegistration(set = "2X2", collectorNumber = "192")
 public class ChildOfAlara extends Card {
 
     public ChildOfAlara() {

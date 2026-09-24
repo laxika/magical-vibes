@@ -19,10 +19,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,8 +53,26 @@ import static org.mockito.Mockito.verify;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class CreatureControlServiceTest {
 
+    @Test
+    void changingControlSchedulesEchoAgain() {
+        Card card = createCreatureCard("Echo creature");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect("{2}{R}"));
+        Permanent creature = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(creature);
+
+        applySteal(player2Id, creature, EffectDuration.PERMANENT, null);
+
+        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep.class))
+                .singleElement().satisfies(echo -> {
+                    assertThat(echo.permanentId()).isEqualTo(creature.getId());
+                    assertThat(echo.manaCost()).isEqualTo("{2}{R}");
+                });
+    }
+
     @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
 
     @InjectMocks private CreatureControlService creatureControlService;
 
@@ -422,6 +442,27 @@ class CreatureControlServiceTest {
     @Nested
     @DisplayName("WHILE_SOURCE_TAPPED control (Seasinger)")
     class WhileSourceTapped {
+
+        @Test
+        @DisplayName("Expires control when a maintained target predicate stops matching")
+        void expiresWhenMaintainedTargetPredicateFails() {
+            Permanent target = addCreature(player2Id, "Grizzly Bears");
+            Permanent source = addCreature(player1Id, "Old Man of the Sea");
+            source.tap();
+            PermanentPowerAtMostSourcePowerPredicate predicate =
+                    new PermanentPowerAtMostSourcePowerPredicate();
+            GainControlOfTargetEffect effect =
+                    GainControlOfTargetEffect.whileSourceRemainsTappedAndTargetMatches(predicate);
+            creatureControlService.applyControlEffect(gd, player1Id, target, effect,
+                    EffectDuration.WHILE_SOURCE_REMAINS_TAPPED, source.getId(), source.getCard().getName());
+            org.mockito.Mockito.doReturn(false).when(predicateEvaluationService)
+                    .matchesPermanentPredicate(eq(target), eq(predicate), any());
+
+            creatureControlService.reconcileControl(gd);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(target);
+            assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+        }
 
         @Test
         @DisplayName("Control is retained while the source stays tapped")

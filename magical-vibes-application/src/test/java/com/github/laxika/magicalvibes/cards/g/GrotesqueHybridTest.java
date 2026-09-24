@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SpiritFlare;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,15 +17,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrotesqueHybrid.class, GiantSpider.class, Shock.class})
+@CardUsed({GrotesqueHybrid.class, Gurzigost.class, SpiritFlare.class})
 class GrotesqueHybridTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage destroys the damaged creature despite a regeneration shield")
     void combatDamageDestroysWithoutRegeneration() {
-        addReadyPermanent(player1, new GrotesqueHybrid());
-        Permanent spider = addReadyPermanent(player2, new GiantSpider());
-        spider.setRegenerationShield(1);
+        addCreatureReady(player1, new GrotesqueHybrid());
+        Permanent gurzigost = addCreatureReady(player2, new Gurzigost());
+        gurzigost.setRegenerationShield(1);
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();
@@ -33,28 +33,32 @@ class GrotesqueHybridTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(spider);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(gurzigost);
     }
 
     @Test
     @DisplayName("The trigger does not fire for noncombat damage")
     void noncombatDamageDoesNotDestroy() {
-        addReadyPermanent(player1, new GrotesqueHybrid());
-        Permanent spider = addReadyPermanent(player2, new GiantSpider());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        Permanent hybrid = addCreatureReady(player1, new GrotesqueHybrid());
+        Permanent gurzigost = addCreatureReady(player2, new Gurzigost());
+        gurzigost.setAttacking(true);
+        harness.setHand(player1, List.of(new SpiritFlare()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, spider.getId());
+        harness.castInstant(player1, 0, List.of(hybrid.getId(), gurzigost.getId()));
         harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(spider);
+        assertThat(gurzigost.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(gurzigost);
     }
 
     @Test
     @DisplayName("Discarding a card grants flying and protection from green and white until end of turn")
     void discardGrantsFlyingAndProtection() {
-        Permanent hybrid = addReadyPermanent(player1, new GrotesqueHybrid());
-        Card discarded = new Shock();
+        Permanent hybrid = addCreatureReady(player1, new GrotesqueHybrid());
+        Card discarded = new SpiritFlare();
         harness.setHand(player1, List.of(discarded));
 
         harness.activateAbility(player1, 0, null, null);
@@ -66,15 +70,10 @@ class GrotesqueHybridTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
 
-        hybrid.resetModifiers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         assertThat(hybrid.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
         assertThat(hybrid.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-    }
-
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

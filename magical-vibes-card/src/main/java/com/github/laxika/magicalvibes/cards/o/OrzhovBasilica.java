@@ -13,6 +13,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "161")
+@CardRegistration(set = "MM2", collectorNumber = "246")
+@CardRegistration(set = "GK2", collectorNumber = "49")
+@CardRegistration(set = "IMA", collectorNumber = "243")
+@CardRegistration(set = "2X2", collectorNumber = "327")
+@CardRegistration(set = "C13", collectorNumber = "311")
+@CardRegistration(set = "CMD", collectorNumber = "283")
+@CardRegistration(set = "C15", collectorNumber = "298")
 public class OrzhovBasilica extends Card {
 
     public OrzhovBasilica() {

@@ -34,7 +34,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean grantHaste,
         boolean sacrificeAtEndStep,
         int minTargets
-) implements CardEffect {
+) implements AggregateManaValueTargetEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter) {
@@ -200,6 +200,21 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false);
     }
 
+    /** Creates an all-graveyards form that puts counters on each returned permanent. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyards(
+            CardPredicate filter, CounterType counterType, int counterCount) {
+        return fromAllGraveyards(filter, Integer.MAX_VALUE, 0, counterType, counterCount);
+    }
+
+    /** Creates a bounded all-graveyards form that puts counters on each returned permanent. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyards(
+            CardPredicate filter, int maxTargets, int minTargets,
+            CounterType counterType, int counterCount) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                filter, maxTargets, false, false, null, 0, null, null, counterType, counterCount,
+                GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false, minTargets);
+    }
+
     /** Creates a fixed-cap form targeting up to N cards from one available graveyard and returning them with riders. */
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromSingleGraveyard(
             CardPredicate filter, int maxTargets, boolean grantHaste, boolean sacrificeAtEndStep) {
@@ -223,6 +238,11 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
 
     public boolean hasTotalManaValueCap() {
         return maxTotalManaValue > 0 || dynamicMaxTotalManaValue != null;
+    }
+
+    @Override
+    public boolean hasAggregateManaValueLimit() {
+        return hasTotalManaValueCap();
     }
 
     @Override

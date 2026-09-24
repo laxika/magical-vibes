@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "12")
+@CardRegistration(set = "UMA", collectorNumber = "207")
 public class SovereignsOfLostAlara extends Card {
 
     public SovereignsOfLostAlara() {

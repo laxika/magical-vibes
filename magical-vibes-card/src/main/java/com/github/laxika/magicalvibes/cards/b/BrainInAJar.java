@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "252")
+@CardRegistration(set = "SIR", collectorNumber = "247")
+@CardRegistration(set = "SIR", collectorNumber = "293")
 public class BrainInAJar extends Card {
 
     public BrainInAJar() {

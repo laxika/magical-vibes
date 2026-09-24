@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardFromTargetO
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LEG", collectorNumber = "201")
+@CardRegistration(set = "ME3", collectorNumber = "130")
+@CardRegistration(set = "C13", collectorNumber = "166")
 public class Reincarnation extends Card {
 
     public Reincarnation() {

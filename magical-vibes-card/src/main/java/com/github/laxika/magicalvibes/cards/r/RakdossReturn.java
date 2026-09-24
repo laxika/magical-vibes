@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "188")
+@CardRegistration(set = "GK2", collectorNumber = "72")
+@CardRegistration(set = "PIO", collectorNumber = "393")
 public class RakdossReturn extends Card {
 
     public RakdossReturn() {

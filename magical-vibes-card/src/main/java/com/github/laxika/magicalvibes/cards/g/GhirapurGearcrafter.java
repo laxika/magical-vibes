@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "149")
+@CardRegistration(set = "DDU", collectorNumber = "46")
+@CardRegistration(set = "PIO", collectorNumber = "138")
 public class GhirapurGearcrafter extends Card {
 
     public GhirapurGearcrafter() {

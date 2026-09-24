@@ -40,8 +40,8 @@ class RelicAxeTest extends BaseCardTest {
         Permanent equipment = addReadyEquipment(player1);
         equipment.setAttachedTo(creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -51,8 +51,8 @@ class RelicAxeTest extends BaseCardTest {
         Permanent equipment = addReadyEquipment(player1);
         equipment.setAttachedTo(creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test

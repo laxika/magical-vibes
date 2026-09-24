@@ -14,6 +14,9 @@ import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "133")
 @CardRegistration(set = "DD1", collectorNumber = "17")
+@CardRegistration(set = "EVG", collectorNumber = "17")
+@CardRegistration(set = "EMA", collectorNumber = "192")
+@CardRegistration(set = "SLD", collectorNumber = "785")
 public class WirewoodSymbiote extends Card {
 
     public WirewoodSymbiote() {

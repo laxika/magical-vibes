@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawOnCreatureSpellCastThisTurnEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "210")
+@CardRegistration(set = "SLC", collectorNumber = "2004")
+@CardRegistration(set = "SOA", collectorNumber = "53")
 public class GlimpseOfNature extends Card {
 
     public GlimpseOfNature() {

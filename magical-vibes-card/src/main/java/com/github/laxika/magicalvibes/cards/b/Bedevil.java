@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "157")
+@CardRegistration(set = "OTP", collectorNumber = "37")
+@CardRegistration(set = "MSC", collectorNumber = "182")
+@CardRegistration(set = "MSC", collectorNumber = "393")
 public class Bedevil extends Card {
 
     public Bedevil() {

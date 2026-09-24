@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "17")
+@CardRegistration(set = "MB1", collectorNumber = "172")
 public class MarduHordechief extends Card {
 
     public MarduHordechief() {

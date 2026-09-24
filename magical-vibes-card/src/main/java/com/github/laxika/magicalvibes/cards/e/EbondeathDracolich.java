@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.CreatureWithDifferentNameD
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "100")
+@CardRegistration(set = "SLD", collectorNumber = "1014")
 public class EbondeathDracolich extends Card {
 
     public EbondeathDracolich() {

@@ -61,6 +61,24 @@ class VigilantDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving ability does not untap a replacement Drake")
+    void resolvingAbilityDoesNotUntapReplacementPermanent() {
+        Permanent source = addCreatureReady(player1, new VigilantDrake());
+        source.tap();
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+        Permanent replacement = addCreatureReady(player1, new VigilantDrake());
+        replacement.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(replacement.isTapped()).isTrue();
+    }
+
+    @Test
     void canActivateWhileSummoningSick() {
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new VigilantDrake());
         assertThat(drake.isSummoningSick()).isTrue();
@@ -89,6 +107,17 @@ class VigilantDrakeTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new VigilantDrake());
         harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability without the required blue mana")
+    void cannotActivateWithoutBlueMana() {
+        addCreatureReady(player1, new VigilantDrake());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

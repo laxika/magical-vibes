@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -119,8 +120,8 @@ public class TargetValidationService {
         boolean graveyardTarget = predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 && ctx.targetZone() == Zone.GRAVEYARD;
         boolean omittedOptionalGraveyardTarget = ctx.targetId() == null
-                && effect instanceof ReturnCardFromGraveyardEffect returnEffect
-                && returnEffect.upTo();
+                && ((effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.upTo())
+                || (effect instanceof ExileGraveyardCardsEffect exileEffect && exileEffect.allowZeroTargets()));
         if (omittedOptionalGraveyardTarget) {
             return;
         }
@@ -322,6 +323,7 @@ public class TargetValidationService {
         if (ctx.defendingPlayerId() != null) {
             filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
+        filterContext = filterContext.withXValue(ctx.xValue());
         return filterContext;
     }
 
@@ -352,6 +354,12 @@ public class TargetValidationService {
     }
 
     public void checkProtection(TargetValidationContext ctx, Permanent target) {
+        Permanent sourcePermanent = ctx.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(ctx.gameData(), ctx.sourcePermanentId());
+        if (sourcePermanent != null && gameQueryService.hasProtectionFromSource(
+                ctx.gameData(), target, sourcePermanent)) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from the source");
+        }
         if (hasProtectionFromSourceController(ctx, target)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
         }

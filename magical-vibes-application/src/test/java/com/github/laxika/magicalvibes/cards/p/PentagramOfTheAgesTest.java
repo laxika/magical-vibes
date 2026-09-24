@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PentagramOfTheAges.class, GrizzlyBears.class, Incinerate.class, OrcishArtillery.class})
+@CardUsed({PentagramOfTheAges.class, GrizzlyBears.class, Shock.class, OrcishArtillery.class})
 class PentagramOfTheAgesTest extends BaseCardTest {
 
     @Test
@@ -212,10 +212,9 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.setLife(player1, 20);
         addReadyPentagram(player1);
         harness.forceActivePlayer(player2);
-        Incinerate incinerate = new Incinerate();
-        harness.setHand(player2, List.of(incinerate));
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castInstant(player2, 0, player1.getId());
@@ -224,9 +223,9 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(incinerate.getId());
+                .contains(shock.getId());
 
-        harness.handlePermanentChosen(player1, incinerate.getId());
+        harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

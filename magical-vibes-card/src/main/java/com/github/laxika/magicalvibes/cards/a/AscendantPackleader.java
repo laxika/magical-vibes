@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicat
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "186")
+@CardRegistration(set = "DBL", collectorNumber = "453")
 public class AscendantPackleader extends Card {
 
     public AscendantPackleader() {

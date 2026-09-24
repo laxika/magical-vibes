@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForDragonToGrave
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "246")
+@CardRegistration(set = "SLD", collectorNumber = "1531")
 public class ScionOfTheUrDragon extends Card {
 
     public ScionOfTheUrDragon() {

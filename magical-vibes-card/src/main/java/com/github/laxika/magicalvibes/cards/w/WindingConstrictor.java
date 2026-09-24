@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.AddOnePlayerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneCounterToArtifactOrCreatureEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "140")
+@CardRegistration(set = "SLD", collectorNumber = "309")
+@CardRegistration(set = "KLR", collectorNumber = "216")
 public class WindingConstrictor extends Card {
 
     public WindingConstrictor() {

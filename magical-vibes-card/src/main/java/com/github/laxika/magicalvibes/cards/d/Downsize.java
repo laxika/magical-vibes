@@ -23,6 +23,7 @@ import java.util.List;
  * the spell chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "38")
+@CardRegistration(set = "RVR", collectorNumber = "41")
 public class Downsize extends Card {
 
     public Downsize() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 public class SilentSpecter extends Card {
 
     public SilentSpecter() {
+        addMorph("{3}{B}{B}");
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
     }

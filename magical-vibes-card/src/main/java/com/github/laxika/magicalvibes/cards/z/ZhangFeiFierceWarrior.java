@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "PTK", collectorNumber = "32")
+@CardRegistration(set = "ME3", collectorNumber = "28")
 public class ZhangFeiFierceWarrior extends Card {
 
     public ZhangFeiFierceWarrior() {

@@ -131,4 +131,22 @@ class NecrosavantTest extends BaseCardTest {
                 .contains(otherCopy)
                 .noneMatch(card -> card.getId().equals(activatedCard.getId()));
     }
+
+    @Test
+    @DisplayName("Does not return the source if it leaves the graveyard before resolution")
+    void doesNotReturnSourceIfItLeavesGraveyardBeforeResolution() {
+        advanceToUpkeep(player1);
+        Necrosavant source = new Necrosavant();
+        harness.setGraveyard(player1, List.of(source));
+        harness.addToBattlefield(player1, new PantherWarriors());
+        addMana(player1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(source));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Necrosavant");
+        harness.assertNotOnBattlefield(player1, "Necrosavant");
+    }
 }

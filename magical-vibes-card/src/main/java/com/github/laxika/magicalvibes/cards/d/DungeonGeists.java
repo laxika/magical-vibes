@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "36")
 @CardRegistration(set = "M20", collectorNumber = "57")
+@CardRegistration(set = "C13", collectorNumber = "42")
 public class DungeonGeists extends Card {
 
     public DungeonGeists() {

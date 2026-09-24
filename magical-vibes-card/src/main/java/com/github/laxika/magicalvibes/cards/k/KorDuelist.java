@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ZEN", collectorNumber = "19")
+@CardRegistration(set = "MM2", collectorNumber = "22")
+@CardRegistration(set = "GN3", collectorNumber = "13")
 public class KorDuelist extends Card {
 
     public KorDuelist() {

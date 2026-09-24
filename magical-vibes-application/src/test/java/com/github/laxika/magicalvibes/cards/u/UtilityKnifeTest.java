@@ -30,8 +30,8 @@ class UtilityKnifeTest extends BaseCardTest {
 
         Permanent equipment = findEquipment(player1);
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -47,8 +47,8 @@ class UtilityKnifeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(equipment.getAttachedTo()).isEqualTo(secondCreature.getId());
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(3);
     }
 
     @Test

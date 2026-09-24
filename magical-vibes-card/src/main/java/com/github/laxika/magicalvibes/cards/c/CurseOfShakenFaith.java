@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchant
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "134")
+@CardRegistration(set = "DBL", collectorNumber = "134")
 public class CurseOfShakenFaith extends Card {
 
     public CurseOfShakenFaith() {

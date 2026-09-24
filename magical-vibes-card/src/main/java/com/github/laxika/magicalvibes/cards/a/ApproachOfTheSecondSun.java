@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.ApproachOfTheSecondSunEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "4")
 @CardRegistration(set = "AKR", collectorNumber = "4")
+@CardRegistration(set = "SLD", collectorNumber = "1035")
+@CardRegistration(set = "SLD", collectorNumber = "1826")
+@CardRegistration(set = "STA", collectorNumber = "1")
+@CardRegistration(set = "Q06", collectorNumber = "1")
 public class ApproachOfTheSecondSun extends Card {
 
     public ApproachOfTheSecondSun() {

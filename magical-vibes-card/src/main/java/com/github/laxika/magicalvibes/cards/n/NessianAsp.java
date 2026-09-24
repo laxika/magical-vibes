@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "164")
+@CardRegistration(set = "DDO", collectorNumber = "48")
+@CardRegistration(set = "PIO", collectorNumber = "186")
 public class NessianAsp extends Card {
 
     public NessianAsp() {

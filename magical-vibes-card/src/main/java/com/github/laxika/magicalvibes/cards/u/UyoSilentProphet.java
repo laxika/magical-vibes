@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "99")
+@CardRegistration(set = "C13", collectorNumber = "64")
 public class UyoSilentProphet extends Card {
 
     public UyoSilentProphet() {

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "66")
+@CardRegistration(set = "SLD", collectorNumber = "1177")
+@CardRegistration(set = "WOT", collectorNumber = "18")
 public class ForcedFruition extends Card {
 
     public ForcedFruition() {

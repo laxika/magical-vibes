@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "65")
+@CardRegistration(set = "C14", collectorNumber = "116")
 public class Ixidron extends Card {
 
     public Ixidron() {

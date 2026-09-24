@@ -11,20 +11,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "119")
+@CardRegistration(set = "ME4", collectorNumber = "200")
 public class FloodwaterDam extends Card {
 
     public FloodwaterDam() {
         // {X}{X}{1}, {T}: Tap X target lands. The two {X} symbols make the cost 2X + 1 (handled by
         // ManaCost's X symbol count), while the paid X bounds the target count via
-        // withXScaledTargets; the tap handler fans over the whole chosen target group.
+        // withExactXTargets; the tap handler fans over the whole chosen target group.
         addActivatedAbility(new ActivatedAbility(true, "{X}{X}{1}",
                 List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
                 "{X}{X}{1}, {T}: Tap X target lands.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsLandPredicate(),
                         "Targets must be lands"
-                ),
-                null, null, null, List.of(), 100, 100)
-                .withXScaledTargets());
+                ))
+                .withExactXTargets());
     }
 }

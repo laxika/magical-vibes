@@ -47,6 +47,7 @@ public class ScryfallOracleLoader implements OracleLoader {
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
     private final SetJsonCache cache;
+    private final SetJsonCache legalityCache;
 
     @Autowired
     public ScryfallOracleLoader(@Value("${card-data.cache-dir:./card-data-cache}") String cacheDir) {
@@ -55,12 +56,36 @@ public class ScryfallOracleLoader implements OracleLoader {
 
     ScryfallOracleLoader(String cacheDir, SetJsonCache.Fetcher fetcher) {
         this.cache = new SetJsonCache(cacheDir, "scryfall-", "Scryfall", fetcher);
+        this.legalityCache = new SetJsonCache(cacheDir, "legality-scryfall-", "Scryfall", fetcher);
+    }
+
+
+    @Override
+    public com.github.laxika.magicalvibes.carddata.LegalitySnapshot loadLegalities(String setCode) {
+        String source = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
+        try {
+            Map<String, JsonNode> nodes = parseSetJson(legalityCache.getRefreshing(source, java.time.Duration.ofHours(24)));
+            Map<String, Map<String, String>> result = new HashMap<>();
+            nodes.forEach((number, node) -> {
+                Map<String, String> formats = new HashMap<>();
+                JsonNode legalities = node.get("legalities");
+                if (legalities != null) legalities.properties().forEach(entry ->
+                        formats.put(entry.getKey().toLowerCase(java.util.Locale.ROOT), entry.getValue().asText().toLowerCase(java.util.Locale.ROOT)));
+                result.put(number, formats);
+            });
+            return new com.github.laxika.magicalvibes.carddata.LegalitySnapshot(result, legalityCache.updatedAt(source));
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            LOG.warning("Could not refresh legalities for " + setCode + ": " + e.getMessage());
+            return com.github.laxika.magicalvibes.carddata.LegalitySnapshot.empty();
+        }
     }
 
     @Override
     public SetOracleData loadSet(String setCode, Set<String> implementedCollectorNumbers) {
         try {
-            Map<String, JsonNode> cardsByCollectorNumber = parseSetJson(cache.get(setCode));
+            String sourceSetCode = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
+            Map<String, JsonNode> cardsByCollectorNumber = parseSetJson(cache.get(sourceSetCode));
 
             String setName = null;
             if (!cardsByCollectorNumber.isEmpty()) {
@@ -82,12 +107,14 @@ public class ScryfallOracleLoader implements OracleLoader {
             // Oracle text is parsed only for printings the game implements.
             Map<String, OracleData> frontFaces = new HashMap<>();
             Map<String, OracleData> backFaces = new HashMap<>();
+            Map<String, List<String>> faceNames = new HashMap<>();
             for (String collectorNumber : implementedCollectorNumbers) {
                 JsonNode cardNode = cardsByCollectorNumber.get(collectorNumber);
                 if (cardNode == null) {
                     continue;
                 }
                 frontFaces.put(collectorNumber, parseOracleData(cardNode));
+                faceNames.put(collectorNumber, parseFaceNames(cardNode));
 
                 OracleData backFaceData = parseBackFaceOracleData(cardNode);
                 if (backFaceData != null) {
@@ -96,7 +123,7 @@ public class ScryfallOracleLoader implements OracleLoader {
             }
 
             return new SetOracleData(setName, cardsByCollectorNumber.size(), rarities,
-                    frontFaces, backFaces, loadTokens(setCode));
+                    frontFaces, backFaces, faceNames, loadTokens(sourceSetCode));
         } catch (Exception e) {
             throw new RuntimeException("Failed to load Scryfall oracle data for set " + setCode, e);
         }
@@ -209,6 +236,22 @@ public class ScryfallOracleLoader implements OracleLoader {
         return FaceOracleMapper.toOracleData(toRawFrontFace(card), false);
     }
 
+    static List<String> parseFaceNames(JsonNode card) {
+        List<String> names = new ArrayList<>();
+        JsonNode faces = card.get("card_faces");
+        if (faces != null && faces.isArray()) {
+            for (JsonNode face : faces) {
+                if (face.has("name")) {
+                    names.add(face.get("name").asText());
+                }
+            }
+        }
+        if (names.isEmpty() && card.has("name")) {
+            names.add(card.get("name").asText());
+        }
+        return List.copyOf(names);
+    }
+
     /**
      * Flattens Scryfall's card object into the front face.
      *
@@ -280,15 +323,16 @@ public class ScryfallOracleLoader implements OracleLoader {
     }
 
     /**
-     * Returns card_faces[0] for transform DFCs and split cards (including aftermath),
-     * or the card itself for normal cards.
+     * Returns card_faces[0] for layouts whose characteristics live on the face node,
+     * including transform DFCs, split cards (including aftermath), and reversible cards, or the
+     * card itself for normal cards.
      */
     private static JsonNode getFrontFaceNode(JsonNode card) {
         if (card.has("card_faces") && card.has("layout")) {
             String layout = card.get("layout").asText();
             if ("transform".equals(layout) || "split".equals(layout) || "flip".equals(layout)
                     || "adventure".equals(layout) || "modal_dfc".equals(layout)
-                    || "prepare".equals(layout)) {
+                    || "prepare".equals(layout) || "reversible_card".equals(layout)) {
                 return card.get("card_faces").get(0);
             }
         }

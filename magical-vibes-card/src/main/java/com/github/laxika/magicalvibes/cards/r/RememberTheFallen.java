@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "21")
+@CardRegistration(set = "2XM", collectorNumber = "27")
 public class RememberTheFallen extends Card {
 
     public RememberTheFallen() {

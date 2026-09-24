@@ -15,6 +15,8 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "219")
 @CardRegistration(set = "DPA", collectorNumber = "70")
+@CardRegistration(set = "GN3", collectorNumber = "98")
+@CardRegistration(set = "C14", collectorNumber = "201")
 public class ImmaculateMagistrate extends Card {
 
     public ImmaculateMagistrate() {

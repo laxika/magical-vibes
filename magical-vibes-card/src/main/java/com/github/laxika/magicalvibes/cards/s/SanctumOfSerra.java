@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "32")
+@CardRegistration(set = "OPCA", collectorNumber = "67")
 public class SanctumOfSerra extends Card {
 
     public SanctumOfSerra() {

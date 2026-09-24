@@ -116,4 +116,25 @@ class LoneWolfTest extends BaseCardTest {
                 player1, 0, Map.of(blocker.getId(), 1, player2.getId(), 1)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Blocked Lone Wolf can assign damage as though unblocked after its blocker leaves")
+    void blockedLoneWolfAssignsDamageAfterBlockerLeaves() {
+        harness.setLife(player2, 20);
+        Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        loneWolf.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(loneWolf.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, blocker));
+
+        assertThat(loneWolf.isBlockedWithoutBlockers()).isTrue();
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
 }

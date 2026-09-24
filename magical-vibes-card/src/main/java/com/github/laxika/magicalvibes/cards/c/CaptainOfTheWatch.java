@@ -14,6 +14,8 @@ import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "6")
 @CardRegistration(set = "M13", collectorNumber = "8")
+@CardRegistration(set = "DDO", collectorNumber = "3")
+@CardRegistration(set = "GN3", collectorNumber = "8")
 public class CaptainOfTheWatch extends Card {
 
     public CaptainOfTheWatch() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacement
 @CardRegistration(set = "FDN", collectorNumber = "431")
 @CardRegistration(set = "FDN", collectorNumber = "441")
 @CardRegistration(set = "V11", collectorNumber = "9")
+@CardRegistration(set = "MMA", collectorNumber = "182")
+@CardRegistration(set = "SLD", collectorNumber = "1163")
 public class Progenitus extends Card {
 
     public Progenitus() {

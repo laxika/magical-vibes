@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "128")
+@CardRegistration(set = "DDK", collectorNumber = "20")
 public class Decompose extends Card {
 
     public Decompose() {

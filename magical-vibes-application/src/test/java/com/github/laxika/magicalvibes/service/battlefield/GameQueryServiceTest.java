@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneCounterToArtifactOrCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlayerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersOnAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFr
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
@@ -123,9 +126,28 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
+    @Test
+    void faceDownPermanentsHaveZeroManaValueForLowestManaValueComparison() {
+        Card printedExpensive = createCreature("Face down", 6, 6, CardColor.GREEN);
+        printedExpensive.setManaCost("{6}");
+        Permanent faceDown = addPermanent(player1Id, printedExpensive);
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card printedCheap = createCreature("Face up", 1, 1, CardColor.GREEN);
+        printedCheap.setManaCost("{1}");
+        Permanent faceUp = addPermanent(player2Id, printedCheap);
+
+        assertThat(gqs.hasLowestManaValueAmongAllNonlandPermanents(gd, faceDown)).isTrue();
+        assertThat(gqs.hasLowestManaValueAmongAllNonlandPermanents(gd, faceUp)).isFalse();
+    }
+
     @Test
     void landCountUsesCurrentPermanentTypes() {
         Permanent creature = addPermanent(player1Id, createCreature("Changed land", 2, 2, CardColor.GREEN));
@@ -179,7 +201,7 @@ class GameQueryServiceTest {
     void conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController() {
         ReflectionTestUtils.setField(gqs, "landPlayPermissionService",
                 new com.github.laxika.magicalvibes.service.effect.LandPlayPermissionService(
-                        new com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver(
+                        new StaticEffectConditionResolver(
                                 conditionEvaluationService)));
         var condition = new com.github.laxika.magicalvibes.model.condition.ControllerTurn();
         Card card = new Card();
@@ -230,6 +252,9 @@ class GameQueryServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
         ReflectionTestUtils.setField(gqs, "conditionEvaluationService", conditionEvaluationService);
+        ReflectionTestUtils.setField(gqs, "staticEffectConditionResolver",
+                new StaticEffectConditionResolver(
+                        conditionEvaluationService));
         ReflectionTestUtils.setField(gqs, "amountEvaluationService",
                 new AmountEvaluationService(evaluator, gqs));
 
@@ -264,6 +289,42 @@ class GameQueryServiceTest {
     }
 
     @Test
+    void landManaReplacementEndsWhenItsSourceLosesAbilities() {
+        Card card = new Card();
+        card.addEffect(EffectSlot.STATIC, new ReplaceLandManaWithColorEffect(ManaColor.BLACK));
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        assertThat(gqs.fixedLandManaColor(gd, null)).isEqualTo(ManaColor.BLACK);
+        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        assertThat(gqs.fixedLandManaColor(gd, null)).isNull();
+    }
+
+    @Test
+    void combatDamagePreventionEndsWhenItsSourceLosesAbilities() {
+        Card card = new Card();
+        card.setType(CardType.CREATURE);
+        card.addEffect(EffectSlot.STATIC, new PreventAllCombatDamageToAndBySelfEffect());
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, source, true)).isTrue();
+        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        assertThat(gqs.isPreventedFromDealingDamage(gd, source, true)).isFalse();
+    }
+
+    @Test
+    void creatureDependentDamageFloorDoesNotRaiseLife() {
+        Card card = new Card();
+        card.setType(CardType.CREATURE);
+        card.addEffect(EffectSlot.STATIC, new DamageLifeFloorEffect(1, LifeFloorCondition.CONTROLS_A_CREATURE));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+        assertThat(gqs.damageLifeFloor(gd, player1Id, 1)).isEqualTo(1);
+        assertThat(gqs.damageLifeFloor(gd, player1Id, 0)).isZero();
+    }
+
+    @Test
     @DisplayName("Player-scoped land mana replacement follows the land's current controller")
     void playerScopedLandManaReplacementFollowsCurrentController() {
         Card firstLandCard = new Card();
@@ -284,6 +345,14 @@ class GameQueryServiceTest {
         gd.playerBattlefields.get(player2Id).add(firstPlayersLand);
 
         assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isNull();
+    }
+
+    @Test
+    void globalTokenReplacementAppliesToAnOpponent() {
+        addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                "Primal Vigor", MultiplyTokenCreationEffect.forAllPlayers(2)));
+
+        assertThat(gqs.getTokenCreationAmount(gd, player2Id, 1, null)).isEqualTo(2);
     }
 
     private static final class CountingLayerSystemService extends LayerSystemService {
@@ -1281,6 +1350,18 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("global marker doubles +1/+1 counters on an opponent's creature")
+        void globalMarkerDoublesCountersOnOpponentCreature() {
+            Card primalVigor = createEnchantment("Primal Vigor");
+            primalVigor.addEffect(EffectSlot.STATIC, DoublePlusOnePlusOneCountersEffect.global());
+            addPermanent(player1Id, primalVigor);
+            Permanent bears = addPermanent(player2Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(gqs.doublePlusOnePlusOneCounters(gd, bears, 1)).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("adds one per Hardened Scales marker")
         void addsOnePerMarker() {
             Card scales = createCreature("Hardened Scales", 0, 0, CardColor.GREEN);
@@ -1322,6 +1403,19 @@ class GameQueryServiceTest {
             Permanent artifact = addPermanent(player1Id, createArtifact("Sol Ring"));
 
             assertThat(gqs.doublePlusOnePlusOneCounters(gd, artifact, 1)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("global replacement doubles +1/+1 counters on an opponent's creature only")
+        void globalReplacementTargetsAllCreatures() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Primal Vigor", new DoublePlusOnePlusOneCountersOnAllCreaturesEffect()));
+            Permanent creature = addPermanent(player2Id, createCreature("Creature", 2, 2, CardColor.GREEN));
+            Permanent artifact = addPermanent(player2Id, createArtifact("Artifact"));
+
+            assertThat(gqs.replaceCounters(gd, creature, CounterType.PLUS_ONE_PLUS_ONE, 1)).isEqualTo(2);
+            assertThat(gqs.replaceCounters(gd, creature, CounterType.CHARGE, 1)).isEqualTo(1);
+            assertThat(gqs.replaceCounters(gd, artifact, CounterType.PLUS_ONE_PLUS_ONE, 1)).isEqualTo(1);
         }
     }
 
@@ -2318,6 +2412,17 @@ class GameQueryServiceTest {
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id)).isEqualTo(2);
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player1Id, player1Id)).isEqualTo(1);
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player2Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("source-and-player multiplier excludes opponent permanents")
+        void sourceAndPlayerMultiplierExcludesOpponentPermanents() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Goblin Goliath", new DoubleControllerDamageToOpponentsEffect()));
+
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id)).isEqualTo(2);
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id,
+                    UUID.randomUUID())).isEqualTo(1);
         }
 
         @Test

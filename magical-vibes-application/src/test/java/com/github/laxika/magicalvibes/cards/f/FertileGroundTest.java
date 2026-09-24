@@ -108,6 +108,24 @@ class FertileGroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Fertile Ground adds one mana when attached to the same land")
+    void multipleAurasEachAddMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
+        firstAura.setAttachedTo(forest.getId());
+        secondAura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+        harness.handleListChoice(player1, "BLUE");
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            harness.handleListChoice(player1, "RED");
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    @Test
     @CardUsed(DreamThrush.class)
     @DisplayName("Cannot cast Fertile Ground targeting a non-land permanent")
     void cannotTargetNonLand() {

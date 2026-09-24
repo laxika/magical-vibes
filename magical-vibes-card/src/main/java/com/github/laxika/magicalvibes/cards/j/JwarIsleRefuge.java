@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "215")
+@CardRegistration(set = "PC2", collectorNumber = "120")
+@CardRegistration(set = "PCA", collectorNumber = "120")
+@CardRegistration(set = "C13", collectorNumber = "300")
+@CardRegistration(set = "CMD", collectorNumber = "279")
 public class JwarIsleRefuge extends Card {
 
     public JwarIsleRefuge() {

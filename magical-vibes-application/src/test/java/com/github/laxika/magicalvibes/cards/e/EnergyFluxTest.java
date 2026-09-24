@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeadlyInsect;
+import com.github.laxika.magicalvibes.cards.k.KyrenToy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,22 +13,26 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EnergyFlux.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({EnergyFlux.class, KyrenToy.class, DeadlyInsect.class})
 class EnergyFluxTest extends BaseCardTest {
 
     private void addEnergyFlux(Player controller) {
         harness.addToBattlefield(controller, new EnergyFlux());
     }
 
-    private Permanent addFountain(Player controller) {
-        return harness.addToBattlefieldAndReturn(controller, new FountainOfYouth());
+    private Permanent addKyrenToy(Player controller) {
+        return harness.addToBattlefieldAndReturn(controller, new KyrenToy());
+    }
+
+    private Permanent addDeadlyInsect(Player controller) {
+        return harness.addToBattlefieldAndReturn(controller, new DeadlyInsect());
     }
 
     @Test
     @DisplayName("Declining to pay {2} sacrifices the artifact")
     void decliningPaymentSacrificesArtifact() {
         addEnergyFlux(player1);
-        addFountain(player1);
+        addKyrenToy(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger -> may-pay prompt
@@ -36,22 +40,22 @@ class EnergyFluxTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
-        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player1, "Kyren Toy");
+        harness.assertInGraveyard(player1, "Kyren Toy");
     }
 
     @Test
     @DisplayName("Paying {2} keeps the artifact on the battlefield")
     void payingKeepsArtifact() {
         addEnergyFlux(player1);
-        addFountain(player1);
+        addKyrenToy(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger -> may-pay prompt
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertOnBattlefield(player1, "Fountain of Youth");
+        harness.assertOnBattlefield(player1, "Kyren Toy");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
@@ -59,22 +63,22 @@ class EnergyFluxTest extends BaseCardTest {
     @DisplayName("Accepting without enough mana still sacrifices the artifact")
     void acceptingWithoutEnoughManaSacrificesArtifact() {
         addEnergyFlux(player1);
-        addFountain(player1);
+        addKyrenToy(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger -> may-pay prompt
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
-        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player1, "Kyren Toy");
+        harness.assertInGraveyard(player1, "Kyren Toy");
     }
 
     @Test
     @DisplayName("Grant is global: an opponent's Energy Flux still taxes your artifact")
     void opponentsEnergyFluxTaxesYourArtifact() {
         addEnergyFlux(player2);
-        addFountain(player1);
+        addKyrenToy(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger -> may-pay prompt
@@ -82,14 +86,14 @@ class EnergyFluxTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player1, "Kyren Toy");
     }
 
     @Test
     @DisplayName("An opponent's artifact does not trigger during your upkeep")
     void opponentArtifactNotTriggeredDuringYourUpkeep() {
         addEnergyFlux(player1);
-        Permanent opponentArtifact = addFountain(player2);
+        Permanent opponentArtifact = addKyrenToy(player2);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -104,14 +108,14 @@ class EnergyFluxTest extends BaseCardTest {
     @DisplayName("Non-artifact permanents are unaffected")
     void nonArtifactUnaffected() {
         addEnergyFlux(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent insect = addDeadlyInsect(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(bears.getId()));
+                .anyMatch(p -> p.getId().equals(insect.getId()));
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -119,7 +123,7 @@ class EnergyFluxTest extends BaseCardTest {
     @DisplayName("An artifact triggers during its controller's upkeep")
     void artifactTriggersDuringItsControllersUpkeep() {
         addEnergyFlux(player1);
-        addFountain(player2);
+        addKyrenToy(player2);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -129,16 +133,16 @@ class EnergyFluxTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Kyren Toy");
+        harness.assertInGraveyard(player2, "Kyren Toy");
     }
 
     @Test
     @DisplayName("Each artifact receives its own upkeep trigger")
     void eachArtifactReceivesItsOwnUpkeepTrigger() {
         addEnergyFlux(player1);
-        Permanent firstArtifact = addFountain(player1);
-        Permanent secondArtifact = addFountain(player1);
+        Permanent firstArtifact = addKyrenToy(player1);
+        Permanent secondArtifact = addKyrenToy(player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -151,7 +155,7 @@ class EnergyFluxTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstArtifact, secondArtifact);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .filteredOn(card -> card.getName().equals("Fountain of Youth"))
+                .filteredOn(card -> card.getName().equals("Kyren Toy"))
                 .hasSize(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

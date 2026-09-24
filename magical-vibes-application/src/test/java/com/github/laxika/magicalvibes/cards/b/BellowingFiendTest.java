@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
-import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.cards.p.PreyUpon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -25,8 +25,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BellowingFiend.class, GrizzlyBears.class, HillGiant.class, InvasionOfInnistrad.class,
-        LilianaVess.class, PreyUpon.class})
+@CardUsed({BellowingFiend.class, ChandraHopesBeacon.class, GrizzlyBears.class, HillGiant.class,
+        InvasionOfInnistrad.class, PreyUpon.class})
 class BellowingFiendTest extends BaseCardTest {
 
     @Test
@@ -129,22 +129,23 @@ class BellowingFiendTest extends BaseCardTest {
      */
     @Nested
     @DisplayName("Non-creature any-target permanents")
+    @CardUsed({BellowingFiend.class, ChandraHopesBeacon.class, InvasionOfInnistrad.class})
     class NonCreatureAnyTargets {
 
         @Test
         @DisplayName("Does not trigger when it deals divided damage to a planeswalker")
         void doesNotTriggerOnDamageToPlaneswalker() {
             Permanent fiend = addCreatureReady(player1, new BellowingFiend());
-            Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
-            liliana.setCounterCount(CounterType.LOYALTY, 5);
+            Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraHopesBeacon());
+            chandra.setCounterCount(CounterType.LOYALTY, 5);
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
             DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
             harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
-                    gd, fiend.getCard(), player1.getId(), Map.of(liliana.getId(), 3)));
+                    gd, fiend.getCard(), player1.getId(), Map.of(chandra.getId(), 3)));
 
-            assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+            assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
             assertThat(gd.stack).isEmpty();
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "162")
+@CardRegistration(set = "A25", collectorNumber = "241")
 public class MikokoroCenterOfTheSea extends Card {
 
     public MikokoroCenterOfTheSea() {

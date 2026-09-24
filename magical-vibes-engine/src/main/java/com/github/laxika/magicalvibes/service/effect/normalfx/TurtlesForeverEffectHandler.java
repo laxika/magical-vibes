@@ -67,8 +67,7 @@ public class TurtlesForeverEffectHandler implements NormalEffectHandlerBean {
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, controllerId))
                 .toList();
-        List<Card> outsideGameCandidates = gameData.playerSideboards
-                .getOrDefault(controllerId, List.of()).stream()
+        List<Card> outsideGameCandidates = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId).stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, controllerId))
                 .toList();

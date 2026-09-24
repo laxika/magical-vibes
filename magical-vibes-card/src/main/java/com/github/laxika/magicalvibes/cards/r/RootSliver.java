@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "137")
+@CardRegistration(set = "SLD", collectorNumber = "656")
 public class RootSliver extends Card {
 
     public RootSliver() {

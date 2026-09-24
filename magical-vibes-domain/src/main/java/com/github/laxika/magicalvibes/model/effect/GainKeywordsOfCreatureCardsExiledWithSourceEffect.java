@@ -25,6 +25,7 @@ public record GainKeywordsOfCreatureCardsExiledWithSourceEffect(
             Keyword.ISLANDWALK,
             Keyword.SWAMPWALK,
             Keyword.PLAINSWALK,
+            Keyword.DESERTWALK,
             Keyword.TRAMPLE
     );
 

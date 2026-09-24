@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseAttackersThisCombatEffe
 import com.github.laxika.magicalvibes.model.effect.ChooseBlockersThisCombatEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "250")
+@CardRegistration(set = "GK1", collectorNumber = "92")
+@CardRegistration(set = "CMD", collectorNumber = "209")
 public class MasterWarcraft extends Card {
 
     public MasterWarcraft() {

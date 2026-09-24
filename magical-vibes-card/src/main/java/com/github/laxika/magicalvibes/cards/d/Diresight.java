@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "BLB", collectorNumber = "91")
+@CardRegistration(set = "TLE", collectorNumber = "162")
 public class Diresight extends Card {
 
     public Diresight() {

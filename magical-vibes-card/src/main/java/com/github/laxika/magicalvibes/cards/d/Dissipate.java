@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MIR", collectorNumber = "61")
 @CardRegistration(set = "M15", collectorNumber = "51")
 @CardRegistration(set = "MID", collectorNumber = "49")
+@CardRegistration(set = "DDJ", collectorNumber = "25")
+@CardRegistration(set = "DBL", collectorNumber = "49")
 public class Dissipate extends Card {
 
     public Dissipate() {

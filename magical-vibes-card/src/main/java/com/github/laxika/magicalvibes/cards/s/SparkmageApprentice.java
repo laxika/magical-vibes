@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "M10", collectorNumber = "158")
 @CardRegistration(set = "RAV", collectorNumber = "144")
+@CardRegistration(set = "DDN", collectorNumber = "48")
 public class SparkmageApprentice extends Card {
 
     public SparkmageApprentice() {

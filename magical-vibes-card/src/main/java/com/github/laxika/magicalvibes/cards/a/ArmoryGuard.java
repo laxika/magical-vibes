@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "2")
+@CardRegistration(set = "DDL", collectorNumber = "12")
+@CardRegistration(set = "RVR", collectorNumber = "3")
 public class ArmoryGuard extends Card {
 
     public ArmoryGuard() {

@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M19", collectorNumber = "126")
 @CardRegistration(set = "M20", collectorNumber = "327")
 @CardRegistration(set = "M21", collectorNumber = "128")
+@CardRegistration(set = "W16", collectorNumber = "10")
 public class WalkingCorpse extends Card {
 }

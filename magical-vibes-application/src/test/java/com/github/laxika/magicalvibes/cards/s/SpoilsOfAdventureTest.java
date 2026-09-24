@@ -38,7 +38,7 @@ class SpoilsOfAdventureTest extends BaseCardTest {
     void gainsLifeAndDrawsCards() {
         harness.setHand(player1, List.of(new SpoilsOfAdventure()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.WHITE, 5);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0);

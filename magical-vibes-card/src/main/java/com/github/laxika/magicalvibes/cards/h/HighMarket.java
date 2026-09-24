@@ -11,6 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "320")
+@CardRegistration(set = "V12", collectorNumber = "9")
+@CardRegistration(set = "2XM", collectorNumber = "321")
+@CardRegistration(set = "EOS", collectorNumber = "18")
+@CardRegistration(set = "EOS", collectorNumber = "63")
+@CardRegistration(set = "EOS", collectorNumber = "108")
+@CardRegistration(set = "EOS", collectorNumber = "153")
+@CardRegistration(set = "C15", collectorNumber = "289")
 public class HighMarket extends Card {
 
     public HighMarket() {

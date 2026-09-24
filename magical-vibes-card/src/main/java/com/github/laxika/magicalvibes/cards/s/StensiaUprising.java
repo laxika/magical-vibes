@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "178")
+@CardRegistration(set = "DBL", collectorNumber = "445")
 public class StensiaUprising extends Card {
 
     public StensiaUprising() {

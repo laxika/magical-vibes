@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "37")
+@CardRegistration(set = "DDQ", collectorNumber = "19")
 public class SpectralGateguards extends Card {
 
     public SpectralGateguards() {

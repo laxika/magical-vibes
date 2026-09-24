@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "211")
+@CardRegistration(set = "MMA", collectorNumber = "191")
+@CardRegistration(set = "SLD", collectorNumber = "1746")
+@CardRegistration(set = "2XM", collectorNumber = "208")
+@CardRegistration(set = "SPG", collectorNumber = "142")
 public class Manamorphose extends Card {
 
     public Manamorphose() {

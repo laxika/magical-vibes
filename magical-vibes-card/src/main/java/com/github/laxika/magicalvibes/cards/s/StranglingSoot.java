@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "132")
+@CardRegistration(set = "DDK", collectorNumber = "65")
+@CardRegistration(set = "TSR", collectorNumber = "140")
 public class StranglingSoot extends Card {
 
     public StranglingSoot() {

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
@@ -183,6 +184,32 @@ class SpellCastingServiceTest {
     private SpellCastingService svc;
 
     @Test
+    void graveyardCounterPaymentDoesNotRequireSacrificingTheSelectedCreatures() {
+        var harness = new com.github.laxika.magicalvibes.testutil.GameTestHarness();
+        var player = harness.getPlayer1();
+        var game = harness.getGameData();
+        harness.skipMulligan();
+        game.alwaysOfferPriorityWindows = true;
+        Permanent first = harness.addToBattlefieldAndReturn(player,
+                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player,
+                new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        first.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
+        second.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setGraveyard(player, List.of(new com.github.laxika.magicalvibes.cards.q.QuilledGreatwurm()));
+        harness.addMana(player, ManaColor.GREEN, 2);
+        harness.addMana(player, ManaColor.COLORLESS, 4);
+
+        harness.castFromGraveyardWithCounterCost(player, 0,
+                List.of(first.getId(), first.getId(), first.getId(), second.getId(), second.getId(), second.getId()));
+
+        assertThat(game.playerBattlefields.get(player.getId())).contains(first, second);
+        assertThat(first.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(game.playerManaPools.get(player.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
     void preparingRoomDoorPreservesTheUnlockAbilityTargetGroup() {
         Card room = new Card();
         room.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
@@ -288,6 +315,9 @@ class SpellCastingServiceTest {
         lenient().when(castingPermissionService.canCastWithTiming(
                 any(GameData.class), any(UUID.class), any(Card.class),
                 anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(true);
+        lenient().when(castingPermissionService.canCastWithTiming(
+                any(GameData.class), any(UUID.class), any(Card.class),
+                anyBoolean(), anyBoolean(), anyBoolean(), anyInt())).thenReturn(true);
         lenient().when(castingPermissionService.flashTimingRequiresAlternateCast(
                 any(GameData.class), any(UUID.class), any(Card.class))).thenReturn(false);
         lenient().when(castingPermissionService.isOpponentsManaValueSpellCastRestricted(
@@ -371,6 +401,30 @@ class SpellCastingServiceTest {
             assertThat(entry.getCard()).isSameAs(spell);
             assertThat(entry.isCastWithFlashback()).isTrue();
         });
+    }
+
+    @Test
+    @DisplayName("Snapshots converge colors when casting flashback")
+    void snapshotsConvergeColorsWhenCastingFlashback() {
+        Card spell = createSorcery("Converge Flashback Spell", "{1}{R}");
+        spell.setKeywords(EnumSet.of(Keyword.CONVERGE));
+        spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+        spell.addCastingOption(new FlashbackCast("{4}{R}"));
+        gd.playerGraveyards.get(player1Id).add(spell);
+        addMana(player1Id, ManaColor.RED, 1);
+        addMana(player1Id, ManaColor.BLUE, 1);
+        addMana(player1Id, ManaColor.COLORLESS, 3);
+        when(castingPermissionService.canUseFlashback(eq(gd), eq(player1Id), any(FlashbackCast.class)))
+                .thenReturn(true);
+        when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, spell)).thenReturn(true);
+
+        svc.playFlashbackSpell(gd, player1, 0, null, player2Id);
+
+        assertThat(gd.stack).singleElement().satisfies(entry ->
+                assertThat(entry.getXValue()).isEqualTo(2));
+        assertThat(gd.getSpellCastConvergeValue(spell.getId())).isEqualTo(2);
+        assertThat(gd.getSpellCastColorsSpent(spell.getId()))
+                .containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
     }
 
     @Test
@@ -1203,6 +1257,30 @@ class SpellCastingServiceTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough mana");
         }
+
+        @Test
+        @DisplayName("Applies an optional hand-exile reduction to an X spell")
+        void appliesHandExileReductionToXSpell() {
+            Card xSpell = createInstant("Test X Spell", "{X}{U}");
+            xSpell.addEffect(EffectSlot.SPELL,
+                    new ExileAnyNumberOfCardsFromHandCost(
+                            new CardColorPredicate(CardColor.BLUE), 2));
+            Card blueCard = createInstant("Blue Card", "{U}");
+            blueCard.setColor(CardColor.BLUE);
+            setHand(player1Id, List.of(xSpell, blueCard));
+            addMana(player1Id, ManaColor.BLUE, 1);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any())).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, 2, null, null, null, List.of(), false, null,
+                    null, List.of(), null, List.of(), false, null, List.of(1));
+
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
+            assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
+                    .containsExactly("Blue Card");
+            assertThat(gd.stack).hasSize(1);
+        }
     }
 
     // =========================================================================
@@ -1627,6 +1705,7 @@ class SpellCastingServiceTest {
             Card land = createLand("Exiled Plains");
             gd.addToExile(player1Id, land);
             gd.exilePlayPermissions.put(land.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, land.getId())).thenReturn(true);
 
             svc.playCardFromExile(gd, player1, land.getId(), 0, null);
 
@@ -1673,6 +1752,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Exiled Bear", "{1}{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 2);
 
             svc.playCardFromExile(gd, player1, creature.getId(), 0, null);
@@ -1697,6 +1777,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Free Bear", "{4}{G}{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             gd.exilePlayWithoutPayingManaCost.add(creature.getId());
             // Player has no mana at all — the play must still succeed.
 
@@ -1716,6 +1797,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Exiled Bear", "{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 1);
             int before = gd.getSpellsCastThisTurnCount(player1Id);
 

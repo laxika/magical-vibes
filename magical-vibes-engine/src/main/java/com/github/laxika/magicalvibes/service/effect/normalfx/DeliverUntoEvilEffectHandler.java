@@ -53,7 +53,8 @@ public class DeliverUntoEvilEffectHandler implements NormalEffectHandlerBean {
         if (controlsBolasPlaneswalker(gameData, controllerId)) {
             graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                     legalCards.stream().map(Card::getId).toList(),
-                    (graveyard, card) -> gameData.addCardToHand(controllerId, card),
+                    (graveyard, card) -> graveyardReturnSupport.addCardToHandFromGraveyard(
+                            gameData, controllerId, controllerId, card),
                     " returns ", " from graveyard to hand.");
             return;
         }

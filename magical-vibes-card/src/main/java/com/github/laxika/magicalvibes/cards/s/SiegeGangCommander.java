@@ -19,8 +19,12 @@ import java.util.Set;
 @CardRegistration(set = "10E", collectorNumber = "234")
 @CardRegistration(set = "M10", collectorNumber = "157")
 @CardRegistration(set = "DOM", collectorNumber = "143")
+@CardRegistration(set = "DMR", collectorNumber = "136")
 @CardRegistration(set = "SCG", collectorNumber = "103")
 @CardRegistration(set = "DD1", collectorNumber = "32")
+@CardRegistration(set = "EVG", collectorNumber = "32")
+@CardRegistration(set = "EMA", collectorNumber = "147")
+@CardRegistration(set = "GNT", collectorNumber = "42")
 public class SiegeGangCommander extends Card {
 
     public SiegeGangCommander() {

@@ -23,8 +23,12 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum SacrificeRecipient {
     CONTROLLER,
     TARGET_PLAYER,
+    /** The controller and the targeted player both sacrifice. */
+    CONTROLLER_AND_TARGET_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
+    /** The current controller of the triggering permanent, falling back to its last controller. */
+    TRIGGERING_PERMANENT_CONTROLLER,
     TARGET_PLAYER_OR_PERMANENT_CONTROLLER,
     EACH_PLAYER,
     EACH_OPPONENT,

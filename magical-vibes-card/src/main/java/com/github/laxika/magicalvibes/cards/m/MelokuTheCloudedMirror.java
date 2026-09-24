@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "74")
+@CardRegistration(set = "MMA", collectorNumber = "52")
 public class MelokuTheCloudedMirror extends Card {
 
     public MelokuTheCloudedMirror() {

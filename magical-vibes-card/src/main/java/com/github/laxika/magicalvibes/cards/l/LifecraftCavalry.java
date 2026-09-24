@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "113")
+@CardRegistration(set = "KLR", collectorNumber = "166")
 public class LifecraftCavalry extends Card {
 
     public LifecraftCavalry() {

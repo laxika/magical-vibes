@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PatronWizard.class, AvenFlock.class})
 class PatronWizardTest extends BaseCardTest {
 
     @Test
@@ -20,19 +20,17 @@ class PatronWizardTest extends BaseCardTest {
     void tapsWizardAndCountersSpellWhenControllerCannotPay() {
         Permanent patron = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
         harness.passPriority(player1);
 
-        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.activateAbility(player2, 0, null, spell.getId());
 
         assertThat(patron.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Aven Flock");
+        harness.assertNotOnBattlefield(player1, "Aven Flock");
     }
 
     @Test
@@ -40,13 +38,12 @@ class PatronWizardTest extends BaseCardTest {
     void spellControllerMayPay() {
         Permanent patron = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castCreature(player1, 0);
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passPriority(player1);
 
-        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.activateAbility(player2, 0, null, spell.getId());
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().interaction.activeInteraction())
@@ -55,7 +52,50 @@ class PatronWizardTest extends BaseCardTest {
 
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Aven Flock");
+    }
+
+    @Test
+    @DisplayName("Another untapped Wizard may pay the ability's cost")
+    void anotherWizardMayPayCost() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
+        Permanent otherWizard = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
+
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, spell.getId());
+
+        assertThat(harness.getGameData().interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, otherWizard.getId());
+
+        assertThat(patron.isTapped()).isFalse();
+        assertThat(otherWizard.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aven Flock");
+    }
+
+    @Test
+    @DisplayName("A tapped source may use another untapped Wizard to pay its cost")
+    void tappedSourceMayUseAnotherWizard() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
+        patron.tap();
+        Permanent otherWizard = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
+
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, spell.getId());
+
+        assertThat(patron.isTapped()).isTrue();
+        assertThat(otherWizard.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aven Flock");
     }
 
     @Test
@@ -63,15 +103,13 @@ class PatronWizardTest extends BaseCardTest {
     void tappedWizardCannotPayCost() {
         Permanent patron = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
         patron.tap();
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AvenFlock());
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, spell.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

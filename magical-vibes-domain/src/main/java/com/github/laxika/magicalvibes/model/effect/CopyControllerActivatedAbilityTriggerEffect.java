@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 /**
- * Trigger descriptor for {@code ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY}: whenever an activated
- * ability that isn't a mana ability is activated, copy that ability. The copy's controller may
- * choose new targets for the copy.
+ * Trigger descriptor for ability-activation slots: copy an activated ability when its trigger
+ * condition matches. The copy's controller may choose new targets for the copy. The normal form is
+ * used in {@code ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY}; the {@code activationCostContainsX}
+ * form is also used in {@code ON_CONTROLLER_ACTIVATES_ABILITY} for triggers that include mana
+ * abilities.
  * <p>
- * At trigger time, {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}
- * snapshots the activated ability on the stack and places a
+ * At trigger time, the relevant trigger collector snapshots the activated ability on the stack and places a
  * {@link CopyControllerActivatedAbilityEffect} on the stack, wrapped in a {@link MayPayManaEffect}
  * when {@code manaCost} is non-null.
  * <p>
@@ -28,30 +29,53 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  *                             abilities activated by this permanent's controller
  * @param loyaltyAbilityOnly  when {@code true} the trigger fires only for loyalty abilities
  * @param targetPredicate      optional restriction on the activated ability's chosen targets
+ * @param activationCostContainsX when {@code true}, the trigger fires only when the activated
+ *                                ability's mana activation cost contains {@code X}
+ * @param exhaustAbilityOnly      when {@code true}, the trigger fires only for exhaust abilities
  */
 public record CopyControllerActivatedAbilityTriggerEffect(
         String manaCost,
         StackEntryPredicate sourceFilter,
         boolean equippedCreatureOnly,
         boolean loyaltyAbilityOnly,
-        StackEntryPredicate targetPredicate
+        StackEntryPredicate targetPredicate,
+        boolean activationCostContainsX,
+        boolean exhaustAbilityOnly
 ) implements CardEffect {
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost) {
-        this(manaCost, null, false, false, null);
+        this(manaCost, null, false, false, null, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter) {
-        this(manaCost, sourceFilter, false, false, null);
+        this(manaCost, sourceFilter, false, false, null, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, false, null);
+        this(manaCost, sourceFilter, equippedCreatureOnly, false, null, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly, boolean loyaltyAbilityOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null);
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null, false, false);
+    }
+
+    public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
+                                                       boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
+                                                       StackEntryPredicate targetPredicate) {
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false, false);
+    }
+
+    public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
+                                                       boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
+                                                       StackEntryPredicate targetPredicate,
+                                                       boolean activationCostContainsX) {
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate,
+                activationCostContainsX, false);
+    }
+
+    public boolean requiresXInActivationCost() {
+        return activationCostContainsX;
     }
 }

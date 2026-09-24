@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  * than an ETB trigger. Islandwalk is loaded from Scryfall metadata.
  */
 @CardRegistration(set = "M12", collectorNumber = "184")
+@CardRegistration(set = "SLD", collectorNumber = "590")
 public class LurkingCrocodile extends Card {
 
     public LurkingCrocodile() {

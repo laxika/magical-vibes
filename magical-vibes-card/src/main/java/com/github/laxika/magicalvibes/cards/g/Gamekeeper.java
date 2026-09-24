@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefi
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "UDS", collectorNumber = "106")
+@CardRegistration(set = "DMR", collectorNumber = "162")
 public class Gamekeeper extends Card {
 
     public Gamekeeper() {

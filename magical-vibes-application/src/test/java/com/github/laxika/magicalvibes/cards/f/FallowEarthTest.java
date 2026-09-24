@@ -31,8 +31,7 @@ class FallowEarthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FallowEarth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, landId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, landId);
 
         GameData gd = harness.getGameData();
         // Land removed from battlefield

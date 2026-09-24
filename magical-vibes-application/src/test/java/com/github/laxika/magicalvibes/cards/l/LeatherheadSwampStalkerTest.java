@@ -110,7 +110,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
         resolveCombat();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
-        harness.handleListChoice(player1, "Remove a +1/+1 counter");
+        harness.handleListChoice(player1, "Remove 1 +1/+1 counters");
         harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "110")
+@CardRegistration(set = "DDS", collectorNumber = "26")
+@CardRegistration(set = "CMD", collectorNumber = "214")
 public class Nucklavee extends Card {
 
     public Nucklavee() {

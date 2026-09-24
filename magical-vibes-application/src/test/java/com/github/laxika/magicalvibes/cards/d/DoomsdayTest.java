@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Doomsday.class, Shock.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({Doomsday.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class DoomsdayTest extends BaseCardTest {
 
     private void cast() {
@@ -32,8 +32,53 @@ class DoomsdayTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving combines library and graveyard into a mandatory choice")
-    void promptsChoiceOverLibraryAndGraveyard() {
+    @DisplayName("Choice and reordering finish before the controller loses half life")
+    void choiceAndReorderingFinishBeforeLifeLoss() {
+        Card shock = new Shock();
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(shock, bears));
+        harness.setGraveyard(player1, List.of(elves));
+        harness.setLife(player1, 20);
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DoomsdayChoice.class);
+        harness.assertLife(player1, 20);
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId(), bears.getId(), elves.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("Keeping five cards puts them on top and exiles the rest")
+    void keepsFiveCardsAndExilesTheRest() {
+        Card first = new Shock();
+        Card second = new GrizzlyBears();
+        Card third = new LlanowarElves();
+        Card fourth = new Shock();
+        Card fifth = new GrizzlyBears();
+        Card sixth = new LlanowarElves();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setGraveyard(player1, List.of(fourth, fifth, sixth));
+
+        cast();
+
+        harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId(), fifth.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(4, 3, 2, 1, 0)));
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).containsExactly(fifth, fourth, third, second, first);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(sixth);
+    }
+
+    @Test
+    @DisplayName("Keeping all available cards when fewer than five are available allows reordering")
+    void keepsAllAvailableCardsWhenFewerThanFiveAndReorders() {
         Card shock = new Shock();
         Card bears = new GrizzlyBears();
         Card elves = new LlanowarElves();
@@ -42,74 +87,63 @@ class DoomsdayTest extends BaseCardTest {
 
         cast();
 
-        PendingInteraction.DoomsdayChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.DoomsdayChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(shock.getId(), bears.getId(), elves.getId());
-        assertThat(choice.legalOptions())
-                .isEqualTo(new InteractionOptions.MultiCardPick(choice.validCardIds(), 3, 3));
-    }
-
-    @Test
-    @DisplayName("Keeping the only available card puts it on top without exiling it")
-    void keepSingleCard() {
-        Card shock = new Shock();
-        harness.setLibrary(player1, List.of(shock));
-        harness.setGraveyard(player1, List.of());
-
-        cast();
-
-        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
-
-        List<Card> library = gd.playerDecks.get(player1.getId());
-        assertThat(library).containsExactly(shock);
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .doesNotContain(shock);
-    }
-
-    @Test
-    @DisplayName("Keeping multiple cards prompts a reorder, then places them on top in that order")
-    void keepMultipleCardsReorder() {
-        Card shock = new Shock();
-        Card bears = new GrizzlyBears();
-        Card elves = new LlanowarElves();
-        Card secondShock = new Shock();
-        Card secondBears = new GrizzlyBears();
-        Card secondElves = new LlanowarElves();
-        harness.setLibrary(player1, List.of(shock, bears, elves));
-        harness.setGraveyard(player1, List.of(secondShock, secondBears, secondElves));
-
-        cast();
-
-        // Keep five cards (pool order: shock, bears, elves, second shock, second bears, second elves).
-        harness.handleMultipleCardsChosen(player1,
-                List.of(shock.getId(), elves.getId(), secondShock.getId(), secondBears.getId(), secondElves.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId(), bears.getId(), elves.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .containsExactly(bears);
 
-        // Chosen order = [shock, elves, second shock, second bears, second elves]; reverse it.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(4, 3, 2, 1, 0)));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
 
         List<Card> library = gd.playerDecks.get(player1.getId());
-        assertThat(library).containsExactly(secondElves, secondBears, secondShock, elves, shock);
+        assertThat(library).containsExactly(elves, shock, bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     @Test
-    @DisplayName("Choosing fewer than five cards when five are available is rejected")
-    void cannotChooseFewerThanFiveAvailableCards() {
-        List<Card> pool = List.of(
-                new Shock(), new GrizzlyBears(), new LlanowarElves(), new Shock(), new GrizzlyBears());
-        harness.setLibrary(player1, pool.subList(0, 3));
-        harness.setGraveyard(player1, pool.subList(3, 5));
+    @DisplayName("Keeping all available cards when fewer than five are available exiles nothing")
+    void keepsAllCardsWhenFewerThanFiveAreAvailable() {
+        Card shock = new Shock();
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(shock));
+        harness.setGraveyard(player1, List.of(bears));
+
+        cast();
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId(), bears.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock, bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rejects selecting fewer than five cards when at least five are available")
+    void requiresFiveCardsWhenEnoughAreAvailable() {
+        Card first = new Shock();
+        Card second = new GrizzlyBears();
+        Card third = new LlanowarElves();
+        Card fourth = new Shock();
+        Card fifth = new GrizzlyBears();
+        Card sixth = new LlanowarElves();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth));
 
         cast();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
-                pool.subList(0, 4).stream().map(Card::getId).toList()))
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DoomsdayChoice.class);
+    }
+
+    @Test
+    @DisplayName("Rejects selecting fewer than all available cards when fewer than five are available")
+    void requiresAllCardsWhenFewerThanFiveAreAvailable() {
+        Card first = new Shock();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+
+        cast();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -174,5 +208,41 @@ class DoomsdayTest extends BaseCardTest {
 
         harness.assertLife(player1, 10);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolving combines library and graveyard into a mandatory choice")
+    void promptsChoiceOverLibraryAndGraveyard() {
+        Card shock = new Shock();
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(shock, bears));
+        harness.setGraveyard(player1, List.of(elves));
+
+        cast();
+
+        PendingInteraction.DoomsdayChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DoomsdayChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(shock.getId(), bears.getId(), elves.getId());
+        assertThat(choice.legalOptions())
+                .isEqualTo(new InteractionOptions.MultiCardPick(choice.validCardIds(), 3, 3));
+    }
+
+    @Test
+    @DisplayName("Keeping the only available card puts it on top without exiling it")
+    void keepSingleCard() {
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+        harness.setGraveyard(player1, List.of());
+
+        cast();
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .doesNotContain(shock);
     }
 }

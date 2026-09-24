@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "140")
+@CardRegistration(set = "DDK", collectorNumber = "72")
+@CardRegistration(set = "HA3", collectorNumber = "15")
+@CardRegistration(set = "SIS", collectorNumber = "39")
 public class DevilsPlay extends Card {
 
     public DevilsPlay() {

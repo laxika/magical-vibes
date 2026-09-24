@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "45")
 @CardRegistration(set = "DDI", collectorNumber = "3")
+@CardRegistration(set = "PC2", collectorNumber = "14")
+@CardRegistration(set = "PCA", collectorNumber = "14")
 public class AuguryOwl extends Card {
 
     public AuguryOwl() {

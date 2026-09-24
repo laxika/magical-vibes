@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "12")
+@CardRegistration(set = "CMD", collectorNumber = "18")
 public class LightkeeperOfEmeria extends Card {
 
     public LightkeeperOfEmeria() {

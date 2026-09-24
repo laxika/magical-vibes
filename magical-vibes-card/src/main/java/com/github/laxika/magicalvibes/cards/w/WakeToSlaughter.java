@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "250")
+@CardRegistration(set = "DBL", collectorNumber = "250")
 public class WakeToSlaughter extends Card {
 
     public WakeToSlaughter() {

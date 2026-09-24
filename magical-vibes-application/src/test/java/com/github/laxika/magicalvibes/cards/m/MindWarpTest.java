@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -242,6 +243,28 @@ class MindWarpTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() == dodecapod);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(dodecapod);
+    }
+
+    @Test
+    @CardUsed(Dodecapod.class)
+    void opponentTargetedDiscardUsesOpponentReplacement() {
+        MindWarp mindWarp = new MindWarp();
+        Dodecapod dodecapod = new Dodecapod();
+        harness.setHand(player2, List.of(dodecapod));
+        harness.setHand(player1, List.of(mindWarp));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent enteredDodecapod = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard() == dodecapod)
+                .findFirst()
+                .orElseThrow();
+        assertThat(enteredDodecapod.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(dodecapod);
     }
 
     @Test

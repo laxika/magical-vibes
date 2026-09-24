@@ -11,10 +11,40 @@ package com.github.laxika.magicalvibes.model.effect;
  * (so two copies multiply by four, three by eight, and so on). Counting the markers — rather than
  * granting a per-creature flag — lets multiple copies stack correctly without looping.
  */
-public record DoublePlusOnePlusOneCountersEffect() implements PlusOnePlusOneCountersReplacementEffect {
+public record DoublePlusOnePlusOneCountersEffect(boolean globalReplacement)
+        implements PlusOnePlusOneCountersReplacementEffect, DoublingEffect {
+
+    public DoublePlusOnePlusOneCountersEffect() {
+        this(false);
+    }
+
+    public static DoublePlusOnePlusOneCountersEffect global() {
+        return new DoublePlusOnePlusOneCountersEffect(true);
+    }
 
     @Override
     public int replace(int count) {
         return count > 0 ? count * 2 : count;
+    }
+
+    @Override
+    public boolean appliesToAllPermanents() {
+        return globalReplacement;
+    }
+
+    @Override
+    public boolean appliesGlobally() {
+        return globalReplacement;
+    }
+
+    @Override
+    public boolean appliesTo(com.github.laxika.magicalvibes.model.CounterType counterType,
+                             boolean affectedPermanentIsCreature,
+                             boolean sourceControlsAffectedPermanent,
+                             boolean sourceControllerIsPlacingPlayer,
+                             boolean affectedObjectIsPlayer) {
+        return !affectedObjectIsPlayer
+                && (globalReplacement ? appliesTo(counterType, affectedPermanentIsCreature)
+                : sourceControlsAffectedPermanent && appliesTo(counterType, affectedPermanentIsCreature));
     }
 }

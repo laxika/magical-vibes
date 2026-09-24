@@ -8,11 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlaye
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /** Resolves a token creation effect for the player whose action caused the trigger. */
 @Component
@@ -55,5 +54,13 @@ public class CreateTokenForTriggeringPlayerEffectHandler implements NormalEffect
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, playerId, e.token(), amount, entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
+        if (e.token().tappedAndAttacking() && entry.getAttackedTargetId() != null) {
+            for (UUID createdId : createdIds) {
+                Permanent token = gameQueryService.findPermanentById(gameData, createdId);
+                if (token != null) {
+                    token.setAttackTarget(entry.getAttackedTargetId());
+                }
+            }
+        }
     }
 }

@@ -31,6 +31,17 @@ class StalkingTigerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Stalking Tiger deals combat damage when unblocked")
+    void dealsCombatDamageWhenUnblocked() {
+        addCreatureReady(player1, new StalkingTiger());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
     @DisplayName("Stalking Tiger cannot be blocked by two creatures")
     void cannotBeBlockedByTwoCreatures() {
         Permanent attacker = addCreatureReady(player1, new StalkingTiger());

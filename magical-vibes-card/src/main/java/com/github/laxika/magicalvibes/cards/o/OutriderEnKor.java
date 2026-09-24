@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "31")
+@CardRegistration(set = "TSR", collectorNumber = "30")
 public class OutriderEnKor extends Card {
 
     public OutriderEnKor() {

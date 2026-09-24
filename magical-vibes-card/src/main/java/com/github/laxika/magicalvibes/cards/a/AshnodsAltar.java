@@ -13,6 +13,14 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "349")
 @CardRegistration(set = "CHR", collectorNumber = "92")
 @CardRegistration(set = "ATQ", collectorNumber = "38")
+@CardRegistration(set = "EMA", collectorNumber = "218")
+@CardRegistration(set = "SLD", collectorNumber = "1679")
+@CardRegistration(set = "BRR", collectorNumber = "4")
+@CardRegistration(set = "SLZ", collectorNumber = "95")
+@CardRegistration(set = "SLZ", collectorNumber = "216")
+@CardRegistration(set = "SLZ", collectorNumber = "337")
+@CardRegistration(set = "ME4", collectorNumber = "181")
+@CardRegistration(set = "CMM", collectorNumber = "368")
 public class AshnodsAltar extends Card {
 
     public AshnodsAltar() {

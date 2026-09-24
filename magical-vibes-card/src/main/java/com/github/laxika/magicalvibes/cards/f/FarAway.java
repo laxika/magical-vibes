@@ -30,6 +30,7 @@ import java.util.List;
  * declares one target filter per half so a creature and a player are chosen independently.
  */
 @CardRegistration(set = "DGM", collectorNumber = "127")
+@CardRegistration(set = "PIO", collectorNumber = "388")
 public class FarAway extends Card {
 
     public FarAway() {

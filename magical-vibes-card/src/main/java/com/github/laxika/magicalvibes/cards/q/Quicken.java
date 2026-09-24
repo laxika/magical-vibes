@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeTh
 
 @CardRegistration(set = "M14", collectorNumber = "68")
 @CardRegistration(set = "GPT", collectorNumber = "31")
+@CardRegistration(set = "DDS", collectorNumber = "6")
+@CardRegistration(set = "PIO", collectorNumber = "69")
+@CardRegistration(set = "RVR", collectorNumber = "57")
 public class Quicken extends Card {
 
     public Quicken() {

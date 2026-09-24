@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "157")
+@CardRegistration(set = "VMA", collectorNumber = "140")
+@CardRegistration(set = "MH2", collectorNumber = "276")
 public class SkirgeFamiliar extends Card {
 
     public SkirgeFamiliar() {

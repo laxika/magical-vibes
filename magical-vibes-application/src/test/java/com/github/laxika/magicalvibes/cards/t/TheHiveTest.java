@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TheHive.class)
+@CardUsed({TheHive.class, GrizzlyBears.class, WindDrake.class, GiantSpider.class})
 class TheHiveTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -75,10 +79,7 @@ class TheHiveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        Permanent token = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Wasp"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Wasp");
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -98,6 +99,42 @@ class TheHiveTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Wasp");
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Wasp cannot be blocked by a creature without flying or reach")
+    void waspCannotBeBlockedByCreatureWithoutFlyingOrReach() {
+        Permanent wasp = createWaspReadyToAttack();
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlocker(bears, wasp))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Wasp can be blocked by a creature with flying")
+    void waspCanBeBlockedByFlyingCreature() {
+        Permanent wasp = createWaspReadyToAttack();
+        Permanent drake = addCreatureReady(player2, new WindDrake());
+
+        prepareDeclareBlockers();
+        declareBlocker(drake, wasp);
+
+        assertThat(drake.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Wasp can be blocked by a creature with reach")
+    void waspCanBeBlockedByCreatureWithReach() {
+        Permanent wasp = createWaspReadyToAttack();
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        declareBlocker(spider, wasp);
+
+        assertThat(spider.isBlocking()).isTrue();
     }
 
     @Test
@@ -220,6 +257,24 @@ class TheHiveTest extends BaseCardTest {
 
     private Permanent addHiveReady(Player player) {
         return harness.addToBattlefieldAndReturn(player, new TheHive());
+    }
+
+    private Permanent createWaspReadyToAttack() {
+        addHiveReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent wasp = findPermanent(player1, "Wasp");
+        wasp.setSummoningSick(false);
+        wasp.setAttacking(true);
+        return wasp;
+    }
+
+    private void declareBlocker(Permanent blocker, Permanent attacker) {
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
     }
 }
 

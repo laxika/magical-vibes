@@ -2,14 +2,22 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
+import com.github.laxika.magicalvibes.cards.d.DimensionXPizzasaur;
+import com.github.laxika.magicalvibes.cards.j.JeeringHomunculus;
+import com.github.laxika.magicalvibes.cards.p.PalaceJailer;
+import com.github.laxika.magicalvibes.cards.s.Shellshock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
@@ -19,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSea
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilOpponentBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
@@ -29,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterControlLossUnattachTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect;
@@ -69,6 +79,55 @@ import static org.assertj.core.api.Assertions.assertThat;
  * bug family). This test turns that silent regression into a build failure.
  */
 class TargetPolarityGuardTest {
+
+    @Test
+    void reflexiveCounterPlacementClassifiesOnlyItsInitialTarget() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+
+        Map<CounterType, TargetPolarity> expected = Map.of(
+                CounterType.PLUS_ONE_PLUS_ONE, TargetPolarity.BENEFICIAL,
+                CounterType.MINUS_ONE_MINUS_ONE, TargetPolarity.HARMFUL,
+                CounterType.CHARGE, TargetPolarity.NEUTRAL);
+        expected.forEach((counterType, polarity) ->
+                assertThat(classifier.classify(gd, new PutCountersOnTargetPermanentThenReflexiveEffect(
+                        counterType, 2, ReturnToHandEffect.target()), aiPlayerId))
+                        .as("initial %s counters, independently targeted reflexive removal", counterType)
+                        .isEqualTo(polarity));
+        assertThat(classifier.classifyCard(gd, new DimensionXPizzasaur(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+    }
+
+    @Test
+    void damageThenTokenCreationTargetsOpposingCreatures() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(harness.getGameData(),
+                new Shellshock(), harness.getPlayer2().getId()))
+                .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
+    }
+
+    @Test
+    void classifiesEquipmentAttachmentsAndCounterRemoval() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classify(gd, new AttachTargetToSourcePermanentEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd, new AttachTargetEquipmentsToTargetCreatureThenEffect(
+                new BoostTargetCreatureEffect(1, 1)), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd, new RemoveAllCountersFromTargetCreatureEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.t.ThievingSkydiver(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+    }
 
     @Test
     void classifiesRepresentativePermanentTargetingShapesByDirection() {
@@ -153,6 +212,51 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd, new SuspectEffect(GrantScope.SELF), aiPlayerId))
                 .isNull();
+    }
+
+    @Test
+    void monarchDurationExileClassifiesAsHarmfulRemoval() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classify(gd,
+                new ExileTargetPermanentUntilOpponentBecomesMonarchEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classifyCard(gd, new PalaceJailer(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+    }
+
+    @Test
+    void optionalGoadTargetsOpposingCreatures() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(harness.getGameData(),
+                new JeeringHomunculus(), harness.getPlayer2().getId()))
+                .isEqualTo(TargetPolarity.HARMFUL);
+    }
+
+    @Test
+    void classifiesCloakingAndCombatReassignment() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.ExileTargetNontokenCreatureAndTopCardsThenCloakEffect(),
+                aiPlayerId)).isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.FalseOrdersEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1),
+                aiPlayerId)).isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.MustBlockEachAttackingCreatureThisTurnEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
     }
 
     @Test

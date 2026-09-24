@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "249")
+@CardRegistration(set = "MM2", collectorNumber = "178")
+@CardRegistration(set = "ECC", collectorNumber = "124")
 public class HordeOfNotions extends Card {
 
     public HordeOfNotions() {

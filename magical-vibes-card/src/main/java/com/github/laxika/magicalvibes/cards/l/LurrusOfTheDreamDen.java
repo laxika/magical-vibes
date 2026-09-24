@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "226")
+@CardRegistration(set = "Q06", collectorNumber = "9")
+@CardRegistration(set = "MUL", collectorNumber = "51")
+@CardRegistration(set = "MUL", collectorNumber = "116")
+@CardRegistration(set = "MUL", collectorNumber = "181")
 public class LurrusOfTheDreamDen extends Card {
 
     public LurrusOfTheDreamDen() {

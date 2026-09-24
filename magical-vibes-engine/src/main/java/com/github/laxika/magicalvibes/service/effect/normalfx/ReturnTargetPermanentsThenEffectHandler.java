@@ -82,7 +82,8 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        if (e.thenEffect() == null || returned.isEmpty()) {
+        if (e.thenEffect() == null
+                || returned.isEmpty() && !e.resolveThenEffectIfNoPermanentReturned()) {
             return;
         }
 
@@ -100,6 +101,7 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
             case MANA_VALUE -> target.getCard().getManaValue();
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
+            case TOTAL_COUNTERS -> target.getTotalCounterCount();
             case BASIC_LAND_SEARCH_COUNT -> 0;
         };
     }

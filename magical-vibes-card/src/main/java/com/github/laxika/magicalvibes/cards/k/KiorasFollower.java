@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "150")
+@CardRegistration(set = "DDO", collectorNumber = "52")
+@CardRegistration(set = "PIO", collectorNumber = "228")
 public class KiorasFollower extends Card {
 
     public KiorasFollower() {

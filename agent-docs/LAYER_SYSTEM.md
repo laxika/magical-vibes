@@ -460,6 +460,10 @@ Reasoning behind the non-obvious mappings:
   `*/*` characteristic-defining ability → 7a with the CDA flag; anywhere else (granted,
   one-shot) → 7b. `SetBasePowerToughnessEffect` ("has base power and toughness X/Y") is
   ALWAYS 7b, even self-applied.
+- **Fixed creature markers outside the battlefield.** `SelfBecomesCreatureOutsideBattlefieldEffect`
+  contributes creature type in layer 4 and fixed base power/toughness in layer 7b. Its static
+  handler contributes no battlefield accumulator values because the oracle condition explicitly
+  excludes the battlefield; `GameQueryService` consumes the marker for cards in other zones.
 - **Color additive vs setting** (`colorSetting` on the classification): `GrantColorEffect`
   follows its existing `overriding` flag. Verified against Scryfall oracle text 2026-07-10
   (cache AND live API): Deep Freeze is "is a blue Wall **in addition to** its other colors

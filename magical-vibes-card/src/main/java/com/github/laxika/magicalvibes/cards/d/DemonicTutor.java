@@ -6,8 +6,18 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "105")
+@CardRegistration(set = "2ED", collectorNumber = "105")
 @CardRegistration(set = "3ED", collectorNumber = "105")
 @CardRegistration(set = "DDC", collectorNumber = "49")
+@CardRegistration(set = "VMA", collectorNumber = "116")
+@CardRegistration(set = "DVD", collectorNumber = "49")
+@CardRegistration(set = "SLD", collectorNumber = "1856")
+@CardRegistration(set = "UMA", collectorNumber = "93")
+@CardRegistration(set = "STA", collectorNumber = "27")
+@CardRegistration(set = "ME4", collectorNumber = "77")
+@CardRegistration(set = "CMM", collectorNumber = "150")
+@CardRegistration(set = "CMM", collectorNumber = "509")
+@CardRegistration(set = "CMM", collectorNumber = "696")
 public class DemonicTutor extends Card {
 
     public DemonicTutor() {

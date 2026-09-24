@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "277")
+@CardRegistration(set = "EXP", collectorNumber = "26")
+@CardRegistration(set = "2XM", collectorNumber = "324")
 public class MysticGate extends Card {
 
     public MysticGate() {

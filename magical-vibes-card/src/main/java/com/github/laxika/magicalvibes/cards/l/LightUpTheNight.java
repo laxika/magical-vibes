@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "146")
+@CardRegistration(set = "DBL", collectorNumber = "146")
 public class LightUpTheNight extends Card {
 
     public LightUpTheNight() {

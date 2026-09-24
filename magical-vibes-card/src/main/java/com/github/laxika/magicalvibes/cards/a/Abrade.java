@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "83")
+@CardRegistration(set = "CMM", collectorNumber = "203")
 @CardRegistration(set = "INR", collectorNumber = "139")
 @CardRegistration(set = "INR", collectorNumber = "311")
 @CardRegistration(set = "FDN", collectorNumber = "188")
@@ -20,6 +21,12 @@ import java.util.List;
 @CardRegistration(set = "AKR", collectorNumber = "136")
 @CardRegistration(set = "VOW", collectorNumber = "139")
 @CardRegistration(set = "LCI", collectorNumber = "131")
+@CardRegistration(set = "SLD", collectorNumber = "1425")
+@CardRegistration(set = "SLD", collectorNumber = "2179")
+@CardRegistration(set = "GN3", collectorNumber = "67")
+@CardRegistration(set = "2XM", collectorNumber = "114")
+@CardRegistration(set = "SOA", collectorNumber = "37")
+@CardRegistration(set = "DBL", collectorNumber = "406")
 public class Abrade extends Card {
 
     public Abrade() {

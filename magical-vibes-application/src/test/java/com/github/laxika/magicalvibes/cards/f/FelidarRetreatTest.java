@@ -26,6 +26,7 @@ class FelidarRetreatTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Create a 2/2 white Cat Beast creature token.");
+        resolveAllTriggers();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()
@@ -50,6 +51,7 @@ class FelidarRetreatTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Put a +1/+1 counter on each creature you control. Those creatures gain vigilance until end of turn.");
+        resolveAllTriggers();
 
         assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(3);
@@ -69,6 +71,7 @@ class FelidarRetreatTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Put a +1/+1 counter on each creature you control. Those creatures gain vigilance until end of turn.");
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

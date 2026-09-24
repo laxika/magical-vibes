@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "94")
+@CardRegistration(set = "EMA", collectorNumber = "79")
+@CardRegistration(set = "C13", collectorNumber = "68")
+@CardRegistration(set = "C14", collectorNumber = "134")
 public class Annihilate extends Card {
 
     public Annihilate() {

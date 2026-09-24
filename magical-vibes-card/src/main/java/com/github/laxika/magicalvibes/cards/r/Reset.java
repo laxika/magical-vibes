@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "73")
+@CardRegistration(set = "ME3", collectorNumber = "48")
 public class Reset extends Card {
 
     public Reset() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "2")
+@CardRegistration(set = "TSR", collectorNumber = "8")
 public class BenalishCommander extends Card {
 
     public BenalishCommander() {

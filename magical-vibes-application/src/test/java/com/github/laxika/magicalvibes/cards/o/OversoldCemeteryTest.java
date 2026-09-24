@@ -29,6 +29,25 @@ class OversoldCemeteryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Offers at most one optional creature target")
+    void offersAtMostOneOptionalTarget() {
+        harness.addToBattlefield(player1, new OversoldCemetery());
+        List<Card> creatures = List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        harness.setGraveyard(player1, creatures);
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isZero();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds())
+                .containsExactlyElementsOf(creatures.stream().map(Card::getId).toList());
+    }
+
+    @Test
     @DisplayName("Returns the chosen creature card to hand")
     void returnsChosenCreatureToHand() {
         harness.addToBattlefield(player1, new OversoldCemetery());
@@ -41,6 +60,7 @@ class OversoldCemeteryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).contains(target);
         harness.assertInGraveyard(player1, "Holy Day");
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
@@ -56,6 +76,18 @@ class OversoldCemeteryTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Does not use an opponent's graveyard for the threshold")
+    void doesNotTriggerFromOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new OversoldCemetery());
+        harness.setGraveyard(player2, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test

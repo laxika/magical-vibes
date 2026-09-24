@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "228")
 @CardRegistration(set = "DDD", collectorNumber = "16")
+@CardRegistration(set = "GVL", collectorNumber = "16")
+@CardRegistration(set = "SLD", collectorNumber = "1847")
+@CardRegistration(set = "SLD", collectorNumber = "2192")
 public class Lignify extends Card {
 
     public Lignify() {

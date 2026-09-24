@@ -12,6 +12,8 @@ import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "10")
 @CardRegistration(set = "ZEN", collectorNumber = "4")
+@CardRegistration(set = "EA2", collectorNumber = "4")
+@CardRegistration(set = "C14", collectorNumber = "66")
 public class BraveTheElements extends Card {
 
     public BraveTheElements() {

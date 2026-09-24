@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "279")
+@CardRegistration(set = "MMA", collectorNumber = "229")
+@CardRegistration(set = "CMD", collectorNumber = "297")
+@CardRegistration(set = "C15", collectorNumber = "320")
 public class VividMeadow extends Card {
 
     public VividMeadow() {

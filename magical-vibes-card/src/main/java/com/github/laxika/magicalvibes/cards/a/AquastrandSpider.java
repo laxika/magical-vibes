@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "80")
+@CardRegistration(set = "MM2", collectorNumber = "140")
+@CardRegistration(set = "CMD", collectorNumber = "141")
 public class AquastrandSpider extends Card {
 
     public AquastrandSpider() {

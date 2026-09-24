@@ -11,4 +11,7 @@ public interface HandAbilityGrantingEffect extends CardEffect {
 
     /** Ability granted to every matching card in a hand. */
     ActivatedAbility grantedAbility();
+
+    /** Whether the grant is limited to the source permanent's controller's hand. */
+    default boolean controllerHandOnly() { return false; }
 }

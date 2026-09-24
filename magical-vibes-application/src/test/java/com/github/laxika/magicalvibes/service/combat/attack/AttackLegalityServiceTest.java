@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssault;
 import com.github.laxika.magicalvibes.cards.g.GoblinRabblemaster;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HedronFieldsOfAgadeem;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.InstillEnergy;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LightOfDay;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.q.QueenMotherRamonda;
 import com.github.laxika.magicalvibes.cards.r.RollingStones;
 import com.github.laxika.magicalvibes.cards.s.SandwurmConvergence;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
@@ -32,12 +34,16 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +51,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +83,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         GoblinAssault.class,
         GoblinRabblemaster.class,
         GrizzlyBears.class,
+        HedronFieldsOfAgadeem.class,
         HillGiant.class,
         InstillEnergy.class,
         Island.class,
@@ -83,6 +91,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         LightOfDay.class,
         Okk.class,
         Pacifism.class,
+        QueenMotherRamonda.class,
         RollingStones.class,
         SandwurmConvergence.class,
         ScatheZombies.class,
@@ -298,6 +307,27 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
+    void faceUpPlanarGlobalCantAttackOrBlockRestrictionStopsAttacking() {
+        gd.planechase = new PlanechaseState();
+        gd.planechase.controllerId = player1.getId();
+        gd.planechase.faceUp.add(new PlanarObject(new HedronFieldsOfAgadeem(), gd.nextTimestamp()));
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setPowerModifier(5);
+
+        assertThat(als.canAttack(gd, attacker, player1.getId())).isFalse();
+    }
+
+    @Test
+    void faceDownSourceDoesNotApplyGlobalAttackRestriction() {
+        Permanent zombies = addCreatureReady(player1, new ScatheZombies());
+        Permanent light = harness.addToBattlefieldAndReturn(player2, new LightOfDay());
+        light.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(als.canAttack(gd, zombies, player1.getId())).isTrue();
+    }
+
+    @Test
     @DisplayName("A board-wide \"can't attack unless …\" restriction reaches both players' creatures")
     void globalCantAttackUnlessRestrictionReachesBothSides() {
         // Stormtide Leviathan: "Creatures without flying or islandwalk can't attack."
@@ -390,6 +420,19 @@ class AttackLegalityServiceTest extends BaseCardTest {
         assertThat(als.canAttackDefender(gd, drake, player2.getId())).isTrue();
         // The restriction protects only its controller — attacking its owner's opponent is fine.
         assertThat(als.canAttackDefender(gd, bears, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("A conditional defender restriction applies only while its controller is monarch")
+    void conditionalDefenderRestrictionTracksMonarch() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new QueenMotherRamonda());
+
+        gd.monarchPlayerId = player2.getId();
+        assertThat(als.canAttackDefender(gd, bears, player2.getId())).isFalse();
+
+        gd.monarchPlayerId = player1.getId();
+        assertThat(als.canAttackDefender(gd, bears, player2.getId())).isTrue();
     }
 
     @Test
@@ -487,6 +530,21 @@ class AttackLegalityServiceTest extends BaseCardTest {
                 null, null, goad.affectedPredicate(), EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
 
         assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A floating requirement can force a creature to attack a specific player")
+    void floatingSpecificAttackRequirementUsesItsPlayerTarget() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        var requirement = new TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect(player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), "Silver Surfer, Galactus's Herald", null, player1.getId(), requirement,
+                bears.getId(), null, null, EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN, 0));
+
+        assertThat(als.getRequiredAttackTargetIds(gd, bears)).containsExactly(player2.getId());
+        assertThat(als.getMustAttackRequirementCount(gd, bears, player2.getId())).isEqualTo(1);
+        assertThat(als.getMustAttackRequirementCount(gd, bears, planeswalker.getId())).isZero();
     }
 
     @Test

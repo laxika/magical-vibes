@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "31")
+@CardRegistration(set = "ME3", collectorNumber = "44")
 public class ManaVortex extends Card {
 
     public ManaVortex() {

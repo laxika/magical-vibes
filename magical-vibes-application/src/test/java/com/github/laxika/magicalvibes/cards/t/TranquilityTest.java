@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.a.ArmadilloCloak;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.e.EyeOfRamos;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarVanguard;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Tranquility.class, DuelingGrounds.class, ArmadilloCloak.class, LlanowarVanguard.class, Forest.class})
+@CardUsed({Tranquility.class, DuelingGrounds.class, ArmadilloCloak.class, LlanowarVanguard.class,
+        Forest.class, EyeOfRamos.class})
 class TranquilityTest extends BaseCardTest {
 
     @Test
@@ -53,5 +55,15 @@ class TranquilityTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Llanowar Vanguard");
         harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a non-enchantment artifact")
+    void doesNotDestroyArtifact() {
+        harness.addToBattlefield(player2, new EyeOfRamos());
+        harness.castFromHand(player1, new Tranquility(), "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Eye of Ramos");
     }
 }

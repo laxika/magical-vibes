@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "143")
 @CardRegistration(set = "8ED", collectorNumber = "141")
 @CardRegistration(set = "PLS", collectorNumber = "44")
+@CardRegistration(set = "SLD", collectorNumber = "1046")
+@CardRegistration(set = "SPG", collectorNumber = "88")
+@CardRegistration(set = "SPG", collectorNumber = "98")
 public class LordOfTheUndead extends Card {
 
     public LordOfTheUndead() {
@@ -28,7 +31,7 @@ public class LordOfTheUndead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}",
-                List.of(ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardSubtypePredicate(CardSubtype.ZOMBIE)).build()),
+                List.of(ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardSubtypePredicate(CardSubtype.ZOMBIE)).targetGraveyard(true).build()),
                 "{1}{B}, {T}: Return target Zombie card from your graveyard to your hand."
         ));
     }

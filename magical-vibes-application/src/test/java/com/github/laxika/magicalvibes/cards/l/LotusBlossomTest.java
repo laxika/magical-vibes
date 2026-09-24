@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(LotusBlossom.class)
 class LotusBlossomTest extends BaseCardTest {
 
     @Test
@@ -39,6 +41,31 @@ class LotusBlossomTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lotus Blossom does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent blossom = harness.addToBattlefieldAndReturn(player1, new LotusBlossom());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(blossom.getCounterCount(CounterType.PETAL)).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing Lotus Blossom with no petal counters adds no mana")
+    void sacrificeWithNoPetalCountersAddsNoMana() {
+        Permanent blossom = harness.addToBattlefieldAndReturn(player1, new LotusBlossom());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blossom);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(blossom.getCard());
+    }
+
+    @Test
     @DisplayName("Sacrificing Lotus Blossom adds mana equal to its petal counters")
     void sacrificeAddsManaEqualToPetalCounters() {
         Permanent blossom = harness.addToBattlefieldAndReturn(player1, new LotusBlossom());
@@ -49,6 +76,6 @@ class LotusBlossomTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blossom);
-        harness.assertInGraveyard(player1, "Lotus Blossom");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(blossom.getCard());
     }
 }

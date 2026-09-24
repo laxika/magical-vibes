@@ -27,6 +27,8 @@ public enum LibrarySearchDestination {
     EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
     /** Exile one card face down with a source while putting a preselected remainder on the bottom in any order. */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
+    /** Exile one card face down with a hatching counter while putting a preselected remainder on the bottom in any order. */
+    EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM,
     /** Exile one card face down with a source while putting a preselected remainder into the target player's graveyard. */
     EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
     /** Exile one card face up with permission to play it this turn, putting the rest on the bottom randomly. */
@@ -35,6 +37,8 @@ public enum LibrarySearchDestination {
     /** Like {@link #EXILE_PLAYABLE}, but the play permission lasts only until the searcher's next
      *  upkeep; if the card is still exiled then, it is put into its owner's graveyard (Grinning Totem). */
     EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+    /** Heist: exile one of three random nonland cards from an opponent's library face down with persistent cast permission. */
+    HEIST,
     TOP_OF_LIBRARY,
     GRAVEYARD,
     BATTLEFIELD_ATTACHED_TO_PLAYER,
@@ -73,6 +77,9 @@ public enum LibrarySearchDestination {
      *  carried in {@link LibrarySearchParams#accumulatedCards()} and handed to the opponent as a
      *  {@link PendingPileSeparation} with {@link CardPileDisposition#GIFTS_UNGIVEN}. */
     GIFTS_UNGIVEN_POOL,
+    /** Threats Undetected — the revealed cards are held out until an opponent chooses two to
+     * shuffle back into the controller's library and the rest go to hand. */
+    THREATS_UNDETECTED_POOL,
     /** Signal the Clans — the revealed creature cards are held out of every zone in
      *  {@link LibrarySearchParams#accumulatedCards()} until the search ends. If exactly three cards
      *  with different names were revealed, one of them is chosen at random and put into the

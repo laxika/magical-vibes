@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "181")
+@CardRegistration(set = "2X2", collectorNumber = "174")
 public class AshenmoorLiege extends Card {
 
     public AshenmoorLiege() {

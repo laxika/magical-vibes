@@ -12,6 +12,10 @@ import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "76")
 @CardRegistration(set = "RAV", collectorNumber = "161")
+@CardRegistration(set = "DDJ", collectorNumber = "47")
+@CardRegistration(set = "ME3", collectorNumber = "116")
+@CardRegistration(set = "SLD", collectorNumber = "1710")
+@CardRegistration(set = "GK1", collectorNumber = "56")
 public class ElvesOfDeepShadow extends Card {
 
     public ElvesOfDeepShadow() {

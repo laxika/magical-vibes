@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,21 +16,8 @@ class LeylineTyrantTest extends BaseCardTest {
 
     private void killTyrant() {
         Permanent tyrant = harness.addToBattlefieldAndReturn(player1, new LeylineTyrant());
-        tyrant.setBlocking(true);
-        tyrant.addBlockingTarget(0);
-
-        GrizzlyBears attackerCard = new GrizzlyBears();
-        attackerCard.setPower(5);
-        attackerCard.setToughness(5);
-        Permanent attacker = new Permanent(attackerCard);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        tyrant.setMarkedDamage(5);
+        harness.runStateBasedActions();
     }
 
     @Test

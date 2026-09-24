@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardWithSameNameAsCardInHandOrAnyIfEmptyEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "46")
+@CardRegistration(set = "RVR", collectorNumber = "78")
 public class InfernalTutor extends Card {
 
     public InfernalTutor() {

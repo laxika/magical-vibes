@@ -64,6 +64,7 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             Permanent source = entry.getSourcePermanentId() == null
                     ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) source = entry.getSourcePermanentSnapshot();
             CardColor chosenColor = source == null ? null : source.getChosenColor();
             if (chosenColor == null) {
                 preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
@@ -99,7 +100,8 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceChoice(
                         controllerId, e.gainLife(), e.exileFromLibrary(),
                         e.damageSourceController() ? entry.getCard() : null,
-                        e.preventHalfDamage(), e.drawCards(), requiredDamageColors);
+                        e.preventHalfDamage(), e.drawCards(), requiredDamageColors,
+                        sourceFilter instanceof PermanentColorInPredicate ? null : sourceFilter);
                 String prevention = e.preventHalfDamage()
                         ? "prevent half that damage, rounded down"
                         : "prevent that damage";

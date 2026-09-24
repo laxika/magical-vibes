@@ -24,6 +24,7 @@ class TajuruParagonTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -39,6 +40,7 @@ class TajuruParagonTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -63,6 +65,7 @@ class TajuruParagonTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);

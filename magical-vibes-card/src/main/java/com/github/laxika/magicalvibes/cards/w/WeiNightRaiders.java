@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "89")
+@CardRegistration(set = "ME3", collectorNumber = "81")
 public class WeiNightRaiders extends Card {
 
     public WeiNightRaiders() {

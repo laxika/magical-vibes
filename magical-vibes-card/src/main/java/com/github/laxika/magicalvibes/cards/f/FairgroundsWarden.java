@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "13")
+@CardRegistration(set = "KLR", collectorNumber = "17")
 public class FairgroundsWarden extends Card {
 
     public FairgroundsWarden() {

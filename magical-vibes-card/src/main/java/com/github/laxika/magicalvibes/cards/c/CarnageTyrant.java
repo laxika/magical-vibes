@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "179")
+@CardRegistration(set = "SLD", collectorNumber = "1174")
+@CardRegistration(set = "SPG", collectorNumber = "10")
 public class CarnageTyrant extends Card {
 
     public CarnageTyrant() {

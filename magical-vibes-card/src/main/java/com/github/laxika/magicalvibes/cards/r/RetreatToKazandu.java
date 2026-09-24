@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "186")
+@CardRegistration(set = "DDP", collectorNumber = "21")
 public class RetreatToKazandu extends Card {
 
     public RetreatToKazandu() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "258")
+@CardRegistration(set = "MSC", collectorNumber = "275")
+@CardRegistration(set = "ECC", collectorNumber = "175")
 public class UnclaimedTerritory extends Card {
 
     public UnclaimedTerritory() {

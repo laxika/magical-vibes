@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "97")
+@CardRegistration(set = "ME3", collectorNumber = "192")
 public class BoneFlute extends Card {
 
     public BoneFlute() {

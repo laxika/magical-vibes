@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(LurkingEvil.class)
 class LurkingEvilTest extends BaseCardTest {
 
     @Test
@@ -45,5 +47,21 @@ class LurkingEvilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, evil)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lurking Evil remains a creature after end-of-turn cleanup")
+    void animationIsPermanent() {
+        harness.setLife(player1, 20);
+        Permanent evil = harness.addToBattlefieldAndReturn(player1, new LurkingEvil());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gd.expireEndOfTurnFloatingEffects();
+        evil.resetModifiers();
+
+        assertThat(gqs.isCreature(gd, evil)).isTrue();
+        assertThat(gqs.isEnchantment(gd, evil)).isFalse();
     }
 }

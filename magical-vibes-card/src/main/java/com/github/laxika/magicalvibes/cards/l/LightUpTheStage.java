@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "107")
+@CardRegistration(set = "FCA", collectorNumber = "39")
+@CardRegistration(set = "RVR", collectorNumber = "117")
 public class LightUpTheStage extends Card {
 
     public LightUpTheStage() {

@@ -213,7 +213,7 @@ class BlockLegalityContextTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Graxiplon.class)
+    @CardUsed({Graxiplon.class, GrizzlyBears.class})
     @DisplayName("Shared-type defender condition is re-evaluated by pair legality")
     void sharedTypeDefenderCondition() {
         Permanent graxiplon = attacking(player1, new Graxiplon());

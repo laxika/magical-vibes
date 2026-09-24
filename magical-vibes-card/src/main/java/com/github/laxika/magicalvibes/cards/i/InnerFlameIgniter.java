@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.InnerFlameIgniterEffect;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "182")
+@CardRegistration(set = "MM2", collectorNumber = "120")
 public class InnerFlameIgniter extends Card {
 
     public InnerFlameIgniter() {

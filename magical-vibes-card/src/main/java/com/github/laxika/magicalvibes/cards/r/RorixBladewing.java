@@ -5,5 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ONS", collectorNumber = "224")
 @CardRegistration(set = "HOP", collectorNumber = "65")
+@CardRegistration(set = "EMA", collectorNumber = "145")
+@CardRegistration(set = "VMA", collectorNumber = "183")
+@CardRegistration(set = "CMM", collectorNumber = "251")
 public class RorixBladewing extends Card {
 }

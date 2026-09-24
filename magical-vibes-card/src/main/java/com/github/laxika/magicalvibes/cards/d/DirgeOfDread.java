@@ -14,6 +14,8 @@ import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "138")
 @CardRegistration(set = "PHUK", collectorNumber = "18")
+@CardRegistration(set = "A25", collectorNumber = "86")
+@CardRegistration(set = "C13", collectorNumber = "73")
 public class DirgeOfDread extends Card {
 
     public DirgeOfDread() {

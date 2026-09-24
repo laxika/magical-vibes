@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "220")
+@CardRegistration(set = "SLD", collectorNumber = "525")
 public class TamiyoCollectorOfTales extends Card {
 
     public TamiyoCollectorOfTales() {

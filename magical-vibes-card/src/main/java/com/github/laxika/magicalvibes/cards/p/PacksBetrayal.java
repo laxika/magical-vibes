@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "153")
+@CardRegistration(set = "DBL", collectorNumber = "153")
 public class PacksBetrayal extends Card {
 
     public PacksBetrayal() {

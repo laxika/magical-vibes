@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CapashenUnicorn;
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhantasmalTerrain.class, Forest.class, Mountain.class, CapashenUnicorn.class})
+@CardUsed({PhantasmalTerrain.class, Forest.class, Mountain.class, CapashenUnicorn.class, CityOfBrass.class})
 class PhantasmalTerrainTest extends BaseCardTest {
 
     @Test
@@ -91,6 +92,19 @@ class PhantasmalTerrainTest extends BaseCardTest {
         aura.setChosenSubtype(CardSubtype.PLAINS);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.PLAINS);
+    }
+
+    @Test
+    @DisplayName("Changing a nonbasic land to a basic type removes its printed abilities")
+    void changingNonbasicLandToBasicTypeRemovesPrintedAbilities() {
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PhantasmalTerrain());
+        aura.setAttachedTo(city.getId());
+        aura.setChosenSubtype(CardSubtype.SWAMP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(city.isTapped()).isFalse();
     }
 
     @Test

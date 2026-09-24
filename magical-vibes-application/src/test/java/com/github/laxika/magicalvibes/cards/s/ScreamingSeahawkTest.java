@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BarrenMoor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScreamingSeahawk.class, GrizzlyBears.class})
+@CardUsed({ScreamingSeahawk.class, BarrenMoor.class})
 class ScreamingSeahawkTest extends BaseCardTest {
 
     @Test
@@ -35,8 +31,8 @@ class ScreamingSeahawkTest extends BaseCardTest {
     void acceptingMaySearchesForScreamingSeahawk() {
         setupAndCast();
         ScreamingSeahawk seahawk = new ScreamingSeahawk();
-        GrizzlyBears bears = new GrizzlyBears();
-        setLibrary(seahawk, bears);
+        BarrenMoor barrenMoor = new BarrenMoor();
+        harness.setLibrary(player1, List.of(seahawk, barrenMoor));
 
         resolveCreatureAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
@@ -44,18 +40,42 @@ class ScreamingSeahawkTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(seahawk);
+        assertThat(search.params().reveals()).isTrue();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(seahawk);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(barrenMoor);
+        assertThat(gameLogContains("reveals Screaming Seahawk")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting the search moves only the chosen matching copy")
+    void acceptingSearchMovesOnlyChosenMatchingCopy() {
+        setupAndCast();
+        ScreamingSeahawk firstSeahawk = new ScreamingSeahawk();
+        ScreamingSeahawk secondSeahawk = new ScreamingSeahawk();
+        BarrenMoor barrenMoor = new BarrenMoor();
+        harness.setLibrary(player1, List.of(firstSeahawk, secondSeahawk, barrenMoor));
+
+        resolveCreatureAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(firstSeahawk, secondSeahawk);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondSeahawk);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstSeahawk, barrenMoor);
     }
 
     @Test
     @DisplayName("Declining the may ability does not search")
     void decliningMayDoesNotSearch() {
         setupAndCast();
-        setLibrary(new ScreamingSeahawk());
+        harness.setLibrary(player1, List.of(new ScreamingSeahawk()));
 
         resolveCreatureAndTrigger();
         harness.handleMayAbilityChosen(player1, false);
@@ -68,7 +88,7 @@ class ScreamingSeahawkTest extends BaseCardTest {
     @DisplayName("The search offers only cards named Screaming Seahawk")
     void searchFiltersByName() {
         setupAndCast();
-        setLibrary(new ScreamingSeahawk(), new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new ScreamingSeahawk(), new BarrenMoor()));
 
         resolveCreatureAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
@@ -82,20 +102,17 @@ class ScreamingSeahawkTest extends BaseCardTest {
     @DisplayName("An empty search has no eligible cards")
     void emptySearchHasNoEligibleCards() {
         setupAndCast();
-        setLibrary(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new BarrenMoor()));
 
         resolveCreatureAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(entry -> entry.contains("finds no cards named Screaming Seahawk"));
+        assertThat(gameLogContains("finds no cards named Screaming Seahawk")).isTrue();
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new ScreamingSeahawk()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ScreamingSeahawk(), "{4}{U}");
     }
 
     private void resolveCreatureAndTrigger() {
@@ -103,9 +120,4 @@ class ScreamingSeahawkTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void setLibrary(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
-    }
 }

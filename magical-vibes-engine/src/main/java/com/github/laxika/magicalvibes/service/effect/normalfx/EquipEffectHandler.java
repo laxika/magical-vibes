@@ -57,7 +57,8 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (!equipSupport.canAttachEquipment(gameData, equipment, target,
-                ((EquipEffect) effect).permitsNonCreatureTarget())) {
+                ((EquipEffect) effect).permitsNonCreatureTarget(),
+                ((EquipEffect) effect).permitsCreatureEquipment())) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s equip ability has no effect (the target can't be equipped)."));
             log.info("Game {} - Equip has no effect, target cannot be equipped", gameData.id);
@@ -72,7 +73,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         equipment.setTimestamp(gameData.nextTimestamp());
 
         
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (target creature no longer exists)."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " equips ", target.getCard(), "."));
         log.info("Game {} - {} equipped to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());

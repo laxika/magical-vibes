@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "117")
+@CardRegistration(set = "EMA", collectorNumber = "82")
+@CardRegistration(set = "MH2", collectorNumber = "273")
 public class BraidsCabalMinion extends Card {
 
     public BraidsCabalMinion() {

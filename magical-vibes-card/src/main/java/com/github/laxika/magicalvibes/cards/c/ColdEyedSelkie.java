@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "149")
+@CardRegistration(set = "MMA", collectorNumber = "186")
+@CardRegistration(set = "DDT", collectorNumber = "25")
+@CardRegistration(set = "C15", collectorNumber = "241")
 public class ColdEyedSelkie extends Card {
 
     public ColdEyedSelkie() {

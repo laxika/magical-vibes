@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "3")
+@CardRegistration(set = "DBL", collectorNumber = "270")
 public class ArmTheCathars extends Card {
 
     public ArmTheCathars() {

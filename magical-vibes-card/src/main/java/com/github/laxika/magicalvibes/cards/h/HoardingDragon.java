@@ -12,6 +12,8 @@ import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "144")
 @CardRegistration(set = "M15", collectorNumber = "149")
+@CardRegistration(set = "IMA", collectorNumber = "134")
+@CardRegistration(set = "CMM", collectorNumber = "233")
 public class HoardingDragon extends Card {
 
     public HoardingDragon() {

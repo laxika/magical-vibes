@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "119")
+@CardRegistration(set = "DDU", collectorNumber = "1")
+@CardRegistration(set = "C14", collectorNumber = "195")
 public class EzuriRenegadeLeader extends Card {
 
     public EzuriRenegadeLeader() {

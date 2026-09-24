@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "134")
+@CardRegistration(set = "MM2", collectorNumber = "231")
 public class SphereOfTheSuns extends Card {
 
     public SphereOfTheSuns() {

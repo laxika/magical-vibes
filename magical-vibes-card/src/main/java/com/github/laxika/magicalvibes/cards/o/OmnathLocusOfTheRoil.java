@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "216")
+@CardRegistration(set = "ECC", collectorNumber = "130")
 public class OmnathLocusOfTheRoil extends Card {
 
     public OmnathLocusOfTheRoil() {

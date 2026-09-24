@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "113")
+@CardRegistration(set = "IMA", collectorNumber = "154")
 public class AerialPredation extends Card {
 
     public AerialPredation() {

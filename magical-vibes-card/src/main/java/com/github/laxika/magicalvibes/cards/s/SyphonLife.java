@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "EVE", collectorNumber = "46")
+@CardRegistration(set = "MMA", collectorNumber = "100")
 public class SyphonLife extends Card {
 
     public SyphonLife() {

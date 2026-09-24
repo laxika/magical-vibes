@@ -37,7 +37,7 @@ jobs:
       - name: Build
         run: |
           chmod +x ./gradlew
-          ./gradlew build -x test -x :magical-vibes-frontend:build -x :magical-vibes-frontend:npmInstall -x :magical-vibes-frontend:buildAngular
+          ./gradlew build --max-workers=3 -x test -x :magical-vibes-frontend:build -x :magical-vibes-frontend:npmInstall -x :magical-vibes-frontend:buildAngular
 
       - name: Test
         run: |

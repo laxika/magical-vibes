@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "35")
 @CardRegistration(set = "DDH", collectorNumber = "50")
+@CardRegistration(set = "DDJ", collectorNumber = "7")
 public class SteamcoreWeird extends Card {
 
     public SteamcoreWeird() {

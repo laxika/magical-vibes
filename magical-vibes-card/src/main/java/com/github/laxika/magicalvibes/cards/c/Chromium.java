@@ -12,6 +12,8 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "74")
 @CardRegistration(set = "LEG", collectorNumber = "224")
+@CardRegistration(set = "ME3", collectorNumber = "147")
+@CardRegistration(set = "SLD", collectorNumber = "1068")
 public class Chromium extends Card {
 
     public Chromium() {

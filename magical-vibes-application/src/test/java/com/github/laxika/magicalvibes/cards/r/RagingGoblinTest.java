@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -23,12 +22,8 @@ class RagingGoblinTest extends BaseCardTest {
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
     void castingPutsOnStack() {
         Card card = new RagingGoblin();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromHand(player1, card, "{R}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -49,13 +44,9 @@ class RagingGoblinTest extends BaseCardTest {
     @DisplayName("Resolving puts Raging Goblin onto the battlefield")
     void resolvingPutsOnBattlefield() {
         Card card = new RagingGoblin();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getOriginalCard() == card);
@@ -65,9 +56,7 @@ class RagingGoblinTest extends BaseCardTest {
     @DisplayName("Can attack the turn it enters the battlefield due to haste")
     void canAttackWithSummoningSicknessDueToHaste() {
         Card card = new RagingGoblin();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{R}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -81,4 +70,3 @@ class RagingGoblinTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
-

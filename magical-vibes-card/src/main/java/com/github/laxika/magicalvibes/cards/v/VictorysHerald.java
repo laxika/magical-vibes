@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "18")
+@CardRegistration(set = "W17", collectorNumber = "6")
+@CardRegistration(set = "C15", collectorNumber = "83")
 public class VictorysHerald extends Card {
 
     public VictorysHerald() {

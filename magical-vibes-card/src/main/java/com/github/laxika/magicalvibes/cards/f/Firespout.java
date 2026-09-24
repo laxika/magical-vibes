@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "205")
+@CardRegistration(set = "V14", collectorNumber = "6")
+@CardRegistration(set = "CMD", collectorNumber = "199")
 public class Firespout extends Card {
 
     public Firespout() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CallOfTheWild.class, RedwoodTreefolk.class, MindStone.class})
+@CardUsed({CallOfTheWild.class, GrizzlyBears.class, MindStone.class, RedwoodTreefolk.class})
 class CallOfTheWildTest extends BaseCardTest {
 
     @Test
@@ -70,5 +71,25 @@ class CallOfTheWildTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(p -> p.getCard().getId())
                 .containsExactly(source.getId());
+    }
+
+    @Test
+    @DisplayName("Uses the activating player's library and does not tap the enchantment")
+    void usesActivatingPlayersLibraryWithoutTappingSource() {
+        harness.addToBattlefield(player1, new CallOfTheWild());
+        Card creature = new GrizzlyBears();
+        Card opponentCreature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+        harness.setLibrary(player2, List.of(opponentCreature));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(creature.getId()));
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(opponentCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
     }
 }

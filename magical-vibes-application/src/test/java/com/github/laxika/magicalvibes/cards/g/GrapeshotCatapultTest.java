@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -22,14 +20,26 @@ class GrapeshotCatapultTest extends BaseCardTest {
     void dealsDamageToFlyingCreature() {
         Permanent catapult = addCreatureReady(player1, new GrapeshotCatapult());
 
-        harness.addToBattlefield(player2, new ScrybSprites());
-        UUID spritesId = harness.getPermanentId(player2, "Scryb Sprites");
+        Permanent sprites = harness.addToBattlefieldAndReturn(player2, new ScrybSprites());
 
-        harness.activateAbility(player1, 0, null, spritesId);
+        harness.activateAbility(player1, 0, null, sprites.getId());
         harness.passBothPriorities();
 
         // 1 damage kills a 1/1 flier
         harness.assertInGraveyard(player2, "Scryb Sprites");
+        assertThat(catapult.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target a flying creature controlled by its controller")
+    void canTargetOwnFlyingCreature() {
+        Permanent catapult = addCreatureReady(player1, new GrapeshotCatapult());
+        Permanent birdMaiden = addCreatureReady(player1, new BirdMaiden());
+
+        harness.activateAbility(player1, 0, null, birdMaiden.getId());
+        harness.passBothPriorities();
+
+        assertThat(birdMaiden.getMarkedDamage()).isEqualTo(1);
         assertThat(catapult.isTapped()).isTrue();
     }
 
@@ -52,10 +62,9 @@ class GrapeshotCatapultTest extends BaseCardTest {
     void cannotTargetNonFlyingCreature() {
         addCreatureReady(player1, new GrapeshotCatapult());
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

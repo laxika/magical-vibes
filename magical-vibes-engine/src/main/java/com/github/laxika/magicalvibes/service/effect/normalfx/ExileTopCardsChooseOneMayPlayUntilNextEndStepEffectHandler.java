@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -42,26 +43,36 @@ public class ExileTopCardsChooseOneMayPlayUntilNextEndStepEffectHandler implemen
         }
 
         UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
+        UUID libraryOwnerId = exileEffect.libraryScope() == LibraryScope.TARGET_PLAYER
+                ? (entry.targetsForEffect(exileEffect).isEmpty()
+                        ? entry.getTargetId() : entry.targetsForEffect(exileEffect).getFirst())
+                : controllerId;
+        if (libraryOwnerId == null || !gameData.orderedPlayerIds.contains(libraryOwnerId)) {
+            return;
+        }
+        UUID permissionPlayerId = exileEffect.libraryScope() == LibraryScope.TARGET_PLAYER
+                ? libraryOwnerId : controllerId;
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         if (deck == null || deck.isEmpty()) {
             return;
         }
 
         List<UUID> exiledIds = new ArrayList<>();
-        String controllerName = gameData.playerIdToName.get(controllerId);
+        String libraryOwnerName = gameData.playerIdToName.get(libraryOwnerId);
         for (int i = 0; i < exileEffect.count() && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, controllerId, topCard);
+            exileService.exileCard(gameData, libraryOwnerId, topCard);
             exiledIds.add(topCard.getId());
             gameLogService.append(gameData, GameLog.builder()
-                    .text(controllerName + " exiles ").card(topCard)
+                    .text(libraryOwnerName + " exiles ").card(topCard)
                     .text(" from the top of their library.").build());
         }
 
         if (!exiledIds.isEmpty()) {
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.ExiledCardMayPlayChoice(
-                            controllerId, exiledIds, ExilePlayDuration.NEXT_END_STEP));
+                            permissionPlayerId, exiledIds, ExilePlayDuration.NEXT_END_STEP,
+                            false, exileEffect.withoutPayingManaCost()));
             log.info("Game {} - {} chooses one card among {} exiled cards to play until next end step",
                     gameData.id, entry.getCard().getName(), exiledIds.size());
         }

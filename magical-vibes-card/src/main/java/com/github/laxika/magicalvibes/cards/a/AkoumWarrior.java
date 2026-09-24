@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "134")
+@CardRegistration(set = "PIO", collectorNumber = "122")
 public class AkoumWarrior extends Card {
 
     public AkoumWarrior() {

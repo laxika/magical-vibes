@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "226")
 @CardRegistration(set = "ONE", collectorNumber = "250")
+@CardRegistration(set = "ZNE", collectorNumber = "12")
 public class DarkslickShores extends Card {
 
     public DarkslickShores() {

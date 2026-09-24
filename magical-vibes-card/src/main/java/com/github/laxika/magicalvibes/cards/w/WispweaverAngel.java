@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "35")
+@CardRegistration(set = "KLR", collectorNumber = "37")
 public class WispweaverAngel extends Card {
 
     public WispweaverAngel() {

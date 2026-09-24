@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "118")
+@CardRegistration(set = "MM2", collectorNumber = "169")
+@CardRegistration(set = "C14", collectorNumber = "225")
 public class WolfbriarElemental extends Card {
 
     public WolfbriarElemental() {

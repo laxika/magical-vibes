@@ -66,7 +66,7 @@ public class ShuffleCardsFromOutsideGameChoiceInteractionHandler
         List<Card> selected = interaction.pool().stream()
                 .filter(card -> selectedIds.contains(card.getId()))
                 .toList();
-        List<Card> sideboard = gameData.playerSideboards.get(interaction.playerId());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId());
         if (!selected.isEmpty() && sideboard == null) {
             throw new IllegalStateException("Selected card is no longer outside the game");
         }

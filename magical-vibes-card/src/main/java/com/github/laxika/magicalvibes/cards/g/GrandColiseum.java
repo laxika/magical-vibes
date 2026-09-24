@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "319")
+@CardRegistration(set = "VMA", collectorNumber = "298")
+@CardRegistration(set = "TMC", collectorNumber = "68")
 public class GrandColiseum extends Card {
 
     public GrandColiseum() {

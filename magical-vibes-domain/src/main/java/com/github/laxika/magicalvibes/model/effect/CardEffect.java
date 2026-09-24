@@ -43,6 +43,12 @@ public interface CardEffect {
     default boolean targetChosenByActivePlayer() { return false; }
 
     /**
+     * Returns whether a target is selected randomly as this triggered ability is put onto the
+     * stack, rather than chosen by a player.
+     */
+    default boolean targetChosenAtRandom() { return false; }
+
+    /**
      * Returns whether this effect reads the numeric value captured from the event that triggered
      * its stack entry. Death-trigger collectors use this to snapshot last-known information before
      * the triggering permanent leaves the battlefield.
@@ -121,7 +127,8 @@ public interface CardEffect {
 
     /**
      * Returns whether this effect or one of its nested effects branches on the source ability's
-     * resolution count for the current turn.
+     * resolution count for the current turn, either through an explicit condition or a dynamic
+     * amount that reads the count.
      */
     default boolean hasAbilityResolutionCondition() { return false; }
 

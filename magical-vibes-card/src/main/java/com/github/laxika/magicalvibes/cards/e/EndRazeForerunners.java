@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "124")
+@CardRegistration(set = "GN3", collectorNumber = "97")
 public class EndRazeForerunners extends Card {
 
     public EndRazeForerunners() {

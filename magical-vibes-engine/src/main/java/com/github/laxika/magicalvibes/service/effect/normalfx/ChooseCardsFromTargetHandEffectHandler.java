@@ -103,6 +103,10 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                         e.returnAtNextEndStep(), e.exilePlayOpponentTax(),
                         e.chosenCardCondition(), e.chosenCardThenEffect());
             }
+            case KEEP_IN_HAND -> playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
+                    gameData, entry, count, e.excludedTypes(), e.includedTypes(), e.filter(),
+                    false, false, null, e.upTo(), false, 0, false, e.revealHand(),
+                    false, false, 0, e.chosenCardCondition(), e.chosenCardThenEffect(), true);
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count, e);
             case SHUFFLE_INTO_LIBRARY ->
                     playerInteractionSupport.resolveHandRevealAndChooseToShuffleIntoLibrary(gameData, entry, count);
@@ -169,7 +173,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                                          ChooseCardsFromTargetHandEffect effect, Card card,
                                          UUID sourceCardId, UUID targetPlayerId) {
         boolean typeMatches = effect.includedTypes().isEmpty()
-                ? !effect.excludedTypes().contains(card.getType())
+                ? effect.excludedTypes().stream().noneMatch(card::hasType)
                 : effect.includedTypes().contains(card.getType())
                 || card.getAdditionalTypes().stream().anyMatch(effect.includedTypes()::contains);
         return typeMatches && (effect.filter() == null || predicateEvaluationService.matchesCardPredicate(

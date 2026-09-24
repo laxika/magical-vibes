@@ -17,6 +17,9 @@ import java.util.Set;
 @CardRegistration(set = "DOM", collectorNumber = "130")
 @CardRegistration(set = "SCG", collectorNumber = "97")
 @CardRegistration(set = "DD1", collectorNumber = "42")
+@CardRegistration(set = "VMA", collectorNumber = "173")
+@CardRegistration(set = "DDN", collectorNumber = "9")
+@CardRegistration(set = "EVG", collectorNumber = "42")
 public class GoblinWarchief extends Card {
 
     public GoblinWarchief() {
@@ -24,7 +27,7 @@ public class GoblinWarchief extends Card {
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
         // Goblins you control have haste
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
     }
 }

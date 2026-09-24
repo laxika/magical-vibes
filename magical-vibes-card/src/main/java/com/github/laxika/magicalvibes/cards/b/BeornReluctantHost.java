@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "HOB", collectorNumber = "118")
+@CardRegistration(set = "HOC", collectorNumber = "118")
 public class BeornReluctantHost extends Card {
 
     public BeornReluctantHost() {

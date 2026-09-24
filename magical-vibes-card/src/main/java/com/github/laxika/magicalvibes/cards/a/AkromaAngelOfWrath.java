@@ -11,6 +11,10 @@ import java.util.Set;
 @CardRegistration(set = "TSB", collectorNumber = "1")
 @CardRegistration(set = "LGN", collectorNumber = "1")
 @CardRegistration(set = "DDC", collectorNumber = "1")
+@CardRegistration(set = "V15", collectorNumber = "2")
+@CardRegistration(set = "DVD", collectorNumber = "1")
+@CardRegistration(set = "A25", collectorNumber = "2")
+@CardRegistration(set = "SLD", collectorNumber = "489")
 public class AkromaAngelOfWrath extends Card {
 
     public AkromaAngelOfWrath() {

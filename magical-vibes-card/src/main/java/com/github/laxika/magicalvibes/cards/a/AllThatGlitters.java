@@ -15,6 +15,11 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "2")
+@CardRegistration(set = "CMM", collectorNumber = "622")
+@CardRegistration(set = "CMM", collectorNumber = "9")
+@CardRegistration(set = "SLZ", collectorNumber = "1")
+@CardRegistration(set = "SLZ", collectorNumber = "122")
+@CardRegistration(set = "SLZ", collectorNumber = "243")
 public class AllThatGlitters extends Card {
 
     public AllThatGlitters() {

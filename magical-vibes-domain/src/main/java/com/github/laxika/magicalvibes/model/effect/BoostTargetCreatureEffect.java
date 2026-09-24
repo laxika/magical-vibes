@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -30,13 +31,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                         PermanentPredicate filter,
                                         GrantDuration duration,
-                                        int targetGroup) implements CreatureBoostEffect, CombatOpponentReferencingEffect {
+                                        int targetGroup,
+                                        DynamicAmount castTimeXValue)
+        implements CreatureBoostEffect, CombatOpponentReferencingEffect, CastTimeXValueEffect {
 
     private static final int UNBOUND_TARGET_GROUP = -1;
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                      PermanentPredicate filter, GrantDuration duration) {
-        this(powerBoost, toughnessBoost, filter, duration, UNBOUND_TARGET_GROUP);
+        this(powerBoost, toughnessBoost, filter, duration, UNBOUND_TARGET_GROUP, null);
     }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
@@ -49,7 +52,7 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost, int targetGroup) {
-        this(powerBoost, toughnessBoost, null, GrantDuration.END_OF_TURN, targetGroup);
+        this(powerBoost, toughnessBoost, null, GrantDuration.END_OF_TURN, targetGroup, null);
     }
 
     /** Convenience for plain fixed boosts ("gets +2/+2 until end of turn"). */
@@ -70,7 +73,22 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     /** Convenience for an activated ability's positional target group. */
     public static BoostTargetCreatureEffect forTargetGroup(int powerBoost, int toughnessBoost, int targetGroup) {
         return new BoostTargetCreatureEffect(new Fixed(powerBoost), new Fixed(toughnessBoost), null,
-                GrantDuration.END_OF_TURN, targetGroup);
+                GrantDuration.END_OF_TURN, targetGroup, null);
+    }
+
+    /**
+     * A boost whose X value is evaluated while the spell is cast and made available to the boost
+     * amounts through {@link XValue}.
+     */
+    public static BoostTargetCreatureEffect withCastTimeXValue(
+            DynamicAmount castTimeXValue, DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
+        return new BoostTargetCreatureEffect(powerBoost, toughnessBoost, null,
+                GrantDuration.END_OF_TURN, UNBOUND_TARGET_GROUP, castTimeXValue);
+    }
+
+    @Override
+    public DynamicAmount castTimeXValue() {
+        return castTimeXValue;
     }
 
     @Override

@@ -1,0 +1,29 @@
+package com.github.laxika.magicalvibes.cards.c;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardPermanentToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+@CardRegistration(set = "VMA", collectorNumber = "154")
+@CardRegistration(set = "SLD", collectorNumber = "741")
+@CardRegistration(set = "SLD", collectorNumber = "823")
+@CardRegistration(set = "2X2", collectorNumber = "105")
+@CardRegistration(set = "STA", collectorNumber = "36")
+@CardRegistration(set = "MSC", collectorNumber = "164")
+@CardRegistration(set = "MSC", collectorNumber = "359")
+@CardRegistration(set = "CMD", collectorNumber = "114")
+@CardRegistration(set = "MAR", collectorNumber = "69")
+@CardRegistration(set = "C14", collectorNumber = "174")
+public class ChaosWarp extends Card {
+
+    public ChaosWarp() {
+        target(TargetFilters.permanent())
+                .addEffect(EffectSlot.SPELL, new ShuffleTargetPermanentIntoLibraryEffect(
+                        new RevealTopCardPermanentToBattlefieldEffect(),
+                        ThenEffectRecipient.TARGET_OWNER));
+    }
+}

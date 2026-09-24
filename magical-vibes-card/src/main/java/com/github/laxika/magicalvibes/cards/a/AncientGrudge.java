@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "127")
 @CardRegistration(set = "TSP", collectorNumber = "143")
+@CardRegistration(set = "MM3", collectorNumber = "88")
+@CardRegistration(set = "SLD", collectorNumber = "98")
+@CardRegistration(set = "TSR", collectorNumber = "151")
+@CardRegistration(set = "HA5", collectorNumber = "12")
 public class AncientGrudge extends Card {
 
     public AncientGrudge() {

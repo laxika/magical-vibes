@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "126")
 @CardRegistration(set = "HOP", collectorNumber = "93")
+@CardRegistration(set = "GK2", collectorNumber = "96")
 public class RumblingSlum extends Card {
 
     public RumblingSlum() {

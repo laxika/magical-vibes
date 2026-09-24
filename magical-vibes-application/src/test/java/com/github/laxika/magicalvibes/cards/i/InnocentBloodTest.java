@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AngelicWall;
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,37 +17,33 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Innocent Blood")
+@CardUsed({InnocentBlood.class, AngelicWall.class, DuskImp.class, Forest.class, Mountain.class})
 class InnocentBloodTest extends BaseCardTest {
 
     @Test
     @DisplayName("Each player sacrifices their only creature")
     void eachPlayerSacrificesTheirOnlyCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GiantSpider());
+        harness.addToBattlefield(player1, new DuskImp());
+        harness.addToBattlefield(player2, new AngelicWall());
 
         castInnocentBlood();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Giant Spider");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertNotOnBattlefield(player1, "Dusk Imp");
+        harness.assertNotOnBattlefield(player2, "Angelic Wall");
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        harness.assertInGraveyard(player2, "Angelic Wall");
     }
 
     @Test
     @DisplayName("Each player chooses which creature to sacrifice")
     void eachPlayerChoosesCreatureToSacrifice() {
-        Permanent player1Bears = new Permanent(new GrizzlyBears());
-        Permanent player1Giant = new Permanent(new GiantSpider());
-        Permanent player2Bears = new Permanent(new GrizzlyBears());
-        Permanent player2Giant = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(player1Bears);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(player1Giant);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(player2Bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(player2Giant);
+        Permanent player1Imp = harness.addToBattlefieldAndReturn(player1, new DuskImp());
+        harness.addToBattlefield(player1, new AngelicWall());
+        harness.addToBattlefield(player2, new DuskImp());
+        Permanent player2Wall = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
 
         castInnocentBlood();
 
-        GameData gd = harness.getGameData();
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
@@ -57,13 +52,31 @@ class InnocentBloodTest extends BaseCardTest {
         assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(player1Bears.getId()));
-        harness.handleMultiplePermanentsChosen(player2, List.of(player2Giant.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1Imp.getId()));
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Giant Spider");
-        harness.assertInGraveyard(player2, "Giant Spider");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(player2Wall.getId()));
+
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        harness.assertOnBattlefield(player1, "Angelic Wall");
+        harness.assertInGraveyard(player2, "Angelic Wall");
+        harness.assertOnBattlefield(player2, "Dusk Imp");
+    }
+
+    @Test
+    @DisplayName("A player without a creature is unaffected")
+    void playerWithoutACreatureIsUnaffected() {
+        harness.addToBattlefield(player1, new DuskImp());
+        harness.addToBattlefield(player2, new Forest());
+
+        castInnocentBlood();
+
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -79,10 +92,8 @@ class InnocentBloodTest extends BaseCardTest {
     }
 
     private void castInnocentBlood() {
-        harness.setHand(player1, List.of(new InnocentBlood()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new InnocentBlood(), "{B}");
         harness.passBothPriorities();
     }
 }

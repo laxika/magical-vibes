@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Headhunter.class, GrizzlyBears.class})
+@CardUsed({Headhunter.class, BarkhideMauler.class})
 class HeadhunterTest extends BaseCardTest {
 
     @Test
     void combatDamageMakesDamagedPlayerDiscard() {
         Permanent headhunter = addAttackingHeadhunter();
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new BarkhideMauler(), new BarkhideMauler())));
 
         resolveCombat();
         harness.passBothPriorities();
@@ -40,10 +40,10 @@ class HeadhunterTest extends BaseCardTest {
     @Test
     void blockedHeadhunterDoesNotTrigger() {
         addAttackingHeadhunter();
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BarkhideMauler());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new BarkhideMauler())));
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -70,6 +70,30 @@ class HeadhunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(headhunter.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void faceDownHeadhunterDoesNotTrigger() {
+        harness.setHand(player1, List.of(new Headhunter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent headhunter = findPermanent(player1, "Headhunter");
+        assertThat(headhunter.isFaceDown()).isTrue();
+        headhunter.setSummoningSick(false);
+        headhunter.setAttacking(true);
+        harness.setHand(player2, List.of(new BarkhideMauler()));
+        harness.setLibrary(player2, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     private Permanent addAttackingHeadhunter() {

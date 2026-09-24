@@ -9,11 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "259")
+@CardRegistration(set = "EMA", collectorNumber = "164")
+@CardRegistration(set = "DDU", collectorNumber = "8")
+@CardRegistration(set = "SLD", collectorNumber = "762")
 public class ElvishVanguard extends Card {
 
     public ElvishVanguard() {
         // Whenever another Elf enters, put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ELF),
                         new PutCountersOnSourceEffect(1, 1, 1)));

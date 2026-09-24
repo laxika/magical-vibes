@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "51")
+@CardRegistration(set = "DBL", collectorNumber = "318")
 public class ChillOfTheGrave extends Card {
 
     public ChillOfTheGrave() {

@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "74")
+@CardRegistration(set = "MM2", collectorNumber = "99")
+@CardRegistration(set = "SLD", collectorNumber = "2003")
+@CardRegistration(set = "SLD", collectorNumber = "2022")
+@CardRegistration(set = "2X2", collectorNumber = "94")
+@CardRegistration(set = "OTP", collectorNumber = "19")
 public class SurgicalExtraction extends Card {
 
     public SurgicalExtraction() {

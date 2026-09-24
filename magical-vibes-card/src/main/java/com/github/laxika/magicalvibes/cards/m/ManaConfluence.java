@@ -9,6 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "163")
+@CardRegistration(set = "EXP", collectorNumber = "42")
+@CardRegistration(set = "SLD", collectorNumber = "1012")
+@CardRegistration(set = "EA2", collectorNumber = "22")
+@CardRegistration(set = "EOS", collectorNumber = "25")
+@CardRegistration(set = "EOS", collectorNumber = "70")
+@CardRegistration(set = "EOS", collectorNumber = "115")
+@CardRegistration(set = "EOS", collectorNumber = "160")
 public class ManaConfluence extends Card {
 
     public ManaConfluence() {

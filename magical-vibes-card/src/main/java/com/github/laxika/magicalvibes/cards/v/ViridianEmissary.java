@@ -15,7 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "95")
+@CardRegistration(set = "PCA", collectorNumber = "80")
+@CardRegistration(set = "PC2", collectorNumber = "80")
 @CardRegistration(set = "TD2", collectorNumber = "52")
+@CardRegistration(set = "C15", collectorNumber = "208")
 public class ViridianEmissary extends Card {
 
     public ViridianEmissary() {

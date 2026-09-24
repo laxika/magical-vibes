@@ -19,8 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class,
-        Stasis.class, VolcanicEruption.class})
+@CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class, Stasis.class, VolcanicEruption.class})
 class CircleOfProtectionBlueTest extends BaseCardTest {
 
     @Test
@@ -173,6 +172,60 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class})
+    @DisplayName("Prevents only the next damage event from the chosen blue source")
+    void preventsOnlyNextDamageEventFromChosenSource() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent wizard = addReadyBlueCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, wizard.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        harness.performUntapStep(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, Mountain.class, VolcanicEruption.class})
+    @DisplayName("Prevention applies only to damage dealt to the protected player")
+    void onlyPreventsDamageToController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        VolcanicEruption spell = new VolcanicEruption();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorcery(player2, 0, 1, List.of(mountain.getId()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("Prevents the next noncombat damage from the chosen source")
     void preventsNextNoncombatDamage() {
         harness.setLife(player1, 20);
@@ -200,7 +253,28 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage from the chosen blue source to your creature is not prevented")
+    void chosenSourceDamageToControlledCreatureIsNotPrevented() {
+        addReadyCircle(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wizard = addReadyBlueCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, wizard.getId());
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(wizard.getId()));
+    }
+
+    @Test
     @DisplayName("Prevents damage from a blue spell chosen while it is on the stack")
+    @CardUsed({Mountain.class, VolcanicEruption.class})
     void preventsDamageFromBlueSpellOnStack() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

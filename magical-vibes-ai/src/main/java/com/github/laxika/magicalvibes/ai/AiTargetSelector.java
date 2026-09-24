@@ -862,6 +862,11 @@ class AiTargetSelector {
             trial.add(candidate.getId());
             return targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+            List<UUID> trial = new ArrayList<>(chosenSoFar);
+            trial.add(candidate.getId());
+            return targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND) {
             List<UUID> trial = new ArrayList<>(chosenSoFar);
             trial.add(candidate.getId());
@@ -901,15 +906,20 @@ class AiTargetSelector {
                 case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(gameData, other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
+                case CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT -> gameData
+                        .combatDamageToPlayersThisCombat
+                        .getOrDefault(other.getId(), Set.of())
+                        .contains(candidateControllerId);
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
                 case BLOCKED_BY_FIRST_TARGET -> gameData.combatOpponentIdsBlockedByThisTurn
                         .getOrDefault(other.getId(), Set.of())
                         .contains(candidate.getId());
                 case DIFFERENT_NAMES -> !other.getCard().getName().equals(candidate.getCard().getName());
                 case DIFFERENT_MANA_VALUES -> other.getCard().getManaValue() != candidate.getCard().getManaValue();
-                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS, AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
+                     AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                      ONE_PER_CONTROLLER_IF_ABLE, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
                      AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->
@@ -1125,7 +1135,7 @@ class AiTargetSelector {
                 }
                 if (rge.requiresManaValueAtMostX() && maxAffordableX < Integer.MAX_VALUE) {
                     candidates = candidates.stream()
-                            .filter(c -> c.getManaValue() <= maxAffordableX)
+                            .filter(c -> c.getManaValue() <= maxAffordableX + rge.manaValueXOffset())
                             .toList();
                 }
             } else {

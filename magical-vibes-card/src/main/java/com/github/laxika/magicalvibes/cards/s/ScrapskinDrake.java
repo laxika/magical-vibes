@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "73")
 @CardRegistration(set = "ORI", collectorNumber = "69")
+@CardRegistration(set = "DDQ", collectorNumber = "47")
 public class ScrapskinDrake extends Card {
 
     public ScrapskinDrake() {

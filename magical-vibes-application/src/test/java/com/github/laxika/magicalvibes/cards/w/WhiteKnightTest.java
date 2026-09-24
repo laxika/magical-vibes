@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.p.Pestilence;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
@@ -22,7 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WhiteKnight.class, GrizzlyBears.class, BogWraith.class, CrawWurm.class,
-        Terror.class, SwordsToPlowshares.class, HolyStrength.class, UnholyStrength.class})
+        Terror.class, SwordsToPlowshares.class, HolyStrength.class, UnholyStrength.class,
+        Pestilence.class})
 class WhiteKnightTest extends BaseCardTest {
 
 
@@ -67,8 +69,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new WhiteKnight());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -85,8 +86,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new WhiteKnight());
         addCreatureReady(player2, new BogWraith());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,8 +99,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new WhiteKnight());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -114,8 +113,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new BogWraith());
         addCreatureReady(player2, new WhiteKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -129,8 +127,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new CrawWurm());
         addCreatureReady(player2, new WhiteKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -139,6 +136,25 @@ class WhiteKnightTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Craw Wurm");
         harness.assertNotOnBattlefield(player2, "White Knight");
         harness.assertInGraveyard(player2, "White Knight");
+    }
+
+    @Test
+    @DisplayName("Protection prevents noncombat damage from a black permanent")
+    void takesNoNoncombatDamageFromBlackPermanent() {
+        harness.addToBattlefield(player1, new Pestilence());
+        addCreatureReady(player2, new WhiteKnight());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "White Knight");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 
     // ===== Protection - targeting =====

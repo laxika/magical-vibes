@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "26")
+@CardRegistration(set = "2X2", collectorNumber = "41")
 public class Breakthrough extends Card {
 
     public Breakthrough() {

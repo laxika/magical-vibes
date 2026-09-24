@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "208")
+@CardRegistration(set = "RVR", collectorNumber = "227")
 public class SphinxOfNewPrahv extends Card {
 
     public SphinxOfNewPrahv() {

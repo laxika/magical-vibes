@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "135")
+@CardRegistration(set = "DBL", collectorNumber = "402")
 public class UnhallowedPhalanx extends Card {
 
     public UnhallowedPhalanx() {

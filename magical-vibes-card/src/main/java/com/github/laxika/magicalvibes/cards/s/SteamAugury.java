@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "205")
+@CardRegistration(set = "DDN", collectorNumber = "68")
+@CardRegistration(set = "PIO", collectorNumber = "244")
+@CardRegistration(set = "C15", collectorNumber = "233")
 public class SteamAugury extends Card {
 
     public SteamAugury() {

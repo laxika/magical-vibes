@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.filter;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -40,8 +39,14 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesCreatureTypeWithSourcePredicate) {
             return "card sharing a creature type with this creature";
         }
+        if (predicate instanceof CardSharesCreatureTypeWithCommanderPredicate) {
+            return "creature card sharing a creature type with your commander";
+        }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
+        }
+        if (predicate instanceof CardHasSourceChosenNamePredicate) {
+            return "card with the chosen name";
         }
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
@@ -82,6 +87,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardHasUnearthPredicate) {
+            return "card with unearth";
+        }
         if (predicate instanceof CardHasXInManaCostPredicate) {
             return "card with {X} in its mana cost";
         }
@@ -118,6 +126,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueLessThanSourcePowerPredicate) {
             return "card with mana value less than this creature's power";
         }
+        if (predicate instanceof CardManaValueLessThanSourceCountersPredicate) {
+            return "card with mana value less than this permanent's counters";
+        }
         if (predicate instanceof CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate) {
             return "card with mana value at most the number of permanent cards in your graveyard";
         }
@@ -136,6 +147,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardMaxManaValueXPredicate) {
             return "card with mana value X or less";
         }
+        if (predicate instanceof CardManaValueLessThanXPredicate) {
+            return "card with mana value less than X";
+        }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";
         }
@@ -150,6 +164,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardToughnessLessThanSourceToughnessPredicate) {
             return "card with toughness less than this creature's toughness";
+        }
+        if (predicate instanceof CardToughnessAtMostPredicate p) {
+            return "card with toughness " + p.maxToughness() + " or less";
         }
         if (predicate instanceof CardNamedPredicate p) {
             return "card named " + p.cardName();

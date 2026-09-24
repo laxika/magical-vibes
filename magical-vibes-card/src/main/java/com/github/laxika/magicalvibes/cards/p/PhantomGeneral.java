@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "16")
+@CardRegistration(set = "DDK", collectorNumber = "14")
 public class PhantomGeneral extends Card {
 
     public PhantomGeneral() {

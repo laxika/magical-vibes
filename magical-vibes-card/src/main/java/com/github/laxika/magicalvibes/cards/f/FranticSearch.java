@@ -11,6 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "32")
+@CardRegistration(set = "VMA", collectorNumber = "70")
+@CardRegistration(set = "SLD", collectorNumber = "228")
+@CardRegistration(set = "SLD", collectorNumber = "1996")
+@CardRegistration(set = "UMA", collectorNumber = "57")
+@CardRegistration(set = "DMR", collectorNumber = "51")
+@CardRegistration(set = "TLE", collectorNumber = "159")
+@CardRegistration(set = "CMM", collectorNumber = "96")
+@CardRegistration(set = "CMM", collectorNumber = "632")
 public class FranticSearch extends Card {
 
     public FranticSearch() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The three hosts cover the condition matrix: Kamahl, Pit Fighter (legendary + red), Raging Goblin
  * (red only), Arvad the Cursed (legendary only) and Grizzly Bears (neither).
  */
+@CardUsed({TenzaGodosMaul.class, GrizzlyBears.class, RagingGoblin.class, ArvadTheCursed.class,
+        KamahlPitFighter.class})
 class TenzaGodosMaulTest extends BaseCardTest {
 
     @Test

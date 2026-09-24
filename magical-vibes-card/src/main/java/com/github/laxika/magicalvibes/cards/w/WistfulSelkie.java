@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "165")
+@CardRegistration(set = "C15", collectorNumber = "243")
 public class WistfulSelkie extends Card {
 
     public WistfulSelkie() {

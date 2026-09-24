@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(RhysticSyphon.class)
 class RhysticSyphonTest extends BaseCardTest {
 
     @Test
@@ -18,8 +20,7 @@ class RhysticSyphonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
         harness.handleMayAbilityChosen(player2, true);
@@ -36,8 +37,7 @@ class RhysticSyphonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, 25);
@@ -50,11 +50,25 @@ class RhysticSyphonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RhysticSyphon()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player1, 25);
         harness.assertLife(player2, 15);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The caster may be the target and pay the generic cost")
+    void casterMayTargetAndPay() {
+        harness.setHand(player1, List.of(new RhysticSyphon()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }

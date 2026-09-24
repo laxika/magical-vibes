@@ -54,7 +54,7 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
         gameData.rerunCurrentEffectAfterInteraction = false;
         StackEntry copyEntry = new StackEntry(entry.getCard(), entry.getControllerId());
         copyEntry.setTargetId(chosenId);
-        tokenCopyHandler.resolve(gameData, copyEntry, new CreateTokenCopyOfTargetPermanentEffect());
+        tokenCopyHandler.resolve(gameData, copyEntry, copyEffect.copyEffect());
     }
 
     private List<UUID> validTargetIds(GameData gameData, StackEntry entry, StackEntry spellSnapshot) {

@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "229")
+@CardRegistration(set = "MM3", collectorNumber = "245")
+@CardRegistration(set = "ECC", collectorNumber = "166")
+@CardRegistration(set = "C13", collectorNumber = "318")
 public class SeasideCitadel extends Card {
 
     public SeasideCitadel() {

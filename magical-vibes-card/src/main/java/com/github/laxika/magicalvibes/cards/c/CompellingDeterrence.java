@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
  */
 @CardRegistration(set = "INR", collectorNumber = "57")
 @CardRegistration(set = "SOI", collectorNumber = "52")
+@CardRegistration(set = "DDQ", collectorNumber = "42")
+@CardRegistration(set = "SIR", collectorNumber = "55")
 public class CompellingDeterrence extends Card {
 
     public CompellingDeterrence() {

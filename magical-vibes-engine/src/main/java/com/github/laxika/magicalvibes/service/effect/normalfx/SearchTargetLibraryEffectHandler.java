@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -60,13 +62,15 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                                 UUID targetPlayerId, LibrarySearchFollowUp followUp) {
         SearchTargetLibraryEffect e = effect;
         UUID controllerId = entry.getControllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
+        UUID searcherId = e.searchPlayer() == LibrarySearchPlayer.TARGET_PLAYER
+                ? targetPlayerId : controllerId;
+        String searcherName = gameData.playerIdToName.get(searcherId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         // Leonin Arbiter: the search itself does not happen, but "then that player shuffles" is a
         // separate instruction that still does — and the library that shuffles is the one that was
         // to be searched, not the searcher's own.
-        if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId, targetPlayerId, controllerId)) {
+        if (!librarySearchSupport.checkSearchRestriction(gameData, searcherId, targetPlayerId, controllerId)) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
             return;
@@ -74,7 +78,8 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(controllerName + " searches " + targetName
+            if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+            gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName
                     + "'s library but it is empty. Library is shuffled."));
             return;
         }
@@ -87,7 +92,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                         .toList());
         if (candidates.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameLogService.append(gameData, GameLog.text(controllerName + " searches " + targetName
+            gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName
                     + "'s library but finds no matching cards. Library is shuffled."));
             return;
         }
@@ -98,30 +103,34 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
             // "up to X" with X == 0 (e.g. Nightmare Incursion with no Swamps): nothing is found,
             // but the targeted player still shuffles.
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameLogService.append(gameData, GameLog.text(controllerName + " searches " + targetName
+            gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName
                     + "'s library for no cards. Library is shuffled."));
             return;
         }
 
-        LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, candidates)
+        LibrarySearchParams.Builder params = LibrarySearchParams.builder(searcherId, candidates)
+                .reveals(e.destination() == LibrarySearchDestination.HAND)
                 .targetPlayerId(targetPlayerId)
                 .remainingCount(count)
                 .canFailToFind(e.canFailToFind())
                 .destination(e.destination())
                 .filterPredicate(filter)
                 .followUp(followUp);
+        if (filter instanceof CardNamedPredicate named) {
+            params.filterCardName(named.cardName());
+        }
         if (grantsPlayPermission(e.destination())) {
             // Grinning Totem reads the source card back out of the params when it queues
             // ExileToOwnerGraveyardAtNextUpkeep for the card left unplayed.
             params.sourceCards(List.of(entry.getCard()));
         }
 
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, params.build(),
-                prompt(e.destination(), filter, targetName, count), e.canFailToFind(),
-                controllerName + " searches " + targetName + "'s library.");
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, searcherId, params.build(),
+                prompt(e.destination(), filter, targetName, count, searcherId.equals(targetPlayerId)), e.canFailToFind(),
+                searcherName + " searches " + targetName + "'s library.");
 
         log.info("Game {} - {} searching {}'s library for {} card(s) to {} ({} candidates)",
-                gameData.id, controllerName, targetName, count, e.destination(), candidates.size());
+                gameData.id, searcherName, targetName, count, e.destination(), candidates.size());
     }
 
     private static boolean grantsPlayPermission(LibrarySearchDestination destination) {
@@ -130,8 +139,9 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
     }
 
     private static String prompt(LibrarySearchDestination destination, CardPredicate filter,
-                                 String targetName, int count) {
-        String subject = "Search " + targetName + "'s library for a " + CardPredicateUtils.describeFilter(filter);
+                                 String targetName, int count, boolean ownLibrary) {
+        String subject = (ownLibrary ? "Search your library for a " : "Search " + targetName
+                + "'s library for a ") + CardPredicateUtils.describeFilter(filter);
         return switch (destination) {
             case EXILE -> subject + " to exile (" + count + " remaining).";
             case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> filter == null
@@ -139,6 +149,9 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                     : subject + " to exile.";
             case EXILE_PLAYABLE_ANY_NUMBER -> subject + " to exile (any number).";
             case GRAVEYARD -> subject + " to put into their graveyard (" + count + " remaining).";
+            case HAND -> subject + (ownLibrary
+                    ? " to reveal and put it into your hand."
+                    : " to reveal and put it into their hand.");
             case BATTLEFIELD_UNDER_SEARCHER -> subject + " to put onto the battlefield under your control.";
             default -> throw new IllegalStateException("Unsupported destination " + destination);
         };

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "141")
+@CardRegistration(set = "PC2", collectorNumber = "128")
+@CardRegistration(set = "PCA", collectorNumber = "128")
 public class TaintedIsle extends Card {
 
     public TaintedIsle() {

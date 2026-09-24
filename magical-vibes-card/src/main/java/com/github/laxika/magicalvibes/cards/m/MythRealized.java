@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "26")
+@CardRegistration(set = "2X2", collectorNumber = "22")
 public class MythRealized extends Card {
 
     public MythRealized() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneCardOfEachManaValueFromGraveyardToHandEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "226")
+@CardRegistration(set = "SIR", collectorNumber = "212")
 public class SeasonsPast extends Card {
 
     public SeasonsPast() {

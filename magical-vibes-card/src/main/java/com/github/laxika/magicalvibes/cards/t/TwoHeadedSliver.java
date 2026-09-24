@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "183")
+@CardRegistration(set = "SLD", collectorNumber = "646")
+@CardRegistration(set = "TSR", collectorNumber = "197")
 public class TwoHeadedSliver extends Card {
 
     public TwoHeadedSliver() {

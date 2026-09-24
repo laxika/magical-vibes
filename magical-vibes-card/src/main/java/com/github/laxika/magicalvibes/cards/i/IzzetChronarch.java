@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "119")
+@CardRegistration(set = "DDJ", collectorNumber = "11")
+@CardRegistration(set = "CMD", collectorNumber = "205")
 public class IzzetChronarch extends Card {
 
     public IzzetChronarch() {

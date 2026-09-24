@@ -47,6 +47,30 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class InputCompletionServiceTest {
 
     @Test
+    void doesNotResumeEffectsOrPriorityWhileASubgameIsPending() {
+        gameData.waitingForSubgame = true;
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+        verifyNoInteractions(playerInputService, turnProgressionService, effectResolutionService);
+    }
+
+    @Test
+    void queuedManaChoiceIsPresentedBeforePriorityResumes() {
+        InteractionHandlerRegistry registry = mock(InteractionHandlerRegistry.class);
+        ReflectionTestUtils.setField(service, "interactionHandlerRegistry", registry);
+        var choice = new PendingInteraction.ColorChoice(playerId, null, null,
+                com.github.laxika.magicalvibes.model.ChoiceContext.ManaColorChoice.fixedColorCombination(
+                        playerId, false, 1, List.of(com.github.laxika.magicalvibes.model.ManaColor.BLUE)),
+                List.of("BLUE"), "Choose a color of mana");
+        gameData.pendingInteractions.add(choice);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        verify(registry).begin(gameData, choice);
+        assertThat(gameData.pendingInteractions).isEmpty();
+        verifyNoInteractions(playerInputService, turnProgressionService, effectResolutionService);
+    }
+
+    @Test
     void pendingRegenerationChoiceIsServicedBeforePriorityResumes() {
         var choice = new PendingInteraction.ColorChoice(playerId, UUID.randomUUID(), null,
                 new com.github.laxika.magicalvibes.model.ChoiceContext.RegenerationShieldChoice(

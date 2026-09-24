@@ -1,23 +1,27 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WayfarersBauble.class, CavesOfKoilos.class, Forest.class, Island.class, Plains.class,
+        GrizzlyBears.class})
 class WayfarersBaubleTest extends BaseCardTest {
 
     @Test
@@ -33,8 +37,34 @@ class WayfarersBaubleTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards())
                 .hasSize(3)
-                .allMatch(card -> card.hasType(CardType.LAND));
+                .allMatch(card -> card.hasType(CardType.LAND)
+                        && card.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
+    }
+
+    @Test
+    @DisplayName("Wayfarer's Bauble cannot be activated without two mana")
+    void requiresTwoManaToActivate() {
+        harness.addToBattlefield(player1, new WayfarersBauble());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Wayfarer's Bauble");
+        harness.assertNotInGraveyard(player1, "Wayfarer's Bauble");
+    }
+
+    @Test
+    @DisplayName("Wayfarer's Bauble cannot be activated while tapped")
+    void requiresUntappedSourceToActivate() {
+        var bauble = harness.addToBattlefieldAndReturn(player1, new WayfarersBauble());
+        bauble.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Wayfarer's Bauble");
+        harness.assertNotInGraveyard(player1, "Wayfarer's Bauble");
     }
 
     @Test
@@ -43,7 +73,7 @@ class WayfarersBaubleTest extends BaseCardTest {
         activateBauble();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Forest") && permanent.isTapped());
@@ -56,7 +86,7 @@ class WayfarersBaubleTest extends BaseCardTest {
         activateBauble();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().hasType(CardType.LAND));
@@ -71,8 +101,7 @@ class WayfarersBaubleTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new Island(), new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(
+                new Forest(), new Island(), new Plains(), new CavesOfKoilos(), new GrizzlyBears()));
     }
 }

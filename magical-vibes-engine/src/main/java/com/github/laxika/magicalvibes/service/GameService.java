@@ -307,6 +307,26 @@ public class GameService {
         };
     }
 
+    private boolean isWordOfCommandManaPayment(GameData gameData, Player player) {
+        return gameData.wordOfCommandCastingCard
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(player.getId())
+                && gameData.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice choice
+                && choice.playerId().equals(player.getId())
+                && choice.manaCost() != null;
+    }
+
+    private void requireWordOfCommandLandManaSource(GameData gameData, Player player, int permanentIndex) {
+        if (!isWordOfCommandManaPayment(gameData, player)) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
+        if (permanentIndex < 0 || permanentIndex >= battlefield.size()
+                || !gameQueryService.isLand(gameData, battlefield.get(permanentIndex))
+                || !player.getId().equals(gameQueryService.findPermanentController(
+                gameData, battlefield.get(permanentIndex).getId()))) {
+            throw new IllegalStateException("Only mana abilities of lands you control may be activated");
+        }
+    }
+
     /**
      * the controlled player when the controlled player should be acting (has priority
      * or is the expected respondent for an interaction).
@@ -364,6 +384,7 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 if (!gameData.stack.isEmpty()) {
                     stackResolutionService.resolveTopOfStack(gameData);
+                    if (gameData.waitingForSubgame) return;
                 } else {
                     turnProgressionService.advanceStep(gameData);
                 }
@@ -520,7 +541,8 @@ public class GameService {
                 if (pool == null || !cost.canPay(pool)) {
                     throw new IllegalStateException("Not enough mana to unlock that Room door");
                 }
-                cost.pay(pool);
+                spellCastingService.payManaCostWithPhyrexianAlternatives(
+                        gameData, player.getId(), cost, pool, 0);
             } finally {
                 if (roomMana != null) {
                     pool.restorePromotedRoomSpellsOrUnlocksMana(roomMana);
@@ -1148,20 +1170,35 @@ public class GameService {
                                     Map<UUID, Integer> damageAssignments,
                                     List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
                                     List<Integer> discardHandCardIndices) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+                                    Map<UUID, Integer> damageAssignments,
+                                    List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                                    List<Integer> discardHandCardIndices, List<UUID> convokeCreatureIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
                         targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
                         retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
                         damageAssignments, beholdPermanentIds, beholdHandCardIndices,
-                        discardHandCardIndices))) return;
+                        discardHandCardIndices, convokeCreatureIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId,
                     targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
                     retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
-                    damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices);
+                    damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices,
+                    convokeCreatureIds);
         }
     }
 
@@ -1324,6 +1361,25 @@ public class GameService {
         }
     }
 
+    /** Casts a face-down spellmorph card from the battlefield. */
+    public void playCardWithSpellmorph(GameData gameData, Player player, int permanentIndex,
+                                       Integer xValue, UUID targetId, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithSpellmorph(gameData, actionPlayer, permanentIndex, xValue,
+                        targetId, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalArgumentException("Invalid permanent index");
+            }
+            spellCastingService.playCardWithSpellmorph(gameData, player, battlefield.get(permanentIndex),
+                    xValue, targetId, targetIds != null ? targetIds : List.of());
+        }
+    }
+
     public void turnFaceUp(GameData gameData, Player player, int permanentIndex) {
         turnFaceUp(gameData, player, permanentIndex, null);
     }
@@ -1388,6 +1444,9 @@ public class GameService {
             if (manifestedOrCloaked && !permanent.getCard().hasType(CardType.CREATURE)) {
                 throw new IllegalStateException("Face-down permanent is not a creature card");
             }
+            if (!manifestedOrCloaked && permanent.getCard().isSpellmorph()) {
+                throw new IllegalStateException("Spellmorph cards are cast from the battlefield instead");
+            }
             if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
                     || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
@@ -1441,14 +1500,22 @@ public class GameService {
                             AmountContext.forCasting(player.getId()));
                     morphCostModifier -= reduction;
                 }
-                if (!manifestedOrCloaked && castingCostService != null) {
-                    morphCostModifier += castingCostService.getMorphCostModifier(
-                            gameData, player.getId(), permanent.getCard());
+                if (castingCostService != null) {
+                    morphCostModifier += castingCostService.getTurnFaceUpCostModifier(
+                            gameData, player.getId(), permanent.getCard(), permanent.getId());
+                    if (!manifestedOrCloaked) {
+                        morphCostModifier += castingCostService.getMorphCostModifier(
+                                gameData, player.getId(), permanent.getCard());
+                    }
                 }
                 if (morphCostModifier > 0) {
                     cost = cost.increasedBy(new ManaCost("{" + morphCostModifier + "}"));
                 } else if (morphCostModifier < 0) {
                     cost = cost.reducedBy(new ManaCost("{" + -morphCostModifier + "}"));
+                }
+                if (castingCostService != null) {
+                    cost = castingCostService.applyManaCostPaymentAlternatives(
+                            gameData, player.getId(), cost);
                 }
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (pool == null) {
@@ -1481,8 +1548,9 @@ public class GameService {
                             return;
                         }
                         throw new IllegalStateException("Not enough mana to turn the permanent face up");
-                    }
-                    cost.pay(pool, effectiveXValue);
+                }
+                    spellCastingService.payManaCostWithPhyrexianAlternatives(
+                            gameData, player.getId(), cost, pool, effectiveXValue);
                 } finally {
                     pool.restorePromotedTurnPermanentsFaceUpMana(turnPermanentsFaceUpMana);
                     pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(
@@ -1572,7 +1640,11 @@ public class GameService {
                     gameData, controllerId, permanent);
         }
 
-        List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+        List<CardEffect> effects = new java.util.ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects = effects.stream()
                 .filter(effect -> !(effect instanceof TurnFaceUpReplacementEffect))
                 .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
                 .toList();
@@ -1607,8 +1679,12 @@ public class GameService {
             boolean targetsPermanent = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (targetsGraveyard) {
+                int minimumGraveyardTargets = effects.stream()
+                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                        .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        permanent.getCard(), controllerId, effects, null, 1, xValue != null ? xValue : 0));
+                        permanent.getCard(), controllerId, effects, null,
+                        minimumGraveyardTargets, xValue != null ? xValue : 0));
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
                 if (autoPass) {
                     turnProgressionService.resolveAutoPass(gameData);
@@ -1722,6 +1798,22 @@ public class GameService {
         }
     }
 
+    public void castCommander(GameData gameData, Player player, UUID cardId, Runnable cast) {
+        if (runAsActionIfNeeded(gameData, () -> castCommander(gameData, player, cardId, cast))) return;
+        synchronized (gameData) {
+            Player actor = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, actor);
+            if (gameData.commandCastCardId != null) throw new IllegalStateException("Already casting a commander");
+            List<Card> zone = gameData.playerCommandZones.getOrDefault(actor.getId(), List.of());
+            if (zone.size() != 1 || !zone.getFirst().getId().equals(cardId) || !gameData.isCommander(cardId))
+                throw new IllegalArgumentException("Commander is not in your command zone");
+            gameData.commandCastPlayerId = actor.getId();
+            gameData.commandCastCardId = cardId;
+            try { cast.run(); }
+            finally { gameData.commandCastPlayerId = null; gameData.commandCastCardId = null; }
+        }
+    }
+
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         playCardFromExile(gameData, player, exileCardId, xValue, targetId, List.of());
     }
@@ -1793,6 +1885,7 @@ public class GameService {
             if (!isCombatCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
                 requirePriority(gameData, player);
             }
+            requireWordOfCommandLandManaSource(gameData, player, permanentIndex);
             requireCanActivateAbilities(gameData, player);
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
@@ -1889,6 +1982,21 @@ public class GameService {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments, null);
     }
 
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateEmblemAbility(gameData, actionPlayer, emblemIndex, abilityIndex, xValue,
+                        targetId, targetZone, targetIds, damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue,
+                    targetId, targetZone, targetIds, damageAssignments);
+        }
+    }
+
     /**
      * @param paymentIntent what the player is activating this mana ability for, so an "any colour"
      *                      prompt can grey out the colours that would strand it; {@code null} when
@@ -1915,11 +2023,24 @@ public class GameService {
                 if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
                     throw new IllegalStateException("Only mana abilities can be activated while paying a cost");
                 }
+                requireWordOfCommandLandManaSource(gameData, player, permanentIndex);
             } else {
                 requirePriority(gameData, player);
             }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
+        }
+    }
+
+    public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateCommandZoneAbility(gameData, actionPlayer, cardId, abilityIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            abilityActivationService.activateCommandZoneAbility(gameData, player, cardId, abilityIndex);
         }
     }
 
@@ -1987,28 +2108,42 @@ public class GameService {
     }
 
     public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId, Integer xValue) {
+        activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, xValue, null);
+    }
+
+    public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex,
+                                    UUID targetId, Integer xValue, List<UUID> targetIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> activateHandAbility(gameData, actionPlayer, handCardIndex, abilityIndex, targetId,
-                        xValue))) return;
+                        xValue, targetIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             requireCanActivateAbilities(gameData, player);
-            abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, xValue);
+            abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId,
+                    xValue, targetIds);
         }
     }
 
     public void activateHandAbilityWithGraveyardTargets(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, List<UUID> graveyardCardIds) {
+        activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, abilityIndex, null,
+                graveyardCardIds);
+    }
+
+    public void activateHandAbilityWithGraveyardTargets(GameData gameData, Player player, int handCardIndex,
+                                                        Integer abilityIndex, Integer xValue,
+                                                        List<UUID> graveyardCardIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> activateHandAbilityWithGraveyardTargets(gameData, actionPlayer, handCardIndex,
-                        abilityIndex, graveyardCardIds))) return;
+                        abilityIndex, xValue, graveyardCardIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             requireCanActivateAbilities(gameData, player);
-            abilityActivationService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, abilityIndex, graveyardCardIds);
+            abilityActivationService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex,
+                    abilityIndex, xValue, graveyardCardIds);
         }
     }
 

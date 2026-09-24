@@ -7,7 +7,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "43")
 @CardRegistration(set = "4ED", collectorNumber = "48")
 @CardRegistration(set = "3ED", collectorNumber = "39")
+@CardRegistration(set = "2ED", collectorNumber = "39")
 @CardRegistration(set = "FDN", collectorNumber = "146")
 @CardRegistration(set = "SUM", collectorNumber = "39")
+@CardRegistration(set = "A25", collectorNumber = "33")
+@CardRegistration(set = "MB1", collectorNumber = "218")
+@CardRegistration(set = "DMR", collectorNumber = "24")
+@CardRegistration(set = "DMR", collectorNumber = "270")
+@CardRegistration(set = "SLZ", collectorNumber = "9")
+@CardRegistration(set = "SLZ", collectorNumber = "130")
+@CardRegistration(set = "SLZ", collectorNumber = "251")
+@CardRegistration(set = "ME4", collectorNumber = "24")
 public class SavannahLions extends Card {
 }

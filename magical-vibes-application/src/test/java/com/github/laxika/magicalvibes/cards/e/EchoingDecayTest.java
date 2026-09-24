@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
+import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,76 +21,131 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EchoingDecay.class, DarksteelGargoyle.class, CrazedGoblin.class, DarksteelIngot.class})
 class EchoingDecayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives the target and all creatures with the same name -2/-2")
     void debuffsTargetAndAllSameNameCreatures() {
-        Permanent ownAvatar = addCreature(player1, new AvatarOfMight());
-        Permanent target = addCreature(player2, new AvatarOfMight());
-        Permanent otherAvatar = addCreature(player2, new AvatarOfMight());
-        Permanent elf = addCreature(player2, new LlanowarElves());
+        Permanent ownGargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent target = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent otherGargoyle = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent goblin = addCreatureReady(player2, new CrazedGoblin());
 
         castEchoingDecay(target.getId());
 
-        assertThat(gqs.getEffectivePower(gd, ownAvatar)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, ownAvatar)).isEqualTo(6);
-        assertThat(gqs.getEffectivePower(gd, otherAvatar)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, otherAvatar)).isEqualTo(6);
-        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownGargoyle)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownGargoyle)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherGargoyle)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherGargoyle)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("A same-name hexproof creature is affected without being targeted")
     void affectsSameNameHexproofCreature() {
-        Permanent target = addCreature(player2, new AvatarOfMight());
-        Permanent hexproof = addCreature(player2, new AvatarOfMight());
+        Permanent target = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent hexproof = addCreatureReady(player2, new DarksteelGargoyle());
         TestCards.mutableCard(hexproof).setKeywords(EnumSet.of(Keyword.HEXPROOF));
 
         castEchoingDecay(target.getId());
 
-        assertThat(gqs.getEffectiveToughness(gd, hexproof)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hexproof)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("The reduction wears off at end of turn")
     void debuffWearsOffAtEndOfTurn() {
-        Permanent target = addCreature(player2, new AvatarOfMight());
+        Permanent target = addCreatureReady(player2, new DarksteelGargoyle());
 
         castEchoingDecay(target.getId());
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Lethal reduction puts every same-name creature into its owner's graveyard")
     void killsAllSameNameCreatures() {
-        addCreature(player1, new GrizzlyBears());
-        Permanent target = addCreature(player2, new GrizzlyBears());
-        addCreature(player2, new GrizzlyBears());
-        addCreature(player2, new LlanowarElves());
+        addCreatureReady(player1, new CrazedGoblin());
+        Permanent target = addCreatureReady(player2, new CrazedGoblin());
+        addCreatureReady(player2, new CrazedGoblin());
+        addCreatureReady(player2, new DarksteelGargoyle());
 
         castEchoingDecay(target.getId());
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Crazed Goblin");
+        harness.assertNotOnBattlefield(player2, "Crazed Goblin");
+        harness.assertInGraveyard(player1, "Crazed Goblin");
+        harness.assertInGraveyard(player2, "Crazed Goblin");
+        harness.assertOnBattlefield(player2, "Darksteel Gargoyle");
+    }
+
+    @Test
+    @DisplayName("Does not target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        Permanent ingot = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, ingot.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Uses current creature names when finding affected creatures")
+    @CardUsed(WitnessProtection.class)
+    void usesEffectiveNamesWhenFindingSameNameCreatures() {
+        Permanent target = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent renamed = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new WitnessProtection());
+        aura.setAttachedTo(renamed.getId());
+
+        assertThat(gqs.getEffectiveName(gd, renamed)).isEqualTo("Legitimate Businessperson");
+
+        castEchoingDecay(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(renamed);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, renamed)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, renamed)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent otherGargoyle = addCreatureReady(player2, new DarksteelGargoyle());
+
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, otherGargoyle)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherGargoyle)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Cannot target a player")
     void cannotTargetPlayer() {
         harness.setHand(player1, List.of(new EchoingDecay()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -97,16 +153,8 @@ class EchoingDecayTest extends BaseCardTest {
 
     private void castEchoingDecay(UUID targetId) {
         harness.setHand(player1, List.of(new EchoingDecay()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
-    }
-
-    private Permanent addCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

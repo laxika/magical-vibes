@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "23")
+@CardRegistration(set = "CMD", collectorNumber = "31")
 public class ShatteredAngel extends Card {
 
     public ShatteredAngel() {

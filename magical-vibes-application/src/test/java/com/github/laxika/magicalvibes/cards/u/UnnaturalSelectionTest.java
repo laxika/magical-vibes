@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AngelfireCrusader;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,13 +14,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnnaturalSelection.class, GrizzlyBears.class})
+@CardUsed({UnnaturalSelection.class, AngelfireCrusader.class})
 class UnnaturalSelectionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature becomes the chosen type until end of turn")
     void targetBecomesChosenType() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelfireCrusader());
         addSelectionAndMana();
 
         activate(target);
@@ -34,7 +35,7 @@ class UnnaturalSelectionTest extends BaseCardTest {
     @Test
     @DisplayName("Wall is not a legal creature type choice")
     void wallCannotBeChosen() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelfireCrusader());
         addSelectionAndMana();
 
         activate(target);
@@ -45,16 +46,58 @@ class UnnaturalSelectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only creature types are offered as choices")
+    void onlyCreatureTypesAreOffered() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelfireCrusader());
+        addSelectionAndMana();
+
+        activate(target);
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+
+        assertThat(choice.options()).contains(CardSubtype.ZOMBIE.name(), CardSubtype.FLAGBEARER.name())
+                .doesNotContain(CardSubtype.TREASURE.name(), CardSubtype.AURA.name(),
+                        CardSubtype.SAGA.name(), CardSubtype.JACE.name(), CardSubtype.LAIR.name(),
+                        CardSubtype.ARCANE.name(), CardSubtype.SIEGE.name());
+    }
+
+    @Test
     @DisplayName("The chosen creature type wears off at end of turn")
     void chosenTypeWearsOff() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelfireCrusader());
+        var originalSubtypes = gqs.effectiveCreatureSubtypes(gd, target);
         addSelectionAndMana();
 
         activate(target);
         harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
-        target.resetModifiers();
 
-        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.BEAR);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).isEqualTo(originalSubtypes);
+    }
+
+    @Test
+    @DisplayName("Can target a creature an opponent controls")
+    void canTargetOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelfireCrusader());
+        addSelectionAndMana();
+
+        activate(target);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UnnaturalSelection());
+        addSelectionAndMana();
+
+        assertThatThrownBy(() -> activate(target))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     private void addSelectionAndMana() {
@@ -64,7 +107,9 @@ class UnnaturalSelectionTest extends BaseCardTest {
     }
 
     private void activate(Permanent target) {
-        harness.activateAbility(player1, 1, null, target.getId());
+        Permanent selection = findPermanent(player1, "Unnatural Selection");
+        int selectionIndex = gd.playerBattlefields.get(player1.getId()).indexOf(selection);
+        harness.activateAbility(player1, selectionIndex, null, target.getId());
         harness.passBothPriorities();
     }
 }

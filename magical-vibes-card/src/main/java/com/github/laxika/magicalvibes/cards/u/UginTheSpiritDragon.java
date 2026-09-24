@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "1")
 @CardRegistration(set = "FRF", collectorNumber = "1")
+@CardRegistration(set = "SLD", collectorNumber = "2131")
 public class UginTheSpiritDragon extends Card {
 
     public UginTheSpiritDragon() {

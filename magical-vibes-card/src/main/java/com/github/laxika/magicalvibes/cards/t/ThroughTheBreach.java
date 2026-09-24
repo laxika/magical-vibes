@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "CHK", collectorNumber = "193")
 @CardRegistration(set = "INR", collectorNumber = "175")
 @CardRegistration(set = "INR", collectorNumber = "404")
+@CardRegistration(set = "MP2", collectorNumber = "49")
+@CardRegistration(set = "UMA", collectorNumber = "152")
 public class ThroughTheBreach extends Card {
 
     public ThroughTheBreach() {

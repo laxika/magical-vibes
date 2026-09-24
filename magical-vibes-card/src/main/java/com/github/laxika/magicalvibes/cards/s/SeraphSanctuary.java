@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "228")
+@CardRegistration(set = "DDQ", collectorNumber = "33")
+@CardRegistration(set = "SLD", collectorNumber = "733")
+@CardRegistration(set = "SLD", collectorNumber = "797")
+@CardRegistration(set = "SLD", collectorNumber = "1292")
 public class SeraphSanctuary extends Card {
 
     public SeraphSanctuary() {

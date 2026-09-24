@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "167")
+@CardRegistration(set = "MM3", collectorNumber = "165")
+@CardRegistration(set = "2XM", collectorNumber = "198")
+@CardRegistration(set = "GK2", collectorNumber = "90")
+@CardRegistration(set = "PIO", collectorNumber = "226")
 public class GhorClanRampager extends Card {
 
     public GhorClanRampager() {

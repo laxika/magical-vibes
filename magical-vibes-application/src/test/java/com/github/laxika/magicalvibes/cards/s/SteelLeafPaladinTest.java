@@ -1,45 +1,43 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
+import com.github.laxika.magicalvibes.cards.a.AuroraGriffin;
+import com.github.laxika.magicalvibes.cards.k.KavuRecluse;
+import com.github.laxika.magicalvibes.cards.m.MeteorCrater;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SteelLeafPaladin.class, AlphaKavu.class, AuroraGriffin.class, KavuRecluse.class,
+        MeteorCrater.class})
 class SteelLeafPaladinTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB allows choosing a green or white creature you control, including itself")
     void etbOffersGreenOrWhiteCreaturesYouControl() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new SavannahLions());
-        harness.addToBattlefield(player1, new Island());
-        harness.setHand(player1, List.of(new SteelLeafPaladin()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID lionsId = harness.getPermanentId(player1, "Savannah Lions");
+        UUID greenId = harness.addToBattlefieldAndReturn(player1, new AlphaKavu()).getId();
+        UUID whiteId = harness.addToBattlefieldAndReturn(player1, new AuroraGriffin()).getId();
+        UUID redId = harness.addToBattlefieldAndReturn(player1, new KavuRecluse()).getId();
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new MeteorCrater()).getId();
+        UUID opponentWhiteId = harness.addToBattlefieldAndReturn(player2, new AuroraGriffin()).getId();
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SteelLeafPaladin(), "{4}{G}{W}");
         resolveAllTriggers();
 
-        GameData gd = harness.getGameData();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         UUID paladinId = harness.getPermanentId(player1, "Steel Leaf Paladin");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+        assertThat(choice.playerId())
                 .isEqualTo(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(bearsId, lionsId, paladinId);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(greenId, whiteId, paladinId);
+        assertThat(choice.validIds()).doesNotContain(redId, landId, opponentWhiteId);
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.BounceCreature.class);
     }
@@ -47,21 +45,62 @@ class SteelLeafPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen green or white creature returns to its owner's hand")
     void chosenCreatureReturnsToHand() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new SavannahLions());
-        harness.setHand(player1, List.of(new SteelLeafPaladin()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        UUID lionsId = harness.getPermanentId(player1, "Savannah Lions");
+        harness.addToBattlefield(player1, new AlphaKavu());
+        UUID whiteId = harness.addToBattlefieldAndReturn(player1, new AuroraGriffin()).getId();
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SteelLeafPaladin(), "{4}{G}{W}");
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, lionsId);
+        harness.handlePermanentChosen(player1, whiteId);
 
-        harness.assertNotOnBattlefield(player1, "Savannah Lions");
-        harness.assertInHand(player1, "Savannah Lions");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Aurora Griffin");
+        harness.assertInHand(player1, "Aurora Griffin");
+        harness.assertOnBattlefield(player1, "Alpha Kavu");
+        harness.assertOnBattlefield(player1, "Steel Leaf Paladin");
+    }
+
+    @Test
+    @DisplayName("A chosen green creature returns to its owner's hand")
+    void chosenGreenCreatureReturnsToHand() {
+        UUID greenId = harness.addToBattlefieldAndReturn(player1, new AlphaKavu()).getId();
+
+        harness.castFromHand(player1, new SteelLeafPaladin(), "{4}{G}{W}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, greenId);
+
+        harness.assertNotOnBattlefield(player1, "Alpha Kavu");
+        harness.assertInHand(player1, "Alpha Kavu");
+        harness.assertOnBattlefield(player1, "Steel Leaf Paladin");
+    }
+
+    @Test
+    @DisplayName("The Paladin itself can be returned to its owner's hand")
+    void sourceCanBeReturnedToItsOwnersHand() {
+        harness.castFromHand(player1, new SteelLeafPaladin(), "{4}{G}{W}");
+        resolveAllTriggers();
+
+        UUID paladinId = harness.getPermanentId(player1, "Steel Leaf Paladin");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(paladinId);
+
+        harness.handlePermanentChosen(player1, paladinId);
+
+        harness.assertInHand(player1, "Steel Leaf Paladin");
+        harness.assertNotOnBattlefield(player1, "Steel Leaf Paladin");
+    }
+
+    @Test
+    @DisplayName("A returned creature goes to its owner's hand rather than its controller's hand")
+    void returnedCreatureGoesToItsOwnersHand() {
+        AlphaKavu ownedByPlayer2 = new AlphaKavu();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        UUID creatureId = harness.addToBattlefieldAndReturn(player1, ownedByPlayer2).getId();
+
+        harness.castFromHand(player1, new SteelLeafPaladin(), "{4}{G}{W}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, creatureId);
+
+        harness.assertInHand(player2, "Alpha Kavu");
+        harness.assertNotInHand(player1, "Alpha Kavu");
         harness.assertOnBattlefield(player1, "Steel Leaf Paladin");
     }
 }

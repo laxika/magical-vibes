@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "125")
+@CardRegistration(set = "DDU", collectorNumber = "12")
+@CardRegistration(set = "SLD", collectorNumber = "769")
 public class IvyLaneDenizen extends Card {
 
     public IvyLaneDenizen() {

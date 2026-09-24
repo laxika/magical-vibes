@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "36")
+@CardRegistration(set = "VMA", collectorNumber = "35")
+@CardRegistration(set = "DMR", collectorNumber = "16")
 public class MysticZealot extends Card {
 
     public MysticZealot() {

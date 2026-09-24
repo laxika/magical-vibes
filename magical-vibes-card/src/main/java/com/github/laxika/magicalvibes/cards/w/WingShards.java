@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "25")
+@CardRegistration(set = "IMA", collectorNumber = "38")
+@CardRegistration(set = "MH1", collectorNumber = "38")
+@CardRegistration(set = "C14", collectorNumber = "97")
 public class WingShards extends Card {
 
     public WingShards() {

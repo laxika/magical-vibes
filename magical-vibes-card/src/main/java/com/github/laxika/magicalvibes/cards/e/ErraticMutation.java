@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandBoostTarget
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "41")
+@CardRegistration(set = "MMA", collectorNumber = "42")
+@CardRegistration(set = "TSR", collectorNumber = "67")
 public class ErraticMutation extends Card {
 
     public ErraticMutation() {

@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "35")
+@CardRegistration(set = "DDM", collectorNumber = "15")
+@CardRegistration(set = "HA3", collectorNumber = "6")
+@CardRegistration(set = "2X2", collectorNumber = "40")
+@CardRegistration(set = "CMM", collectorNumber = "75")
 public class BodyDouble extends Card {
 
     public BodyDouble() {

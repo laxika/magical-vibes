@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "161")
+@CardRegistration(set = "C14", collectorNumber = "291")
 public class DormantVolcano extends Card {
 
     private static final PermanentAllOfPredicate UNTAPPED_MOUNTAIN = new PermanentAllOfPredicate(List.of(

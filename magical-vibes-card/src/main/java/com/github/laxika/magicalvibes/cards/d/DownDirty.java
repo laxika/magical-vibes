@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "126")
+@CardRegistration(set = "PIO", collectorNumber = "387")
 public class DownDirty extends Card {
 
     public DownDirty() {

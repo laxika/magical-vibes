@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -70,7 +71,6 @@ class JayemdaeTomeTest extends BaseCardTest {
     void activatingPutsOnStack() {
         Permanent tome = addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -85,7 +85,6 @@ class JayemdaeTomeTest extends BaseCardTest {
     void activatingTapsTome() {
         Permanent tome = addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThat(tome.isTapped()).isFalse();
 
@@ -99,7 +98,6 @@ class JayemdaeTomeTest extends BaseCardTest {
     void manaIsConsumedWhenActivating() {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -126,11 +124,25 @@ class JayemdaeTomeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activated ability still resolves if Jayemdae Tome leaves the battlefield")
+    void abilityResolvesAfterTomeLeavesBattlefield() {
+        Forest drawn = new Forest();
+        addReadyTome(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
     @DisplayName("Resolving ability does not affect opponent's hand")
     void doesNotAffectOpponent() {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -164,6 +176,7 @@ class JayemdaeTomeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to draw"));
     }
@@ -186,7 +199,6 @@ class JayemdaeTomeTest extends BaseCardTest {
     void cannotActivateTwice() {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 8);
-        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -212,12 +224,9 @@ class JayemdaeTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability the turn it enters the battlefield (no summoning sickness for artifacts)")
     void noSummoningSicknessForArtifact() {
-        JayemdaeTome card = new JayemdaeTome();
-        Permanent tome = new Permanent(card);
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new JayemdaeTome());
         tome.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(tome);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -243,10 +252,8 @@ class JayemdaeTomeTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyTome(Player player) {
-        JayemdaeTome card = new JayemdaeTome();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JayemdaeTome());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

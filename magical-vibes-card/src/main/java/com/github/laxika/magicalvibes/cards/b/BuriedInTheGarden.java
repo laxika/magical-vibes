@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "191")
+@CardRegistration(set = "OTP", collectorNumber = "38")
 public class BuriedInTheGarden extends Card {
 
     public BuriedInTheGarden() {

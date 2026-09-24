@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 
 @Component
 @RequiredArgsConstructor
@@ -39,7 +40,9 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect) effect;
 
-        Map<UUID, List<Card>> cardsToReturn = new LinkedHashMap<>();
+        gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
+                entry.getControllerId(), List.of(), Map.of(), e.underOwnersControl(),
+                true, e.enterTapped(), e.enterWithCounter());
         Map<UUID, List<String>> returnedNamesByPlayer = new LinkedHashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
@@ -75,7 +78,9 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                         graveyardService.notifyCardsLeftGraveyard(gameData, playerId, card);
                         removed.add(card);
                     }
-                    cardsToReturn.put(playerId, removed);
+                    for (Card card : removed) {
+                        gameData.pendingGraveyardReturnBatch = gameData.pendingGraveyardReturnBatch.add(card, playerId);
+                    }
                     returnedNamesByPlayer.put(playerId, removed.stream().map(Card::getName).toList());
                 } else {
                     gameData.pendingGraveyardReturnQueue.add(
@@ -88,8 +93,6 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
-        graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
-                gameData, cardsToReturn, e.enterTapped(), e.enterWithCounter());
         for (Map.Entry<UUID, List<String>> returned : returnedNamesByPlayer.entrySet()) {
             String playerName = gameData.playerIdToName.get(returned.getKey());
             gameLogService.append(gameData,
@@ -97,8 +100,6 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                             + " from graveyard to the battlefield."));
         }
 
-        if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
-            graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
-        }
+        graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
     }
 }

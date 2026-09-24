@@ -14,6 +14,13 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "229")
+@CardRegistration(set = "EXP", collectorNumber = "23")
+@CardRegistration(set = "MM3", collectorNumber = "249")
+@CardRegistration(set = "ZNE", collectorNumber = "8")
+@CardRegistration(set = "SLU", collectorNumber = "3")
+@CardRegistration(set = "SPG", collectorNumber = "113")
+@CardRegistration(set = "SPG", collectorNumber = "118")
+@CardRegistration(set = "MH2", collectorNumber = "260")
 public class VerdantCatacombs extends Card {
 
     public VerdantCatacombs() {

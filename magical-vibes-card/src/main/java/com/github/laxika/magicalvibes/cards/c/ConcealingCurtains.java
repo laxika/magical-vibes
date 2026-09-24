@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "101")
+@CardRegistration(set = "DBL", collectorNumber = "368")
 public class ConcealingCurtains extends Card {
 
     public ConcealingCurtains() {

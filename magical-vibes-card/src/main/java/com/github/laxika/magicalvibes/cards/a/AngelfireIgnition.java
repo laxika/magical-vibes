@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "229")
 @CardRegistration(set = "MID", collectorNumber = "209")
+@CardRegistration(set = "DBL", collectorNumber = "209")
 public class AngelfireIgnition extends Card {
 
     public AngelfireIgnition() {

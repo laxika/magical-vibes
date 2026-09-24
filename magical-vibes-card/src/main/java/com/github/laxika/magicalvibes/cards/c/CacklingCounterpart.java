@@ -8,8 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "46")
+@CardRegistration(set = "MM3", collectorNumber = "32")
 @CardRegistration(set = "INR", collectorNumber = "55")
 @CardRegistration(set = "INR", collectorNumber = "353")
+@CardRegistration(set = "SIS", collectorNumber = "14")
+@CardRegistration(set = "C14", collectorNumber = "100")
 public class CacklingCounterpart extends Card {
 
     public CacklingCounterpart() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "148")
+@CardRegistration(set = "RVR", collectorNumber = "223")
 public class SimicGuildmage extends Card {
 
     public SimicGuildmage() {

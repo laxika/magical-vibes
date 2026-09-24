@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StreamOfLife.class, GrizzlyBears.class})
@@ -25,7 +24,21 @@ class StreamOfLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+        harness.assertLife(player2, 24);
+    }
+
+    @Test
+    @DisplayName("Only the targeted player gains life")
+    void onlyTargetedPlayerGainsLife() {
+        harness.setHand(player1, List.of(new StreamOfLife()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
     }
 
     @Test
@@ -37,7 +50,7 @@ class StreamOfLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player1, 23);
     }
 
     @Test
@@ -49,7 +62,7 @@ class StreamOfLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test

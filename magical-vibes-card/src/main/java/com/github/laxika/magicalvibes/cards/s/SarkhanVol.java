@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "191")
+@CardRegistration(set = "MMA", collectorNumber = "183")
+@CardRegistration(set = "SLD", collectorNumber = "1144")
 public class SarkhanVol extends Card {
 
     public SarkhanVol() {

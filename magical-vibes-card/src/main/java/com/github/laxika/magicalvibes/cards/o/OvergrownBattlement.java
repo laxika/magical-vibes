@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "203")
+@CardRegistration(set = "MB1", collectorNumber = "180")
+@CardRegistration(set = "IMA", collectorNumber = "180")
 public class OvergrownBattlement extends Card {
 
     public OvergrownBattlement() {

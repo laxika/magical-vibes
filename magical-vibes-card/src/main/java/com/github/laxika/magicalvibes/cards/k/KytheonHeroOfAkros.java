@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "23")
+@CardRegistration(set = "V17", collectorNumber = "13")
+@CardRegistration(set = "PIO", collectorNumber = "23")
 public class KytheonHeroOfAkros extends Card {
 
     public KytheonHeroOfAkros() {

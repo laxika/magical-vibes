@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "18")
+@CardRegistration(set = "EMA", collectorNumber = "14")
+@CardRegistration(set = "MB1", collectorNumber = "136")
 public class Humble extends Card {
 
     public Humble() {

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "176")
+@CardRegistration(set = "A25", collectorNumber = "201")
+@CardRegistration(set = "KLR", collectorNumber = "189")
 public class Cloudblazer extends Card {
 
     public Cloudblazer() {

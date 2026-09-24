@@ -20,6 +20,12 @@ import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "139")
 @CardRegistration(set = "DDH", collectorNumber = "54")
+@CardRegistration(set = "UMA", collectorNumber = "113")
+@CardRegistration(set = "TSR", collectorNumber = "331")
+@CardRegistration(set = "ECC", collectorNumber = "85")
+@CardRegistration(set = "CMD", collectorNumber = "100")
+@CardRegistration(set = "C14", collectorNumber = "160")
+@CardRegistration(set = "C15", collectorNumber = "137")
 public class Shriekmaw extends Card {
 
     public Shriekmaw() {

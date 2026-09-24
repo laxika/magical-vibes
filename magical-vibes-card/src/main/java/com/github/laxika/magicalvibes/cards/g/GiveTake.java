@@ -37,6 +37,7 @@ import java.util.List;
  * cash it in for cards) is a legal and central use of this card.
  */
 @CardRegistration(set = "DGM", collectorNumber = "129")
+@CardRegistration(set = "PIO", collectorNumber = "389")
 public class GiveTake extends Card {
 
     public GiveTake() {

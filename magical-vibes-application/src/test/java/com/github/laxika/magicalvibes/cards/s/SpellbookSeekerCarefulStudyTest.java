@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CarefulStudy;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpellbookSeekerCarefulStudy.class, CarefulStudy.class, Island.class})
 class SpellbookSeekerCarefulStudyTest extends BaseCardTest {
 
     @Test
@@ -32,8 +34,8 @@ class SpellbookSeekerCarefulStudyTest extends BaseCardTest {
     void castingPreparedCopyDrawsDiscardsAndUnprepares() {
         Permanent seeker = castSeeker();
         UUID copyId = seeker.getPreparedSpellCardId();
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        setDeck(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
 
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -60,10 +62,5 @@ class SpellbookSeekerCarefulStudyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         return findPermanent(player1, "Spellbook Seeker");
-    }
-
-    private void setDeck(List<Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
     }
 }

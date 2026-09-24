@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "27")
+@CardRegistration(set = "FCA", collectorNumber = "25")
+@CardRegistration(set = "CMM", collectorNumber = "42")
+@CardRegistration(set = "CMM", collectorNumber = "466")
 public class MangaraTheDiplomat extends Card {
 
     public MangaraTheDiplomat() {

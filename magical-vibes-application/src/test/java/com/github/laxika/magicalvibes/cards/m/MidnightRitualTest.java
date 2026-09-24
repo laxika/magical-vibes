@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.DeepwoodGhoul;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MidnightRitual.class, DeepwoodGhoul.class, DarkRitual.class})
 class MidnightRitualTest extends BaseCardTest {
 
     // ===== Casting with X > 0 enters graveyard choice =====
@@ -32,8 +31,8 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Casting with X=2 prompts for graveyard target selection")
     void castingWithXPromptsGraveyardChoice() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5); // {X}{2}{B} with X=2 costs 5
@@ -55,9 +54,9 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Only creature cards from controller's graveyard are valid targets")
     void onlyCreatureCardsAreValidTargets() {
-        Card bears = new GrizzlyBears();
-        Card plains = new Plains(); // not a creature
-        Card opponentBears = new GrizzlyBears(); // opponent's creature
+        Card bears = new DeepwoodGhoul();
+        Card plains = new DarkRitual(); // not a creature
+        Card opponentBears = new DeepwoodGhoul(); // opponent's creature
         harness.setGraveyard(player1, List.of(bears, plains));
         harness.setGraveyard(player2, List.of(opponentBears));
         harness.setHand(player1, List.of(new MidnightRitual()));
@@ -65,7 +64,7 @@ class MidnightRitualTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1);
 
-        // Only player1's creature card should be valid (not Plains, not opponent's card)
+        // Only player1's creature card should be valid (not Dark Ritual, not opponent's card)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).containsExactly(bears.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).doesNotContain(plains.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).doesNotContain(opponentBears.getId());
@@ -76,10 +75,11 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Selecting targets puts sorcery on the stack")
     void selectingTargetsPutsSpellOnStack() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2));
-        harness.setHand(player1, List.of(new MidnightRitual()));
+        Card ritual = new MidnightRitual();
+        harness.setHand(player1, List.of(ritual));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0, 2);
@@ -89,7 +89,7 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Midnight Ritual");
+        assertThat(entry.getCard()).isSameAs(ritual);
         assertThat(entry.getXValue()).isEqualTo(2);
         assertThat(entry.getTargetCardIds()).containsExactly(bears1.getId(), bears2.getId());
 
@@ -97,7 +97,7 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions casting
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("casts Midnight Ritual"));
+        assertThat(gameLogContains("casts")).isTrue();
     }
 
     // ===== Resolution: exile + token creation =====
@@ -105,10 +105,11 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving exiles targeted creatures and creates Zombie tokens")
     void resolvingExilesAndCreatesTokens() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2));
-        harness.setHand(player1, List.of(new MidnightRitual()));
+        Card ritual = new MidnightRitual();
+        harness.setHand(player1, List.of(ritual));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0, 2);
@@ -117,11 +118,10 @@ class MidnightRitualTest extends BaseCardTest {
 
         // Both creatures exiled from graveyard; only Midnight Ritual remains (sorcery goes to graveyard)
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName()).isEqualTo("Midnight Ritual");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ritual);
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .extracting(Card::getName)
-                .containsOnly("Grizzly Bears");
+                .containsExactlyInAnyOrder(bears1, bears2);
 
         // Two Zombie tokens on the battlefield
         List<Permanent> tokens = findPermanents(player1, "Zombie");
@@ -131,13 +131,14 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Log mentions exile
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("exiles") && l.contains("from graveyard"));
+        assertThat(gameLogContains("exiles")).isTrue();
+        assertThat(gameLogContains("from graveyard")).isTrue();
     }
 
     @Test
     @DisplayName("Zombie tokens have correct properties")
     void zombieTokensHaveCorrectProperties() {
-        Card bears = new GrizzlyBears();
+        Card bears = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 4); // X=1
@@ -160,7 +161,7 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Casting with X=0 puts spell on stack directly without graveyard prompt")
     void castingWithXZeroPutsOnStackDirectly() {
-        Card bears = new GrizzlyBears();
+        Card bears = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 3); // {X}{2}{B} with X=0 costs 3
@@ -177,7 +178,7 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving with X=0 does nothing")
     void resolvingWithXZeroDoesNothing() {
-        Card bears = new GrizzlyBears();
+        Card bears = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -197,7 +198,7 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Casting with X greater than creature count in graveyard throws error")
     void xGreaterThanCreatureCountThrows() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears())); // only 1 creature
+        harness.setGraveyard(player1, List.of(new DeepwoodGhoul())); // only 1 creature
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5); // X=2
 
@@ -210,7 +211,7 @@ class MidnightRitualTest extends BaseCardTest {
     @DisplayName("Non-creature cards in graveyard do not count toward X validation")
     void nonCreaturesDontCountForXValidation() {
         // Graveyard has 1 creature and 2 non-creatures
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Plains(), new Plains()));
+        harness.setGraveyard(player1, List.of(new DeepwoodGhoul(), new DarkRitual(), new DarkRitual()));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
@@ -250,9 +251,9 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("X=3 exiles three creatures and creates three Zombie tokens")
     void xThreeCreatesThreeTokens() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
-        Card angel = new SerraAngel();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
+        Card angel = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2, angel));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 6); // X=3, costs 6
@@ -277,8 +278,8 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Target removed from graveyard before resolution creates fewer tokens")
     void targetRemovedBeforeResolutionCreatesFewerTokens() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -302,8 +303,8 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("All targets removed before resolution creates no tokens")
     void allTargetsRemovedCreatesNoTokens() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -321,14 +322,38 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Target moved to an opponent's graveyard is no longer exiled")
+    void targetMovedToOpponentsGraveyardIsNotExiled() {
+        Card movedCreature = new DeepwoodGhoul();
+        Card remainingCreature = new DeepwoodGhoul();
+        harness.setGraveyard(player1, List.of(movedCreature, remainingCreature));
+        harness.setHand(player1, List.of(new MidnightRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(movedCreature.getId(), remainingCreature.getId()));
+
+        gd.playerGraveyards.get(player1.getId()).remove(movedCreature);
+        gd.playerGraveyards.get(player2.getId()).add(movedCreature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(movedCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(remainingCreature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+    }
+
     // ===== Validation errors =====
 
     @Test
     @DisplayName("Selecting more cards than X throws error")
     void selectingMoreThanXThrows() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
-        Card bears3 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
+        Card bears3 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2, bears3));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5); // X=2
@@ -345,7 +370,7 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Selecting invalid card ID throws error")
     void selectingInvalidCardIdThrows() {
-        Card bears = new GrizzlyBears();
+        Card bears = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -361,8 +386,8 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Selecting duplicate card IDs throws error")
     void selectingDuplicateIdsThrows() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -379,7 +404,7 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Wrong player choosing throws error")
     void wrongPlayerChoosingThrows() {
-        Card bears = new GrizzlyBears();
+        Card bears = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -396,8 +421,8 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing fewer cards than X throws error (X target, not up to X)")
     void choosingFewerThanXThrowsError() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
+        Card bears1 = new DeepwoodGhoul();
+        Card bears2 = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears1, bears2));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5); // X=2
@@ -415,10 +440,10 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Graveyard with mixed types only shows creatures as valid targets")
     void mixedGraveyardOnlyCreaturesValid() {
-        Card bears = new GrizzlyBears();
-        Card angel = new SerraAngel();
-        Card plains1 = new Plains();
-        Card plains2 = new Plains();
+        Card bears = new DeepwoodGhoul();
+        Card angel = new DeepwoodGhoul();
+        Card plains1 = new DarkRitual();
+        Card plains2 = new DarkRitual();
         harness.setGraveyard(player1, List.of(bears, plains1, angel, plains2));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 5); // X=2
@@ -436,7 +461,7 @@ class MidnightRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Midnight Ritual goes to graveyard after resolution")
     void spellGoesToGraveyardAfterResolution() {
-        Card bears = new GrizzlyBears();
+        Card bears = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 4);

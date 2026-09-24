@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "108")
+@CardRegistration(set = "MM2", collectorNumber = "80")
+@CardRegistration(set = "CMM", collectorNumber = "152")
 public class DreadDrone extends Card {
 
     public DreadDrone() {

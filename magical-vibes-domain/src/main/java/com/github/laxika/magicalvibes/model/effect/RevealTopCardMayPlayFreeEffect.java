@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.UUID;
+
 /**
  * Reveals the top card of the controller's library. The controller may play that card
- * without paying its mana cost.
+ * without paying its mana cost. When {@code libraryOwnerId} is non-null, that player's library
+ * is used while the effect controller remains the player making the play-or-cast choice.
  *
  * <p>{@code notPlayedDestination} says where a card that isn't (or can't be) played goes:
  * {@link LookDestination#EXILE} exiles it (Djinn of Wishes), {@link LookDestination#TOP_OF_LIBRARY}
@@ -15,10 +18,23 @@ package com.github.laxika.magicalvibes.model.effect;
  * straight to {@code notPlayedDestination} without offering a choice (Descendants' Path).</p>
  */
 public record RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination,
-                                             boolean requireCreatureSharingTypeWithYourCreatures)
+                                             boolean requireCreatureSharingTypeWithYourCreatures,
+                                             UUID libraryOwnerId,
+                                             boolean drawIfDeclined)
         implements CardEffect {
 
     public RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination) {
-        this(notPlayedDestination, false);
+        this(notPlayedDestination, false, null, false);
+    }
+
+    public RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination,
+                                          boolean requireCreatureSharingTypeWithYourCreatures) {
+        this(notPlayedDestination, requireCreatureSharingTypeWithYourCreatures, null, false);
+    }
+
+    public RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination,
+                                          boolean requireCreatureSharingTypeWithYourCreatures,
+                                          UUID libraryOwnerId) {
+        this(notPlayedDestination, requireCreatureSharingTypeWithYourCreatures, libraryOwnerId, false);
     }
 }

@@ -15,8 +15,8 @@ public class FieldResearch extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new Kicked(),
-                new DrawCardEffect(3),
-                new DrawCardEffect(2)
+                new DrawCardEffect(2),
+                new DrawCardEffect(3)
         ));
     }
 }

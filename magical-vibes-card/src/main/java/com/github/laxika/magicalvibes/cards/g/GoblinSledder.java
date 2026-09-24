@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "209")
 @CardRegistration(set = "DD1", collectorNumber = "41")
+@CardRegistration(set = "EVG", collectorNumber = "41")
 public class GoblinSledder extends Card {
 
     public GoblinSledder() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VolleyOfBoulders.class, GrizzlyBears.class, HillGiant.class})
 class VolleyOfBouldersTest extends BaseCardTest {
 
     @Test
@@ -41,6 +43,18 @@ class VolleyOfBouldersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 9);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(giant.getId(), 5)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each target must receive at least one damage")
+    void assignmentsMustBePositive() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VolleyOfBoulders()));
+        harness.addMana(player1, ManaColor.RED, 9);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                Map.of(bears.getId(), 0, player2.getId(), 6)))
                 .isInstanceOf(IllegalStateException.class);
     }
 

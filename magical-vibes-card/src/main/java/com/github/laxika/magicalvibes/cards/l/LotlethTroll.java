@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "177")
+@CardRegistration(set = "GK1", collectorNumber = "67")
+@CardRegistration(set = "2X2", collectorNumber = "245")
+@CardRegistration(set = "PIO", collectorNumber = "229")
+@CardRegistration(set = "C15", collectorNumber = "226")
 public class LotlethTroll extends Card {
 
     public LotlethTroll() {

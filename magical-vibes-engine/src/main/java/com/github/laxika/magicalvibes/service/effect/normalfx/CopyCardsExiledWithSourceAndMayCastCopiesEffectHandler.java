@@ -1,18 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect.CopyCastCost;
+import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
     private final CopySupport copySupport;
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,9 +45,27 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
         List<Card> trackedCards = sourcePermanentId == null
                 ? List.of()
                 : gameData.getCardsExiledByPermanent(sourcePermanentId);
+        if (copyEffect.onlyOwnKickCounterCards()) {
+            trackedCards = trackedCards.stream()
+                    .filter(card -> gameData.exiledCardsWithKickCounters.contains(card.getId()))
+                    .filter(card -> {
+                        ExiledCardEntry exiledCard = gameData.findExiledCard(card.getId());
+                        return exiledCard != null && entry.getControllerId().equals(exiledCard.ownerId());
+                    })
+                    .toList();
+        }
+        if (!copyEffect.copyAll() && copyEffect.castCost() == CopyCastCost.FREE
+                && targetCardId(entry) == null && trackedCards.size() > 1) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledSpellCopyChoice(
+                    entry.getControllerId(), trackedCards.stream().map(Card::getId).toList(),
+                    1, true, "a card exiled with " + entry.getCard().getName()));
+            return;
+        }
         List<Card> cardsToCopy = copyEffect.copyAll()
                 ? trackedCards
-                : singletonOrEmpty(findTargetCard(trackedCards, targetCardId(entry)));
+                : copyEffect.castCost() == CopyCastCost.FREE && targetCardId(entry) == null
+                        && trackedCards.size() == 1 ? trackedCards
+                        : singletonOrEmpty(findTargetCard(trackedCards, targetCardId(entry)));
 
         if (cardsToCopy.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no exiled card to copy."));

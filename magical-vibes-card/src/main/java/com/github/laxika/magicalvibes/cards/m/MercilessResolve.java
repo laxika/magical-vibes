@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "123")
+@CardRegistration(set = "SIR", collectorNumber = "122")
 public class MercilessResolve extends Card {
 
     public MercilessResolve() {

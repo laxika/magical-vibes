@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DSK", collectorNumber = "32")
+@CardRegistration(set = "SLZ", collectorNumber = "11")
+@CardRegistration(set = "SLZ", collectorNumber = "132")
+@CardRegistration(set = "SLZ", collectorNumber = "253")
 public class SplitUp extends Card {
 
     public SplitUp() {

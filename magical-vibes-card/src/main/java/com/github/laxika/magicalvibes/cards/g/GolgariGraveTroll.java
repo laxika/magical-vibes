@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "167")
+@CardRegistration(set = "DDJ", collectorNumber = "60")
+@CardRegistration(set = "UMA", collectorNumber = "167")
+@CardRegistration(set = "RVR", collectorNumber = "144")
 public class GolgariGraveTroll extends Card {
 
     public GolgariGraveTroll() {

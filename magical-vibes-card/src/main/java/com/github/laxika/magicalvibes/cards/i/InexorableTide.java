@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "35")
+@CardRegistration(set = "MM2", collectorNumber = "49")
+@CardRegistration(set = "HA2", collectorNumber = "6")
 public class InexorableTide extends Card {
 
     public InexorableTide() {

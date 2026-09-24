@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "196")
+@CardRegistration(set = "DDL", collectorNumber = "65")
 public class TerrifyingPresence extends Card {
 
     public TerrifyingPresence() {

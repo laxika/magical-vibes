@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "62")
+@CardRegistration(set = "AA4", collectorNumber = "16")
 public class BringerOfTheRedDawn extends Card {
 
     public BringerOfTheRedDawn() {

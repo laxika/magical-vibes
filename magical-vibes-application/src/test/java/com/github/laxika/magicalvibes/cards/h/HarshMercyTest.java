@@ -1,56 +1,66 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.d.DaruLancer;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SkirkProspector;
+import com.github.laxika.magicalvibes.cards.s.SnarlingUndorak;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@CardUsed({HarshMercy.class, GrizzlyBears.class, HillGiant.class, RagingGoblin.class})
+@CardUsed({HarshMercy.class, DaruLancer.class, Plains.class, SkirkProspector.class, SnarlingUndorak.class})
 class HarshMercyTest extends BaseCardTest {
-
     @Test
-    @DisplayName("Each player chooses a type and creatures of any chosen type survive")
     void chosenTypesAreUnionedAcrossPlayers() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player2, new HillGiant());
-        harness.addToBattlefield(player2, new RagingGoblin());
+        harness.addToBattlefield(player1, new DaruLancer());
+        harness.addToBattlefield(player1, new SkirkProspector());
+        harness.addToBattlefield(player2, new SnarlingUndorak());
+        harness.addToBattlefield(player2, new SkirkProspector());
         cast();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+        org.assertj.core.api.Assertions.assertThat(
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleListChoice(player1, "BEAR");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+        harness.handleListChoice(player1, "HUMAN");
+        org.assertj.core.api.Assertions.assertThat(
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleListChoice(player2, "GIANT");
+        harness.handleListChoice(player2, "BEAST");
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Hill Giant");
-        harness.assertNotOnBattlefield(player1, "Raging Goblin");
-        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        harness.assertOnBattlefield(player1, "Daru Lancer");
+        harness.assertOnBattlefield(player2, "Snarling Undorak");
+        harness.assertNotOnBattlefield(player1, "Skirk Prospector");
+        harness.assertNotOnBattlefield(player2, "Skirk Prospector");
     }
 
     @Test
-    @DisplayName("The destruction does not allow regeneration")
     void creaturesCannotBeRegenerated() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        var goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new DaruLancer());
+        var goblin = harness.addToBattlefieldAndReturn(player1, new SkirkProspector());
         goblin.setRegenerationShield(1);
         cast();
 
-        harness.handleListChoice(player1, "BEAR");
-        harness.handleListChoice(player2, "BEAR");
+        harness.handleListChoice(player1, "HUMAN");
+        harness.handleListChoice(player2, "HUMAN");
 
-        harness.assertNotOnBattlefield(player1, "Raging Goblin");
-        harness.assertInGraveyard(player1, "Raging Goblin");
+        harness.assertNotOnBattlefield(player1, "Skirk Prospector");
+        harness.assertInGraveyard(player1, "Skirk Prospector");
+    }
+
+    @Test
+    void onlyCreaturesAreDestroyed() {
+        harness.addToBattlefield(player1, new DaruLancer());
+        harness.addToBattlefield(player1, new Plains());
+        cast();
+
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.handleListChoice(player2, "GOBLIN");
+
+        harness.assertNotOnBattlefield(player1, "Daru Lancer");
+        harness.assertOnBattlefield(player1, "Plains");
     }
 
     private void cast() {

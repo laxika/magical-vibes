@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "RNA", collectorNumber = "259")
 @CardRegistration(set = "GPT", collectorNumber = "165")
 @CardRegistration(set = "EOE", collectorNumber = "258")
+@CardRegistration(set = "EXP", collectorNumber = "9")
+@CardRegistration(set = "SLD", collectorNumber = "126")
+@CardRegistration(set = "RVR", collectorNumber = "289")
+@CardRegistration(set = "RVR", collectorNumber = "299")
 public class StompingGround extends Card {
 
     public StompingGround() {

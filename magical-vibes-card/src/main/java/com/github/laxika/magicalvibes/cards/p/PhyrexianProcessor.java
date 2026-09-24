@@ -15,6 +15,8 @@ import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "306")
 @CardRegistration(set = "DDE", collectorNumber = "29")
+@CardRegistration(set = "V16", collectorNumber = "12")
+@CardRegistration(set = "BRR", collectorNumber = "39")
 public class PhyrexianProcessor extends Card {
 
     public PhyrexianProcessor() {

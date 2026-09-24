@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValue
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "59")
+@CardRegistration(set = "KLR", collectorNumber = "60")
+@CardRegistration(set = "CMM", collectorNumber = "109")
 public class PadeemConsulOfInnovation extends Card {
 
     public PadeemConsulOfInnovation() {

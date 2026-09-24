@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "NEM", collectorNumber = "26")
+@CardRegistration(set = "DDO", collectorNumber = "35")
+@CardRegistration(set = "A25", collectorNumber = "40")
+@CardRegistration(set = "SLD", collectorNumber = "2140")
 public class AccumulatedKnowledge extends Card {
 
     public AccumulatedKnowledge() {

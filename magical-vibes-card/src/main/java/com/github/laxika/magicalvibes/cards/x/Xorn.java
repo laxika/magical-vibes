@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "167")
+@CardRegistration(set = "SLD", collectorNumber = "876")
 public class Xorn extends Card {
 
     public Xorn() {

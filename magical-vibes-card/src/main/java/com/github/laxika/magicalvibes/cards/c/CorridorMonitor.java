@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "41")
+@CardRegistration(set = "2XM", collectorNumber = "46")
 public class CorridorMonitor extends Card {
 
     public CorridorMonitor() {

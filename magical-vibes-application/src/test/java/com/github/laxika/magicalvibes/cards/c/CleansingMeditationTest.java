@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
+import com.github.laxika.magicalvibes.cards.h.Hypochondria;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,12 +10,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CleansingMeditation.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({CleansingMeditation.class, Hypochondria.class, AvenTrooper.class})
 class CleansingMeditationTest extends BaseCardTest {
 
     @Test
@@ -23,13 +22,17 @@ class CleansingMeditationTest extends BaseCardTest {
     void destroysAllEnchantmentsWithoutThreshold() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.addToBattlefield(player1, new Hypochondria());
+        harness.addToBattlefield(player2, new Hypochondria());
+        harness.addToBattlefield(player1, new AvenTrooper());
+        harness.addToBattlefield(player2, new AvenTrooper());
 
         castCleansingMeditation();
 
-        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player1, "Hypochondria");
+        harness.assertNotOnBattlefield(player2, "Hypochondria");
+        harness.assertOnBattlefield(player1, "Aven Trooper");
+        harness.assertOnBattlefield(player2, "Aven Trooper");
     }
 
     @Test
@@ -37,16 +40,16 @@ class CleansingMeditationTest extends BaseCardTest {
     void thresholdReturnsOnlyEnchantmentsDestroyedIntoYourGraveyard() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        Card previousEnchantment = new GloriousAnthem();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(
+        harness.addToBattlefield(player1, new Hypochondria());
+        Card previousEnchantment = new Hypochondria();
+        harness.setGraveyard(player1, List.of(
                 previousEnchantment,
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+                new AvenTrooper(), new AvenTrooper(), new AvenTrooper(),
+                new AvenTrooper(), new AvenTrooper(), new AvenTrooper()));
 
         castCleansingMeditation();
 
-        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Hypochondria");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(previousEnchantment)
                 .hasSize(8);
@@ -57,15 +60,15 @@ class CleansingMeditationTest extends BaseCardTest {
     void thresholdIsCheckedBeforeDestruction() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        Card enchantment = new GloriousAnthem();
+        Card enchantment = new Hypochondria();
         harness.addToBattlefield(player1, enchantment);
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new AvenTrooper(), new AvenTrooper(), new AvenTrooper(),
+                new AvenTrooper(), new AvenTrooper(), new AvenTrooper()));
 
         castCleansingMeditation();
 
-        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player1, "Hypochondria");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(enchantment)
                 .hasSize(8);
@@ -76,26 +79,25 @@ class CleansingMeditationTest extends BaseCardTest {
     void thresholdDoesNotReturnOpponentsEnchantments() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        Card opponentEnchantment = new GloriousAnthem();
+        harness.addToBattlefield(player1, new Hypochondria());
+        Card opponentEnchantment = new Hypochondria();
         harness.addToBattlefield(player2, opponentEnchantment);
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears()));
+                new AvenTrooper(), new AvenTrooper(), new AvenTrooper(),
+                new AvenTrooper(), new AvenTrooper(), new AvenTrooper(),
+                new AvenTrooper()));
 
         castCleansingMeditation();
 
-        harness.assertOnBattlefield(player1, "Glorious Anthem");
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Hypochondria");
+        harness.assertNotOnBattlefield(player2, "Hypochondria");
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentEnchantment);
     }
 
     private void castCleansingMeditation() {
-        harness.setHand(player1, new ArrayList<>(List.of(new CleansingMeditation())));
+        harness.setHand(player1, List.of(new CleansingMeditation()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

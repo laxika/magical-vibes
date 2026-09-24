@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "144")
+@CardRegistration(set = "KLR", collectorNumber = "153")
+@CardRegistration(set = "CMM", collectorNumber = "273")
 public class ArmorcraftJudge extends Card {
 
     public ArmorcraftJudge() {

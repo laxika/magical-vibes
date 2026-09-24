@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "108")
+@CardRegistration(set = "KLR", collectorNumber = "115")
 public class BuiltToSmash extends Card {
 
     public BuiltToSmash() {

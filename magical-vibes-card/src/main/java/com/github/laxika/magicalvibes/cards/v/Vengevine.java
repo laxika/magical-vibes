@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "212")
+@CardRegistration(set = "SLD", collectorNumber = "1078")
+@CardRegistration(set = "UMA", collectorNumber = "189")
+@CardRegistration(set = "2XM", collectorNumber = "185")
 public class Vengevine extends Card {
 
     public Vengevine() {

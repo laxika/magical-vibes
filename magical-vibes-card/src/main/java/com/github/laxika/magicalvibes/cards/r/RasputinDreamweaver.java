@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "253")
+@CardRegistration(set = "ME3", collectorNumber = "170")
 public class RasputinDreamweaver extends Card {
 
     public RasputinDreamweaver() {

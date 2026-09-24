@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "71")
+@CardRegistration(set = "TSR", collectorNumber = "124")
 public class MinionsMurmurs extends Card {
 
     public MinionsMurmurs() {

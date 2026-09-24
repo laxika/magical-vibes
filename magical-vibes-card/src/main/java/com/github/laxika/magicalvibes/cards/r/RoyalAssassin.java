@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "3ED", collectorNumber = "125")
+@CardRegistration(set = "2ED", collectorNumber = "124")
 @CardRegistration(set = "4ED", collectorNumber = "157")
 @CardRegistration(set = "8ED", collectorNumber = "159")
 @CardRegistration(set = "9ED", collectorNumber = "159")
@@ -20,6 +21,8 @@ import java.util.List;
 @CardRegistration(set = "M11", collectorNumber = "116")
 @CardRegistration(set = "M12", collectorNumber = "105")
 @CardRegistration(set = "SUM", collectorNumber = "125")
+@CardRegistration(set = "DMR", collectorNumber = "101")
+@CardRegistration(set = "ACR", collectorNumber = "93")
 public class RoyalAssassin extends Card {
 
     public RoyalAssassin() {

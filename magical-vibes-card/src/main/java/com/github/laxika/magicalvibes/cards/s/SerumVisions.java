@@ -7,6 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "36")
+@CardRegistration(set = "MM3", collectorNumber = "49")
+@CardRegistration(set = "SLD", collectorNumber = "29")
+@CardRegistration(set = "SLD", collectorNumber = "30")
+@CardRegistration(set = "SLD", collectorNumber = "31")
+@CardRegistration(set = "SLD", collectorNumber = "32")
 public class SerumVisions extends Card {
 
     public SerumVisions() {

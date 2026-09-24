@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "21")
 @CardRegistration(set = "LEG", collectorNumber = "57")
+@CardRegistration(set = "ME3", collectorNumber = "35")
 public class FlashFlood extends Card {
 
     public FlashFlood() {

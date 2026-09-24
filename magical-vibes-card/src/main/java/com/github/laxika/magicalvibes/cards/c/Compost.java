@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "235")
 @CardRegistration(set = "UDS", collectorNumber = "102")
+@CardRegistration(set = "SLD", collectorNumber = "1047")
 public class Compost extends Card {
 
     public Compost() {

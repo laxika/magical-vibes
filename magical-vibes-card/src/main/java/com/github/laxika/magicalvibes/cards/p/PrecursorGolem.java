@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "194")
+@CardRegistration(set = "MM2", collectorNumber = "225")
+@CardRegistration(set = "BRR", collectorNumber = "42")
 public class PrecursorGolem extends Card {
 
     public PrecursorGolem() {

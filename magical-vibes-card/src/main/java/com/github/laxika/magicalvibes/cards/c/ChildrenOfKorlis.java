@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "8")
+@CardRegistration(set = "TSR", collectorNumber = "14")
 public class ChildrenOfKorlis extends Card {
 
     public ChildrenOfKorlis() {

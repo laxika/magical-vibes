@@ -21,8 +21,7 @@ class PrizedGriffinTest extends BaseCardTest {
         Permanent griffin = addCreatureReady(player1, new PrizedGriffin());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(griffin);

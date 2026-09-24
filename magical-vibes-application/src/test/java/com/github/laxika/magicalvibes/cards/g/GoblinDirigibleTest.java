@@ -2,29 +2,30 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(GoblinDirigible.class)
 class GoblinDirigibleTest extends BaseCardTest {
 
     @Test
     void doesNotUntapDuringUntapStep() {
-        Permanent dirigible = addGoblinDirigible(player1, true);
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(dirigible.isTapped()).isTrue();
     }
 
     @Test
     void payingFourDuringUpkeepUntapsDirigible() {
-        Permanent dirigible = addGoblinDirigible(player1, true);
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -36,7 +37,8 @@ class GoblinDirigibleTest extends BaseCardTest {
 
     @Test
     void decliningUpkeepPaymentLeavesDirigibleTapped() {
-        Permanent dirigible = addGoblinDirigible(player1, true);
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -46,24 +48,43 @@ class GoblinDirigibleTest extends BaseCardTest {
         assertThat(dirigible.isTapped()).isTrue();
     }
 
-    private Permanent addGoblinDirigible(Player player, boolean tapped) {
-        Permanent perm = new Permanent(new GoblinDirigible());
-        perm.setSummoningSick(false);
-        if (tapped) {
-            perm.tap();
-        }
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void payingFourConsumesOnlyFourMana() {
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(dirigible.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void acceptingWithoutFourManaLeavesDirigibleTapped() {
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(dirigible.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(dirigible.isTapped()).isTrue();
     }
 }

@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "139")
+@CardRegistration(set = "V13", collectorNumber = "8")
+@CardRegistration(set = "SLD", collectorNumber = "694")
 public class TangleWire extends Card {
 
     private static final PermanentPredicate ARTIFACT_CREATURE_OR_LAND = new PermanentAnyOfPredicate(List.of(

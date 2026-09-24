@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "80")
+@CardRegistration(set = "UMA", collectorNumber = "192")
+@CardRegistration(set = "ECC", collectorNumber = "118")
 public class WickerboughElder extends Card {
 
     public WickerboughElder() {

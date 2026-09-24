@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -37,6 +39,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToAnyTargetEffect) effect;
+        if (e.recordDamageDealt()) {
+            entry.setEventValue(0);
+        }
 
         // Group-aimed damage (e.g. Goblin Barrage's kicked "4 damage to target player or
         // planeswalker"): resolve against the declared target group's chosen target rather
@@ -69,23 +74,29 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         // Source-relative amounts use the live source permanent when it is still on the
         // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
-        Permanent source = entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+        UUID sourcePermanentId = e.sourceIsTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId != null
+                ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
                 : null;
         if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
+            source = e.sourceIsTriggeringPermanent() && entry.getAttachedPermanentSnapshot() != null
+                    ? entry.getAttachedPermanentSnapshot() : entry.getSourcePermanentSnapshot();
         }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
 
         StackEntry damageEntry = entry;
         if (e.sourceIsTriggeringPermanent()) {
-            damageEntry = new StackEntry(entry);
+            damageEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+                    entry.getDescription(), entry.getEffectsToResolve(), targetId, sourcePermanentId);
+            damageEntry.setXValue(entry.getXValue());
+            damageEntry.setSourcePermanentSnapshot(source == null ? null : new Permanent(source));
             if (source != null) {
                 damageEntry.setDamageSourceCard(source.getCard());
             }
-            UUID sourceControllerId = entry.getSourcePermanentId() == null ? null
-                    : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+            UUID sourceControllerId = sourcePermanentId == null ? null
+                    : gameQueryService.findPermanentController(gameData, sourcePermanentId);
             if (sourceControllerId == null) {
                 sourceControllerId = entry.getTriggeringPermanentControllerId();
             }
@@ -96,14 +107,12 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
 
-        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(nextEffect ->
-                nextEffect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look
-                        && amountEvaluationService.referencesEventValue(look.count()));
+        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
         Permanent excessTarget = null;
         boolean targetIsCreature = false;
         boolean targetIsPlaneswalker = false;
         boolean targetIsBattle = false;
-        int toughnessBefore = 0;
+        int lethalDamageThresholdBefore = 0;
         int markedDamageBefore = 0;
         int loyaltyBefore = 0;
         int defenseBefore = 0;
@@ -114,8 +123,8 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                 targetIsCreature = gameQueryService.isCreature(gameData, excessTarget);
                 targetIsPlaneswalker = excessTarget.getCard().hasType(CardType.PLANESWALKER);
                 targetIsBattle = excessTarget.getCard().hasType(CardType.BATTLE);
-                toughnessBefore = targetIsCreature
-                        ? gameQueryService.getEffectiveToughness(gameData, excessTarget)
+                lethalDamageThresholdBefore = targetIsCreature
+                        ? gameQueryService.getLethalDamageThreshold(gameData, excessTarget)
                         : 0;
                 markedDamageBefore = excessTarget.getMarkedDamage();
                 loyaltyBefore = excessTarget.getCounterCount(CounterType.LOYALTY);
@@ -130,6 +139,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         boolean unpreventable = e.unpreventableWhen() != null
                 && conditionEvaluationService.isMet(gameData, e.unpreventableWhen(), ConditionContext.forStackEntry(entry));
         int damageDealt;
+        UUID damageSourceId = damageEntry.getSourcePermanentId() != null
+                ? damageEntry.getSourcePermanentId() : damageEntry.getEffectiveDamageSourceCard().getId();
+        int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
         if (unpreventable) {
             boolean previous = gameData.damageCantBePreventedThisTurn;
             gameData.damageCantBePreventedThisTurn = true;
@@ -142,14 +154,28 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         } else {
             damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, e.cantRegenerate());
         }
+        if (e.recordDamageDealt()) {
+            entry.setEventValue(gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0) - damageBefore);
+        }
         if (tracksExcess) {
             entry.setEventValue(excessTarget == null
                     ? 0
                     : damageSupport.computeExcessDamageToAnyTarget(damageDealt, targetIsCreature,
-                    toughnessBefore, markedDamageBefore, sourceHasDeathtouch,
+                    lethalDamageThresholdBefore, markedDamageBefore, sourceHasDeathtouch,
                     targetIsPlaneswalker, loyaltyBefore, targetIsBattle, defenseBefore));
         }
         gameOutcomeService.checkWinCondition(gameData);
 
+    }
+
+    private boolean referencesExcessDamage(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditional.condition() instanceof EventValueAtLeast
+                    || referencesExcessDamage(conditional.wrapped());
+        }
+        if (effect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look) {
+            return amountEvaluationService.referencesEventValue(look.count());
+        }
+        return false;
     }
 }

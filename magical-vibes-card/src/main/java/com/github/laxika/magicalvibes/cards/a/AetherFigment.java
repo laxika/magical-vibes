@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "40")
+@CardRegistration(set = "DDM", collectorNumber = "5")
 public class AetherFigment extends Card {
 
     public AetherFigment() {

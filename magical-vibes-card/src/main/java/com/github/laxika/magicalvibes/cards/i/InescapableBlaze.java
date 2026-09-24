@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "107")
+@CardRegistration(set = "ANB", collectorNumber = "76")
 public class InescapableBlaze extends Card {
 
     public InescapableBlaze() {

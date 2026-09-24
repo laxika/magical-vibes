@@ -47,11 +47,11 @@ class AshenPowderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AshenPowder()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         Permanent creature = findPermanent(player1, "Grizzly Bears");
         assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.isSummoningSick()).isTrue();
         // Removed from the opponent's graveyard
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         // Tracked as stolen so it returns to its owner on leaving the battlefield
@@ -66,8 +66,7 @@ class AshenPowderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AshenPowder()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         Permanent creature = findPermanent(player1, "Grizzly Bears");
         UUID creatureId = creature.getId();

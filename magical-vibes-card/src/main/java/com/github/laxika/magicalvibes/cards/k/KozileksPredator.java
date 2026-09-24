@@ -16,6 +16,10 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "193")
+@CardRegistration(set = "MM2", collectorNumber = "147")
+@CardRegistration(set = "MB1", collectorNumber = "147")
+@CardRegistration(set = "2XM", collectorNumber = "173")
+@CardRegistration(set = "CMM", collectorNumber = "301")
 public class KozileksPredator extends Card {
 
     public KozileksPredator() {

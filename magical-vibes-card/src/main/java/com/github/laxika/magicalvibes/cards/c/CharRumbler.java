@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "96")
+@CardRegistration(set = "TSR", collectorNumber = "158")
 public class CharRumbler extends Card {
 
     public CharRumbler() {

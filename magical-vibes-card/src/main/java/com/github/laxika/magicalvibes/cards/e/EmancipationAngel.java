@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "AVR", collectorNumber = "19")
+@CardRegistration(set = "DDQ", collectorNumber = "10")
+@CardRegistration(set = "UMA", collectorNumber = "15")
 public class EmancipationAngel extends Card {
 
     public EmancipationAngel() {

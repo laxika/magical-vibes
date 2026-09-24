@@ -47,6 +47,19 @@ class BottleOfSuleimanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activation pays the generic mana cost before resolution")
+    void activationPaysManaCost() {
+        harness.addToBattlefield(player1, new BottleOfSuleiman());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+
+        harness.passBothPriorities();
+    }
+
+    @Test
     @CardUsed(EdgarKingOfFigaro.class)
     @DisplayName("Winning the flip creates the specified Djinn token")
     void winningFlipCreatesCorrectDjinnToken() {

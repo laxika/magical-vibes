@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "19")
+@CardRegistration(set = "DMR", collectorNumber = "5")
+@CardRegistration(set = "DMR", collectorNumber = "262")
 public class DivineSacrament extends Card {
 
     public DivineSacrament() {

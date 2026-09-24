@@ -8,6 +8,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *       Rager).</li>
  *   <li>{@link #OWNER} — the owner of the effect's source card loses life, even after a control
  *       change.</li>
+ *   <li>{@link #SOURCE_CONTROLLER} — the current controller of the effect's source permanent loses
+ *       life, or its last known controller if it has left the battlefield.</li>
  *   <li>{@link #TARGET_PLAYER} — the targeted player (stack entry's {@code targetId}) loses life;
  *       the effect targets a player.</li>
  *   <li>{@link #TRIGGERING_PLAYER} — the player whose spell or event caused the trigger
@@ -28,11 +30,14 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #EACH_PLAYER} — every player loses life, in {@code orderedPlayerIds} order.</li>
  *   <li>{@link #EACH_OPPONENT} — every opponent of the controller loses life, in
  *       {@code orderedPlayerIds} order.</li>
+ *   <li>{@link #EACH_OTHER_PLAYER} — every player other than the source card's owner loses life,
+ *       in {@code orderedPlayerIds} order.</li>
  * </ul>
  */
 public enum LoseLifeRecipient {
     CONTROLLER,
     OWNER,
+    SOURCE_CONTROLLER,
     TARGET_PLAYER,
     TRIGGERING_PLAYER,
     TARGET_PERMANENT_CONTROLLER,
@@ -41,5 +46,6 @@ public enum LoseLifeRecipient {
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
     EACH_PLAYER,
-    EACH_OPPONENT
+    EACH_OPPONENT,
+    EACH_OTHER_PLAYER
 }

@@ -61,6 +61,9 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
             gameData.skipCombatPhasesNextTurn.add(affectedPlayerId);
         } else {
             queueFor(gameData, e.kind()).merge(affectedPlayerId, 1, Integer::sum);
+            if (e.thisTurnOnly()) {
+                gameData.skipCombatPhaseExpirationsThisTurn.merge(affectedPlayerId, 1, Integer::sum);
+            }
         }
 
         String affectedName = gameData.playerIdToName.get(affectedPlayerId);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "28")
+@CardRegistration(set = "V15", collectorNumber = "8")
 public class ExaltedAngel extends Card {
 
     public ExaltedAngel() {

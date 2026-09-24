@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "89")
 @CardRegistration(set = "ODY", collectorNumber = "190")
+@CardRegistration(set = "DMR", collectorNumber = "117")
 public class EmberBeast extends Card {
 
     public EmberBeast() {

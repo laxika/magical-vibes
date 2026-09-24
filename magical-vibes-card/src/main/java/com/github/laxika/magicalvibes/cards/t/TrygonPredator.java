@@ -12,6 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "133")
+@CardRegistration(set = "MMA", collectorNumber = "185")
+@CardRegistration(set = "GK2", collectorNumber = "125")
+@CardRegistration(set = "EMA", collectorNumber = "209")
+@CardRegistration(set = "TSR", collectorNumber = "389")
+@CardRegistration(set = "C15", collectorNumber = "236")
 public class TrygonPredator extends Card {
 
     public TrygonPredator() {

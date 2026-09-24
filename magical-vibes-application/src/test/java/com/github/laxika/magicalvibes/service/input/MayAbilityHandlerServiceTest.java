@@ -4,16 +4,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -26,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -80,6 +84,8 @@ class MayAbilityHandlerServiceTest {
         gameQueryService = mock(GameQueryService.class);
         playerInputService = mock(PlayerInputService.class);
         validTargetService = mock(ValidTargetService.class);
+        when(validTargetService.isValidTriggeredAbilityPermanentTarget(
+                any(), any(), anyList(), any(), any(), any())).thenReturn(true);
         mayEffectHandlerRegistry = mock(MayEffectHandlerRegistry.class);
         effectResolutionService = mock(EffectResolutionService.class);
 
@@ -109,7 +115,8 @@ class MayAbilityHandlerServiceTest {
                 validTargetService,
                 targetPredicateEvaluationService,
                 mayEffectHandlerRegistry,
-                mock(TriggerCollectionService.class));
+                mock(TriggerCollectionService.class),
+                mock(RagingRiverEffectHandler.class));
 
         player1 = new Player(PLAYER1_ID, "Alice");
 
@@ -166,6 +173,21 @@ class MayAbilityHandlerServiceTest {
     }
 
     @Test
+    void matchingCreatureRejectedByTargetingRestrictionsIsNotOffered() {
+        Permanent bear = permanent("Grizzly Bears", CardType.CREATURE);
+        Permanent restricted = permanent("Untargetable creature", CardType.CREATURE);
+        gd.playerBattlefields.get(PLAYER1_ID).addAll(List.of(bear, restricted));
+        when(gameQueryService.isCreature(gd, bear)).thenReturn(true);
+        when(gameQueryService.isCreature(gd, restricted)).thenReturn(true);
+        when(validTargetService.isValidTriggeredAbilityPermanentTarget(
+                eq(gd), any(), anyList(), any(), eq(restricted), eq(PLAYER1_ID))).thenReturn(false);
+
+        acceptMayAbility(specEffect(TargetPredicates.creature()));
+
+        assertThat(offeredTargets()).containsExactly(bear.getId());
+    }
+
+    @Test
     @DisplayName("A preselected graveyard target is not selected again after accepting a sequence may")
     void preselectedGraveyardTargetIsRetainedAfterMayAcceptance() {
         Card sourceCard = new Card();
@@ -195,6 +217,39 @@ class MayAbilityHandlerServiceTest {
 
         verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
         verify(mayEffectHandlerRegistry, org.mockito.Mockito.never()).getHandler(any());
+    }
+
+    @Test
+    @DisplayName("An accepted graveyard-cast may ability offers only matching cards")
+    void graveyardCastMayAbilityOffersOnlyMatchingCards() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        Card enchantment = new Card();
+        enchantment.setName("Enchantment");
+        enchantment.setType(CardType.ENCHANTMENT);
+        Card creature = new Card();
+        creature.setName("Creature");
+        creature.setType(CardType.CREATURE);
+        gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>(List.of(enchantment, creature)));
+        when(gameQueryService.cardHasType(enchantment, CardType.ENCHANTMENT, null, null)).thenReturn(true);
+
+        CardEffect effect = new AllowCastTargetCardFromGraveyardThisTurnEffect(
+                new CardTypePredicate(CardType.ENCHANTMENT),
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                false);
+        StackEntry pendingEntry = new StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(effect, "Cast it?")));
+        gd.pendingEffectResolutionEntry = pendingEntry;
+        gd.pendingEffectResolutionIndex = 0;
+        gd.resolvingMayEffectFromStack = true;
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(effect), "Cast it?"));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(PLAYER1_ID, "Cast it?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        assertThat(pendingEntry.getTargetId()).isEqualTo(enchantment.getId());
+        verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
     }
 
     @Test

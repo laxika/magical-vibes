@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "180")
+@CardRegistration(set = "DBL", collectorNumber = "180")
 public class DawnhartRejuvenator extends Card {
 
     public DawnhartRejuvenator() {

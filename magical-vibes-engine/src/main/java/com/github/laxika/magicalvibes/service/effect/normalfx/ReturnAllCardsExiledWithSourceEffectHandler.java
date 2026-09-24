@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -88,11 +90,18 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
 
             Permanent perm = new Permanent(card);
             perm.setEnteredFromExile(true);
+            if (returnEffect.enterTapped()) {
+                perm.tap();
+            }
             perm.getPersistentGrantedKeywords().addAll(returnEffect.grantedKeywords());
             applyPermanentCharacteristics(gameData, newControllerId, perm, returnEffect);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
                     enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(perm);
+            if (returnEffect.sacrificeAtEndStep()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            }
 
             gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(newControllerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",

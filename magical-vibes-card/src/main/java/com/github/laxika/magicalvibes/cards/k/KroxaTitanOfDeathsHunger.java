@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfUnlessEscapedEff
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "221")
+@CardRegistration(set = "SLD", collectorNumber = "225")
+@CardRegistration(set = "MUL", collectorNumber = "49")
+@CardRegistration(set = "MUL", collectorNumber = "114")
+@CardRegistration(set = "MUL", collectorNumber = "179")
 public class KroxaTitanOfDeathsHunger extends Card {
 
     public KroxaTitanOfDeathsHunger() {

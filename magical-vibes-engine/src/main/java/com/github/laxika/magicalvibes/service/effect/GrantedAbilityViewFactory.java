@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCount
 import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
@@ -116,6 +117,13 @@ public class GrantedAbilityViewFactory {
                 && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 && !bonus.losesAllAbilities()) {
             result.add(new GrantedAbilityView("Protection from creatures your opponents control", null));
+        }
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(ProtectionFromChosenPlayerEffect.class::isInstance)
+                && !permanent.isStaticEffectSuppressed(ProtectionFromChosenPlayerEffect.class)
+                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && !bonus.losesAllAbilities()) {
+            result.add(new GrantedAbilityView("Protection from the chosen player", null));
         }
         if (permanent.isProtectionFromOpponentsPermanently()
                 && !permanent.isLosesAllAbilitiesUntilEndOfTurn()

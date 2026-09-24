@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "45")
+@CardRegistration(set = "MM3", collectorNumber = "31")
+@CardRegistration(set = "C14", collectorNumber = "98")
 public class AzureMage extends Card {
 
     public AzureMage() {

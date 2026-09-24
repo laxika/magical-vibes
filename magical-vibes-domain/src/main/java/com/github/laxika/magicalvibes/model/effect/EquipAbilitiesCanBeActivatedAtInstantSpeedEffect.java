@@ -9,6 +9,6 @@ public record EquipAbilitiesCanBeActivatedAtInstantSpeedEffect() implements Acti
     @Override
     public boolean allowsInstantSpeedActivation(ActivatedAbility ability) {
         return ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
-                && ability.getEffects().stream().anyMatch(EquipEffect.class::isInstance);
+                && ability.isEquipAbility();
     }
 }

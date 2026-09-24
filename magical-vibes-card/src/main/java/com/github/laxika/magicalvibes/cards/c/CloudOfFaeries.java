@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "29")
+@CardRegistration(set = "VMA", collectorNumber = "62")
+@CardRegistration(set = "DMR", collectorNumber = "43")
 public class CloudOfFaeries extends Card {
 
     public CloudOfFaeries() {

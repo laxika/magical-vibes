@@ -23,4 +23,14 @@ public interface SpellCastingAbilityGrantingEffect extends CardEffect {
     default boolean appliesToSourceZone(Zone sourceZone) {
         return sourceZone() == null || sourceZone() == sourceZone;
     }
+
+    /** Whether the grant also applies to spells cast by players other than the source controller. */
+    default boolean appliesToAllPlayers() {
+        return false;
+    }
+
+    /** Whether this grant applies only to the first matching spell cast by its controller each turn. */
+    default boolean appliesOnlyToFirstMatchingSpellEachTurn() {
+        return false;
+    }
 }

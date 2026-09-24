@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "114")
+@CardRegistration(set = "DDP", collectorNumber = "53")
 public class InduceDespair extends Card {
 
     public InduceDespair() {

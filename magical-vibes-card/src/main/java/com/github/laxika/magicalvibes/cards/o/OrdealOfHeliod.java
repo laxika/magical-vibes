@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastP
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "25")
+@CardRegistration(set = "A25", collectorNumber = "27")
 public class OrdealOfHeliod extends Card {
 
     public OrdealOfHeliod() {

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "93")
+@CardRegistration(set = "DDK", collectorNumber = "52")
+@CardRegistration(set = "MM3", collectorNumber = "98")
 public class Hellrider extends Card {
 
     public Hellrider() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "65")
 @CardRegistration(set = "PD2", collectorNumber = "6")
+@CardRegistration(set = "DDK", collectorNumber = "46")
 public class HellsparkElemental extends Card {
 
     public HellsparkElemental() {

@@ -24,12 +24,11 @@ class RaphLeoSiblingRivalsTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1), 1);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(raphLeo.getId(), bear.getId());
 
-        harness.handlePermanentChosen(player1, raphLeo.getId());
-        harness.handlePermanentChosen(player1, bear.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(raphLeo.getId(), bear.getId()));
         harness.passBothPriorities();
 
         assertThat(raphLeo.isTapped()).isFalse();
@@ -46,10 +45,10 @@ class RaphLeoSiblingRivalsTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0), 1);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(raphLeo.getId())
                 .doesNotContain(nonAttacker.getId());
-        harness.handlePermanentChosen(player1, raphLeo.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(raphLeo.getId()));
         harness.passBothPriorities();
     }
 

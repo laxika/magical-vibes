@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CircleOfProtectionRed.class, LightOfDay.class, SereneOffering.class, TrainedArmodon.class})
+@CardUsed({CircleOfProtectionRed.class, LightOfDay.class, RainOfGore.class, SereneOffering.class, TrainedArmodon.class})
 class SereneOfferingTest extends BaseCardTest {
 
     private void castSereneOffering(UUID targetId) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "EVE", collectorNumber = "63")
+@CardRegistration(set = "MM2", collectorNumber = "131")
 public class Thunderblust extends Card {
 
     public Thunderblust() {

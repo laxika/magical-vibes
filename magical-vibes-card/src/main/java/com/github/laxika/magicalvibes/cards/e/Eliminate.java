@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "97")
+@CardRegistration(set = "STA", collectorNumber = "30")
 public class Eliminate extends Card {
 
     public Eliminate() {

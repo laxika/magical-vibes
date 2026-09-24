@@ -121,6 +121,11 @@ same `CastingCostService.computeTargetBasedCostReduction` path. The spell-self f
 effect's zero-based `targetIndex` (defaulting to the first target), while a battlefield-carried
 effect continues to reduce once when any chosen permanent target matches.
 
+`ReduceOwnCastCostForEachTargetEffect` and `IncreaseOpponentCastCostPerTargetEffect` are the
+target-count forms. The reduction applies to spells cast by the controller of the permanent
+carrying it; the increase applies to opponents' spells. Both are evaluated inline from the full
+chosen-target list because the ordinary cost-modifier context does not carry targets.
+
 Target-gated increases use the parallel `TargetBasedCastCostIncreaseEffect` interface and
 `IncreaseOwnCastCostIfTargetingPermanentEffect` record. Their surcharge is evaluated against the
 chosen first permanent target by `CastingCostService.getTargetBasedCostIncrease`, rather than by a
@@ -144,6 +149,11 @@ Room-door unlock-cost modifiers use the same battlefield handler registry. A han
 `modifyRoomUnlockCost` for the generic mana component of a Room door's unlock cost; ordinary
 spell-cost modifiers do not affect Room-door unlocks. `CastingCostService.getRoomUnlockCost` is
 the shared path for previews and payment.
+
+Payment replacements that change how a mana cost may be paid, without changing its mana value,
+use `CostModificationHandlerBean.applyManaCostPaymentAlternatives`. `MayPayLifeForBlackManaEffect`
+is the reusable model for K'rrik, Son of Yawgmoth; its handler converts black mana symbols to the
+existing Phyrexian-payment path for that source's controller.
 ## Alternate-cost reductions
 
 Effects that reduce a named alternate cost, rather than a spell's normal mana cost, use the
@@ -179,6 +189,10 @@ another player's dash costs.
   restricts by source zone, hand plotting, or face-down casting, matches the spell against the predicate,
   and evaluates the amount with the **source permanent** in the `AmountContext` so `CountersOnSource`
   works ("costs {1} less for each +1/+1 counter on this creature" — Herald of War).
+- `cast/costmod/ModifyCastCostForCardsDrawnThisTurnEffectHandler.java` — battlefield handler for
+  `ModifyCastCostForCardsDrawnThisTurnEffect(int, boolean)`; matches the spell's card id against
+  the per-turn draw-id tracker for the source controller or that controller's opponents, then
+  returns the corresponding generic reduction or tax.
 - `cast/costmod/ReduceBuybackCostEffectHandler.java` — battlefield handler for
   `ReduceBuybackCostEffect(int)`; contributes only through `modifyBuybackCost`, so the effect is
   isolated from ordinary spell-cost calculations.

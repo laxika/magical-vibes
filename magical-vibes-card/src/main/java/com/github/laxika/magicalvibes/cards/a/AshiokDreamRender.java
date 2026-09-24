@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesE
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "228")
+@CardRegistration(set = "SLD", collectorNumber = "399")
+@CardRegistration(set = "SLD", collectorNumber = "528")
 public class AshiokDreamRender extends Card {
 
     public AshiokDreamRender() {

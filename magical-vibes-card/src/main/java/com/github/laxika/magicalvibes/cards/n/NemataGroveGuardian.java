@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "85")
+@CardRegistration(set = "CMM", collectorNumber = "307")
 public class NemataGroveGuardian extends Card {
 
     public NemataGroveGuardian() {
@@ -36,7 +37,7 @@ public class NemataGroveGuardian extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
                                 )),
-                                "Sacrifice a Saproling"
+                                "Sacrifice a Saproling", false
                         ),
                         new BoostAllCreaturesEffect(1, 1,
                                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING))

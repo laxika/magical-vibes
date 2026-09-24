@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.CavePeople;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeadGolem;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -21,7 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SibilantSpirit.class, CavePeople.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SibilantSpirit.class, LeadGolem.class, Forest.class, GrizzlyBears.class})
 class SibilantSpiritTest extends BaseCardTest {
 
     @Test
@@ -90,44 +90,58 @@ class SibilantSpiritTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Its attack trigger is controlled by the attacking player for trigger ordering")
-    void attackTriggerUsesAttackingPlayerForApnapOrdering() {
+    @DisplayName("Each attacking Sibilant Spirit offers a separate draw")
+    void eachAttackingSibilantSpiritTriggersSeparately() {
         addCreatureReady(player1, new SibilantSpirit());
-        Permanent cavePeople = addCreatureReady(player1, new CavePeople());
-        harness.setLibrary(player2, List.of(new Forest()));
-        int cavePowerBefore = gqs.getEffectivePower(gd, cavePeople);
+        addCreatureReady(player1, new SibilantSpirit());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
 
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, cavePeople)).isEqualTo(cavePowerBefore + 1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Its attack trigger is controlled by the attacking player for trigger ordering")
+    void attackTriggerUsesAttackingPlayerForApnapOrdering() {
+        addCreatureReady(player1, new SibilantSpirit());
+        Permanent leadGolem = addCreatureReady(player1, new LeadGolem());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+
+        assertThat(leadGolem.getSkipUntapCount()).isEqualTo(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
     }
 
     @Test
-    @DisplayName("Uses the current controller of an attacked planeswalker when the trigger resolves")
-    void attackedPlaneswalkerControllerIsResolvedAtResolution() {
+    @DisplayName("Does not offer the draw if the attacked planeswalker leaves before resolution")
+    void attackedPlaneswalkerLeavingBeforeResolutionOffersNoDraw() {
         addCreatureReady(player1, new SibilantSpirit());
         Permanent planeswalker = addPlaneswalker(player2, 4);
-        harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
-        int player2HandBefore = gd.playerHands.get(player2.getId()).size();
+        int handBefore = gd.playerHands.get(player2.getId()).size();
 
         declareAttackersAtTarget(player1, List.of(0), Map.of(0, planeswalker.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
-        gd.playerBattlefields.get(player1.getId()).add(planeswalker);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
-
-        int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
-        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(player2HandBefore);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore);
     }
 
     @Test

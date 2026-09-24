@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.c.Censor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.k.KeeneyeAven;
+import com.github.laxika.magicalvibes.cards.r.RiptideMangler;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WarpedResearcher.class, Censor.class, GrizzlyBears.class})
+@CardUsed({WarpedResearcher.class, KeeneyeAven.class, FugitiveWizard.class, RiptideMangler.class})
 class WarpedResearcherTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,8 @@ class WarpedResearcherTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(researcher.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(researcher.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -44,8 +46,8 @@ class WarpedResearcherTest extends BaseCardTest {
         harness.activateHandAbility(player2, 0, null);
         harness.passBothPriorities();
 
-        assertThat(researcher.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(researcher.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -57,20 +59,42 @@ class WarpedResearcherTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(researcher.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(researcher.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(researcher.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(researcher.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted shroud prevents targeted abilities from targeting Warped Researcher")
+    void grantedShroudPreventsAbilityTargeting() {
+        Permanent researcher = harness.addToBattlefieldAndReturn(player1, new WarpedResearcher());
+        Permanent mangler = harness.addToBattlefieldAndReturn(player1, new RiptideMangler());
+        setUpCycling(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(mangler),
+                null,
+                researcher.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 
     private void setUpCycling(Player player) {
-        harness.setHand(player, List.of(new Censor()));
-        harness.setLibrary(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.BLUE, 1);
+        harness.setHand(player, List.of(new KeeneyeAven()));
+        harness.setLibrary(player, List.of(new FugitiveWizard()));
+        harness.addMana(player, ManaColor.COLORLESS, 2);
     }
 }

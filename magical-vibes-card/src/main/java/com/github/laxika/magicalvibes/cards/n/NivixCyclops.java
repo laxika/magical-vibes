@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "87")
+@CardRegistration(set = "DDS", collectorNumber = "24")
+@CardRegistration(set = "PIO", collectorNumber = "234")
 public class NivixCyclops extends Card {
 
     public NivixCyclops() {

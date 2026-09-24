@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "276")
+@CardRegistration(set = "V12", collectorNumber = "6")
+@CardRegistration(set = "EXP", collectorNumber = "39")
+@CardRegistration(set = "2X2", collectorNumber = "323")
 public class ForbiddenOrchard extends Card {
 
     public ForbiddenOrchard() {

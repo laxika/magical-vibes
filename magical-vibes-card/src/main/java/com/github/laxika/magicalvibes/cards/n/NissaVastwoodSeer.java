@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "189")
+@CardRegistration(set = "V17", collectorNumber = "15")
+@CardRegistration(set = "PIO", collectorNumber = "187")
 public class NissaVastwoodSeer extends Card {
 
     public NissaVastwoodSeer() {

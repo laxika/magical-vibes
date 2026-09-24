@@ -14,6 +14,11 @@ import java.util.List;
 @CardRegistration(set = "6ED", collectorNumber = "83")
 @CardRegistration(set = "MIR", collectorNumber = "80")
 @CardRegistration(set = "V09", collectorNumber = "8")
+@CardRegistration(set = "EMA", collectorNumber = "62")
+@CardRegistration(set = "SS1", collectorNumber = "6")
+@CardRegistration(set = "SLD", collectorNumber = "334")
+@CardRegistration(set = "DMR", collectorNumber = "60")
+@CardRegistration(set = "TLE", collectorNumber = "308")
 public class MysticalTutor extends Card {
 
     public MysticalTutor() {

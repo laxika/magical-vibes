@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,12 +17,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WeirdHarvest.class, Forest.class, GrizzlyBears.class, Plains.class, SerraAngel.class})
 class WeirdHarvestTest extends BaseCardTest {
 
     private void setupCreatureLibrary(Player player) {
-        List<Card> deck = gd.playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new SerraAngel(), new Plains()));
+        harness.setLibrary(player, List.of(new GrizzlyBears(), new SerraAngel(), new Plains()));
     }
 
     private PendingInteraction.LibrarySearch activeSearch() {
@@ -74,22 +72,24 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Active player (player1) takes two creatures
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         // Now the opponent (player2) is prompted
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
 
         // player2 takes one creature, then declines the second
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, -1);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).allMatch(c -> c.hasType(CardType.CREATURE));
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).allMatch(c -> c.hasType(CardType.CREATURE));
+        assertThat(gameLogContains("reveals")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -104,7 +104,7 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Active player declines immediately
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(activeSearch()).isNotNull();
@@ -114,9 +114,7 @@ class WeirdHarvestTest extends BaseCardTest {
     @Test
     @DisplayName("A player with no creatures in their library is skipped")
     void playerWithoutCreaturesIsSkipped() {
-        List<Card> deck1 = gd.playerDecks.get(player1.getId());
-        deck1.clear();
-        deck1.addAll(List.of(new Plains(), new Forest()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest()));
         setupCreatureLibrary(player2);
         harness.setHand(player1, List.of(new WeirdHarvest()));
         harness.addMana(player1, ManaColor.GREEN, 3);

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GoblinMountaineer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.g.GoblinGrappler;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,19 +18,19 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkirkDrillSergeant.class, GoblinMountaineer.class, GrizzlyBears.class, Forest.class, Shock.class})
+@CardUsed({SkirkDrillSergeant.class, GoblinGrappler.class, FugitiveWizard.class, Shock.class})
 class SkirkDrillSergeantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Another Goblin dying triggers the paid reveal")
     void anotherGoblinDyingTriggersAbility() {
         harness.addToBattlefield(player1, new SkirkDrillSergeant());
-        harness.addToBattlefield(player2, new GoblinMountaineer());
-        Card topGoblin = new GoblinMountaineer();
+        harness.addToBattlefield(player2, new GoblinGrappler());
+        Card topGoblin = new GoblinGrappler();
         harness.setLibrary(player1, List.of(topGoblin));
         addShockMana(player1);
 
-        killCreature(player1, player2, "Goblin Mountaineer");
+        killCreature(player1, player2, "Goblin Grappler");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -47,7 +46,7 @@ class SkirkDrillSergeantTest extends BaseCardTest {
     @DisplayName("Its own death triggers the paid reveal")
     void ownDeathTriggersAbility() {
         harness.addToBattlefield(player1, new SkirkDrillSergeant());
-        Card topGoblin = new GoblinMountaineer();
+        Card topGoblin = new GoblinGrappler();
         harness.setLibrary(player1, List.of(topGoblin));
         addShockMana(player1);
         harness.addMana(player2, ManaColor.RED, 1);
@@ -60,25 +59,45 @@ class SkirkDrillSergeantTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(topGoblin.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("A non-Goblin top permanent card goes to the graveyard")
     void nonGoblinTopPermanentGoesToGraveyard() {
         harness.addToBattlefield(player1, new SkirkDrillSergeant());
-        harness.addToBattlefield(player2, new GoblinMountaineer());
-        Card topLand = new Forest();
-        harness.setLibrary(player1, List.of(topLand));
+        harness.addToBattlefield(player2, new GoblinGrappler());
+        Card topNonGoblin = new FugitiveWizard();
+        harness.setLibrary(player1, List.of(topNonGoblin));
         addShockMana(player1);
 
-        killCreature(player1, player2, "Goblin Mountaineer");
+        killCreature(player1, player2, "Goblin Grappler");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(topLand.getId()));
+                .anyMatch(card -> card.getId().equals(topNonGoblin.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(topLand.getId()));
+                .noneMatch(permanent -> permanent.getCard().getId().equals(topNonGoblin.getId()));
+    }
+
+    @Test
+    @DisplayName("A nonpermanent top card goes to the graveyard")
+    void nonPermanentTopCardGoesToGraveyard() {
+        harness.addToBattlefield(player1, new SkirkDrillSergeant());
+        harness.addToBattlefield(player2, new GoblinGrappler());
+        Card topInstant = new Shock();
+        harness.setLibrary(player1, List.of(topInstant));
+        addShockMana(player1);
+
+        killCreature(player1, player2, "Goblin Grappler");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(topInstant.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(topInstant.getId()));
     }
 
     @Test
@@ -86,11 +105,11 @@ class SkirkDrillSergeantTest extends BaseCardTest {
     void decliningPaymentLeavesLibraryUnchanged() {
         addShockMana(player1);
         harness.addToBattlefield(player1, new SkirkDrillSergeant());
-        harness.addToBattlefield(player2, new GoblinMountaineer());
-        Card topGoblin = new GoblinMountaineer();
+        harness.addToBattlefield(player2, new GoblinGrappler());
+        Card topGoblin = new GoblinGrappler();
         harness.setLibrary(player1, List.of(topGoblin));
 
-        killCreature(player1, player2, "Goblin Mountaineer");
+        killCreature(player1, player2, "Goblin Grappler");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -103,12 +122,12 @@ class SkirkDrillSergeantTest extends BaseCardTest {
     @DisplayName("A non-Goblin death does not trigger")
     void nonGoblinDeathDoesNotTrigger() {
         harness.addToBattlefield(player1, new SkirkDrillSergeant());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Card topGoblin = new GoblinMountaineer();
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        Card topGoblin = new GoblinGrappler();
         harness.setLibrary(player1, List.of(topGoblin));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        killCreature(player1, player2, "Grizzly Bears");
+        killCreature(player1, player2, "Fugitive Wizard");
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topGoblin);
@@ -124,7 +143,6 @@ class SkirkDrillSergeantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Shock()));
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }

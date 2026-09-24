@@ -12,12 +12,13 @@ import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "91")
 @CardRegistration(set = "MAT", collectorNumber = "9")
+@CardRegistration(set = "TLE", collectorNumber = "20")
 public class TrainingGrounds extends Card {
 
     public TrainingGrounds() {
         addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate())), 2));
+                        new PermanentControlledBySourceControllerPredicate())), 2, true, true));
     }
 }

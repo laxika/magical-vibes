@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "278")
+@CardRegistration(set = "HA2", collectorNumber = "14")
+@CardRegistration(set = "DMR", collectorNumber = "181")
 public class Terravore extends Card {
 
     public Terravore() {

@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "131")
+@CardRegistration(set = "DBL", collectorNumber = "131")
 public class BurnDownTheHouse extends Card {
 
     public BurnDownTheHouse() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "POR", collectorNumber = "126")
+@CardRegistration(set = "ME4", collectorNumber = "113")
 public class FireImp extends Card {
 
     public FireImp() {

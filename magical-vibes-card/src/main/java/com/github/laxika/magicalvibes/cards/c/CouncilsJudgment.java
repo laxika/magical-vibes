@@ -1,0 +1,17 @@
+package com.github.laxika.magicalvibes.cards.c;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.WillOfTheCouncilEffect;
+
+@CardRegistration(set = "VMA", collectorNumber = "20")
+@CardRegistration(set = "SLD", collectorNumber = "1635")
+@CardRegistration(set = "2XM", collectorNumber = "11")
+@CardRegistration(set = "2XM", collectorNumber = "336")
+public class CouncilsJudgment extends Card {
+
+    public CouncilsJudgment() {
+        addEffect(EffectSlot.SPELL, new WillOfTheCouncilEffect());
+    }
+}

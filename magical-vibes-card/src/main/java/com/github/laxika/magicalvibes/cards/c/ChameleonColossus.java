@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "116")
+@CardRegistration(set = "V13", collectorNumber = "16")
+@CardRegistration(set = "C15", collectorNumber = "178")
 public class ChameleonColossus extends Card {
 
     public ChameleonColossus() {

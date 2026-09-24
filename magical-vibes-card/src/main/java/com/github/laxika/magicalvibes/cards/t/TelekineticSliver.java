@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "84")
+@CardRegistration(set = "SLD", collectorNumber = "627")
 public class TelekineticSliver extends Card {
 
     public TelekineticSliver() {

@@ -7,16 +7,17 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "144")
+@CardRegistration(set = "DMR", collectorNumber = "137")
 @CardRegistration(set = "ONS", collectorNumber = "230")
 @CardRegistration(set = "DD1", collectorNumber = "51")
 @CardRegistration(set = "DDG", collectorNumber = "49")
+@CardRegistration(set = "VMA", collectorNumber = "186")
+@CardRegistration(set = "EVG", collectorNumber = "51")
 public class SkirkProspector extends Card {
 
     public SkirkProspector() {
@@ -24,10 +25,7 @@ public class SkirkProspector extends Card {
                 false,
                 null,
                 List.of(new SacrificePermanentCost(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                        )),
+                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         "Sacrifice a Goblin",
                         false
                 ), new AwardManaEffect(ManaColor.RED)),

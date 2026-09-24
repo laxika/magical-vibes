@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "78")
+@CardRegistration(set = "TSR", collectorNumber = "87")
 public class Snapback extends Card {
 
     public Snapback() {

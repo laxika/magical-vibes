@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "TPR", collectorNumber = "218")
 @CardRegistration(set = "H09", collectorNumber = "29")
 @CardRegistration(set = "DPA", collectorNumber = "90")
+@CardRegistration(set = "DDS", collectorNumber = "58")
+@CardRegistration(set = "SLD", collectorNumber = "1712")
+@CardRegistration(set = "SLD", collectorNumber = "1903")
 public class CoatOfArms extends Card {
 
     public CoatOfArms() {

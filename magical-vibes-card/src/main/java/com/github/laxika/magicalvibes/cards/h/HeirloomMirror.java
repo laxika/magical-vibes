@@ -19,6 +19,7 @@ import java.util.List;
  * Heirloom Mirror's front face.
  */
 @CardRegistration(set = "MID", collectorNumber = "105")
+@CardRegistration(set = "DBL", collectorNumber = "105")
 public class HeirloomMirror extends Card {
 
     public HeirloomMirror() {

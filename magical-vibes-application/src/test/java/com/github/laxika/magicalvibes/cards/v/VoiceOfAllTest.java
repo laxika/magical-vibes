@@ -1,63 +1,36 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SilverDrake;
+import com.github.laxika.magicalvibes.cards.s.Singe;
+import com.github.laxika.magicalvibes.cards.s.SinisterStrength;
+import com.github.laxika.magicalvibes.cards.s.StoneKavu;
+import com.github.laxika.magicalvibes.cards.t.TahngarthTalruumHero;
+import com.github.laxika.magicalvibes.cards.v.VolcanoImp;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VoiceOfAll.class, TahngarthTalruumHero.class, StoneKavu.class, VolcanoImp.class,
+        SilverDrake.class, Singe.class, SinisterStrength.class})
 class VoiceOfAllTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createFlyingCreature(String name, int power, int toughness, CardColor color) {
-        Card card = createCreature(name, power, toughness, color);
-        card.setKeywords(Set.of(Keyword.FLYING));
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     // ===== Casting =====
 
@@ -72,7 +45,6 @@ class VoiceOfAllTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Voice of All");
     }
 
     @Test
@@ -181,7 +153,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VoiceOfAll());
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(perm.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isTrue();
     }
 
     // ===== Color choice validation =====
@@ -213,50 +185,32 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Voice of All takes no combat damage from chosen color creature")
     void takesNoDamageFromChosenColor() {
-        Permanent voiceOfAll = new Permanent(new VoiceOfAll());
-        voiceOfAll.setSummoningSick(false);
+        Permanent voiceOfAll = addCreatureReady(player2, new VoiceOfAll());
         voiceOfAll.setChosenColor(CardColor.RED);
         voiceOfAll.setBlocking(true);
         voiceOfAll.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
 
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 5, 4, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new TahngarthTalruumHero());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Voice of All survives — red damage prevented (protection from red)
         harness.assertOnBattlefield(player2, "Voice of All");
-        // Fire Elemental takes 2 from Voice of All (2 < 4 toughness) → survives
-        harness.assertOnBattlefield(player1, "Fire Elemental");
+        // Tahngarth takes 2 from Voice of All (2 < 4 toughness) → survives
+        harness.assertOnBattlefield(player1, "Tahngarth, Talruum Hero");
     }
 
     @Test
     @DisplayName("Voice of All takes normal combat damage from non-chosen color creature")
     void takesNormalDamageFromNonChosenColor() {
-        Permanent voiceOfAll = new Permanent(new VoiceOfAll());
-        voiceOfAll.setSummoningSick(false);
+        Permanent voiceOfAll = addCreatureReady(player2, new VoiceOfAll());
         voiceOfAll.setChosenColor(CardColor.RED);
         voiceOfAll.setBlocking(true);
         voiceOfAll.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
 
-        Permanent attacker = new Permanent(createCreature("Big Green", 3, 3, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new StoneKavu());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Voice of All dies — green is not the chosen color, 3 >= 2 toughness
         harness.assertNotOnBattlefield(player2, "Voice of All");
@@ -268,20 +222,13 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen color flying creature cannot block Voice of All")
     void chosenColorCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new VoiceOfAll());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new VoiceOfAll());
         attacker.setChosenColor(CardColor.BLACK);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createFlyingCreature("Black Dragon", 2, 2, CardColor.BLACK));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new VolcanoImp());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -291,20 +238,13 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Non-chosen color flying creature can block Voice of All")
     void nonChosenColorCreatureCanBlock() {
-        Permanent attacker = new Permanent(new VoiceOfAll());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new VoiceOfAll());
         attacker.setChosenColor(CardColor.BLACK);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createFlyingCreature("Green Dragon", 2, 2, CardColor.GREEN));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new SilverDrake());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -316,39 +256,33 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by instant of chosen color")
     void cannotBeTargetedByChosenColorInstant() {
-        Permanent voiceOfAll = new Permanent(new VoiceOfAll());
-        voiceOfAll.setSummoningSick(false);
-        voiceOfAll.setChosenColor(CardColor.BLACK);
-        gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
+        Permanent voiceOfAll = addCreatureReady(player2, new VoiceOfAll());
+        voiceOfAll.setChosenColor(CardColor.RED);
 
         // Add valid target so spell is playable
-        Permanent bears = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new StoneKavu());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player1, List.of(new Singe()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, voiceOfAll.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, voiceOfAll.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from black");
+                .hasMessageContaining("protection from red");
     }
 
     @Test
     @DisplayName("Can be targeted by instant of non-chosen color")
     void canBeTargetedByNonChosenColorInstant() {
-        Permanent voiceOfAll = new Permanent(new VoiceOfAll());
-        voiceOfAll.setSummoningSick(false);
+        Permanent voiceOfAll = addCreatureReady(player1, new VoiceOfAll());
         voiceOfAll.setChosenColor(CardColor.BLACK);
-        gd.playerBattlefields.get(player1.getId()).add(voiceOfAll);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new Singe()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, voiceOfAll.getId(), null);
+        harness.castInstant(player1, 0, voiceOfAll.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning Bolt");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(voiceOfAll.getId());
     }
 
     // ===== Protection - aura enchantment =====
@@ -356,26 +290,16 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be enchanted by aura of chosen color")
     void cannotBeEnchantedByChosenColorAura() {
-        Permanent voiceOfAll = new Permanent(new VoiceOfAll());
-        voiceOfAll.setSummoningSick(false);
+        Permanent voiceOfAll = addCreatureReady(player2, new VoiceOfAll());
         voiceOfAll.setChosenColor(CardColor.BLACK);
-        gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
 
         // Add valid target so aura is playable
-        Permanent bears = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new StoneKavu());
 
-        Card blackAura = new Card();
-        blackAura.setName("Unholy Strength");
-        blackAura.setType(CardType.ENCHANTMENT);
-        blackAura.setManaCost("{B}");
-        blackAura.setColor(CardColor.BLACK);
-        blackAura.setSubtypes(List.of(CardSubtype.AURA));
-        harness.setHand(player1, List.of(blackAura));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player1, List.of(new SinisterStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, voiceOfAll.getId(), null))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, voiceOfAll.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
@@ -398,9 +322,7 @@ class VoiceOfAllTest extends BaseCardTest {
             h.handleListChoice(p1, colorName);
 
             GameData data = h.getGameData();
-            Permanent perm = data.playerBattlefields.get(p1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Voice of All"))
-                    .findFirst().orElseThrow();
+            Permanent perm = data.playerBattlefields.get(p1.getId()).getFirst();
             assertThat(perm.getChosenColor()).isEqualTo(CardColor.valueOf(colorName));
         }
     }
@@ -410,25 +332,16 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing white grants protection from white creatures in combat")
     void protectionFromWhiteInCombat() {
-        Permanent voiceOfAll = new Permanent(new VoiceOfAll());
-        voiceOfAll.setSummoningSick(false);
+        Permanent voiceOfAll = addCreatureReady(player2, new VoiceOfAll());
         voiceOfAll.setChosenColor(CardColor.WHITE);
         voiceOfAll.setBlocking(true);
         voiceOfAll.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
 
-        Permanent attacker = new Permanent(createCreature("White Knight", 3, 3, CardColor.WHITE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SilverDrake());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        resolveCombat();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        // Voice of All survives — white damage prevented
+        // Voice of All survives — damage from the white-blue source is prevented
         harness.assertOnBattlefield(player2, "Voice of All");
     }
 
@@ -437,25 +350,16 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Without choosing a color, Voice of All has no protection")
     void noProtectionWithoutColorChoice() {
-        Permanent voiceOfAll = new Permanent(new VoiceOfAll());
-        voiceOfAll.setSummoningSick(false);
+        Permanent voiceOfAll = addCreatureReady(player2, new VoiceOfAll());
         // No chosenColor set
         voiceOfAll.setBlocking(true);
         voiceOfAll.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
 
-        Permanent attacker = new Permanent(createCreature("Big Red", 3, 3, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new TahngarthTalruumHero());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        resolveCombat();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        // Voice of All dies — no protection without choosing a color (3 >= 2)
+        // Voice of All dies — no protection without choosing a color (4 >= 2)
         harness.assertNotOnBattlefield(player2, "Voice of All");
         harness.assertInGraveyard(player2, "Voice of All");
     }

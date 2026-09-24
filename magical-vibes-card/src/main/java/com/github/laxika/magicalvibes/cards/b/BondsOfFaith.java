@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "5")
+@CardRegistration(set = "DDL", collectorNumber = "24")
+@CardRegistration(set = "DDQ", collectorNumber = "2")
+@CardRegistration(set = "SIS", collectorNumber = "3")
 public class BondsOfFaith extends Card {
 
     public BondsOfFaith() {

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "106")
+@CardRegistration(set = "V17", collectorNumber = "14")
+@CardRegistration(set = "PIO", collectorNumber = "96")
 public class LilianaHereticalHealer extends Card {
 
     public LilianaHereticalHealer() {

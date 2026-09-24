@@ -10,5 +10,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M15", collectorNumber = "90")
 @CardRegistration(set = "M19", collectorNumber = "89")
 @CardRegistration(set = "GRN", collectorNumber = "65")
+@CardRegistration(set = "DDK", collectorNumber = "5")
+@CardRegistration(set = "IMA", collectorNumber = "85")
+@CardRegistration(set = "E02", collectorNumber = "16")
 public class ChildOfNight extends Card {
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "145")
+@CardRegistration(set = "2XM", collectorNumber = "242")
 public class CogworkAssembler extends Card {
 
     public CogworkAssembler() {

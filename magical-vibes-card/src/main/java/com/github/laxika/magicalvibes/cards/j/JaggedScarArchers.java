@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "222")
 @CardRegistration(set = "DPA", collectorNumber = "72")
+@CardRegistration(set = "DDU", collectorNumber = "13")
 public class JaggedScarArchers extends Card {
 
     public JaggedScarArchers() {

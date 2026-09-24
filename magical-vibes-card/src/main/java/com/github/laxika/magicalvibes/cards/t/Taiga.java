@@ -11,6 +11,9 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "287")
 @CardRegistration(set = "3ED", collectorNumber = "287")
 @CardRegistration(set = "ME2", collectorNumber = "238")
+@CardRegistration(set = "VMA", collectorNumber = "317")
+@CardRegistration(set = "ME4", collectorNumber = "253")
+@CardRegistration(set = "2ED", collectorNumber = "283")
 public class Taiga extends Card {
 
     public Taiga() {

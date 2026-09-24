@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "142")
+@CardRegistration(set = "TSR", collectorNumber = "245")
 public class UtopiaVow extends Card {
 
     public UtopiaVow() {

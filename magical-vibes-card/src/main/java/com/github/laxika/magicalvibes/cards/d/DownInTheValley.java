@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOB", collectorNumber = "124")
+@CardRegistration(set = "HOC", collectorNumber = "124")
 public class DownInTheValley extends Card {
 
     private static final PermanentHasSubtypePredicate ELVES =

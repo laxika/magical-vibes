@@ -12,10 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "241")
+@CardRegistration(set = "DMU", collectorNumber = "244")
 @CardRegistration(set = "10E", collectorNumber = "350")
 @CardRegistration(set = "9ED", collectorNumber = "320")
 @CardRegistration(set = "ORI", collectorNumber = "245")
 @CardRegistration(set = "APC", collectorNumber = "140")
+@CardRegistration(set = "MD1", collectorNumber = "14")
 public class CavesOfKoilos extends Card {
 
     public CavesOfKoilos() {

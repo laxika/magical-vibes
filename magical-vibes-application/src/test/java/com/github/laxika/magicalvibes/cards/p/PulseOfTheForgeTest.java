@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PulseOfTheForge.class, ElspethKnightErrant.class, CrazedGoblin.class})
 class PulseOfTheForgeTest extends BaseCardTest {
 
     @Test
@@ -59,14 +61,31 @@ class PulseOfTheForgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not return when targeting your own planeswalker")
+    void doesNotReturnWhenTargetingOwnPlaneswalker() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        ElspethKnightErrant elspethCard = new ElspethKnightErrant();
+        Permanent elspeth = new Permanent(elspethCard);
+        elspeth.setCounterCount(CounterType.LOYALTY, 5);
+        gd.playerBattlefields.get(player1.getId()).add(elspeth);
+
+        castAt(elspeth.getId());
+
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(handNames(player1)).doesNotContain("Pulse of the Forge");
+        assertThat(graveyardNames(player1)).containsExactly("Pulse of the Forge");
+    }
+
+    @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new CrazedGoblin());
         harness.setHand(player1, List.of(new PulseOfTheForge()));
         addMana();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
-                harness.getPermanentId(player2, "Grizzly Bears")))
+                harness.getPermanentId(player2, "Crazed Goblin")))
                 .isInstanceOf(IllegalStateException.class);
     }
 

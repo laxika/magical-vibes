@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.r.RhysticCave;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
@@ -95,10 +96,26 @@ class CombatAttackServiceTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.t.TotalWar.class)
+    void playerAttackSweepUsesTheAttackingPlayerWithoutTargetChoice() {
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.t.TotalWar());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent stayedHome = addCreatureReady(player2, new GrizzlyBears());
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker).doesNotContain(stayedHome);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(defender);
+    }
+
+    @Test
+    @CardUsed({KeldonBerserker.class, RhysticCave.class})
     @DisplayName("An attack trigger gated by at most zero matching permanents is skipped when not met")
     void skipsAtMostPermanentAttackTriggerWhenConditionIsNotMet() {
         addCreatureReady(player1, new KeldonBerserker());
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new RhysticCave());
         enterDeclareAttackers();
 
         gs.declareAttackers(gd, player1, List.of(0));
@@ -150,6 +167,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({Juggernaut.class, FormOfTheDragon.class})
         @DisplayName("A must-attack creature with no legal attack target is not offered")
         void mustAttackCreatureWithNoLegalTargetIsNotOffered() {
             addCreatureReady(player1, new Juggernaut());
@@ -252,6 +270,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({BerserkersOfBloodRidge.class, WindbornMuse.class})
         @DisplayName("CR 508.1d: an attack tax suspends every requirement, since the cost is optional")
         void anAttackTaxSuspendsEveryRequirement() {
             addCreatureReady(player1, new BerserkersOfBloodRidge());
@@ -354,6 +373,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({GrizzlyBears.class, WindbornMuse.class, TroveOfTemptation.class})
         @DisplayName("The declaration reports the attack tax and the forced-attack demand")
         void openedDeclarationCarriesTheTaxAndTheDemand() {
             addCreatureReady(player1, new GrizzlyBears());
@@ -467,6 +487,19 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(Okk.class)
+        void greaterPowerRestrictionEndsWithPrintedAbilities() {
+            Permanent okk = addCreatureReady(player1, new Okk());
+            okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+            enterDeclareAttackers();
+
+            declare(List.of(index(okk)));
+
+            assertThat(okk.isAttacking()).isTrue();
+        }
+
+        @Test
+        @CardUsed({Okk.class, HillGiant.class, CrawWurm.class})
         @DisplayName("CR 508.1a: Okk needs a strictly greater-power attacker beside it")
         void greaterPowerRestrictionNeedsABiggerAttacker() {
             // Okk is 4/4; Hill Giant (3/3) is not enough, Craw Wurm (6/4) is.
@@ -557,6 +590,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({GrizzlyBears.class, WindDrake.class, FormOfTheDragon.class})
         @DisplayName("A defender-scoped restriction excludes the barred creature from declaration choices")
         void defenderScopedRestrictionExcludesBarredCreature() {
             // Form of the Dragon: "Creatures without flying can't attack you."
@@ -580,6 +614,7 @@ class CombatAttackServiceTest extends BaseCardTest {
     class AttackTax {
 
         @Test
+        @CardUsed({GrizzlyBears.class, HillGiant.class, WindbornMuse.class})
         @DisplayName("The tax is summed across the whole declaration and must be payable as one total")
         void taxIsSummedAcrossTheWholeDeclaration() {
             // Windborn Muse: creatures can't attack you unless their controller pays {2} for each.

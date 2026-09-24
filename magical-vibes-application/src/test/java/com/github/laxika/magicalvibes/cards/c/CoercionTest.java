@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.e.ElvenCache;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,13 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Coercion.class, DarkRitual.class, Counterspell.class, Island.class})
+@CardUsed({Coercion.class, Disenchant.class, ElvenCache.class, Island.class})
 class CoercionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Caster chooses a card from opponent's hand and it is discarded")
     void choosingCardDiscardsIt() {
-        harness.setHand(player2, List.of(new DarkRitual(), new Counterspell()));
+        ElvenCache elvenCache = new ElvenCache();
+        Disenchant disenchant = new Disenchant();
+        harness.setHand(player2, List.of(elvenCache, disenchant));
 
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -38,15 +41,16 @@ class CoercionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player2, "Dark Ritual");
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Counterspell");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(elvenCache);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(disenchant);
     }
 
     @Test
     @DisplayName("Any card type is a valid choice, including lands")
     void landsAreValidChoices() {
-        harness.setHand(player2, List.of(new DarkRitual(), new Island()));
+        ElvenCache elvenCache = new ElvenCache();
+        Island island = new Island();
+        harness.setHand(player2, List.of(elvenCache, island));
 
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -58,8 +62,8 @@ class CoercionTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 1);
 
-        harness.assertInGraveyard(player2, "Island");
-        harness.assertInHand(player2, "Dark Ritual");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(island);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(elvenCache);
     }
 
     @Test

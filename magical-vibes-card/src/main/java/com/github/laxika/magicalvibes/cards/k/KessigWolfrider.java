@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "165")
+@CardRegistration(set = "DBL", collectorNumber = "432")
 public class KessigWolfrider extends Card {
 
     public KessigWolfrider() {

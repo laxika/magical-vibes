@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "155")
+@CardRegistration(set = "ME3", collectorNumber = "105")
 public class KoboldOverlord extends Card {
 
     public KoboldOverlord() {

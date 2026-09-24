@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "67")
+@CardRegistration(set = "SLC", collectorNumber = "81")
 public class SharkTyphoon extends Card {
 
     public SharkTyphoon() {

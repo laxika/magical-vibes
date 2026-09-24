@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "99")
+@CardRegistration(set = "DDQ", collectorNumber = "56")
+@CardRegistration(set = "2XM", collectorNumber = "90")
 public class DriverOfTheDead extends Card {
 
     public DriverOfTheDead() {

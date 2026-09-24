@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "210")
+@CardRegistration(set = "EMA", collectorNumber = "151")
+@CardRegistration(set = "C13", collectorNumber = "127")
 public class ToothAndClaw extends Card {
 
     public ToothAndClaw() {

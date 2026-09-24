@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "48")
+@CardRegistration(set = "IMA", collectorNumber = "34")
+@CardRegistration(set = "C13", collectorNumber = "23")
 public class SurvivalCache extends Card {
 
     public SurvivalCache() {

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "227")
+@CardRegistration(set = "V14", collectorNumber = "7")
+@CardRegistration(set = "SLD", collectorNumber = "273")
 public class FracturingGust extends Card {
 
     public FracturingGust() {

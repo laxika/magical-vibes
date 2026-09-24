@@ -1,0 +1,56 @@
+package com.github.laxika.magicalvibes.cards.m;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+
+import java.util.List;
+import java.util.Set;
+
+@CardRegistration(set = "MH1", collectorNumber = "57")
+public class MirrodinBesieged extends Card {
+
+    private static final String MIRRAN = "Mirran";
+    private static final String PHYREXIAN = "Phyrexian";
+
+    public MirrodinBesieged() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ChooseModeOnEnterEffect(List.of(MIRRAN, PHYREXIAN)));
+
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ConditionalEffect(
+                new SourceHasChosenMode(MIRRAN),
+                new SpellCastTriggerEffect(
+                        new CardTypePredicate(CardType.ARTIFACT),
+                        List.of(new CreateTokenEffect("Myr", 1, 1, null,
+                                List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT))))));
+
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+                new SourceHasChosenMode(PHYREXIAN),
+                SequenceEffect.of(
+                        new DrawCardEffect(1),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                        ConditionalEffect.unless(
+                                new GraveyardCardThreshold(15, new CardTypePredicate(CardType.ARTIFACT)),
+                                new TargetPlayerLosesGameEffect(null)))));
+    }
+}

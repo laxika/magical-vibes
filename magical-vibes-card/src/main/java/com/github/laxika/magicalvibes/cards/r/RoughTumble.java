@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "114")
+@CardRegistration(set = "TSR", collectorNumber = "186")
+@CardRegistration(set = "C13", collectorNumber = "118")
 public class RoughTumble extends Card {
 
     public RoughTumble() {

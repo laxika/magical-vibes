@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "94")
+@CardRegistration(set = "PC2", collectorNumber = "77")
+@CardRegistration(set = "PCA", collectorNumber = "77")
+@CardRegistration(set = "RVR", collectorNumber = "156")
 public class SilhanaLedgewalker extends Card {
 
     public SilhanaLedgewalker() {

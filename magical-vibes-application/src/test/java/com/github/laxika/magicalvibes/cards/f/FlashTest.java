@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.e.EkunduGriffin;
 import com.github.laxika.magicalvibes.cards.g.GrinningTotem;
 import com.github.laxika.magicalvibes.cards.l.LightningSerpent;
-import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
+import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,8 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Flash.class, GrinningTotem.class, LightningSerpent.class, NobleElephant.class,
-        PorcelainLegionnaire.class})
+@CardUsed({Flash.class, EkunduGriffin.class, GrinningTotem.class, LightningSerpent.class,
+        PorcelainLegionnaire.class, VenerableMonk.class})
 class FlashTest extends BaseCardTest {
 
     private void castFlash() {
@@ -31,57 +33,57 @@ class FlashTest extends BaseCardTest {
     @Test
     @DisplayName("Paying the reduced cost keeps the creature on the battlefield")
     void payingReducedCostKeepsCreature() {
-        harness.setHand(player1, List.of(new Flash(), new NobleElephant()));
+        harness.setHand(player1, List.of(new Flash(), new EkunduGriffin()));
         castFlash();
 
-        // Put Noble Elephant (index 0 now that Flash has left the hand) onto the battlefield.
+        // Put Ekundu Griffin (index 0 now that Flash has left the hand) onto the battlefield.
         harness.handleCardChosen(player1, 0);
 
-        // Noble Elephant is {3}{W}; reduced by {2} the cost to keep it is {1}{W}.
+        // Ekundu Griffin is {3}{W}; reduced by {2} the cost to keep it is {1}{W}.
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertOnBattlefield(player1, "Noble Elephant");
-        harness.assertNotInGraveyard(player1, "Noble Elephant");
+        harness.assertOnBattlefield(player1, "Ekundu Griffin");
+        harness.assertNotInGraveyard(player1, "Ekundu Griffin");
     }
 
     @Test
     @DisplayName("Declining to pay sacrifices the creature")
     void decliningToPaySacrificesCreature() {
-        harness.setHand(player1, List.of(new Flash(), new NobleElephant()));
+        harness.setHand(player1, List.of(new Flash(), new EkunduGriffin()));
         castFlash();
 
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertNotOnBattlefield(player1, "Noble Elephant");
-        harness.assertInGraveyard(player1, "Noble Elephant");
+        harness.assertNotOnBattlefield(player1, "Ekundu Griffin");
+        harness.assertInGraveyard(player1, "Ekundu Griffin");
     }
 
     @Test
     @DisplayName("Accepting without enough mana still sacrifices the creature")
     void cannotPaySacrificesCreature() {
-        harness.setHand(player1, List.of(new Flash(), new NobleElephant()));
+        harness.setHand(player1, List.of(new Flash(), new EkunduGriffin()));
         castFlash();
 
         harness.handleCardChosen(player1, 0);
         // No mana is available - the reduced {1}{W} cost cannot be paid.
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player1, "Noble Elephant");
-        harness.assertInGraveyard(player1, "Noble Elephant");
+        harness.assertNotOnBattlefield(player1, "Ekundu Griffin");
+        harness.assertInGraveyard(player1, "Ekundu Griffin");
     }
 
     @Test
     @DisplayName("Declining to put a creature leaves it in hand")
     void decliningToPutLeavesCreatureInHand() {
-        harness.setHand(player1, List.of(new Flash(), new NobleElephant()));
+        harness.setHand(player1, List.of(new Flash(), new EkunduGriffin()));
         castFlash();
 
         harness.handleCardChosen(player1, -1);
 
-        harness.assertNotOnBattlefield(player1, "Noble Elephant");
-        harness.assertInHand(player1, "Noble Elephant");
+        harness.assertNotOnBattlefield(player1, "Ekundu Griffin");
+        harness.assertInHand(player1, "Ekundu Griffin");
     }
 
     @Test
@@ -92,6 +94,51 @@ class FlashTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInHand(player1, "Grinning Totem");
+    }
+
+    @Test
+    @DisplayName("Only creature cards are offered from a mixed hand")
+    void mixedHandOffersOnlyCreatureCards() {
+        harness.setHand(player1, List.of(new Flash(), new GrinningTotem(), new EkunduGriffin()));
+        castFlash();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(1);
+        harness.handleCardChosen(player1, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Grinning Totem");
+        harness.assertInGraveyard(player1, "Ekundu Griffin");
+    }
+
+    @Test
+    @DisplayName("Only generic mana is reduced from the creature's mana cost")
+    void coloredManaIsStillRequired() {
+        harness.setHand(player1, List.of(new Flash(), new EkunduGriffin()));
+        castFlash();
+
+        harness.handleCardChosen(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Ekundu Griffin");
+        harness.assertInGraveyard(player1, "Ekundu Griffin");
+    }
+
+    @Test
+    @DisplayName("The creature's enters-the-battlefield ability triggers before it is sacrificed")
+    void entersBattlefieldAbilityTriggersBeforeSacrifice() {
+        harness.setHand(player1, List.of(new Flash(), new VenerableMonk()));
+        castFlash();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertNotOnBattlefield(player1, "Venerable Monk");
+        harness.assertInGraveyard(player1, "Venerable Monk");
     }
 
     @Test

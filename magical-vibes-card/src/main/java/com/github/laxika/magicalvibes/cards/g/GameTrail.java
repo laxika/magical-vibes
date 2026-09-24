@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "276")
+@CardRegistration(set = "SIR", collectorNumber = "269")
 public class GameTrail extends Card {
 
     public GameTrail() {

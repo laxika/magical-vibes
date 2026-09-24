@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "55")
 @CardRegistration(set = "M12", collectorNumber = "55")
+@CardRegistration(set = "SLD", collectorNumber = "220")
+@CardRegistration(set = "HA7", collectorNumber = "3")
+@CardRegistration(set = "C14", collectorNumber = "112")
 public class FrostTitan extends Card {
 
     public FrostTitan() {

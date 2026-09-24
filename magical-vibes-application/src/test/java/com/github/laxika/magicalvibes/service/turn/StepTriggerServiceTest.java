@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -298,6 +299,9 @@ class StepTriggerServiceTest {
         gd.playerHands.put(player2Id, new ArrayList<>());
         gd.playerGraveyards.put(player1Id, new ArrayList<>());
         gd.playerGraveyards.put(player2Id, new ArrayList<>());
+        lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
+                .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
+                        .toStaticBonus(0, 0, false));
         lenient().when(gameQueryService.getEffectiveGraveyardEffects(
                         eq(gd), any(Card.class), any(EffectSlot.class)))
                 .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
@@ -1078,6 +1082,27 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Each Upkeep Card");
+        }
+
+        @Test
+        @DisplayName("EACH_UPKEEP_TRIGGERED any-target effect queues target choice for its controller")
+        void eachUpkeepAnyTargetQueuesTargetChoiceForItsController() {
+            gd.turnNumber = 2;
+            gd.activePlayerId = player2Id;
+            Card card = createCardWithName("Each Upkeep Damage Card");
+            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new DealDamageToAnyTargetEffect(3));
+            Permanent source = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            sut.handleUpkeepTriggers(gd);
+
+            PermanentChoiceContext.UpkeepAnyTargetTrigger trigger =
+                    (PermanentChoiceContext.UpkeepAnyTargetTrigger) gd.interaction.permanentChoiceContext();
+            assertThat(trigger).isNotNull();
+            assertThat(trigger.controllerId()).isEqualTo(player1Id);
+            assertThat(trigger.sourcePermanentId()).isEqualTo(source.getId());
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test
@@ -2054,6 +2079,19 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Controller May Card");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                     new MayEffect(new GainLifeEffect(1), "Gain life?"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with reflexive MayPayManaEffect queues may ability")
+        void controllerEndStepReflexiveMayPayManaEffectQueuesMayAbility() {
+            Card card = createCardWithName("Controller Reflexive May Pay Card");
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    MayPayManaEffect.reflexiveTarget("{1}", new GainLifeEffect(1), "Pay {1} to gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);

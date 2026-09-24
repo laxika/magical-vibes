@@ -19,6 +19,13 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "ME1", collectorNumber = "57")
 @CardRegistration(set = "3ED", collectorNumber = "93")
 @CardRegistration(set = "PD3", collectorNumber = "16")
+@CardRegistration(set = "EMA", collectorNumber = "78")
+@CardRegistration(set = "VMA", collectorNumber = "104")
+@CardRegistration(set = "SLD", collectorNumber = "2189")
+@CardRegistration(set = "SLZ", collectorNumber = "34")
+@CardRegistration(set = "SLZ", collectorNumber = "155")
+@CardRegistration(set = "SLZ", collectorNumber = "276")
+@CardRegistration(set = "2ED", collectorNumber = "93")
 public class AnimateDead extends Card {
 
     public AnimateDead() {

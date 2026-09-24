@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "60")
+@CardRegistration(set = "ANB", collectorNumber = "42")
 public class WindstormDrake extends Card {
 
     public WindstormDrake() {

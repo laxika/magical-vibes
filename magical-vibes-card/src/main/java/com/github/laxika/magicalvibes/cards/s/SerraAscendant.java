@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "28")
+@CardRegistration(set = "IMA", collectorNumber = "31")
+@CardRegistration(set = "SLD", collectorNumber = "1125")
+@CardRegistration(set = "SLD", collectorNumber = "2291")
+@CardRegistration(set = "HA1", collectorNumber = "1")
 public class SerraAscendant extends Card {
 
     public SerraAscendant() {

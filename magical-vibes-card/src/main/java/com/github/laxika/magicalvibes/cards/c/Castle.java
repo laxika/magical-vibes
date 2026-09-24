@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "5")
@@ -12,10 +14,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "15")
 @CardRegistration(set = "SUM", collectorNumber = "8")
 @CardRegistration(set = "3ED", collectorNumber = "8")
+@CardRegistration(set = "2ED", collectorNumber = "9")
 public class Castle extends Card {
 
     public Castle() {
         // Untapped creatures you control get +0/+2.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 2, GrantScope.OWN_UNTAPPED_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 2, GrantScope.ALL_OWN_CREATURES,
+                new PermanentNotPredicate(new PermanentIsTappedPredicate())));
     }
 }

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "62")
+@CardRegistration(set = "IMA", collectorNumber = "61")
+@CardRegistration(set = "PIO", collectorNumber = "61")
 public class JhessianThief extends Card {
 
     public JhessianThief() {

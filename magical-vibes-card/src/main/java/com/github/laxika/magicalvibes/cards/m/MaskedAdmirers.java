@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "230")
+@CardRegistration(set = "MMA", collectorNumber = "154")
+@CardRegistration(set = "C14", collectorNumber = "206")
 public class MaskedAdmirers extends Card {
 
     public MaskedAdmirers() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "12")
+@CardRegistration(set = "FCA", collectorNumber = "24")
 public class LoranOfTheThirdPath extends Card {
 
     public LoranOfTheThirdPath() {

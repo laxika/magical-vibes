@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -20,6 +21,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "56")
+@CardRegistration(set = "DMR", collectorNumber = "77")
+@CardRegistration(set = "CMM", collectorNumber = "144")
+@CardRegistration(set = "CMM", collectorNumber = "505")
 public class ChainerDementiaMaster extends Card {
 
     public ChainerDementiaMaster() {
@@ -28,8 +32,8 @@ public class ChainerDementiaMaster extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE)));
 
         // {B}{B}{B}, Pay 3 life: Put target creature card from a graveyard onto the battlefield
-        // under your control. That creature is a black Nightmare in addition to its other colors
-        // and types.
+        // under your control. That creature is black and is a Nightmare in addition to its
+        // other creature types.
         addActivatedAbility(new ActivatedAbility(false, "{B}{B}{B}", List.of(
                 new PayLifeCost(3),
                 ReturnCardFromGraveyardEffect.builder()
@@ -37,7 +41,7 @@ public class ChainerDementiaMaster extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .targetGraveyard(true)
-                        .grantColor(CardColor.BLACK)
+                        .battlefieldEffectGrants(List.of(new GrantColorEffect(CardColor.BLACK, GrantScope.TARGET, true)))
                         .grantSubtype(CardSubtype.NIGHTMARE)
                         .build()),
                 "{B}{B}{B}, Pay 3 life: Put target creature card from a graveyard onto the battlefield under your control. "

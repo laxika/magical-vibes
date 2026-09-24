@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "25")
+@CardRegistration(set = "MSC", collectorNumber = "276")
+@CardRegistration(set = "MSC", collectorNumber = "318")
 public class Scourglass extends Card {
 
     public Scourglass() {

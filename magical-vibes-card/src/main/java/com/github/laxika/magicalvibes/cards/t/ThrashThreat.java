@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "229")
+@CardRegistration(set = "RVR", collectorNumber = "246")
 public class ThrashThreat extends Card {
 
     public ThrashThreat() {

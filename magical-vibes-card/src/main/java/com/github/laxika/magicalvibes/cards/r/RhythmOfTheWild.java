@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEf
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "201")
+@CardRegistration(set = "SLD", collectorNumber = "1740")
+@CardRegistration(set = "RVR", collectorNumber = "217")
+@CardRegistration(set = "PZA", collectorNumber = "12")
 public class RhythmOfTheWild extends Card {
 
     public RhythmOfTheWild() {

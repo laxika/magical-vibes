@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "54")
+@CardRegistration(set = "GN2", collectorNumber = "22")
 public class Galestrike extends Card {
 
     public Galestrike() {

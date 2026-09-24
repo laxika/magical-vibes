@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 
 /**
@@ -43,7 +45,8 @@ public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed)
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return amount instanceof SourceToughness ? TriggerContext.SOURCE_SELF : null;
+        return amount instanceof SourcePower || amount instanceof SourceToughness
+                ? TriggerContext.SOURCE_SELF : null;
     }
 
     @Override
@@ -59,6 +62,9 @@ public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed)
             return true;
         }
         if (amount instanceof CardsInHand count && count.scope() == CountScope.TARGET_PLAYER) {
+            return true;
+        }
+        if (amount instanceof CardsInGraveyard count && count.scope() == CountScope.TARGET_PLAYER) {
             return true;
         }
         return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER;
