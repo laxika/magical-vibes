@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AlabasterLeech;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +14,15 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Restock.class, AlabasterLeech.class, Forest.class})
 class RestockTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns two chosen cards of any type from the graveyard to hand")
     void returnsTwoChosenCardsToHand() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LeoninScimitar()));
+        harness.setGraveyard(player1, List.of(new AlabasterLeech(), new Forest()));
         harness.setHand(player1, List.of(new Restock()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
@@ -36,16 +38,16 @@ class RestockTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, new ArrayList<>(choice.validCardIds()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertInHand(player1, "Leonin Scimitar");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInHand(player1, "Alabaster Leech");
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Alabaster Leech");
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 
     @Test
     @DisplayName("Restock exiles itself instead of going to the graveyard")
     void exilesItselfOnResolution() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new AlabasterLeech(), new Forest()));
         harness.setHand(player1, List.of(new Restock()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
@@ -62,19 +64,29 @@ class RestockTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casting with an empty graveyard skips the target prompt and still exiles Restock")
-    void emptyGraveyardSkipsPrompt() {
+    @DisplayName("Cannot cast with only one legal graveyard target")
+    void cannotCastWithOnlyOneLegalTarget() {
+        harness.setGraveyard(player1, List.of(new AlabasterLeech()));
         harness.setHand(player1, List.of(new Restock()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.stack).hasSize(1);
+        harness.assertInHand(player1, "Restock");
+        assertThat(gd.stack).isEmpty();
+    }
 
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Cannot cast with an empty graveyard")
+    void cannotCastWithEmptyGraveyard() {
+        harness.setHand(player1, List.of(new Restock()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.exiledCards.stream().map(e -> e.card().getName())).contains("Restock");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Restock");
+        assertThat(gd.stack).isEmpty();
     }
 }

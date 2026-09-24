@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.d.DreamThrush;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FertileGround.class, Forest.class, ArgothianSwine.class})
+@CardUsed({FertileGround.class, Forest.class})
 class FertileGroundTest extends BaseCardTest {
 
     @Test
@@ -45,7 +45,8 @@ class FertileGroundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> forest.getId().equals(p.getAttachedTo()));
+                .anyMatch(p -> p.getCard().getName().equals("Fertile Ground")
+                        && forest.getId().equals(p.getAttachedTo()));
     }
 
     @Test
@@ -125,10 +126,11 @@ class FertileGroundTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(DreamThrush.class)
     @DisplayName("Cannot cast Fertile Ground targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DreamThrush());
         harness.setHand(player1, List.of(new FertileGround()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 

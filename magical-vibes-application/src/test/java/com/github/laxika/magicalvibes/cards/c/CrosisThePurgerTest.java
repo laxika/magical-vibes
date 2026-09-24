@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CrosisThePurger.class, AirElemental.class, GrizzlyBears.class, Forest.class})
 class CrosisThePurgerTest extends BaseCardTest {
 
     @Test
@@ -23,10 +23,11 @@ class CrosisThePurgerTest extends BaseCardTest {
     void combatDamageDiscardsAllCardsOfChosenColor() {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new AirElemental(), new GrizzlyBears(), new Forest())));
+        harness.setHand(player2, List.of(
+                new AirElemental(), new GrizzlyBears(), new Forest()));
 
-        resolveCombatToMayPrompt();
+        resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         addPaymentMana();
@@ -35,6 +36,8 @@ class CrosisThePurgerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "BLUE");
 
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(card -> card.getName())
                 .containsExactlyInAnyOrder("Grizzly Bears", "Forest");
@@ -48,15 +51,39 @@ class CrosisThePurgerTest extends BaseCardTest {
     void decliningPaymentDoesNothing() {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
-        harness.setHand(player2, new ArrayList<>(List.of(new AirElemental(), new GrizzlyBears())));
+        harness.setHand(player2, List.of(new AirElemental(), new GrizzlyBears()));
 
-        resolveCombatToMayPrompt();
+        resolveCombat();
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A paid ability discards every card containing the chosen color")
+    void combatDamageDiscardsEveryMatchingCard() {
+        Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
+        crosis.setAttacking(true);
+        harness.setHand(player2, List.of(
+                new AirElemental(), new AirElemental(), new CrosisThePurger(),
+                new GrizzlyBears(), new Forest()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Grizzly Bears", "Forest");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Air Elemental", "Air Elemental", "Crosis, the Purger");
     }
 
     @Test
@@ -67,20 +94,12 @@ class CrosisThePurgerTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new AirElemental());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.setHand(player2, new ArrayList<>(List.of(new AirElemental())));
+        harness.setHand(player2, List.of(new AirElemental()));
 
         resolveCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-    }
-
-    private void resolveCombatToMayPrompt() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private void addPaymentMana() {

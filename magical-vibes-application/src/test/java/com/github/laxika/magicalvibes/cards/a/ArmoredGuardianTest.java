@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArmoredGuardian.class, GrizzlyBears.class})
 class ArmoredGuardianTest extends BaseCardTest {
 
     @Test
@@ -85,14 +87,10 @@ class ArmoredGuardianTest extends BaseCardTest {
     }
 
     private Permanent addReadyGuardian(Player player) {
-        Permanent guardian = harness.addToBattlefieldAndReturn(player, new ArmoredGuardian());
-        guardian.setSummoningSick(false);
-        return guardian;
+        return addCreatureReady(player, new ArmoredGuardian());
     }
 
     private Permanent addReadyBears(Player player) {
-        Permanent bears = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        bears.setSummoningSick(false);
-        return bears;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

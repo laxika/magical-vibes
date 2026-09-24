@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AlloyGolem;
+import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -7,11 +9,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+@CardUsed({AlloyGolem.class, BarrinsUnmaking.class, BenalishLancer.class, BlindSeer.class,
+        BloodstoneCameo.class, GalinasKnight.class})
 class BarrinsUnmakingTest extends BaseCardTest {
 
     @Test
@@ -35,6 +40,30 @@ class BarrinsUnmakingTest extends BaseCardTest {
         castBarrinsUnmaking(target);
 
         harness.assertInHand(player2, "White Target");
+    }
+
+    @Test
+    @DisplayName("Returns a multicolored target sharing one of the most common colors")
+    void returnsMulticoloredTargetSharingMostCommonColor() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GalinasKnight());
+        harness.addToBattlefield(player1, new BenalishLancer());
+
+        castBarrinsUnmaking(target);
+
+        harness.assertNotOnBattlefield(player2, "Galina's Knight");
+        harness.assertInHand(player2, "Galina's Knight");
+    }
+
+    @Test
+    @DisplayName("Does nothing when the target is colorless")
+    void doesNothingForColorlessTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BloodstoneCameo());
+        harness.addToBattlefield(player1, new BenalishLancer());
+
+        castBarrinsUnmaking(target);
+
+        harness.assertOnBattlefield(player2, "Bloodstone Cameo");
+        harness.assertNotInHand(player2, "Bloodstone Cameo");
     }
 
     @Test
@@ -66,6 +95,21 @@ class BarrinsUnmakingTest extends BaseCardTest {
         harness.assertNotInHand(player2, "White Target");
     }
 
+    @Test
+    @DisplayName("Counts colors supplied by continuous effects when resolving")
+    void countsColorsSuppliedByContinuousEffects() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
+        harness.addToBattlefield(player1, new BlindSeer());
+        harness.addToBattlefield(player1, new BlindSeer());
+        Permanent alloyGolem = harness.addToBattlefieldAndReturn(player1, new AlloyGolem());
+        alloyGolem.setChosenColor(CardColor.WHITE);
+
+        castBarrinsUnmaking(target);
+
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInHand(player2, "Benalish Lancer");
+    }
+
     private Permanent addColoredPermanent(Player owner, String name, CardColor... colors) {
         Card card = new Card();
         card.setName(name);
@@ -86,7 +130,6 @@ class BarrinsUnmakingTest extends BaseCardTest {
     private void castBarrinsUnmaking(Permanent target) {
         harness.setHand(player1, List.of(new BarrinsUnmaking()));
         addCastingMana();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

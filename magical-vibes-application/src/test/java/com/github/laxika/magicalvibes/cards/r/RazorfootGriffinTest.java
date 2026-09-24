@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,70 +14,74 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RazorfootGriffin.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({RazorfootGriffin.class, RagingKavu.class, GiantSpider.class, GrizzlyBears.class})
 class RazorfootGriffinTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Flying prevents a creature without flying or reach from blocking")
-    void cannotBeBlockedByGroundCreature() {
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
+    @DisplayName("Flying prevents a nonflying creature from blocking Razorfoot Griffin")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        addCreatureReady(player1, new RazorfootGriffin());
+        addCreatureReady(player2, new RagingKavu());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
 
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("flying");
+                .hasMessageContaining("(flying)");
     }
 
     @Test
-    @DisplayName("Flying creature can be blocked by another flying creature")
+    @DisplayName("A first-strike blocker kills a 3/1 attacker before it deals regular damage")
+    void firstStrikeKillsAttackerBeforeRegularDamage() {
+        addCreatureReady(player1, new RagingKavu());
+        addCreatureReady(player2, new RazorfootGriffin());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Razorfoot Griffin");
+        harness.assertInGraveyard(player1, "Raging Kavu");
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Razorfoot Griffin")
     void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new RazorfootGriffin());
         Permanent blocker = addCreatureReady(player2, new RazorfootGriffin());
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
-
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
-    @DisplayName("Flying creature can be blocked by a creature with reach")
+    @DisplayName("A creature with reach can block Razorfoot Griffin")
     void canBeBlockedByCreatureWithReach() {
+        addCreatureReady(player1, new RazorfootGriffin());
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
-
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
-    @DisplayName("First strike deals combat damage before a creature without first strike")
-    void firstStrikeDealsDamageFirst() {
-        Permanent attacker = addCreatureReady(player1, new RazorfootGriffin());
-        attacker.setAttacking(true);
+    @DisplayName("A first-strike attacker kills a blocker before it deals regular damage")
+    void firstStrikeAttackerKillsBlocker() {
+        addCreatureReady(player1, new RazorfootGriffin());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         harness.assertOnBattlefield(player1, "Razorfoot Griffin");
