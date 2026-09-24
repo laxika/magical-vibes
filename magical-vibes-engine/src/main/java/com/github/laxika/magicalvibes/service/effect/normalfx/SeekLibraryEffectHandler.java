@@ -3,16 +3,19 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -22,22 +25,14 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** Resolves the digital Seek action without opening a player-choice search interaction. */
 @Component
+@RequiredArgsConstructor
 public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-
-    public SeekLibraryEffectHandler(PredicateEvaluationService predicateEvaluationService,
-                                    BattlefieldEntryService battlefieldEntryService,
-                                    GameQueryService gameQueryService,
-                                    AmountEvaluationService amountEvaluationService) {
-        this.predicateEvaluationService = predicateEvaluationService;
-        this.battlefieldEntryService = battlefieldEntryService;
-        this.gameQueryService = gameQueryService;
-        this.amountEvaluationService = amountEvaluationService;
-    }
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,6 +53,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 : amountEvaluationService.evaluate(gameData, seek.manaValueBound().amount(),
                 AmountContext.forStackEntry(entry, source)) + seek.manaValueBound().offset();
         if (deck == null || deck.isEmpty() || count == 0) {
+            if (count > 0 && seek.destination() != LibrarySearchDestination.HAND) {
+                logNoMatch(gameData, entry);
+            }
             return;
         }
 
@@ -66,10 +64,16 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                         card, seek.filter(), null, gameData, controllerId)
                         && (manaValueBound == null || (seek.manaValueBound().exact()
                         ? card.getManaValue() == manaValueBound
-                        : card.getManaValue() <= manaValueBound)))
+                        : card.getManaValue() <= manaValueBound))
+                        && (seek.destination() == LibrarySearchDestination.HAND
+                        || !gameQueryService.isCardBlockedFromEnteringFromZone(
+                        gameData, card, Zone.LIBRARY)))
                 .toList());
 
         int cardsToSeek = Math.min(count, matchingCards.size());
+        if (cardsToSeek == 0 && seek.destination() != LibrarySearchDestination.HAND) {
+            logNoMatch(gameData, entry);
+        }
         for (int i = 0; i < cardsToSeek; i++) {
             Card chosen = matchingCards.remove(ThreadLocalRandom.current().nextInt(matchingCards.size()));
             deck.removeIf(card -> card.getId().equals(chosen.getId()));
@@ -84,9 +88,16 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 if (seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
                     permanent.tap();
                 }
+                gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                        .text("seeks and puts " + chosen.getName() + " onto the battlefield.").build());
             } else {
                 throw new IllegalStateException("Unsupported Seek destination: " + seek.destination());
             }
         }
+    }
+
+    private void logNoMatch(GameData gameData, StackEntry entry) {
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                .text("seeks but finds no matching card.").build());
     }
 }

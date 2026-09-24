@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1224,7 +1226,70 @@ public class GameQueryService {
                 && card.getManaCost() != null && !card.getManaCost().isBlank()) {
             result.add(Card.embalmAbility(card.getManaCost()));
         }
+        if (card != null && gameData.cardsGrantedPerpetualUnearth.contains(card.getId())
+                && card.getManaCost() != null && !card.getManaCost().isBlank()
+                && !cardHasUnearthAbilityBeforePerpetualGrant(gameData, ownerId, card)) {
+            result.add(Card.unearthAbility(card.getManaCost()));
+        }
         return result;
+    }
+
+    /** Whether the card currently has native or granted unearth. */
+    public boolean cardHasUnearthAbility(GameData gameData, UUID ownerId, Card card) {
+        if (card == null) return false;
+        if (card.getGraveyardActivatedAbilities().stream().anyMatch(ActivatedAbility::isUnearthAbility)) {
+            return true;
+        }
+        if (gameData != null && gameData.cardsGrantedPerpetualUnearth.contains(card.getId())
+                && card.getManaCost() != null && !card.getManaCost().isBlank()) {
+            return true;
+        }
+        return cardHasUnearthAbilityBeforePerpetualGrant(gameData, ownerId, card);
+    }
+
+    private boolean cardHasUnearthAbilityBeforePerpetualGrant(GameData gameData, UUID ownerId, Card card) {
+        return computeGrantedGraveyardAbilitiesForOwnedCardWithoutPerpetualUnearth(gameData, ownerId, card)
+                .stream().anyMatch(ActivatedAbility::isUnearthAbility);
+    }
+
+    private List<ActivatedAbility> computeGrantedGraveyardAbilitiesForOwnedCardWithoutPerpetualUnearth(
+            GameData gameData, UUID ownerId, Card card) {
+        List<ActivatedAbility> abilities = new ArrayList<>();
+        if (graveyardCardsHaveLostAllAbilities(gameData)) return abilities;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GraveyardAbilityGrantingEffect grant
+                            && grant.appliesTo(card)) {
+                        ActivatedAbility ability = grant.grantedGraveyardAbilityFor(card);
+                        if (ability != null) abilities.add(ability);
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null && Objects.equals(gameData.planechase.controllerId, ownerId)) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GraveyardAbilityGrantingEffect grant
+                            && grant.appliesTo(card)) {
+                        ActivatedAbility ability = grant.grantedGraveyardAbilityFor(card);
+                        if (ability != null) abilities.add(ability);
+                    }
+                }
+            }
+        }
+        return abilities;
+    }
+
+    /** Whether Highway Reaver currently permits this player's first unearth activation to be free. */
+    public boolean canUseMaxSpeedFreeUnearth(GameData gameData, UUID playerId) {
+        return gameData.playerSpeeds.getOrDefault(playerId, 0) == 4
+                && !gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.contains(playerId)
+                && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isFaceDown() && !hasLostAllAbilities(gameData, permanent))
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(MaxSpeedFreeFirstUnearthEffect.class::isInstance);
     }
 
     /**

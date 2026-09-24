@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /** Resolves a full card copy conjured onto its controller's battlefield. */
 @Component
 @RequiredArgsConstructor
@@ -32,20 +36,45 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardToBattlefieldEffect conjure = (ConjureCardToBattlefieldEffect) effect;
-        CardSet set = CardSet.findByCode(conjure.setCode());
-        if (set == null) {
-            throw new IllegalArgumentException("Unknown card set: " + conjure.setCode());
-        }
-
-        CardPrinting printing = cardCatalog.findByCollectorNumber(set, conjure.collectorNumber());
-        Card conjuredCard = printing.createCard();
+        Card conjuredCard = conjure.setCode() == null
+                ? findCard(conjure.cardName())
+                : findPrinting(conjure.setCode(), conjure.collectorNumber());
         conjuredCard.setOwnerId(entry.getControllerId());
+
         Permanent permanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
-        entry.getCreatedPermanentIds().add(permanent.getId());
 
-        String controllerName = gameData.playerIdToName.get(entry.getControllerId());
-        gameLogService.append(gameData, GameLog.textCardText(
-                controllerName + " conjures a ", conjuredCard, " onto the battlefield."));
+        if (gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
+                .anyMatch(candidate -> candidate.getId().equals(permanent.getId()))) {
+            entry.getCreatedPermanentIds().add(permanent.getId());
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " conjures " + conjuredCard.getName() + " onto the battlefield."));
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, entry.getControllerId(), conjuredCard, null, false);
+        }
+    }
+
+    private Card findPrinting(String setCode, String collectorNumber) {
+        CardSet set = CardSet.findByCode(setCode);
+        if (set == null) {
+            throw new IllegalArgumentException("Unknown card set: " + setCode);
+        }
+        return cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
+    }
+
+    private Card findCard(String cardName) {
+        Set<String> inspectedClasses = new HashSet<>();
+        for (CardSet cardSet : CardSet.values()) {
+            for (CardPrinting printing : cardCatalog.getPrintings(cardSet)) {
+                if (!inspectedClasses.add(printing.cardClassName())) {
+                    continue;
+                }
+                Card card = printing.createCard();
+                if (cardName.equals(card.getName())) {
+                    return card;
+                }
+            }
+        }
+        throw new IllegalStateException("Cannot conjure unimplemented card: " + cardName);
     }
 }

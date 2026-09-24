@@ -248,6 +248,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesCreatureTheyControlToCopy(gameData, permanentId, echoChamberChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseControlledArtifactOrCreatureToCopy chooseCopy) {
             battlefieldHandler.handleChooseControlledArtifactOrCreatureToCopy(gameData, permanentId, chooseCopy);
+        } else if (context instanceof PermanentChoiceContext.AnimateChosenOwnPermanent animateChoice) {
+            battlefieldHandler.handleAnimateChosenOwnPermanent(gameData, permanentId, animateChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentCreatureThenBoostOthers zenosChoice) {
             battlefieldHandler.handleChooseOpponentCreatureThenBoostOthers(gameData, permanentId, zenosChoice);
         } else if (context instanceof PermanentChoiceContext.GuidedPassageOpponentChoice guidedPassageChoice) {

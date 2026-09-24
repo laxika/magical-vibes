@@ -34,6 +34,17 @@ public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
         this(new Fixed(nonNegative(count)), filter, LibrarySearchDestination.HAND, null);
     }
 
+    public SeekLibraryEffect(CardPredicate filter, int maxManaValue, boolean entersTapped) {
+        this(new Fixed(1), filter,
+                entersTapped ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                        : LibrarySearchDestination.BATTLEFIELD,
+                new ManaValueBound(new Fixed(maxManaValue), false, 0));
+    }
+
+    public SeekLibraryEffect(CardPredicate filter, int maxManaValue) {
+        this(filter, maxManaValue, false);
+    }
+
     private static int nonNegative(int count) {
         if (count < 0) {
             throw new IllegalArgumentException("count cannot be negative");

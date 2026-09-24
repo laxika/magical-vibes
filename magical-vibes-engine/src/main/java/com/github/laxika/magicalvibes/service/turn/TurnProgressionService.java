@@ -881,6 +881,7 @@ public class TurnProgressionService {
                     });
         }
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
         gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();

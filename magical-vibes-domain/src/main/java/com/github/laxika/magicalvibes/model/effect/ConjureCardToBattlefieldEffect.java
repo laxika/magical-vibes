@@ -1,8 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Conjures one full, non-token copy of a registered card printing onto its controller's battlefield. */
-public record ConjureCardToBattlefieldEffect(
-        String setCode,
-        String collectorNumber
-) implements CardEffect {
+/** Conjures a full, non-token card by printing or by name onto the controller's battlefield. */
+public record ConjureCardToBattlefieldEffect(String setCode, String collectorNumber, String cardName)
+        implements CardEffect {
+
+    public ConjureCardToBattlefieldEffect(String setCode, String collectorNumber) {
+        this(setCode, collectorNumber, null);
+    }
+
+    public ConjureCardToBattlefieldEffect(String cardName) {
+        this(null, null, cardName);
+    }
 }

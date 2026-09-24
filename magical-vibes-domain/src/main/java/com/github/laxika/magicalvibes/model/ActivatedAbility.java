@@ -36,6 +36,11 @@ public class ActivatedAbility {
         return description != null && description.startsWith("Level up ");
     }
 
+    /** Whether this is an unearth ability, including one granted by another card. */
+    public boolean isUnearthAbility() {
+        return description != null && description.startsWith("Unearth ");
+    }
+
     private final boolean requiresTap;
     private final String manaCost;
     private final List<CardEffect> effects;
