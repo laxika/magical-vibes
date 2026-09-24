@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "207")
+@CardRegistration(set = "SLD", collectorNumber = "522")
+@CardRegistration(set = "SLD", collectorNumber = "1246")
 public class NicolBolasDragonGod extends Card {
 
     public NicolBolasDragonGod() {

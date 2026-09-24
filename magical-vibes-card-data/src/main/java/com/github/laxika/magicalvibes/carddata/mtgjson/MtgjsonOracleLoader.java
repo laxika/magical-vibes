@@ -75,12 +75,14 @@ public class MtgjsonOracleLoader implements OracleLoader {
             String setName = setData.has("name") ? setData.get("name").asText() : null;
 
             FaceIndex faces = indexFacesByCollectorNumber(setData.get("cards"));
-            Map<String, JsonNode> frontFaceNodes = faces.frontFaces();
+            Map<String, JsonNode> cardFrontFaceNodes = faces.frontFaces();
+            Map<String, JsonNode> frontFaceNodes = new HashMap<>(cardFrontFaceNodes);
+            mergeImplementedTokenFaces(frontFaceNodes, setData.get("tokens"), implementedCollectorNumbers);
             Map<String, JsonNode> backFaceNodes = faces.backFaces();
 
             // Rarity covers every card in the set, implemented or not.
             Map<String, String> rarities = new HashMap<>();
-            for (Map.Entry<String, JsonNode> entry : frontFaceNodes.entrySet()) {
+            for (Map.Entry<String, JsonNode> entry : cardFrontFaceNodes.entrySet()) {
                 JsonNode cardNode = entry.getValue();
                 if (cardNode.has("rarity")) {
                     rarities.put(entry.getKey(), cardNode.get("rarity").asText());
@@ -105,7 +107,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
             // Total cards in the set (one entry per collector number, meld results included —
             // the same count Scryfall yields) — the set-completeness denominator.
-            return new SetOracleData(setName, frontFaceNodes.size(), rarities,
+            return new SetOracleData(setName, cardFrontFaceNodes.size(), rarities,
                     frontFaces, backFaces, parseTokens(setCode, setData));
         } catch (Exception e) {
             throw new RuntimeException("Failed to load MTGJSON oracle data for set " + setCode, e);
@@ -139,6 +141,23 @@ public class MtgjsonOracleLoader implements OracleLoader {
             backFaces.forEach(frontFaces::putIfAbsent);
         }
         return new FaceIndex(frontFaces, backFaces);
+    }
+
+    /** Adds token faces only when a token class is explicitly registered for the set. */
+    static void mergeImplementedTokenFaces(Map<String, JsonNode> frontFaces, JsonNode tokens,
+                                           Set<String> implementedCollectorNumbers) {
+        if (tokens == null || !tokens.isArray()) {
+            return;
+        }
+        for (JsonNode token : tokens) {
+            if (!token.has("number")) {
+                continue;
+            }
+            String number = token.get("number").asText();
+            if (implementedCollectorNumbers.contains(number)) {
+                frontFaces.putIfAbsent(number, token);
+            }
+        }
     }
 
     private static String fetchFromMtgjson(String setCode) throws IOException, InterruptedException {

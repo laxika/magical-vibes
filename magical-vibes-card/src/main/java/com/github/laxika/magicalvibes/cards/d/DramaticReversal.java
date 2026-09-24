@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "44")
+@CardRegistration(set = "SLD", collectorNumber = "1083")
 public class DramaticReversal extends Card {
 
     public DramaticReversal() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "91")
 @CardRegistration(set = "DDU", collectorNumber = "45")
+@CardRegistration(set = "SLD", collectorNumber = "1732")
 public class GalvanicBlast extends Card {
 
     public GalvanicBlast() {

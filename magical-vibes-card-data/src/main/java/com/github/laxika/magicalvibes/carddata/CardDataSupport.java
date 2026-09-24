@@ -74,6 +74,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Plainswalk", Keyword.PLAINSWALK);
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
         KEYWORD_MAP.put("Ward", Keyword.WARD);
+        KEYWORD_MAP.put("Doctor's companion", Keyword.DOCTORS_COMPANION);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
         KEYWORD_MAP.put("Poisonous", Keyword.POISONOUS);
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
@@ -112,6 +113,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Mutate", Keyword.MUTATE);
         KEYWORD_MAP.put("Skulk", Keyword.SKULK);
         KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
+        KEYWORD_MAP.put("Partner", Keyword.PARTNER);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Exploit", Keyword.EXPLOIT);
         KEYWORD_MAP.put("Miracle", Keyword.MIRACLE);

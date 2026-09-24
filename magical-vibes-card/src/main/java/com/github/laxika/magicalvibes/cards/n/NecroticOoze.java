@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "72")
+@CardRegistration(set = "SLD", collectorNumber = "133")
 public class NecroticOoze extends Card {
 
     public NecroticOoze() {

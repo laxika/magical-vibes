@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGravey
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "139")
+@CardRegistration(set = "SLD", collectorNumber = "859")
 public class HavengulLich extends Card {
 
     public HavengulLich() {

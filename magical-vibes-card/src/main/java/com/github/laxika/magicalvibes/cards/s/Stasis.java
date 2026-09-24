@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "104")
 @CardRegistration(set = "SUM", collectorNumber = "83")
 @CardRegistration(set = "3ED", collectorNumber = "83")
+@CardRegistration(set = "SLD", collectorNumber = "1103")
 public class Stasis extends Card {
 
     public Stasis() {

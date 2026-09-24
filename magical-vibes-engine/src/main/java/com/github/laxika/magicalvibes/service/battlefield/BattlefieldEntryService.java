@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -64,7 +65,7 @@ public class BattlefieldEntryService {
         }
         placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 placementService.snapshotEnterTappedTypes(gameData), List.of(), 0, false, List.of(),
-                0, null, null, landPlayZone));
+                0, null, null, landPlayZone, null));
     }
 
     private boolean beginLandCardNameChoice(GameData gameData, UUID controllerId,
@@ -106,6 +107,12 @@ public class BattlefieldEntryService {
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                            int xValue, boolean kicked, StackEntry stackEntry) {
+        place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
+                List.of(), xValue, kicked, List.of(), 0, stackEntry);
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                             int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
                 List.of(), xValue, kicked, repeatedAdditionalCosts, 0);
@@ -116,6 +123,13 @@ public class BattlefieldEntryService {
                                             int convokeCreatureCount) {
         place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
                 List.of(), xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount);
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                            int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                                            int convokeCreatureCount, StackEntry stackEntry) {
+        place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
+                List.of(), xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount, stackEntry);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
@@ -148,13 +162,21 @@ public class BattlefieldEntryService {
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         place(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
-                xValue, kicked, repeatedAdditionalCosts, 0);
+                xValue, kicked, repeatedAdditionalCosts, 0, null);
     }
 
     private void place(GameData gameData, UUID controllerId, Permanent permanent,
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
                        int convokeCreatureCount) {
+        place(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount, null);
+    }
+
+    private void place(GameData gameData, UUID controllerId, Permanent permanent,
+                       Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
+                       int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                       int convokeCreatureCount, StackEntry stackEntry) {
         if (beginLandCardNameChoice(gameData, controllerId, permanent, null)) {
             return;
         }
@@ -173,7 +195,7 @@ public class BattlefieldEntryService {
         }
         placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts,
-                convokeCreatureCount, null, null, null));
+                convokeCreatureCount, null, null, null, stackEntry));
     }
 
     public UUID resolveEnteringController(GameData gameData, UUID controllerId, Permanent permanent) {

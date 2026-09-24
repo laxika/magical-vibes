@@ -1506,7 +1506,8 @@ public class LibraryChoiceHandlerService {
                     .filterCardTypes(filterCardTypes)
                     .filterCardName(filterCardName)
                     .filterPredicate(filterPredicate)
-                    .accumulatedCards(accumulatedCards)
+                    .shuffleAfterSelection(shuffleAfterSelection)
+                     .accumulatedCards(accumulatedCards)
                     .battlefieldControllerId(battlefieldControllerId)
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
@@ -1757,6 +1758,7 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        gameData.recordPileGroupingOrGuess();
         Map<UUID, UUID> cardOwners = new HashMap<>();
         for (Card card : pool) {
             cardOwners.put(card.getId(), controllerId);

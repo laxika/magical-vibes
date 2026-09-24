@@ -68,6 +68,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
+        register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
@@ -229,6 +230,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
+        register(PendingInteraction.ApplejackToyChoice.class, this::projectApplejackToyChoice);
         register(PendingInteraction.ShuffleCardsFromOutsideGameChoice.class,
                 this::projectShuffleCardsFromOutsideGameChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
@@ -352,6 +354,13 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validPlaneCardIds()), cardViews, 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectCommanderChoice(
+            GameData gameData, PendingInteraction.CommanderChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
+                "Choose one of your commanders to put into your hand.");
     }
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(
@@ -1356,6 +1365,15 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may reveal a " + interaction.cardLabel()
                         + " from outside the game or choose one in face-up exile.");
+    }
+
+    private InteractionPromptMessage projectApplejackToyChoice(
+            GameData gameData, PendingInteraction.ApplejackToyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.toys()),
+                1,
+                "Choose a toy you own to put onto the battlefield as a 2/2 creature token.");
     }
 
     private InteractionPromptMessage projectShuffleCardsFromOutsideGameChoice(

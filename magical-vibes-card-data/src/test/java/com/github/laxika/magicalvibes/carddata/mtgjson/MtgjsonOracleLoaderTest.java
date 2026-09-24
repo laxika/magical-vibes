@@ -14,7 +14,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -221,5 +223,29 @@ class MtgjsonOracleLoaderTest {
 
         // Emblems are not tokens created by CreateTokenEffect
         assertThat(tokens).hasSize(2);
+    }
+
+    @Test
+    void mergesRegisteredTokenFacesIntoOracleData() {
+        JsonNode token = MAPPER.readTree("""
+                {
+                  "name": "Treasure",
+                  "number": "153",
+                  "type": "Token Artifact \\u2014 Treasure",
+                  "colors": [],
+                  "text": "{T}, Sacrifice this token: Add one mana of any color."
+                }
+                """);
+        Map<String, JsonNode> frontFaces = new HashMap<>();
+
+        MtgjsonOracleLoader.mergeImplementedTokenFaces(frontFaces, MAPPER.createArrayNode().add(token),
+                Set.of("153"));
+
+        assertThat(frontFaces).containsKey("153");
+        OracleData data = MtgjsonOracleLoader.parseOracleData(frontFaces.get("153"), false);
+        assertThat(data.name()).isEqualTo("Treasure");
+        assertThat(data.type()).isEqualTo(CardType.ARTIFACT);
+        assertThat(data.subtypes()).containsExactly(CardSubtype.TREASURE);
+        assertThat(data.cardText()).isEqualTo("{T}, Sacrifice this token: Add one mana of any color.");
     }
 }

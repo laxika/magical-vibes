@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "270")
 @CardRegistration(set = "DDR", collectorNumber = "29")
+@CardRegistration(set = "SLD", collectorNumber = "440")
+@CardRegistration(set = "SLD", collectorNumber = "2269")
 public class MosswortBridge extends Card {
 
     public MosswortBridge() {

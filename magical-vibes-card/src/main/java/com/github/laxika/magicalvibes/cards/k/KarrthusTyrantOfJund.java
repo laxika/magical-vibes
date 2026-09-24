@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "117")
+@CardRegistration(set = "SLD", collectorNumber = "1250")
 public class KarrthusTyrantOfJund extends Card {
 
     public KarrthusTyrantOfJund() {

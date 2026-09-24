@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "62")
+@CardRegistration(set = "SLD", collectorNumber = "1013")
 public class IymrithDesertDoom extends Card {
 
     public IymrithDesertDoom() {

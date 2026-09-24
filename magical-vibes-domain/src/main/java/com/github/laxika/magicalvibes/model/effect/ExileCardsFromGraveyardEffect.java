@@ -30,6 +30,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                     cards instead of allowing any number up to that limit
  * @param xTargetMultiplier multiplier applied to the paid X value when {@code maxTargets} is zero
  * @param allGraveyardsForSpell whether a spell-cast selection may span multiple graveyards
+ * @param maxTargetsFromMultikicker whether an ETB target limit is the number of multikicker
+ *                                  payments made for the entering creature
+ * @param putKickCountersOnExiledCards whether successfully exiled cards receive kick counters
  */
 public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
                                             CardPredicate filter, boolean assignNoCombatDamage,
@@ -42,13 +45,34 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                             boolean ownGraveyardOnly,
                                             boolean exactTargets,
                                             int xTargetMultiplier,
-                                            boolean allGraveyardsForSpell)
+                                            boolean allGraveyardsForSpell,
+                                            boolean maxTargetsFromMultikicker,
+                                            boolean putKickCountersOnExiledCards)
         implements GraveyardCardChoosingEffect {
 
     public ExileCardsFromGraveyardEffect {
         if (xTargetMultiplier < 1) {
             throw new IllegalArgumentException("xTargetMultiplier must be positive");
         }
+    }
+
+    /** Backward-compatible constructor for ordinary graveyard exile effects. */
+    public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
+                                         CardPredicate filter, boolean assignNoCombatDamage,
+                                         CardPredicate conditionalFilter,
+                                         int conditionalLifeLossEachOpponent,
+                                         int conditionalLifeGain,
+                                         boolean singleGraveyard,
+                                         boolean conditionalLifePerMatchingCard,
+                                         boolean trackWithSource,
+                                         boolean ownGraveyardOnly,
+                                         boolean exactTargets,
+                                         int xTargetMultiplier,
+                                         boolean allGraveyardsForSpell) {
+        this(maxTargets, lifeGain, lifeGainPerExiledCard, filter, assignNoCombatDamage,
+                conditionalFilter, conditionalLifeLossEachOpponent, conditionalLifeGain,
+                singleGraveyard, conditionalLifePerMatchingCard, trackWithSource, ownGraveyardOnly,
+                exactTargets, xTargetMultiplier, allGraveyardsForSpell, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain) {
@@ -107,6 +131,13 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                          boolean ownGraveyardOnly) {
         this(maxTargets, 0, false, filter, false, null, 0, 0, singleGraveyard, false,
                 trackWithSource, ownGraveyardOnly, false, 1, false);
+    }
+
+    /** Creates an ETB exile effect whose target count is the number of multikicker payments. */
+    public static ExileCardsFromGraveyardEffect upToMultikickerCards(CardPredicate filter) {
+        return new ExileCardsFromGraveyardEffect(
+                0, 0, false, filter, false, null, 0, 0,
+                false, false, true, true, false, 1, false, true, true);
     }
 
     /** Whether the maximum target count is supplied by the ability's X value. */

@@ -166,6 +166,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesOpponentPermanentToExileEffectHandler eachPlayerChoosesOpponentPermanentToExileHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesOpponentPermanentToDestroyEffectHandler eachPlayerChoosesOpponentPermanentToDestroyHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .WillOfTheCouncilEffectHandler willOfTheCouncilEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
@@ -713,6 +715,8 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerReturnsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToExile ctx) {
             handleEachPlayerChoosesOpponentPermanentToExile(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy ctx) {
+            handleEachPlayerChoosesOpponentPermanentToDestroy(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice ctx) {
             handleWillOfTheCouncilChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
@@ -2893,6 +2897,17 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleEachPlayerChoosesOpponentPermanentToDestroy(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy context) {
+        eachPlayerChoosesOpponentPermanentToDestroyHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleWillOfTheCouncilChoice(GameData gameData, List<UUID> permanentIds,

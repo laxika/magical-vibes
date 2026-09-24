@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "246")
+@CardRegistration(set = "SLD", collectorNumber = "1369")
 public class FoodChain extends Card {
 
     public FoodChain() {

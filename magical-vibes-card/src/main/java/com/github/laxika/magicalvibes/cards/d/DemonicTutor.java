@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 @CardRegistration(set = "DDC", collectorNumber = "49")
 @CardRegistration(set = "VMA", collectorNumber = "116")
 @CardRegistration(set = "DVD", collectorNumber = "49")
+@CardRegistration(set = "SLD", collectorNumber = "1856")
 public class DemonicTutor extends Card {
 
     public DemonicTutor() {

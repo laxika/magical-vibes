@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "MBS", collectorNumber = "104")
 @CardRegistration(set = "DDU", collectorNumber = "52")
+@CardRegistration(set = "SLD", collectorNumber = "1572")
 public class DarksteelPlate extends Card {
 
     public DarksteelPlate() {

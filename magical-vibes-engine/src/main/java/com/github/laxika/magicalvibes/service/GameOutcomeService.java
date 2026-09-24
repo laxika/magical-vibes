@@ -219,6 +219,8 @@ public class GameOutcomeService {
                     new ArrayList<>(effects),
                     null,
                     perm.getId());
+            // This is non-targeting event context: the player whose loss caused the trigger.
+            se.setTargetId(losingPlayerId);
             se.setNonTargeting(true);
             gameData.stack.add(se);
 

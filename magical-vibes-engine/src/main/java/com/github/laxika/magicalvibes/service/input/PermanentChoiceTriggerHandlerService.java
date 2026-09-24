@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
@@ -74,6 +75,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
     private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
+    private final AttackLegalityService attackLegalityService;
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
@@ -929,6 +931,9 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setAttackedTargetId(mat.attackedTargetId());
             entry.setEventValue(mat.eventValue());
             entry.setSacrificedPermanentSnapshot(mat.sacrificedPermanentSnapshot());
+            if (mat.sacrificedPermanentSnapshot() != null) {
+                entry.setSacrificedCardSnapshot(mat.sacrificedPermanentSnapshot().getCard());
+            }
             entry.setSacrificedPower(mat.sacrificedPower());
             entry.setSacrificedColorCount(mat.sacrificedColorCount());
             entry.setSacrificedToughness(mat.sacrificedToughness());
@@ -958,6 +963,23 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleRandomOpponentDamageChoice(GameData gameData, UUID permanentId,
+                                                  PermanentChoiceContext.RandomOpponentDamageChoice choice) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null) {
+            return;
+        }
+
+        pendingEntry.setTargetId(permanentId);
+        gameLogService.append(gameData, GameLog.text(
+                choice.sourceCard().getName() + " chooses " + getTargetDisplayName(gameData, permanentId) + "."));
+        effectResolutionService.resolveEffectsFrom(
+                gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleResolvingModalTarget(GameData gameData, UUID permanentId,
@@ -1142,6 +1164,23 @@ public class PermanentChoiceTriggerHandlerService {
             permanent.setAttacking(true);
             permanent.setAttackedOrBlockedSinceLastUpkeep(true);
             permanent.setAttackTarget(attackTargetId);
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleReselectAttackingCreatureTarget(GameData gameData, UUID attackTargetId,
+                                                       PermanentChoiceContext.ReselectAttackingCreatureTarget context) {
+        Permanent attacker = gameQueryService.findPermanentById(gameData, context.permanentId());
+        UUID attackerControllerId = attacker == null
+                ? null : gameQueryService.findPermanentController(gameData, attacker.getId());
+        boolean validTarget = attackerControllerId != null
+                && attackTargetId != null
+                && !attackerControllerId.equals(attackTargetId)
+                && attackLegalityService.getValidAttackTargetIds(gameData, attackerControllerId)
+                .contains(attackTargetId);
+        if (attacker != null && attacker.isAttacking()
+                && gameQueryService.isCreature(gameData, attacker) && validTarget) {
+            attacker.setAttackTarget(attackTargetId);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -2436,6 +2475,9 @@ public class PermanentChoiceTriggerHandlerService {
                 skipped ? null : permanentId,
                 boct.sourcePermanentId()
         );
+        // Beginning-of-combat triggers have no separate event permanent, so the source is also
+        // the triggering permanent for effects such as attaching an Equipment to the trigger source.
+        entry.setTriggeringPermanentId(boct.sourcePermanentId());
         pushTriggeredEntry(gameData, entry);
 
         if (skipped) {

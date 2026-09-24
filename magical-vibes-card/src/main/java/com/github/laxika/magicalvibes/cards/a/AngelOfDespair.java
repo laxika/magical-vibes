@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GPT", collectorNumber = "101")
+@CardRegistration(set = "SLD", collectorNumber = "1564")
 public class AngelOfDespair extends Card {
 
     public AngelOfDespair() {

@@ -273,6 +273,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
 
+    /** Demonstrate: the controller chooses the opponent who gets the second spell copy. */
+    record DemonstrateOpponentChoice(StackEntry spellSnapshot, UUID controllerId)
+            implements PermanentChoiceContext {}
+
     /** Risky Move: its controller chooses the creature to risk after gaining control of the enchantment. */
     record RiskyMoveCreatureChoice(Card sourceCard, UUID sourcePermanentId, UUID controllerId)
             implements PermanentChoiceContext {}
@@ -519,6 +523,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       UUID targetId,
                                       Zone targetZone,
                                       List<UUID> targetIds,
+                                      java.util.Map<UUID, Integer> damageAssignments,
                                       CardEffect costEffect,
                                       int remaining,
                                       List<UUID> chosenSoFar,
@@ -528,6 +533,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
         public ActivatedAbilityCostChoice {
             targetIds = targetIds != null ? List.copyOf(targetIds) : List.of();
+            damageAssignments = damageAssignments != null ? java.util.Map.copyOf(damageAssignments) : java.util.Map.of();
+        }
+
+        public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId,
+                                          Integer abilityIndex, Integer xValue, UUID targetId,
+                                          Zone targetZone, List<UUID> targetIds, CardEffect costEffect,
+                                          int remaining, List<UUID> chosenSoFar,
+                                          ActivatedAbility ability, Permanent sourcePermanentSnapshot,
+                                          Card sourceCard) {
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone,
+                    targetIds, java.util.Map.of(), costEffect, remaining, chosenSoFar, ability,
+                    sourcePermanentSnapshot, sourceCard);
         }
         /** Permanents already paid toward this cost, for costs whose valid choices depend on prior
          *  picks (e.g. "tap two creatures that share a creature type"). Empty for count-only costs. */
@@ -661,6 +678,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
     record ResolvingModalTarget(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
+
+    /** Resolution-time choice of the randomly selected opponent or one of their planeswalkers. */
+    record RandomOpponentDamageChoice(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
 
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, Permanent sourcePermanentSnapshot,
@@ -881,6 +901,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
     /** Winota: choose the player or planeswalker for the selected Human to attack. */
     record ChosenPermanentAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
+
+    /** Misleading Signpost: choose a new player or permanent for the attacking creature to attack. */
+    record ReselectAttackingCreatureTarget(UUID permanentId) implements PermanentChoiceContext {}
 
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
@@ -2088,6 +2111,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                              UUID controllerPermanentId) implements PermanentChoiceContext {}
 
     record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
+
+    /** The controller chooses the creature that becomes their Ring-bearer. */
+    record RingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
 
     /** Chooses a controlled permanent from which a counter will be removed. */
     record RemoveCounterFromChosenOwnPermanent(PermanentPredicate permanentFilter)

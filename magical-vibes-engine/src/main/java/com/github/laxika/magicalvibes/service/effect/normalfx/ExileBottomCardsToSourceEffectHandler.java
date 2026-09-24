@@ -48,22 +48,42 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
 
         int count = Math.max(0, amountEvaluationService.evaluate(gameData, exileEffect.count(),
                 AmountContext.forStackEntry(entry, source)));
-        var library = gameData.playerDecks.get(entry.getControllerId());
-        if (count == 0 || library == null || library.isEmpty()) {
+        if (count == 0) {
             return;
         }
 
-        int exiledCount = Math.min(count, library.size());
-        for (int i = 0; i < exiledCount; i++) {
-            Card card = library.removeLast();
-            exileService.exileCard(gameData, entry.getControllerId(), card, sourcePermanentId);
-        }
+        UUID controllerId = entry.getControllerId();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!exileEffect.eachOpponent() && !playerId.equals(controllerId)) {
+                continue;
+            }
+            if (exileEffect.eachOpponent() && playerId.equals(controllerId)) {
+                continue;
+            }
 
-        gameLogService.append(gameData, GameLog.builder()
-                .text(gameData.playerIdToName.get(entry.getControllerId()) + " exiles " + exiledCount
-                        + " card" + (exiledCount == 1 ? "" : "s") + " from the bottom of their library with ")
-                .card(source.getCard()).text(".").build());
-        log.info("Game {} - {} exiles {} cards from library bottom with {}", gameData.id,
-                gameData.playerIdToName.get(entry.getControllerId()), exiledCount, source.getCard().getName());
+            var library = gameData.playerDecks.get(playerId);
+            if (library == null || library.isEmpty()) {
+                continue;
+            }
+
+            int exiledCount = Math.min(count, library.size());
+            for (int i = 0; i < exiledCount; i++) {
+                Card card = library.removeLast();
+                if (exileEffect.faceDown()) {
+                    exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
+                } else {
+                    exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+                }
+            }
+
+            String visibility = exileEffect.faceDown() ? " face down" : "";
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(gameData.playerIdToName.get(playerId) + " exiles " + exiledCount
+                            + " card" + (exiledCount == 1 ? "" : "s")
+                            + " from the bottom of their library" + visibility + " with ")
+                    .card(source.getCard()).text(".").build());
+            log.info("Game {} - {} exiles {} cards from library bottom with {}", gameData.id,
+                    gameData.playerIdToName.get(playerId), exiledCount, source.getCard().getName());
+        }
     }
 }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "246")
+@CardRegistration(set = "SLD", collectorNumber = "1772")
 public class UnlicensedHearse extends Card {
 
     public UnlicensedHearse() {

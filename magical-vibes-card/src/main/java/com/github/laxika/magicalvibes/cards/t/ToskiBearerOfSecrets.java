@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "197")
+@CardRegistration(set = "SLD", collectorNumber = "1930")
 public class ToskiBearerOfSecrets extends Card {
 
     public ToskiBearerOfSecrets() {

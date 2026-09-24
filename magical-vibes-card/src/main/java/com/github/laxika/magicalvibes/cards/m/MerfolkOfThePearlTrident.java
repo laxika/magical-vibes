@@ -15,5 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "S00", collectorNumber = "16")
 @CardRegistration(set = "SUM", collectorNumber = "68")
 @CardRegistration(set = "3ED", collectorNumber = "68")
+@CardRegistration(set = "SLD", collectorNumber = "714")
 public class MerfolkOfThePearlTrident extends Card {
 }

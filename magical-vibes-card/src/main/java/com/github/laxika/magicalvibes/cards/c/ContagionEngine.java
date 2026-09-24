@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "145")
+@CardRegistration(set = "SLD", collectorNumber = "1095")
 public class ContagionEngine extends Card {
 
     public ContagionEngine() {

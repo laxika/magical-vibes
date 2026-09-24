@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "158")
+@CardRegistration(set = "SLD", collectorNumber = "1149")
+@CardRegistration(set = "SLD", collectorNumber = "1150")
+@CardRegistration(set = "SLD", collectorNumber = "1310")
 public class SliverLegion extends Card {
 
     public SliverLegion() {

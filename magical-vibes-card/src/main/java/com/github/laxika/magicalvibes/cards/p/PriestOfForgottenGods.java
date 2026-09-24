@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "83")
+@CardRegistration(set = "SLD", collectorNumber = "2006")
 public class PriestOfForgottenGods extends Card {
 
     public PriestOfForgottenGods() {

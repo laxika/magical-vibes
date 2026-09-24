@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "15")
+@CardRegistration(set = "SLD", collectorNumber = "1336")
+@CardRegistration(set = "SLD", collectorNumber = "1388")
 public class BrunaTheFadingLight extends Card {
 
     public BrunaTheFadingLight() {

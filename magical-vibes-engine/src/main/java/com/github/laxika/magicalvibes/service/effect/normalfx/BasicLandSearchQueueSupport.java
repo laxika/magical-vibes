@@ -104,6 +104,13 @@ public class BasicLandSearchQueueSupport {
         }
 
         int count = pick.count();
+        if (count <= 0) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " searches their library for up to zero basic land cards. Library is shuffled."));
+            return false;
+        }
         boolean enterTapped = pick.enterTapped();
         String destinationText = enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
         String prompt = "You may search your library for up to " + count + " basic land card"
@@ -117,6 +124,7 @@ public class BasicLandSearchQueueSupport {
                                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                                 : LibrarySearchDestination.BATTLEFIELD)
                         .filterPredicate(BASIC_LAND)
+                        .shuffleAfterSelection(true)
                         .followUp(followUp)
                         .build(), prompt, true);
         return true;

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "199")
+@CardRegistration(set = "SLD", collectorNumber = "603")
 public class EldraziMonument extends Card {
 
     public EldraziMonument() {

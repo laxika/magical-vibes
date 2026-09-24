@@ -17,6 +17,9 @@ import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "254")
 @CardRegistration(set = "A25", collectorNumber = "205")
+@CardRegistration(set = "SLD", collectorNumber = "963")
+@CardRegistration(set = "SLD", collectorNumber = "964")
+@CardRegistration(set = "SLD", collectorNumber = "1569")
 public class GrenzoDungeonWarden extends Card {
 
     public GrenzoDungeonWarden() {

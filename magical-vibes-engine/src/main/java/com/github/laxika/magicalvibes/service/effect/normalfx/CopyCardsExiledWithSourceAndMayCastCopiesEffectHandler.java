@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -38,9 +39,22 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
         CopyCardsExiledWithSourceAndMayCastCopiesEffect copyEffect =
                 (CopyCardsExiledWithSourceAndMayCastCopiesEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        List<Card> trackedCards = sourcePermanentId == null
-                ? List.of()
-                : gameData.getCardsExiledByPermanent(sourcePermanentId);
+        List<ExiledCardEntry> trackedEntries;
+        if (sourcePermanentId == null) {
+            trackedEntries = List.of();
+        } else {
+            UUID controllerId = entry.getControllerId();
+            synchronized (gameData.exiledCards) {
+                trackedEntries = gameData.exiledCards.stream()
+                        .filter(exiled -> sourcePermanentId.equals(exiled.sourcePermanentId()))
+                        .filter(exiled -> !copyEffect.requireKickCounter()
+                                || gameData.exiledCardsWithKickCounters.contains(exiled.card().getId()))
+                        .filter(exiled -> !copyEffect.onlyCardsOwnedByController()
+                                || controllerId.equals(exiled.ownerId()))
+                        .toList();
+            }
+        }
+        List<Card> trackedCards = trackedEntries.stream().map(ExiledCardEntry::card).toList();
         List<Card> cardsToCopy = copyEffect.copyAll()
                 ? trackedCards
                 : singletonOrEmpty(findTargetCard(trackedCards, targetCardId(entry)));

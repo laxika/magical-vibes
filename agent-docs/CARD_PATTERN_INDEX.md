@@ -2,6 +2,8 @@
 
 Purpose: quickly find a reference card for the pattern you're implementing. One or two examples per archetype. All paths relative to `cards/`.
 
+| as-enters number choice, noncreature spells with chosen mana value can't be cast | `TalionTheKindlyLord` + `NoncreatureSpellsWithChosenManaValueCantBeCastEffect` |
+
 This index has been split into smaller files for faster lookup. Each file is under 10k tokens.
 
 ## File index
@@ -45,7 +47,9 @@ This index has been split into smaller files for faster lookup. Each file is und
 | buyback, return spell to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | attack trigger, death trigger, upkeep trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| counters placed on a creature you don't control | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | beginning-of-combat random counter trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| beginning-of-combat random-opponent attack trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | face-down permanent turns face up | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | suspect a creature / clear suspected creatures | `SuspectEffect(GrantScope.TARGET)` + `UnsuspectAllCreaturesEffect`; for optional non-targeted selection use `MayEffect(SuspectChosenOtherCreatureEffect())` |
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
@@ -54,6 +58,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| each opponent may investigate, opponent choice plus controller Clues | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | damage prevention into counters | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | aura, enchant creature, pacifism | CARD_PATTERNS_PERMANENTS_STATIC.md |
@@ -68,6 +73,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | X-paid face-down creature cast from hand with damage/tap turn-up clause | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | base power from target creature, indefinitely | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | mana ability, mana dork | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
+| commander-identity mana plus shared-creature-type spell trigger | CARD_PATTERNS_LANDS_SPELLS.md |
 | planeswalker, loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | template, copy-paste, skeleton | CARD_COPY_PASTE_TEMPLATES.md |

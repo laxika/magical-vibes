@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisT
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.CardsDelved;
 import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
@@ -39,8 +40,10 @@ import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanen
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
 import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
+import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
+import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
 import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -151,6 +154,7 @@ import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreature
 import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
+import com.github.laxika.magicalvibes.model.amount.PileGroupingOrGuessCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PlusOnePlusOneCountersPutOnControlledCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
@@ -310,6 +314,8 @@ public class AmountEvaluationService {
                     gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of()).size();
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case PileGroupingOrGuessCountThisTurn ignored ->
+                    gameData.pileGroupingOrGuessCountThisTurn;
             case UnlockedRoomDoorsCount c ->
                     countUnlockedRoomDoors(gameData, c, ctx);
             case PermanentCounterSum s ->
@@ -385,6 +391,8 @@ public class AmountEvaluationService {
             case CardsExiledWithSource ignored ->
                     ctx.sourcePermanent() == null ? 0
                             : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).size();
+            case CardsDelved delved ->
+                    countDelvedCards(gameData, delved, ctx);
             case GreatestManaValueAmongCardsExiledWithSource ignored ->
                     greatestManaValueAmongCardsExiledWithSource(gameData, ctx);
             case ForetoldCardsInExile c ->
@@ -456,8 +464,13 @@ public class AmountEvaluationService {
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
                     // is a ConcurrentHashMap, which rejects null keys.
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
+            case ControllerExperienceCounters ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.playerExperienceCounters.getOrDefault(ctx.controllerId(), 0);
             case ControllerSpeed ignored ->
                     ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
+            case CommanderCastsFromCommandZoneThisGame ignored ->
+                    gameData.getCommanderCastsFromCommandZoneThisGame(ctx.controllerId());
             case HighestLifeTotalAmongPlayers ignored ->
                     gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).max().orElse(0);
             case LowestLifeTotalAmongPlayers ignored ->
@@ -1408,6 +1421,21 @@ public class AmountEvaluationService {
                 if (predicateEvaluationService.matchesCardPredicate(card, count.filter(), null)) {
                     matches++;
                 }
+            }
+        }
+        return matches;
+    }
+
+    private int countDelvedCards(GameData gameData, CardsDelved count, AmountContext ctx) {
+        if (ctx.stackEntry() == null) {
+            return 0;
+        }
+        int matches = 0;
+        for (UUID cardId : ctx.stackEntry().getDelvedCardIds()) {
+            var exiledCard = gameData.findExiledCard(cardId);
+            if (exiledCard != null && !exiledCard.card().isToken()
+                    && predicateEvaluationService.matchesCardPredicate(exiledCard.card(), count.filter(), null)) {
+                matches++;
             }
         }
         return matches;

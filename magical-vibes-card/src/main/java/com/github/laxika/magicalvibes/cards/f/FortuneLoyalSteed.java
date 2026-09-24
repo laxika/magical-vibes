@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "OTJ", collectorNumber = "12")
+@CardRegistration(set = "SLD", collectorNumber = "830")
 public class FortuneLoyalSteed extends Card {
 
     public FortuneLoyalSteed() {

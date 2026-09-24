@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "AVR", collectorNumber = "32")
 @CardRegistration(set = "IMA", collectorNumber = "28")
 @CardRegistration(set = "MM3", collectorNumber = "20")
+@CardRegistration(set = "SLD", collectorNumber = "1380")
 public class RestorationAngel extends Card {
 
     public RestorationAngel() {

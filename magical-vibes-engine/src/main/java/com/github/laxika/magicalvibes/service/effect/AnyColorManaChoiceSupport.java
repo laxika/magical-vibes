@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -159,6 +160,11 @@ public final class AnyColorManaChoiceSupport {
         if (choiceContext == null) {
             return false;
         }
+        if (sourcePermanentId != null && sourceCard != null
+                && sourceCard.hasType(CardType.ARTIFACT)
+                && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
+        }
         if (effect.sourceBecomesProducedColorUntilEndOfTurn()) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
@@ -200,19 +206,29 @@ public final class AnyColorManaChoiceSupport {
                 && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withCaveSource(true);
         }
+        if (effect.usesCommanderColorIdentity()) {
+            choiceContext = new ChoiceContext.SourceTrackedManaColorChoice(
+                    playerId, sourcePermanentId, recipientPlayerId, fromCreature, amount,
+                    fromSnowSource, fromCaveSource);
+        }
         List<ManaColor> allowedColors = switch (effect.restriction()) {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
             case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
-            default -> effect.allowedColors();
+            default -> effect.usesCommanderColorIdentity()
+                    ? commanderColorIdentity(gameData, playerId) : effect.allowedColors();
         };
+        if (allowedColors.isEmpty()) {
+            return false;
+        }
         if (allowedColors.size() == 1
                 && (effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 || effect.restriction() == ManaSpendRestriction.EXILED_CARD_COLORS
                 || effect.restriction() == ManaSpendRestriction.SOURCE_PERMANENT_COLORS
                 || effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES
                 || effect.restriction() == ManaSpendRestriction.KICKED_SPELLS
-                || effect.restriction() == ManaSpendRestriction.CREATURE_ABILITIES)) {
+                || effect.restriction() == ManaSpendRestriction.CREATURE_ABILITIES
+                || effect.usesCommanderColorIdentity())) {
             UUID manaRecipientId = recipientPlayerId != null ? recipientPlayerId : playerId;
             ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
             ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId, allowedColors.get(0));
@@ -231,6 +247,11 @@ public final class AnyColorManaChoiceSupport {
                 }
                 if (fromCreature) {
                     manaPool.addCreatureMana(effectiveColor, amount);
+                }
+                if ((effect.tracksProducingSourceForSpellCastTriggers()
+                        || sourceCard != null && sourceCard.hasType(CardType.ARTIFACT))
+                        && sourcePermanentId != null) {
+                    manaPool.addSpellCastTriggerMana(sourcePermanentId, effectiveColor, amount);
                 }
             }
             if (fromTreasureSource) {
@@ -427,6 +448,14 @@ public final class AnyColorManaChoiceSupport {
         }
         return ManaColor.COLORS.stream()
                 .filter(color -> sourceColors.contains(CardColor.valueOf(color.name())))
+                .toList();
+    }
+
+    private static List<ManaColor> commanderColorIdentity(GameData gameData, UUID playerId) {
+        List<Card> commandZone = gameData.playerCommandZones.getOrDefault(playerId, List.of());
+        return ManaColor.COLORS.stream()
+                .filter(color -> commandZone.stream().anyMatch(card -> card.getColorIdentity()
+                        .contains(CardColor.valueOf(color.name()))))
                 .toList();
     }
 

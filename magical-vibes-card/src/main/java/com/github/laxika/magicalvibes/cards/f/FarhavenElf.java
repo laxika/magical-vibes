@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "SHM", collectorNumber = "113")
+@CardRegistration(set = "SLD", collectorNumber = "766")
 public class FarhavenElf extends Card {
 
     public FarhavenElf() {

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "207")
+@CardRegistration(set = "SLD", collectorNumber = "18")
+@CardRegistration(set = "SLD", collectorNumber = "929")
 public class GoblinSharpshooter extends Card {
 
     public GoblinSharpshooter() {

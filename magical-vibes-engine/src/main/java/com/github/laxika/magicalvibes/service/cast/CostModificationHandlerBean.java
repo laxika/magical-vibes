@@ -91,6 +91,17 @@ public interface CostModificationHandlerBean {
     }
 
     /**
+     * Applies a replacement that changes how a mana cost may be paid, without changing its mana
+     * value. The default leaves ordinary cost modifiers unaffected.
+     */
+    default ManaCost applyManaCostPaymentAlternatives(CostModificationContext context,
+                                                       CardEffect effect,
+                                                       CostModificationSource source,
+                                                       ManaCost cost) {
+        return cost;
+    }
+
+    /**
      * Whether a colored reduction may reduce generic mana after matching colored components are
      * exhausted. Ordinary colored-only reductions such as Ragemonger's default to false.
      */

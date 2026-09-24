@@ -25,6 +25,8 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "97")
 @CardRegistration(set = "M14", collectorNumber = "102")
+@CardRegistration(set = "SLD", collectorNumber = "1107")
+@CardRegistration(set = "SLD", collectorNumber = "1593")
 public class LilianaOfTheDarkRealms extends Card {
 
     public LilianaOfTheDarkRealms() {

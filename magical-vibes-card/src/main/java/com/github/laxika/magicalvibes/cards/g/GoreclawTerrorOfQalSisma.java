@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "186")
+@CardRegistration(set = "SLD", collectorNumber = "941")
+@CardRegistration(set = "SLD", collectorNumber = "1229")
 public class GoreclawTerrorOfQalSisma extends Card {
 
     public GoreclawTerrorOfQalSisma() {

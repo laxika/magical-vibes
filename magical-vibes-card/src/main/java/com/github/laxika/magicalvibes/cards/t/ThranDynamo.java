@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "UDS", collectorNumber = "139")
 @CardRegistration(set = "V13", collectorNumber = "7")
 @CardRegistration(set = "IMA", collectorNumber = "230")
+@CardRegistration(set = "SLD", collectorNumber = "483")
 public class ThranDynamo extends Card {
 
     public ThranDynamo() {

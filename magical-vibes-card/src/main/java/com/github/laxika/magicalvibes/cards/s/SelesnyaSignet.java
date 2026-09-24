@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "270")
 @CardRegistration(set = "MM3", collectorNumber = "226")
+@CardRegistration(set = "SLD", collectorNumber = "290")
 public class SelesnyaSignet extends Card {
 
     public SelesnyaSignet() {

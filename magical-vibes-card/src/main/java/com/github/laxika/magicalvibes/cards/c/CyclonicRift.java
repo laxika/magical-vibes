@@ -25,6 +25,7 @@ import java.util.List;
  */
 @CardRegistration(set = "RTR", collectorNumber = "35")
 @CardRegistration(set = "MM3", collectorNumber = "35")
+@CardRegistration(set = "SLD", collectorNumber = "1869")
 public class CyclonicRift extends Card {
 
     public CyclonicRift() {

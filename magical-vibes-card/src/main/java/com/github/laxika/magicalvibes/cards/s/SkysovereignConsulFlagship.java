@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "234")
+@CardRegistration(set = "SLD", collectorNumber = "1029")
 public class SkysovereignConsulFlagship extends Card {
 
     public SkysovereignConsulFlagship() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "70")
+@CardRegistration(set = "SLD", collectorNumber = "1180")
 public class MindsDilation extends Card {
 
     public MindsDilation() {

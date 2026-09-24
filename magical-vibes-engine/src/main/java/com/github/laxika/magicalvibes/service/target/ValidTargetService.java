@@ -1708,6 +1708,11 @@ public class ValidTargetService {
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
+                        if (rge.targetPutIntoGraveyardFromLibraryThisTurn()
+                                && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
                         if (rge.targetNotPutIntoGraveyardThisCombat()
                                 && gameData.cardsPutIntoGraveyardThisCombat
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
@@ -1929,11 +1934,17 @@ public class ValidTargetService {
 
     private boolean matchesReturnCardFilter(GameData gameData, ReturnCardFromGraveyardEffect effect,
                                              Card card, UUID sourceCardId, UUID controllerId, Integer xValue) {
+        UUID cardOwnerId = card.getOwnerId() != null
+                ? card.getOwnerId()
+                : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (effect.targetPutIntoGraveyardFromLibraryThisTurn()
+                && (cardOwnerId == null
+                || !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
+            return false;
+        }
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, sourceCardId);
-            UUID cardOwnerId = card.getOwnerId() != null
-                    ? card.getOwnerId()
-                    : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
             return chosenSubtype != null
                     && (card.hasKeyword(Keyword.CHANGELING)
                     || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));

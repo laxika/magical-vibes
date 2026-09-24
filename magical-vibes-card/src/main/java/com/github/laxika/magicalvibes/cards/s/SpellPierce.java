@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "NEO", collectorNumber = "80")
 @CardRegistration(set = "MM3", collectorNumber = "51")
 @CardRegistration(set = "MP2", collectorNumber = "17")
+@CardRegistration(set = "SLD", collectorNumber = "41")
 public class SpellPierce extends Card {
 
     public SpellPierce() {

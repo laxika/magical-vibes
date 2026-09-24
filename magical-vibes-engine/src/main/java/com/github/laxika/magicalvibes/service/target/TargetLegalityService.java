@@ -360,6 +360,13 @@ public class TargetLegalityService {
                             .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId))) {
                         throw new IllegalStateException("Target must be a card put into a graveyard this turn");
                     }
+                    if (returnEffect.targetPutIntoGraveyardFromLibraryThisTurn()
+                            && (graveyardOwnerId == null
+                            || !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId))) {
+                        throw new IllegalStateException(
+                                "Target must be a card put into a graveyard from a library this turn");
+                    }
                 }
                 break;
             }

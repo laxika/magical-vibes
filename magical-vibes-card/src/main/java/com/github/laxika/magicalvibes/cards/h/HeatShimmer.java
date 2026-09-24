@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "175")
+@CardRegistration(set = "SLD", collectorNumber = "1957")
 public class HeatShimmer extends Card {
 
     public HeatShimmer() {

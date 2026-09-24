@@ -28,30 +28,43 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  *                             abilities activated by this permanent's controller
  * @param loyaltyAbilityOnly  when {@code true} the trigger fires only for loyalty abilities
  * @param targetPredicate      optional restriction on the activated ability's chosen targets
+ * @param requiresXInActivationCost when {@code true} the trigger fires only for abilities whose
+ *                                  activation cost contains {X}
  */
 public record CopyControllerActivatedAbilityTriggerEffect(
         String manaCost,
         StackEntryPredicate sourceFilter,
         boolean equippedCreatureOnly,
         boolean loyaltyAbilityOnly,
-        StackEntryPredicate targetPredicate
+        StackEntryPredicate targetPredicate,
+        boolean requiresXInActivationCost
 ) implements CardEffect {
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost) {
-        this(manaCost, null, false, false, null);
+        this(manaCost, null, false, false, null, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter) {
-        this(manaCost, sourceFilter, false, false, null);
+        this(manaCost, sourceFilter, false, false, null, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, false, null);
+        this(manaCost, sourceFilter, equippedCreatureOnly, false, null, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly, boolean loyaltyAbilityOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null);
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null, false);
+    }
+
+    public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
+                                                       boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
+                                                       StackEntryPredicate targetPredicate) {
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false);
+    }
+
+    public static CopyControllerActivatedAbilityTriggerEffect withXInActivationCost() {
+        return new CopyControllerActivatedAbilityTriggerEffect(null, null, false, false, null, true);
     }
 }

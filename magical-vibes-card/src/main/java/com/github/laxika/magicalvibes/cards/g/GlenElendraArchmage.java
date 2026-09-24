@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "898")
+@CardRegistration(set = "SLD", collectorNumber = "2171")
 @CardRegistration(set = "EVE", collectorNumber = "22")
 @CardRegistration(set = "MMA", collectorNumber = "47")
 public class GlenElendraArchmage extends Card {

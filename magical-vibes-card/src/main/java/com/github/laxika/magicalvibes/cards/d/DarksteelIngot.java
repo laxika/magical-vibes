@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 @CardRegistration(set = "M14", collectorNumber = "207")
 @CardRegistration(set = "DST", collectorNumber = "112")
+@CardRegistration(set = "SLD", collectorNumber = "204")
 public class DarksteelIngot extends Card {
 
     public DarksteelIngot() {

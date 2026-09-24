@@ -481,6 +481,7 @@ public class DamageSupport {
                     sourcePermanentForBonus, sourceControllerId, damage);
             gameData.recordNoncombatDamageToPermanent(target.getId(), damage);
             recordDamageToPermanent(gameData, target.getId(), damage, entry, effectiveDamageSource);
+            recordExcessDamageToCreatureIfAny(gameData, entry, target, damageSource, damage);
             if (damageSource == null) {
                 recordSorcerySpellDamage(gameData, entry, damage);
             }
@@ -740,6 +741,7 @@ public class DamageSupport {
         }
 
         if (damage > 0) {
+            recordExcessDamageToCreatureIfAny(gameData, entry, target, sourcePermanent, damage);
             accumulateSourceDamageForReflection(gameData, entry.getEffectiveDamageSourceCard(),
                     entry.getControllerId(), entry.getSourcePermanentId(), damage,
                     null, gameQueryService.findPermanentController(gameData, target.getId()), target.getId(), entry);
@@ -815,6 +817,10 @@ public class DamageSupport {
                 ? gameQueryService.getEffectiveName(gameData, damageSource)
                 : sourceCard == null ? null : sourceCard.getName();
         gameData.recordDamageToPermanentFromSource(targetId, amount, sourceId, sourceName);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target != null && gameQueryService.isCreature(gameData, target)) {
+            gameData.recordDamageDealtToCreatureBySource(sourceId, targetId);
+        }
     }
 
     private void queueEnchantedCreatureDealsDamageTrigger(GameData gameData, StackEntry entry,
@@ -888,6 +894,19 @@ public class DamageSupport {
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
         int lethalNeeded = Math.max(0, toughness - markedDamageBefore);
         return Math.max(0, damageDealt - lethalNeeded);
+    }
+
+    private void recordExcessDamageToCreatureIfAny(GameData gameData, StackEntry entry,
+                                                    Permanent target, Permanent damageSource, int damage) {
+        if (damage <= 0 || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+        boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(
+                gameData, entry, damageSource, Keyword.DEATHTOUCH);
+        if (computeExcessDamageToCreature(gameData, target, damage,
+                target.getMarkedDamage(), sourceHasDeathtouch) > 0) {
+            gameData.recordExcessDamageToPermanent(target.getId());
+        }
     }
 
     public boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {

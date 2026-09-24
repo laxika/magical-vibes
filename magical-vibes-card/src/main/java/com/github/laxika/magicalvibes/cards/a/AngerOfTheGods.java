@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 @CardRegistration(set = "THS", collectorNumber = "112")
 @CardRegistration(set = "AKR", collectorNumber = "138")
 @CardRegistration(set = "IMA", collectorNumber = "116")
+@CardRegistration(set = "SLD", collectorNumber = "113")
+@CardRegistration(set = "SLD", collectorNumber = "1503")
 public class AngerOfTheGods extends Card {
 
     public AngerOfTheGods() {

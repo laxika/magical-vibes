@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ODY", collectorNumber = "46")
 @CardRegistration(set = "EMA", collectorNumber = "29")
 @CardRegistration(set = "VMA", collectorNumber = "44")
+@CardRegistration(set = "SLD", collectorNumber = "1587")
 public class Shelter extends Card {
 
     public Shelter() {

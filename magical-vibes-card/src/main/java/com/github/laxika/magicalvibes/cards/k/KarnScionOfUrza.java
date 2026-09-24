@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "1")
+@CardRegistration(set = "SLD", collectorNumber = "1419")
 public class KarnScionOfUrza extends Card {
 
     public KarnScionOfUrza() {

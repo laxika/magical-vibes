@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandTh
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONS", collectorNumber = "73")
+@CardRegistration(set = "SLD", collectorNumber = "2295")
 public class ChainOfVapor extends Card {
 
     public ChainOfVapor() {

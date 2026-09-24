@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayin
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "274")
+@CardRegistration(set = "SLD", collectorNumber = "439")
 public class SpinerockKnoll extends Card {
 
     public SpinerockKnoll() {

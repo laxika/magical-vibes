@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "86")
+@CardRegistration(set = "SLD", collectorNumber = "839")
 public class Cryptbreaker extends Card {
 
     public Cryptbreaker() {

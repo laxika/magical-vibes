@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "ORI", collectorNumber = "240")
+@CardRegistration(set = "SLD", collectorNumber = "1642")
 public class SwordOfTheAnimist extends Card {
 
     public SwordOfTheAnimist() {

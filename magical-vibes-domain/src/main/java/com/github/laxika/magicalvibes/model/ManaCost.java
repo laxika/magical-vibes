@@ -365,6 +365,24 @@ public class ManaCost {
         return Collections.unmodifiableMap(coloredCosts);
     }
 
+    /**
+     * Returns this cost with each ordinary black mana symbol also payable as Phyrexian mana.
+     * The colored requirement is moved to the existing Phyrexian-payment path, preserving the
+     * symbol's mana value while allowing the caller to charge 2 life when black mana is absent.
+     */
+    public ManaCost withBlackManaPayableWithLife() {
+        int blackCost = coloredCosts.getOrDefault(ManaColor.BLACK, 0);
+        if (blackCost == 0) {
+            return this;
+        }
+        Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        remainingColored.remove(ManaColor.BLACK);
+        Map<ManaColor, Integer> updatedPhyrexian = new EnumMap<>(phyrexianCosts);
+        updatedPhyrexian.merge(ManaColor.BLACK, blackCost, Integer::sum);
+        return new ManaCost(genericCost, remainingColored, updatedPhyrexian, hybridCosts,
+                snowCost, xSymbolCount, cumulativeUpkeepPayment);
+    }
+
     /** The generic (colorless-symbol) portion of the cost, e.g. 5 for "{5}" or "{5}{W}". */
     public int getGenericCost() {
         return genericCost;

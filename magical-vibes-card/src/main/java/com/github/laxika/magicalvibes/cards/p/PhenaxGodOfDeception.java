@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "152")
+@CardRegistration(set = "SLD", collectorNumber = "75")
 public class PhenaxGodOfDeception extends Card {
 
     public PhenaxGodOfDeception() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "PCY", collectorNumber = "126")
+@CardRegistration(set = "SLD", collectorNumber = "696")
 public class SporeFrog extends Card {
 
     public SporeFrog() {

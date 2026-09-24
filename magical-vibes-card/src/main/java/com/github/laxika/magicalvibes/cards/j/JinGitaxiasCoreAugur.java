@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffe
 
 @CardRegistration(set = "NPH", collectorNumber = "37")
 @CardRegistration(set = "IMA", collectorNumber = "62")
+@CardRegistration(set = "SLD", collectorNumber = "210")
 public class JinGitaxiasCoreAugur extends Card {
 
     public JinGitaxiasCoreAugur() {

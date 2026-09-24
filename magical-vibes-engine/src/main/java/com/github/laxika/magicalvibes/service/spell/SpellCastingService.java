@@ -1762,12 +1762,13 @@ public class SpellCastingService {
         ManaCost plotCost = plotOption.getCost(ManaCastingCost.class)
                 .map(cost -> new ManaCost(cost.manaCost()))
                 .orElseGet(() -> new ManaCost("{0}"));
+        plotCost = castingCostService.applyManaCostPaymentAlternatives(gameData, playerId, plotCost);
         int modifier = castingCostService.getPlotCostModifier(gameData, playerId, card);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (pool == null || !plotCost.canPay(pool, modifier)) {
             throw new IllegalStateException("Not enough mana to pay plot cost");
         }
-        plotCost.pay(pool, modifier);
+        payManaCostWithPhyrexianAlternatives(gameData, playerId, plotCost, pool, modifier);
 
         hand.remove(cardIndex);
         markCardPlotted(gameData, playerId, card);
@@ -2103,6 +2104,7 @@ public class SpellCastingService {
         }
         entry.setCastWithAdventure(true);
         entry.setSourceZone(Zone.HAND);
+        entry.setDelvedCardIds(additionalCostPayment.delvedCardIds());
         stampSacrificedCostSnapshot(entry, additionalCostPayment);
         if (additionalCostPayment.sacrificedCardSnapshot() != null) {
             entry.setSacrificedCard(additionalCostPayment.sacrificedCardSnapshot());
@@ -2173,7 +2175,9 @@ public class SpellCastingService {
             throw new IllegalStateException("X value cannot be negative");
         }
         if (castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
-                gameData, playerId, adventureCard, effectiveXValue)) {
+                gameData, playerId, adventureCard, effectiveXValue)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, adventureCard, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
 
@@ -2251,6 +2255,17 @@ public class SpellCastingService {
         entry.setSourceZone(Zone.GRAVEYARD);
         gameData.stack.add(entry);
         finishSpellCast(gameData, playerId, player, graveyard, physicalCard, false);
+    }
+
+    /** Pays a cost whose Phyrexian symbols have already been selected by a cost replacement. */
+    public void payManaCostWithPhyrexianAlternatives(GameData gameData, UUID playerId, ManaCost cost,
+                                                     ManaPool pool, int xValue) {
+        int phyrexianLifeCost = cost.hasPhyrexianMana()
+                ? cost.payPhyrexianManaAuto(pool, xValue) : 0;
+        cost.pay(pool, xValue);
+        if (phyrexianLifeCost > 0) {
+            lifeSupport.applyLifePayment(gameData, playerId, phyrexianLifeCost, "Phyrexian mana");
+        }
     }
 
     public void playCardWithMorph(GameData gameData, Player player, int cardIndex, Integer xValue,
@@ -3101,7 +3116,10 @@ public class SpellCastingService {
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
-                || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
+                || castingPermissionService.isOpponentsManaValueSpellCastRestricted(
+                gameData, playerId, card, effectiveXValue)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
 
@@ -4341,6 +4359,7 @@ public class SpellCastingService {
             if (additionalCostPayment.tappedPermanentId() != null) {
                 entry.setChosenPermanentId(additionalCostPayment.tappedPermanentId());
             }
+            entry.setDelvedCardIds(additionalCostPayment.delvedCardIds());
             stampSacrificedCostSnapshot(entry, additionalCostPayment);
             if (additionalCostPayment.sacrificedCardId() != null) {
                 entry.setSacrificedCardId(additionalCostPayment.sacrificedCardId());
@@ -5566,6 +5585,9 @@ public class SpellCastingService {
                 gameData.stack.getLast().setChosenPermanentId(additionalCostPayment.tappedPermanentId());
             }
             if (!gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setDelvedCardIds(additionalCostPayment.delvedCardIds());
+            }
+            if (!gameData.stack.isEmpty()) {
                 stampSacrificedCostSnapshot(gameData.stack.getLast(), additionalCostPayment);
             }
             if (additionalCosts.chooseCreatureOrRevealCreatureCardCost() != null
@@ -5986,7 +6008,8 @@ public class SpellCastingService {
         payExileNCardsFromGraveyardCost(gameData, player, card, costs.exileNCardsCost(), selection.exileGraveyardCardIndices());
         payExileNCardsFromGraveyardOrPayManaCost(gameData, player, card, costs.exileNCardsOrPayManaCost(),
                 selection.exileGraveyardCardIndices(), preManaPaymentPool);
-        payDelveCost(gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
+        List<UUID> delvedCardIds = payDelveCost(
+                gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
         payExileAnyNumberOfCardsFromHandCost(gameData, player, card,
                 costs.exileAnyNumberOfCardsFromHandCost(), selection.discardHandCardIndices(),
                 selection.spellCardIndex());
@@ -6027,7 +6050,7 @@ public class SpellCastingService {
                 effectiveSacrificePayment.sacrificedPower(), effectiveSacrificePayment.sacrificedToughness(),
                 costs.casualtyCost() != null && selection.sacrificePermanentId() != null,
                 exiledCostPayment.cardId(),
-                exiledCostPayment.cardSnapshot(), tappedPermanentId);
+                exiledCostPayment.cardSnapshot(), tappedPermanentId, delvedCardIds);
     }
 
     private ExiledCostPayment payExileCreatureCost(GameData gameData, Player player, Card card,
@@ -6631,7 +6654,8 @@ public class SpellCastingService {
                                          Permanent sacrificedPermanentSnapshot, int sacrificedPower,
                                          int sacrificedToughness, boolean casualtyCostPaid,
                                          UUID exiledCostCardId,
-                                         Card exiledCostCardSnapshot, UUID tappedPermanentId) {}
+                                         Card exiledCostCardSnapshot, UUID tappedPermanentId,
+                                         List<UUID> delvedCardIds) {}
 
     private record SacrificeCostPayment(int resolvedXValue, UUID sacrificedCardId,
                                         Card sacrificedCardSnapshot,
@@ -7363,12 +7387,12 @@ public class SpellCastingService {
         }
     }
 
-    private void payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
-                               List<Integer> exileGraveyardCardIndices) {
-        if (cost == null) return;
+    private List<UUID> payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
+                                    List<Integer> exileGraveyardCardIndices) {
+        if (cost == null) return List.of();
         additionalSpellCostService.validateDelveCost(gameData, player, card, cost, exileGraveyardCardIndices);
         List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
-        if (indices.isEmpty()) return;
+        if (indices.isEmpty()) return List.of();
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Integer> sortedDescending = indices.stream().sorted(java.util.Comparator.reverseOrder()).toList();
@@ -7393,6 +7417,7 @@ public class SpellCastingService {
                     .text(".")
                     .build());
         }
+        return exiledCards.stream().map(Card::getId).toList();
     }
 
     // --- Play with flashback from graveyard ---
@@ -7602,7 +7627,8 @@ public class SpellCastingService {
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
-                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -8703,6 +8729,10 @@ public class SpellCastingService {
         } else {
             card = exiledEntry.card();
         }
+        // Discord's copies are represented in exile with the normal temporary play permission,
+        // but they must still be cast as copies so they cease to exist after resolving rather than
+        // going to a graveyard or becoming a permanent card.
+        copy = copy || gameData.discordCopySourcePermanents.containsKey(exileCardId);
         if (card.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from this zone");
         }
@@ -8767,7 +8797,8 @@ public class SpellCastingService {
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
-                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -8917,8 +8948,14 @@ public class SpellCastingService {
                         throw new IllegalStateException("Not enough mana to pay spell");
                     }
                     int manaBefore = pool.getTotalAllMana();
+                    phyrexianManaPaidWithLife = cost.hasPhyrexianMana()
+                            ? cost.payPhyrexianManaAuto(pool, effectiveXValue + additionalCost) : 0;
                     cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
                             false, false, false, false, true);
+                    if (phyrexianManaPaidWithLife > 0) {
+                        lifeSupport.applyLifePayment(
+                                gameData, playerId, phyrexianManaPaidWithLife, "Phyrexian mana");
+                    }
                     gameData.addSpellCastManaSpent(card.getId(), manaBefore - pool.getTotalAllMana());
                 } finally {
                     pool.endForetellPayment(paymentState);
@@ -9373,11 +9410,12 @@ public class SpellCastingService {
             }
             ManaCost plotCost = card.getManaCost() != null
                     ? new ManaCost(card.getManaCost()) : new ManaCost("{0}");
+            plotCost = castingCostService.applyManaCostPaymentAlternatives(gameData, playerId, plotCost);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             if (pool == null || !plotCost.canPay(pool)) {
                 throw new IllegalStateException("Not enough mana to pay plot cost");
             }
-            plotCost.pay(pool);
+            payManaCostWithPhyrexianAlternatives(gameData, playerId, plotCost, pool, 0);
             deck.removeFirst();
             markCardPlotted(gameData, playerId, card);
             gameLogService.append(gameData, GameLog.textCardText(
@@ -9430,7 +9468,8 @@ public class SpellCastingService {
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
-                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -9557,7 +9596,9 @@ public class SpellCastingService {
         int effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, 0);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
-                gameData, playerId, card, effectiveXValue)) {
+                gameData, playerId, card, effectiveXValue)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
+                gameData, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
 
@@ -12707,6 +12748,11 @@ public class SpellCastingService {
                     castEntry.getGrantedKeywordsWhileOnStack().addAll(marker.keywords());
                 }
             }
+        }
+
+        if (castEntry != null && gameQueryService.hasArtifactManaSplitSecond(
+                gameData, playerId, card.getId())) {
+            castEntry.getGrantedKeywordsWhileOnStack().add(Keyword.SPLIT_SECOND);
         }
 
         stampLatestCastDuringMainPhase(gameData, playerId, card);

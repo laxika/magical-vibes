@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "A25", collectorNumber = "142")
+@CardRegistration(set = "SLD", collectorNumber = "1166")
 public class MagusOfTheWheel extends Card {
 
     public MagusOfTheWheel() {

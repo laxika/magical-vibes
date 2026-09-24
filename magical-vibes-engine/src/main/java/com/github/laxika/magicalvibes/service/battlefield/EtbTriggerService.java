@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -149,9 +150,14 @@ public class EtbTriggerService {
                         gameData, card, enteringPermanent.getId(), modeChoice.modes())) {
                     return;
                 }
-            } else if (enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+            } else if (enteringPermanent.getChosenModeLabels().stream()
+                    .filter(modeChoice.modes()::contains)
+                    .count() < modeChoice.choicesRequired()) {
                 playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
-                        enteringPermanent.getId(), modeChoice.modes());
+                        enteringPermanent.getId(), modeChoice.modes(), modeChoice.choicesRequired(),
+                        enteringPermanent.getChosenModeLabels().stream()
+                                .filter(modeChoice.modes()::contains)
+                                .toList());
                 return;
             }
         }
@@ -407,6 +413,14 @@ public class EtbTriggerService {
         }
 
         processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
+    }
+
+    private int countMultikickerPayments(Card card, List<String> repeatedAdditionalCosts) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(RepeatableAdditionalManaCost.class::isInstance)
+                .map(RepeatableAdditionalManaCost.class::cast)
+                .mapToInt(cost -> cost.multikickerPaymentCount(repeatedAdditionalCosts))
+                .sum();
     }
 
     private void snapshotAttachedPermanent(GameData gameData, StackEntry entry, Permanent sourcePermanent) {
@@ -830,9 +844,12 @@ public class EtbTriggerService {
                 ? null : enteredBattlefield.getLast().getId();
         for (CardEffect effect : graveyardExileEffects) {
             ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
+            int multikickerPaymentCount = exile.maxTargetsFromMultikicker()
+                    ? countMultikickerPayments(card, repeatedAdditionalCosts) : 0;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 graveyardTargetingService.handleGraveyardExileETBTargeting(
-                        gameData, controllerId, card, mandatoryEffects, graveyardSourcePermanentId, exile);
+                        gameData, controllerId, card, mandatoryEffects, graveyardSourcePermanentId, exile,
+                        multikickerPaymentCount);
             }
         }
 

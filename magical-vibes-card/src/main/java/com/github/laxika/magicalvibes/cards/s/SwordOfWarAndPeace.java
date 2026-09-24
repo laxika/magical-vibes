@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "161")
 @CardRegistration(set = "MPS", collectorNumber = "51")
+@CardRegistration(set = "SLD", collectorNumber = "1730")
 public class SwordOfWarAndPeace extends Card {
 
     public SwordOfWarAndPeace() {

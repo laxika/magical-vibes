@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithControlledLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
@@ -206,6 +207,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
@@ -449,6 +451,13 @@ public class PredicateEvaluationService {
                 }
                 yield source != null && gameQueryService.isCreature(gameData, source)
                         && gameQueryService.shareCreatureType(gameData, source, card);
+            }
+            case CardSharesCreatureTypeWithCommanderPredicate ignored -> {
+                if (gameData == null || cardOwnerId == null) {
+                    yield false;
+                }
+                yield gameData.playerCommandZones.getOrDefault(cardOwnerId, List.of()).stream()
+                        .anyMatch(commander -> gameQueryService.shareCreatureType(commander, card));
             }
             case CardHasSourceChosenCardTypePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -925,6 +934,7 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isCreature(gameData, permanent);
             }
+            case PermanentIsCommanderPredicate ignored -> permanent.isCommander();
             case PermanentIsLandPredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.LAND);
@@ -2452,6 +2462,7 @@ public class PredicateEvaluationService {
                         && sourceControllerId.equals(permanent.getAttackTarget());
             }
             case PermanentIsBlockingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsCommanderPredicate ignored -> permanent.isCommander();
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEquippedPredicate ignored -> {
@@ -3177,6 +3188,7 @@ public class PredicateEvaluationService {
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentIsCreaturePredicate ignored ->
                     state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
+            case PermanentIsCommanderPredicate ignored -> permanent.isCommander();
             case PermanentIsArtifactPredicate ignored ->
                     state.hasCardType(CardType.ARTIFACT);
             case PermanentIsLandPredicate ignored ->

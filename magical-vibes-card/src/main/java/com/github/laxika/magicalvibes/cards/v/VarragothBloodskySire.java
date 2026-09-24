@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "115")
+@CardRegistration(set = "SLD", collectorNumber = "1809")
 public class VarragothBloodskySire extends Card {
 
     public VarragothBloodskySire() {

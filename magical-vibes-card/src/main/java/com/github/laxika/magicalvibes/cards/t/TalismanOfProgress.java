@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "256")
 @CardRegistration(set = "TD2", collectorNumber = "26")
+@CardRegistration(set = "SLD", collectorNumber = "1052")
 public class TalismanOfProgress extends Card {
 
     public TalismanOfProgress() {

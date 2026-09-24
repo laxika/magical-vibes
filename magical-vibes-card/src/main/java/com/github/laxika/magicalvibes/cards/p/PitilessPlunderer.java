@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "81")
+@CardRegistration(set = "SLD", collectorNumber = "1431")
 public class PitilessPlunderer extends Card {
 
     public PitilessPlunderer() {

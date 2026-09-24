@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "63")
+@CardRegistration(set = "SLD", collectorNumber = "1808")
 public class PhyrexianReclamation extends Card {
 
     public PhyrexianReclamation() {

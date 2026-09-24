@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.AlmsCollectorDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
@@ -201,9 +202,30 @@ public class DrawService {
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
 
+        AlmsCollectorSource almsCollectorSource = drawAmount >= 2
+                ? findAlmsCollectorSource(gameData, playerId) : null;
         if (drawChoicePending(gameData)) {
-            for (int i = 0; i < drawAmount; i++) {
+            if (almsCollectorSource != null) {
+                gameData.pendingCardDraws.addLast(almsCollectorSource.controllerId());
                 gameData.pendingCardDraws.addLast(playerId);
+            } else {
+                for (int i = 0; i < drawAmount; i++) {
+                    gameData.pendingCardDraws.addLast(playerId);
+                }
+            }
+            return;
+        }
+
+        if (almsCollectorSource != null) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(playerName + "'s draw is replaced by ")
+                    .card(almsCollectorSource.permanent().getCard())
+                    .text(" — that player and its controller each draw a card.")
+                    .build());
+            performDrawCard(gameData, almsCollectorSource.controllerId());
+            if (gameData.status != GameStatus.FINISHED) {
+                performDrawCard(gameData, playerId);
             }
             return;
         }
@@ -866,6 +888,29 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private AlmsCollectorSource findAlmsCollectorSource(GameData gameData, UUID drawingPlayerId) {
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(drawingPlayerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(AlmsCollectorDrawReplacement.class::isInstance);
+                if (hasEffect) {
+                    return new AlmsCollectorSource(permanent, controllerId);
+                }
+            }
+        }
+        return null;
+    }
+
+    private record AlmsCollectorSource(Permanent permanent, UUID controllerId) {
     }
 
     private Permanent findExileTopCardFaceDownInsteadOfDrawSource(GameData gameData, UUID playerId) {
@@ -2005,6 +2050,11 @@ public class DrawService {
                     } else if (effect instanceof DrawTriggerEffect drawTrigger) {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
+                    }
+                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, playerId).withTargetId(drawingPlayerId))) {
+                        continue;
                     }
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may);

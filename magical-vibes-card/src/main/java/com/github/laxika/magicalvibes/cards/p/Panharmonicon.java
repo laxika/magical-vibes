@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "226")
+@CardRegistration(set = "SLD", collectorNumber = "605")
 public class Panharmonicon extends Card {
 
     public Panharmonicon() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "124")
+@CardRegistration(set = "SLD", collectorNumber = "1767")
 public class UrilTheMiststalker extends Card {
 
     public UrilTheMiststalker() {

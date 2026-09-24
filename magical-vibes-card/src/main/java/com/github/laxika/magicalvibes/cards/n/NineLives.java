@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "28")
+@CardRegistration(set = "SLD", collectorNumber = "793")
 public class NineLives extends Card {
 
     public NineLives() {

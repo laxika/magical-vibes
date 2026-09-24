@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "27")
+@CardRegistration(set = "SLD", collectorNumber = "848")
 public class PontiffOfBlight extends Card {
 
     public PontiffOfBlight() {

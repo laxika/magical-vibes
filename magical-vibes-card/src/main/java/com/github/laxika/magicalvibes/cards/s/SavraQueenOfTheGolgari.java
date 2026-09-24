@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "225")
+@CardRegistration(set = "SLD", collectorNumber = "500")
 public class SavraQueenOfTheGolgari extends Card {
 
     public SavraQueenOfTheGolgari() {

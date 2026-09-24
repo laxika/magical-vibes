@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 
 @CardRegistration(set = "EMA", collectorNumber = "108")
+@CardRegistration(set = "SLD", collectorNumber = "1860")
 public class ToxicDeluge extends Card {
 
     public ToxicDeluge() {

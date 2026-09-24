@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
@@ -56,6 +57,8 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
@@ -134,6 +137,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -177,6 +181,7 @@ public class CombatAttackService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final StaticEffectConditionResolver staticEffectConditionResolver;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -719,7 +724,8 @@ public class CombatAttackService {
             resolvedTargets.put(idx, targetId);
         }
 
-        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets);
+        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets,
+                staticEffectConditionResolver);
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
@@ -1594,6 +1600,11 @@ public class CombatAttackService {
                                 ConditionContext.forPermanent(attacker, playerId)));
 
                 matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksPlayerAlone
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof SourceAttackedThisCombat
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(perm, playerId)));
@@ -1603,6 +1614,8 @@ public class CombatAttackService {
                 // "you may tap target creature") route through the may/mandatory split below.
                 matchingEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
+                matchingEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksPlayerAlone ? ce.wrapped() : e);
 
                 if (matchingEffects.isEmpty()) continue;
 
@@ -1990,6 +2003,8 @@ public class CombatAttackService {
                                 attacker.getId(),
                                 perm.getId()
                         );
+                        anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
+                        anyAttackTrigger.setTriggeringPermanentControllerId(playerId);
                         anyAttackTrigger.setNonTargeting(true);
                         gameData.stack.add(anyAttackTrigger);
                         gameLogService.append(gameData,
@@ -2034,14 +2049,25 @@ public class CombatAttackService {
         // Check for "whenever a player attacks with one or more creatures" triggers
         // (ON_ANY_PLAYER_ATTACKS). Unlike ON_ALLY_CREATURES_ATTACK these fire for any attacking
         // player, on every permanent with this slot across all battlefields, and only once per
-        // combat. The attacking player is stored as a non-targeting targetId so player-scoped
-        // effects can act on "that player" (e.g. Total War's sweep of their non-attackers).
+        // combat. PlayerAttacksOneOfYourOpponents is the exception: it queues once per distinct
+        // opponent directly attacked. The attacking player is stored as a non-targeting targetId
+        // so player-scoped effects can act on "that player" (e.g. Total War's sweep of their
+        // non-attackers).
         for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
             UUID permController = bf.getKey();
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
+                Map<UUID, List<CardEffect>> effectsByAttackedOpponent = new LinkedHashMap<>();
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
                     if (effect instanceof ConditionalEffect conditional) {
+                        if (conditional.condition() instanceof PlayerAttacksOneOfYourOpponents) {
+                            for (UUID attackedOpponentId : attackedOpponents(gameData, permController, resolvedTargets)) {
+                                effectsByAttackedOpponent
+                                        .computeIfAbsent(attackedOpponentId, ignored -> new ArrayList<>())
+                                        .add(conditional.wrapped());
+                            }
+                            continue;
+                        }
                         if (conditional.condition() instanceof MinimumAttackers
                                 && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(perm, permController)
@@ -2049,7 +2075,8 @@ public class CombatAttackService {
                             continue;
                         }
                         if (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
-                                || conditional.condition() instanceof OpponentAttacksPlaneswalker) {
+                                || conditional.condition() instanceof OpponentAttacksPlaneswalker
+                                || conditional.condition() instanceof OpponentAttacksAnotherOpponent) {
                             if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                     ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
                                 continue;
@@ -2062,31 +2089,25 @@ public class CombatAttackService {
                     }
                     if (effect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
-                            || conditional.condition() instanceof OpponentAttacksPlaneswalker)) {
+                            || conditional.condition() instanceof OpponentAttacksPlaneswalker
+                            || conditional.condition() instanceof OpponentAttacksAnotherOpponent)) {
                         playerAttackEffects.add(conditional.wrapped());
                     } else {
                         playerAttackEffects.add(effect);
                     }
                 }
-                if (playerAttackEffects.isEmpty()) continue;
+                if (playerAttackEffects.isEmpty() && effectsByAttackedOpponent.isEmpty()) continue;
 
                 int previousCopies = beginAttackTriggerCopies(gameData, permController, perm);
                 try {
-                    StackEntry playerAttackTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            permController,
-                            perm.getCard().getName() + "'s trigger",
-                            new ArrayList<>(playerAttackEffects),
-                            attackerIndices.size(),
-                            perm.getId());
-                    playerAttackTrigger.setTargetId(playerId);
-                    playerAttackTrigger.setNonTargeting(true);
-                    gameData.stack.add(playerAttackTrigger);
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                    log.info("Game {} - {} ON_ANY_PLAYER_ATTACKS trigger for attacking player {}",
-                            gameData.id, perm.getCard().getName(), playerId);
+                    if (!playerAttackEffects.isEmpty()) {
+                        addPlayerAttackTrigger(gameData, perm, permController, playerId, attackerIndices.size(),
+                                playerAttackEffects, null);
+                    }
+                    for (Map.Entry<UUID, List<CardEffect>> attackedOpponent : effectsByAttackedOpponent.entrySet()) {
+                        addPlayerAttackTrigger(gameData, perm, permController, playerId, attackerIndices.size(),
+                                attackedOpponent.getValue(), attackedOpponent.getKey());
+                    }
                 } finally {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
@@ -2125,6 +2146,36 @@ public class CombatAttackService {
         attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, declaredAttackers);
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    private Set<UUID> attackedOpponents(GameData gameData, UUID controllerId,
+                                         Map<Integer, UUID> resolvedTargets) {
+        return resolvedTargets.values().stream()
+                .filter(gameData.playerIds::contains)
+                .filter(targetId -> !controllerId.equals(targetId))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private void addPlayerAttackTrigger(GameData gameData, Permanent source, UUID sourceControllerId,
+                                        UUID attackingPlayerId, int attackerCount,
+                                        List<CardEffect> effects, UUID attackedOpponentId) {
+        StackEntry playerAttackTrigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                sourceControllerId,
+                source.getCard().getName() + "'s trigger",
+                new ArrayList<>(effects),
+                attackerCount,
+                source.getId());
+        playerAttackTrigger.setTargetId(attackingPlayerId);
+        playerAttackTrigger.setAttackedTargetId(attackedOpponentId);
+        playerAttackTrigger.setNonTargeting(true);
+        gameData.stack.add(playerAttackTrigger);
+        gameLogService.append(gameData,
+                GameLog.builder().card(source.getCard()).text("'s ability triggers.").build());
+        log.info("Game {} - {} ON_ANY_PLAYER_ATTACKS trigger for attacking player {}{}",
+                gameData.id, source.getCard().getName(), attackingPlayerId,
+                attackedOpponentId == null ? "" : " attacking " + attackedOpponentId);
     }
 
     /**

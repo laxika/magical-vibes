@@ -821,13 +821,14 @@ public class ActivatedAbilityExecutionService {
                 || abilityEffects.stream().anyMatch(
                         com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
         boolean recordsSacrificedPermanentSnapshot = abilityEffects.stream()
-                .filter(SacrificeCreatureCost.class::isInstance)
-                .map(SacrificeCreatureCost.class::cast)
-                .anyMatch(SacrificeCreatureCost::recordSacrificedPermanentSnapshot);
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::recordsSacrificedPermanentSnapshot);
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                 targetZone, targetIds, damageAssignments, chosenCostPermanentIds, tracksSacrificedCard,
                 recordsSacrificedPermanentSnapshot, sacrificedSourceSnapshot, sacrificedAttachedEquipmentIds,
-                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds);
+                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds,
+                activatedPermanentControllerId);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -1167,7 +1168,8 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(effectiveColor, amount);
                     }
-                    if (award.tracksProducingSourceForSpellCastTriggers()) {
+                    if (award.tracksProducingSourceForSpellCastTriggers()
+                            || gameQueryService.isArtifact(gameData, permanent)) {
                         pool.addSpellCastTriggerMana(permanent.getId(), effectiveColor, amount);
                     }
                     if (isCreatureSource) {
@@ -1303,12 +1305,18 @@ public class ActivatedAbilityExecutionService {
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, picks);
                     }
+                    if (gameQueryService.isArtifact(gameData, permanent)) {
+                        pool.addSpellCastTriggerMana(permanent.getId(), manaColor, picks);
+                    }
                 } else {
                     // Each of the `picks` mana is chosen individually from the fixed color list; the
                     // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
                             .withCaveSource(caveSource);
+                    if (gameQueryService.isArtifact(gameData, permanent)) {
+                        choiceContext = choiceContext.withSourcePermanentId(permanent.getId());
+                    }
                     if (ofColors.grantsRiot()) {
                         choiceContext = choiceContext.withRiot();
                     }
@@ -1476,7 +1484,7 @@ public class ActivatedAbilityExecutionService {
                 // here rather than on the stack.
                 int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.recipient())) {
+                for (UUID victimId : lifeLossRecipients(gameData, playerId, permanent, loss.recipient())) {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
@@ -1775,6 +1783,7 @@ public class ActivatedAbilityExecutionService {
      */
     private static boolean isNonTargetedLifeLoss(LoseLifeEffect effect) {
         return effect.recipient() == LoseLifeRecipient.CONTROLLER
+                || effect.recipient() == LoseLifeRecipient.SOURCE_CONTROLLER
                 || effect.recipient() == LoseLifeRecipient.EACH_PLAYER
                 || effect.recipient() == LoseLifeRecipient.EACH_OPPONENT;
     }
@@ -1786,9 +1795,14 @@ public class ActivatedAbilityExecutionService {
     }
 
     /** The players losing life, in turn order, for a non-targeted {@link LoseLifeRecipient}. */
-    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, LoseLifeRecipient recipient) {
+    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, Permanent source,
+                                                  LoseLifeRecipient recipient) {
         return switch (recipient) {
             case CONTROLLER -> List.of(controllerId);
+            case SOURCE_CONTROLLER -> {
+                UUID sourceControllerId = source == null ? null : gameData.findControllerOf(source);
+                yield sourceControllerId == null ? List.of() : List.of(sourceControllerId);
+            }
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
             case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
                     .filter(pid -> !pid.equals(controllerId))
@@ -2037,7 +2051,8 @@ public class ActivatedAbilityExecutionService {
                                     List<UUID> sacrificedAttachedEquipmentIds,
                                     List<UUID> sacrificedCardIds,
                                     Card discardedCardSnapshot,
-                                    Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
+                                    Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds,
+                                    UUID activatedPermanentControllerId) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -2105,6 +2120,7 @@ public class ActivatedAbilityExecutionService {
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
+        stackEntry.setSourcePermanentControllerId(activatedPermanentControllerId);
         List<UUID> trackedIds = chosenCostPermanentIds == null ? List.of() : List.copyOf(chosenCostPermanentIds);
         stackEntry.setChosenCostPermanentIds(trackedIds);
         List<Permanent> trackedSnapshots = new ArrayList<>();

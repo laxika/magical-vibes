@@ -27,11 +27,14 @@ public class TransformSelfWhenChosenPermanentLeavesEffectHandler implements Norm
         var transformEffect = (TransformSelfWhenChosenPermanentLeavesEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || source.isTransformed()
-                || !transformEffect.leavingPermanentId().equals(source.getChosenPermanentId())) {
+        if (source == null || !transformEffect.leavingPermanentId().equals(source.getChosenPermanentId())) {
             return;
         }
 
-        animationSupport.transformToBackFace(gameData, source);
+        if (source.isTransformed()) {
+            animationSupport.transformToFrontFace(gameData, source);
+        } else {
+            animationSupport.transformToBackFace(gameData, source);
+        }
     }
 }

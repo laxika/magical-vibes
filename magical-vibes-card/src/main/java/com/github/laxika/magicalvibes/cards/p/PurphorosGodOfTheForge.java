@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "135")
+@CardRegistration(set = "SLD", collectorNumber = "77")
 public class PurphorosGodOfTheForge extends Card {
 
     public PurphorosGodOfTheForge() {

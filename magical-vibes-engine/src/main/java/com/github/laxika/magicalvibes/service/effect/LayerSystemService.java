@@ -639,6 +639,8 @@ public class LayerSystemService {
         h = mix(h, gameData.timestampCounter);
         h = mix(h, gameData.stolenCreatures.hashCode());
         h = mix(h, gameData.stolenCreatures.size());
+        h = mix(h, gameData.ringStates.hashCode());
+        h = mix(h, gameData.ringStates.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
         if (gameData.planechase != null) {
@@ -665,6 +667,14 @@ public class LayerSystemService {
                 h = mix(h, battlefield.size());
                 for (Permanent permanent : battlefield) {
                     h = hashPermanent(h, permanent);
+                }
+            }
+            List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+            h = mix(h, commandZone == null ? -1 : commandZone.size());
+            if (commandZone != null) {
+                for (Card card : commandZone) {
+                    h = mix(h, System.identityHashCode(card));
+                    h = mix(h, card.getColorIdentity().hashCode());
                 }
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -709,6 +719,8 @@ public class LayerSystemService {
         h = mix(h, p.getId().hashCode());
         h = mix(h, p.getTimestamp());
         h = hashCard(h, p.getCard());
+        h = mix(h, System.identityHashCode(p.getOriginalCard()));
+        h = mix(h, p.getOriginalCard().getColorIdentity().hashCode());
 
         long flags = 0;
         flags = flags << 1 | (p.isTapped() ? 1 : 0);
@@ -722,6 +734,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isBaseToughnessOverriddenPermanently() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isSuspected() ? 1 : 0);
+        flags = flags << 1 | (p.isCommander() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllCreatureTypesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
         flags = flags << 1 | (p.isFaceDown() ? 1 : 0);

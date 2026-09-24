@@ -402,6 +402,39 @@ public class Card {
     }
 
     /**
+     * Creates a runtime copy that keeps this card's non-text-box characteristics and uses the
+     * supplied card's rules text, keywords, abilities, and targeting configuration.
+     */
+    public Card createRuntimeTextBoxCopy(Card textSource) {
+        Card copy = new Card(this);
+        copy.cardText = textSource.cardText;
+        copy.keywords = textSource.keywords.isEmpty()
+                ? Set.of()
+                : EnumSet.copyOf(textSource.keywords);
+
+        copy.effectRegistrations.clear();
+        textSource.effectRegistrations.forEach((slot, registrations) ->
+                copy.effectRegistrations.put(slot, new ArrayList<>(registrations)));
+        copy.effectCache.clear();
+
+        copy.spellTargets.clear();
+        copy.effectTargetIndexMap.clear();
+        copy.copyTargetingFrom(textSource);
+
+        copy.sagaChapterTargetFilters.clear();
+        copy.sagaChapterTargetFilters.putAll(textSource.sagaChapterTargetFilters);
+        copy.sagaChapterTargetGroups.clear();
+        textSource.sagaChapterTargetGroups.forEach((slot, groups) ->
+                copy.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
+
+        copy.activatedAbilities = new ArrayList<>(textSource.activatedAbilities);
+        copy.graveyardActivatedAbilities = new ArrayList<>(textSource.graveyardActivatedAbilities);
+        copy.handActivatedAbilities = new ArrayList<>(textSource.handActivatedAbilities);
+        copy.stackActivatedAbilities = new ArrayList<>(textSource.stackActivatedAbilities);
+        return copy;
+    }
+
+    /**
      * Creates a runtime copy with this card's identity and the supplied face's characteristics.
      * The copy is used for a modal double-faced spell after its face has been chosen; keeping the
      * id from this card lets stack targets and zone movement continue to refer to the physical card.

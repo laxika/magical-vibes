@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "VMA", collectorNumber = "256")
+@CardRegistration(set = "SLD", collectorNumber = "1452")
+@CardRegistration(set = "SLD", collectorNumber = "2009")
 public class MarchesaTheBlackRose extends Card {
 
     public MarchesaTheBlackRose() {

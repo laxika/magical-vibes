@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,6 +99,106 @@ public final class TokenCreationReplacementSupport {
 
     static CreateTokenEffect additionalMapToken(boolean tapped, boolean tappedAndAttacking) {
         return CreateTokenEffect.ofMapToken(1).withTapped(tapped || tappedAndAttacking);
+    }
+
+    /** Returns Academy Manufactor's additional token blueprints for one creation event. */
+    static List<CreateTokenEffect> additionalAcademyManufactorTokens(
+            GameData gameData, UUID controllerId, CreateTokenEffect original, int amount) {
+        if (amount <= 0 || original == null) {
+            return List.of();
+        }
+        CardSubtype originalSubtype = manufactorTokenSubtype(original);
+        if (originalSubtype == null) {
+            return List.of();
+        }
+
+        int manufactorCount = academyManufactorCount(gameData, controllerId);
+        if (manufactorCount == 0) {
+            return List.of();
+        }
+
+        int tokensPerSubtype = amount;
+        for (int i = 1; i < manufactorCount; i++) {
+            tokensPerSubtype = Math.multiplyExact(tokensPerSubtype, 3);
+        }
+
+        List<CreateTokenEffect> additional = new ArrayList<>();
+        for (int i = amount; i < tokensPerSubtype; i++) {
+            additional.add(original);
+        }
+        for (CardSubtype subtype : List.of(CardSubtype.CLUE, CardSubtype.FOOD, CardSubtype.TREASURE)) {
+            if (subtype == originalSubtype) {
+                continue;
+            }
+            CreateTokenEffect standardToken = switch (subtype) {
+                case CLUE -> CreateTokenEffect.ofClueToken(1);
+                case FOOD -> CreateTokenEffect.ofFoodToken(1);
+                case TREASURE -> CreateTokenEffect.ofTreasureToken(1);
+                default -> throw new IllegalStateException("Unexpected Academy Manufactor subtype: " + subtype);
+            };
+            CreateTokenEffect eventToken = withEventModifiers(standardToken, original);
+            for (int i = 0; i < tokensPerSubtype; i++) {
+                additional.add(eventToken);
+            }
+        }
+        return additional;
+    }
+
+    private static CreateTokenEffect withEventModifiers(CreateTokenEffect token,
+                                                         CreateTokenEffect original) {
+        return new CreateTokenEffect(
+                token.primaryType(),
+                1,
+                token.tokenName(),
+                token.tokenPower(),
+                token.tokenToughness(),
+                token.color(),
+                token.colors(),
+                token.subtypes(),
+                token.keywords(),
+                token.additionalTypes(),
+                original.tappedAndAttacking(),
+                original.tapped(),
+                token.tokenEffects(),
+                token.tokenAbilities(),
+                original.exileAtEndOfCombat(),
+                original.exileAtEndStep(),
+                token.legendary(),
+                original.initialPlusOnePlusOneCounters(),
+                original.grantedKeywordsUntilEndOfTurn(),
+                token.supertypes());
+    }
+
+    private static CardSubtype manufactorTokenSubtype(CreateTokenEffect token) {
+        if (token.subtypes() == null) {
+            return null;
+        }
+        for (CardSubtype subtype : List.of(CardSubtype.CLUE, CardSubtype.FOOD, CardSubtype.TREASURE)) {
+            if (token.subtypes().contains(subtype)) {
+                return subtype;
+            }
+        }
+        return null;
+    }
+
+    private static int academyManufactorCount(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || permanent.isStaticEffectSuppressed(AcademyManufactorTokenReplacementEffect.class)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AcademyManufactorTokenReplacementEffect) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     /** Returns the Frog token blueprint when Quina's token-creation replacement is active. */

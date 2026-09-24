@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPre
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "197")
+@CardRegistration(set = "SLD", collectorNumber = "1602")
 public class FeatherTheRedeemed extends Card {
 
     public FeatherTheRedeemed() {

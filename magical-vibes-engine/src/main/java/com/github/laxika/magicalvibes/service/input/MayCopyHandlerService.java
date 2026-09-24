@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,6 +61,7 @@ public class MayCopyHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final ValidTargetService validTargetService;
     private final LandCopyOnEnterService landCopyOnEnterService;
+    private final TargetRedirectionSupport targetRedirectionSupport;
 
     public void handleCopyPermanentOnEnterChoice(GameData gameData, Player player, boolean accepted,
                                                   PendingMayAbility ability, CopyPermanentOnEnterEffect copyEffect) {
@@ -155,14 +158,26 @@ public class MayCopyHandlerService {
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
         if (accepted) {
-            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
-                    .flatMap(List::stream)
-                    .filter(card -> card.hasType(CardType.CREATURE))
-                    .toList();
+            List<Card> creatureCards = new ArrayList<>();
+            for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
+                if (copyEffect.controllerGraveyardOnly()
+                        && !ability.controllerId().equals(graveyardOwnerId)) {
+                    continue;
+                }
+                for (Card graveyardCard : gameData.playerGraveyards
+                        .getOrDefault(graveyardOwnerId, List.of())) {
+                    if (isValidGraveyardCopyCard(gameData, ability.controllerId(), graveyardOwnerId,
+                            graveyardCard, copyEffect)) {
+                        creatureCards.add(graveyardCard);
+                    }
+                }
+            }
             if (!creatureCards.isEmpty()) {
                 playerInputService.beginMultiGraveyardChoice(
                         gameData, ability.controllerId(), creatureCards, 1, 1,
-                        "Choose a creature card in a graveyard to copy.");
+                        copyEffect.controllerGraveyardOnly()
+                                ? "Choose a qualifying creature card in your graveyard to copy."
+                                : "Choose a qualifying creature card in a graveyard to copy.");
                 gameLogService.append(gameData, GameLog.text(
                         player.getUsername() + " accepts — choosing a creature card in a graveyard to copy."));
                 return;
@@ -173,6 +188,51 @@ public class MayCopyHandlerService {
                 ? player.getUsername() + " has no creature card to copy; it enters without copying."
                 : player.getUsername() + " declines to copy a creature card from a graveyard. ";
         gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(), " enters without copying."));
+        finishCloneEntryWithoutFurtherChoice(gameData);
+    }
+
+    private boolean isValidGraveyardCopyCard(GameData gameData, UUID controllerId, UUID graveyardOwnerId,
+                                             Card graveyardCard,
+                                             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
+            return false;
+        }
+        if (copyEffect.controllerGraveyardOnly() && !controllerId.equals(graveyardOwnerId)) {
+            return false;
+        }
+        if (copyEffect.cardFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                graveyardCard, copyEffect.cardFilter(), null, gameData, graveyardOwnerId)) {
+            return false;
+        }
+        return !copyEffect.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of())
+                .contains(graveyardCard.getId());
+    }
+
+    public void handleMimeoplasmCopyOnEnterChoice(GameData gameData, Player player, boolean accepted,
+                                                  PendingMayAbility ability) {
+        if (accepted) {
+            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
+                    .flatMap(List::stream)
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .toList();
+            if (creatureCards.size() >= 2) {
+                playerInputService.beginMultiGraveyardChoice(
+                        gameData, ability.controllerId(), creatureCards, 2, 2,
+                        "Choose two creature cards from graveyards to exile.");
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " accepts — choosing two creature cards from graveyards to exile."));
+                return;
+            }
+        }
+
+        String message = accepted
+                ? player.getUsername() + " has fewer than two creature cards in graveyards; it enters without copying."
+                : player.getUsername() + " declines to exile creature cards for The Mimeoplasm. ";
+        gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(),
+                " It enters without copying."));
         finishCloneEntryWithoutFurtherChoice(gameData);
     }
 
@@ -499,7 +559,10 @@ public class MayCopyHandlerService {
         Card spellCard = targetSpellEntry.getCard();
         List<UUID> validTargets = new ArrayList<>();
 
-        if (EffectResolution.needsSpellTarget(spellCard)) {
+        if (targetSpellEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetSpellEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            validTargets.addAll(targetRedirectionSupport.collectValidNewTargets(gameData, targetSpellEntry));
+        } else if (EffectResolution.needsSpellTarget(spellCard)) {
             for (StackEntry se : gameData.stack) {
                 if (se.getTargetableId().equals(spellCardId)) continue;
                 try {

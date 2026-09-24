@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "18")
+@CardRegistration(set = "SLD", collectorNumber = "1213")
 public class PhyrexianUnlife extends Card {
 
     public PhyrexianUnlife() {

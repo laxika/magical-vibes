@@ -76,9 +76,53 @@ public class PermanentCounterSupport {
     }
 
     public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target, int amount) {
-        if (triggerCollectionService != null && target != null && amount > 0) {
-            triggerCollectionService.checkYouPutCountersTriggers(
-                    gameData, placingPlayerId(gameData, entry, target), amount);
+        if (target == null || amount <= 0) {
+            return;
+        }
+        UUID placingPlayerId = placingPlayerId(gameData, entry, target);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        }
+        fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
+    }
+
+    /** Fires "whenever you put one or more counters on a creature you don't control" watchers. */
+    private void fireCountersPutOnCreatureYouDontControlTriggers(
+            GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
+        if (count <= 0 || creature == null || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+
+        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (creatureControllerId == null || placingPlayerId.equals(creatureControllerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            Card card = source.getCard();
+            List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    placingPlayerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId()
+            );
+            trigger.setEventValue(count);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} opponent-creature counter trigger fires", gameData.id, card.getName());
         }
     }
 

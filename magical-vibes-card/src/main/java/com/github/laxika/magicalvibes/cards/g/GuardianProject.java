@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfEnteringCreatureHasUniqueNameEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "130")
+@CardRegistration(set = "SLD", collectorNumber = "2172")
 public class GuardianProject extends Card {
 
     public GuardianProject() {

@@ -380,7 +380,11 @@ public class StateBasedActionService {
 
             for (DeathEntry entry : toDie) {
                 processedIds.add(entry.permanent().getId());
-                permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+                if (entry.reason() == DeathReason.LETHAL_DAMAGE) {
+                    permanentRemovalService.destroyPermanentByStateBasedAction(gameData, entry.permanent());
+                } else {
+                    permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+                }
                 Card cardEntry = entry.permanent().getCard();
                 String name = cardEntry.getName();
                 switch (entry.reason()) {

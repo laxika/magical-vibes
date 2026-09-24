@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "246")
 @CardRegistration(set = "A25", collectorNumber = "200")
+@CardRegistration(set = "SLD", collectorNumber = "1450")
 public class BrionStoutarm extends Card {
 
     public BrionStoutarm() {

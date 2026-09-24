@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 @CardRegistration(set = "INR", collectorNumber = "320")
 @CardRegistration(set = "INR", collectorNumber = "435")
 @CardRegistration(set = "EMN", collectorNumber = "189")
+@CardRegistration(set = "SLD", collectorNumber = "193")
 public class SpellQueller extends Card {
 
     public SpellQueller() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 
 @CardRegistration(set = "M12", collectorNumber = "201")
 @CardRegistration(set = "E02", collectorNumber = "42")
+@CardRegistration(set = "SLD", collectorNumber = "1109")
 public class AdaptiveAutomaton extends Card {
 
     public AdaptiveAutomaton() {

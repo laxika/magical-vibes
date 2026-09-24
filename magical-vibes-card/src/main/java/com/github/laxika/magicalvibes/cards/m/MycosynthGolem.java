@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "137")
+@CardRegistration(set = "SLD", collectorNumber = "1433")
 public class MycosynthGolem extends Card {
 
     public MycosynthGolem() {

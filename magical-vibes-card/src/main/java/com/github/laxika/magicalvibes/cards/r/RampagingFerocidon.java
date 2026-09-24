@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "154")
+@CardRegistration(set = "SLD", collectorNumber = "1390")
 public class RampagingFerocidon extends Card {
 
     public RampagingFerocidon() {

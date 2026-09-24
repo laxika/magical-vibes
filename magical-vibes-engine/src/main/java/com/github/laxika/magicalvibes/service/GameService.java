@@ -520,7 +520,8 @@ public class GameService {
                 if (pool == null || !cost.canPay(pool)) {
                     throw new IllegalStateException("Not enough mana to unlock that Room door");
                 }
-                cost.pay(pool);
+                spellCastingService.payManaCostWithPhyrexianAlternatives(
+                        gameData, player.getId(), cost, pool, 0);
             } finally {
                 if (roomMana != null) {
                     pool.restorePromotedRoomSpellsOrUnlocksMana(roomMana);
@@ -1450,6 +1451,10 @@ public class GameService {
                 } else if (morphCostModifier < 0) {
                     cost = cost.reducedBy(new ManaCost("{" + -morphCostModifier + "}"));
                 }
+                if (castingCostService != null) {
+                    cost = castingCostService.applyManaCostPaymentAlternatives(
+                            gameData, player.getId(), cost);
+                }
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (pool == null) {
                     pool = new ManaPool();
@@ -1481,8 +1486,9 @@ public class GameService {
                             return;
                         }
                         throw new IllegalStateException("Not enough mana to turn the permanent face up");
-                    }
-                    cost.pay(pool, effectiveXValue);
+                }
+                    spellCastingService.payManaCostWithPhyrexianAlternatives(
+                            gameData, player.getId(), cost, pool, effectiveXValue);
                 } finally {
                     pool.restorePromotedTurnPermanentsFaceUpMana(turnPermanentsFaceUpMana);
                     pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(

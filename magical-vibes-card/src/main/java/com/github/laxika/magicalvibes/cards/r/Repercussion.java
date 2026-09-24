@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 
 @CardRegistration(set = "UDS", collectorNumber = "95")
+@CardRegistration(set = "SLD", collectorNumber = "1065")
 public class Repercussion extends Card {
 
     public Repercussion() {

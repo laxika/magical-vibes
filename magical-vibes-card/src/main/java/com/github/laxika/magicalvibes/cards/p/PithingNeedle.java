@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 @CardRegistration(set = "MPS", collectorNumber = "44")
 @CardRegistration(set = "RTR", collectorNumber = "231")
 @CardRegistration(set = "SOK", collectorNumber = "158")
+@CardRegistration(set = "SLD", collectorNumber = "44")
 public class PithingNeedle extends Card {
 
     public PithingNeedle() {

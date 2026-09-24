@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "140")
+@CardRegistration(set = "SLD", collectorNumber = "313")
+@CardRegistration(set = "SLD", collectorNumber = "1999")
 public class ImpactTremors extends Card {
 
     public ImpactTremors() {

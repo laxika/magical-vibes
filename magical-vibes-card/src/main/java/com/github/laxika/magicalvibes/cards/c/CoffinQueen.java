@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "114")
 @CardRegistration(set = "TPR", collectorNumber = "87")
+@CardRegistration(set = "SLD", collectorNumber = "1704")
 public class CoffinQueen extends Card {
 
     public CoffinQueen() {

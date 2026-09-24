@@ -18,6 +18,8 @@ import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "163")
 @CardRegistration(set = "V16", collectorNumber = "14")
+@CardRegistration(set = "SLD", collectorNumber = "1288")
+@CardRegistration(set = "SLD", collectorNumber = "1865")
 public class UmezawasJitte extends Card {
 
     public UmezawasJitte() {

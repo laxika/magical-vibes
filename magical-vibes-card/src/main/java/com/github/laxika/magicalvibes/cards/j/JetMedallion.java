@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "292")
+@CardRegistration(set = "SLD", collectorNumber = "1189")
 public class JetMedallion extends Card {
 
     public JetMedallion() {

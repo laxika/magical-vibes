@@ -186,7 +186,8 @@ public class GameViewProjectionFactory {
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
                     potentialPayableAbilityIndices, speeds, gameData.dayNight,
-                    gameData.planechase == null ? null : planarViews.create(gameData, playerId)
+                    gameData.planechase == null ? null : planarViews.create(gameData, playerId),
+                    gameData.monarchPlayerId
             ));
         }
         return Collections.unmodifiableMap(messages);

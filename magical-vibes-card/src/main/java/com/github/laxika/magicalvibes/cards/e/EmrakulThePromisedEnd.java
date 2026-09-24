@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "5")
 @CardRegistration(set = "INR", collectorNumber = "330")
 @CardRegistration(set = "EMN", collectorNumber = "6")
+@CardRegistration(set = "SLD", collectorNumber = "1160")
 public class EmrakulThePromisedEnd extends Card {
 
     public EmrakulThePromisedEnd() {

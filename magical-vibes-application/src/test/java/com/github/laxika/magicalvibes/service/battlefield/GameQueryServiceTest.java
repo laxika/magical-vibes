@@ -1325,6 +1325,18 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("global marker doubles +1/+1 counters on an opponent's creature")
+        void globalMarkerDoublesCountersOnOpponentCreature() {
+            Card primalVigor = createEnchantment("Primal Vigor");
+            primalVigor.addEffect(EffectSlot.STATIC, DoublePlusOnePlusOneCountersEffect.global());
+            addPermanent(player1Id, primalVigor);
+            Permanent bears = addPermanent(player2Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(gqs.doublePlusOnePlusOneCounters(gd, bears, 1)).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("adds one per Hardened Scales marker")
         void addsOnePerMarker() {
             Card scales = createCreature("Hardened Scales", 0, 0, CardColor.GREEN);

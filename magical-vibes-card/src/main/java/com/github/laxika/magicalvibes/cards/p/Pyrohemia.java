@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "119")
+@CardRegistration(set = "SLD", collectorNumber = "2211")
 public class Pyrohemia extends Card {
 
     public Pyrohemia() {

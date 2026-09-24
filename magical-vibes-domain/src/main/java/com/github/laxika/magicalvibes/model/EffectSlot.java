@@ -53,6 +53,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
+    /** Triggers at the beginning of its controller's upkeep while this card is in the command zone. */
+    COMMAND_ZONE_UPKEEP_TRIGGERED,
     GRAVEYARD_UPKEEP_TRIGGERED,
     EACH_UPKEEP_TRIGGERED,
     SUSPENDED_EACH_UPKEEP_TRIGGERED,
@@ -179,6 +181,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
+    ON_CONTROLLER_TEMPTS_RING,
     /** Triggers when this permanent's controller investigates for the first time each turn. */
     ON_CONTROLLER_INVESTIGATES,
     /** Triggers whenever this permanent's controller surveils. Checked by
@@ -215,6 +219,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_PERMANENT_SACRIFICED,
     /** Triggers whenever any player sacrifices a permanent. */
     ON_ANY_PERMANENT_SACRIFICED,
+    /** Triggers whenever a noncreature artifact is sacrificed or destroyed. */
+    ON_ANY_NONCREATURE_ARTIFACT_SACRIFICED_OR_DESTROYED,
     /** Triggers whenever an opponent sacrifices a nontoken permanent. */
     ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED,
     /** Global watcher: triggers whenever any player sacrifices a creature ("Whenever a player
@@ -595,6 +601,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GETS_ENERGY,
     /** Triggers whenever this permanent's controller wins a coin flip. */
     ON_CONTROLLER_WINS_COIN_FLIP,
+    /** Triggers whenever any player wins a coin flip. */
+    ON_ANY_PLAYER_WINS_COIN_FLIP,
     /** Triggers whenever this permanent's controller loses a coin flip. */
     ON_CONTROLLER_LOSES_COIN_FLIP,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
@@ -728,6 +736,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if
      *  {@code SourceCardInCommandZone} so the ability fails if the card left the command zone. */
     COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL,
+    /** Creature ETB trigger for an Eminence ability whose source card is in the command zone. */
+    COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+    /** Static effects that remain active while this card is in its controller's command zone. */
+    COMMAND_ZONE_STATIC,
     /** Triggers whenever the controller of this permanent loses life (damage or direct life loss).
      *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
      *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
@@ -768,6 +780,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  exile from the battlefield. Checked after the permanent has been removed and its card has
      *  entered exile. */
     ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD,
+    /** Triggers whenever a creature is put into exile from the battlefield. Checked after the
+     *  permanent has been removed and its card has entered exile. */
+    ON_CREATURE_EXILED_FROM_BATTLEFIELD,
     ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     ON_SELF_OR_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
@@ -874,6 +889,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
+    /** Triggers whenever the controller puts one or more counters on a creature they don't control. */
+    ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
     /** Triggers once for each counter put on a creature the controller controls. */
     ON_ALLY_COUNTER_PUT_ON_CREATURE,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
@@ -923,6 +940,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers once for each instant or sorcery card that leaves the controller's graveyard. */
+    ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
     /** Triggers whenever one or more controlled creatures or creature cards in the controller's graveyard are exiled. */
@@ -971,6 +990,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  not the trigger's source permanent. Checked in {@code CombatBlockService}. Used by
      *  Stinkdrinker Bandit. */
     ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
+    /** Triggers once per combat when one or more creatures controlled by an opponent attack this
+     *  permanent's controller directly and are not blocked. The attacking player's ID is stored
+     *  as the non-targeting {@code targetId}; checked in {@code CombatBlockService}. */
+    ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      *  or ability controlled by an opponent. Fires on ALL permanents with this slot on the
      *  creature's controller's battlefield (not just the targeted creature).
@@ -1094,6 +1117,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
      *  instant or sorcery is cast from hand. */
     GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
+    /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect}; detected
+     *  by presence on the casting player's battlefield when a Sliver spell is cast. */
+    GRANT_CASCADE_TO_SLIVER_SPELLS,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller

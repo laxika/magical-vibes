@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAnd
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "157")
+@CardRegistration(set = "SLD", collectorNumber = "1108")
 public class ReflectorMage extends Card {
 
     public ReflectorMage() {

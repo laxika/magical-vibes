@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "145")
+@CardRegistration(set = "SLD", collectorNumber = "45")
+@CardRegistration(set = "SLD", collectorNumber = "1207")
 public class InkmothNexus extends Card {
 
     public InkmothNexus() {

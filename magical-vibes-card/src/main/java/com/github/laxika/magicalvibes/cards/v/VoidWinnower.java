@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "17")
+@CardRegistration(set = "SLD", collectorNumber = "1075")
 public class VoidWinnower extends Card {
 
     public VoidWinnower() {

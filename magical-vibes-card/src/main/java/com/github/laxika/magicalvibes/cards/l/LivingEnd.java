@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "115")
+@CardRegistration(set = "SLD", collectorNumber = "1769")
 public class LivingEnd extends Card {
 
     public LivingEnd() {

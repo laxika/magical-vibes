@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -385,6 +386,35 @@ public class MiscTriggerCollectorService {
         // and the "you may" is offered to the source's controller (not the sacrificing player).
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
                 null, match.permanent().getId());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
+    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
+    private boolean handleAnyCreatureSacrificedOncePerTurn(TriggerMatchContext match,
+            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
+        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
+                match.gameData(), match.permanent(), effect);
+        if (resolved == null) {
+            return false;
+        }
+
+        if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolved)),
+                    match.permanent().getId()));
+        } else {
+            match.gameData().enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(resolved)),
+                    null,
+                    match.permanent().getId()));
+        }
+        OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
@@ -1384,6 +1414,47 @@ public class MiscTriggerCollectorService {
         enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), match.controllerId(), effect);
         gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
         log.info("Game {} - {} triggers on winning a coin flip", gameData.id, permanent.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_GAINS_LIFE)
+    private boolean handleConditionalOnOpponentLifeGain(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                        .withTargetId(lifeGain.gainingPlayerId()))) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setTargetId(lifeGain.gainingPlayerId());
+        entry.setEventValue(lifeGain.lifeGainedAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on opponent life gain", match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_PLAYER_WINS_COIN_FLIP)
+    private boolean handleAnyPlayerCoinFlipWonDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Permanent permanent = match.permanent();
+
+        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), match.controllerId(), effect);
+        gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        log.info("Game {} - {} triggers when any player wins a coin flip", gameData.id,
+                permanent.getCard().getName());
         return true;
     }
 
@@ -2744,7 +2815,11 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD ────────────────────────────
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD),
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD)
+    })
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!handleControllerArtifactOrCreatureCardsLeaveGraveyard(match, effect, ctx)) {

@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "DRK", collectorNumber = "17")
 @CardRegistration(set = "TSB", collectorNumber = "15")
+@CardRegistration(set = "SLD", collectorNumber = "59")
 public class Squire extends Card {
 }

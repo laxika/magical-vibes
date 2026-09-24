@@ -116,9 +116,9 @@ public class CastingCostService {
     private final TargetLegalityService targetLegalityService;
 
     /**
-     * All cost-modifying static effects currently on the battlefield, in emblems, or among active
-     * floating continuous effects that could affect spells cast by one player, pre-collected in a
-     * single pass so per-card evaluation doesn't re-scan all permanents.
+     * All cost-modifying static effects currently on the battlefield, in the command zone, in
+     * emblems, or among active floating continuous effects that could affect spells cast by one
+     * player, pre-collected in a single pass so per-card evaluation doesn't re-scan all permanents.
      */
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
     }
@@ -139,6 +139,19 @@ public class CastingCostService {
                     CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
                     if (handler != null) {
                         modifiers.add(new CollectedCostModifier(handler, effect, new CostModificationSource(perm, pid)));
+                    }
+                }
+            }
+        }
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Card> commandZone = gameData.playerCommandZones.get(pid);
+            if (commandZone == null) continue;
+            for (Card card : List.copyOf(commandZone)) {
+                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_STATIC)) {
+                    CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
+                    if (handler != null) {
+                        modifiers.add(new CollectedCostModifier(handler, effect,
+                                new CostModificationSource(null, pid, card)));
                     }
                 }
             }
@@ -227,12 +240,13 @@ public class CastingCostService {
         ManaCost baseCost = new ManaCost(room.getRoomDoorManaCosts().get(doorIndex));
         int modifier = getRoomUnlockCostModifier(gameData, playerId, room,
                 buildCostModifierSnapshot(gameData, playerId));
-        if (modifier == 0) {
-            return baseCost;
+        ManaCost effectiveCost = baseCost;
+        if (modifier > 0) {
+            effectiveCost = baseCost.increasedBy(new ManaCost("{" + modifier + "}"));
+        } else if (modifier < 0) {
+            effectiveCost = baseCost.reducedBy(new ManaCost("{" + -modifier + "}"));
         }
-        return modifier > 0
-                ? baseCost.increasedBy(new ManaCost("{" + modifier + "}"))
-                : baseCost.reducedBy(new ManaCost("{" + -modifier + "}"));
+        return applyManaCostPaymentAlternatives(gameData, playerId, effectiveCost);
     }
 
     private int getRoomUnlockCostModifier(GameData gameData, UUID playerId, Card room,
@@ -595,6 +609,27 @@ public class CastingCostService {
                         ? effectiveCost.reducedBy(reduction)
                         : effectiveCost.reducedByColoredOnly(reduction);
             }
+        }
+        return applyManaCostPaymentAlternatives(context, effectiveCost, snapshot);
+    }
+
+    /** Applies battlefield payment replacements to a cost used by a spell, ability, or action. */
+    public ManaCost applyManaCostPaymentAlternatives(GameData gameData, UUID playerId, ManaCost cost) {
+        if (cost == null) {
+            return null;
+        }
+        return applyManaCostPaymentAlternatives(
+                new CostModificationContext(gameData, playerId, null),
+                cost,
+                buildCostModifierSnapshot(gameData, playerId));
+    }
+
+    private ManaCost applyManaCostPaymentAlternatives(CostModificationContext context, ManaCost cost,
+                                                      CostModifierSnapshot snapshot) {
+        ManaCost effectiveCost = cost;
+        for (CollectedCostModifier modifier : snapshot.modifiers()) {
+            effectiveCost = modifier.handler().applyManaCostPaymentAlternatives(
+                    context, modifier.effect(), modifier.source(), effectiveCost);
         }
         return effectiveCost;
     }
@@ -1401,7 +1436,7 @@ public class CastingCostService {
                     }
                 }
             }
-        } else if (source.effect().oncePerTurn()) {
+        } else if (source.effect() != null && source.effect().oncePerTurn()) {
             gameData.freeCastPermanentUsedThisTurn.add(source.permanent().getId());
         }
         return true;
@@ -1422,6 +1457,9 @@ public class CastingCostService {
      * source only counts when it applies to all players (Aluren).
      */
     private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
+        if (sourceZone == Zone.HAND && gameData.playersWithFreeHandCastUntilEndOfTurn.contains(playerId)) {
+            return new FreeCastSource(null, null, null);
+        }
         List<CardPredicate> nextSpellPermissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);
         if (nextSpellPermissions != null) {
             synchronized (nextSpellPermissions) {

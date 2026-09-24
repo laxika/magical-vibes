@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "86")
+@CardRegistration(set = "SLD", collectorNumber = "1687")
 public class KalitasTraitorOfGhet extends Card {
 
     public KalitasTraitorOfGhet() {

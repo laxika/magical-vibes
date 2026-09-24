@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "322")
+@CardRegistration(set = "SLD", collectorNumber = "208")
 public class PhyrexianTower extends Card {
 
     public PhyrexianTower() {

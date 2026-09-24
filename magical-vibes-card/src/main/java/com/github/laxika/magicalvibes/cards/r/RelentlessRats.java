@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSame
 @CardRegistration(set = "M11", collectorNumber = "113")
 @CardRegistration(set = "5DN", collectorNumber = "58")
 @CardRegistration(set = "A25", collectorNumber = "105")
+@CardRegistration(set = "SLD", collectorNumber = "752")
+@CardRegistration(set = "SLD", collectorNumber = "754")
+@CardRegistration(set = "SLD", collectorNumber = "755")
+@CardRegistration(set = "SLD", collectorNumber = "756")
+@CardRegistration(set = "SLD", collectorNumber = "757")
 public class RelentlessRats extends Card {
 
     public RelentlessRats() {

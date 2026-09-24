@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "220")
+@CardRegistration(set = "SLD", collectorNumber = "480")
+@CardRegistration(set = "SLD", collectorNumber = "1172")
 public class SeizeTheDay extends Card {
 
     public SeizeTheDay() {

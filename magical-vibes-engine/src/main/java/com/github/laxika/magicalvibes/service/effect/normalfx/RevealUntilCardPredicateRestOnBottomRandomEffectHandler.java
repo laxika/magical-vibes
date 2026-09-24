@@ -47,6 +47,18 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        resolve(gameData, entry, effect, entry.getCard() == null ? null : entry.getCard().getId(),
+                entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot());
+    }
+
+    void resolveUsingSourcePermanentSnapshot(GameData gameData, StackEntry entry, CardEffect effect,
+                                              Permanent sourcePermanentSnapshot) {
+        resolve(gameData, entry, effect, null, null, sourcePermanentSnapshot);
+    }
+
+    private void resolve(GameData gameData, StackEntry entry, CardEffect effect,
+                         UUID predicateSourceCardId, UUID predicateSourcePermanentId,
+                         Permanent sourcePermanentSnapshot) {
         var typedEffect = (RevealUntilCardPredicateRestOnBottomRandomEffect) effect;
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -64,7 +76,8 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             Card card = deck.removeFirst();
             revealedCards.add(card);
             if (predicateEvaluationService.matchesCardPredicate(
-                    card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId)) {
+                    card, typedEffect.predicate(), predicateSourceCardId, gameData, controllerId,
+                    predicateSourcePermanentId, null, null, sourcePermanentSnapshot)) {
                 foundCard = card;
                 break;
             }

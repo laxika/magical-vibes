@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "A25", collectorNumber = "236")
+@CardRegistration(set = "SLD", collectorNumber = "469")
 public class AshBarrens extends Card {
 
     public AshBarrens() {

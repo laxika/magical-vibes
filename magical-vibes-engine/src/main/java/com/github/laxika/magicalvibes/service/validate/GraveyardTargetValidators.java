@@ -133,6 +133,16 @@ public class GraveyardTargetValidators {
                 throw new IllegalStateException("Target must be a card put into a graveyard this turn");
             }
         }
+        if (effect.targetPutIntoGraveyardFromLibraryThisTurn()) {
+            boolean tracked = graveyardOwnerId != null
+                    && ctx.gameData().cardsPutIntoGraveyardFromLibraryThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of())
+                            .contains(ctx.targetId());
+            if (!tracked) {
+                throw new IllegalStateException(
+                        "Target must be a card put into a graveyard from a library this turn");
+            }
+        }
         if (effect.targetNotPutIntoGraveyardThisCombat()) {
             boolean tracked = graveyardOwnerId != null
                     && ctx.gameData().cardsPutIntoGraveyardThisCombat

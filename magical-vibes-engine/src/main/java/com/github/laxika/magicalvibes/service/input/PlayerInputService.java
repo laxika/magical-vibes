@@ -822,15 +822,27 @@ public class PlayerInputService {
 
     public void beginChooseModeOnEnterChoice(GameData gameData, UUID controllerId, Card sourceCard,
             UUID sourcePermanentId, List<String> modes) {
+        beginChooseModeOnEnterChoice(gameData, controllerId, sourceCard, sourcePermanentId,
+                modes, 1, List.of());
+    }
+
+    public void beginChooseModeOnEnterChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            UUID sourcePermanentId, List<String> modes, int choicesRequired, List<String> chosenLabels) {
         com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect =
                 new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(modes.stream()
                         .map(mode -> new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
                                 mode, List.of()))
-                        .toList());
+                        .toList(), false, choicesRequired, choicesRequired, false);
         ChoiceContext.ChooseModeChoice ctx = new ChoiceContext.ChooseModeChoice(
-                sourceCard, controllerId, effect, sourcePermanentId, true);
+                sourceCard, controllerId, effect, false, sourcePermanentId, false, chosenLabels, true);
+        List<String> availableModes = modes.stream()
+                .filter(mode -> !ctx.chosenLabels().contains(mode))
+                .toList();
+        String prompt = choicesRequired > 1
+                ? sourceCard.getName() + " - Choose " + choicesRequired + " modes."
+                : sourceCard.getName() + " - Choose one.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, sourcePermanentId, null, ctx, modes, sourceCard.getName() + " - Choose one."));
+                controllerId, sourcePermanentId, null, ctx, availableModes, prompt));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose an as-enters mode for {}", gameData.id, playerName,
@@ -1256,9 +1268,15 @@ public class PlayerInputService {
     }
 
     public void beginSpellNumberChoice(GameData gameData, UUID playerId, int maxNumber) {
+        beginSpellNumberChoice(gameData, playerId,
+                java.util.stream.IntStream.rangeClosed(0, Math.max(0, maxNumber)).boxed().toList());
+    }
+
+    public void beginSpellNumberChoice(GameData gameData, UUID playerId, List<Integer> choices) {
         ChoiceContext.SpellNumberChoice choiceContext = new ChoiceContext.SpellNumberChoice(playerId);
-        List<String> numbers = java.util.stream.IntStream.rangeClosed(0, Math.max(0, maxNumber))
-                .mapToObj(Integer::toString)
+        List<String> numbers = choices.stream()
+                .distinct()
+                .map(number -> number.toString())
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, numbers, "Choose a number."));
@@ -1851,6 +1869,7 @@ public class PlayerInputService {
     }
 
     public void beginLiarsPendulumGuessChoice(GameData gameData, ChoiceContext.LiarsPendulumChoice ctx) {
+        gameData.recordPileGroupingOrGuess();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 ctx.targetPlayerId(), null, null, ctx, List.of("Yes", "No"),
                 "Is a card named \"" + ctx.chosenName() + "\" in the controller's hand?"));

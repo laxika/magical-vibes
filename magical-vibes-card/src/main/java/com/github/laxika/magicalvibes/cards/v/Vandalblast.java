@@ -25,6 +25,8 @@ import java.util.List;
  * chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "111")
+@CardRegistration(set = "SLD", collectorNumber = "404")
+@CardRegistration(set = "SLD", collectorNumber = "1757")
 public class Vandalblast extends Card {
 
     public Vandalblast() {

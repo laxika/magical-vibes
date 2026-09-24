@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "80")
+@CardRegistration(set = "SLD", collectorNumber = "1670")
 public class VisionsOfBeyond extends Card {
 
     public VisionsOfBeyond() {

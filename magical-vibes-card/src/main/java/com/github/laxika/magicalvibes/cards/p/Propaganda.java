@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "TMP", collectorNumber = "80")
+@CardRegistration(set = "SLD", collectorNumber = "381")
+@CardRegistration(set = "SLD", collectorNumber = "1633")
 public class Propaganda extends Card {
 
     public Propaganda() {

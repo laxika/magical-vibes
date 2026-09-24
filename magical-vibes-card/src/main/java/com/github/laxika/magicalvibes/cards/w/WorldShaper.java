@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "151")
+@CardRegistration(set = "SLD", collectorNumber = "2017")
 public class WorldShaper extends Card {
 
     public WorldShaper() {

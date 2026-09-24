@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "4")
+@CardRegistration(set = "SLD", collectorNumber = "493")
 public class KozilekTheGreatDistortion extends Card {
 
     public KozilekTheGreatDistortion() {

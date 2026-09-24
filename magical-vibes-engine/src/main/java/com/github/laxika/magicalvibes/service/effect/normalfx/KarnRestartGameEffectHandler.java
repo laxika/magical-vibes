@@ -185,6 +185,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
         gameData.emblems.clear();
+        gameData.ringStates.clear();
         gameData.extraTurns.clear();
         gameData.extraTurnSkipsUntap.clear();
         gameData.extraTurnPowerUpAbilitiesDisabled.clear();
@@ -260,12 +261,14 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
+        gameData.sourcePermanentsThatDealtDamageToCreaturesThisTurn.clear();
         gameData.damageDealtToPlayersBySourceThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.permanentsThatHaveDealtDamage.clear();
         gameData.damageRecipientsBySource.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.permanentsDealtNoncombatDamageThisTurn.clear();
+        gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();

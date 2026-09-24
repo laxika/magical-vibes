@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "215")
+@CardRegistration(set = "SLD", collectorNumber = "831")
+@CardRegistration(set = "SLD", collectorNumber = "979")
+@CardRegistration(set = "SLD", collectorNumber = "2106")
 public class FoundryInspector extends Card {
 
     public FoundryInspector() {

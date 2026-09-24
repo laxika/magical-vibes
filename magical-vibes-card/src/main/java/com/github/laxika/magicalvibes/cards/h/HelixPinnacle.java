@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "68")
+@CardRegistration(set = "SLD", collectorNumber = "1831")
 public class HelixPinnacle extends Card {
 
     public HelixPinnacle() {

@@ -14,6 +14,9 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "118")
 @CardRegistration(set = "BRO", collectorNumber = "144")
 @CardRegistration(set = "IMA", collectorNumber = "140")
+@CardRegistration(set = "SLD", collectorNumber = "216")
+@CardRegistration(set = "SLD", collectorNumber = "2038")
+@CardRegistration(set = "SLD", collectorNumber = "2043")
 public class MonasterySwiftspear extends Card {
 
     public MonasterySwiftspear() {

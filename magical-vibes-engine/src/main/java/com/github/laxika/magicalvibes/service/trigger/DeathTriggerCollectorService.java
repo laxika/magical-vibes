@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreatu
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachAuraAttachedToDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
@@ -1045,9 +1046,16 @@ public class DeathTriggerCollectorService {
     boolean handleEquippedCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        TriggerContext.EquippedCreatureDeath death = (TriggerContext.EquippedCreatureDeath) ctx;
+        CardEffect resolvedEffect = effect;
+        if (effect instanceof DyingCreaturePermanentAwareEffect aware
+                && death.dyingPermanent() != null) {
+            resolvedEffect = aware.boundToDyingCreature(death.dyingPermanent());
+        }
+        if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolvedEffect)),
                     null, new Permanent(match.permanent())
             ));
         } else {
@@ -1056,7 +1064,7 @@ public class DeathTriggerCollectorService {
                     match.permanent().getCard(),
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(List.of(resolvedEffect)),
                     null,
                     match.permanent().getId()
             ));
@@ -1503,6 +1511,25 @@ public class DeathTriggerCollectorService {
     }
 
     // ── ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ────────────
+
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
+            slot = EffectSlot.ON_ANY_NONCREATURE_ARTIFACT_SACRIFICED_OR_DESTROYED)
+    boolean handleNoncreatureArtifactSacrificedOrDestroyedDamage(TriggerMatchContext match,
+            DealDamageToPlayersEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on a noncreature artifact being sacrificed or destroyed",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect.class,
             slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)

@@ -64,6 +64,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToC
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscordCopyCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
@@ -136,6 +138,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverVoluteTriggerEffect;
@@ -909,6 +912,48 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleControllerSpellCastFromHandTrigger(TriggerMatchContext match,
+            SpellCastFromHandTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.castFromHand()) {
+            return false;
+        }
+        return handleGenericSpellCastTrigger(match,
+                new SpellCastTriggerEffect(trigger.spellFilter(), trigger.resolvedEffects()),
+                sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = DiscordCopyCastTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleDiscordCopyCastTrigger(TriggerMatchContext match,
+            DiscordCopyCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        UUID sourcePermanentId = match.gameData().discordCopySourcePermanents.get(sc.spellCard().getId());
+        if (sourcePermanentId == null || !sourcePermanentId.equals(match.permanent().getId())) {
+            return false;
+        }
+
+        if (findStackEntryForCard(match.gameData(), sc.spellCard().getId()) == null) {
+            return false;
+        }
+        match.gameData().discordCopySourcePermanents.remove(sc.spellCard().getId());
+
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DiscordRandomCardCopyEffect())),
+                null,
+                match.permanent().getId());
+        triggerEntry.setNonTargeting(true);
+        match.gameData().stack.add(triggerEntry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
     }
 
     @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnOnSpellCastEffect.class,

@@ -12,6 +12,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "44")
+@CardRegistration(set = "SLD", collectorNumber = "593")
+@CardRegistration(set = "SLD", collectorNumber = "595")
+@CardRegistration(set = "SLD", collectorNumber = "596")
+@CardRegistration(set = "SLD", collectorNumber = "597")
+@CardRegistration(set = "SLD", collectorNumber = "598")
+@CardRegistration(set = "SLD", collectorNumber = "599")
+@CardRegistration(set = "SLD", collectorNumber = "600")
+@CardRegistration(set = "SLD", collectorNumber = "601")
+@CardRegistration(set = "SLD", collectorNumber = "602")
 public class PersistentPetitioners extends Card {
 
     public PersistentPetitioners() {

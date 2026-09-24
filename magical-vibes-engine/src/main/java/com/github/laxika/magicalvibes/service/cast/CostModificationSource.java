@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 
 import java.util.UUID;
@@ -9,9 +10,13 @@ import java.util.UUID;
  * object (with its controller), or on the spell being cast itself ({@link #SPELL_ITSELF}, where
  * both fields are null). Emblem and planar effects have a null {@code sourcePermanent}.
  */
-public record CostModificationSource(Permanent sourcePermanent, UUID controllerId) {
+public record CostModificationSource(Permanent sourcePermanent, UUID controllerId, Card sourceCard) {
 
-    public static final CostModificationSource SPELL_ITSELF = new CostModificationSource(null, null);
+    public CostModificationSource(Permanent sourcePermanent, UUID controllerId) {
+        this(sourcePermanent, controllerId, sourcePermanent == null ? null : sourcePermanent.getCard());
+    }
+
+    public static final CostModificationSource SPELL_ITSELF = new CostModificationSource(null, null, null);
 
     public boolean controlledBy(UUID playerId) {
         return playerId != null && playerId.equals(controllerId);

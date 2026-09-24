@@ -397,6 +397,12 @@ public class GraveyardReturnSupport {
                 .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
             return false;
         }
+        if (effect.targetPutIntoGraveyardFromLibraryThisTurn()
+                && (cardOwnerId == null
+                || !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
+            return false;
+        }
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, entry, sourceCardId);
             return chosenSubtype != null
@@ -891,8 +897,7 @@ public class GraveyardReturnSupport {
 
         List<UUID> result = new ArrayList<>();
         gameData.forEachPermanent((ignored, candidate) -> {
-            if (!gameQueryService.isCreature(gameData, candidate)
-                    || !predicateEvaluationService.matchesPermanentPredicate(gameData, candidate, attachmentTarget)
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, candidate, attachmentTarget)
                     || !canEnchant(gameData, auraCard, auraControllerId, candidate)) {
                 return;
             }
@@ -2450,7 +2455,8 @@ public class GraveyardReturnSupport {
         // Phyrexian Portal's piles are both face down. For the shared one-face-down flow,
         // Fortune's Favor uses a face-down Pile 1 while Curator of Destinies uses a face-down Pile 2.
         boolean bothPilesFaceDown = state.disposition() == CardPileDisposition.SEARCH_ONE_TO_HAND;
-        boolean onePileFaceDown = state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE;
+        boolean onePileFaceDown = state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE
+                || state.disposition() == CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE;
         boolean pile1FaceDown = bothPilesFaceDown || onePileFaceDown && state.controllerChoosesPile();
         boolean pile2FaceDown = bothPilesFaceDown || onePileFaceDown && !state.controllerChoosesPile();
         String pile1Desc = pile1FaceDown ? describePileSize(pile1) : buildCardPileDescription(state.cards(), pile1);
@@ -2487,7 +2493,7 @@ public class GraveyardReturnSupport {
 
         UUID controllerId = state.controllerId();
         String destText = switch (state.disposition()) {
-            case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM -> "put into your hand";
+            case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_EXILE_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM -> "put into your hand";
             case ONE_FROM_CHOSEN_HAND_AND_BOTTOM -> "put one card into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
             case OPPONENT_CHOOSES_EXILE -> "exile";
@@ -2581,6 +2587,24 @@ public class GraveyardReturnSupport {
             gameData.queueInteraction(new PendingTruthOrTaleCardChoice(controllerId, chosenPile, otherCards));
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, chosenPile, 1, 1,
                     "Choose one card from the chosen pile to put into your hand.");
+            return;
+        }
+
+        if (state.disposition() == CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE) {
+            boolean pile1FaceDown = state.controllerChoosesPile();
+            for (Card card : allCards) {
+                UUID ownerId = cardOwners.getOrDefault(card.getId(), controllerId);
+                boolean faceDown = pile1FaceDown == state.pile1Ids().contains(card.getId());
+                gameData.addToExile(ownerId, card, null, faceDown);
+            }
+            for (UUID cardId : chosenPileCardIds) {
+                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+                if (card != null && gameData.removeFromExile(cardId)) {
+                    gameData.addCardToHand(controllerId, card);
+                }
+            }
+            gameLogService.append(gameData, GameLog.text(
+                    controllerName + " puts " + chosenPileName + " into their hand and leaves the other pile exiled."));
             return;
         }
 

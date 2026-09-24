@@ -132,6 +132,9 @@ public sealed interface ChoiceContext {
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record SourceTrackedManaColorChoice(UUID playerId, UUID sourcePermanentId, UUID recipientPlayerId,
+                                        boolean fromCreature, int amount, boolean fromSnowSource,
+                                        boolean fromCaveSource) implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
@@ -1827,6 +1830,13 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {
 
         public static final String SACRIFICE = "Sacrifice a permanent";
+        public static final String DISCARD = "Discard a card";
+    }
+
+    /** Dr. Eggman's villainous choice between discarding and letting its controller put a card in. */
+    record VillainousChoice(UUID affectedPlayerId, String sourceCardName, String putOption)
+            implements ChoiceContext {
+
         public static final String DISCARD = "Discard a card";
     }
 

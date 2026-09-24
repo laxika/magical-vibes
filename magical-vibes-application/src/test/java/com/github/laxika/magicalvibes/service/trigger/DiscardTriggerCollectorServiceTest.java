@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -143,6 +144,23 @@ class DiscardTriggerCollectorServiceTest {
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("Queues a self-untap discard trigger with its source permanent")
+    void queuesSelfUntapDiscardTrigger() {
+        Permanent source = createPermanent("Anje Falkenrath");
+        var effect = new UntapPermanentsEffect(TapUntapScope.SELF);
+        var ctx = new TriggerContext.Discard(player1Id, createCard("Madness card"));
+
+        boolean result = registry.dispatch(
+                match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
     }
 

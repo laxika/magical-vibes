@@ -53,6 +53,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentBlockedBySourceThisTurnPredicate` | `()` | creatures that were blocked by the source permanent this turn (attacker direction only). Reads `GameData.creaturesBlockedThisTurn` and the source's recorded combat-opponent IDs, so it remains usable after combat state is cleared; requires a `FilterContext` source permanent ID or source snapshot. Wall of Nets |
 | `PermanentThatSaddledSourceThisTurnPredicate` | `()` | creatures that saddled the source Mount during the current turn; requires the source permanent context and reads `GameData.creaturesThatSaddledPermanentThisTurn` |
 | `PermanentIsCreaturePredicate` | `()` | creatures |
+| `PermanentIsCommanderPredicate` | `()` | permanents designated as commanders |
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
@@ -412,6 +413,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasSourceChosenColorPredicate` | `()` | a card containing the color chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful for spell-cast triggers such as Jeweled Torque |
 | `CardDoesNotShareColorWithSourceControlledCreaturePredicate` | `()` | a card whose effective colors share no color with any creature controlled by the source permanent; needs the `GameData` overload and source card ID, and is evaluated when a spell-cast trigger is created (Invoke Prejudice) |
 | `CardSharesCreatureTypeWithSourcePredicate` | `()` | a creature card sharing an effective creature type with the source permanent; respects Changeling and transient/layered creature-type changes, including the source permanent snapshot if it has left the battlefield; needs the `GameData` overload plus source card ID |
+| `CardSharesCreatureTypeWithCommanderPredicate` | `()` | a card sharing a creature type with one of the evaluating player's command-zone cards; needs the `GameData` overload and evaluating player ID |
 | `CardHasSourceChosenCardTypePredicate` | `()` | a card with a card type chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful with global spell taxes |
 | `CardHasSourceChosenSubtypePredicate` | `()` | a creature card carrying the creature subtype chosen by the source permanent; Changeling matches every creature type. Needs the `GameData` overload and the source card ID |
 | `CardKeywordPredicate` | `(Keyword)` | a card with the named keyword, including `MUTATE` for creature cards with a mutate ability |

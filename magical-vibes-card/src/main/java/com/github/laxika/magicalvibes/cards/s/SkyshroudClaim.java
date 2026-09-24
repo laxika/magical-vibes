@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "NEM", collectorNumber = "117")
+@CardRegistration(set = "SLD", collectorNumber = "2279")
 public class SkyshroudClaim extends Card {
 
     public SkyshroudClaim() {

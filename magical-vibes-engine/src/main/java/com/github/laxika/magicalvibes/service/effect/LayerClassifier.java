@@ -92,6 +92,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenType
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenColorToPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfBecomesCreatureOutsideBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
@@ -111,6 +112,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffe
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromImprintedCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOutsideCommanderColorIdentityEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMonocoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -254,6 +256,8 @@ public final class LayerClassifier {
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
         map.put(GrantSubtypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSubtypesToSelfEffect.class, fixed(Layer.L4_TYPE));
+        map.put(SelfBecomesCreatureOutsideBattlefieldEffect.class,
+                fixedCharacteristicDefining(Layer.L4_TYPE, Layer.L7B_SET_PT));
         map.put(GrantAllCreatureTypesToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeToOwnNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));
@@ -413,6 +417,7 @@ public final class LayerClassifier {
         map.put(ProtectionFromColorsEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromImprintedCardTypesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromColorsOfPermanentsYouControlEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(ProtectionFromColorsOutsideCommanderColorIdentityEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromMulticoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromMonocoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromChosenColorEffect.class, fixed(Layer.L6_ABILITIES));

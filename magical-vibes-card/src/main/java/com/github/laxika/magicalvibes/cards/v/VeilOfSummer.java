@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "198")
+@CardRegistration(set = "SLD", collectorNumber = "1024")
 public class VeilOfSummer extends Card {
 
     public VeilOfSummer() {

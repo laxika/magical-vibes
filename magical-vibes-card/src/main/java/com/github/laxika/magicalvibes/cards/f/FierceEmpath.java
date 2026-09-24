@@ -17,6 +17,9 @@ import java.util.List;
 @CardRegistration(set = "SCG", collectorNumber = "119")
 @CardRegistration(set = "A25", collectorNumber = "171")
 @CardRegistration(set = "DDU", collectorNumber = "10")
+@CardRegistration(set = "SLD", collectorNumber = "751")
+@CardRegistration(set = "SLD", collectorNumber = "767")
+@CardRegistration(set = "SLD", collectorNumber = "2135")
 public class FierceEmpath extends Card {
 
     public FierceEmpath() {

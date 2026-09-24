@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "154")
+@CardRegistration(set = "SLD", collectorNumber = "82")
 public class PharikaGodOfAffliction extends Card {
 
     public PharikaGodOfAffliction() {

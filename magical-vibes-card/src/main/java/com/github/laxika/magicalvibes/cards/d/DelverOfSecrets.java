@@ -13,6 +13,7 @@ import java.util.Set;
 @CardRegistration(set = "MID", collectorNumber = "47")
 @CardRegistration(set = "INR", collectorNumber = "60")
 @CardRegistration(set = "INR", collectorNumber = "457")
+@CardRegistration(set = "SLD", collectorNumber = "722")
 public class DelverOfSecrets extends Card {
 
     public DelverOfSecrets() {

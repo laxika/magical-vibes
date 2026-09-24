@@ -124,6 +124,11 @@ public class PermanentControlSupport {
         boolean addClueToken = applyAdditionalReplacements
                 && totalAmount > 0
                 && hasSolvedClueReplacement(gameData, controllerId);
+        CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
+        List<CreateTokenEffect> additionalAcademyManufactorTokens = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalAcademyManufactorTokens(
+                        gameData, controllerId, evaluatedToken, totalAmount)
+                : List.of();
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
@@ -131,8 +136,8 @@ public class PermanentControlSupport {
         List<Permanent> batch = new ArrayList<>();
         int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
-                totalAmount + additionalMapTokenCount + additionalFrogTokenCount);
-        CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
+                totalAmount + additionalMapTokenCount + additionalFrogTokenCount
+                        + additionalAcademyManufactorTokens.size());
         for (int i = 0; i < totalAmount; i++) {
             tokenBlueprints.add(evaluatedToken);
         }
@@ -142,6 +147,7 @@ public class PermanentControlSupport {
         if (additionalFrogTokenCount > 0) {
             tokenBlueprints.add(additionalFrog);
         }
+        tokenBlueprints.addAll(additionalAcademyManufactorTokens);
 
         for (CreateTokenEffect tokenBlueprint : tokenBlueprints) {
             boolean blueprintIsCreature = tokenBlueprint.primaryType() == CardType.CREATURE;

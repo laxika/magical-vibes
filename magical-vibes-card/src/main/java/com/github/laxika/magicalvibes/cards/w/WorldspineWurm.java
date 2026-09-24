@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "140")
+@CardRegistration(set = "SLD", collectorNumber = "1305")
 public class WorldspineWurm extends Card {
 
     public WorldspineWurm() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilNonlandToHandRepeatIfHighMVEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "86")
+@CardRegistration(set = "SLD", collectorNumber = "159")
 public class DemonlordBelzenlok extends Card {
 
     public DemonlordBelzenlok() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "187")
+@CardRegistration(set = "SLD", collectorNumber = "1608")
 public class AvabruckCaretaker extends Card {
 
     public AvabruckCaretaker() {

@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -79,6 +81,13 @@ public class DiscardTriggerCollectorService {
         UUID triggeringPlayerId = ctx instanceof TriggerContext.Discard discard
                 ? discard.discardingPlayerId() : null;
         return enqueueDiscardTrigger(match, trigger, "conditional effect", triggeringPlayerId);
+    }
+
+    @CollectsTrigger(value = UntapPermanentsEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleSelfUntapOnDiscard(TriggerMatchContext match,
+            UntapPermanentsEffect trigger, TriggerContext ctx) {
+        if (trigger.scope() != TapUntapScope.SELF) return false;
+        return enqueueDiscardTrigger(match, trigger, "untap source");
     }
 
     @CollectsTrigger(value = CyclingTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)

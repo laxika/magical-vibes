@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "101")
+@CardRegistration(set = "SLD", collectorNumber = "1707")
 public class RankleMasterOfPranks extends Card {
 
     public RankleMasterOfPranks() {

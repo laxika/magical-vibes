@@ -43,7 +43,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TurnFaceUpXValueChoice,
         PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
-        PendingInteraction.PlanarCardChoice,
+        PendingInteraction.PlanarCardChoice, PendingInteraction.CommanderChoice,
         PendingInteraction.SpatialMergingCardOrder,
         PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
@@ -132,6 +132,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.NivMizzetColorPairChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.SearchOutsideGameOrExileCardChoice,
+        PendingInteraction.ApplejackToyChoice,
         PendingInteraction.ShuffleCardsFromOutsideGameChoice,
         PendingInteraction.AssimilationAegisCopyChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
@@ -574,6 +575,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validPlaneCardIds, 1, 1);
+        }
+    }
+
+    /** Chooses one commander to move from the command zone to its controller's hand. */
+    record CommanderChoice(UUID playerId, java.util.List<Card> commanders)
+            implements PendingInteraction {
+
+        public CommanderChoice {
+            commanders = java.util.List.copyOf(commanders);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return commanders.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 
@@ -4348,6 +4372,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    /** Selects one owned outside-the-game toy to use as Applejack's token profile. */
+    record ApplejackToyChoice(UUID playerId, java.util.List<Card> toys)
+            implements PendingInteraction {
+
+        public ApplejackToyChoice {
+            toys = java.util.List.copyOf(toys);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return toys.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

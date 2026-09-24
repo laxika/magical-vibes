@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "87")
 @CardRegistration(set = "ME1", collectorNumber = "42")
+@CardRegistration(set = "SLD", collectorNumber = "406")
+@CardRegistration(set = "SLD", collectorNumber = "1842")
 public class MysticRemora extends Card {
 
     public MysticRemora() {

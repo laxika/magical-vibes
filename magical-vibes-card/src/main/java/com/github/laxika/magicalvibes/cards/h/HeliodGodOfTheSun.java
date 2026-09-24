@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "17")
+@CardRegistration(set = "SLD", collectorNumber = "68")
 public class HeliodGodOfTheSun extends Card {
 
     public HeliodGodOfTheSun() {

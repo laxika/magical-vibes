@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "94")
 @CardRegistration(set = "A25", collectorNumber = "128")
+@CardRegistration(set = "SLD", collectorNumber = "422")
 public class EidolonOfTheGreatRevel extends Card {
 
     public EidolonOfTheGreatRevel() {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 @CardRegistration(set = "3ED", collectorNumber = "263")
 @CardRegistration(set = "VMA", collectorNumber = "274")
 @CardRegistration(set = "MPS", collectorNumber = "17")
+@CardRegistration(set = "SLD", collectorNumber = "796")
 public class ManaVault extends Card {
 
     public ManaVault() {

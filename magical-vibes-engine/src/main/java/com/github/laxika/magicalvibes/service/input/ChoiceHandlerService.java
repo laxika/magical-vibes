@@ -296,6 +296,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.SourceTrackedManaColorChoice ctx) {
+            handleSourceTrackedManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
@@ -785,6 +790,10 @@ public class ChoiceHandlerService {
             handleEachPlayerSacrificeOrDiscardChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.VillainousChoice ctx) {
+            handleVillainousChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.WintersChillPaymentChoice ctx) {
             handleWintersChillPaymentChoice(gameData, player, colorName, ctx);
             return;
@@ -1258,6 +1267,7 @@ public class ChoiceHandlerService {
                 if (ctx.fromTreasureSource()) {
                     manaPool.addTreasureMana(manaColor, 1);
                 }
+                tagArtifactSourceMana(gameData, manaPool, ctx, manaColor, 1);
             }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
@@ -1284,6 +1294,9 @@ public class ChoiceHandlerService {
                 }
                 List<String> colors = nextColors.stream().map(Enum::name).toList();
                 nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
+                if (ctx.sourcePermanentId() != null) {
+                    nextCtx = nextCtx.withSourcePermanentId(ctx.sourcePermanentId());
+                }
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -1402,6 +1415,7 @@ public class ChoiceHandlerService {
             if (ctx.fromBasicLandSource()) {
                 manaPool.addBasicLandManaTag(manaColor, amount);
             }
+            tagArtifactSourceMana(gameData, manaPool, ctx, manaColor, amount);
             resolveProducedManaTriggers(gameData, manaColor);
             // The mana this activation owed has now landed, so the parked snapshot can become a
             // real revertable entry — this is what lets "cancel casting" untap a Birds of Paradise.
@@ -1438,6 +1452,55 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void tagArtifactSourceMana(GameData gameData, ManaPool manaPool,
+                                       ChoiceContext.ManaColorChoice context,
+                                       ManaColor color, int amount) {
+        if (context.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+            if (source != null && gameQueryService.isArtifact(gameData, source)) {
+                manaPool.addSpellCastTriggerMana(source.getId(), color, amount);
+            }
+        }
+    }
+
+    private void handleSourceTrackedManaColorChosen(
+            GameData gameData, Player player, String colorName, List<String> options,
+            ChoiceContext.SourceTrackedManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor chosenColor = ManaColor.valueOf(colorName);
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
+        ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
+        manaPool.add(manaColor, ctx.amount());
+        if (ctx.fromSnowSource()) {
+            manaPool.addSnowManaTag(manaColor, ctx.amount());
+        }
+        if (ctx.fromCaveSource()) {
+            manaPool.addCaveManaTag(manaColor, ctx.amount());
+        }
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, ctx.amount());
+        }
+        manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, ctx.amount());
+        resolveProducedManaTriggers(gameData, manaColor);
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2594,8 +2657,16 @@ public class ChoiceHandlerService {
     private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
                                                     ChooseOneEffect.ChooseOneOption chosen) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        boolean combatContextPlayerTarget = pendingEntry != null
+                && pendingEntry.isNonTargeting()
+                && pendingEntry.getTargetId() != null
+                && gameData.playerIds.contains(pendingEntry.getTargetId())
+                && chosen.effects().stream().anyMatch(effect ->
+                        effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))
+                && chosen.effects().stream().noneMatch(effect ->
+                        effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER));
         if (pendingEntry == null
-                || pendingEntry.getTargetId() != null
+                || (pendingEntry.getTargetId() != null && !combatContextPlayerTarget)
                 || !pendingEntry.getTargetIds().isEmpty()) {
             return false;
         }
@@ -2611,9 +2682,10 @@ public class ChoiceHandlerService {
                 ? null
                 : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         TargetFilter targetFilter = chosen.targetFilter();
+        UUID defendingPlayerId = combatContextPlayerTarget ? pendingEntry.getTargetId() : null;
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                 gameData, chosen.effects(), targetFilter, ctx.controllerId(), ctx.sourceCard(),
-                TriggerTargetCollector.Options.ATTACK, source);
+                TriggerTargetCollector.Options.ATTACK, source, defendingPlayerId);
         if (result.validTargets().isEmpty()) {
             return false;
         }
@@ -2789,6 +2861,9 @@ public class ChoiceHandlerService {
                 .filter(o -> o.label().equals(chosenLabel))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+        if (ctx.chosenLabels().contains(chosen.label())) {
+            throw new IllegalArgumentException("Mode already chosen: " + chosen.label());
+        }
 
         gameData.interaction.clearAwaitingInput();
 
@@ -2804,11 +2879,18 @@ public class ChoiceHandlerService {
 
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (source != null) {
-            source.getChosenModeLabels().add(chosen.label());
+            List<String> chosenLabels = new ArrayList<>(ctx.chosenLabels());
+            chosenLabels.add(chosen.label());
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
             log.info("Game {} - {} chooses as-enters mode \"{}\" for {}", gameData.id,
                     player.getUsername(), chosen.label(), ctx.sourceCard().getName());
+            if (chosenLabels.size() < ctx.effect().choicesRequired()) {
+                playerInputService.beginChooseModeOnEnterChoice(gameData, player.getId(), ctx.sourceCard(),
+                        source.getId(), modeChoice.modes(), ctx.effect().choicesRequired(), chosenLabels);
+                return;
+            }
+            source.getChosenModeLabels().addAll(chosenLabels);
             battlefieldEntryService.processCreatureETBEffects(
                     gameData, player.getId(), source.getCard(), null, false);
         }
@@ -3627,6 +3709,26 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         gameData.eachPlayerSacrificeOrDiscard.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen,
+                ctx.sourceCardName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Records Dr. Eggman's villainous choice and resumes its parked resolution. */
+    private void handleVillainousChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.VillainousChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid villainous choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.villainousChoice.chosenMode = chosen;
 
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));

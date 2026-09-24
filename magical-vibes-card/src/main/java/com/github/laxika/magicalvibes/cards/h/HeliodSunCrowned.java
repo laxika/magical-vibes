@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "18")
+@CardRegistration(set = "SLD", collectorNumber = "214")
+@CardRegistration(set = "SLD", collectorNumber = "2165")
 public class HeliodSunCrowned extends Card {
 
     public HeliodSunCrowned() {

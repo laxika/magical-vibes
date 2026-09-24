@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "257")
+@CardRegistration(set = "SLD", collectorNumber = "1056")
 public class TalismanOfUnity extends Card {
 
     public TalismanOfUnity() {

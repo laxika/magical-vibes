@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "178")
+@CardRegistration(set = "SLD", collectorNumber = "464")
 public class DepalaPilotExemplar extends Card {
 
     public DepalaPilotExemplar() {

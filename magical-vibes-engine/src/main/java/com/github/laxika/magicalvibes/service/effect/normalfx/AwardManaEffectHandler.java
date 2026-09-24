@@ -63,7 +63,8 @@ public class AwardManaEffectHandler implements NormalEffectHandlerBean {
         ManaPool pool = gameData.playerManaPools.get(controllerId);
         ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, controllerId, e.color());
         pool.add(effectiveColor, amount);
-        if (source != null && e.tracksProducingSourceForSpellCastTriggers()) {
+        if (source != null && (e.tracksProducingSourceForSpellCastTriggers()
+                || gameQueryService.isArtifact(gameData, source))) {
             pool.addSpellCastTriggerMana(source.getId(), effectiveColor, amount);
         }
         if (source != null && gameQueryService.isCreature(gameData, source)) {

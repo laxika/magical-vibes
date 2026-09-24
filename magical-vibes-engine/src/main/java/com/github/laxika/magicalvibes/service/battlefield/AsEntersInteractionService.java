@@ -309,9 +309,14 @@ public class AsEntersInteractionService {
                         gameData, card, justEntered.getId(), modeChoice.modes())) {
                     return;
                 }
-            } else if (justEntered.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+            } else if (justEntered.getChosenModeLabels().stream()
+                    .filter(modeChoice.modes()::contains)
+                    .count() < modeChoice.choicesRequired()) {
                 playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
-                        justEntered.getId(), modeChoice.modes());
+                        justEntered.getId(), modeChoice.modes(), modeChoice.choicesRequired(),
+                        justEntered.getChosenModeLabels().stream()
+                                .filter(modeChoice.modes()::contains)
+                                .toList());
                 return;
             }
         }

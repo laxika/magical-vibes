@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "79")
+@CardRegistration(set = "SLD", collectorNumber = "1187")
 public class BolassCitadel extends Card {
 
     public BolassCitadel() {

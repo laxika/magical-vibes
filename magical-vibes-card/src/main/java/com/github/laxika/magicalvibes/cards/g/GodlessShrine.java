@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "GPT", collectorNumber = "157")
 @CardRegistration(set = "EOE", collectorNumber = "254")
 @CardRegistration(set = "EXP", collectorNumber = "11")
+@CardRegistration(set = "SLD", collectorNumber = "128")
+@CardRegistration(set = "SLD", collectorNumber = "933")
 public class GodlessShrine extends Card {
 
     public GodlessShrine() {

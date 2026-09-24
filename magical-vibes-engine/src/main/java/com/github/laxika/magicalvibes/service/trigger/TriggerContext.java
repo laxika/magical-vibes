@@ -172,6 +172,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for triggers caused by choosing a Ring-bearer. */
+    record RingTempted(UUID temptingPlayerId, UUID ringBearerId) implements TriggerContext {}
+
     /** Context for global triggers that watch any permanent being tapped for mana. */
     record PermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
                                Set<ManaColor> producedManaTypes) implements TriggerContext {
@@ -231,6 +234,10 @@ public sealed interface TriggerContext {
 
     /** Context for global permanent-sacrificed triggers. */
     record PermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+
+    /** Context for global noncreature-artifact sacrifice or destruction triggers. */
+    record NoncreatureArtifactSacrificedOrDestroyed(UUID artifactControllerId, Card artifactCard)
+            implements TriggerContext {}
 
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
@@ -474,11 +481,17 @@ public sealed interface TriggerContext {
     record EquippedCreatureDeath(UUID dyingCreatureId,
                                  UUID dyingCreatureControllerId,
                                  Card dyingCard,
-                                 int dyingCreaturePower) implements TriggerContext {
+                                 int dyingCreaturePower,
+                                 Permanent dyingPermanent) implements TriggerContext {
 
         public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
             this(dyingCreatureId, dyingCreatureControllerId, dyingCard,
-                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0);
+                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0, null);
+        }
+
+        public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard,
+                                     int dyingCreaturePower) {
+            this(dyingCreatureId, dyingCreatureControllerId, dyingCard, dyingCreaturePower, null);
         }
 
         @Override

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "20")
+@CardRegistration(set = "SLD", collectorNumber = "1253")
 public class StoneforgeMystic extends Card {
 
     public StoneforgeMystic() {

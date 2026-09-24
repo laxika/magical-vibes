@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "NPH", collectorNumber = "57")
 @CardRegistration(set = "MM2", collectorNumber = "79")
 @CardRegistration(set = "MD1", collectorNumber = "25")
+@CardRegistration(set = "SLD", collectorNumber = "321")
+@CardRegistration(set = "SLD", collectorNumber = "1674")
 public class Dismember extends Card {
 
     public Dismember() {

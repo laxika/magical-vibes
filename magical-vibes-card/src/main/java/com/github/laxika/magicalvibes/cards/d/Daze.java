@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 @CardRegistration(set = "EMA", collectorNumber = "44")
 @CardRegistration(set = "JVC", collectorNumber = "23")
 @CardRegistration(set = "MP2", collectorNumber = "12")
+@CardRegistration(set = "SLD", collectorNumber = "1934")
 public class Daze extends Card {
 
     public Daze() {

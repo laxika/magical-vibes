@@ -183,6 +183,8 @@ public class GraveyardTargetOperationState {
     public UUID defendingPlayerChoosesCardFromGraveyardChosenCardId;
     /** Whether a resolution-time attack-trigger graveyard choice is awaiting an answer. */
     public boolean resolutionTimeDefendingPlayerChoosesCardFromGraveyardResume;
+    /** In-progress Dawnbreak Reclaimer cross-graveyard choices. */
+    public DawnbreakReclaimerContext dawnbreakReclaimer;
     /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
     public boolean resolutionTimeOpponentChoosesCardToHandResume;
     /** Opponent selected by the controller for the resolution-time graveyard choice. */
@@ -252,5 +254,16 @@ public class GraveyardTargetOperationState {
         public MilledCreaturesToHandContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
+    }
+
+    public enum DawnbreakReclaimerChoiceStage {
+        OPPONENT_CARD,
+        CONTROLLER_CARD,
+        READY
+    }
+
+    public record DawnbreakReclaimerContext(UUID opponentCardId, UUID opponentPlayerId,
+                                             UUID controllerCardId,
+                                             DawnbreakReclaimerChoiceStage stage) {
     }
 }

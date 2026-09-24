@@ -521,6 +521,20 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each player chooses up to one qualifying permanent controlled by an opponent. */
+    record EachPlayerChoosesOpponentPermanentToDestroy(List<UUID> remainingPlayerIds,
+                                                       List<UUID> chosenIds,
+                                                       PermanentPredicate filter,
+                                                       UUID sourceCardId,
+                                                       UUID sourceControllerId,
+                                                       String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesOpponentPermanentToDestroy {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
     /** Return the chosen permanents {@code targetPlayerId} controls to their owner's hand. */
     record CombatDamageBounce(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }

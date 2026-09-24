@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "61")
+@CardRegistration(set = "SLD", collectorNumber = "169")
 public class CryptGhast extends Card {
 
     public CryptGhast() {

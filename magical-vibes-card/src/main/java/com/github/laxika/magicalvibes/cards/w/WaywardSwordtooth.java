@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "150")
+@CardRegistration(set = "SLD", collectorNumber = "1392")
 public class WaywardSwordtooth extends Card {
 
     public WaywardSwordtooth() {

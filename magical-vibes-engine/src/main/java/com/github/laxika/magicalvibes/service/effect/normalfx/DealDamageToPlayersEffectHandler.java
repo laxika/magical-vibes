@@ -48,7 +48,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         try {
             switch (e.recipient()) {
                 case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER,
-                     TRIGGERING_PLAYER ->
+                     TRIGGERING_PLAYER, CHOSEN_PLAYER ->
                         resolveSingleTargetPlayer(gameData, entry, e);
                 case TRIGGERING_PERMANENT_CONTROLLER -> resolveTriggeringPermanentController(gameData, entry, e);
                 case CONTROLLER -> resolveController(gameData, entry, e);

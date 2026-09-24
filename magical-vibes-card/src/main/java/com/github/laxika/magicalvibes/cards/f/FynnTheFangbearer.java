@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "170")
+@CardRegistration(set = "SLD", collectorNumber = "1449")
 public class FynnTheFangbearer extends Card {
 
     public FynnTheFangbearer() {

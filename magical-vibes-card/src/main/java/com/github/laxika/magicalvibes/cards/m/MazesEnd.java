@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "152")
+@CardRegistration(set = "SLD", collectorNumber = "1834")
 public class MazesEnd extends Card {
 
     public MazesEnd() {

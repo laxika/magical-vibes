@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 
 @CardRegistration(set = "FRF", collectorNumber = "55")
+@CardRegistration(set = "SLD", collectorNumber = "2190")
 public class TemporalTrespass extends Card {
 
     public TemporalTrespass() {

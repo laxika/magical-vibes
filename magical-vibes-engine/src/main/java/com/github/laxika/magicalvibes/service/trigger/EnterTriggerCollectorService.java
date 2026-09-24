@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -977,10 +978,11 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.sourceCard();
         int eventValue = mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect
                 ? pe.enteringCard().getManaValue() : 0;
         if (mayPay.sourceIsTriggeringPermanent()) {
@@ -1324,7 +1326,9 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
                     slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    slot = EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     })
     private boolean handleAllyNontokenCreatureCreateTokenCopy(TriggerMatchContext match,
             CreateTokenCopyOfTargetPermanentEffect effect, TriggerContext ctx) {
@@ -1354,6 +1358,41 @@ public class EnterTriggerCollectorService {
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (create token copy of entering creature)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
+     * Faerie Artisans: exile its previously created tokens before making the new entering-creature
+     * copy. The entering creature is fixed at trigger time rather than chosen on resolution.
+     */
+    @CollectsTrigger(value = ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect.class,
+            slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleOpponentCreatureExileTrackedTokensAndCreateTokenCopy(
+            TriggerMatchContext match, ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+        Card sourceCard = match.sourceCard();
+        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    enteringPermanentId,
+                    sourcePermanentId);
+            entry.setSourcePlanarObject(match.sourcePlanarObject() == null
+                    ? null : match.sourcePlanarObject().copy());
+            match.gameData().stack.add(entry);
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (exile old token copies and create a new copy)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }

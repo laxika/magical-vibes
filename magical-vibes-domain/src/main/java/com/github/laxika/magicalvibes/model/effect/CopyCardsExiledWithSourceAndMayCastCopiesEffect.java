@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /** Copies cards exiled with the source permanent and offers the copies to the controller. */
-public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, CopyCastCost castCost)
+public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, CopyCastCost castCost,
+                                                               boolean requireKickCounter,
+                                                               boolean onlyCardsOwnedByController)
         implements CardEffect {
 
     public enum CopyCastCost {
@@ -16,6 +18,10 @@ public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, C
         }
     }
 
+    public CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, CopyCastCost castCost) {
+        this(copyAll, castCost, false, false);
+    }
+
     public static CopyCardsExiledWithSourceAndMayCastCopiesEffect oneForNormalCost() {
         return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(false, CopyCastCost.NORMAL);
     }
@@ -26,5 +32,9 @@ public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, C
 
     public static CopyCardsExiledWithSourceAndMayCastCopiesEffect allForFree() {
         return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(true, CopyCastCost.FREE);
+    }
+
+    public static CopyCardsExiledWithSourceAndMayCastCopiesEffect allKickCounterCardsForNormalCost() {
+        return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(true, CopyCastCost.NORMAL, true, true);
     }
 }

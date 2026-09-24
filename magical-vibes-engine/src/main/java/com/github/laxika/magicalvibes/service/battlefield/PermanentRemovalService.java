@@ -193,7 +193,15 @@ public class PermanentRemovalService {
     }
 
     public boolean sacrificePermanentToGraveyard(GameData gameData, Permanent target) {
-        return removePermanentToGraveyard(gameData, target, false, false, null, true);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        boolean wasNoncreatureArtifact = gameQueryService.isArtifact(gameData, target)
+                && !gameQueryService.isCreature(gameData, target);
+        boolean removed = removePermanentToGraveyard(gameData, target, false, false, null, true);
+        if (removed && wasNoncreatureArtifact && controllerId != null) {
+            triggerCollectionService.checkAnyNoncreatureArtifactSacrificedOrDestroyedTriggers(
+                    gameData, controllerId, target.getCard());
+        }
+        return removed;
     }
 
     /**
@@ -201,7 +209,25 @@ public class PermanentRemovalService {
      * applied destruction-specific replacement checks such as indestructible and regeneration.
      */
     public boolean destroyPermanentToGraveyard(GameData gameData, Permanent target) {
-        return removePermanentToGraveyard(gameData, target, true);
+        return destroyPermanentToGraveyard(gameData, target, true);
+    }
+
+    /** Moves a permanent to its graveyard as destruction from a state-based action. */
+    public boolean destroyPermanentByStateBasedAction(GameData gameData, Permanent target) {
+        return destroyPermanentToGraveyard(gameData, target, false);
+    }
+
+    private boolean destroyPermanentToGraveyard(GameData gameData, Permanent target,
+                                                boolean destroyedBySpellOrAbility) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        boolean wasNoncreatureArtifact = gameQueryService.isArtifact(gameData, target)
+                && !gameQueryService.isCreature(gameData, target);
+        boolean removed = removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility);
+        if (removed && wasNoncreatureArtifact && controllerId != null) {
+            triggerCollectionService.checkAnyNoncreatureArtifactSacrificedOrDestroyedTriggers(
+                    gameData, controllerId, target.getCard());
+        }
+        return removed;
     }
 
     public boolean removePermanentToGraveyardAfterDecliningLibraryReplacement(GameData gameData,
@@ -593,6 +619,7 @@ public class PermanentRemovalService {
                 gameData, leavingCards.size(), controllerId, wasCreature, creatureCards);
         triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
+        triggerCollectionService.checkCreatureExiledFromBattlefieldTriggers(gameData, target, wasCreature);
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -1153,6 +1180,9 @@ public class PermanentRemovalService {
             if (effectiveDamage > 0) {
                 target.addMarkedDamage(sourcePermanentId, effectiveDamage);
                 recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
+                if (gameQueryService.isCreature(gameData, target) && sourcePermanentId != null) {
+                    gameData.recordDamageDealtToCreatureBySource(sourcePermanentId, target.getId());
+                }
         triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
                 if (sourcePermanentId != null) {
                     gameData.recordDamageRecipientBySource(sourcePermanentId, target.getId());
@@ -1176,6 +1206,9 @@ public class PermanentRemovalService {
 
         target.addMarkedDamage(sourcePermanentId, effectiveDamage);
         recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
+        if (gameQueryService.isCreature(gameData, target) && sourcePermanentId != null) {
+            gameData.recordDamageDealtToCreatureBySource(sourcePermanentId, target.getId());
+        }
 
         triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
@@ -1640,6 +1673,7 @@ public class PermanentRemovalService {
         if (exiledFromBattlefield > 0) {
             triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
+            triggerCollectionService.checkCreatureExiledFromBattlefieldTriggers(gameData, target, wasCreature);
         }
         if (wentToGraveyard) {
             triggerCollectionService.checkHauntedCreatureDeathTriggers(gameData, target);
@@ -1702,7 +1736,7 @@ public class PermanentRemovalService {
                     triggerCollectionService.checkOpponentCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath, dyingToughnessAtDeath);
                     triggerCollectionService.checkEquippedCreatureDeathTriggers(
-                            gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath);
+                            gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath, target);
                     triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                     collectUndyingTrigger(gameData, target, ownerId, hadUndying);
                     collectPersistTrigger(gameData, target, ownerId, hadPersist);

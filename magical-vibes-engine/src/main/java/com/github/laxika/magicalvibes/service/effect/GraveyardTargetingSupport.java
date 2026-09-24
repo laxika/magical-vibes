@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastE
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardByExperienceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
@@ -136,6 +138,10 @@ public class GraveyardTargetingSupport {
             return new Target(exileThen.filter(), GraveyardSearchScope.ALL_GRAVEYARDS,
                     "to exile", 1, 1);
         }
+        if (effect instanceof ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect discovery) {
+            return new Target(discovery.filter(), GraveyardSearchScope.ALL_GRAVEYARDS,
+                    "to exile", 1, 0);
+        }
         if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copy) {
             GraveyardSearchScope scope = copy.targetSpec().graveyardScope().orElseThrow();
             return new Target(copy.filter(), scope, "to exile and copy", 1, 1);
@@ -178,6 +184,10 @@ public class GraveyardTargetingSupport {
                     ? Integer.MAX_VALUE : targetCards.maxTargets();
             return new Target(targetCards.filter(), targetCards.source(),
                     "into its owner's library", maxTargets, 0);
+        }
+        if (effect instanceof ReturnTargetCardFromGraveyardByExperienceEffect returnByExperience) {
+            return new Target(returnByExperience.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                    "to the battlefield or your hand", 1, 1);
         }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             String destination = switch (returnEffect.destination()) {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetCreatureUntilSo
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ME1", collectorNumber = "79")
+@CardRegistration(set = "SLD", collectorNumber = "1794")
 public class Oubliette extends Card {
 
     public Oubliette() {

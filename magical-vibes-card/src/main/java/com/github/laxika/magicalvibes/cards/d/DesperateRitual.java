@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 @CardRegistration(set = "CHK", collectorNumber = "163")
 @CardRegistration(set = "MMA", collectorNumber = "110")
 @CardRegistration(set = "DDS", collectorNumber = "14")
+@CardRegistration(set = "SLD", collectorNumber = "1984")
 public class DesperateRitual extends Card {
 
     public DesperateRitual() {

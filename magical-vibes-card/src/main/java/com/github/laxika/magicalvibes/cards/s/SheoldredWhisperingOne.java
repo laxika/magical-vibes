@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "NPH", collectorNumber = "73")
 @CardRegistration(set = "IMA", collectorNumber = "108")
+@CardRegistration(set = "SLD", collectorNumber = "211")
 public class SheoldredWhisperingOne extends Card {
 
     public SheoldredWhisperingOne() {

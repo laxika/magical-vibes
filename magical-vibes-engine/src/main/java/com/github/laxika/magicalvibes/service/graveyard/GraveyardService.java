@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillBonusEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -149,8 +150,10 @@ public class GraveyardService {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         gameData.lastMilledCardColorSymbols.clear();
         int additionalCards = 0;
+        int millMultiplier = 1;
         if (count > 0) {
             int[] bonus = {0};
+            int[] multiplier = {1};
             gameData.forEachPermanent((controllerId, permanent) -> {
                 if (controllerId.equals(targetPlayerId)
                         || permanent.isFaceDown()
@@ -161,11 +164,15 @@ public class GraveyardService {
                     if (effect instanceof ControllerOpponentMillBonusEffect millBonus) {
                         bonus[0] += millBonus.amount();
                     }
+                    if (effect instanceof ControllerOpponentMillMultiplyingEffect multiplyingEffect) {
+                        multiplier[0] *= multiplyingEffect.millMultiplier();
+                    }
                 }
             });
             additionalCards = bonus[0];
+            millMultiplier = multiplier[0];
         }
-        int cardsToMill = Math.min(count + additionalCards, deck.size());
+        int cardsToMill = Math.min((count + additionalCards) * millMultiplier, deck.size());
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
@@ -582,7 +589,11 @@ public class GraveyardService {
         OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
                 gameData, ownerId, effectiveCardControllerId);
         if (opponentExileReplacement != null) {
-            if (opponentExileReplacement.effect().trackWithSource()) {
+            if (opponentExileReplacement.effect().addVoidCounter()) {
+                gameData.addToExileWithVoidCounter(ownerId, card,
+                        opponentExileReplacement.effect().trackWithSource()
+                                ? opponentExileReplacement.sourcePermanentId() : null);
+            } else if (opponentExileReplacement.effect().trackWithSource()) {
                 exileService.exileCard(gameData, ownerId, card,
                         opponentExileReplacement.sourcePermanentId());
             } else {
@@ -618,7 +629,7 @@ public class GraveyardService {
         updateThisCombatGraveyardTracking(gameData, ownerId, card);
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone,
                 battlefieldSnapshot, creatureDeathTriggersSuppressed);
-        updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
+        updateFromAnywhereThisTurnTracking(gameData, ownerId, card, sourceZone);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
         collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
@@ -1407,11 +1418,17 @@ public class GraveyardService {
         return false;
     }
 
-    private void updateFromAnywhereThisTurnTracking(GameData gameData, UUID ownerId, Card card) {
+    private void updateFromAnywhereThisTurnTracking(GameData gameData, UUID ownerId, Card card,
+                                                    Zone sourceZone) {
         if (!card.isToken()) {
             gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                     .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
                     .add(card.getId());
+            if (sourceZone == Zone.LIBRARY) {
+                gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                        .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
+                        .add(card.getId());
+            }
             if (card.hasType(CardType.CREATURE)) {
                 gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn
                         .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
@@ -1708,6 +1725,10 @@ public class GraveyardService {
                             gameData, pending.getKey());
                 }
             }
+            for (var pending : gameData.graveyardLeaveNotificationPendingInstantOrSorceryCardCounts.entrySet()) {
+                triggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers(
+                        gameData, pending.getKey(), pending.getValue());
+            }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners) {
                 triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
             }
@@ -1718,6 +1739,7 @@ public class GraveyardService {
             gameData.graveyardOrBattlefieldExileNotificationPending = false;
             gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
             gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
+            gameData.graveyardLeaveNotificationPendingInstantOrSorceryCardCounts.clear();
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
         }
     }
@@ -1754,6 +1776,9 @@ public class GraveyardService {
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, 1);
         }
+        if (isInstantOrSorceryCard(leavingCard)) {
+            notifyInstantOrSorceryCardsLeftGraveyard(gameData, ownerId, 1);
+        }
         if (isArtifactOrCreatureCard(leavingCard)) {
             notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
         }
@@ -1772,6 +1797,12 @@ public class GraveyardService {
                 .count();
         if (creatureCardCount > 0) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, creatureCardCount);
+        }
+        int instantOrSorceryCardCount = (int) leavingCards.stream()
+                .filter(this::isInstantOrSorceryCard)
+                .count();
+        if (instantOrSorceryCardCount > 0) {
+            notifyInstantOrSorceryCardsLeftGraveyard(gameData, ownerId, instantOrSorceryCardCount);
         }
         if (leavingCards.stream().anyMatch(this::isArtifactOrCreatureCard)) {
             notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
@@ -1862,6 +1893,16 @@ public class GraveyardService {
         }
     }
 
+    private void notifyInstantOrSorceryCardsLeftGraveyard(GameData gameData, UUID ownerId, int count) {
+        if (gameData.graveyardLeaveNotificationDepth > 0) {
+            gameData.graveyardLeaveNotificationPendingInstantOrSorceryCardCounts.merge(
+                    ownerId, count, Integer::sum);
+            return;
+        }
+        triggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers(
+                gameData, ownerId, count);
+    }
+
     private void notifyArtifactOrCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId) {
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.add(ownerId);
@@ -1875,6 +1916,11 @@ public class GraveyardService {
         return card != null
                 && !card.isToken()
                 && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE));
+    }
+
+    private boolean isInstantOrSorceryCard(Card card) {
+        return card != null && !card.isToken()
+                && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY));
     }
 
     /**

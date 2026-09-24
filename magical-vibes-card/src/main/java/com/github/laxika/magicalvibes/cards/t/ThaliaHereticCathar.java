@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "300")
 @CardRegistration(set = "INR", collectorNumber = "351")
 @CardRegistration(set = "EMN", collectorNumber = "46")
+@CardRegistration(set = "SLD", collectorNumber = "1428")
 public class ThaliaHereticCathar extends Card {
 
     public ThaliaHereticCathar() {

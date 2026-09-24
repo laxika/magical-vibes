@@ -125,7 +125,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `ExploreTriggerTarget` queue for target selection |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
-| ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java` | CopyCreatureCardInGraveyardOnEnterEffect(name, power, toughness, additionalSubtypes) — the chosen card remains in its graveyard until the reflexive exile trigger resolves |
+| ETB temporary creature copy | `c/CursedMirror.java` | `CopyPermanentOnEnterEffect.temporaryCopy(...)` — optional creature copy with haste, reverted during cleanup |
+| ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java`, `t/TheFourteenthDoctor.java` | CopyCreatureCardInGraveyardOnEnterEffect(...) — supports filtered graveyard choices, optional haste, and configurable post-entry exile |
+| ETB exile two graveyard creatures, copy one, and add counters for the other’s power | `t/TheMimeoplasm.java` | MimeoplasmCopyOnEnterEffect — accept the replacement, choose two creature cards from any graveyards, choose one to copy, exile both before entry, and give the copy additional +1/+1 counters equal to the other card’s power |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |
 | ETB copy with added subtype + granted trigger | `p/PhantasmalImage.java` | CopyPermanentOnEnterEffect(filter, typeLabel, Set.of(ILLUSION), Map.of(ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, List.of(new SacrificeSelfEffect()))) |

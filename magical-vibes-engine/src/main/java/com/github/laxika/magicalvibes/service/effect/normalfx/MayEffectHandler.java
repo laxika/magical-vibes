@@ -56,7 +56,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         gameData.resolvingMayEffectFromStack = true;
         UUID choicePlayerId = switch (e.choicePlayer()) {
             case CONTROLLER -> entry.getControllerId();
-            case ACTIVE_PLAYER -> entry.getActivePlayerId();
+            // Triggered abilities snapshot the active player on their stack entry. Activated
+            // abilities do not need that trigger snapshot, so use the current active player for
+            // effects such as Obeka's "the player whose turn it is may ...".
+            case ACTIVE_PLAYER -> entry.getActivePlayerId() != null
+                    ? entry.getActivePlayerId() : gameData.activePlayerId;
             case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry.getAttackedTargetId());
             case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
             case TARGET_PERMANENT_CONTROLLER -> targetId == null

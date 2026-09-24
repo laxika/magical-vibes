@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "137")
+@CardRegistration(set = "SLD", collectorNumber = "137")
 public class Voidslime extends Card {
 
     public Voidslime() {

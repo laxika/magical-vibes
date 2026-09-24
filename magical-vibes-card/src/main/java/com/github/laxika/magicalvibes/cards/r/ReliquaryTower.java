@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 @CardRegistration(set = "CON", collectorNumber = "143")
 @CardRegistration(set = "M13", collectorNumber = "227")
 @CardRegistration(set = "M19", collectorNumber = "254")
+@CardRegistration(set = "SLD", collectorNumber = "695")
+@CardRegistration(set = "SLD", collectorNumber = "1536")
 public class ReliquaryTower extends Card {
 
     public ReliquaryTower() {

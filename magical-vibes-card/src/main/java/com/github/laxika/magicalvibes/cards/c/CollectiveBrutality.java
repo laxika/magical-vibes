@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "308")
 @CardRegistration(set = "INR", collectorNumber = "375")
 @CardRegistration(set = "EMN", collectorNumber = "85")
+@CardRegistration(set = "SLD", collectorNumber = "1085")
 public class CollectiveBrutality extends Card {
 
     public CollectiveBrutality() {

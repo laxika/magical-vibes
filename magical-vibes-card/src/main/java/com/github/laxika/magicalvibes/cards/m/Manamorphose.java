@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "211")
 @CardRegistration(set = "MMA", collectorNumber = "191")
+@CardRegistration(set = "SLD", collectorNumber = "1746")
 public class Manamorphose extends Card {
 
     public Manamorphose() {

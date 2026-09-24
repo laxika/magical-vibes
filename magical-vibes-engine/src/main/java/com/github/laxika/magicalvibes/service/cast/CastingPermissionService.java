@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithCroakCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithVoidCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromAnyLibraryTopEffect;
@@ -712,6 +713,11 @@ public class CastingPermissionService {
     }
 
     public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card) {
+        return isSpellCastingRestrictedByMostRecentSpell(gameData, card, null);
+    }
+
+    public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card,
+                                                              Integer chosenX) {
         Card mostRecentSpell = gameData.getMostRecentSpellCastThisTurn();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -719,7 +725,7 @@ public class CastingPermissionService {
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof SpellCastingRestrictionEffect restriction
-                            && restriction.preventsCasting(perm, mostRecentSpell, card)) {
+                            && restriction.preventsCasting(perm, mostRecentSpell, card, chosenX)) {
                         return true;
                     }
                 }
@@ -1950,8 +1956,13 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof AnyManaTypeCastEffect anyMana
+                        && ((!anyMana.appliesToNonOwnedSpellsOnly()
                         && (cardHasAnyType(card, anyMana.spellTypes())
-                        || cardHasAnySubtype(card, anyMana.spellSubtypes()))) {
+                        || cardHasAnySubtype(card, anyMana.spellSubtypes())))
+                        || (anyMana.appliesToNonOwnedSpellsOnly()
+                        && !card.hasType(CardType.LAND)
+                        && card.getOwnerId() != null
+                        && !playerId.equals(card.getOwnerId())))) {
                     return true;
                 }
             }
@@ -1993,6 +2004,11 @@ public class CastingPermissionService {
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
             if (hasCroakCounterPermission(gameData, playerId, entry.card().getId())) {
+                castableIds.add(entry.card().getId());
+            }
+        }
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (hasVoidCounterPermission(gameData, playerId, entry.card().getId())) {
                 castableIds.add(entry.card().getId());
             }
         }
@@ -2092,6 +2108,7 @@ public class CastingPermissionService {
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasIceCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasCroakCounterPermission(gameData, playerId, cardId)) return true;
+        if (hasVoidCounterPermission(gameData, playerId, cardId)) return true;
         if (hasCollectionCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
@@ -2549,6 +2566,13 @@ public class CastingPermissionService {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null || !playerId.equals(entry.ownerId())) return false;
         return controlsStatic(gameData, playerId, AllowPlayAndCastCardsExiledWithCroakCountersEffect.class);
+    }
+
+    private boolean hasVoidCounterPermission(GameData gameData, UUID playerId, UUID cardId) {
+        if (!gameData.exiledCardsWithVoidCounters.contains(cardId)) return false;
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null || playerId.equals(entry.ownerId())) return false;
+        return controlsStatic(gameData, playerId, AllowPlayAndCastCardsExiledWithVoidCountersEffect.class);
     }
 
     private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,

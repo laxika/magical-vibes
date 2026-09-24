@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "152")
+@CardRegistration(set = "SLD", collectorNumber = "73")
 public class KruphixGodOfHorizons extends Card {
 
     public KruphixGodOfHorizons() {

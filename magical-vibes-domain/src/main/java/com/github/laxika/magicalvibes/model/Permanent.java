@@ -206,6 +206,8 @@ public class Permanent {
     /** True while this permanent has the suspected designation. Cleared only by a leave-and-return
      *  event or an effect that specifically makes it no longer suspected. */
     @Setter private boolean suspected;
+    /** True while this permanent represents a commander. */
+    @Setter private boolean commander;
     /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
      *  effect (e.g. Act of Heroism). Stacks on top of any static "can block an additional creature"
      *  grants counted in {@code CombatBlockService}. Cleared at end of turn by {@link #resetModifiers()}. */
@@ -764,6 +766,7 @@ public class Permanent {
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantBlockThisCombat = source.cantBlockThisCombat;
         this.suspected = source.suspected;
+        this.commander = source.commander;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
         this.mustAttackThisCombat = source.mustAttackThisCombat;

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEqualTo
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "107")
+@CardRegistration(set = "SLD", collectorNumber = "262")
 public class HeartlessHidetsugu extends Card {
 
     public HeartlessHidetsugu() {

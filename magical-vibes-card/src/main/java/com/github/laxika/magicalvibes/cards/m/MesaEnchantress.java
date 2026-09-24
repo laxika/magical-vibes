@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "M12", collectorNumber = "25")
 @CardRegistration(set = "PLC", collectorNumber = "26")
 @CardRegistration(set = "EMA", collectorNumber = "19")
+@CardRegistration(set = "SLD", collectorNumber = "282")
 public class MesaEnchantress extends Card {
 
     public MesaEnchantress() {

@@ -280,15 +280,16 @@ public class ScryfallOracleLoader implements OracleLoader {
     }
 
     /**
-     * Returns card_faces[0] for transform DFCs and split cards (including aftermath),
-     * or the card itself for normal cards.
+     * Returns card_faces[0] for layouts whose characteristics live on the face node,
+     * including transform DFCs, split cards (including aftermath), and reversible cards, or the
+     * card itself for normal cards.
      */
     private static JsonNode getFrontFaceNode(JsonNode card) {
         if (card.has("card_faces") && card.has("layout")) {
             String layout = card.get("layout").asText();
             if ("transform".equals(layout) || "split".equals(layout) || "flip".equals(layout)
                     || "adventure".equals(layout) || "modal_dfc".equals(layout)
-                    || "prepare".equals(layout)) {
+                    || "prepare".equals(layout) || "reversible_card".equals(layout)) {
                 return card.get("card_faces").get(0);
             }
         }

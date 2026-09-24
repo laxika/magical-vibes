@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "248")
+@CardRegistration(set = "SLD", collectorNumber = "492")
+@CardRegistration(set = "SLD", collectorNumber = "699")
 public class OliviaMobilizedForWar extends Card {
 
     public OliviaMobilizedForWar() {

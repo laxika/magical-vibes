@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "211")
+@CardRegistration(set = "SLD", collectorNumber = "523")
 public class RalStormConduit extends Card {
 
     private static final CardAnyOfPredicate INSTANT_OR_SORCERY = new CardAnyOfPredicate(List.of(

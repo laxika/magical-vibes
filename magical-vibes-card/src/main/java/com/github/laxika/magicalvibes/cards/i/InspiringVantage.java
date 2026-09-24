@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "246")
 @CardRegistration(set = "OTJ", collectorNumber = "269")
+@CardRegistration(set = "SLD", collectorNumber = "1375")
+@CardRegistration(set = "SLD", collectorNumber = "1605")
 public class InspiringVantage extends Card {
 
     public InspiringVantage() {
