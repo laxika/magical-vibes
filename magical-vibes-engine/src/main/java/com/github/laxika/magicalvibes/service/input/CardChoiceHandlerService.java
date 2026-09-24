@@ -48,6 +48,8 @@ import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -421,6 +423,58 @@ public class CardChoiceHandlerService {
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    public void handlePerpetualEnterExileHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualEnterExileHandCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualEnterExileHandCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = hand.get(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        gameData.perpetualEnterEffectsByCardId
+                .computeIfAbsent(selectedCard.getId(), ignored ->
+                        java.util.Collections.synchronizedList(new ArrayList<>()))
+                .add(ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler.grantedEnterEffect());
+        gameLogService.append(gameData, GameLog.cardThen(
+                selectedCard, " perpetually gains its exile ability."));
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    public void handlePerpetualCastCostHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualCastCostHandCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualCastCostHandCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = hand.get(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler.remember(
+                gameData, selectedCard, choice.amount());
+        gameLogService.append(gameData, GameLog.cardThen(
+                selectedCard, " perpetually gains \"This spell costs {1} less to cast.\"."));
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }

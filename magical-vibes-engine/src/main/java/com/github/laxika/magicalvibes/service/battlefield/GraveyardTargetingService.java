@@ -1055,12 +1055,33 @@ public class GraveyardTargetingService {
     /** Begins the ordered, independently optional graveyard target groups of a spell. */
     public boolean beginIndependentGraveyardSpellTargeting(GameData gameData, UUID controllerId,
                                                             IndependentlyTargetedGraveyardCardsEffect effect) {
+        return beginIndependentGraveyardSpellTargeting(gameData, controllerId, effect, false);
+    }
+
+    /** Begins independent graveyard target groups, optionally enabling kicked-only groups. */
+    public boolean beginIndependentGraveyardSpellTargeting(GameData gameData, UUID controllerId,
+                                                            IndependentlyTargetedGraveyardCardsEffect effect,
+                                                            boolean kicked) {
+        if (effect.targetScopes().size() != effect.targetFilters().size()
+                || effect.targetGroupsOnlyWhenKicked().size() != effect.targetFilters().size()) {
+            throw new IllegalArgumentException("Independent graveyard target metadata must have equal sizes");
+        }
         while (gameData.graveyardTargetOperation.independentTargetGroupIndex
                 < effect.targetFilters().size()) {
             int groupIndex = gameData.graveyardTargetOperation.independentTargetGroupIndex;
+            if (effect.targetGroupsOnlyWhenKicked().get(groupIndex) && !kicked) {
+                gameData.graveyardTargetOperation.independentTargetGroupSizes.add(0);
+                gameData.graveyardTargetOperation.independentTargetGroupIndex++;
+                continue;
+            }
+
+            GraveyardSearchScope scope = effect.targetScopes().get(groupIndex);
             List<Card> matchingCards = new ArrayList<>();
-            List<Card> graveyard = targetableGraveyard(gameData, controllerId, controllerId);
-            if (graveyard != null) {
+            for (UUID graveyardOwnerId : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
+                List<Card> graveyard = targetableGraveyard(gameData, graveyardOwnerId, controllerId);
+                if (graveyard == null) {
+                    continue;
+                }
                 for (Card graveyardCard : graveyard) {
                     if (effect.requiresDistinctTargets()
                             && gameData.graveyardTargetOperation.independentTargetCardIds
@@ -1087,7 +1108,7 @@ public class GraveyardTargetingService {
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                     effect.minimumTargetCounts().get(groupIndex),
                     "Choose up to one target " + effect.targetDescriptions().get(groupIndex)
-                            + " from your graveyard.");
+                            + " from " + zoneLabel(scope) + ".");
             return true;
         }
 

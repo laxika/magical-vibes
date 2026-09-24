@@ -146,6 +146,8 @@ public sealed interface TriggerContext {
     }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     record SelfBecomesCrewed(UUID controllerId) implements TriggerContext {}
+    /** Context for triggers watching a creature crew a Vehicle. */
+    record CreatureCrewsVehicle(Permanent crewingCreature, Permanent vehicle) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
     /** Context for controller forage triggers. */
@@ -835,9 +837,14 @@ public sealed interface TriggerContext {
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
     record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
-                                              boolean enlistment) implements TriggerContext {
+                                              boolean enlistment, Permanent enlistedCreature) implements TriggerContext {
+        public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
+                                                  boolean enlistment) {
+            this(attackingCreature, triggeredAbility, enlistment, null);
+        }
+
         public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility) {
-            this(attackingCreature, triggeredAbility, false);
+            this(attackingCreature, triggeredAbility, false, null);
         }
     }
 }

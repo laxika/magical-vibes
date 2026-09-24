@@ -305,6 +305,17 @@ public class GameData {
      * (e.g. Hoarding Dragon's death trigger, Clone Shell's sacrifice ability).
      */
     public final Map<UUID, Card> imprintedCards = new ConcurrentHashMap<>();
+    /** Perpetual ETB abilities granted to cards, keyed by the card's stable id. */
+    public final Map<UUID, List<CardEffect>> perpetualEnterEffectsByCardId = new ConcurrentHashMap<>();
+    /** Perpetual power/toughness modifiers granted to physical cards, keyed by stable card id. */
+    public final Map<UUID, CardPowerToughnessModifier> perpetualCardPowerToughnessModifiers =
+            new ConcurrentHashMap<>();
+    /** Perpetual static effects granted to physical cards while they are on the battlefield. */
+    public final Map<UUID, List<CardEffect>> perpetualCardBattlefieldEffectGrants = new ConcurrentHashMap<>();
+    /** Perpetual generic spell-cost reductions granted to physical cards, keyed by stable card id. */
+    public final Map<UUID, Integer> perpetualCardCastCostReductions = new ConcurrentHashMap<>();
+    /** Perpetual generic spell-cost increases granted to physical cards, keyed by stable card id. */
+    public final Map<UUID, Integer> perpetualCardCastCostIncreases = new ConcurrentHashMap<>();
     /** Keyword or ability word chosen for a card's Legacy pregame ability, keyed by card id. */
     public final Map<UUID, String> legacyChosenWordsByCardId = new ConcurrentHashMap<>();
     /**
@@ -1458,6 +1469,9 @@ public class GameData {
      *  player. Every unconsumed grant applies to the same next creature spell and is consumed by
      *  {@link #recordSpellCast}. Cleared at end of turn. */
     public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowermentsThisTurn = new ConcurrentHashMap<>();
+
+    /** Persistent one-time creature-spell boons, keyed by player and consumed by {@link #recordSpellCast}. */
+    public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowerments = new ConcurrentHashMap<>();
 
     /** Extra +1/+1 counters a spell's permanent enters the battlefield with, keyed by card id
      *  (Savage Summoning). Consumed as an as-enters replacement by {@code BattlefieldEntryService}
@@ -3621,6 +3635,7 @@ public class GameData {
         consumeNextSpellFlashGrant(playerId, card);
         consumeNextSpellCostReductions(playerId, card);
         consumeNextCreatureSpellEmpowerments(playerId, card);
+        consumePersistentNextCreatureSpellEmpowerments(playerId, card);
         consumeNextSpellUncounterableGrant(playerId, card);
         consumeNextInstantSorceryUncounterableGrant(playerId, card);
     }
@@ -3781,13 +3796,29 @@ public class GameData {
                 .add(empowerment);
     }
 
+    /** Adds a persistent one-time boon for the player's next creature spell. */
+    public void addPersistentNextCreatureSpellEmpowerment(UUID playerId, CreatureSpellEmpowerment empowerment) {
+        nextCreatureSpellEmpowerments
+                .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
+                .add(empowerment);
+    }
+
     /**
      * Applies every pending creature-spell empowerment to the creature spell just cast. All pending
      * grants refer to the same "next creature spell", so they all apply and are all consumed.
      */
     private void consumeNextCreatureSpellEmpowerments(UUID playerId, Card card) {
+        consumeCreatureSpellEmpowerments(nextCreatureSpellEmpowermentsThisTurn, playerId, card);
+    }
+
+    private void consumePersistentNextCreatureSpellEmpowerments(UUID playerId, Card card) {
+        consumeCreatureSpellEmpowerments(nextCreatureSpellEmpowerments, playerId, card);
+    }
+
+    private void consumeCreatureSpellEmpowerments(
+            Map<UUID, List<CreatureSpellEmpowerment>> empowerments, UUID playerId, Card card) {
         if (!card.hasType(CardType.CREATURE)) return;
-        List<CreatureSpellEmpowerment> grants = nextCreatureSpellEmpowermentsThisTurn.get(playerId);
+        List<CreatureSpellEmpowerment> grants = empowerments.get(playerId);
         if (grants == null) return;
         List<CreatureSpellEmpowerment> consumed;
         synchronized (grants) {
@@ -5819,6 +5850,15 @@ public class GameData {
         // --- Map<UUID, String/Integer> ---
         copy.playerIdToName.putAll(this.playerIdToName);
         copy.imprintedCards.putAll(this.imprintedCards);
+        this.perpetualEnterEffectsByCardId.forEach((cardId, effects) ->
+                copy.perpetualEnterEffectsByCardId.put(cardId,
+                        Collections.synchronizedList(new ArrayList<>(effects))));
+        copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);
+        this.perpetualCardBattlefieldEffectGrants.forEach((cardId, effects) ->
+                copy.perpetualCardBattlefieldEffectGrants.put(cardId,
+                        Collections.synchronizedList(new ArrayList<>(effects))));
+        copy.perpetualCardCastCostReductions.putAll(this.perpetualCardCastCostReductions);
+        copy.perpetualCardCastCostIncreases.putAll(this.perpetualCardCastCostIncreases);
         copy.legacyChosenWordsByCardId.putAll(this.legacyChosenWordsByCardId);
         copy.exiledVoyageCounters.putAll(this.exiledVoyageCounters);
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
@@ -6778,6 +6818,8 @@ public class GameData {
                 copy.nextSpellFreeCastPermissionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        this.nextCreatureSpellEmpowerments.forEach((k, v) ->
+                copy.nextCreatureSpellEmpowerments.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);
         this.spellEntryCounters.forEach((cardId, counters) ->
                 copy.spellEntryCounters.put(cardId, new ConcurrentHashMap<>(counters)));

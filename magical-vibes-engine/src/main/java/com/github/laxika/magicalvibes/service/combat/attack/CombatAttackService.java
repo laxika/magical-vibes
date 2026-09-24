@@ -864,7 +864,7 @@ public class CombatAttackService {
             return CombatResult.AUTO_PASS_ONLY;
         }
         return finishAttackerDeclaration(gameData, playerId, player.getUsername(), battlefield,
-                attackerIndices, resolvedTargets, declaredAttackers, Map.of());
+                attackerIndices, resolvedTargets, declaredAttackers, Map.of(), Map.of());
     }
 
     /** Completes attack declaration after all Enlist choices have been answered. */
@@ -872,9 +872,10 @@ public class CombatAttackService {
                                                   List<Permanent> battlefield, List<Integer> attackerIndices,
                                                   Map<Integer, UUID> resolvedTargets,
                                                   List<Permanent> declaredAttackers,
-                                                  Map<UUID, Integer> enlistmentBoosts) {
+                                                  Map<UUID, Integer> enlistmentBoosts,
+                                                  Map<UUID, UUID> enlistedSupporters) {
         int stackSizeBeforeAttackTriggers = gameData.stack.size();
-        addEnlistmentTriggers(gameData, playerId, enlistmentBoosts);
+        addEnlistmentTriggers(gameData, playerId, enlistmentBoosts, enlistedSupporters);
 
         String logEntry = playerName + " declares " + attackerIndices.size() +
                 " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
@@ -2227,7 +2228,7 @@ public class CombatAttackService {
 
         MultiPermanentChoiceContext.Enlistment context = new MultiPermanentChoiceContext.Enlistment(
                 playerId, attackerIndices, resolvedTargets, declaredAttackers, enlistmentAttackers,
-                Set.of(), Map.of());
+                Set.of(), Map.of(), Map.of());
         beginNextEnlistmentChoice(gameData, battlefield, context);
         return true;
     }
@@ -2251,7 +2252,8 @@ public class CombatAttackService {
             remaining = remaining.subList(1, remaining.size());
             context = new MultiPermanentChoiceContext.Enlistment(
                     context.playerId(), context.attackerIndices(), context.resolvedTargets(),
-                    context.declaredAttackers(), remaining, context.usedSupporterIds(), context.boostPowers());
+                    context.declaredAttackers(), remaining, context.usedSupporterIds(), context.boostPowers(),
+                    context.enlistedSupporters());
         }
     }
 
@@ -2274,13 +2276,15 @@ public class CombatAttackService {
             return finishAttackerDeclaration(gameData, context.playerId(),
                     gameData.playerIdToName.get(context.playerId()),
                     gameData.playerBattlefields.get(context.playerId()), context.attackerIndices(),
-                    context.resolvedTargets(), context.declaredAttackers(), context.boostPowers());
+                    context.resolvedTargets(), context.declaredAttackers(), context.boostPowers(),
+                    context.enlistedSupporters());
         }
 
         UUID attackerId = remaining.getFirst();
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         Set<UUID> usedSupporterIds = new HashSet<>(context.usedSupporterIds());
         Map<UUID, Integer> boostPowers = new LinkedHashMap<>(context.boostPowers());
+        Map<UUID, UUID> enlistedSupporters = new LinkedHashMap<>(context.enlistedSupporters());
         if (attacker != null && permanentIds != null && permanentIds.size() == 1) {
             Permanent supporter = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             List<UUID> eligibleIds = eligibleEnlistmentSupporters(gameData, context.playerId(),
@@ -2291,6 +2295,7 @@ public class CombatAttackService {
                         gameData, supporter, context.playerId());
                 usedSupporterIds.add(supporter.getId());
                 boostPowers.put(attacker.getId(), gameQueryService.getEffectivePower(gameData, supporter));
+                enlistedSupporters.put(attacker.getId(), supporter.getId());
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(context.playerId()) + " taps "
                                 + supporter.getCard().getName() + " to enlist "
@@ -2301,7 +2306,7 @@ public class CombatAttackService {
         List<UUID> nextRemaining = remaining.subList(1, remaining.size());
         MultiPermanentChoiceContext.Enlistment nextContext = new MultiPermanentChoiceContext.Enlistment(
                 context.playerId(), context.attackerIndices(), context.resolvedTargets(),
-                context.declaredAttackers(), nextRemaining, usedSupporterIds, boostPowers);
+                context.declaredAttackers(), nextRemaining, usedSupporterIds, boostPowers, enlistedSupporters);
         List<Permanent> battlefield = gameData.playerBattlefields.get(context.playerId());
         if (!nextRemaining.isEmpty()) {
             beginNextEnlistmentChoice(gameData, battlefield, nextContext);
@@ -2311,10 +2316,12 @@ public class CombatAttackService {
         }
         return finishAttackerDeclaration(gameData, context.playerId(),
                 gameData.playerIdToName.get(context.playerId()), battlefield,
-                context.attackerIndices(), context.resolvedTargets(), context.declaredAttackers(), boostPowers);
+                context.attackerIndices(), context.resolvedTargets(), context.declaredAttackers(), boostPowers,
+                enlistedSupporters);
     }
 
-    private void addEnlistmentTriggers(GameData gameData, UUID playerId, Map<UUID, Integer> boostPowers) {
+    private void addEnlistmentTriggers(GameData gameData, UUID playerId, Map<UUID, Integer> boostPowers,
+                                       Map<UUID, UUID> enlistedSupporters) {
         for (Map.Entry<UUID, Integer> boost : boostPowers.entrySet()) {
             Permanent attacker = gameQueryService.findPermanentById(gameData, boost.getKey());
             if (attacker == null) {
@@ -2333,8 +2340,10 @@ public class CombatAttackService {
                 enlistTrigger.setNonTargeting(true);
                 enlistTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
                 gameData.stack.add(enlistTrigger);
+                Permanent enlistedCreature = gameQueryService.findPermanentById(
+                        gameData, enlistedSupporters.get(boost.getKey()));
                 triggerCollectionService.checkEnlistmentTriggeredAbilityTriggers(
-                        gameData, attacker, enlistTrigger);
+                        gameData, attacker, enlistTrigger, enlistedCreature);
                 gameLogService.append(gameData,
                         GameLog.builder().card(attacker.getCard()).text("'s enlist ability triggers.").build());
             } finally {

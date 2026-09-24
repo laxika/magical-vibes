@@ -405,6 +405,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  triggering Vehicle is stored on the resulting stack entry for effects that refer to it.
      *  Checked from {@code CrewCostHandler}. */
     ON_CREWS_VEHICLE,
+    /** Triggers whenever a creature the controller controls is tapped to pay a Vehicle's crew cost.
+     *  The event context carries both the crewing creature and the Vehicle. Checked from
+     *  {@code CrewCostHandler}; the source permanent itself is included. */
+    ON_ALLY_CREATURE_CREWS_VEHICLE,
     /** Triggers whenever this creature is tapped to pay a teamwork cost. */
     ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST,
     /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),

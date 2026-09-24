@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -316,6 +317,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.condition.SourceCardToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
@@ -1341,6 +1343,8 @@ public class ConditionEvaluationService {
                     isSourceCardInCommandZone(gameData, ctx);
             case SourceCardInGraveyard ignored ->
                     isSourceCardInGraveyard(gameData, ctx);
+            case SourceCardToughnessAtLeast c ->
+                    sourceCardToughnessAtLeast(gameData, ctx, c.threshold());
             case SourceCardSuspended ignored ->
                     isSourceCardSuspended(gameData, ctx);
             case SourceAttackedOrBlockedThisCombat ignored -> {
@@ -2098,6 +2102,15 @@ public class ConditionEvaluationService {
         return gameData.playerGraveyards.values().stream()
                 .flatMap(List::stream)
                 .anyMatch(card -> card.getId().equals(ctx.sourceCard().getId()));
+    }
+
+    /** True when the source card's printed toughness plus its perpetual modifiers meets the threshold. */
+    private boolean sourceCardToughnessAtLeast(GameData gameData, ConditionContext ctx, int threshold) {
+        if (ctx.sourceCard() == null || ctx.sourceCard().getToughness() == null) return false;
+        CardPowerToughnessModifier modifier = gameData.perpetualCardPowerToughnessModifiers
+                .get(ctx.sourceCard().getId());
+        int toughness = ctx.sourceCard().getToughness() + (modifier == null ? 0 : modifier.toughness());
+        return toughness >= threshold;
     }
 
     /** True when the source card is still exiled with a positive time-counter entry. */

@@ -91,6 +91,10 @@ public class InteractionPromptProjectionRegistry {
                 this::projectAssimilationAegisCopyChoice);
         register(PendingInteraction.ExiledCreatureCopyChoice.class,
                 this::projectExiledCreatureCopyChoice);
+        register(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class,
+                this::projectProteanWarEngineSpellbookDraftChoice);
+        register(PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class,
+                this::projectSlimefootThallidTransplantSpellbookDraftChoice);
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
@@ -197,6 +201,10 @@ public class InteractionPromptProjectionRegistry {
                 this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.PerpetualEnterExileHandCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualCastCostHandCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.WordOfCommandCardChoice.class,
                 this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
@@ -485,6 +493,25 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
                 "Choose a creature card exiled with " + interaction.sourceName() + " to copy.");
+    }
+
+    private InteractionPromptMessage projectProteanWarEngineSpellbookDraftChoice(
+            GameData gameData, PendingInteraction.ProteanWarEngineSpellbookDraftChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "Choose a card from Protean War Engine's spellbook to exile.");
+    }
+
+    private InteractionPromptMessage projectSlimefootThallidTransplantSpellbookDraftChoice(
+            GameData gameData,
+            PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "Choose a card from Slimefoot, Thallid Transplant's spellbook.");
     }
 
     private InteractionPromptMessage projectTargetHandSpellCopyChoice(

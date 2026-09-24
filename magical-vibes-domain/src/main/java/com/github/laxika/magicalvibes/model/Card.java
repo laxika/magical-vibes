@@ -338,7 +338,11 @@ public class Card {
      * fails on any newly declared field to force this update.
      */
     protected Card(Card source) {
-        this.id = source.id;
+        this(source, source.id);
+    }
+
+    private Card(Card source, UUID id) {
+        this.id = id;
         this.ownerId = source.ownerId;
         this.name = source.name;
         this.type = source.type;
@@ -419,6 +423,11 @@ public class Card {
      */
     public Card createRuntimeCopy() {
         return new Card(this);
+    }
+
+    /** Creates an unfrozen copy with a fresh identity, for a newly conjured card. */
+    public Card createRuntimeCopyWithNewId() {
+        return new Card(this, UUID.randomUUID());
     }
 
     /**

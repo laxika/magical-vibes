@@ -293,6 +293,7 @@ public sealed interface Condition permits
         SourceAddedManaThisTurn,
         SourceCardInCommandZone,
         SourceCardInGraveyard,
+        SourceCardToughnessAtLeast,
         SourceCardSuspended,
         SourceCanSoulbond,
         SourceAttackedBattleThisTurn,

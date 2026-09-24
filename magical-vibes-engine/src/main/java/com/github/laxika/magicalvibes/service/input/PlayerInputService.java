@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1052,7 +1053,13 @@ public class PlayerInputService {
     }
 
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {
-        ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetId, options);
+        beginKeywordChoice(gameData, playerId, targetId, options, GrantDuration.END_OF_TURN, null, null);
+    }
+
+    public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options,
+                                   GrantDuration duration, String sourceCardName, UUID sourcePermanentId) {
+        ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(
+                targetId, options, duration, sourceCardName, sourcePermanentId);
 
         List<String> optionNames = options.stream().map(Keyword::name).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

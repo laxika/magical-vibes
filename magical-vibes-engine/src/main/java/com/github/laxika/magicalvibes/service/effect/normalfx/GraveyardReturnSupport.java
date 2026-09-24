@@ -531,7 +531,9 @@ public class GraveyardReturnSupport {
                 && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())
                 && effect.grantOnDeathEffect() == null
-                && (effect.battlefieldEffectGrants() == null || effect.battlefieldEffectGrants().isEmpty())) {
+                && (effect.battlefieldEffectGrants() == null || effect.battlefieldEffectGrants().isEmpty())
+                && (effect.perpetualBattlefieldEffectGrants() == null
+                || effect.perpetualBattlefieldEffectGrants().isEmpty())) {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -610,6 +612,12 @@ public class GraveyardReturnSupport {
                                     ? EffectDuration.PERMANENT
                                     : effect.battlefieldEffectGrantDuration(), 0));
                 }
+            }
+            if (effect.perpetualBattlefieldEffectGrants() != null) {
+                PerpetualCardBattlefieldEffectSupport.remember(
+                        gameData, card, effect.perpetualBattlefieldEffectGrants());
+                PerpetualCardBattlefieldEffectSupport.apply(
+                        gameData, controllerId, p, effect.perpetualBattlefieldEffectGrants());
             }
             break;
         }

@@ -5994,16 +5994,24 @@ public class TriggerCollectionService {
      */
     public void checkAttackingCreatureTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
                                                                 StackEntry triggeredAbility) {
-        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, false);
+        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, false, null);
     }
 
     public void checkEnlistmentTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
                                                         StackEntry triggeredAbility) {
-        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, true);
+        checkEnlistmentTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, null);
+    }
+
+    public void checkEnlistmentTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
+                                                        StackEntry triggeredAbility,
+                                                        Permanent enlistedCreature) {
+        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, true,
+                enlistedCreature);
     }
 
     private void checkAttackingCreatureTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
-                                                                StackEntry triggeredAbility, boolean enlistment) {
+                                                                StackEntry triggeredAbility, boolean enlistment,
+                                                                Permanent enlistedCreature) {
         if (attacker == null || triggeredAbility == null) {
             return;
         }
@@ -6017,7 +6025,7 @@ public class TriggerCollectionService {
         }
 
         TriggerContext context = new TriggerContext.AttackingCreatureTriggeredAbility(
-                attacker, triggeredAbility, enlistment);
+                attacker, triggeredAbility, enlistment, enlistedCreature);
         for (Permanent watcher : List.copyOf(battlefield)) {
             dispatchSlot(gameData, watcher, controllerId, EffectSlot.STATIC, context);
         }
@@ -6495,6 +6503,27 @@ public class TriggerCollectionService {
             gameLogService.append(gameData, GameLog.abilityTriggers(crewingCreature.getCard()));
             log.info("Game {} - {} triggers when it crews {}",
                     gameData.id, crewingCreature.getCard().getName(), vehicle.getCard().getName());
+        }
+    }
+
+    /** Collects abilities watching a creature controlled by a player crew a Vehicle. */
+    public void checkAllyCreatureCrewsVehicleTriggers(GameData gameData, Permanent crewingCreature,
+                                                       Permanent vehicle) {
+        if (vehicle == null || !vehicle.getCard().getSubtypes().contains(CardSubtype.VEHICLE)) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, crewingCreature.getId());
+        if (controllerId == null) {
+            return;
+        }
+        TriggerContext context = new TriggerContext.CreatureCrewsVehicle(crewingCreature, vehicle);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent watcher : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, watcher, controllerId,
+                    EffectSlot.ON_ALLY_CREATURE_CREWS_VEHICLE, context);
         }
     }
 

@@ -10751,10 +10751,11 @@ public class SpellCastingService {
         boolean pendingAnyManaType = gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId);
         boolean battlefieldAnyManaType = castingPermissionService.canSpendAnyManaTypeFromBattlefield(
                 gameData, playerId, card);
+        boolean cardAnyManaType = castingPermissionService.canSpendAnyManaTypeFromCard(card);
         boolean usesPendingAnyManaType = pendingAnyManaType && !anyManaType && !battlefieldAnyManaType
                 && !baseMana.isEmpty();
         if ((convokeContributions == null || convokeContributions.isEmpty())
-                && (anyManaType || battlefieldAnyManaType || usesPendingAnyManaType)
+                && (anyManaType || cardAnyManaType || battlefieldAnyManaType || usesPendingAnyManaType)
                 && !(blackManaLifePaymentPermission && cost.hasPhyrexianMana())) {
             if (usesPendingAnyManaType && !additionalCostsMana.isEmpty()) {
                 return payBaseManaCostWithPendingAnyManaType(gameData, playerId, card, baseMana,

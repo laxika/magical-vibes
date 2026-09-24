@@ -112,6 +112,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
+        PendingInteraction.PerpetualEnterExileHandCardChoice,
+        PendingInteraction.PerpetualCastCostHandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
@@ -139,6 +141,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ShuffleCardsFromOutsideGameChoice,
         PendingInteraction.AssimilationAegisCopyChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
+        PendingInteraction.ProteanWarEngineSpellbookDraftChoice,
+        PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice,
         PendingInteraction.FaceUpExiledCardChoice,
         PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice,
         PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice,
@@ -3211,6 +3215,45 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Pull of the Mist Moon: choose a nonland permanent card from hand for a perpetual ETB ability. */
+    record PerpetualEnterExileHandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualEnterExileHandCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /** Bloodsprout Talisman: choose a nonland card from hand for a perpetual cast-cost reduction. */
+    record PerpetualCastCostHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                           int amount, String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualCastCostHandCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
     /** Word of Command's controller chooses one card from the targeted player's hand. */
     record WordOfCommandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                    java.util.List<Integer> validIndices, String prompt)
@@ -4869,6 +4912,52 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Chooses one of the three cards drafted from Protean War Engine's spellbook. */
+    record ProteanWarEngineSpellbookDraftChoice(UUID playerId, UUID sourcePermanentId,
+                                                 java.util.List<Card> cards)
+            implements PendingInteraction {
+        public ProteanWarEngineSpellbookDraftChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** Chooses one of the three cards drafted from Slimefoot, Thallid Transplant's spellbook. */
+    record SlimefootThallidTransplantSpellbookDraftChoice(UUID playerId, UUID sourcePermanentId,
+                                                           java.util.List<Card> cards)
+            implements PendingInteraction {
+        public SlimefootThallidTransplantSpellbookDraftChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

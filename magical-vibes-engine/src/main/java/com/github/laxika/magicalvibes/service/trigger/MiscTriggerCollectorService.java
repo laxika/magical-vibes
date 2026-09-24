@@ -48,6 +48,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect;
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -113,6 +115,40 @@ public class MiscTriggerCollectorService {
     // MiscTriggerCollectorService → PermanentControlSupport → TriggerCollectionService → MiscTriggerCollectorService
     private PermanentControlSupport permanentControlSupport;
     private PermanentRemovalService permanentRemovalService;
+
+    @CollectsTrigger(value = PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_CREWS_VEHICLE)
+    private boolean handlePerpetualVehicleBoostOnCrew(
+            TriggerMatchContext match, PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect effect,
+            TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CreatureCrewsVehicle crew)) {
+            return false;
+        }
+        FilterContext filterContext = FilterContext.of(match.gameData())
+                .withSourceCardId(match.permanent().getCard().getId())
+                .withSourceControllerId(match.controllerId())
+                .withSourcePermanentId(match.permanent().getId())
+                .withSourcePermanentSnapshot(match.permanent());
+        if (!predicateEvaluationService.matchesPermanentPredicate(
+                crew.crewingCreature(), effect.crewingCreaturePredicate(), filterContext)) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new PerpetuallyBoostCardEffect(
+                        crew.vehicle().getCard(), effect.powerBoost(), effect.toughnessBoost()))),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringPermanentId(crew.vehicle().getId());
+        entry.setNonTargeting(true);
+        match.gameData().pendingActivatedAbilityCostTriggers.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
 
     public MiscTriggerCollectorService(GameLogService gameLogService,
                                        @Lazy GraveyardService graveyardService,

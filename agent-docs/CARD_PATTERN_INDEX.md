@@ -32,6 +32,25 @@ This index has been split into smaller files for faster lookup. Each file is und
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
 | opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
+| seek a random matching card from the top of a library, then shuffle | `SeekFromTopOfLibraryEffect` |
+| seek a random matching card from the full library into hand, then shuffle | `SeekFromLibraryToHandEffect` |
+| seek a random matching card from the full library into the graveyard, then shuffle | `SeekFromLibraryToGraveyardEffect` |
+| discard a card, then seek and exile a random card with greater mana value that you may play until the end of your next turn | `DiscardCardThenEffect` + `SeekFromLibraryWithGreaterManaValueEffect` |
+| trigger from the card actually drawn without revealing it | `DrawnCardTriggerEffect` |
+| random card from a fixed spellbook into hand | `ConjureGoblinInfluxArraySpellbookEffect` or `ConjureSkywriterDjinnSpellbookEffect` |
+| landfall draft of three cards from a fixed spellbook into hand | `DraftSlimefootThallidTransplantSpellbookEffect` |
+| reveal target opponent's hand, exile a chosen nonland card, then conjure a named card into that player's hand | `ChooseCardsFromTargetHandEffect(..., HandChoiceDestination.EXILE).withChosenCardThen(null, new ConjureCardIntoTargetPlayerHandEffect(card))` |
+| random Dragon card from a fixed spellbook into face-down exile with egg counters | `ConjureDarigaazShivanChampionSpellbookEffect` |
+| draft three random cards from a fixed spellbook and exile the chosen card tracked to the source | `DraftProteanWarEngineSpellbookEffect` |
+| optional enlist trigger that conjures a perpetual duplicate into the top five | `ConjureDuplicateOfEnlistedNontokenCreatureEffect` + `ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect` |
+| next instant/sorcery cast conjures a duplicate into hand, with an un-kicked delayed discard | `RegisterDelayedControllerSpellCastTriggerEffect` + `ConjureDuplicateOfTriggeringSpellIntoHandEffect` + `DiscardSpecificCardEffect` |
+| one or more other nontoken creatures deal combat damage, then choose one and conjure its duplicate into hand | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` + `AllyCombatDamageTriggerEffect(..., oncePerDamageStep=true)` + `ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect` |
+| perpetually modify a physical card's power and toughness | `PerpetuallyBoostCardEffect` + `GameData.perpetualCardPowerToughnessModifiers` |
+| perpetually boost other own creatures and matching creature cards in hand of a chosen type | `ChooseSubtypeOnEnterEffect` + `GrantChosenSubtypeToOwnCreaturesEffect.toSelf()` + `PerpetuallyBoostOtherOwnCreaturesAndHandCreatureCardsOfChosenSubtypeEffect` |
+| perpetually boost a Vehicle when a matching creature crews it | `ON_ALLY_CREATURE_CREWS_VEHICLE` + `PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect` |
+| choose a nonland hand card that perpetually costs less to cast | `ChooseCardFromHandToPerpetuallyReduceCastCostEffect` + `GameData.perpetualCardCastCostReductions` |
+| target a creature card in your graveyard, make it perpetually only one card type, and let you cast it this turn | `GrantTargetGraveyardCardCastEffect` + `PerpetuallySetTargetCreatureCardTypeEffect` |
+| look at top seven cards, perpetually gain keywords | `p/PriestOfPossibility.java` and `LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler` |
 | exile top cards, play this turn, unplayed exiled cards to graveyard and tokens | `g/GlimpseTheImpossible.java` |
 | double any effect that doubles, quadruple | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -122,3 +141,6 @@ When implementing a card, use these as the **best** test file to read for each c
 ### Subgames
 
 Shahrazad (ARN 10): `StartSubgameEffect` followed by the existing fractional life-loss effect with `SUBGAME_NON_WINNERS`. The creating spell stays suspended until its immediate child ends. Use `GameSession` for nesting; never copy the parent board into a child or restore an old library snapshot.
+| Perpetual ETB ability granted to a card in hand | `PullOfTheMistMoonTest.java` | Covers the hand-card choice and the stored ability triggering when a later copy enters |
+| Kicked bounce that conjures a castable duplicate into hand | `VesuvanMistTest.java` | Covers nontoken/nonland targeting, last-known-information copying, persistent token-card handling, and card-local any-color mana permission |
+| Kicked ETB returns your graveyard card and conjures an opponent-graveyard duplicate | `NantukoSlicerTest.java` | Covers independently targeted graveyard groups, kicked-only opponent targeting, and perpetual any-color casting permission on the conjured card |

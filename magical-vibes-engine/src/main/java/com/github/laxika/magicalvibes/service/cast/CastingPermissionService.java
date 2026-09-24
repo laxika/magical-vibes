@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerTurnRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsWhileAttackingEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
@@ -2080,6 +2081,9 @@ public class CastingPermissionService {
      * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).
      */
     public boolean canSpendAnyManaTypeToCast(GameData gameData, UUID playerId, Card card) {
+        if (canSpendAnyManaTypeFromCard(card)) {
+            return true;
+        }
         if (hasLibraryTopPermissionForCard(gameData, playerId, card)) {
             return true;
         }
@@ -2087,6 +2091,12 @@ public class CastingPermissionService {
             return true;
         }
         return canSpendAnyManaTypeFromBattlefield(gameData, playerId, card);
+    }
+
+    /** Returns whether the card itself carries a perpetual any-color casting permission. */
+    public boolean canSpendAnyManaTypeFromCard(Card card) {
+        return card != null && card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PerpetualAnyManaTypeToCastSelfEffect.class::isInstance);
     }
 
     public boolean canSpendAnyManaTypeFromBattlefield(GameData gameData, UUID playerId, Card card) {

@@ -209,6 +209,7 @@ on what the mana may pay for.
 | Counter (filtered) + draw | `b/BoneToAsh.java` | CounterSpellEffect + DrawCardEffect + creature-spell filter via target() chain |
 | Counter (filtered) + life loss | `p/PsychicBarrier.java` | TargetSpellControllerLosesLifeEffect(1) + CounterSpellEffect + creature-spell filter. Life loss placed before counter so target is still on stack |
 | Counter + opponent-spell cost reduction | `e/ErtaisScorn.java` | STATIC ConditionalEffect(OpponentCastTwoOrMoreSpellsThisTurn, ReduceOwnCastCostEffect(Fixed(1))) + SPELL CounterSpellEffect |
+| Counter + same-name perpetual cast-cost tax | `t/TeferisContingency.java` | `CounterSpellAndPerpetuallyIncreaseSameNameCastCostEffect(2)`; the handler counters the target when possible, then records a generic-cost increase by physical card identity across the target controller's graveyard, hand, and library |
 | Counter-unless-pay + discard | `f/FrightfulDelusion.java` | TargetSpellControllerDiscardsEffect(1) + CounterUnlessPaysEffect(1). Discard placed before counter so target is still on stack |
 | Counter-unless-damage | `m/MoltenInfluence.java` | `CounterUnlessTakesDamageEffect(4)` with an instant-or-sorcery `StackEntryPredicateTargetFilter`; the target controller chooses damage or counter |
 | Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + STATIC ConditionalEffect(Metalcraft(), ReduceOwnCastCostEffect(Fixed(1))) — costs {1} less with 3+ artifacts |

@@ -70,6 +70,8 @@ import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PerpetualCardBattlefieldEffectSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PerpetualCardPowerToughnessSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EnchantedPlayerCreaturesEnterTappedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
@@ -247,6 +249,8 @@ public class BattlefieldPlacementService {
             carrySpellTextReplacements(gameData, permanent);
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
+            PerpetualCardPowerToughnessSupport.applyStored(gameData, controllerId, permanent);
+            PerpetualCardBattlefieldEffectSupport.applyStored(gameData, controllerId, permanent);
             applyRandomNumberChoiceOnEnter(permanent);
             com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoiceOnEnterSupport
                     .applyIfPresent(gameData, controllerId, permanent);
