@@ -96,6 +96,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ManifestTopCardsForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
@@ -456,6 +458,34 @@ public class DeathTriggerCollectorService {
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(resolved))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = ManifestTopCardsForEachDyingSourceCounterEffect.class,
+            slot = EffectSlot.ON_DEATH)
+    boolean handleManifestTopCardsForEachDyingSourceCounter(TriggerMatchContext match,
+            ManifestTopCardsForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        int counters = countConcreteCounters(dyingPermanent);
+        if (counters < 1) {
+            return false;
+        }
+
+        List<CardEffect> manifestEffects = new ArrayList<>(counters);
+        for (int i = 0; i < counters; i++) {
+            manifestEffects.add(new ManifestTopCardEffect());
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                manifestEffects
         ));
         return true;
     }

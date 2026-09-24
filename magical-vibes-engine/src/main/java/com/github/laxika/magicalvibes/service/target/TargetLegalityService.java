@@ -74,10 +74,12 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchant
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
@@ -362,6 +364,15 @@ public class TargetLegalityService {
                             || !gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                             .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId))) {
                         throw new IllegalStateException("Target must be a card put into a graveyard this turn");
+                    }
+                    if (returnEffect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                            && (graveyardOwnerId == null
+                            || (!gameData.cardsDiscardedOrCycledThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId)
+                            && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId)))) {
+                        throw new IllegalStateException(
+                                "Target must have been discarded or put into a graveyard from a library this turn");
                     }
                 }
                 break;
@@ -4238,12 +4249,42 @@ public class TargetLegalityService {
                     && gameData.getCardsExiledByPermanent(source.getId()).stream()
                     .anyMatch(card -> card.getName().equals(stackEntry.getCard().getName()));
         }
+        if (predicate instanceof StackEntryHasSourceChosenSubtypePredicate) {
+            if (source == null || source.getChosenSubtype() == null
+                    || stackEntry.getSourcePermanentId() == null) {
+                return false;
+            }
+            Permanent abilitySource = gameQueryService.findPermanentById(
+                    gameData, stackEntry.getSourcePermanentId());
+            return abilitySource != null
+                    && predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, abilitySource,
+                    new PermanentHasSubtypePredicate(source.getChosenSubtype()));
+        }
         if (predicate instanceof StackEntryTypeInPredicate typeInPredicate) {
             return typeInPredicate.spellTypes().contains(stackEntry.getEntryType());
         }
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
             return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).stream()
                     .anyMatch(colorInPredicate.colors()::contains);
+        }
+        if (predicate instanceof StackEntrySourceIsColorlessPredicate) {
+            if (stackEntry.getSourcePlanarObject() != null) {
+                return true;
+            }
+            if (stackEntry.getSourcePermanentId() != null) {
+                Permanent sourcePermanent = gameQueryService.findPermanentById(
+                        gameData, stackEntry.getSourcePermanentId());
+                if (sourcePermanent != null) {
+                    return gameQueryService.getEffectiveColors(gameData, sourcePermanent).isEmpty();
+                }
+                if (stackEntry.getSourcePermanentSnapshot() != null) {
+                    return gameQueryService.getEffectiveColors(
+                            gameData, stackEntry.getSourcePermanentSnapshot()).isEmpty();
+                }
+            }
+            return stackEntry.getCard() != null
+                    && gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).isEmpty();
         }
         if (predicate instanceof StackEntryIsMulticoloredPredicate) {
             return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).size() >= 2;

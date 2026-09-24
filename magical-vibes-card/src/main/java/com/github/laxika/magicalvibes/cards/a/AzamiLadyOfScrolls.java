@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "52")
+@CardRegistration(set = "CMM", collectorNumber = "74")
+@CardRegistration(set = "CMM", collectorNumber = "480")
+@CardRegistration(set = "CMM", collectorNumber = "672")
 public class AzamiLadyOfScrolls extends Card {
 
     public AzamiLadyOfScrolls() {

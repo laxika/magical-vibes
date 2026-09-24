@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "33")
+@CardRegistration(set = "CMM", collectorNumber = "88")
 public class EfficientConstruction extends Card {
 
     public EfficientConstruction() {

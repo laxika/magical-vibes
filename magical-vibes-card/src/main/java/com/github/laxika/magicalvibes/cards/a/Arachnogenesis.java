@@ -18,6 +18,9 @@ import java.util.Set;
 
 @CardRegistration(set = "MAR", collectorNumber = "31")
 @CardRegistration(set = "OMB", collectorNumber = "31")
+@CardRegistration(set = "CMM", collectorNumber = "272")
+@CardRegistration(set = "CMM", collectorNumber = "553")
+@CardRegistration(set = "CMM", collectorNumber = "647")
 public class Arachnogenesis extends Card {
 
     public Arachnogenesis() {

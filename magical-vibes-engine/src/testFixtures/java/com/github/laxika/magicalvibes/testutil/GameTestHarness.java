@@ -408,6 +408,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    public void castCreatureWithRepeatedCosts(Player player, int cardIndex,
+                                               List<String> repeatedAdditionalCosts) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
     public void castCreatureTappingPermanents(Player player, int cardIndex, List<UUID> tapPermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,

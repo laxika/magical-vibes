@@ -7,6 +7,13 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "364")
+@CardRegistration(set = "CMM", collectorNumber = "438")
+@CardRegistration(set = "CMM", collectorNumber = "439")
+@CardRegistration(set = "CMM", collectorNumber = "784")
+@CardRegistration(set = "CMM", collectorNumber = "785")
+@CardRegistration(set = "CMM", collectorNumber = "786")
+@CardRegistration(set = "CMM", collectorNumber = "787")
+@CardRegistration(set = "CMM", collectorNumber = "783")
 @CardRegistration(set = "GNT", collectorNumber = "59")
 @CardRegistration(set = "GNT", collectorNumber = "60")
 @CardRegistration(set = "ANA", collectorNumber = "22")
@@ -77,6 +84,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MKM", collectorNumber = "278")
 @CardRegistration(set = "DSK", collectorNumber = "277")
 @CardRegistration(set = "DSK", collectorNumber = "278")
+@CardRegistration(set = "CMM", collectorNumber = "437")
 @CardRegistration(set = "MMQ", collectorNumber = "331")
 @CardRegistration(set = "MMQ", collectorNumber = "332")
 @CardRegistration(set = "MMQ", collectorNumber = "333")

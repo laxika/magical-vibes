@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "27")
 @CardRegistration(set = "MUL", collectorNumber = "92")
 @CardRegistration(set = "MUL", collectorNumber = "157")
+@CardRegistration(set = "CMM", collectorNumber = "293")
 public class GoreclawTerrorOfQalSisma extends Card {
 
     public GoreclawTerrorOfQalSisma() {

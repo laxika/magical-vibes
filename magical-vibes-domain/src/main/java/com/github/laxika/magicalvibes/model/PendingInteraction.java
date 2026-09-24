@@ -49,6 +49,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TargetPlayerHandOrderChoice,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.AminatousAuguryChoice,
         PendingInteraction.InvokeCalamityCastChoice,
         PendingInteraction.PortentOfCalamityState,
         PendingInteraction.PlarggAndNassariOpponentChoice,
@@ -733,6 +734,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
+    /** Staged land and one-per-card-type choices for Aminatou's Augury. */
+    record AminatousAuguryChoice(
+            UUID playerId,
+            java.util.List<UUID> exiledCardIds,
+            java.util.List<UUID> chosenSpellIds,
+            java.util.List<CardType> remainingCardTypes,
+            java.util.List<UUID> validCardIds,
+            CardType offeredCardType) implements PendingInteraction {
+
+        public AminatousAuguryChoice {
+            exiledCardIds = java.util.List.copyOf(exiledCardIds);
+            chosenSpellIds = java.util.List.copyOf(chosenSpellIds);
+            remainingCardTypes = java.util.List.copyOf(remainingCardTypes);
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }
 

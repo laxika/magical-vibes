@@ -56,6 +56,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers}. Used by Trespasser's Curse. */
     ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
     STATIC,
+    /** Static cost-modifying effects of cards in the controller's command zone (Eminence). */
+    COMMAND_ZONE_STATIC,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
@@ -793,6 +795,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
      *  battlefield during that controller's turn. */
     ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
+    /** Triggers whenever another permanent controlled by this permanent's controller leaves the
+     *  battlefield by any means. */
+    ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */

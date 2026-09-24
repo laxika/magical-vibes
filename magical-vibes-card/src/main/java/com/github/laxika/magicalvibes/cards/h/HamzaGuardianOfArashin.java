@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HA4", collectorNumber = "18")
+@CardRegistration(set = "CMM", collectorNumber = "339")
 public class HamzaGuardianOfArashin extends Card {
 
     public HamzaGuardianOfArashin() {

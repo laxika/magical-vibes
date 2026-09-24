@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "99")
+@CardRegistration(set = "CMM", collectorNumber = "185")
 public class SerratedScorpion extends Card {
 
     public SerratedScorpion() {

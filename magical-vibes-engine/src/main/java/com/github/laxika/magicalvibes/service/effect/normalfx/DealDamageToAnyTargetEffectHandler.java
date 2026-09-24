@@ -106,7 +106,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         boolean targetIsCreature = false;
         boolean targetIsPlaneswalker = false;
         boolean targetIsBattle = false;
-        int toughnessBefore = 0;
+        int lethalDamageThresholdBefore = 0;
         int markedDamageBefore = 0;
         int loyaltyBefore = 0;
         int defenseBefore = 0;
@@ -117,8 +117,8 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                 targetIsCreature = gameQueryService.isCreature(gameData, excessTarget);
                 targetIsPlaneswalker = excessTarget.getCard().hasType(CardType.PLANESWALKER);
                 targetIsBattle = excessTarget.getCard().hasType(CardType.BATTLE);
-                toughnessBefore = targetIsCreature
-                        ? gameQueryService.getEffectiveToughness(gameData, excessTarget)
+                lethalDamageThresholdBefore = targetIsCreature
+                        ? gameQueryService.getLethalDamageThreshold(gameData, excessTarget)
                         : 0;
                 markedDamageBefore = excessTarget.getMarkedDamage();
                 loyaltyBefore = excessTarget.getCounterCount(CounterType.LOYALTY);
@@ -155,7 +155,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             entry.setEventValue(excessTarget == null
                     ? 0
                     : damageSupport.computeExcessDamageToAnyTarget(damageDealt, targetIsCreature,
-                    toughnessBefore, markedDamageBefore, sourceHasDeathtouch,
+                    lethalDamageThresholdBefore, markedDamageBefore, sourceHasDeathtouch,
                     targetIsPlaneswalker, loyaltyBefore, targetIsBattle, defenseBefore));
         }
         gameOutcomeService.checkWinCondition(gameData);

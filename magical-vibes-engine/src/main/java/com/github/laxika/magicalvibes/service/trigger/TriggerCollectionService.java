@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingArtifactUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -1303,7 +1304,6 @@ public class TriggerCollectionService {
         List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
         List<CardEffect> selfCastEffects = new ArrayList<>();
         if (spellCard.getManaCost() != null
-                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))
                 && gameQueryService.hasSpellCastingAbilityGrant(
                         gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone)
                 && spellCard.getEffects(EffectSlot.ON_SELF_CAST).stream()
@@ -6797,7 +6797,7 @@ public class TriggerCollectionService {
                     continue;
                 }
                 if (trigger.sourceFilter() != null && !targetLegalityService.matchesStackEntryPredicate(
-                        gameData, abilityEntry, trigger.sourceFilter(), ownerId)) {
+                        gameData, abilityEntry, trigger.sourceFilter(), ownerId, perm)) {
                     continue;
                 }
                 if (trigger.targetPredicate() != null && !targetLegalityService.matchesStackEntryPredicate(
@@ -7240,7 +7240,7 @@ public class TriggerCollectionService {
                     continue;
                 }
                 if (trigger.sourceFilter() != null && !targetLegalityService.matchesStackEntryPredicate(
-                        gameData, abilityEntry, trigger.sourceFilter(), ownerId)) {
+                        gameData, abilityEntry, trigger.sourceFilter(), ownerId, perm)) {
                     continue;
                 }
                 if (trigger.targetPredicate() != null && !targetLegalityService.matchesStackEntryPredicate(
@@ -7978,9 +7978,10 @@ public class TriggerCollectionService {
 
     /** Fires triggers watching a Saga's final chapter ability after it has fully resolved. */
     public void checkSagaFinalChapterAbilityResolutionTriggers(GameData gameData,
-                                                                UUID sagaControllerId) {
+                                                                UUID sagaControllerId, int sagaManaValue) {
         if (sagaControllerId == null) return;
-        TriggerContext context = new TriggerContext.SagaFinalChapterAbilityResolved(sagaControllerId);
+        TriggerContext context = new TriggerContext.SagaFinalChapterAbilityResolved(
+                sagaControllerId, sagaManaValue);
         gameData.forEachPermanent((controllerId, permanent) ->
                 dispatchSlot(gameData, permanent, controllerId,
                         EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES, context));
@@ -8957,6 +8958,41 @@ public class TriggerCollectionService {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
         });
+
+        collectEmblemArtifactGraveyardTriggers(gameData, artifactCard, ctx);
+    }
+
+    /** Fires emblem triggers for artifacts put into their controller's graveyard. */
+    private void collectEmblemArtifactGraveyardTriggers(GameData gameData, Card artifactCard,
+                                                         TriggerContext.ArtifactGraveyard context) {
+        if (artifactCard == null || !artifactCard.hasType(CardType.ARTIFACT)) {
+            return;
+        }
+        for (Emblem emblem : gameData.emblems) {
+            if (!emblem.controllerId().equals(context.graveyardOwnerId())) {
+                continue;
+            }
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (!(effect instanceof RegisterDelayedReturnDyingArtifactUnderControlEffect)) {
+                    continue;
+                }
+                Card source = emblem.sourceCard();
+                String description = source != null ? source.getName() + "'s emblem" : "Emblem";
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source != null ? source : artifactCard,
+                        emblem.controllerId(),
+                        description,
+                        new ArrayList<>(List.of(effect))
+                );
+                entry.setTriggeringCardId(artifactCard.getId());
+                gameData.stack.add(entry);
+                gameLogService.append(gameData,
+                        GameLog.text(description + " triggers (an artifact was put into your graveyard)."));
+                log.info("Game {} - {} schedules a delayed return of {}",
+                        gameData.id, description, artifactCard.getName());
+            }
+        }
     }
 
     public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId,
@@ -10005,6 +10041,39 @@ public class TriggerCollectionService {
                         gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
             }
         });
+    }
+
+    /**
+     * "Whenever another permanent you control leaves the battlefield" triggers.
+     */
+    public void checkAllyPermanentLeavesBattlefieldTriggers(GameData gameData, Permanent leavingPermanent,
+                                                             UUID controllerId) {
+        if (controllerId == null) return;
+        UUID leavingId = leavingPermanent.getId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            if (perm.getId().equals(leavingId)) continue;
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD)) {
+                CardEffect resolved = resolveTriggeringPermanentConditional(
+                        gameData, perm, controllerId, leavingPermanent, effect);
+                if (resolved == null) continue;
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        null,
+                        perm.getId()
+                ));
+                gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+                log.info("Game {} - {} triggers on another permanent you control leaving the battlefield ({})",
+                        gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
+            }
+        }
     }
 
     /**

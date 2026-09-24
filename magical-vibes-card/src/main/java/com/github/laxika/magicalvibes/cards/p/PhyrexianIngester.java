@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "41")
 @CardRegistration(set = "EMA", collectorNumber = "66")
+@CardRegistration(set = "CMM", collectorNumber = "111")
 public class PhyrexianIngester extends Card {
 
     public PhyrexianIngester() {

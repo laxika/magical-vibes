@@ -41,7 +41,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       boolean grantsAdditionalPlusOneCounter,
                                       Set<CardSubtype> spellOnlySubtypes,
                                       boolean differentColors,
-                                      List<ManaColor> allowedColors) implements ManaProducingEffect {
+                                      List<ManaColor> allowedColors,
+                                      boolean tracksProducingSourceForSpellCastTriggers) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect {
         spellOnlySubtypes = spellOnlySubtypes == null ? Set.of() : Set.copyOf(spellOnlySubtypes);
@@ -64,6 +65,24 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
                 differentColors, ManaColor.COLORS);
+    }
+
+    public AwardAnyColorManaEffect(DynamicAmount amount,
+                                   ManaSpendRestriction restriction,
+                                   CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn,
+                                   boolean targetsPlayer,
+                                   boolean manaRecipientIsTargetPlayer,
+                                   boolean markSourceAsHavingAddedManaThisTurn,
+                                   boolean anyColorCombination,
+                                   boolean grantsAdditionalPlusOneCounter,
+                                   Set<CardSubtype> spellOnlySubtypes,
+                                   boolean differentColors,
+                                   List<ManaColor> allowedColors) {
+        this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
+                targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
+                anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
+                differentColors, allowedColors, false);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount,
@@ -124,6 +143,15 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction) {
         this(new Fixed(amount), restriction, null, false, false, false, false, false, false, Set.of(), false);
+    }
+
+    /** Marks the produced mana so a spell-cast trigger can require that it was spent. */
+    public AwardAnyColorManaEffect withProducingSourceForSpellCastTriggers() {
+        return new AwardAnyColorManaEffect(amount, restriction, subtype,
+                sourceBecomesProducedColorUntilEndOfTurn, targetsPlayer,
+                manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
+                anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
+                differentColors, allowedColors, true);
     }
 
     /** "Add N mana in any combination of colors" with a spending restriction. */
@@ -222,7 +250,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                  MANA_VALUE_AT_LEAST_FOUR,
                  CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS,
-                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY -> 0;
+                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY,
+                 COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS, COMMANDER_ONLY -> 0;
         };
     }
 }

@@ -1271,7 +1271,7 @@ public class StackResolutionService {
             return;
         }
         triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
-                gameData, entry.getControllerId());
+                gameData, entry.getControllerId(), card.getManaValue());
     }
 
     /**

@@ -1,5 +1,7 @@
 # Card Patterns: Vanilla, Keyword & ETB Creatures
 
+| ETB during declare attackers may reselect an attacking creature's target | `p/PortalMage.java` | `target(TargetFilters.attackingCreature()).addEffect(ON_ENTER_BATTLEFIELD, ConditionalEffect(new DuringDeclareAttackers(), MayEffect(new ReselectAttackingCreatureAttackTargetEffect(), ...)))`; the original attacker is chosen at trigger time and the replacement attack target is chosen on resolution using current attack legality |
+
 All paths relative to `cards/`.
 
 For an ETB that free-casts an instant from your graveyard, use

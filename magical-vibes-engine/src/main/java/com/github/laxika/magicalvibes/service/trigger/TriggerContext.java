@@ -22,7 +22,7 @@ import java.util.Set;
 public sealed interface TriggerContext {
 
     /** Context for a Saga's final chapter ability finishing resolution. */
-    record SagaFinalChapterAbilityResolved(UUID sagaControllerId) implements TriggerContext {}
+    record SagaFinalChapterAbilityResolved(UUID sagaControllerId, int sagaManaValue) implements TriggerContext {}
 
     record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {
         public Card spellCard() {

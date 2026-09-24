@@ -19,6 +19,8 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "8")
 @CardRegistration(set = "SLZ", collectorNumber = "129")
 @CardRegistration(set = "SLZ", collectorNumber = "250")
+@CardRegistration(set = "CMM", collectorNumber = "52")
+@CardRegistration(set = "CMM", collectorNumber = "628")
 public class ReturnToDust extends Card {
 
     public ReturnToDust() {

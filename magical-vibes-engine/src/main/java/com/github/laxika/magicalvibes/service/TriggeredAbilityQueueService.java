@@ -2156,6 +2156,14 @@ public class TriggeredAbilityQueueService {
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
                         continue;
                     }
+                    if (returnEffect != null
+                            && returnEffect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                            && !gameData.cardsDiscardedOrCycledThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())
+                            && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (manaValueEqualsX
                             && graveyardCard.getManaValue() != pending.xValue() + manaValueXOffset) {
                         continue;

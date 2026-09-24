@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "2XM", collectorNumber = "155")
+@CardRegistration(set = "CMM", collectorNumber = "276")
+@CardRegistration(set = "CMM", collectorNumber = "555")
 public class BloodsporeThrinax extends Card {
 
     public BloodsporeThrinax() {

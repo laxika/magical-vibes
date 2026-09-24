@@ -52,7 +52,7 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         }
         if (!predicateEvaluationService.matchesCardPredicate(
                 context.spell(), reduce.predicate(),
-                source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
+                source.sourceCardId(),
                 context.gameData(), context.castingPlayerId(), null, null, context.xValue())) {
             return 0;
         }

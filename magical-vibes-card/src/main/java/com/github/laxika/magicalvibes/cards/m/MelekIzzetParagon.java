@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "84")
+@CardRegistration(set = "CMM", collectorNumber = "345")
 public class MelekIzzetParagon extends Card {
 
     public MelekIzzetParagon() {

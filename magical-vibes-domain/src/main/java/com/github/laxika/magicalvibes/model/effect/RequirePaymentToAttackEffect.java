@@ -13,14 +13,17 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  *
  * <p>{@code activeCondition} (nullable, {@code null} = always active) gates the
  * whole tax on a state of the source permanent, re-checked at declare-attackers
+ * time. {@code planeswalkersOnly} limits the tax to creatures attacking a
+ * planeswalker controlled by the defender, as with Onakke Oathkeeper.
  * time — Archangel of Tithes taxes only "as long as this creature is untapped".
  */
 public record RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker,
                                            boolean protectsPlaneswalkers,
+                                           boolean planeswalkersOnly,
                                            Condition activeCondition) implements CardEffect {
 
     public RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker) {
-        this(amountPerAttacker, true, null);
+        this(amountPerAttacker, true, false, null);
     }
 
     public RequirePaymentToAttackEffect(int amountPerAttacker) {
@@ -28,14 +31,24 @@ public record RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker,
     }
 
     public RequirePaymentToAttackEffect(int amountPerAttacker, boolean protectsPlaneswalkers) {
-        this(new Fixed(amountPerAttacker), protectsPlaneswalkers, null);
+        this(new Fixed(amountPerAttacker), protectsPlaneswalkers, false, null);
     }
 
     public RequirePaymentToAttackEffect(int amountPerAttacker, Condition activeCondition) {
-        this(new Fixed(amountPerAttacker), true, activeCondition);
+        this(new Fixed(amountPerAttacker), true, false, activeCondition);
+    }
+
+    public RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker,
+                                        boolean protectsPlaneswalkers,
+                                        Condition activeCondition) {
+        this(amountPerAttacker, protectsPlaneswalkers, false, activeCondition);
     }
 
     public static RequirePaymentToAttackEffect playerOnly(int amountPerAttacker) {
-        return new RequirePaymentToAttackEffect(new Fixed(amountPerAttacker), false, null);
+        return new RequirePaymentToAttackEffect(new Fixed(amountPerAttacker), false, false, null);
+    }
+
+    public static RequirePaymentToAttackEffect planeswalkersOnly(int amountPerAttacker) {
+        return new RequirePaymentToAttackEffect(new Fixed(amountPerAttacker), true, true, null);
     }
 }

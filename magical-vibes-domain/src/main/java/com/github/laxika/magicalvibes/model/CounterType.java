@@ -11,6 +11,7 @@ public enum CounterType {
     BAIT,
     BLAZE,
     BLIGHT,
+    BLESSING,
     BLOOD,
     BLOODLINE,
     BLOODSTAIN,

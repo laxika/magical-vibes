@@ -19,6 +19,12 @@ public enum ManaSpendRestriction {
     /** Choose a color in the activating player's commander's color identity (Command Tower). */
     COMMANDER_COLOR_IDENTITY,
 
+    /** Choose a color in the commander's color identity; mana spent on the commander adds entry counters (Opal Palace). */
+    COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS,
+
+    /** Spendable only to cast the activating player's commander (Jeweled Lotus). */
+    COMMANDER_ONLY,
+
     /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
     SPELL_ONLY,
 

@@ -30,14 +30,16 @@ public class SagaTriggerCollectorService {
         }
 
         Card sourceCard = match.permanent().getCard();
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(trigger)),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        entry.setEventValue(resolved.sagaManaValue());
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers after a final Saga chapter resolves",
                 match.gameData().id, sourceCard.getName());

@@ -304,6 +304,9 @@ public class BattlefieldPlacementService {
         // CR 613.7d: an object receives its timestamp as it enters a zone.
         permanent.setTimestamp(gameData.nextTimestamp());
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        if (permanent.getCard().isToken()) {
+            gameData.playersWhoCreatedTokensThisTurn.add(puttingPlayerId);
+        }
         if (permanent.getCard().isAura() && permanent.getAttachedTo() != null) {
             triggerCollectionService.checkAuraAttachedTriggers(gameData, permanent, permanent.getAttachedTo());
         }

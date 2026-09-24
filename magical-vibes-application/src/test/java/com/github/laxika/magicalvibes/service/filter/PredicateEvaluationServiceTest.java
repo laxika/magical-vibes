@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredi
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -896,6 +897,24 @@ class PredicateEvaluationServiceTest {
     @Nested
     @DisplayName("matchesPermanentPredicate")
     class MatchesPermanentPredicate {
+
+        @Test
+        @DisplayName("PermanentControlledByMonarchPredicate follows the permanent's current controller")
+        void controlledByMonarchPredicateMatchesCurrentMonarch() {
+            Permanent permanent = addPermanent(player2Id,
+                    createCreature("Monarch's Creature", 2, 2, CardColor.GREEN));
+            Permanent otherPermanent = addPermanent(player1Id,
+                    createCreature("Other Creature", 2, 2, CardColor.GREEN));
+            PermanentControlledByMonarchPredicate predicate = new PermanentControlledByMonarchPredicate();
+
+            gd.monarchPlayerId = player2Id;
+            assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isFalse();
+
+            gd.monarchPlayerId = player1Id;
+            assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isTrue();
+        }
 
         @Test
         @DisplayName("PermanentIsCreaturePredicate matches creature")

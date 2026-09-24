@@ -305,6 +305,16 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.CommanderManaColorChoice ctx) {
+            handleCommanderManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.CommanderIdentityManaColorChoice ctx) {
+            handleCommanderIdentityManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
@@ -1287,6 +1297,9 @@ public class ChoiceHandlerService {
             } else {
                 manaPool.add(manaColor, 1);
                 tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
+                if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
+                    manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
+                }
                 if (ctx.fromSnowSource()) {
                     manaPool.addSnowManaTag(manaColor, 1);
                 }
@@ -1328,6 +1341,9 @@ public class ChoiceHandlerService {
                 }
                 List<String> colors = nextColors.stream().map(Enum::name).toList();
                 nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
+                if (ctx.tracksSourceForSpellCastTriggers()) {
+                    nextCtx = nextCtx.withSourceTracking();
+                }
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -1432,6 +1448,9 @@ public class ChoiceHandlerService {
         } else {
             manaPool.add(manaColor, amount);
             tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
+            if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
+                manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, amount);
+            }
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
             }
@@ -1574,6 +1593,67 @@ public class ChoiceHandlerService {
                 + colorName.toLowerCase() + " mana."));
         log.info("Game {} - {} adds {} {} Treasure mana", gameData.id,
                 player.getUsername(), manaWord, colorName.toLowerCase());
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCommanderManaColorChosen(GameData gameData, Player player, String colorName,
+                                                List<String> options,
+                                                ChoiceContext.CommanderManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
+        gameData.playerManaPools.get(manaRecipientId).addCommanderOnlyMana(manaColor, ctx.amount());
+
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana (commander only)."));
+        log.info("Game {} - {} adds {} {} commander-only mana", gameData.id,
+                player.getUsername(), manaWord, colorName.toLowerCase());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCommanderIdentityManaColorChosen(
+            GameData gameData, Player player, String colorName, List<String> options,
+            ChoiceContext.CommanderIdentityManaColorChoice ctx) {
+        if (!options.contains(colorName) || !ctx.fixedColorOptions().stream().map(Enum::name).toList().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, ctx.amount());
+        manaPool.addCommanderCastCounterGrantingMana(manaColor, ctx.amount());
+
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana."));
+        log.info("Game {} - {} adds {} {} commander-entry-counter mana", gameData.id,
+                player.getUsername(), manaWord, colorName.toLowerCase());
+
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -3899,6 +3979,9 @@ public class ChoiceHandlerService {
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (source != null) {
             source.setChosenSubtype(subtype);
+            if (ctx.untilEndOfTurn()) {
+                gameData.temporaryChosenSubtypePermanentIds.add(source.getId());
+            }
             log.info("Game {} - {} secretly chooses creature type {} for {}", gameData.id,
                     player.getUsername(), subtype, source.getCard().getName());
             battlefieldEntryService.applyDeferredEnterWithCounters(gameData, player.getId(), source);

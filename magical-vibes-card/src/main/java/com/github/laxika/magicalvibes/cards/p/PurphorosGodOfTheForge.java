@@ -21,6 +21,8 @@ import java.util.Set;
 @CardRegistration(set = "THS", collectorNumber = "135")
 @CardRegistration(set = "PIO", collectorNumber = "296")
 @CardRegistration(set = "FCA", collectorNumber = "14")
+@CardRegistration(set = "CMM", collectorNumber = "246")
+@CardRegistration(set = "CMM", collectorNumber = "547")
 public class PurphorosGodOfTheForge extends Card {
 
     public PurphorosGodOfTheForge() {

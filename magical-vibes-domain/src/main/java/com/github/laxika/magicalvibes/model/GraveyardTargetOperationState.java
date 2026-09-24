@@ -201,6 +201,7 @@ public class GraveyardTargetOperationState {
     public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
     public MilledCreaturesToHandContext milledCreaturesToHand;
+    public MilledCreaturesToExileForTokenContext milledCreaturesToExileForToken;
 
     /**
      * The entry context needed to resume {@code BattlefieldEntryService.processCreatureETBEffects}
@@ -250,6 +251,12 @@ public class GraveyardTargetOperationState {
 
     public record MilledCreaturesToHandContext(List<UUID> chosenCardIds) {
         public MilledCreaturesToHandContext {
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
+    public record MilledCreaturesToExileForTokenContext(List<UUID> chosenCardIds) {
+        public MilledCreaturesToExileForTokenContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }

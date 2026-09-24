@@ -5,13 +5,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import java.util.UUID;
 
 /**
- * Where a cost-modifying static effect lives: on a battlefield permanent, emblem, or planar
- * object (with its controller), or on the spell being cast itself ({@link #SPELL_ITSELF}, where
- * both fields are null). Emblem and planar effects have a null {@code sourcePermanent}.
+ * Where a cost-modifying static effect lives: on a battlefield permanent, emblem, planar object,
+ * or command-zone card (with its controller), or on the spell being cast itself ({@link #SPELL_ITSELF}).
+ * Emblem, planar, and command-zone sources have a null {@code sourcePermanent}.
  */
-public record CostModificationSource(Permanent sourcePermanent, UUID controllerId) {
+public record CostModificationSource(Permanent sourcePermanent, UUID controllerId, UUID sourceCardId) {
 
-    public static final CostModificationSource SPELL_ITSELF = new CostModificationSource(null, null);
+    public static final CostModificationSource SPELL_ITSELF = new CostModificationSource(null, null, null);
+
+    public CostModificationSource(Permanent sourcePermanent, UUID controllerId) {
+        this(sourcePermanent, controllerId,
+                sourcePermanent == null ? null : sourcePermanent.getCard().getId());
+    }
 
     public boolean controlledBy(UUID playerId) {
         return playerId != null && playerId.equals(controllerId);

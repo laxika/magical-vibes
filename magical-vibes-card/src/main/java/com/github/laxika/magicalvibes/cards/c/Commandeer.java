@@ -18,6 +18,8 @@ import java.util.Set;
 
 @CardRegistration(set = "CSP", collectorNumber = "29")
 @CardRegistration(set = "OTP", collectorNumber = "9")
+@CardRegistration(set = "CMM", collectorNumber = "80")
+@CardRegistration(set = "CMM", collectorNumber = "484")
 public class Commandeer extends Card {
 
     public Commandeer() {

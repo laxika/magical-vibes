@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackDirectionRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackTargetRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreviouslyAttackedPlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUntilNextTurnEffect.Direction;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -232,6 +234,9 @@ public class AttackLegalityService {
      * flag is set apply (Sandwurm Convergence — "can't attack you or planeswalkers you control").
      */
     public boolean canAttackDefender(GameData gameData, Permanent attacker, UUID targetId) {
+        if (!canAttackInChosenDirection(gameData, attacker, targetId)) {
+            return false;
+        }
         if (isRestrictedFromAttackingPreviouslyAttackedPlayer(gameData, attacker, targetId)) {
             return false;
         }
@@ -298,6 +303,70 @@ public class AttackLegalityService {
             }
         }
         return true;
+    }
+
+    /**
+     * Teyo, Geometric Tactician: a temporary global restriction allows attacks only against the
+     * nearest opponent in the selected table direction, or that opponent's planeswalkers.
+     */
+    private boolean canAttackInChosenDirection(GameData gameData, Permanent attacker, UUID targetId) {
+        List<AttackDirectionRestrictionEffect> restrictions = new ArrayList<>();
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof AttackDirectionRestrictionEffect restriction) {
+                    restrictions.add(restriction);
+                }
+            }
+        }
+        if (restrictions.isEmpty()) {
+            return true;
+        }
+        if (targetId == null) {
+            return false;
+        }
+
+        UUID attackerControllerId = gameData.findControllerOf(attacker);
+        if (attackerControllerId == null) {
+            return false;
+        }
+
+        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+        boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+        UUID targetPlayerId;
+        if (targetIsPlayer) {
+            targetPlayerId = targetId;
+        } else if (targetPermanent != null && targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+            targetPlayerId = gameQueryService.findPermanentController(gameData, targetId);
+        } else {
+            targetPlayerId = null;
+        }
+
+        for (AttackDirectionRestrictionEffect restriction : restrictions) {
+            if (targetPlayerId == null || !isNearestOpponentInDirection(
+                    gameData, attackerControllerId, targetPlayerId, restriction)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isNearestOpponentInDirection(GameData gameData, UUID attackerControllerId,
+                                                   UUID targetPlayerId,
+                                                   AttackDirectionRestrictionEffect restriction) {
+        int controllerIndex = gameData.orderedPlayerIds.indexOf(attackerControllerId);
+        if (controllerIndex < 0) {
+            return false;
+        }
+        int step = restriction.direction() == Direction.LEFT ? -1 : 1;
+        int playerCount = gameData.orderedPlayerIds.size();
+        for (int offset = 1; offset < playerCount; offset++) {
+            UUID candidate = gameData.orderedPlayerIds.get(
+                    Math.floorMod(controllerIndex + step * offset, playerCount));
+            if (gameData.playerIds.contains(candidate)) {
+                return candidate.equals(targetPlayerId);
+            }
+        }
+        return false;
     }
 
     private boolean isRestrictedFromAttackingPreviouslyAttackedPlayer(GameData gameData,

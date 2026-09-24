@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "232")
 @CardRegistration(set = "DMR", collectorNumber = "138")
+@CardRegistration(set = "CMM", collectorNumber = "255")
 public class SliceAndDice extends Card {
 
     public SliceAndDice() {
