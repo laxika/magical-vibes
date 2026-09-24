@@ -12,7 +12,15 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "DKA", collectorNumber = "24")
 @CardRegistration(set = "VOW", collectorNumber = "38")
 @CardRegistration(set = "A25", collectorNumber = "36")
+@CardRegistration(set = "SLD", collectorNumber = "37")
+@CardRegistration(set = "SLD", collectorNumber = "38")
+@CardRegistration(set = "SLD", collectorNumber = "39")
+@CardRegistration(set = "SLD", collectorNumber = "40")
 @CardRegistration(set = "HA2", collectorNumber = "4")
+@CardRegistration(set = "MUL", collectorNumber = "7")
+@CardRegistration(set = "MUL", collectorNumber = "72")
+@CardRegistration(set = "MUL", collectorNumber = "137")
+@CardRegistration(set = "DBL", collectorNumber = "305")
 public class ThaliaGuardianOfThraben extends Card {
 
     public ThaliaGuardianOfThraben() {

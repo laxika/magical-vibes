@@ -22,6 +22,8 @@ import java.util.List;
  * the Joiner Adept-style "{T}: Add one mana of any color" ability rather than five separate abilities.
  */
 @CardRegistration(set = "SHM", collectorNumber = "126")
+@CardRegistration(set = "SLD", collectorNumber = "1104")
+@CardRegistration(set = "WOT", collectorNumber = "60")
 public class PrismaticOmen extends Card {
 
     public PrismaticOmen() {

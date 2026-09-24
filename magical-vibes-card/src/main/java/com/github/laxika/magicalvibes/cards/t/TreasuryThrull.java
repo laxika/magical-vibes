@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "201")
 @CardRegistration(set = "GK2", collectorNumber = "46")
+@CardRegistration(set = "C15", collectorNumber = "235")
 public class TreasuryThrull extends Card {
 
     public TreasuryThrull() {

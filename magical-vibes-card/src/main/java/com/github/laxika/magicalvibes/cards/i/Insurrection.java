@@ -14,6 +14,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "213")
 @CardRegistration(set = "HOP", collectorNumber = "57")
+@CardRegistration(set = "TLE", collectorNumber = "31")
+@CardRegistration(set = "CMD", collectorNumber = "126")
+@CardRegistration(set = "CMM", collectorNumber = "236")
+@CardRegistration(set = "CMM", collectorNumber = "542")
+@CardRegistration(set = "CMM", collectorNumber = "699")
 public class Insurrection extends Card {
 
     public Insurrection() {

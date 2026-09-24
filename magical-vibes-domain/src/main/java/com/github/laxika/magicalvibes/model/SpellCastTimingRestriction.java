@@ -74,6 +74,9 @@ public enum SpellCastTimingRestriction {
      */
     DECLARE_BLOCKERS,
 
+    /** "Cast this spell only during the declare blockers step on an opponent's turn." */
+    OPPONENTS_DECLARE_BLOCKERS,
+
     /**
      * "Cast this spell only during an opponent's turn, before attackers are declared." Siren's Call.
      * Legal only when the caster is not the active player and the current step precedes the declare
@@ -86,6 +89,9 @@ public enum SpellCastTimingRestriction {
      * which the caster is not the active player.
      */
     OPPONENTS_TURN,
+
+    /** "Cast this spell only during an opponent's combat phase." */
+    OPPONENTS_COMBAT,
 
     /**
      * "Cast this spell only during an opponent's turn after their upkeep step." Reset. Legal in

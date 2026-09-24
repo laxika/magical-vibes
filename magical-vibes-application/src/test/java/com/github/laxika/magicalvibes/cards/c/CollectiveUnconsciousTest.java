@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,6 +73,20 @@ class CollectiveUnconsciousTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Counts creatures but not other permanents")
+    void ignoresNonCreaturePermanents() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);

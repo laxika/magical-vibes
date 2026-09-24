@@ -67,7 +67,7 @@ public class SearchLibraryGraveyardAndOrOutsideGameForCardToHandEffectHandler
             }
         }
 
-        for (Card card : gameData.playerSideboards.getOrDefault(playerId, List.of())) {
+        for (Card card : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)) {
             if (matches(gameData, card, search.filter(), playerId)) {
                 candidates.putIfAbsent(card.getId(), card);
                 outsideGameCardIds.add(card.getId());

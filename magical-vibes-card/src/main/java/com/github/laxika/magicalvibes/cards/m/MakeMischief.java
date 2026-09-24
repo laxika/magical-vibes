@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "EMN", collectorNumber = "135")
+@CardRegistration(set = "SIR", collectorNumber = "169")
 public class MakeMischief extends Card {
 
     public MakeMischief() {

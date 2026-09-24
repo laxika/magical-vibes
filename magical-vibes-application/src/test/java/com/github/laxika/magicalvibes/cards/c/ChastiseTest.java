@@ -1,19 +1,18 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -101,6 +100,40 @@ class ChastiseTest extends BaseCardTest {
         // No life gain when the spell fizzles
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        harness.assertInGraveyard(player2, "Chastise");
+    }
+
+    @Test
+    @DisplayName("Gains life even when the attacking creature regenerates")
+    void gainsLifeWhenTargetRegenerates() {
+        harness.setLife(player2, 15);
+        Permanent attacker = addAttacker(player1);
+        attacker.setRegenerationShield(1);
+
+        castChastise(attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getRegenerationShield()).isZero();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttacking() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addAttacker(player1);
+
+        castChastise(attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+        assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player2, "Chastise");
     }
 }

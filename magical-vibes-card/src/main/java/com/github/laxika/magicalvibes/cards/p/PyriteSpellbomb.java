@@ -12,7 +12,9 @@ import java.util.List;
 @CardRegistration(set = "MRD", collectorNumber = "232")
 @CardRegistration(set = "MMA", collectorNumber = "212")
 @CardRegistration(set = "DDU", collectorNumber = "60")
+@CardRegistration(set = "SLD", collectorNumber = "676")
 @CardRegistration(set = "2XM", collectorNumber = "283")
+@CardRegistration(set = "AA2", collectorNumber = "21")
 public class PyriteSpellbomb extends Card {
 
     public PyriteSpellbomb() {

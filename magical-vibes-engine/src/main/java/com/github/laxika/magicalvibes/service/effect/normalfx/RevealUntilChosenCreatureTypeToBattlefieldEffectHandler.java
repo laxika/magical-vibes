@@ -56,6 +56,6 @@ public class RevealUntilChosenCreatureTypeToBattlefieldEffectHandler implements 
         ));
         revealHandler.resolve(gameData, entry,
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
-                        matchingCreature, LibrarySearchDestination.BATTLEFIELD));
+                        matchingCreature, LibrarySearchDestination.BATTLEFIELD), true);
     }
 }

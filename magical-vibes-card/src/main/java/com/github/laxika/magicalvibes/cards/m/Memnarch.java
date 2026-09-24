@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "129")
 @CardRegistration(set = "V16", collectorNumber = "7")
+@CardRegistration(set = "SLD", collectorNumber = "1626")
 public class Memnarch extends Card {
 
     public Memnarch() {

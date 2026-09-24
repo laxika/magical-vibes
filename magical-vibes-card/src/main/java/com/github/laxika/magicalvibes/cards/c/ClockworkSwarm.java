@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "104")
+@CardRegistration(set = "ME4", collectorNumber = "192")
 public class ClockworkSwarm extends Card {
 
     public ClockworkSwarm() {

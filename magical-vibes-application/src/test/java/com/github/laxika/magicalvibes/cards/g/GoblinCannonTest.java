@@ -4,20 +4,21 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinCannon.class, LlanowarElves.class, Forest.class})
 class GoblinCannonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to target player and is sacrificed")
     void dealsDamageToPlayerAndIsSacrificed() {
-        Permanent cannon = addCannon(player1);
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new GoblinCannon());
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -32,7 +33,7 @@ class GoblinCannonTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple activations deal damage before the first resolution sacrifices it")
     void multipleActivationsEachDealDamage() {
-        addCannon(player1);
+        harness.addToBattlefield(player1, new GoblinCannon());
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -47,7 +48,7 @@ class GoblinCannonTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target creature")
     void dealsDamageToCreature() {
-        addCannon(player1);
+        harness.addToBattlefield(player1, new GoblinCannon());
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -59,9 +60,24 @@ class GoblinCannonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not sacrifice itself when its target becomes illegal")
+    void doesNotSacrificeWhenTargetBecomesIllegal() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new GoblinCannon());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cannon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(cannon.getCard());
+    }
+
+    @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        addCannon(player1);
+        harness.addToBattlefield(player1, new GoblinCannon());
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -69,10 +85,4 @@ class GoblinCannonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addCannon(Player player) {
-        Permanent cannon = new Permanent(new GoblinCannon());
-        cannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(cannon);
-        return cannon;
-    }
 }

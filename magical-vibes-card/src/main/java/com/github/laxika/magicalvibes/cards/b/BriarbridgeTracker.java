@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "172")
+@CardRegistration(set = "DBL", collectorNumber = "172")
 public class BriarbridgeTracker extends Card {
 
     public BriarbridgeTracker() {

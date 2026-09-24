@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "195")
+@CardRegistration(set = "SIS", collectorNumber = "54")
 public class Moonmist extends Card {
 
     public Moonmist() {

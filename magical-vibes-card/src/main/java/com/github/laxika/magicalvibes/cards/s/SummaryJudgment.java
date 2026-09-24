@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "24")
+@CardRegistration(set = "RVR", collectorNumber = "27")
 public class SummaryJudgment extends Card {
 
     public SummaryJudgment() {

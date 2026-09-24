@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatches
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "86")
+@CardRegistration(set = "DBL", collectorNumber = "353")
 public class WanderlightSpirit extends Card {
 
     public WanderlightSpirit() {

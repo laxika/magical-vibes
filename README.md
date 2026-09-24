@@ -8,8 +8,12 @@ An experimental online Magic game engine. The goal is to show that modern agents
 **What the engine supports:**
 - 10E (Tenth Edition) 80% coded.
 - 1v1 matches against human players.
+- Two-player Commander with 40 starting life, one commander, commander tax, command-zone return choices, and 21 combat damage from one commander.
+- Saved decks with main deck, sideboard, and commander selection. The deck builder validates Casual, Standard, Pioneer, Modern, Legacy, Vintage, Pauper, and Commander. Invalid drafts can be saved; game admission enforces the selected format.
 - 1v1 matches against AI (an easy, heuristic based one).
 - 8 player drafts against other humans or AI.
+
+Commander uses the regular Commander rules for a two-player game, not Duel Commander. Partner/background pairs, companions, multiplayer, random Commander decks, and Commander with Planechase are outside the supported scope. Format legality is refreshed from the configured card-data provider in a separate daily cache; validation displays its date and rejects unknown legality for tournament formats.
 
 **Architecture:**
 - Backend: Java + Spring Boot.

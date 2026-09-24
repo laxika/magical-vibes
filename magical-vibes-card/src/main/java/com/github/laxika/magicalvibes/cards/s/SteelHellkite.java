@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithM
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "205")
+@CardRegistration(set = "C14", collectorNumber = "273")
 public class SteelHellkite extends Card {
 
     public SteelHellkite() {

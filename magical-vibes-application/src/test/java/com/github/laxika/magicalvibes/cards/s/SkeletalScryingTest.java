@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Concentrate;
+import com.github.laxika.magicalvibes.cards.r.RottingGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkeletalScrying.class, RottingGiant.class, Concentrate.class})
 class SkeletalScryingTest extends BaseCardTest {
 
     private void cast(int xValue, List<Integer> exileIndices) {
@@ -23,7 +25,7 @@ class SkeletalScryingTest extends BaseCardTest {
     @Test
     @DisplayName("Exiling two cards draws two cards and causes two life loss")
     void exilesTwoDrawsTwoAndLosesTwoLife() {
-        harness.setGraveyard(player1, List.of(new RagingGoblin(), new Shock()));
+        harness.setGraveyard(player1, List.of(new RottingGiant(), new Concentrate()));
         harness.setHand(player1, List.of(new SkeletalScrying()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.setLife(player1, 20);
@@ -63,7 +65,7 @@ class SkeletalScryingTest extends BaseCardTest {
     @Test
     @DisplayName("The number of cards exiled must match the announced X")
     void exileCountMustMatchAnnouncedX() {
-        harness.setGraveyard(player1, List.of(new RagingGoblin()));
+        harness.setGraveyard(player1, List.of(new RottingGiant()));
         harness.setHand(player1, List.of(new SkeletalScrying()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -73,5 +75,21 @@ class SkeletalScryingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same graveyard card cannot be exiled twice to pay the cost")
+    void duplicateGraveyardCardSelectionIsRejected() {
+        harness.setGraveyard(player1, List.of(new Concentrate()));
+        harness.setHand(player1, List.of(new SkeletalScrying()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> cast(2, List.of(0, 0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
     }
 }

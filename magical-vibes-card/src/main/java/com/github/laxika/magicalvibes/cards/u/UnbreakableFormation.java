@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "29")
+@CardRegistration(set = "SLD", collectorNumber = "310")
+@CardRegistration(set = "RVR", collectorNumber = "32")
 public class UnbreakableFormation extends Card {
 
     public UnbreakableFormation() {

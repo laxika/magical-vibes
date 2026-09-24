@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessOfOtherAttackingCreatureEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "151")
+@CardRegistration(set = "DBL", collectorNumber = "418")
 public class CreepyPuppeteer extends Card {
 
     public CreepyPuppeteer() {

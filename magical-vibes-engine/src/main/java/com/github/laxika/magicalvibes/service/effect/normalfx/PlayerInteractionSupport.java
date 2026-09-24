@@ -629,6 +629,25 @@ public class PlayerInteractionSupport {
                 chosenCardCondition, chosenCardThenEffect, null, null);
     }
 
+    public void resolveHandRevealAndChooseWithChosenCardThen(GameData gameData, StackEntry entry,
+                                                              int count, List<CardType> excludedTypes,
+                                                              List<CardType> includedTypes, CardPredicate filter,
+                                                              boolean discardMode, boolean exileMode,
+                                                              UUID sourcePermanentId, boolean optional,
+                                                              boolean exileAllCopiesOfChosenNames,
+                                                              int declineFallbackDiscardCount, boolean imprintOnSource,
+                                                              boolean revealHand, boolean grantPlayPermission,
+                                                              boolean returnAtNextEndStep, int exilePlayOpponentTax,
+                                                              CardPredicate chosenCardCondition,
+                                                              CardEffect chosenCardThenEffect,
+                                                              boolean keepInHand) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, optional, exileAllCopiesOfChosenNames,
+                declineFallbackDiscardCount, imprintOnSource, revealHand, false,
+                grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
+                chosenCardCondition, chosenCardThenEffect, null, null, keepInHand);
+    }
+
     public void resolveHandRevealAndChooseOrElse(GameData gameData, StackEntry entry,
                                                   int count, List<CardType> excludedTypes,
                                                   List<CardType> includedTypes, CardPredicate filter,
@@ -715,6 +734,28 @@ public class PlayerInteractionSupport {
                                              CardEffect chosenCardThenEffect,
                                              CardEffect declineEffect,
                                              CardEffect currentEffect) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, optional, exileAllCopiesOfChosenNames,
+                declineFallbackDiscardCount, imprintOnSource, revealHand, shuffleIntoLibraryMode,
+                grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
+                chosenCardCondition, chosenCardThenEffect, declineEffect, currentEffect, false);
+    }
+
+    private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+                                             int count, List<CardType> excludedTypes,
+                                             List<CardType> includedTypes, CardPredicate filter,
+                                             boolean discardMode, boolean exileMode,
+                                             UUID sourcePermanentId, boolean optional,
+                                             boolean exileAllCopiesOfChosenNames,
+                                             int declineFallbackDiscardCount, boolean imprintOnSource,
+                                             boolean revealHand, boolean shuffleIntoLibraryMode,
+                                             boolean grantPlayPermission, boolean returnAtNextEndStep,
+                                             int exilePlayOpponentTax,
+                                             CardPredicate chosenCardCondition,
+                                             CardEffect chosenCardThenEffect,
+                                             CardEffect declineEffect,
+                                             CardEffect currentEffect,
+                                             boolean keepInHand) {
 
         boolean effectiveOptional = optional || declineFallbackDiscardCount > 0 || declineEffect != null;
         UUID targetPlayerId = entry.getTargetId();
@@ -728,7 +769,7 @@ public class PlayerInteractionSupport {
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);
-        String actionVerb = exileMode ? "exile"
+        String actionVerb = keepInHand ? "keep in hand" : exileMode ? "exile"
                 : shuffleIntoLibraryMode ? "shuffle into their library" : "discard";
 
         if (hand == null || hand.isEmpty()) {
@@ -804,7 +845,8 @@ public class PlayerInteractionSupport {
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
                 null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
                 imprintOnSource, shuffleIntoLibraryMode, false, grantPlayPermission, returnAtNextEndStep,
-                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0);
+                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0,
+                keepInHand);
         interactionHandlerRegistry.begin(gameData, interaction);
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
@@ -1200,6 +1242,9 @@ public class PlayerInteractionSupport {
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
             int amount = variableAmounts ? amounts.remove(0) : followUp.eachPlayerAmount();
+            if (amount <= 0) {
+                continue;
+            }
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
             if (gameData.discardCausedByOpponent
                     && gameQueryService.isDiscardPrevented(gameData, nextPlayerId)) {

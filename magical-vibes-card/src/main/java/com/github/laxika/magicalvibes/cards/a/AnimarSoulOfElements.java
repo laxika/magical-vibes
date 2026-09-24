@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "A25", collectorNumber = "196")
+@CardRegistration(set = "SLD", collectorNumber = "1891")
+@CardRegistration(set = "2X2", collectorNumber = "171")
+@CardRegistration(set = "CMD", collectorNumber = "181")
 public class AnimarSoulOfElements extends Card {
 
     public AnimarSoulOfElements() {

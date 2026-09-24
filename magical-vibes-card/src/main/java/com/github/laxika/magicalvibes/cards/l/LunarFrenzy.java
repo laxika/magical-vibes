@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "147")
+@CardRegistration(set = "DBL", collectorNumber = "147")
 public class LunarFrenzy extends Card {
 
     public LunarFrenzy() {

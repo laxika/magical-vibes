@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "314")
+@CardRegistration(set = "ME4", collectorNumber = "188")
 public class CelestialSword extends Card {
 
     public CelestialSword() {

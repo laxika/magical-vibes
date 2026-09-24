@@ -9,15 +9,21 @@ import java.util.UUID;
  */
 public record RevealUntilNonlandBottomThenDealManaValueDamageEffect(
         TargetPredicate targetPredicate,
-        UUID fixedTargetId
+        UUID fixedTargetId,
+        boolean randomizeBottom
 ) implements CardEffect {
 
     public RevealUntilNonlandBottomThenDealManaValueDamageEffect() {
-        this(TargetPredicates.anyTarget(), null);
+        this(TargetPredicates.anyTarget(), null, false);
     }
 
     public RevealUntilNonlandBottomThenDealManaValueDamageEffect(TargetPredicate targetPredicate) {
-        this(targetPredicate, null);
+        this(targetPredicate, null, false);
+    }
+
+    public RevealUntilNonlandBottomThenDealManaValueDamageEffect(TargetPredicate targetPredicate,
+                                                                 boolean randomizeBottom) {
+        this(targetPredicate, null, randomizeBottom);
     }
 
     @Override

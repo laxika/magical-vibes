@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "135")
 @CardRegistration(set = "VMA", collectorNumber = "279")
+@CardRegistration(set = "C14", collectorNumber = "263")
 public class PredatorFlagship extends Card {
 
     public PredatorFlagship() {

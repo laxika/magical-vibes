@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "73")
+@CardRegistration(set = "SLD", collectorNumber = "969")
+@CardRegistration(set = "SLD", collectorNumber = "2243")
+@CardRegistration(set = "SPG", collectorNumber = "152")
 public class GrimHaruspex extends Card {
 
     public GrimHaruspex() {

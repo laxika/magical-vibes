@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Resolves a discard-trigger payload by returning the discarded card if it is still in a
- * graveyard.
+ * Returns the discarded card only while it remains the same object in the controller's graveyard.
  */
 @Slf4j
 @Component
@@ -39,23 +38,15 @@ public class ReturnDiscardedCardFromGraveyardToHandEffectHandler implements Norm
             return;
         }
 
-        UUID ownerId = null;
-        Card discardedCard = null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) {
-                continue;
-            }
-            discardedCard = graveyard.stream()
-                    .filter(card -> discardedCardId.equals(card.getId()))
-                    .findFirst()
-                    .orElse(null);
-            if (discardedCard != null) {
-                ownerId = playerId;
-                break;
-            }
+        if (gameData.graveyardEntryVersion(discardedCardId)
+                != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
         }
-        if (discardedCard == null || ownerId == null) {
+        UUID ownerId = entry.getControllerId();
+        Card discardedCard = gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                .filter(card -> discardedCardId.equals(card.getId()))
+                .findFirst().orElse(null);
+        if (discardedCard == null) {
             return;
         }
 

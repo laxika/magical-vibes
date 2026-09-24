@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.DreamChisel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElvishScrapper.class, GrizzlyBears.class, Island.class, LeoninScimitar.class, PhyrexianHulk.class})
+@CardUsed({ElvishScrapper.class, GrizzlyBears.class, Island.class, LeoninScimitar.class, PhyrexianHulk.class, DreamChisel.class, ElvishWarrior.class})
 class ElvishScrapperTest extends BaseCardTest {
 
     @Test
@@ -146,5 +149,11 @@ class ElvishScrapperTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Elvish Scrapper");
         harness.assertOnBattlefield(player2, "Leonin Scimitar");
         assertThat(gd.stack).hasSize(1);
+    }
+
+    private Permanent addReadyArtifact(Player player) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DreamChisel());
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 }

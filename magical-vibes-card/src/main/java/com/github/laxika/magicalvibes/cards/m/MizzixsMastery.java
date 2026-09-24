@@ -20,6 +20,9 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "STA", collectorNumber = "43")
+@CardRegistration(set = "FCA", collectorNumber = "41")
+@CardRegistration(set = "RVR", collectorNumber = "118")
+@CardRegistration(set = "C15", collectorNumber = "29")
 public class MizzixsMastery extends Card {
 
     public MizzixsMastery() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "109")
+@CardRegistration(set = "SIR", collectorNumber = "110")
+@CardRegistration(set = "C20", collectorNumber = "133")
 public class EverAfter extends Card {
 
     public EverAfter() {

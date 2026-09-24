@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.BarrenMoor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,14 +10,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ElvishPioneer.class, Forest.class, GrizzlyBears.class, ElfhamePalace.class})
+@CardUsed({ElvishPioneer.class, Forest.class, GrizzlyBears.class, ElfhamePalace.class, ElvishWarrior.class, BarrenMoor.class})
 class ElvishPioneerTest extends BaseCardTest {
 
     @Test
@@ -107,5 +107,22 @@ class ElvishPioneerTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Forest");
         harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Accepting with no basic land in hand does nothing")
+    void acceptingWithoutBasicLandDoesNothing() {
+        harness.setHand(player1, List.of(new ElvishPioneer(), new ElvishWarrior(), new BarrenMoor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Elvish Warrior");
+        harness.assertInHand(player1, "Barren Moor");
+        harness.assertNotOnBattlefield(player1, "Barren Moor");
     }
 }

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "12")
+@CardRegistration(set = "CMM", collectorNumber = "22")
 public class EliteScaleguard extends Card {
 
     public EliteScaleguard() {

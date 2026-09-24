@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "96")
+@CardRegistration(set = "CMD", collectorNumber = "69")
 public class WhirlpoolWhelm extends Card {
 
     public WhirlpoolWhelm() {

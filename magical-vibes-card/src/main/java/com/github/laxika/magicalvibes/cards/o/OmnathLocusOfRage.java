@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "217")
+@CardRegistration(set = "SLD", collectorNumber = "1256")
+@CardRegistration(set = "EA3", collectorNumber = "17")
+@CardRegistration(set = "ECC", collectorNumber = "129")
 public class OmnathLocusOfRage extends Card {
 
     private static final DealDamageToAnyTargetEffect DEATH_DAMAGE = new DealDamageToAnyTargetEffect(3);

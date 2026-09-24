@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "20")
+@CardRegistration(set = "MH2", collectorNumber = "258")
 public class ThornglintBridge extends Card {
 
     public ThornglintBridge() {

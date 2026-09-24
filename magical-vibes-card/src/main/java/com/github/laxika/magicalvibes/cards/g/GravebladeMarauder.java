@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "101")
+@CardRegistration(set = "2X2", collectorNumber = "77")
 public class GravebladeMarauder extends Card {
 
     public GravebladeMarauder() {

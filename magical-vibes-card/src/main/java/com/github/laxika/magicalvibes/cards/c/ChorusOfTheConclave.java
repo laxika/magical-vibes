@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellAdditionalCountersCostEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "195")
+@CardRegistration(set = "CMD", collectorNumber = "189")
 public class ChorusOfTheConclave extends Card {
 
     public ChorusOfTheConclave() {

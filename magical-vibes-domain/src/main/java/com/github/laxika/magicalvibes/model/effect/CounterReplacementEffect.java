@@ -8,6 +8,21 @@ public interface CounterReplacementEffect extends CardEffect {
 
     int replace(CounterType counterType, int count);
 
+    /** Whether this replacement applies only when a modular triggered ability places counters. */
+    default boolean appliesOnlyToModularAbility() {
+        return false;
+    }
+
+    /** Whether this replacement applies to counters put on permanents regardless of controller. */
+    default boolean appliesToAllPermanents() {
+        return false;
+    }
+
+    /** Whether this replacement uses the controller-aware global applicability path. */
+    default boolean appliesGlobally() {
+        return false;
+    }
+
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature) {
         return true;
     }

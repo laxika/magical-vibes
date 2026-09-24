@@ -62,7 +62,11 @@ import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
@@ -190,6 +194,65 @@ class SpellCastTriggerCollectorServiceTest {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
     }
 
+    @Nested
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — single-target creature control trigger")
+    class SingleTargetCreatureControlTrigger {
+
+        @Test
+        @DisplayName("binds the triggering spell's sole creature target")
+        void bindsSoleCreatureTarget() {
+            Permanent source = createPermanent("Loki, God of Lies");
+            Permanent target = createPermanent("Grizzly Bears");
+            Card spell = createInstant("Giant Growth");
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
+                    spell.getName(), List.of(), 0, target.getId(), java.util.Map.of()));
+            var effect = new GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect();
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.isCreature(gd, target)).thenReturn(true);
+
+            boolean result = registry.dispatch(match(source, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(spell, player1Id, true));
+
+            assertThat(result).isTrue();
+            StackEntry triggeredAbility = gd.stack.getLast();
+            assertThat(triggeredAbility.getTargetId()).isEqualTo(target.getId());
+            assertThat(triggeredAbility.isNonTargeting()).isTrue();
+            assertThat(triggeredAbility.getTriggeringCardId()).isEqualTo(spell.getId());
+            assertThat(triggeredAbility.getEffectsToResolve()).hasSize(2);
+            assertThat(triggeredAbility.getEffectsToResolve().getFirst())
+                    .isEqualTo(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN));
+            ConditionalEffect rider = (ConditionalEffect) triggeredAbility.getEffectsToResolve().getLast();
+            assertThat(rider.wrapped()).isInstanceOf(SequenceEffect.class);
+            SequenceEffect sequence = (SequenceEffect) rider.wrapped();
+            assertThat(sequence.steps()).containsExactly(
+                    new UntapPermanentsEffect(com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET),
+                    new GrantKeywordEffect(com.github.laxika.magicalvibes.model.Keyword.HASTE,
+                            com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET));
+        }
+
+        @Test
+        @DisplayName("does not trigger for multiple distinct targets")
+        void doesNotTriggerForMultipleDistinctTargets() {
+            Permanent source = createPermanent("Loki, God of Lies");
+            Permanent firstTarget = createPermanent("First creature");
+            Permanent secondTarget = createPermanent("Second creature");
+            Card spell = createInstant("Two-target spell");
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
+                    spell.getName(), List.of(), null,
+                    List.of(firstTarget.getId(), secondTarget.getId())));
+            var effect = new GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect();
+
+            boolean result = registry.dispatch(match(source, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(spell, player1Id, true));
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).hasSize(1);
+        }
+    }
+
     @Test
     void referringToTheTriggeringSpellDoesNotMakeItADeclaredTarget() {
         Permanent source = createPermanent("Spell watcher");
@@ -199,7 +262,7 @@ class SpellCastTriggerCollectorServiceTest {
                         "Choose new targets?")));
         var context = new TriggerContext.SpellCast(spell, player1Id, true);
         when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(null),
-                eq(source.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                eq(source.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
         registry.dispatch(match(source, player1Id, effect),
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, context);
@@ -219,7 +282,7 @@ class SpellCastTriggerCollectorServiceTest {
         gd.stack.add(spellEntry);
         var effect = new SpellCastTriggerEffect(null, List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(new XValue())));
         when(predicateEvaluationService.matchesCardPredicate(spell, null,
-                source.getOriginalCard().getId(), gd, player1Id)).thenReturn(true);
+                source.getOriginalCard().getId(), gd, player1Id, null, null, 3)).thenReturn(true);
 
         registry.dispatch(match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 effect, new TriggerContext.SpellCast(spell, player1Id, true));
@@ -314,7 +377,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -329,6 +392,33 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("caster-relative turn gate ignores spells cast by the active player")
+        void casterRelativeTurnGateUsesCastingPlayer() {
+            Permanent perm = createPermanent("Vision");
+            var effect = SpellCastTriggerEffect.whenCasterIsNotActiveTurn(
+                    List.of(new BoostSelfEffect(1, 1)));
+            Card spellCard = createInstant("Opt");
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
+                    .thenReturn(true);
+
+            gd.activePlayerId = player1Id;
+            boolean activeCasterResult = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+                    effect, new TriggerContext.SpellCast(spellCard, player1Id, true));
+
+            assertThat(activeCasterResult).isFalse();
+            assertThat(gd.stack).isEmpty();
+
+            boolean nonActiveCasterResult = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+                    effect, new TriggerContext.SpellCast(spellCard, player2Id, true));
+
+            assertThat(nonActiveCasterResult).isTrue();
+            assertThat(gd.stack).hasSize(1);
+        }
+
+        @Test
         @DisplayName("returns false when spell does not match filter")
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Shrine of Burning Rage");
@@ -339,7 +429,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(false);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -360,7 +450,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any()))
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(
@@ -384,7 +474,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -408,7 +498,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(aura.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(aura.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(aura, player1Id, effect),
@@ -429,7 +519,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
 
@@ -454,7 +544,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
             when(amountEvaluationService.referencesXValue(new Fixed(1))).thenReturn(false);
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
@@ -479,7 +569,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
             registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
@@ -499,7 +589,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, mayEffect),
@@ -521,7 +611,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -568,6 +658,34 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(triggerEntry.getTargetZone()).isEqualTo(Zone.STACK);
             assertThat(triggerEntry.getEffectsToResolve()).singleElement()
                     .isEqualTo(new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE, 2));
+        }
+        @Test
+        @DisplayName("snapshots every X symbol in the triggering spell mana value")
+        void snapshotsBothXSymbolsInTriggeringSpellManaValue() {
+            Permanent perm = createPermanent("Chalice of the Void");
+            perm.setCounterCount(CounterType.CHARGE, 4);
+            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
+            spellCard.setManaCost("{X}{X}");
+            StackEntry spellEntry = new StackEntry(
+                    StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 2);
+            gd.stack.add(spellEntry);
+            var effect = new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE);
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            when(targetLegalityService.matchesStackEntryPredicate(
+                    eq(gd), eq(spellEntry), any(), eq(player1Id), eq(perm))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            StackEntry triggerEntry = gd.stack.getLast();
+            assertThat(triggerEntry.getTargetId()).isEqualTo(spellCard.getId());
+            assertThat(triggerEntry.getTargetZone()).isEqualTo(Zone.STACK);
+            assertThat(triggerEntry.getEffectsToResolve()).singleElement()
+                    .isEqualTo(new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE, 4));
         }
     }
 
@@ -878,7 +996,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any()))
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
                     .thenReturn(true);
             when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
 
@@ -1266,7 +1384,7 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("A same-name graveyard counter trigger snapshots the spell name and targets the spell")
+    @DisplayName("A same-name graveyard counter trigger snapshots the spell name without targeting it")
     void sameNameGraveyardCounterTriggerSnapshotsSpellName() {
         Permanent perm = createPermanent("Cephalid Shrine");
         var effect = new CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect();
@@ -1278,8 +1396,7 @@ class SpellCastTriggerCollectorServiceTest {
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(spellCard.getId());
-        assertThat(gd.stack.getLast().getTargetZone()).isEqualTo(Zone.STACK);
+        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
         assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
                 .isEqualTo(new CounterUnlessPaysEffect(
                         new CardsInGraveyard(new CardNamedPredicate("Grizzly Bears"), CountScope.ANY_PLAYER)));
@@ -1359,7 +1476,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1387,7 +1504,11 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(secondCreatureSpell, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), eq(filter), any(), eq(gd), eq(player1Id)))
+                    any(Card.class), eq(filter), any(), eq(gd), eq(player1Id), isNull(), isNull(), any()))
+                    .thenAnswer(invocation -> invocation.getArgument(0, Card.class).hasType(CardType.CREATURE));
+
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), eq(filter), isNull(), eq(gd), eq(player1Id)))
                     .thenAnswer(invocation -> invocation.getArgument(0, Card.class).hasType(CardType.CREATURE));
 
             boolean result = registry.dispatch(
@@ -1410,6 +1531,9 @@ class SpellCastTriggerCollectorServiceTest {
             gd.activePlayerId = player1Id;
 
             when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(null), any(),
+                    eq(gd), eq(player1Id), isNull(), isNull(), any())).thenReturn(true);
+
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), isNull(), isNull(),
                     eq(gd), eq(player1Id))).thenReturn(true);
 
             gd.recordSpellCast(player1Id, firstSpell);
@@ -1457,7 +1581,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1482,7 +1606,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any()))
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(
@@ -1543,7 +1667,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(false);
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1944,7 +2068,7 @@ class SpellCastTriggerCollectorServiceTest {
             CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new GainControlOfTargetCreatureByCastSpellManaValueEffect(filter);
             Card spellCard = createCard("Test Spell");
-            spellCard.setManaCost("{1}{R}");
+            spellCard.setManaCost("{X}{1}{R}");
             gd.stack.add(new StackEntry(
                     StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 2));
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
@@ -2371,7 +2495,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card player2Spell = createCard("Player 2 Spell");
             player2Spell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
             when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class)))
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
                     .thenReturn(true);
 
             gd.recordSpellCast(player1Id, player1Spell);
@@ -2399,7 +2523,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card secondSpell = createCard("Second Spell");
             secondSpell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
             when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class)))
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
                     .thenReturn(true);
 
             gd.recordSpellCast(player1Id, firstSpell);
@@ -2429,7 +2553,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card firstNoncreatureSpell = createInstant("First Noncreature Spell");
             Card laterNoncreatureSpell = createInstant("Later Noncreature Spell");
             when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class)))
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
                     .thenReturn(true);
 
             gd.recordSpellCast(player1Id, creatureSpell);

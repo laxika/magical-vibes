@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EMA", collectorNumber = "96")
+@CardRegistration(set = "C14", collectorNumber = "25")
 public class MaliciousAffliction extends Card {
 
     public MaliciousAffliction() {

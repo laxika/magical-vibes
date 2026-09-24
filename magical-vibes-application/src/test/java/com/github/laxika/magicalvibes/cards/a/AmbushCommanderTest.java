@@ -139,4 +139,24 @@ class AmbushCommanderTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(5);
     }
+
+    @Test
+    @DisplayName("An animated Forest can be targeted as a creature")
+    void canTargetAnimatedForest() {
+        harness.addToBattlefield(player1, new AmbushCommander());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvishMystic());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.handlePermanentChosen(player1, elf.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        harness.assertInGraveyard(player1, "Elvish Mystic");
+    }
 }

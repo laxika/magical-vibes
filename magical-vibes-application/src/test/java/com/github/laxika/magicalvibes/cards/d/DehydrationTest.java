@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.CreditVoucher;
+import com.github.laxika.magicalvibes.cards.d.DrakeHatchling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,15 +10,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Dehydration.class, GrizzlyBears.class, Island.class})
+@CardUsed({Dehydration.class, GrizzlyBears.class, Island.class, DrakeHatchling.class, CreditVoucher.class})
 class DehydrationTest extends BaseCardTest {
 
     @Test

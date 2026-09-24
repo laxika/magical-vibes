@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChoArrimLegate.class, Plains.class, Swamp.class})
 class ChoArrimLegateTest extends BaseCardTest {
 
     @Test
@@ -22,19 +24,32 @@ class ChoArrimLegateTest extends BaseCardTest {
     void castsForAlternateCost() {
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player2, new Swamp());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setHand(player1, List.of(new ChoArrimLegate()));
 
         harness.castWithAlternateCost(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Cho-Arrim Legate");
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Cannot use the alternate cost without an opponent-controlled Swamp")
     void alternateCostRequiresOpponentSwamp() {
         harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new ChoArrimLegate()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot use the alternate cost when only the caster controls a Swamp")
+    void alternateCostDoesNotUseCasterSwamp() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Swamp());
         harness.setHand(player1, List.of(new ChoArrimLegate()));
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
@@ -63,11 +78,7 @@ class ChoArrimLegateTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast normally for its mana cost")
     void castsNormally() {
-        harness.setHand(player1, List.of(new ChoArrimLegate()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChoArrimLegate(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Cho-Arrim Legate");

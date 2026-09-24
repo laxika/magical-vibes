@@ -340,6 +340,7 @@ public class LandTapTriggerCollectorService {
         String sourceName = sourceCard != null ? sourceCard.getName() : "Planar ability";
         // Vorinclex fires only for the controller's own lands; Mana Flare is symmetric.
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
+        if (trigger.monarchOnly() && !match.controllerId().equals(match.gameData().monarchPlayerId)) return false;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
@@ -377,19 +378,27 @@ public class LandTapTriggerCollectorService {
         }
         if (producedColors.isEmpty()) return false;
 
-        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
-        producedColors.forEach(pool::add);
+        if (producedColors.size() > 1) {
+            List<ManaColor> choices = producedColors.stream().sorted().toList();
+            ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
+                    .fixedColorCombination(lt.tappingPlayerId(), false, 1, choices);
+            AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, match.gameData(),
+                    new PendingInteraction.ColorChoice(lt.tappingPlayerId(), null, null, choiceContext,
+                            choices.stream().map(Enum::name).toList(), "Choose a type of mana the land produced."));
+        } else {
+            match.gameData().playerManaPools.get(lt.tappingPlayerId()).add(producedColors.iterator().next());
+        }
 
         if (sourceCard == null) {
             gameLogService.append(match.gameData(), GameLog.text(
                     match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                            + " adds 1 additional mana of each type produced by the land."));
+                            + " adds 1 additional mana of a type produced by the land."));
             return true;
         }
 
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                        + " adds 1 additional mana of each type produced by the land."));
+                        + " adds 1 additional mana of a type produced by the land."));
         return true;
     }
 
@@ -590,6 +599,10 @@ public class LandTapTriggerCollectorService {
     private boolean handleAddManaWhenLandTapped(TriggerMatchContext match,
             AddManaWhenLandTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (trigger.sourceOnly()
+                && (match.permanent() == null || !match.permanent().getId().equals(lt.tappedLandId()))) {
+            return false;
+        }
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
         var gameData = match.gameData();

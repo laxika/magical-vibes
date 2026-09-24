@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "62")
+@CardRegistration(set = "ME4", collectorNumber = "148")
+@CardRegistration(set = "ARN", collectorNumber = "45")
 public class Cyclone extends Card {
 
     public Cyclone() {

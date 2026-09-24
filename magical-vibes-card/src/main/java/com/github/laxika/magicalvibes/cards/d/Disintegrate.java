@@ -7,12 +7,16 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "219")
+@CardRegistration(set = "2ED", collectorNumber = "141")
 @CardRegistration(set = "3ED", collectorNumber = "142")
 @CardRegistration(set = "4ED", collectorNumber = "185")
 @CardRegistration(set = "ITP", collectorNumber = "31")
 @CardRegistration(set = "RQS", collectorNumber = "30")
 @CardRegistration(set = "SUM", collectorNumber = "142")
 @CardRegistration(set = "TSB", collectorNumber = "58")
+@CardRegistration(set = "SLZ", collectorNumber = "56")
+@CardRegistration(set = "SLZ", collectorNumber = "177")
+@CardRegistration(set = "SLZ", collectorNumber = "298")
 public class Disintegrate extends Card {
 
     public Disintegrate() {

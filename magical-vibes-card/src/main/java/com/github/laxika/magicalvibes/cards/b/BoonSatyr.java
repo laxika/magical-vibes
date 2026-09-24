@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "152")
+@CardRegistration(set = "PIO", collectorNumber = "167")
 public class BoonSatyr extends Card {
 
     public BoonSatyr() {

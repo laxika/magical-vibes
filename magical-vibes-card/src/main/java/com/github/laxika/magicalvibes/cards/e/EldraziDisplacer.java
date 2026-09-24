@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "13")
+@CardRegistration(set = "EA2", collectorNumber = "6")
 public class EldraziDisplacer extends Card {
 
     public EldraziDisplacer() {

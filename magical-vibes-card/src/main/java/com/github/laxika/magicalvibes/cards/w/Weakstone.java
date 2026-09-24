@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "ATQ", collectorNumber = "78")
+@CardRegistration(set = "ME4", collectorNumber = "239")
 public class Weakstone extends Card {
 
     public Weakstone() {

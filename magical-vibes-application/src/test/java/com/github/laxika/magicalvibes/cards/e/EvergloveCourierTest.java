@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IronfistCrusher;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvergloveCourier.class, GrizzlyBears.class})
+@CardUsed({EvergloveCourier.class, ElvishWarrior.class, IronfistCrusher.class})
 class EvergloveCourierTest extends BaseCardTest {
 
     @Test
@@ -48,7 +48,7 @@ class EvergloveCourierTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(courier.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, courier)).isEqualTo(basePower + 2);
@@ -75,13 +75,49 @@ class EvergloveCourierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing not to untap keeps the boost and trample")
+    void boostAndTrampleRemainWhenCourierStaysTapped() {
+        Permanent courier = addReadyCourier(player1);
+        int basePower = gqs.getEffectivePower(gd, courier);
+        int baseToughness = gqs.getEffectiveToughness(gd, courier);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, courier.getId());
+        harness.passBothPriorities();
+        advanceToNextTurnWithMayChoice(player2, false);
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, courier)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, courier)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability can target an Elf controlled by an opponent")
+    void abilityCanTargetOpponentsElf() {
+        Permanent courier = addReadyCourier(player1);
+        Permanent elf = addCreatureReady(player2, new ElvishWarrior());
+        int basePower = gqs.getEffectivePower(gd, elf);
+        int baseToughness = gqs.getEffectiveToughness(gd, elf);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, elf.getId());
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     @DisplayName("The ability cannot target a non-Elf creature")
     void cannotTargetNonElfCreature() {
         addReadyCourier(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonElf = addCreatureReady(player2, new IronfistCrusher());
         addAbilityMana();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonElf.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an Elf creature");
     }
@@ -103,9 +139,9 @@ class EvergloveCourierTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

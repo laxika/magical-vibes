@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OTJ", collectorNumber = "11")
+@CardRegistration(set = "MAR", collectorNumber = "45")
 public class FinalShowdown extends Card {
 
     public FinalShowdown() {

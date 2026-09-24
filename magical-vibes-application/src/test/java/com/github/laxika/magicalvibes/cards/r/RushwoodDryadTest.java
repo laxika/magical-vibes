@@ -2,16 +2,16 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,5 +92,25 @@ class RushwoodDryadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Rushwood Dryad can be blocked when only the attacking player controls a Forest")
+    void canBeBlockedWhenOnlyAttackerControlsForest() {
+        harness.addToBattlefield(player1, new Forest());
+
+        Permanent blockerPerm = addCreatureReady(player2, new RushwoodDryad());
+
+        Permanent atkPerm = addCreatureReady(player1, new RushwoodDryad());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
     }
 }

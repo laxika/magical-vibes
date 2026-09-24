@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinDynamo;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeftbladeElite.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({DeftbladeElite.class, GrizzlyBears.class, FountainOfYouth.class, GoblinDynamo.class})
 class DeftbladeEliteTest extends BaseCardTest {
 
     @Test
@@ -92,8 +93,7 @@ class DeftbladeEliteTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent elite = addCreatureReady(player2, new DeftbladeElite());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -105,5 +105,23 @@ class DeftbladeEliteTest extends BaseCardTest {
         assertThat(attacker.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Deftblade Elite");
+    }
+
+    @Test
+    @DisplayName("The activated ability does not prevent noncombat damage to Deftblade Elite")
+    void activatedAbilityDoesNotPreventNoncombatDamage() {
+        Permanent elite = addCreatureReady(player1, new DeftbladeElite());
+        addCreatureReady(player1, new GoblinDynamo());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 0, null,
+                elite.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Deftblade Elite");
     }
 }

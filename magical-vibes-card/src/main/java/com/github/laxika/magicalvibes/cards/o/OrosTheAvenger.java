@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "161")
+@CardRegistration(set = "CMD", collectorNumber = "216")
 public class OrosTheAvenger extends Card {
 
     public OrosTheAvenger() {

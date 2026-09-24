@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "79")
+@CardRegistration(set = "DMR", collectorNumber = "124")
 public class GoblinMedics extends Card {
 
     public GoblinMedics() {

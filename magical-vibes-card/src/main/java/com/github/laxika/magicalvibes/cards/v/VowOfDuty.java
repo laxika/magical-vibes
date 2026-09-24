@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "E02", collectorNumber = "6")
+@CardRegistration(set = "GN3", collectorNumber = "21")
+@CardRegistration(set = "CMD", collectorNumber = "36")
+@CardRegistration(set = "C15", collectorNumber = "84")
 public class VowOfDuty extends Card {
 
     public VowOfDuty() {

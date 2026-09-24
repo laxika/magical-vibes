@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SiegeGangCommander.class, LlanowarElves.class})
 class SiegeGangCommanderTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("ETB creates three 1/1 red Goblin tokens")
@@ -34,6 +35,12 @@ class SiegeGangCommanderTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).hasSize(4);
         assertThat(countGoblinTokens(player1)).isEqualTo(3);
+
+        Permanent token = findPermanent(player1, "Goblin");
+        assertThat(token.getCard().getPower()).isEqualTo(1);
+        assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
     }
 
     @Test
@@ -47,6 +54,21 @@ class SiegeGangCommanderTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only Goblins are offered as sacrifice choices")
+    void onlyGoblinsAreOfferedAsSacrificeChoices() {
+        castAndResolveCommanderWithTokens();
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).doesNotContain(elves.getId());
     }
 
     @Test
@@ -116,6 +138,17 @@ class SiegeGangCommanderTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         castAndResolveCommanderWithTokens();
         harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability without the required red mana")
+    void cannotActivateWithoutRedMana() {
+        castAndResolveCommanderWithTokens();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

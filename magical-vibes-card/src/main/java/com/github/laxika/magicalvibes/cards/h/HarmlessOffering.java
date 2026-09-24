@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "131")
+@CardRegistration(set = "SLD", collectorNumber = "868")
 @CardRegistration(set = "HA4", collectorNumber = "14")
 public class HarmlessOffering extends Card {
 

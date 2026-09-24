@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControll
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "167")
+@CardRegistration(set = "PIO", collectorNumber = "301")
 public class NyleasDisciple extends Card {
 
     public NyleasDisciple() {

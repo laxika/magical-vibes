@@ -1,23 +1,24 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Bribery.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Bribery.class, Forest.class, GrizzlyBears.class, Island.class, Unsummon.class})
 class BriberyTest extends BaseCardTest {
 
     private void castBribery() {
@@ -105,5 +106,44 @@ class BriberyTest extends BaseCardTest {
         assertThatThrownBy(() -> castBribery(player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    private void prepareBribery() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+
+        harness.setHand(player1, List.of(new Bribery()));
+        harness.addMana(player1, ManaColor.BLUE, 5); // {3}{U}{U}
+    }
+
+    @Test
+    @DisplayName("Can target only an opponent")
+    void cannotTargetItsController() {
+        prepareBribery();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature put onto the battlefield under your control remains owned by the opponent")
+    void chosenCreatureReturnsToItsOwner() {
+        GrizzlyBears stolen = new GrizzlyBears();
+        stolen.setOwnerId(player2.getId());
+        harness.setLibrary(player2, List.of(stolen, new Island()));
+
+        castBribery();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        UUID stolenPermanentId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, stolenPermanentId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 }

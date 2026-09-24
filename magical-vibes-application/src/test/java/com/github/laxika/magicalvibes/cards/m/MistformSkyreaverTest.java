@@ -18,10 +18,12 @@ class MistformSkyreaverTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability prompts for a creature type without requiring a target")
     void activatingPromptsForCreatureType() {
-        addReadySkyreaver();
+        Permanent skyreaver = addReadySkyreaver();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
+        assertThat(skyreaver.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -63,14 +65,11 @@ class MistformSkyreaverTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(skyreaver.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, skyreaver)).containsExactly(CardSubtype.ILLUSION);
     }
 
     private Permanent addReadySkyreaver() {
-        Permanent skyreaver = new Permanent(new MistformSkyreaver());
-        skyreaver.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(skyreaver);
-        return skyreaver;
+        return addCreatureReady(player1, new MistformSkyreaver());
     }
 
     private void activateAndChoose(CardSubtype subtype) {

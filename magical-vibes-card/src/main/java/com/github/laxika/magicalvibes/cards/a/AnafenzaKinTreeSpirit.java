@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "2")
+@CardRegistration(set = "MUL", collectorNumber = "1")
+@CardRegistration(set = "MUL", collectorNumber = "66")
+@CardRegistration(set = "MUL", collectorNumber = "131")
+@CardRegistration(set = "CMM", collectorNumber = "11")
 public class AnafenzaKinTreeSpirit extends Card {
 
     public AnafenzaKinTreeSpirit() {

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "44")
+@CardRegistration(set = "CMM", collectorNumber = "68")
+@CardRegistration(set = "CMM", collectorNumber = "476")
 public class WakeningSunsAvatar extends Card {
 
     public WakeningSunsAvatar() {

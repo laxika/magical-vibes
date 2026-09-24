@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.Hurricane;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.CrashingCentaur;
+import com.github.laxika.magicalvibes.cards.f.FlameBurst;
+import com.github.laxika.magicalvibes.cards.h.HowlingGale;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,25 +13,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SphereOfDuty.class, HowlingGale.class, FlameBurst.class, CrashingCentaur.class})
 class SphereOfDutyTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Prevents 2 damage from a green noncombat source")
+    @DisplayName("Prevents green noncombat damage to the controller")
     void preventsDamageFromGreenSource() {
         harness.addToBattlefield(player1, new SphereOfDuty());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player2, List.of(new Hurricane()));
-        harness.addMana(player2, ManaColor.GREEN, 5);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new HowlingGale()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player2, 0, 4);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
     @Test
@@ -41,13 +36,27 @@ class SphereOfDutyTest extends BaseCardTest {
     void doesNotPreventDamageFromNonGreenSource() {
         harness.addToBattlefield(player1, new SphereOfDuty());
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new FlameBurst()));
+        harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Protects only its controller from green damage")
+    void protectsOnlyItsController() {
+        harness.addToBattlefield(player1, new SphereOfDuty());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new HowlingGale()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
     @Test
@@ -56,22 +65,24 @@ class SphereOfDutyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SphereOfDuty());
         harness.setLife(player1, 20);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        addCreatureReady(player2, new CrashingCentaur());
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player1, List.<BlockerAssignment>of());
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Prevents 2 damage from each green combat source")
+    void preventsDamageFromEachGreenCombatSource() {
+        harness.addToBattlefield(player1, new SphereOfDuty());
+        harness.setLife(player1, 20);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        addCreatureReady(player2, new CrashingCentaur());
+        addCreatureReady(player2, new CrashingCentaur());
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 }

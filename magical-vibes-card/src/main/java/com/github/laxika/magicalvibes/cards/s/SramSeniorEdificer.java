@@ -12,8 +12,13 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "23")
+@CardRegistration(set = "SLD", collectorNumber = "461")
 @CardRegistration(set = "TSR", collectorNumber = "303")
 @CardRegistration(set = "KLR", collectorNumber = "32")
+@CardRegistration(set = "MUL", collectorNumber = "6")
+@CardRegistration(set = "MUL", collectorNumber = "71")
+@CardRegistration(set = "MUL", collectorNumber = "136")
+@CardRegistration(set = "FCA", collectorNumber = "3")
 public class SramSeniorEdificer extends Card {
 
     public SramSeniorEdificer() {

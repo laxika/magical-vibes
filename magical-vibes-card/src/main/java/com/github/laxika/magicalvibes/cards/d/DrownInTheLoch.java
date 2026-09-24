@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "188")
+@CardRegistration(set = "SLD", collectorNumber = "270")
+@CardRegistration(set = "SLD", collectorNumber = "1790")
+@CardRegistration(set = "SPG", collectorNumber = "27")
 public class DrownInTheLoch extends Card {
 
     public DrownInTheLoch() {

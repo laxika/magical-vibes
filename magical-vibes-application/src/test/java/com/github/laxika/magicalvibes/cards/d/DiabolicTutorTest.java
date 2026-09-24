@@ -1,24 +1,25 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DiabolicTutor.class, Plains.class, Swamp.class, GrizzlyBears.class})
+@CardUsed({DiabolicTutor.class, Plains.class, Swamp.class, GrizzlyBears.class, AvenFisher.class})
 class DiabolicTutorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -209,4 +210,3 @@ class DiabolicTutorTest extends BaseCardTest {
         return library;
     }
 }
-

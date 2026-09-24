@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CastCreatureFromHandFaceDownE
 import java.util.List;
 
 @CardRegistration(set = "ME3", collectorNumber = "197")
+@CardRegistration(set = "2ED", collectorNumber = "250")
 public class IllusionaryMask extends Card {
 
     public IllusionaryMask() {

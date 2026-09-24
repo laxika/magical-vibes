@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "115")
 @CardRegistration(set = "AKR", collectorNumber = "191")
+@CardRegistration(set = "MB1", collectorNumber = "115")
 public class FeralProwler extends Card {
 
     public FeralProwler() {

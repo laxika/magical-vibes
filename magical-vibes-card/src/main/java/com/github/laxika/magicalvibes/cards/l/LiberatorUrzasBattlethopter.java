@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "237")
+@CardRegistration(set = "SLD", collectorNumber = "2286")
 public class LiberatorUrzasBattlethopter extends Card {
 
     public LiberatorUrzasBattlethopter() {

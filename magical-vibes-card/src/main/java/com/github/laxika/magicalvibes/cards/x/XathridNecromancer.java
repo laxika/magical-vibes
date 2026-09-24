@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "123")
+@CardRegistration(set = "PIO", collectorNumber = "120")
 public class XathridNecromancer extends Card {
 
     public XathridNecromancer() {

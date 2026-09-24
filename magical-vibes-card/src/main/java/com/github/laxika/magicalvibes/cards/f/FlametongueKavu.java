@@ -11,6 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "HOP", collectorNumber = "54")
 @CardRegistration(set = "VMA", collectorNumber = "160")
 @CardRegistration(set = "JVC", collectorNumber = "42")
+@CardRegistration(set = "DMR", collectorNumber = "120")
+@CardRegistration(set = "GN3", collectorNumber = "78")
+@CardRegistration(set = "CMD", collectorNumber = "123")
+@CardRegistration(set = "YEOE", collectorNumber = "41")
+@CardRegistration(set = "C14", collectorNumber = "176")
 public class FlametongueKavu extends Card {
 
     public FlametongueKavu() {

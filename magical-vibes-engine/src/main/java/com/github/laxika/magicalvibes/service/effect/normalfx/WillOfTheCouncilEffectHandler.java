@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.WillOfTheCouncilEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +33,7 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -39,13 +43,24 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
-                entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
+        WillOfTheCouncilEffect willOfTheCouncil = (WillOfTheCouncilEffect) effect;
+        if (willOfTheCouncil.graveyardCards()) {
+            beginNextGraveyardVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+                    entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
+        } else {
+            beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+                    entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
+        }
     }
 
     /** Continues the vote after the current player selects a permanent. */
     public void completeVote(GameData gameData, List<UUID> permanentIds,
                              MultiPermanentChoiceContext.WillOfTheCouncilChoice context) {
+        if (context.graveyardCards()) {
+            completeGraveyardVote(gameData, permanentIds, context);
+            return;
+        }
+
         Map<UUID, Integer> votes = new HashMap<>(context.votes());
         UUID chosenId = permanentIds.getFirst();
         votes.merge(chosenId, 1, Integer::sum);
@@ -118,6 +133,83 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    private void completeGraveyardVote(GameData gameData, List<UUID> cardIds,
+                                       MultiPermanentChoiceContext.WillOfTheCouncilChoice context) {
+        Map<UUID, Integer> votes = new HashMap<>(context.votes());
+        UUID chosenId = cardIds.getFirst();
+        votes.merge(chosenId, 1, Integer::sum);
+        beginNextGraveyardVote(gameData, context.remainingPlayerIds(), context.effectControllerId(), votes,
+                context.sourceName());
+    }
+
+    private void beginNextGraveyardVote(GameData gameData, List<UUID> remainingPlayerIds,
+                                        UUID effectControllerId, Map<UUID, Integer> votes, String sourceName) {
+        List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
+        while (!remaining.isEmpty()) {
+            UUID choosingPlayerId = remaining.removeFirst();
+            List<UUID> candidates = eligibleGraveyardCardIds(gameData, effectControllerId);
+
+            if (candidates.isEmpty()) {
+                continue;
+            }
+            if (candidates.size() == 1) {
+                votes.merge(candidates.getFirst(), 1, Integer::sum);
+                continue;
+            }
+
+            playerInputService.beginMultiPermanentChoice(
+                    gameData, choosingPlayerId, List.of(), candidates, 1,
+                    new MultiPermanentChoiceContext.WillOfTheCouncilChoice(
+                            effectControllerId, remaining, votes, sourceName, true),
+                    sourceName + " — vote for an artifact, creature, or enchantment card in your graveyard.");
+            return;
+        }
+
+        returnMostVotedGraveyardCards(gameData, effectControllerId, votes, sourceName);
+    }
+
+    private List<UUID> eligibleGraveyardCardIds(GameData gameData, UUID playerId) {
+        return gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .filter(card -> card.hasType(CardType.ARTIFACT)
+                        || card.hasType(CardType.CREATURE)
+                        || card.hasType(CardType.ENCHANTMENT))
+                .map(Card::getId)
+                .toList();
+    }
+
+    private void returnMostVotedGraveyardCards(GameData gameData, UUID playerId,
+                                               Map<UUID, Integer> votes, String sourceName) {
+        if (votes.isEmpty()) {
+            return;
+        }
+
+        int mostVotes = votes.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            return;
+        }
+        List<Card> toReturn = graveyard.stream()
+                .filter(card -> votes.getOrDefault(card.getId(), 0) == mostVotes)
+                .toList();
+
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (Card card : toReturn) {
+                if (graveyard.remove(card)) {
+                    graveyardService.notifyCardsLeftGraveyard(gameData, playerId, card);
+                    gameData.addCardToHand(playerId, card);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            gameData.playerIdToName.get(playerId) + " returns ", card,
+                            " from graveyard to hand (" + sourceName + ")."));
+                    log.info("Game {} - {} returns {} from graveyard to hand", gameData.id,
+                            sourceName, card.getName());
+                }
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
+        }
     }
 
     private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {

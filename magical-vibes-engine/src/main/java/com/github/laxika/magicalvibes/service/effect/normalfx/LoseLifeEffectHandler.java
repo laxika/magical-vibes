@@ -64,8 +64,12 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         if (e.recipient() == LoseLifeRecipient.OWNER && ownerId == null) {
             ownerId = entry.getControllerId();
         }
+        UUID sourceControllerId = e.recipient() == LoseLifeRecipient.SOURCE_CONTROLLER
+                ? sourcePermanentControllerId(gameData, entry) : null;
         if (ownerId != null) {
             amountContext = amountContext.withControllerId(ownerId);
+        } else if (sourceControllerId != null) {
+            amountContext = amountContext.withControllerId(sourceControllerId);
         }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), amountContext);
 
@@ -75,6 +79,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
             case OWNER -> lifeSupport.applyLifeLoss(gameData, ownerId, amount, sourceName);
+            case SOURCE_CONTROLLER -> lifeSupport.applyLifeLoss(gameData, sourceControllerId, amount, sourceName);
             case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER ->
                     loseTargetPlayerLife(gameData, entry, e, amount, sourceName, amountContext);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
@@ -82,7 +87,23 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
             case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, false);
             case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, true);
+            case EACH_OTHER_PLAYER -> {
+                UUID owner = entry.getCard().getOwnerId() != null
+                        ? entry.getCard().getOwnerId() : controllerId;
+                eachPlayerLosesLife(gameData, e, entry, owner, amount, sourceName, false);
+            }
         }
+    }
+
+    private UUID sourcePermanentControllerId(GameData gameData, StackEntry entry) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId != null) {
+            UUID liveControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+            if (liveControllerId != null) {
+                return liveControllerId;
+            }
+        }
+        return entry.getSourcePermanentControllerId();
     }
 
     private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
@@ -171,7 +192,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
         int totalLifeLost = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (opponentsOnly && playerId.equals(controllerId)) {
+            if (playerId.equals(controllerId) && (opponentsOnly || e.recipient() == LoseLifeRecipient.EACH_OTHER_PLAYER)) {
                 continue;
             }
             // "each opponent who doesn't control an Elf" — players controlling a matching

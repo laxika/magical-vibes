@@ -14,6 +14,11 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "185")
 @CardRegistration(set = "MP2", collectorNumber = "25")
 @CardRegistration(set = "E02", collectorNumber = "25")
+@CardRegistration(set = "SLD", collectorNumber = "1026")
+@CardRegistration(set = "SLD", collectorNumber = "1983")
+@CardRegistration(set = "WOT", collectorNumber = "39")
+@CardRegistration(set = "WOT", collectorNumber = "76")
+@CardRegistration(set = "WOT", collectorNumber = "96")
 public class AggravatedAssault extends Card {
 
     public AggravatedAssault() {

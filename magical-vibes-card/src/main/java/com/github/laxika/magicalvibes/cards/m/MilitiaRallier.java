@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "24")
+@CardRegistration(set = "DBL", collectorNumber = "291")
 public class MilitiaRallier extends Card {
 
     public MilitiaRallier() {

@@ -59,11 +59,17 @@ public class AiGameActions {
         this.playCardRequestDispatchService = new PlayCardRequestDispatchService(gameService);
     }
 
+    private com.github.laxika.magicalvibes.model.GameContext decisionContext;
+
+    public void beginDecision(com.github.laxika.magicalvibes.model.GameContext context) { decisionContext = context; }
+    public void endDecision() { decisionContext = null; }
+
     private GameData game() {
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         if (gameData == null || gameData.status == GameStatus.FINISHED) {
             return null;
         }
+        if (decisionContext != null && !decisionContext.equals(gameData.session.context())) return null;
         return gameData;
     }
 

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "2XM", collectorNumber = "226")
+@CardRegistration(set = "CMD", collectorNumber = "234")
 public class VishKalBloodArbiter extends Card {
 
     public VishKalBloodArbiter() {

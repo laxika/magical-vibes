@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "243")
+@CardRegistration(set = "DBL", collectorNumber = "243")
 public class StormSkreelix extends Card {
 
     private static final CardAnyOfPredicate INSTANT_OR_SORCERY = new CardAnyOfPredicate(List.of(

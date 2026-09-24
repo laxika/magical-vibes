@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "228")
+@CardRegistration(set = "RVR", collectorNumber = "241")
 public class RevivalRevenge extends Card {
 
     public RevivalRevenge() {

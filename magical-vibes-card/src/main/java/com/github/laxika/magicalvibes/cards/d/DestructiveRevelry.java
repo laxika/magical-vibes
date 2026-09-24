@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "192")
 @CardRegistration(set = "DDL", collectorNumber = "66")
+@CardRegistration(set = "PIO", collectorNumber = "214")
 public class DestructiveRevelry extends Card {
 
     public DestructiveRevelry() {

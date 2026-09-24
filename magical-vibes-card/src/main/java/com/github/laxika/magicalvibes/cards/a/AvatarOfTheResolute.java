@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "175")
+@CardRegistration(set = "PIO", collectorNumber = "299")
 public class AvatarOfTheResolute extends Card {
 
     public AvatarOfTheResolute() {

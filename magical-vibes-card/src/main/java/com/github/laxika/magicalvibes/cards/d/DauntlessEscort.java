@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "67")
+@CardRegistration(set = "2X2", collectorNumber = "199")
 public class DauntlessEscort extends Card {
 
     public DauntlessEscort() {

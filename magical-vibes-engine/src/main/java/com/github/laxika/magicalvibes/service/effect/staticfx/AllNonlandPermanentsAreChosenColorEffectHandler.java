@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import lombok.RequiredArgsConstructor;
 import com.github.laxika.magicalvibes.model.effect.AllNonlandPermanentsAreChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Component;
  * AllNonlandPermanentsAreChosenColorSelfEffectHandler}.
  */
 @Component
+@RequiredArgsConstructor
 public class AllNonlandPermanentsAreChosenColorEffectHandler implements StaticEffectHandlerBean {
+
+    private final StaticEffectSupport support;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -26,7 +30,7 @@ public class AllNonlandPermanentsAreChosenColorEffectHandler implements StaticEf
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         CardColor chosenColor = context.source().getChosenColor();
         if (chosenColor == null) return;
-        if (context.target().getCard().hasType(CardType.LAND)) return;
+        if (support.matchesStaticLeaf(context.target(), new PermanentIsLandPredicate())) return;
         accumulator.addGrantedColor(chosenColor);
         accumulator.setColorOverriding(true);
     }

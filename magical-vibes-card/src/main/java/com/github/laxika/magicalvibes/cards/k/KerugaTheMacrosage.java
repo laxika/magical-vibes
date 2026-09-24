@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 
 @CardRegistration(set = "IKO", collectorNumber = "225")
+@CardRegistration(set = "MUL", collectorNumber = "48")
+@CardRegistration(set = "MUL", collectorNumber = "113")
+@CardRegistration(set = "MUL", collectorNumber = "178")
 public class KerugaTheMacrosage extends Card {
 
     public KerugaTheMacrosage() {

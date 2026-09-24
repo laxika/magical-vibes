@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * turn. Each creature's current effective power is added to that creature independently when the
  * effect resolves.
  */
-public record DoubleOtherOwnCreaturesPowerEffect() implements CardEffect {
+public record DoubleOtherOwnCreaturesPowerEffect() implements CardEffect, DoublingEffect {
 }

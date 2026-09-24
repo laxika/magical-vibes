@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "88")
+@CardRegistration(set = "SLD", collectorNumber = "1774")
 public class Trickbind extends Card {
 
     public Trickbind() {

@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "10")
+@CardRegistration(set = "SPG", collectorNumber = "84")
+@CardRegistration(set = "SPG", collectorNumber = "94")
 public class CavalierOfDawn extends Card {
 
     public CavalierOfDawn() {

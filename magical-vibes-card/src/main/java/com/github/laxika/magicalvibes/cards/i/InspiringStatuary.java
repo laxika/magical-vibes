@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "160")
 @CardRegistration(set = "HA4", collectorNumber = "23")
+@CardRegistration(set = "BRR", collectorNumber = "22")
+@CardRegistration(set = "CMM", collectorNumber = "394")
+@CardRegistration(set = "CMM", collectorNumber = "609")
 public class InspiringStatuary extends Card {
 
     public InspiringStatuary() {

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
+import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,23 +12,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VolcanicSpray.class, AvenFlock.class, DwarvenGrunt.class})
 class VolcanicSprayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to each player and each creature without flying")
     void damagesPlayersAndGroundCreatures() {
-        harness.addToBattlefield(player2, new FugitiveWizard());
-        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.addToBattlefield(player1, new DwarvenGrunt());
+        harness.addToBattlefield(player2, new DwarvenGrunt());
+        harness.addToBattlefield(player2, new AvenFlock());
         harness.setHand(player1, List.of(new VolcanicSpray()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
-        harness.assertOnBattlefield(player2, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player1, "Dwarven Grunt");
+        harness.assertNotOnBattlefield(player2, "Dwarven Grunt");
+        harness.assertOnBattlefield(player2, "Aven Flock");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -38,8 +41,7 @@ class VolcanicSprayTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VolcanicSpray()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Volcanic Spray");
     }
@@ -47,16 +49,15 @@ class VolcanicSprayTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback deals damage and exiles Volcanic Spray after resolving")
     void flashbackDealsDamageAndExilesSpell() {
-        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new DwarvenGrunt());
         harness.setGraveyard(player1, List.of(new VolcanicSpray()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
-        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player2, "Dwarven Grunt");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         harness.assertNotInGraveyard(player1, "Volcanic Spray");

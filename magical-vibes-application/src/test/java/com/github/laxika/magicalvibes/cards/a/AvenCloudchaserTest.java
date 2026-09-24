@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -200,5 +201,24 @@ class AvenCloudchaserTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-}
 
+    @Test
+    @DisplayName("Chooses an enchantment that enters before the ETB is put on the stack")
+    void choosesTargetWhenEtbIsPutOnStack() {
+        harness.setHand(player1, List.of(new AvenCloudchaser()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
+    }
+}

@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "112")
+@CardRegistration(set = "SLD", collectorNumber = "1703")
 public class JaxisTheTroublemaker extends Card {
 
     public JaxisTheTroublemaker() {

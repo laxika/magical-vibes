@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "123")
+@CardRegistration(set = "PIO", collectorNumber = "338")
 public class RuinousPath extends Card {
 
     @Override

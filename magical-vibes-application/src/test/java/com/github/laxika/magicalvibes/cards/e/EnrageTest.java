@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.DingusEgg;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Enrage.class, GrizzlyBears.class, DingusEgg.class})
+@CardUsed({Enrage.class, GrizzlyBears.class, DingusEgg.class, GoblinBrigand.class, Stabilizer.class})
 class EnrageTest extends BaseCardTest {
 
     @Test
@@ -95,5 +96,54 @@ class EnrageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, dingusEgg.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
+        harness.setHand(player1, List.of(new Enrage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, 1, goblin.getId());
+        harness.passBothPriorities();
+
+        assertThat(goblin.getPowerModifier()).isEqualTo(1);
+        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(goblin.getEffectivePower()).isEqualTo(3);
+        assertThat(goblin.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("X can be zero")
+    void resolvesWithZeroBoost() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        harness.setHand(player1, List.of(new Enrage()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, 0, goblin.getId());
+        harness.passBothPriorities();
+
+        assertThat(goblin.getPowerModifier()).isEqualTo(0);
+        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(goblin.getEffectivePower()).isEqualTo(2);
+        assertThat(goblin.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target leaves before resolution")
+    void fizzlesIfTargetRemoved() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        harness.setHand(player1, List.of(new Enrage()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, 2, goblin.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player1, "Enrage");
     }
 }

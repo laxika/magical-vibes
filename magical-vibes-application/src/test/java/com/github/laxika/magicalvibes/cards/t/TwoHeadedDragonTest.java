@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,15 +9,14 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TwoHeadedDragon.class, GrizzlyBears.class})
+@CardUsed({TwoHeadedDragon.class, GrizzlyBears.class, AirElemental.class})
 class TwoHeadedDragonTest extends BaseCardTest {
 
     // ===== {1}{R}: +2/+0 pump =====
@@ -140,5 +140,56 @@ class TwoHeadedDragonTest extends BaseCardTest {
 
     private Permanent addReadyDragon(Player player) {
         return addCreatureReady(player, new TwoHeadedDragon());
+    }
+
+    @Test
+    @DisplayName("Flying prevents a ground creature from blocking")
+    void flyingPreventsGroundCreatureFromBlocking() {
+        Permanent dragon = addCreatureReady(player1, new TwoHeadedDragon());
+        dragon.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    @DisplayName("Menace prevents blocking with only one flying creature")
+    void menaceRequiresTwoBlockers() {
+        Permanent dragon = addCreatureReady(player1, new TwoHeadedDragon());
+        dragon.setAttacking(true);
+        addCreatureReady(player2, new AirElemental());
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("except by two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Menace allows two flying creatures to block")
+    void menaceAllowsTwoBlockers() {
+        Permanent dragon = addCreatureReady(player1, new TwoHeadedDragon());
+        dragon.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new AirElemental());
+        Permanent secondBlocker = addCreatureReady(player2, new AirElemental());
+
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+        assertThat(firstBlocker.getBlockingTargets()).containsExactly(0);
+        assertThat(secondBlocker.getBlockingTargets()).containsExactly(0);
     }
 }

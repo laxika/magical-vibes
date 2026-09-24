@@ -12,6 +12,9 @@ import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "197")
 @CardRegistration(set = "MM3", collectorNumber = "189")
+@CardRegistration(set = "MB1", collectorNumber = "189")
+@CardRegistration(set = "2X2", collectorNumber = "278")
+@CardRegistration(set = "C13", collectorNumber = "219")
 public class SproutingThrinax extends Card {
 
     public SproutingThrinax() {

@@ -99,4 +99,28 @@ class PrimevalShamblerTest extends BaseCardTest {
     private Permanent addReadyShambler(Player player) {
         return addCreatureReady(player, new PrimevalShambler());
     }
+
+    @Test
+    @DisplayName("Cannot activate with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new PrimevalShambler());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick because the ability has no tap cost")
+    void canActivateWithSummoningSickness() {
+        Permanent shambler = harness.addToBattlefieldAndReturn(player1, new PrimevalShambler());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shambler.getPowerModifier()).isEqualTo(1);
+        assertThat(shambler.getToughnessModifier()).isEqualTo(1);
+    }
 }

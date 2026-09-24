@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "222")
+@CardRegistration(set = "RVR", collectorNumber = "242")
 public class ConniveConcoct extends Card {
 
     public ConniveConcoct() {

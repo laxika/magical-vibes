@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "274")
+@CardRegistration(set = "C14", collectorNumber = "204")
+@CardRegistration(set = "2ED", collectorNumber = "211")
 @CardRegistration(set = "BRB", collectorNumber = "39")
 @CardRegistration(set = "DD1", collectorNumber = "9")
 @CardRegistration(set = "FDN", collectorNumber = "227")
@@ -27,7 +29,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "211")
 @CardRegistration(set = "EVG", collectorNumber = "9")
 @CardRegistration(set = "EMA", collectorNumber = "175")
+@CardRegistration(set = "SLD", collectorNumber = "800")
+@CardRegistration(set = "SLD", collectorNumber = "1129")
+@CardRegistration(set = "SLD", collectorNumber = "1553")
 @CardRegistration(set = "GNT", collectorNumber = "46")
+@CardRegistration(set = "GN3", collectorNumber = "101")
+@CardRegistration(set = "SLC", collectorNumber = "12")
+@CardRegistration(set = "SLC", collectorNumber = "39")
+@CardRegistration(set = "SLZ", collectorNumber = "81")
+@CardRegistration(set = "SLZ", collectorNumber = "202")
+@CardRegistration(set = "SLZ", collectorNumber = "323")
 public class LlanowarElves extends Card {
 
     public LlanowarElves() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatureBlocksThisTurnIfAbleEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "180")
+@CardRegistration(set = "CMM", collectorNumber = "313")
 public class PredatoryRampage extends Card {
 
     public PredatoryRampage() {

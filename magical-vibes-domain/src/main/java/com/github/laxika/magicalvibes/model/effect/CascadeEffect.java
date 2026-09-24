@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
 /**
  * Trigger descriptor for {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_SELF_CAST}
  * implementing the Cascade keyword (CR 702.85): "When you cast this spell, exile cards from the top
@@ -13,12 +15,25 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link com.github.laxika.magicalvibes.model.LibrarySearchDestination#CAST_WITHOUT_PAYING} flow to
  * optionally cast that card for free and put the rest on the bottom in a random order.</p>
  *
+ * <p>The {@link TriggeringSpellManaValueEffect} marker lets generic spell-cast triggers snapshot
+ * the triggering spell's mana value for this effect.</p>
+ *
  * @param instantOrSorceryOnly whether the qualifying card must be an instant or sorcery instead of
  *                             any nonland card
+ * @param qualifyingCardFilter optional additional filter for the qualifying nonland card
  */
-public record CascadeEffect(boolean instantOrSorceryOnly) implements CardEffect {
+public record CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter)
+        implements TriggeringSpellManaValueEffect {
 
     public CascadeEffect() {
-        this(false);
+        this(false, null);
+    }
+
+    public CascadeEffect(boolean instantOrSorceryOnly) {
+        this(instantOrSorceryOnly, null);
+    }
+
+    public CascadeEffect(CardPredicate qualifyingCardFilter) {
+        this(false, qualifyingCardFilter);
     }
 }

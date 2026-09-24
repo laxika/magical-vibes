@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "MID", collectorNumber = "42")
+@CardRegistration(set = "DBL", collectorNumber = "42")
 public class BaithookAngler extends Card {
 
     public BaithookAngler() {

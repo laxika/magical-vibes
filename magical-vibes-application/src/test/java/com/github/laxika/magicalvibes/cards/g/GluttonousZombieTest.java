@@ -1,20 +1,21 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.t.TribalGolem;
 import com.github.laxika.magicalvibes.cards.w.WallOfSpears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GluttonousZombie.class, GrizzlyBears.class, BogImp.class, WallOfSpears.class})
+@CardUsed({GluttonousZombie.class, GrizzlyBears.class, BogImp.class, WallOfSpears.class, GlorySeeker.class, GangrenousGoliath.class, TribalGolem.class})
 class GluttonousZombieTest extends BaseCardTest {
 
     @Test

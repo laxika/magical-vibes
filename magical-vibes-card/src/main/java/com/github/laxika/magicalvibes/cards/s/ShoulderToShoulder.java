@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "34")
+@CardRegistration(set = "PIO", collectorNumber = "362")
 public class ShoulderToShoulder extends Card {
 
     public ShoulderToShoulder() {

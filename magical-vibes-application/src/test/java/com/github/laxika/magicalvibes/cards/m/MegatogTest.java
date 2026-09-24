@@ -3,21 +3,22 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Megatog.class, LeoninScimitar.class})
 class MegatogTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing an artifact gives Megatog +3/+3 and trample")
     void sacrificingArtifactBoostsAndGrantsTrample() {
-        addReadyMegatog(player1);
+        addCreatureReady(player1, new Megatog());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
         harness.activateAbility(player1, 0, null, null);
@@ -33,7 +34,7 @@ class MegatogTest extends BaseCardTest {
     @Test
     @DisplayName("The boost and trample wear off at end of turn")
     void boostAndTrampleWearOffAtEndOfTurn() {
-        addReadyMegatog(player1);
+        addCreatureReady(player1, new Megatog());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
         harness.activateAbility(player1, 0, null, null);
@@ -52,17 +53,30 @@ class MegatogTest extends BaseCardTest {
     @Test
     @DisplayName("Megatog cannot activate without an artifact to sacrifice")
     void requiresArtifactToSacrifice() {
-        addReadyMegatog(player1);
+        addCreatureReady(player1, new Megatog());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyMegatog(Player player) {
-        Permanent perm = new Permanent(new Megatog());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("A nonartifact permanent cannot be sacrificed for Megatog's ability")
+    void requiresArtifactRatherThanAnyPermanent() {
+        addCreatureReady(player1, new Megatog());
+        addCreatureReady(player1, new Megatog());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot be sacrificed for Megatog's ability")
+    void cannotSacrificeOpponentsArtifact() {
+        addCreatureReady(player1, new Megatog());
+        harness.addToBattlefield(player2, new LeoninScimitar());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
 }

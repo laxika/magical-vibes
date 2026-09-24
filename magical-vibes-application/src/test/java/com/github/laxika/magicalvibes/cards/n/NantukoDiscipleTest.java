@@ -7,10 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -132,5 +131,40 @@ class NantukoDiscipleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("Spends one green mana when activated")
+    void spendsGreenMana() {
+        setupDisciple();
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        harness.activateAbility(player1, 0, null, targetId);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        setupDisciple();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Nantuko Disciple").isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without green mana")
+    void cannotActivateWithoutGreenMana() {
+        setupDisciple(0);
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(findPermanent(player1, "Nantuko Disciple").isTapped()).isFalse();
     }
 }

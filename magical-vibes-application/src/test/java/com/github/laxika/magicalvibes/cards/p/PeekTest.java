@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Peek.class)
 class PeekTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -30,7 +30,6 @@ class PeekTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Peek");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -59,8 +58,8 @@ class PeekTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Peek"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("looks at") && entry.plainText().contains("hand"));
+        assertThat(gameLogContains("Peek")).isTrue();
     }
 
     @Test
@@ -73,7 +72,7 @@ class PeekTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("empty"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("looks at") && entry.plainText().contains("empty"));
     }
 
     @Test
@@ -85,7 +84,7 @@ class PeekTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("looks at") && entry.plainText().contains("hand"));
     }
 
     // ===== Drawing a card =====

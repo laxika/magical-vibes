@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "9ED", collectorNumber = "146")
 @CardRegistration(set = "ODY", collectorNumber = "149")
+@CardRegistration(set = "DMR", collectorNumber = "91")
 public class Mindslicer extends Card {
 
     public Mindslicer() {

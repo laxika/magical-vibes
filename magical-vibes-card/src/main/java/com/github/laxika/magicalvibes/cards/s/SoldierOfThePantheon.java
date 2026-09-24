@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "32")
+@CardRegistration(set = "EA2", collectorNumber = "8")
 public class SoldierOfThePantheon extends Card {
 
     public SoldierOfThePantheon() {

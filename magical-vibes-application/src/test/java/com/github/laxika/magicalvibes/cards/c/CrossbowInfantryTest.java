@@ -82,6 +82,22 @@ class CrossbowInfantryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttackingBeforeResolution() {
+        addCreatureReady(player1, new CrossbowInfantry());
+        Permanent attacker = addAttackingCreature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         addCreatureReady(player1, new CrossbowInfantry());

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MorbidHunger.class, AvenFlock.class})
 class MorbidHungerTest extends BaseCardTest {
 
     @Test
@@ -29,15 +31,15 @@ class MorbidHungerTest extends BaseCardTest {
 
     @Test
     void canTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AvenFlock());
         harness.setHand(player1, List.of(new MorbidHunger()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Aven Flock");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Aven Flock");
     }
 
     @Test

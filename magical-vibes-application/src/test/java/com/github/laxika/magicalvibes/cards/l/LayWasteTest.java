@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +27,7 @@ class LayWasteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -42,11 +42,25 @@ class LayWasteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Allows a regeneration shield to save the target land")
+    void allowsRegeneration() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new LayWaste()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, mountain.getId());
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        assertThat(mountain.getRegenerationShield()).isZero();
     }
 
     @Test

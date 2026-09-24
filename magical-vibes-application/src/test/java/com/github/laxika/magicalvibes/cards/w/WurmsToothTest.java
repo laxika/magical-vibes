@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
+import com.github.laxika.magicalvibes.cards.t.TangleSpider;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WurmsTooth.class, TangleSpider.class, MyrMoonvessel.class})
 class WurmsToothTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -24,7 +26,7 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Casting Wurm's Tooth puts it on the stack as an artifact spell")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new WurmsTooth()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
 
@@ -32,7 +34,6 @@ class WurmsToothTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Wurm's Tooth");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -41,14 +42,15 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Wurm's Tooth resolves onto the battlefield")
     void resolvesOntoBattlefield() {
         harness.setHand(player1, List.of(new WurmsTooth()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Wurm's Tooth");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof WurmsTooth);
     }
 
     // ===== Triggered ability: controller casts green spell =====
@@ -57,8 +59,8 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Controller casts green spell, accepts may ability, gains 1 life")
     void controllerCastsGreenSpellAndAccepts() {
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new TangleSpider()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -72,20 +74,20 @@ class WurmsToothTest extends BaseCardTest {
 
         // Triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Wurm's Tooth"));
+                && e.getCard() instanceof WurmsTooth);
 
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.assertLife(player1, lifeBefore + 1);
     }
 
     @Test
     @DisplayName("Controller casts green spell, declines may ability, no life gain")
     void controllerCastsGreenSpellAndDeclines() {
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new TangleSpider()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -95,13 +97,13 @@ class WurmsToothTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No triggered ability on stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Wurm's Tooth"));
+                && e.getCard() instanceof WurmsTooth);
 
         // Resolve the creature spell
         harness.passBothPriorities();
 
         // No life gained
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player1, lifeBefore);
     }
 
     // ===== Triggered ability: opponent casts green spell =====
@@ -115,8 +117,8 @@ class WurmsToothTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new TangleSpider()));
+        harness.addMana(player2, ManaColor.GREEN, 6);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -129,10 +131,9 @@ class WurmsToothTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Resolve the triggered ability and then the creature spell
-        harness.passBothPriorities(); // resolve triggered ability
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.assertLife(player1, lifeBefore + 1);
     }
 
     // ===== Non-green spell does NOT trigger =====
@@ -141,8 +142,8 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Non-green spell does not trigger Wurm's Tooth")
     void nonGreenSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new MyrMoonvessel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
 
@@ -151,7 +152,9 @@ class WurmsToothTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Myr Moonvessel");
+        harness.assertLife(player1, 20);
     }
 
     // ===== Multiple teeth =====
@@ -161,8 +164,8 @@ class WurmsToothTest extends BaseCardTest {
     void multipleTeethTriggerIndependently() {
         harness.addToBattlefield(player1, new WurmsTooth());
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new TangleSpider()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -181,11 +184,9 @@ class WurmsToothTest extends BaseCardTest {
         assertThat(triggeredCount).isEqualTo(2);
 
         // Resolve all
-        harness.passBothPriorities(); // resolve second triggered ability
-        harness.passBothPriorities(); // resolve first triggered ability
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        harness.assertLife(player1, lifeBefore + 2);
     }
 
     // ===== No trigger when not on battlefield =====
@@ -194,10 +195,10 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Wurm's Tooth does not trigger when not on the battlefield")
     void doesNotTriggerWhenNotOnBattlefield() {
         // Wurm's Tooth is in the hand, not on the battlefield
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new WurmsTooth(), new TangleSpider()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 1);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

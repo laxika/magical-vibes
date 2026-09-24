@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "172")
 @CardRegistration(set = "DDL", collectorNumber = "43")
+@CardRegistration(set = "PIO", collectorNumber = "190")
 public class PolukranosWorldEater extends Card {
 
     public PolukranosWorldEater() {

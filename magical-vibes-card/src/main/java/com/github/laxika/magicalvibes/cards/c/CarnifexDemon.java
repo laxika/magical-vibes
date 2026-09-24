@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "57")
+@CardRegistration(set = "ECC", collectorNumber = "72")
 public class CarnifexDemon extends Card {
 
     public CarnifexDemon() {

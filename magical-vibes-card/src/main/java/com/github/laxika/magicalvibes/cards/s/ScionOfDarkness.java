@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "79")
+@CardRegistration(set = "2X2", collectorNumber = "86")
 public class ScionOfDarkness extends Card {
 
     public ScionOfDarkness() {

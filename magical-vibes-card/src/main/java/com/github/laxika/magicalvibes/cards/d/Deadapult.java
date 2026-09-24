@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "59")
+@CardRegistration(set = "DMR", collectorNumber = "115")
 public class Deadapult extends Card {
 
     public Deadapult() {

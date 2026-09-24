@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "SOI", collectorNumber = "171")
 @CardRegistration(set = "DDK", collectorNumber = "51")
 @CardRegistration(set = "UMA", collectorNumber = "137")
+@CardRegistration(set = "SIR", collectorNumber = "167")
 public class MadProphet extends Card {
 
     public MadProphet() {

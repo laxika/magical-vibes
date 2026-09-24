@@ -1,28 +1,27 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Demolish.class, GrizzlyBears.class, Millstone.class, Mountain.class, PhyrexianHulk.class})
+@CardUsed({Demolish.class, GrizzlyBears.class, Millstone.class, Mountain.class, PhyrexianHulk.class, FountainOfYouth.class})
 class DemolishTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -171,4 +170,3 @@ class DemolishTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 }
-

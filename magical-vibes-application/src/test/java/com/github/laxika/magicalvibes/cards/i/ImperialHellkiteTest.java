@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.k.KilnmouthDragon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ImperialHellkite.class, GrizzlyBears.class, Island.class})
+@CardUsed({ImperialHellkite.class, FugitiveWizard.class, KilnmouthDragon.class})
 class ImperialHellkiteTest extends BaseCardTest {
 
     @Test
@@ -33,18 +34,22 @@ class ImperialHellkiteTest extends BaseCardTest {
     void acceptingSearchOffersOnlyDragonCardsAndPutsChosenCardIntoHand() {
         Permanent hellkite = castFaceDown();
         Card dragon = new ImperialHellkite();
-        Card nonDragon = new GrizzlyBears();
-        Card land = new Island();
-        harness.setLibrary(player1, List.of(dragon, nonDragon, land));
+        Card nonDragon = new FugitiveWizard();
+        Card otherDragon = new KilnmouthDragon();
+        harness.setLibrary(player1, List.of(dragon, nonDragon, otherDragon));
 
         turnFaceUp(hellkite);
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
         assertThat(search.params().cards())
-                .hasSize(1)
+                .hasSize(2)
                 .allMatch(card -> card.getSubtypes().contains(CardSubtype.DRAGON));
+        assertThat(search.params().cards()).extracting(Card::getId)
+                .containsExactly(dragon.getId(), otherDragon.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -52,6 +57,21 @@ class ImperialHellkiteTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(dragon.getId()));
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(dragon.getId()));
+    }
+
+    @Test
+    void acceptingSearchWithNoDragonLeavesLibraryUnchanged() {
+        Permanent hellkite = castFaceDown();
+        Card nonDragon = new FugitiveWizard();
+        harness.setLibrary(player1, List.of(nonDragon));
+
+        turnFaceUp(hellkite);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonDragon);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(nonDragon.getId()));
     }
 
     @Test
@@ -65,6 +85,20 @@ class ImperialHellkiteTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    void castingFaceUpDoesNotCreateTurnedFaceUpTrigger() {
+        ImperialHellkite card = new ImperialHellkite();
+        Card libraryCard = new FugitiveWizard();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.castFromHand(player1, card, "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Imperial Hellkite");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
     }
 
     private Permanent castFaceDown() {
@@ -90,6 +124,6 @@ class ImperialHellkiteTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        harness.setLibrary(player1, List.of(new ImperialHellkite(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new ImperialHellkite(), new FugitiveWizard()));
     }
 }

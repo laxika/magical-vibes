@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "236")
 @CardRegistration(set = "M21", collectorNumber = "214")
+@CardRegistration(set = "CMM", collectorNumber = "332")
 public class WildwoodScourge extends Card {
 
     public WildwoodScourge() {

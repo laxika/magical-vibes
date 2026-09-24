@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "94")
+@CardRegistration(set = "SIR", collectorNumber = "120")
+@CardRegistration(set = "2X2", collectorNumber = "82")
 public class LilianasElite extends Card {
 
     public LilianasElite() {

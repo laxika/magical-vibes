@@ -1,23 +1,28 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/**
- * Offers Auras from the configured zones and attaches the chosen cards to the source permanent.
- * The no-argument form is Bruna's any-number battlefield/graveyard/hand effect; the parameterized
- * form also supports one-card searches that include the controller's library.
- */
+/** Offers eligible Auras, and optionally Equipment, from the configured zones and attaches the
+ * chosen cards to the source permanent. */
 public record AttachAurasToSourceEffect(boolean includeBattlefield, boolean includeLibrary,
-                                        int maxCount) implements CardEffect {
+                                        int maxCount, boolean includeEquipment) implements CardEffect {
 
     public AttachAurasToSourceEffect() {
-        this(true, false, Integer.MAX_VALUE);
+        this(true, false, Integer.MAX_VALUE, false);
     }
 
     public AttachAurasToSourceEffect(boolean includeLibrary, int maxCount) {
-        this(true, includeLibrary, maxCount);
+        this(true, includeLibrary, maxCount, false);
+    }
+
+    public AttachAurasToSourceEffect(boolean includeBattlefield, boolean includeLibrary, int maxCount) {
+        this(includeBattlefield, includeLibrary, maxCount, false);
     }
 
     public static AttachAurasToSourceEffect oneAuraSearch() {
-        return new AttachAurasToSourceEffect(false, true, 1);
+        return new AttachAurasToSourceEffect(false, true, 1, false);
+    }
+
+    public static AttachAurasToSourceEffect oneAuraOrEquipmentFromHandOrGraveyard() {
+        return new AttachAurasToSourceEffect(false, false, 1, true);
     }
 
     public AttachAurasToSourceEffect {

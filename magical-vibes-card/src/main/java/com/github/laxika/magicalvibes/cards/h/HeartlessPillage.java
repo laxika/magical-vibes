@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "109")
 @CardRegistration(set = "2XM", collectorNumber = "96")
+@CardRegistration(set = "OTP", collectorNumber = "14")
 public class HeartlessPillage extends Card {
 
     public HeartlessPillage() {

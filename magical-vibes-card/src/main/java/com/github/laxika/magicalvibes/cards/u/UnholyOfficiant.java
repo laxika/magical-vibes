@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "41")
+@CardRegistration(set = "DBL", collectorNumber = "308")
 public class UnholyOfficiant extends Card {
 
     public UnholyOfficiant() {

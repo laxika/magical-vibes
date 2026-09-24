@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "68")
+@CardRegistration(set = "RVR", collectorNumber = "62")
+@CardRegistration(set = "MSC", collectorNumber = "279")
+@CardRegistration(set = "MSC", collectorNumber = "337")
 public class SparkDouble extends Card {
 
     public SparkDouble() {

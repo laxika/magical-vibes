@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,12 +40,24 @@ class MenacingOgreTest extends BaseCardTest {
         assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void choosingZeroCausesNoLifeLossAndStillAddsCountersWhenTied() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent ogre = castMenacingOgre();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent castMenacingOgre() {
-        harness.setHand(player1, List.of(new MenacingOgre()));
-        harness.addMana(player1, ManaColor.RED, 5);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new MenacingOgre(), "{3}{R}{R}");
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
         return findPermanent(player1, "Menacing Ogre");

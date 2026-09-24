@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "14")
+@CardRegistration(set = "PIO", collectorNumber = "24")
 public class LagonnaBandTrailblazer extends Card {
 
     public LagonnaBandTrailblazer() {

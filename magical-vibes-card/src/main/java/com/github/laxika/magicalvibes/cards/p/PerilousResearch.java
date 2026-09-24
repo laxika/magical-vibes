@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "41")
 @CardRegistration(set = "MMA", collectorNumber = "58")
+@CardRegistration(set = "CMD", collectorNumber = "54")
 public class PerilousResearch extends Card {
 
     public PerilousResearch() {

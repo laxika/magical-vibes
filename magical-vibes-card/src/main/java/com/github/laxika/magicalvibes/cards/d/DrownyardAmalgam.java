@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "50")
+@CardRegistration(set = "DBL", collectorNumber = "50")
 public class DrownyardAmalgam extends Card {
 
     public DrownyardAmalgam() {

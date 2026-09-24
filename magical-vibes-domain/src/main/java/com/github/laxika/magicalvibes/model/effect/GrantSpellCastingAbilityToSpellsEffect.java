@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>
  * Used by Wort, the Raidmother (conspire, on red or green instant and sorcery spells), Chief Engineer
  * (convoke, on artifact spells), Inspiring Statuary (improvise, on nonartifact spells), and
- * Niv-Mizzet, Supreme (jump-start, on exactly two-color instants and sorceries in the graveyard).
+ * Niv-Mizzet, Supreme (jump-start, on exactly two-color instants and sorceries in the graveyard),
+ * and Wrenn and Six (retrace, on instants and sorceries in the graveyard).
  * The {@link #allPlayers(Keyword, CardPredicate)} factory is for symmetric grants such as a Plane's
  * "instant and sorcery spells have rebound" ability.
  * <p>
@@ -51,10 +52,11 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
                 && grantedAbility != Keyword.DELVE
                 && grantedAbility != Keyword.JUMP_START
                 && grantedAbility != Keyword.CASUALTY
-                && grantedAbility != Keyword.REPLICATE) {
+                && grantedAbility != Keyword.REPLICATE
+                && grantedAbility != Keyword.RETRACE) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
-                            + "; only CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, and REPLICATE do");
+                            + "; only CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, CASUALTY, REPLICATE, and RETRACE do");
         }
     }
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, int abilityValue, CardPredicate filter) {

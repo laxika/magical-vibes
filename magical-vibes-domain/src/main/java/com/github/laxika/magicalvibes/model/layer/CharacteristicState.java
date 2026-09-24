@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -60,6 +61,8 @@ public class CharacteristicState {
     private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
     /** Colors from which protection has been removed by a later layer-6 effect. */
     private final Set<CardColor> removedProtectionColors = EnumSet.noneOf(CardColor.class);
+    /** Whether all protection abilities have been removed by a later layer-6 effect. */
+    private boolean protectionRemoved;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedStaticEffects = new ArrayList<>();
     @Setter private int basePower;
@@ -108,6 +111,8 @@ public class CharacteristicState {
         if (!permanent.isFaceDown()) {
             this.supertypes.addAll(card.getSupertypes());
             this.subtypes.addAll(card.getSubtypes());
+        } else {
+            this.subtypes.addAll(permanent.getFaceDownSubtypes());
         }
         for (CardSubtype granted : permanent.getGrantedSubtypes()) {
             addSubtype(granted);
@@ -180,6 +185,7 @@ public class CharacteristicState {
         this.seededKeywords.addAll(source.seededKeywords);
         this.protectionColors.addAll(source.protectionColors);
         this.removedProtectionColors.addAll(source.removedProtectionColors);
+        this.protectionRemoved = source.protectionRemoved;
         this.grantedActivatedAbilities.addAll(source.grantedActivatedAbilities);
         this.grantedStaticEffects.addAll(source.grantedStaticEffects);
         this.basePower = source.basePower;
@@ -318,6 +324,7 @@ public class CharacteristicState {
     }
 
     public void addProtectionColors(Collection<CardColor> colors) {
+        protectionRemoved = false;
         removedProtectionColors.removeAll(colors);
         protectionColors.addAll(colors);
     }
@@ -325,6 +332,16 @@ public class CharacteristicState {
     public void removeProtectionColors(Collection<CardColor> colors) {
         protectionColors.removeAll(colors);
         removedProtectionColors.addAll(colors);
+    }
+
+    public void removeAllProtection() {
+        protectionColors.clear();
+        removedProtectionColors.addAll(EnumSet.allOf(CardColor.class));
+        protectionRemoved = true;
+    }
+
+    public boolean isProtectionRemoved() {
+        return protectionRemoved;
     }
 
     /** Whether the layer-6 state so far gives this permanent protection from the given color. */
@@ -337,6 +354,9 @@ public class CharacteristicState {
     }
 
     public void addStaticEffect(CardEffect effect) {
+        if (effect instanceof ProtectionGrantingEffect) {
+            protectionRemoved = false;
+        }
         grantedStaticEffects.add(effect);
     }
 

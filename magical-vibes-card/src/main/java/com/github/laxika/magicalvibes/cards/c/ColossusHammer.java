@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "223")
+@CardRegistration(set = "SLD", collectorNumber = "736")
+@CardRegistration(set = "SLD", collectorNumber = "1866")
+@CardRegistration(set = "GN3", collectorNumber = "115")
 public class ColossusHammer extends Card {
 
     public ColossusHammer() {

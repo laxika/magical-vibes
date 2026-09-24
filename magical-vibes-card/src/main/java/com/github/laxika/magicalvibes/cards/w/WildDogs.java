@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "284")
+@CardRegistration(set = "DMR", collectorNumber = "183")
 public class WildDogs extends Card {
 
     public WildDogs() {

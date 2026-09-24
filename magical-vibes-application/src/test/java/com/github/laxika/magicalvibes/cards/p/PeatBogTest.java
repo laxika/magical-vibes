@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(PeatBog.class)
 class PeatBogTest extends BaseCardTest {
 
     @Test
@@ -36,7 +38,7 @@ class PeatBogTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
         assertThat(bog.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
         assertThat(bog.isTapped()).isTrue();
-        assertThat(findPermanent(player1, "Peat Bog")).isSameAs(bog);
+        harness.assertOnBattlefield(player1, "Peat Bog");
     }
 
     @Test
@@ -48,8 +50,8 @@ class PeatBogTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
         assertThat(bog.getCounterCount(CounterType.DEPLETION)).isZero();
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bog);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bog.getCard());
+        harness.assertNotOnBattlefield(player1, "Peat Bog");
+        harness.assertInGraveyard(player1, "Peat Bog");
     }
 
     @Test
@@ -59,6 +61,18 @@ class PeatBogTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Peat Bog cannot be activated while it is tapped")
+    void cannotActivateWhenTapped() {
+        addReadyBog(2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     private Permanent addReadyBog(int counters) {

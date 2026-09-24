@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BringerOfTheBlackDawn.class, DrossCrocodile.class, BringerOfTheGreenDawn.class})
 class BringerOfTheBlackDawnTest extends BaseCardTest {
 
     @Test
@@ -35,13 +36,35 @@ class BringerOfTheBlackDawnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Trample deals excess combat damage to the defending player")
+    void trampleDealsExcessCombatDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BringerOfTheBlackDawn());
+        Permanent blocker = addCreatureReady(player2, new DrossCrocodile());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 4
+        ));
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
+    }
+
+    @Test
     @DisplayName("Paying 2 life allows searching for a card and putting it on top")
     void paysLifeAndPutsChosenCardOnTop() {
         harness.addToBattlefield(player1, new BringerOfTheBlackDawn());
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        Card chosen = new GrizzlyBears();
-        deck.addAll(List.of(new DiabolicTutor(), chosen, new Island()));
+        Card chosen = new BringerOfTheGreenDawn();
+        harness.setLibrary(player1, List.of(new DrossCrocodile(), chosen, new DrossCrocodile()));
         int lifeBefore = gd.getLife(player1.getId());
 
         advanceToUpkeep(player1);
@@ -49,7 +72,7 @@ class BringerOfTheBlackDawnTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(chosen);
@@ -76,7 +99,7 @@ class BringerOfTheBlackDawnTest extends BaseCardTest {
     @DisplayName("The ability cannot be paid with less than 2 life")
     void cannotPayWithInsufficientLife() {
         harness.addToBattlefield(player1, new BringerOfTheBlackDawn());
-        gd.playerLifeTotals.put(player1.getId(), 1);
+        harness.setLife(player1, 1);
         List<Card> deck = gd.playerDecks.get(player1.getId());
         List<Card> deckBefore = List.copyOf(deck);
 

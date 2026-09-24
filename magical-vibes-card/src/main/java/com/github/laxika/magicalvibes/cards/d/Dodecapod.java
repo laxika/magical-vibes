@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffe
 
 @CardRegistration(set = "APC", collectorNumber = "134")
 @CardRegistration(set = "TSB", collectorNumber = "108")
+@CardRegistration(set = "DMR", collectorNumber = "220")
 public class Dodecapod extends Card {
 
     public Dodecapod() {

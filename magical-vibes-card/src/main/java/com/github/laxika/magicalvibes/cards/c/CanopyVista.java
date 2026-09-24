@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "EXP", collectorNumber = "5")
+@CardRegistration(set = "EA3", collectorNumber = "20")
+@CardRegistration(set = "MSC", collectorNumber = "227")
+@CardRegistration(set = "MSC", collectorNumber = "462")
 public class CanopyVista extends Card {
 
     public CanopyVista() {

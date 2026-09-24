@@ -16,6 +16,8 @@ import java.util.List;
 @CardRegistration(set = "DDQ", collectorNumber = "52")
 @CardRegistration(set = "TD2", collectorNumber = "76")
 @CardRegistration(set = "DVD", collectorNumber = "52")
+@CardRegistration(set = "SIS", collectorNumber = "25")
+@CardRegistration(set = "C15", collectorNumber = "115")
 public class BarterInBlood extends Card {
 
     public BarterInBlood() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,25 @@ class KaronasZealotTest extends BaseCardTest {
 
         ping(firstPyromancer, zealot);
         ping(secondPyromancer, zealot);
+
+        assertThat(zealot.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void turningFaceUpRedirectsCombatDamageToTheChosenCreature() {
+        Permanent zealot = castFaceDown();
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        turnFaceUp(zealot, target);
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(zealot),
+                gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
+        resolveCombat(player2);
 
         assertThat(zealot.getMarkedDamage()).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(2);

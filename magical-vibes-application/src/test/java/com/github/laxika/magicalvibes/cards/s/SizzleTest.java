@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+
 @CardUsed({Sizzle.class})
 class SizzleTest extends BaseCardTest {
 
@@ -33,5 +34,10 @@ class SizzleTest extends BaseCardTest {
 
     private void castSizzle() {
         harness.castFromHand(player1, new Sizzle(), "{2}{R}");
+    }
+
+    private void castAndResolveSizzle() {
+        harness.castFromHand(player1, new Sizzle(), "{2}{R}");
+        harness.passBothPriorities();
     }
 }

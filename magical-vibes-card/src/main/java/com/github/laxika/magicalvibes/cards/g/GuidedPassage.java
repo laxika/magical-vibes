@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GuidedPassageEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "105")
+@CardRegistration(set = "2X2", collectorNumber = "224")
 public class GuidedPassage extends Card {
 
     public GuidedPassage() {

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RunWild.class, GrizzlyBears.class, Shock.class, Forest.class})
+@CardUsed({RunWild.class, GlorySeeker.class, Shock.class, Forest.class})
 class RunWildTest extends BaseCardTest {
 
     @Test
@@ -35,21 +35,37 @@ class RunWildTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's creature and its controller can activate regeneration")
+    void targetsOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new RunWild()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The granted regeneration shield saves the creature from lethal damage")
     void regenerationSavesCreatureFromLethalDamage() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         harness.setHand(player1, List.of(new RunWild(), new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.getRegenerationShield()).isZero();
@@ -85,12 +101,11 @@ class RunWildTest extends BaseCardTest {
     }
 
     private Permanent castRunWildOnOwnCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         harness.setHand(player1, List.of(new RunWild()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         return creature;
     }
 }

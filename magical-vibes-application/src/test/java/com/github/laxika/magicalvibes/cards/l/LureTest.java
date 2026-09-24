@@ -2,9 +2,13 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
+import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.w.WarCadence;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,10 +18,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AirElemental.class, BalduvianBarbarians.class, GrizzlyBears.class, Hipparion.class, Lure.class, Mountain.class})
+@CardUsed({AirElemental.class, BalduvianBarbarians.class, GrizzlyBears.class, Hipparion.class, Lure.class, Mountain.class, FreshVolunteers.class, CloudSprite.class, WarCadence.class})
 class LureTest extends BaseCardTest {
 
     @Test
@@ -188,5 +193,11 @@ class LureTest extends BaseCardTest {
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    private Permanent attackingCreature(Card card) {
+        Permanent permanent = addCreatureReady(player1, card);
+        permanent.setAttacking(true);
+        return permanent;
     }
 }

@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "87")
+@CardRegistration(set = "SLD", collectorNumber = "1396")
 @CardRegistration(set = "UMA", collectorNumber = "117")
 @CardRegistration(set = "TSR", collectorNumber = "333")
+@CardRegistration(set = "PIO", collectorNumber = "113")
 public class TasigurTheGoldenFang extends Card {
 
     public TasigurTheGoldenFang() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "52")
+@CardRegistration(set = "DBL", collectorNumber = "52")
 public class FalconAbomination extends Card {
 
     public FalconAbomination() {

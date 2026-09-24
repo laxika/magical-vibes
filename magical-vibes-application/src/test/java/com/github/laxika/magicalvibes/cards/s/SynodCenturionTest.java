@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.m.MyrServitor;
+import com.github.laxika.magicalvibes.cards.n.NeurokTransmuter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +14,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SynodCenturion.class, FountainOfYouth.class, Shatter.class,
+        MyrServitor.class, NeurokTransmuter.class})
 class SynodCenturionTest extends BaseCardTest {
 
     @Test
@@ -32,7 +37,7 @@ class SynodCenturionTest extends BaseCardTest {
         castCenturion();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Synod Centurion");
         harness.assertInGraveyard(player1, "Synod Centurion");
@@ -64,11 +69,31 @@ class SynodCenturionTest extends BaseCardTest {
         castCenturion();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Synod Centurion");
         harness.assertInGraveyard(player1, "Synod Centurion");
         harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself when another artifact stops being an artifact")
+    void sacrificesWhenAnotherArtifactStopsBeingAnArtifact() {
+        var transmuter = addCreatureReady(player1, new NeurokTransmuter());
+        var servitor = addCreatureReady(player1, new MyrServitor());
+        addCreatureReady(player1, new SynodCenturion());
+
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int transmuterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(transmuter);
+        harness.activateAbility(player1, transmuterIndex, 1, null, servitor.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isArtifact(gd, servitor)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Synod Centurion");
+        harness.assertInGraveyard(player1, "Synod Centurion");
+        harness.assertOnBattlefield(player1, "Myr Servitor");
     }
 
     private void castCenturion() {

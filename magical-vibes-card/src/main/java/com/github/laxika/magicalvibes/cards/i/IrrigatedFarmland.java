@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "245")
 @CardRegistration(set = "AKR", collectorNumber = "304")
+@CardRegistration(set = "MSC", collectorNumber = "251")
+@CardRegistration(set = "MSC", collectorNumber = "481")
 public class IrrigatedFarmland extends Card {
 
     public IrrigatedFarmland() {

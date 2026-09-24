@@ -1,55 +1,76 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.f.FlailingManticore;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.l.LastBreath;
+import com.github.laxika.magicalvibes.cards.l.Lunge;
+import com.github.laxika.magicalvibes.cards.l.LightningHounds;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        ThermalGlider.class,
+        FlailingManticore.class,
+        FreshVolunteers.class,
+        Lunge.class,
+        LastBreath.class,
+        LightningHounds.class
+})
 class ThermalGliderTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Red creature cannot block Thermal Glider")
+    @DisplayName("A red flying creature cannot block Thermal Glider")
     void redCreatureCannotBlock() {
-        Permanent glider = addReady(player1, new ThermalGlider());
+        Permanent glider = addCreatureReady(player1, new ThermalGlider());
         glider.setAttacking(true);
-        Permanent blocker = addReady(player2, createCreature("Shivan Dragon", 5, 5, CardColor.RED, Keyword.FLYING));
+        Permanent blocker = addCreatureReady(player2, new FlailingManticore());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(glider)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
     }
 
     @Test
+    @DisplayName("Flying prevents a nonflying creature from blocking Thermal Glider")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        Permanent glider = addCreatureReady(player1, new ThermalGlider());
+        glider.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(glider)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
     @DisplayName("Thermal Glider cannot be targeted by a red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent glider = addReady(player2, new ThermalGlider());
-        addReady(player2, createCreature("Green Bears", 2, 2, CardColor.GREEN));
+        Permanent glider = addCreatureReady(player2, new ThermalGlider());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Red Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new Lunge()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, glider.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(glider.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
@@ -57,50 +78,32 @@ class ThermalGliderTest extends BaseCardTest {
     @Test
     @DisplayName("Thermal Glider takes no combat damage from a red creature")
     void takesNoCombatDamageFromRedCreature() {
-        Permanent attacker = addReady(player2, createCreature("Red Giant", 3, 3, CardColor.RED));
+        Permanent attacker = addCreatureReady(player2, new LightningHounds());
         attacker.setAttacking(true);
-        Permanent glider = addReady(player1, new ThermalGlider());
+        Permanent glider = addCreatureReady(player1, new ThermalGlider());
         glider.setBlocking(true);
         glider.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat(player2);
 
+        assertThat(glider.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Thermal Glider");
+        harness.assertNotOnBattlefield(player2, "Lightning Hounds");
+    }
+
+    @Test
+    @DisplayName("A white instant can target Thermal Glider")
+    void nonRedInstantCanTargetThermalGlider() {
+        Permanent glider = addCreatureReady(player2, new ThermalGlider());
+
+        harness.setHand(player1, List.of(new LastBreath()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, glider.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isZero();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color, Keyword... keywords) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        if (keywords.length > 0) {
-            card.setKeywords(Set.of(keywords));
-        }
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
+        harness.assertNotOnBattlefield(player2, "Thermal Glider");
+        harness.assertLife(player2, 24);
     }
 }

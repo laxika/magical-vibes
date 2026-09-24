@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "FDN", collectorNumber = "143")
 @CardRegistration(set = "MKM", collectorNumber = "22")
 @CardRegistration(set = "TMT", collectorNumber = "20")
+@CardRegistration(set = "MSC", collectorNumber = "137")
 public class MakeYourMove extends Card {
 
     public MakeYourMove() {

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "186")
+@CardRegistration(set = "SLD", collectorNumber = "2104")
 public class DanceOfTheManse extends Card {
 
     public DanceOfTheManse() {

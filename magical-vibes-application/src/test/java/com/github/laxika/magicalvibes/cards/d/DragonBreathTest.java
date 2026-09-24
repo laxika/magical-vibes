@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KrosanCloudscraper;
+import com.github.laxika.magicalvibes.cards.a.AvenFarseer;
+import com.github.laxika.magicalvibes.cards.n.NobleTemplar;
+import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,49 +17,63 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonBreath.class, FountainOfYouth.class, GrizzlyBears.class, KrosanCloudscraper.class})
+@CardUsed({DragonBreath.class, AvenFarseer.class, NobleTemplar.class, Stabilizer.class})
 class DragonBreathTest extends BaseCardTest {
 
     @Test
     void resolvingAuraGrantsHasteToEnchantedCreature() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AvenFarseer());
         harness.setHand(player1, List.of(new DragonBreath()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         Permanent aura = findPermanent(player1, "Dragon Breath");
-        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void resolvingAuraCanEnchantCreatureControlledByOpponent() {
+        Permanent creature = addCreatureReady(player2, new AvenFarseer());
+        harness.setHand(player1, List.of(new DragonBreath()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Dragon Breath");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
     @Test
     void activatedAbilityBoostsEnchantedCreatureUntilEndOfTurn() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new DragonBreath());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        Permanent creature = addCreatureReady(player1, new AvenFarseer());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DragonBreath());
+        aura.setAttachedTo(creature.getId());
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
     }
 
     @Test
-    void highManaValueCreatureEnteringTriggersReturnAttachedToIt() {
+    void sixManaValueCreatureEnteringTriggersReturnAttachedToIt() {
         harness.setGraveyard(player1, List.of(new DragonBreath()));
-        Permanent creature = harness.enterBattlefieldAndReturn(player2, new KrosanCloudscraper());
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new NobleTemplar());
 
         resolveMayAbility(true);
 
@@ -72,7 +86,7 @@ class DragonBreathTest extends BaseCardTest {
     @Test
     void smallerCreatureDoesNotTriggerReturn() {
         harness.setGraveyard(player1, List.of(new DragonBreath()));
-        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new AvenFarseer());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Dragon Breath");
@@ -81,7 +95,7 @@ class DragonBreathTest extends BaseCardTest {
     @Test
     void decliningReturnKeepsAuraInGraveyard() {
         harness.setGraveyard(player1, List.of(new DragonBreath()));
-        harness.enterBattlefieldAndReturn(player1, new KrosanCloudscraper());
+        harness.enterBattlefieldAndReturn(player1, new NobleTemplar());
 
         resolveMayAbility(false);
 
@@ -90,13 +104,28 @@ class DragonBreathTest extends BaseCardTest {
     }
 
     @Test
+    void acceptedReturnEntersUnattachedWhenEnteringCreatureLeavesBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new DragonBreath()));
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new NobleTemplar());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("Dragon Breath returns to the battlefield unattached.")).isTrue();
+        harness.assertInGraveyard(player1, "Dragon Breath");
+        harness.assertNotOnBattlefield(player1, "Dragon Breath");
+    }
+
+    @Test
     void cannotEnchantNonCreaturePermanent() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Stabilizer());
         harness.setHand(player1, List.of(new DragonBreath()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

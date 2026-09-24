@@ -19,7 +19,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "222")
+@CardRegistration(set = "SLD", collectorNumber = "377")
+@CardRegistration(set = "SLD", collectorNumber = "378")
 @CardRegistration(set = "KLR", collectorNumber = "252")
+@CardRegistration(set = "MSC", collectorNumber = "204")
+@CardRegistration(set = "MSC", collectorNumber = "442")
 public class MetalworkColossus extends Card {
 
     public MetalworkColossus() {

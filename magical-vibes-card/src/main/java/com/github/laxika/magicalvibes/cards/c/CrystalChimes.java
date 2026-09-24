@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "292")
+@CardRegistration(set = "C15", collectorNumber = "250")
 public class CrystalChimes extends Card {
 
     public CrystalChimes() {

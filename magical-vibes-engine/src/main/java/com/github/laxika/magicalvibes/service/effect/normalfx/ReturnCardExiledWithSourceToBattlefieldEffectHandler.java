@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
     private final GameQueryService gameQueryService;
     private final GameMutationCoordinator mutationCoordinator;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GrantKeywordEffectHandler grantKeywordEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -79,7 +82,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             }
             returnToBattlefield(gameData, controllerId, target.card(), sourceName,
                     returnEffect.grantedSubtype(), returnEffect.enterTapped(),
-                    returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters());
+                    returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters(),
+                    returnEffect.grantHaste());
             return;
         }
 
@@ -100,19 +104,22 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         if (returnEffect.returnAtRandom()) {
             Card chosen = matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
             returnToBattlefield(gameData, controllerId, chosen, sourceName,
-                    returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking());
+                    returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking(),
+                    returnEffect.grantHaste());
             return;
         }
 
         if (matching.size() == 1) {
             returnToBattlefield(gameData, controllerId, matching.getFirst(), sourceName,
                     returnEffect.grantedSubtype(), returnEffect.enterTapped(),
-                    returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters());
+                    returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters(),
+                    returnEffect.grantHaste());
             return;
         }
 
         gameData.queueInteraction(new PendingReturnExiledWithSourceCard(true, controllerId,
-                returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking()));
+                returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking(),
+                returnEffect.grantHaste()));
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,
@@ -139,12 +146,20 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
     public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                     CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking) {
         returnToBattlefield(gameData, controllerId, card, sourceName,
-                grantedSubtype, enterTapped, enterAttacking, 0);
+                grantedSubtype, enterTapped, enterAttacking, 0, false);
+    }
+
+    /** Shared with the multi-card choice path in {@code LibraryChoiceHandlerService}. */
+    public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                    CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
+                                    boolean grantHaste) {
+        returnToBattlefield(gameData, controllerId, card, sourceName,
+                grantedSubtype, enterTapped, enterAttacking, 0, grantHaste);
     }
 
     private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                      CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
-                                     int additionalPlusOnePlusOneCounters) {
+                                     int additionalPlusOnePlusOneCounters, boolean grantHaste) {
         if (!gameData.removeFromExile(card.getId())) {
             return;
         }
@@ -166,6 +181,10 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             permanent.tap();
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+        if (grantHaste) {
+            grantKeywordEffectHandler.grantToPermanent(gameData, sourceName, controllerId,
+                    permanent, Set.of(Keyword.HASTE));
+        }
         if (enterAttacking) {
             permanent.setAttacking(true);
         }

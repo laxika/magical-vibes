@@ -49,6 +49,7 @@ public class MasterOfPredicamentsCardChoiceInteractionHandler
 
         Card selectedCard = hand.get(cardIndex);
         gameData.interaction.clearAwaitingInput();
+        gameData.recordPileGroupingOrGuess();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 interaction.guessingPlayerId(), null, null,
                 new ChoiceContext.MasterOfPredicamentsGuessChoice(

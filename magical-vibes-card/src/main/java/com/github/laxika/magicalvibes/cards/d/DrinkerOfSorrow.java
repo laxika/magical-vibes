@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class DrinkerOfSorrow extends Card {
 
     public DrinkerOfSorrow() {
+        addEffect(EffectSlot.STATIC, new CantBlockEffect());
         addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                 new SacrificePermanentsEffect(1, new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER));
     }

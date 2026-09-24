@@ -1,20 +1,19 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Larceny.class, GrizzlyBears.class})
+@CardUsed({Larceny.class, GrizzlyBears.class, FreshVolunteers.class})
 class LarcenyTest extends BaseCardTest {
 
     @Test
@@ -126,6 +125,30 @@ class LarcenyTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Triggers once for each creature that deals combat damage")
+    void triggersForEachCreatureThatDealsCombatDamage() {
+        harness.setHand(player2, List.of(new FreshVolunteers(), new FreshVolunteers()));
+        harness.addToBattlefield(player1, new Larceny());
+
+        Permanent firstAttacker = addCreatureReady(player1, new FreshVolunteers());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new FreshVolunteers());
+        secondAttacker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

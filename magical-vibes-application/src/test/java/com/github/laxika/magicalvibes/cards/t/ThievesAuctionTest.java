@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
+import com.github.laxika.magicalvibes.cards.c.CoastalPiracy;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrafRats;
+import com.github.laxika.magicalvibes.cards.i.IronLance;
+import com.github.laxika.magicalvibes.cards.j.JeweledTorque;
 import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.w.WildJhovall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,21 +18,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({
-        ThievesAuction.class,
-        RagingGoblin.class,
-        Plains.class,
-        RodOfRuin.class,
-        GloriousAnthem.class
-})
+@CardUsed({ThievesAuction.class, RagingGoblin.class, Plains.class, RodOfRuin.class, GloriousAnthem.class, WildJhovall.class, IronLance.class, CoastalPiracy.class, JeweledTorque.class})
 class ThievesAuctionTest extends BaseCardTest {
 
     private void cast(com.github.laxika.magicalvibes.model.Player caster) {
@@ -206,5 +203,28 @@ class ThievesAuctionTest extends BaseCardTest {
             }
         }
         return -1;
+    }
+
+    @Test
+    @DisplayName("Every auctioned permanent resolves its mandatory as-enters choice")
+    void everyAuctionedPermanentResolvesAsEntersChoice() {
+        harness.addToBattlefield(player1, new JeweledTorque());
+        harness.addToBattlefield(player2, new JeweledTorque());
+
+        cast(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(poolCardId("Jeweled Torque")));
+        harness.handleMultipleCardsChosen(player2, List.of(poolCardId("Jeweled Torque")));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class))
+                .isNotNull();
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(findPermanent(player1, "Jeweled Torque").getChosenColor())
+                .isEqualTo(CardColor.GREEN);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class))
+                .isNotNull();
+        harness.handleListChoice(player2, "RED");
+        assertThat(findPermanent(player2, "Jeweled Torque").getChosenColor())
+                .isEqualTo(CardColor.RED);
     }
 }

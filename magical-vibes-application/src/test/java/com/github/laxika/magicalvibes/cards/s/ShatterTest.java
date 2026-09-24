@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.cards.k.KrarkClanGrunt;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
+import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,16 +15,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, JayemdaeTome.class, PhyrexianHulk.class, Shatter.class})
+@CardUsed({GrizzlyBears.class, JayemdaeTome.class, PhyrexianHulk.class, Shatter.class, IcyManipulator.class, KrarkClanGrunt.class, YotianSoldier.class})
 class ShatterTest extends BaseCardTest {
 
     @Test

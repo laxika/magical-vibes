@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "146")
+@CardRegistration(set = "RVR", collectorNumber = "158")
 public class TitanicBrawl extends Card {
 
     public TitanicBrawl() {

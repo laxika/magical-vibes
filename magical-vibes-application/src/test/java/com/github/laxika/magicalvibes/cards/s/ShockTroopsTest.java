@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShockTroops.class, GrizzlyBears.class, ChandraNalaar.class})
+@CardUsed({ShockTroops.class, GrizzlyBears.class, ChandraNalaar.class, FreshVolunteers.class})
 class ShockTroopsTest extends BaseCardTest {
 
     @Test
@@ -95,5 +96,28 @@ class ShockTroopsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Any target includes Shock Troops's controller")
+    void dealsDamageToItsController() {
+        addCreatureReady(player1, new ShockTroops());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick because the ability does not require tapping")
+    void canActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ShockTroops());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 }

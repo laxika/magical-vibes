@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "USG", collectorNumber = "130")
 @CardRegistration(set = "PD3", collectorNumber = "22")
 @CardRegistration(set = "TD2", collectorNumber = "75")
+@CardRegistration(set = "C15", collectorNumber = "120")
 public class DiabolicServitude extends Card {
 
     public DiabolicServitude() {

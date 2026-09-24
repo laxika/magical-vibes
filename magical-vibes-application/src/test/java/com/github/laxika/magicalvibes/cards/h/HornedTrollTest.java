@@ -47,15 +47,15 @@ class HornedTrollTest extends BaseCardTest {
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Horned Troll");
         assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.isBlocking()).isFalse();
+        assertThat(troll.getMarkedDamage()).isZero();
         assertThat(troll.getRegenerationShield()).isEqualTo(0);
     }
 
@@ -66,10 +66,8 @@ class HornedTrollTest extends BaseCardTest {
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         resolveCombat(player2);
 

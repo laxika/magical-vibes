@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "174")
+@CardRegistration(set = "SLD", collectorNumber = "774")
 public class NullmageShepherd extends Card {
 
     public NullmageShepherd() {

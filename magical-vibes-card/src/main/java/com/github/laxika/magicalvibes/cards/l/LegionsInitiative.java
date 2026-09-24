@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "81")
+@CardRegistration(set = "2X2", collectorNumber = "242")
 public class LegionsInitiative extends Card {
 
     public LegionsInitiative() {

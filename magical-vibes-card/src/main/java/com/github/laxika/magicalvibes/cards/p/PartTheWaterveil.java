@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "80")
+@CardRegistration(set = "PIO", collectorNumber = "366")
 public class PartTheWaterveil extends Card {
 
     @Override

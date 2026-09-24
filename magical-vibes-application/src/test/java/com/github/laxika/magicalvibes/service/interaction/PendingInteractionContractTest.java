@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingRagingRiver;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
@@ -102,6 +103,7 @@ class PendingInteractionContractTest {
             PendingKnowledgePoolCast.class,
             PendingHostileNegotiations.class,
             PendingPileSeparation.class,
+            PendingRagingRiver.class,
             PendingEachPlayerLibraryExile.class,
             PendingBendOrBreak.class,
             PendingGuildFeud.class,
@@ -119,6 +121,8 @@ class PendingInteractionContractTest {
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,
             PendingInteraction.PlanarAbilityHandCardChoice.class,
+            PendingInteraction.PerpetualPowerToughnessChoice.class,
+            PendingInteraction.ExchangeOutsideGameHandChoice.class,
             PendingInteraction.DiscardChoice.class,
             PendingInteraction.ExileFromHandChoice.class,
             PendingInteraction.ImprintFromHandChoice.class,

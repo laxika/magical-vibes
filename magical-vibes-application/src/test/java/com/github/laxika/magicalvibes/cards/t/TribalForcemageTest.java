@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,40 +15,44 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TribalForcemage.class, LlanowarElves.class, GrizzlyBears.class})
+@CardUsed({TribalForcemage.class, TimberwatchElf.class, AvenEnvoy.class})
 class TribalForcemageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Turning Tribal Forcemage face up boosts and gives trample to the chosen type")
     void turningFaceUpBoostsChosenTypeAcrossBattlefields() {
-        Permanent ownElf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        Permanent opposingElf = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
-        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownElf = harness.addToBattlefieldAndReturn(player1, new TimberwatchElf());
+        Permanent opposingElf = harness.addToBattlefieldAndReturn(player2, new TimberwatchElf());
+        Permanent ownBird = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
         Permanent forcemage = castFaceDown();
 
         turnFaceUp(forcemage);
         harness.handleListChoice(player1, CardSubtype.ELF.name());
 
         assertThat(gqs.getEffectivePower(gd, ownElf)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, ownElf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownElf)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownElf, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, opposingElf)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, opposingElf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingElf)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, opposingElf, Keyword.TRAMPLE)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, forcemage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, forcemage)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, forcemage, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ownBird)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, ownBird)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownBird, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
     @DisplayName("Tribal Forcemage's face-up effect wears off at end of turn")
     void faceUpEffectWearsOffAtEndOfTurn() {
-        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new TimberwatchElf());
         Permanent forcemage = castFaceDown();
 
         turnFaceUp(forcemage);
         harness.handleListChoice(player1, CardSubtype.ELF.name());
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -57,8 +60,23 @@ class TribalForcemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the face-up trigger resolves do not get its boost")
+    void creaturesEnteringAfterResolutionAreNotBoosted() {
+        Permanent forcemage = castFaceDown();
+
+        turnFaceUp(forcemage);
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        Permanent laterElf = harness.enterBattlefieldAndReturn(player2, new TimberwatchElf());
+
+        assertThat(gqs.getEffectivePower(gd, laterElf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterElf)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, laterElf, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent castFaceDown() {

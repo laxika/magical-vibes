@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PsychicOverload.class, FountainOfYouth.class, GrizzlyBears.class, LeoninScimitar.class})
 class PsychicOverloadTest extends BaseCardTest {
 
     @Test
@@ -45,7 +47,7 @@ class PsychicOverloadTest extends BaseCardTest {
         aura.setAttachedTo(bears.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
         assertThat(bears.isTapped()).isTrue();
     }
@@ -92,14 +94,21 @@ class PsychicOverloadTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void advanceToNextTurn(com.github.laxika.magicalvibes.model.Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("The granted ability cannot be activated by discarding nonartifact cards")
+    void cannotActivateWithNonartifactCards() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        bears.tap();
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        Permanent aura = new Permanent(new PsychicOverload());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

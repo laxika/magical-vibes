@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "215")
+@CardRegistration(set = "PIO", collectorNumber = "237")
 public class PossessedSkaab extends Card {
 
     public PossessedSkaab() {

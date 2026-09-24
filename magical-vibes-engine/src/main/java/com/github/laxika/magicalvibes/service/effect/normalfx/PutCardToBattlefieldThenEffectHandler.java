@@ -23,7 +23,7 @@ public class PutCardToBattlefieldThenEffectHandler implements NormalEffectHandle
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCardToBattlefieldThenEffect) effect;
         PutCardToBattlefieldEffect putEffect = new PutCardToBattlefieldEffect(
-                e.predicate(), e.label(), e.enterTapped());
+                e.predicate(), e.label(), e.enterTapped(), false, false, false, false, e.enterAttacking());
         playerInteractionSupport.applyPutCardToBattlefield(gameData, entry.getControllerId(), putEffect,
                 entry.getXValue(), null, entry.getCard() == null ? null : entry.getCard().getId(),
                 e.thenEffect(), e.thenCondition());

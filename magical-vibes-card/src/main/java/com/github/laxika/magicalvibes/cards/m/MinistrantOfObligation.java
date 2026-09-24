@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "16")
+@CardRegistration(set = "RVR", collectorNumber = "23")
+@CardRegistration(set = "CMM", collectorNumber = "43")
 public class MinistrantOfObligation extends Card {
 
     public MinistrantOfObligation() {

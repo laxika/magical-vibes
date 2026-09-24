@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "48")
+@CardRegistration(set = "DBL", collectorNumber = "315")
 public class BindingGeist extends Card {
 
     public BindingGeist() {

@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "198")
+@CardRegistration(set = "C15", collectorNumber = "201")
 @CardRegistration(set = "BNG", collectorNumber = "136")
 @CardRegistration(set = "UMA", collectorNumber = "180")
+@CardRegistration(set = "EA2", collectorNumber = "17")
 public class SatyrWayfinder extends Card {
 
     public SatyrWayfinder() {

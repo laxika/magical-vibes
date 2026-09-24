@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "259")
+@CardRegistration(set = "DBL", collectorNumber = "526")
 public class LanternOfTheLost extends Card {
 
     public LanternOfTheLost() {

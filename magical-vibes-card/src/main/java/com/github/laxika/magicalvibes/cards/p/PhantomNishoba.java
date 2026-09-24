@@ -11,12 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "140")
+@CardRegistration(set = "DMR", collectorNumber = "193")
 public class PhantomNishoba extends Card {
 
     public PhantomNishoba() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(7)));
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect());
+        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, new GainLifeEffect(new EventValue()));
     }
 }

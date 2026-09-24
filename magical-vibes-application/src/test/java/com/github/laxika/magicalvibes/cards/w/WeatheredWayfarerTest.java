@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WeatheredWayfarer.class, Forest.class, GlorySeeker.class, Plains.class})
 class WeatheredWayfarerTest extends BaseCardTest {
 
     @Test
@@ -72,12 +72,25 @@ class WeatheredWayfarerTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.hasType(CardType.LAND));
+        harness.assertInHand(player1, "Plains");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolves without a prompt when the library has no land cards")
+    void resolvesWithoutLandInLibrary() {
+        activateWithOpponentAhead();
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Glory Seeker");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private Permanent addWayfarer() {
@@ -92,8 +105,6 @@ class WeatheredWayfarerTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new GlorySeeker()));
     }
 }

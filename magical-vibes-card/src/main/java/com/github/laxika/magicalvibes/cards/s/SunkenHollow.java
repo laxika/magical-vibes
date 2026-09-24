@@ -16,6 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXP", collectorNumber = "2")
+@CardRegistration(set = "EA3", collectorNumber = "23")
+@CardRegistration(set = "MSC", collectorNumber = "271")
+@CardRegistration(set = "MSC", collectorNumber = "498")
+@CardRegistration(set = "TMC", collectorNumber = "76")
 public class SunkenHollow extends Card {
 
     public SunkenHollow() {

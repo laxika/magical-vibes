@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastE
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "89")
+@CardRegistration(set = "SLD", collectorNumber = "261")
 public class ToshiroUmezawa extends Card {
 
     public ToshiroUmezawa() {

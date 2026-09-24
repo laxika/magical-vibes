@@ -11,7 +11,9 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "171")
 @CardRegistration(set = "MPS", collectorNumber = "45")
+@CardRegistration(set = "SLD", collectorNumber = "447")
 @CardRegistration(set = "KLR", collectorNumber = "262")
+@CardRegistration(set = "2X2", collectorNumber = "313")
 public class PlanarBridge extends Card {
 
     public PlanarBridge() {

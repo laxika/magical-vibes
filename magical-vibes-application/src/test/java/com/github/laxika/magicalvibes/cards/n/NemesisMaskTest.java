@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.a.AvenFisher;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HoverguardObserver;
+import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,21 +15,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NemesisMask.class, MyrMoonvessel.class, HoverguardObserver.class})
 class NemesisMaskTest extends BaseCardTest {
 
     @Test
     @DisplayName("All able creatures must block the equipped creature")
     void allAbleCreaturesMustBlockEquippedCreature() {
-        Permanent attacker = attackingCreature(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-        Permanent mask = new Permanent(new NemesisMask());
+        Permanent attacker = addCreatureReady(player1, new MyrMoonvessel());
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new NemesisMask());
         mask.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(mask);
 
-        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
-        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker1 = addCreatureReady(player2, new MyrMoonvessel());
+        Permanent blocker2 = addCreatureReady(player2, new MyrMoonvessel());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -46,16 +46,14 @@ class NemesisMaskTest extends BaseCardTest {
     @Test
     @DisplayName("Only creatures able to block the equipped creature are forced to block")
     void onlyAbleCreaturesAreForcedToBlock() {
-        Permanent attacker = attackingCreature(new AvenFisher());
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-        Permanent mask = new Permanent(new NemesisMask());
+        Permanent attacker = addCreatureReady(player1, new HoverguardObserver());
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new NemesisMask());
         mask.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(mask);
 
-        Permanent unableBlocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent ableBlocker = addCreatureReady(player2, new AvenFisher());
+        Permanent unableBlocker = addCreatureReady(player2, new MyrMoonvessel());
+        Permanent ableBlocker = addCreatureReady(player2, new HoverguardObserver());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,10 +68,9 @@ class NemesisMaskTest extends BaseCardTest {
     @Test
     @DisplayName("Equipping Nemesis Mask attaches it to a creature")
     void equipAttachesMask() {
-        Permanent mask = new Permanent(new NemesisMask());
-        gd.playerBattlefields.get(player1.getId()).add(mask);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new NemesisMask());
+        Permanent creature = addCreatureReady(player1, new MyrMoonvessel());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
@@ -84,20 +81,29 @@ class NemesisMaskTest extends BaseCardTest {
     @Test
     @DisplayName("An unattached Nemesis Mask does not force blockers")
     void unattachedMaskDoesNotForceBlockers() {
-        Permanent attacker = attackingCreature(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new NemesisMask()));
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new MyrMoonvessel());
+        harness.addToBattlefield(player1, new NemesisMask());
+        addCreatureReady(player2, new MyrMoonvessel());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of());
     }
 
-    private Permanent attackingCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
+    @Test
+    @DisplayName("Tapped creatures are not forced to block the equipped creature")
+    void tappedCreaturesAreNotForcedToBlock() {
+        Permanent attacker = addCreatureReady(player1, new MyrMoonvessel());
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new NemesisMask());
+        mask.setAttachedTo(attacker.getId());
+
+        Permanent tappedBlocker = addCreatureReady(player2, new MyrMoonvessel());
+        tappedBlocker.tap();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(tappedBlocker.isBlocking()).isFalse();
     }
 }

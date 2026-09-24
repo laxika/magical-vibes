@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "148")
+@CardRegistration(set = "PZA", collectorNumber = "13")
 public class WavesOfAggression extends Card {
 
     public WavesOfAggression() {

@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.p.PsionicSliver;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.t.ToxinSliver;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EssenceSliver.class, MetallicSliver.class, GrizzlyBears.class, PsionicSliver.class})
+@CardUsed({EssenceSliver.class, ToxinSliver.class, FugitiveWizard.class, PsionicSliver.class})
 class EssenceSliverTest extends BaseCardTest {
 
     @Test
@@ -25,7 +24,8 @@ class EssenceSliverTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         declareAttackers(player1, List.of(0));
-        resolveCombatAndTriggers(player1);
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
@@ -35,32 +35,51 @@ class EssenceSliverTest extends BaseCardTest {
     @DisplayName("An opposing Sliver also gains life for the damage it deals")
     void opposingSliverGainsLifeForItsDamage() {
         addCreatureReady(player1, new EssenceSliver());
-        addCreatureReady(player2, new MetallicSliver());
+        addCreatureReady(player2, new ToxinSliver());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
-        resolveCombatAndTriggers(player2);
+        resolveCombat(player2);
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
     }
 
     @Test
     @DisplayName("Essence Sliver does not grant the ability to non-Slivers")
     void doesNotGrantAbilityToNonSlivers() {
         addCreatureReady(player1, new EssenceSliver());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new FugitiveWizard());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
         declareAttackers(player1, List.of(1));
-        resolveCombatAndTriggers(player1);
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A Sliver gains life when it deals combat damage to a creature")
+    void gainsLifeForCombatDamageToCreature() {
+        addCreatureReady(player1, new EssenceSliver());
+        addCreatureReady(player2, new FugitiveWizard());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
     }
 
     @Test
@@ -72,19 +91,10 @@ class EssenceSliverTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 1, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         harness.assertInGraveyard(player1, "Psionic Sliver");
-    }
-
-    private void resolveCombatAndTriggers(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 }

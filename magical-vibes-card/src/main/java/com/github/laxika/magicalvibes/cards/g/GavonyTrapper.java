@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "22")
+@CardRegistration(set = "DBL", collectorNumber = "22")
 public class GavonyTrapper extends Card {
 
     public GavonyTrapper() {

@@ -91,6 +91,8 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
                 entry.getControllerId(),
                 List.of(copyEffect),
                 "Cast the copy of " + copy.getName() + "?",
-                copy.getId()));
+                copy.getId(),
+                null,
+                entry.getSourcePermanentId()));
     }
 }

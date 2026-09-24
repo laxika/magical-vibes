@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "33")
 @CardRegistration(set = "VMA", collectorNumber = "60")
+@CardRegistration(set = "SLD", collectorNumber = "1519")
 @CardRegistration(set = "UMA", collectorNumber = "47")
+@CardRegistration(set = "DMR", collectorNumber = "42")
 public class CircularLogic extends Card {
 
     public CircularLogic() {

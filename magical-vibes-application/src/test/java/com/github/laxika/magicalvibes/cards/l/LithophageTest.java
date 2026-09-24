@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Lithophage.class, Mountain.class, Forest.class})
 class LithophageTest extends BaseCardTest {
 
     @Test
@@ -20,6 +23,21 @@ class LithophageTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Lithophage");
         harness.assertInGraveyard(player1, "Lithophage");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A non-Mountain land does not satisfy the upkeep cost")
+    void nonMountainLandDoesNotSatisfyUpkeepCost() {
+        harness.addToBattlefield(player1, new Lithophage());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lithophage");
+        harness.assertInGraveyard(player1, "Lithophage");
+        harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

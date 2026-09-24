@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.c.CurseOfBloodletting;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({NoblePurpose.class, GrizzlyBears.class})
+
+@CardUsed({NoblePurpose.class, GrizzlyBears.class, FreshVolunteers.class})
 class NoblePurposeTest extends BaseCardTest {
 
     @Test
@@ -173,5 +176,46 @@ class NoblePurposeTest extends BaseCardTest {
 
     private void addNoblePurpose(Player controller) {
         harness.addToBattlefield(controller, new NoblePurpose());
+    }
+
+    @Test
+    @DisplayName("Combat damage life gain waits for the triggered ability to resolve")
+    void combatDamageWaitsForTriggeredLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.addToBattlefield(player1, new NoblePurpose());
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @CardUsed({NoblePurpose.class, FreshVolunteers.class, CurseOfBloodletting.class})
+    @DisplayName("Life gain equals combat damage after damage multipliers")
+    void lifeGainMatchesModifiedCombatDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.addToBattlefield(player1, new NoblePurpose());
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfBloodletting());
+        curse.setAttachedTo(player2.getId());
+
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
     }
 }

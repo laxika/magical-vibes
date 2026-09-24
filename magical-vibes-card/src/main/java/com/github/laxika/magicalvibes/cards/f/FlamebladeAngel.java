@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceContr
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "157")
+@CardRegistration(set = "SIR", collectorNumber = "155")
 public class FlamebladeAngel extends Card {
 
     public FlamebladeAngel() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "70")
+@CardRegistration(set = "SIR", collectorNumber = "78")
 public class JacesScrutiny extends Card {
 
     public JacesScrutiny() {

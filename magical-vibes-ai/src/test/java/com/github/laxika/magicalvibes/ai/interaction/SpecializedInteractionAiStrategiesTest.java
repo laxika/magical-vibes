@@ -54,6 +54,28 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void commandZoneChoiceSelectsOneOfferedCommander() throws Exception {
+        UUID first = UUID.randomUUID();
+        var interaction = new PendingInteraction.CommandZoneCardChoice(
+                aiPlayerId, List.of(first, UUID.randomUUID()), "Choose a commander");
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(List.of(first)));
+    }
+
+    @Test
+    void outsideGameExchangeSelectsOneOfferedCard() throws Exception {
+        Card card = new Card();
+        var interaction = new PendingInteraction.ExchangeOutsideGameCardChoice(
+                aiPlayerId, List.of(card), null);
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(List.of(card.getId())));
+    }
+
+    @Test
     void exileProcessingChoosesTwoCards() throws Exception {
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();

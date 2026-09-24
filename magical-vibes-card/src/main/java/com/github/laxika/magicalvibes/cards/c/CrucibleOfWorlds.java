@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M19", collectorNumber = "229")
 @CardRegistration(set = "5DN", collectorNumber = "114")
 @CardRegistration(set = "MPS", collectorNumber = "11")
+@CardRegistration(set = "SLD", collectorNumber = "2110")
+@CardRegistration(set = "2X2", collectorNumber = "303")
 public class CrucibleOfWorlds extends Card {
 
     public CrucibleOfWorlds() {

@@ -11,7 +11,13 @@ import java.util.List;
 @CardRegistration(set = "RAV", collectorNumber = "262")
 @CardRegistration(set = "MM3", collectorNumber = "220")
 @CardRegistration(set = "DDJ", collectorNumber = "66")
+@CardRegistration(set = "SLD", collectorNumber = "292")
+@CardRegistration(set = "SLD", collectorNumber = "936")
 @CardRegistration(set = "GK1", collectorNumber = "73")
+@CardRegistration(set = "AA1", collectorNumber = "6")
+@CardRegistration(set = "RVR", collectorNumber = "258")
+@CardRegistration(set = "CMD", collectorNumber = "249")
+@CardRegistration(set = "C15", collectorNumber = "255")
 public class GolgariSignet extends Card {
 
     public GolgariSignet() {

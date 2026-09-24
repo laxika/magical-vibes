@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,20 +14,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WebOfInertia.class, GrizzlyBears.class})
+@CardUsed({ChandraNalaar.class, SuntailHawk.class, WebOfInertia.class})
 class WebOfInertiaTest extends BaseCardTest {
 
     @Test
     @DisplayName("The active opponent may exile a graveyard card to allow attacks")
     void activeOpponentMayExileCard() {
-        Card graveyardCard = new GrizzlyBears();
+        Card graveyardCard = new SuntailHawk();
         harness.setGraveyard(player2, List.of(graveyardCard));
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
 
@@ -39,8 +43,8 @@ class WebOfInertiaTest extends BaseCardTest {
     @Test
     @DisplayName("The active opponent chooses which card to exile when several are available")
     void activeOpponentChoosesGraveyardCard() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
+        Card first = new SuntailHawk();
+        Card second = new SuntailHawk();
         harness.setGraveyard(player2, List.of(first, second));
         harness.addToBattlefield(player1, new WebOfInertia());
 
@@ -61,7 +65,7 @@ class WebOfInertiaTest extends BaseCardTest {
     @DisplayName("Declining the exile prevents the active opponent's creatures from attacking")
     void decliningPreventsAttacks() {
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, false);
@@ -76,7 +80,7 @@ class WebOfInertiaTest extends BaseCardTest {
     void emptyGraveyardAppliesRestriction() {
         harness.setGraveyard(player2, List.of());
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, true);
@@ -90,7 +94,7 @@ class WebOfInertiaTest extends BaseCardTest {
     @DisplayName("The restriction expires at end of turn")
     void restrictionExpiresAtEndOfTurn() {
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, false);
@@ -102,7 +106,48 @@ class WebOfInertiaTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
     }
 
+    @Test
+    @DisplayName("The ability does not trigger on the Web controller's turn")
+    void doesNotTriggerOnControllerTurn() {
+        harness.addToBattlefield(player1, new WebOfInertia());
+        addCreatureReady(player1, new SuntailHawk());
+
+        resolveCombatTrigger(player1);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        declareAttackers(player1, List.of(1));
+    }
+
     private void resolveCombatTrigger(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+    }
+
+    private void declareAttackers() {
+        declareAttackers(player2, List.of(0));
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("The restriction does not prevent attacks at the controller's planeswalker")
+    void restrictionDoesNotPreventAttackingControllerPlaneswalker() {
+        harness.addToBattlefield(player1, new WebOfInertia());
+        Permanent attacker = addCreatureReady(player2, new SuntailHawk());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+
+        resolveCombatTriggerForJudReview(player2);
+        harness.handleMayAbilityChosen(player2, false);
+
+        declareAttackerAtTargetForJudReview(player2, attacker, planeswalker);
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+    }
+
+    private void resolveCombatTriggerForJudReview(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -110,7 +155,12 @@ class WebOfInertiaTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void declareAttackers() {
-        declareAttackers(player2, List.of(0));
+    private void declareAttackerAtTargetForJudReview(Player attacker, Permanent creature, Permanent target) {
+        harness.forceActivePlayer(attacker);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        int attackerIndex = gd.playerBattlefields.get(attacker.getId()).indexOf(creature);
+        gs.declareAttackers(gd, attacker, List.of(attackerIndex), Map.of(attackerIndex, target.getId()));
     }
 }

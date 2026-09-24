@@ -1,26 +1,28 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DartingMerfolk;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NaturalAffinity;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SpectersWail;
+import com.github.laxika.magicalvibes.cards.s.StingingBarrier;
+import com.github.laxika.magicalvibes.cards.v.Vendetta;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Cowardice.class, Confiscate.class, GrizzlyBears.class, Naturalize.class,
-        Forest.class, NaturalAffinity.class, SamiteHealer.class, Shock.class})
+@CardUsed({Cowardice.class, Confiscate.class, GrizzlyBears.class, Naturalize.class, Forest.class, NaturalAffinity.class, SamiteHealer.class, Shock.class, DartingMerfolk.class, SpectersWail.class, StingingBarrier.class, Vendetta.class})
 class CowardiceTest extends BaseCardTest {
 
     @Test
@@ -215,5 +217,49 @@ class CowardiceTest extends BaseCardTest {
 
         // Shock + 2 Cowardice triggers on the stack
         assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Triggers when an opponent's creature becomes the target")
+    void triggersForOpponentCreature() {
+        harness.addToBattlefield(player1, new Cowardice());
+        harness.addToBattlefield(player2, new DartingMerfolk());
+        UUID merfolkId = harness.getPermanentId(player2, "Darting Merfolk");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new Vendetta()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, merfolkId);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Cowardice");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled creature to its owner's hand")
+    void returnsControlledCreatureToOwnersHand() {
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DartingMerfolk());
+        gd.playerBattlefields.get(player1.getId()).remove(merfolk);
+        gd.playerBattlefields.get(player2.getId()).add(merfolk);
+        gd.stolenCreatures.put(merfolk.getId(), player1.getId());
+        harness.addToBattlefield(player2, new Cowardice());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new Vendetta()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player2, 0, merfolk.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Darting Merfolk");
+        harness.assertInHand(player1, "Darting Merfolk");
+        harness.assertNotInHand(player2, "Darting Merfolk");
     }
 }

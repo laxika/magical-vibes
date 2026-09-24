@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/** Resolves a mill followed by a mandatory choice of one matching milled card to put onto the battlefield. */
+/** Resolves a mill followed by a choice of one matching milled card to put onto the battlefield. */
 @Component
 @RequiredArgsConstructor
 public class MillControllerAndPutMilledCardOntoBattlefieldEffectHandler implements NormalEffectHandlerBean {
@@ -60,7 +60,7 @@ public class MillControllerAndPutMilledCardOntoBattlefieldEffectHandler implemen
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                 .builder(controllerId, validIndices, GraveyardChoiceDestination.BATTLEFIELD,
                         "Choose a " + filterLabel + " milled this way to put onto the battlefield.")
-                .mandatory(true)
+                .mandatory(millEffect.mandatory())
                 .build());
     }
 }

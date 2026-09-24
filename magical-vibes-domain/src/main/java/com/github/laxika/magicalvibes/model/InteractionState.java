@@ -26,6 +26,12 @@ public class InteractionState {
     public InteractionState deepCopy() {
         InteractionState copy = new InteractionState();
         copy.activeInteraction = this.activeInteraction;
+        if (activeInteraction instanceof PendingInteraction.RevealAnyNumberOfCardsFromHandChoice reveal
+                && reveal.amplifyEntry() != null) {
+            copy.activeInteraction = new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
+                    reveal.playerId(), reveal.validCardIds(), reveal.cardName(), reveal.manaAbilityContext(),
+                    reveal.activatedAbilityContext(), reveal.eachPlayerRevealContext(), reveal.amplifyEntry().deepCopy());
+        }
         copy.activeDecisionId = this.activeDecisionId;
         copy.permanentChoiceContext = this.permanentChoiceContext instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                 ? trigger.copyPlanarSnapshot() : this.permanentChoiceContext;

@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "79")
+@CardRegistration(set = "OTP", collectorNumber = "17")
+@CardRegistration(set = "OTP", collectorNumber = "69")
+@CardRegistration(set = "ME4", collectorNumber = "92")
 public class OverwhelmingForces extends Card {
 
     public OverwhelmingForces() {

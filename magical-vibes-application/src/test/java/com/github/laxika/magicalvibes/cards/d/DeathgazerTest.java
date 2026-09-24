@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.p.PrimevalShambler;
+import com.github.laxika.magicalvibes.cards.r.RockBadger;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Deathgazer.class, GiantSpider.class, ScatheZombies.class})
+@CardUsed({Deathgazer.class, GiantSpider.class, ScatheZombies.class, RockBadger.class, PrimevalShambler.class})
 class DeathgazerTest extends BaseCardTest {
 
     @Test
@@ -137,5 +138,52 @@ class DeathgazerTest extends BaseCardTest {
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Deathgazer"));
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A nonblack creature blocked by Deathgazer is destroyed at end of combat")
+    void nonblackAttackerDestroyedAtEndOfCombat() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent rockBadger = addCreatureReady(player1, new RockBadger());
+        rockBadger.setAttacking(true);
+        addCreatureReady(player2, new Deathgazer());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rock Badger");
+        harness.assertInGraveyard(player1, "Rock Badger");
+    }
+
+    @Test
+    @DisplayName("Becoming blocked by multiple nonblack creatures creates one destruction for each blocker")
+    void becomesBlockedByMultipleNonblackCreaturesSchedulesEachBlocker() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new RockBadger());
+        Permanent secondBlocker = addCreatureReady(player2, new RockBadger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(gd.stack).filteredOn(se ->
+                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Deathgazer"))
+                .hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .extracting(DelayedPermanentAction::permanentId)
+                .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "258")
+@CardRegistration(set = "DBL", collectorNumber = "258")
 public class SilverBolt extends Card {
 
     public SilverBolt() {

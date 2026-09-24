@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "135")
+@CardRegistration(set = "RVR", collectorNumber = "154")
 public class RampagingRendhorn extends Card {
 
     public RampagingRendhorn() {

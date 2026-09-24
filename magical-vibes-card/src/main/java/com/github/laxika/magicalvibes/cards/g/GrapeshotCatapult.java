@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "375")
 @CardRegistration(set = "4ED", collectorNumber = "322")
 @CardRegistration(set = "ATQ", collectorNumber = "52")
+@CardRegistration(set = "ME4", collectorNumber = "204")
 public class GrapeshotCatapult extends Card {
 
     public GrapeshotCatapult() {

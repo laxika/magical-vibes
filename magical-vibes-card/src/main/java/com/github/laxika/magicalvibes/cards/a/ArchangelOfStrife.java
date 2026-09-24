@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import java.util.List;
 
 @CardRegistration(set = "V15", collectorNumber = "3")
+@CardRegistration(set = "CMD", collectorNumber = "7")
 public class ArchangelOfStrife extends Card {
 
     private static final String WAR = "War";

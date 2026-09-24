@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "25")
+@CardRegistration(set = "MUL", collectorNumber = "5")
+@CardRegistration(set = "MUL", collectorNumber = "70")
+@CardRegistration(set = "MUL", collectorNumber = "135")
 public class KwendePrideOfFemeref extends Card {
 
     public KwendePrideOfFemeref() {

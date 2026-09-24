@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "136")
+@CardRegistration(set = "SLD", collectorNumber = "1409")
+@CardRegistration(set = "MUL", collectorNumber = "20")
+@CardRegistration(set = "MUL", collectorNumber = "85")
+@CardRegistration(set = "MUL", collectorNumber = "150")
+@CardRegistration(set = "FCA", collectorNumber = "38")
 public class CaptainLanneryStorm extends Card {
 
     public CaptainLanneryStorm() {

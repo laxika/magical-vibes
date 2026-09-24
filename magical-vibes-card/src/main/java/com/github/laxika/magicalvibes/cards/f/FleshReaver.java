@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "136")
+@CardRegistration(set = "DMR", collectorNumber = "86")
 public class FleshReaver extends Card {
 
     public FleshReaver() {

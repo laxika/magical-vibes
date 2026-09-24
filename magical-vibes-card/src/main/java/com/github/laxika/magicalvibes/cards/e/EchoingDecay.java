@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureAndAllWith
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DST", collectorNumber = "41")
+@CardRegistration(set = "HA7", collectorNumber = "7")
 public class EchoingDecay extends Card {
 
     public EchoingDecay() {

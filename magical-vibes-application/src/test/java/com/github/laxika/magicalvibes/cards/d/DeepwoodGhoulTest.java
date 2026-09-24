@@ -24,6 +24,7 @@ class DeepwoodGhoulTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+        assertThat(ghoul.isTapped()).isFalse();
     }
 
     @Test
