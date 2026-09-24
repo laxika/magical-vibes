@@ -2939,7 +2939,8 @@ public class SpellCastingService {
                 || alternateDiscardHandCardIndex != null
                 || usingSharedColorDiscardAlternativeCost
                 || usingWebSlingingCost;
-        boolean usingWarpAlternativeCost = false;
+        boolean usingWarpAlternativeCost = forceAlternateCost
+                && gameData.cardsGrantedWarpUntilEndOfTurn.contains(handEarly.get(cardIndex).getId());
         Integer webSlingingReturnedCreatureManaValue = null;
         UUID sneakAttackTargetId = null;
 
@@ -3162,7 +3163,9 @@ public class SpellCastingService {
         if (card == null) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
-        AlternateHandCast alternateHandCast = usingGrantedEvoke
+        AlternateHandCast alternateHandCast = usingWarpAlternativeCost
+                ? new AlternateHandCast(List.of(new ManaCastingCost("{0}")))
+                : usingGrantedEvoke
                 ? gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card).orElseThrow(
                 () -> new IllegalStateException("Card does not have a granted evoke cost"))
                 : usingGrantedProwl

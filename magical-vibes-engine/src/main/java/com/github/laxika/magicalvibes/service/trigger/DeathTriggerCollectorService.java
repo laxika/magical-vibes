@@ -1723,6 +1723,31 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleLandGraveyardConditional(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.AnyLandGraveyard land = (TriggerContext.AnyLandGraveyard) ctx;
+        if (!predicateEvaluationService.matchesCardPredicate(
+                land.landCard(), conditional.predicate(), match.permanent().getCard().getId(),
+                match.gameData(), land.landControllerId())) {
+            return true;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId()
+        );
+        entry.setTriggeringPermanentControllerId(land.landControllerId());
+        match.gameData().stack.add(entry);
+        logLandGraveyard(match);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleLandGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

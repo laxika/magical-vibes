@@ -1267,6 +1267,18 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.HEIST) {
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
+            gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+            String targetName = gameData.playerIdToName.get(deckOwnerId);
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " exiles a card face down from "
+                            + targetName + "'s library with Heist."));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
             boolean faceUp = filterPredicate != null
@@ -1600,7 +1612,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
                         EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, HEIST,
                         EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST,
                         EXILE_FOR_MAY_CAST_WITH_NORMAL_COST -> "into exile";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,

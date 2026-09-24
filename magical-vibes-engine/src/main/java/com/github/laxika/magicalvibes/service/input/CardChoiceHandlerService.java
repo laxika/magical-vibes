@@ -1305,20 +1305,26 @@ public class CardChoiceHandlerService {
                 prompt = "Choose another card to discard.";
             } else if (exileMode) {
                 prompt = "Choose another card to exile.";
+            } else if (revealedHandChoice.keepInHand()) {
+                prompt = "Choose another card to keep in hand.";
             } else if (revealedHandChoice.shuffleIntoLibraryMode()) {
                 prompt = "Choose another card to shuffle into " + targetName + "'s library.";
             } else {
                 prompt = "Choose another card to put on top of " + targetName + "'s library.";
             }
             // Matching the legacy mid-flow re-begin, sourcePermanentId is not carried across picks.
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+            PendingInteraction.RevealedHandChoice nextInteraction = new PendingInteraction.RevealedHandChoice(
                     player.getId(), targetPlayerId, newValidIndices, remainingChoices,
                     discardMode, exileMode, chosenCards, null, prompt, false, revealedHandChoice.optional(),
                     false, null, null, 0, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames(),
                     false, revealedHandChoice.shuffleIntoLibraryMode(), false,
                     revealedHandChoice.grantPlayPermission(), revealedHandChoice.returnAtNextEndStep(),
                     revealedHandChoice.exilePlayOpponentTax(), revealedHandChoice.chosenCardCondition(),
-                    revealedHandChoice.chosenCardThenEffect(), revealedHandChoice.libraryPosition()));
+                    revealedHandChoice.chosenCardThenEffect(), revealedHandChoice.libraryPosition());
+            if (revealedHandChoice.keepInHand()) {
+                nextInteraction = nextInteraction.withKeepInHand();
+            }
+            interactionHandlerRegistry.begin(gameData, nextInteraction);
         } else {
             finishRevealedHandChoice(gameData, player, revealedHandChoice, chosenCards);
         }
@@ -1382,6 +1388,7 @@ public class CardChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
+        boolean keepInHand = revealedHandChoice.keepInHand();
         boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
         boolean shuffleIntoLibraryMode = revealedHandChoice.shuffleIntoLibraryMode();
         boolean discardThenDrawMode = revealedHandChoice.discardThenDrawMode();
@@ -1389,7 +1396,12 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        if (discardMode) {
+        if (keepInHand) {
+            gameData.playerHands.get(targetPlayerId).addAll(chosenCards);
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(player.getUsername() + " keeps "), chosenCards)
+                            .text(" in " + targetName + "'s hand.").build());
+        } else if (discardMode) {
             // Talara's Bane: the chooser gains life equal to the chosen card's toughness before discard.
             if (revealedHandChoice.gainLifeToChooserEqualToChosenToughness()) {
                 int toughness = chosenCards.stream()
@@ -1543,6 +1555,11 @@ public class CardChoiceHandlerService {
                     appendCards(GameLog.builder().text(player.getUsername() + " puts "), chosenCards)
                             .text(" " + placement + ".").build());
             log.info("Game {} - {} puts {} {}", gameData.id, player.getUsername(), cardNames, placement);
+        }
+
+        if (revealedHandChoice.chosenCardThenEffect() != null
+                && gameData.pendingEffectResolutionEntry != null && !chosenCards.isEmpty()) {
+            gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCards.get(chosenCards.size() - 1));
         }
 
         if (revealedHandChoice.chosenCardThenEffect() != null

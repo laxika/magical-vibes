@@ -11,6 +11,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryAnyOfPredicate,
         StackEntryCardTypeInPredicate,
         StackEntryCastFromZonePredicate,
+        StackEntryCastWithWarpCostPredicate,
         StackEntryColorInPredicate,
         StackEntryIsMulticoloredPredicate,
         StackEntryControlledByChosenPlayerPredicate,

@@ -2,6 +2,22 @@
 - `ExileCardFromGraveyardOnEnterEffect(CardPredicate filter[, GraveyardSearchScope scope])` — as-enters replacement: exile exactly one matching card from the selected graveyard scope and track it with the entering permanent; the default scope is the controller's graveyard, while `ALL_GRAVEYARDS` supports Dermotaxi
 - `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect([Set<CardType> additionalTypes, Set<CardSubtype> additionalSubtypes])` — the source may copy one tracked face-up creature card until end of turn, with optional type and subtype copy exceptions; used by Lazav, Wearer of Faces and Dermotaxi
 - `GrantControllerKeywordUntilNextTurnEffect(Keyword)` — controller has `SHROUD` or `HEXPROOF` until the beginning of their next turn; stored in `GameData.playerKeywordsUntilNextTurn`
+- `SacrificeTriggeringPermanentThenConjureDuplicateEffect(CreateTokenCopyOfTargetPermanentEffect)` — sacrifices the permanent that caused an ally-creature-enter trigger, then conjures a fresh non-token copy with the supplied copy profile (Prototype X-8, YEOE 24).
+- `SeekToBattlefieldEffect(CardPredicate)` — randomly selects one matching card from the controller's library and puts it onto the battlefield tapped (Worldweave, YEOE 21).
+- `PerpetuallyGainKeywordsOfTriggeringCreatureEffect()` — on an ally-creature-enter trigger, records the supported keywords of the entering creature and perpetually grants them to the source card (Mutable Pupa, YEOE 20).
+- `ConjureCardOntoBattlefieldEffect(Supplier<? extends Card>, Set<CardType>)` — creates a fresh non-token card under the resolving ability's controller and applies the supplied enter-tapped card types (Brood Astronomer, YEOE 18).
+- `DraftFromSpellbookEffect(List<Supplier<? extends Card>>[, int])` — randomly offers spellbook cards through the existing modal-choice interaction, then conjures the selected card onto the battlefield tapped (Brood Astronomer, YEOE 18).
+- `ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect(Supplier<? extends Card>, Set<CardType>)` — creates a fresh non-token card under the controller of the permanent that caused the trigger and applies the supplied enter-tapped card types (Thendar, the Overminer, YEOE 17).
+- `ConjureCardIntoTopCardsOfLibraryEffect(Supplier<? extends Card>, int, List<CastingOption>)` — creates a fresh card owned by the controller and inserts it at a random position among the top `count` library cards; added casting options are carried by the runtime card through zone changes (Mine Security, YEOE 16).
+- `PerpetuallyBecomeArtifactCreatureEffect(int power, int toughness)` — replaces the targeted permanent with a runtime card copy that perpetually becomes an artifact creature with the supplied base power/toughness and haste (Kavaron Consumed, YEOE 15).
+- `PerpetuallyGrantKeywordsToStationingCreatureEffect(Set<Keyword>)` — records keywords on the creature that paid a Spacecraft's station cost, following that card through zone changes (Monoist Gravliner, YEOE 11).
+- `PerpetuallyBoostOwnedCardsEffect(CardPredicate filter, int powerBoost, int toughnessBoost)` — records an additive perpetual power/toughness modifier for every matching card owned by the effect controller; the modifier follows those card identities through zone changes (Network Marauder, YEOE 8).
+- `ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT` — trigger slot for "Whenever one or more counters are removed from a permanent you control"; the event is batched per affected permanent and supports effects such as `SeekEffect` (Cloudsculpt Armorer, YEOE 5).
+- `PowerBoostForCrewAndStationEffect(int)` — static power modifier for creatures while paying crew or station costs; use with `GrantEffectEffect(..., ALL_OWN_CREATURES)` for a global pilot bonus.
+- `SeekEffect(CardPredicate)` — randomly selects one matching card from the controller's library and puts it into their hand.
+- `ON_CONTROLLER_SEEKS` — trigger slot for abilities that fire whenever the controller successfully seeks one or more cards.
+- `PerpetuallySetRandomLandInLibraryAsBasicIslandEffect()` — randomly selects a land card in the controller's library and replaces it with a runtime copy that permanently gains the Basic supertype, Island subtype, and "When this land enters, draw a card." ETB trigger (Hydroponics Architect, YEOE 6).
+- `PerpetuallyGrantTapDrawToRandomLandInLibraryEffect()` — randomly selects a land card in the controller's library and replaces it with a runtime copy that perpetually gains "Whenever this land becomes tapped, draw a card." (Ambassador of Evendo, YEOE 22).
 - `PlayersWithCardsInHandAtLeast(CountScope, threshold)` - `DynamicAmount` counting players in the requested scope whose hands contain at least the threshold number of cards; use `CountScope.OPPONENTS` for Wolfcallers' Howl's upkeep trigger.
 - WaveOfVitriolEffect() - each player simultaneously sacrifices all artifacts, enchantments, and nonbasic lands they control, then may search for up to one tapped basic land per nonbasic land sacrificed this way, using the shared APNAP search queue. Wave of Vitriol
 - `LivingDeathEffect([CardType])` - SPELL mass exchange: default creature mode is Living Death; `CardType.ARTIFACT` is Scrap Mastery. Each player exiles matching graveyard cards, sacrifices matching permanents, then returns the exiled cards under their graveyard owner's control. Sacrificed permanents are not reanimated.
@@ -40,6 +56,7 @@ reveals a matching creature card onto the battlefield and puts the rest on the b
 - `EachTargetPlayerMaySearchLibraryForBasicLandToBattlefieldEffect()` — each targeted player may search their own library for a basic land card, put it onto the battlefield untapped, then shuffle; pair with `target(0, 99)` for "any number of target players." Turtle Tracks
 - `DrawAndLoseLifePerCounterOnSourceEffect()` — `ON_COMBAT_DAMAGE_TO_PLAYER`: the controller may draw cards equal to the total number of counters on the source, then loses that same amount of life. The counter amount is evaluated once and reused for both operations. Bebop, Skull & Crossbones
 - `SearchTargetLibraryEffect(..., LibrarySearchPlayer.TARGET_PLAYER)` — the targeted player searches their own library; with `HAND`, the selected card is revealed and put into that player's hand. Bebop, Skull & Crossbones
+- `HeistTargetOpponentLibraryEffect()` — offers three random nonland cards from the target opponent's library; the controller chooses one to exile face down and may cast it for as long as it remains exiled using mana of any type. Axavar, Fate Thief (YEOE 23)
 - `PutCountersOnCombatDamageDealersEffect(CounterType, int)` — counters on the captured creatures that matched a batched `AllyCombatDamageTriggerEffect` in one combat-damage event; dealer ids are supplied by the trigger collector.
 - `EachOpponentLosesAllCountersEffect()` - non-targeting: each opponent of the resolving controller loses all tracked player counters (poison, energy, and experience). Used by Final Act (MAR 66).
 - `ExileTargetCreatureCardFromGraveyardThenReflexiveEffect(CardEffect reflexiveEffect)` — exile the targeted creature card from any graveyard, record its printed toughness as the event value, and queue `reflexiveEffect` as a reflexive ability only after the exile succeeds. Use `EventValue` in the follow-up amount; Venom, Deadly Devourer (SPE 22)
@@ -76,6 +93,9 @@ reveals a matching creature card onto the battlefield and puts the rest on the b
 - `CreateTokenAttachedToDefendingPlayerEffect(CreateTokenEffect)` - creates the supplied token profile attached to the player being attacked (Celestine Cave Witch, MB1 #37)
 
 - `CreateTokenCardsInGraveyardEffect(int, CreateTokenEffect, String, String, List<ActivatedAbility>)` - creates persistent token cards in the controller's graveyard with the supplied card characteristics and graveyard abilities (Bone Rattler, MB1 #35)
+- `ConjureCardInGraveyardEffect(Supplier<? extends Card>)` - creates a fresh non-token card from the supplied factory in the resolving player's graveyard (Song of Point Prime, YEOE 12)
+- `ConjureCardInGraveyardEffect(Supplier<? extends Card>)` - creates a fresh non-token card from the supplied factory in the resolving player's graveyard (Song of Point Prime, YEOE 12)
+- `ConjureRandomCreatureWithManaValueEffect(DynamicAmount)` - chooses an implemented creature card at random with the evaluated mana value, conjures it with haste under the controller's control, and exiles it at the next end step (Cosmic Sovereign, YEOE 14)
 
 - `ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect()` - exiles the source card from its controller's opening hand, creates four blue `{1}{U}` Time Walk token cards with an extra-turn spell effect, and shuffles them into that player's library (Time Sidewalk, MB1 #31)
 
@@ -483,6 +503,7 @@ Planar source note: `PutCountersOnSelfEffect(CounterType)` can place the counter
 
 - `ExileCardFromOpponentGraveyardAndSameNameFromZonesEffect()` — non-targeting resolution-time choice of a card from an opponent's graveyard; exiles it, then offers any number of same-named cards from its owner's graveyard, hand, and library, shuffles, and draws for cards exiled from that hand. Deadly Cover-Up
 - `ChooseCardsFromTargetHandEffect(..., grantPlayPermission, returnAtNextEndStep)` — an EXILE choice can grant the chooser normal-cost permission to cast the card and return it to its owner's hand at the next end step if it remains exiled (Psychic Theft, PCY)
+- `PerpetuallySetChosenCardCharacteristicsEffect(CardColor, manaCost)` — replaces the selected hand card with an immutable runtime copy whose color and mana cost persist through future zone changes (Thought Partition, YEOE)
 - `ExileCardFromHandEffect()` — the controller chooses and exiles one card from their hand without source tracking (Ego Drain, WOE)
 - `SpectersShriekEffect()` — target opponent reveals their hand and may have you choose a nonland card to exile; if the chosen card is nonblack and you have a card in hand, you exile one of your hand cards (Specter's Shriek, ELD)
 
@@ -514,6 +535,7 @@ enters-the-battlefield triggers are processed (Magmatic Hellkite).
 - `EachOpponentSacrificesArtifactAndNonartifactCreatureEffect()` — each opponent chooses an artifact creature and a nonartifact creature when possible; if only one category is present, only one creature is sacrificed. Choices are made in APNAP order and all selected creatures are sacrificed simultaneously. Used by Perilous Predicament
 
 - `ReturnToHandEffect.self()` supplies `SOURCE_SELF` combat-trigger context when used in `ON_COMBAT_DAMAGE_TO_PLAYER`, so self-bounce effects retain the source permanent while remaining player-only triggers.
+- `ReturnTargetCreatureToHandAndPerpetuallyBoostEffect(int powerBoost, int toughnessBoost)` — returns the targeted creature to its owner's hand and records an additive power/toughness modifier that follows that card through future zone changes.
 - `ColorlessSubtypeSpellsOrAbilities(CardSubtype)` — fixed colorless mana spendable only for colorless spells or activated abilities of the given subtype; uses a dedicated bucket and is used by Eldrazi Temple.
 
 - `CreateTokenCopyOfSourceEffect(removeLegendary, amount, grantHaste, exileAtEndStep)` — plain source copies may gain haste and be exiled at the beginning of the next end step (Splinter Twin); `amount` may be a dynamic count evaluated on resolution
@@ -1092,6 +1114,9 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `ConditionalManaEffect(Condition, ifMetColor, ifNotMetColor[, DynamicAmount])` — adds one of two
   fixed colors based on the condition at resolution while remaining a single mana ability; use for
   replacement-style mana text such as River of Tears
+- `ConditionalAnyColorManaEffect(Condition, ifMetAmount, ifNotMetAmount)` — adds any one color of
+  mana, choosing the amount from the condition at resolution while remaining a single mana ability
+  (Brood Astronomer, YEOE 18)
 - `DamageDealingEffect` — deals a `DynamicAmount` to one target category; `damageAmount()`,
   `canDamageCreatures()`, `canDamagePlayers()`, and optional `triggeredTargetFilter()` for a
   target-selecting triggered ability with no cast-time target declaration. Impl `DealDamageToAnyTargetEffect`,
@@ -2127,6 +2152,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `WormsOfTheEarthEffect()` — each upkeep, players in APNAP order may first choose to sacrifice two lands, or instead accept 5 damage; the first player who accepts either option pays that cost and destroys the source. If the sacrifice option is declined, the same player receives the damage option; if both are declined, the next player is offered the choice
 - `PutCreatureFromHandThenSacrificeUnlessPayReducedEffect(int genericReduction)` — SPELL: you may put a creature from your hand onto the battlefield; then sacrifice it unless you pay its mana cost reduced by `{genericReduction}` (generic only, floored at 0). Declinable card choice + a resolution-time pay-or-sacrifice may ability; Flash (`2`)
 - `PutCardToBattlefieldEffect(...).cloakedFromHand()` — mandatory hand-card choice: put any card from hand onto the battlefield cloaked (Vannifar, Evolved Enigma)
+- `PutCardToBattlefieldEffect(predicate, label)` — optional hand-card choice; the standard form puts one matching card onto the battlefield untapped, and a player may decline when the effect is used as a combat-damage trigger (Candela, Aegis of Adagia)
 - `PutCardToBattlefieldEffect(...).returningToHandAtEndStep()` — hand-card choice rider: return the chosen permanent to its owner's hand at the beginning of the next end step, only if it is still on the battlefield (Surprise Deployment)
 - `PutCardToBattlefieldEffect(...).untapSourceIfEnteredCardHasAnySubtype(subtypes)` — after the chosen card enters, untap the source permanent if that card has any listed subtype
 - `PutCardToBattlefieldThenEffect(predicate, label, thenCondition, thenEffect)` — declinable hand-card choice that puts a matching card onto the battlefield and resolves the follow-up only when the chosen card matches the condition (Spelunking); the extended constructor also controls tapped and attacking entry (Ultra Magnus, Tactician)

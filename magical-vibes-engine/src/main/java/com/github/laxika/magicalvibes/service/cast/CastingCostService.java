@@ -1777,6 +1777,9 @@ public class CastingCostService {
      * Gate) exists and all of its costs (life, sacrifices, taps, mana) are currently payable.
      */
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
+        if (gameData.cardsGrantedWarpUntilEndOfTurn.contains(card.getId())) {
+            return true;
+        }
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
             var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);

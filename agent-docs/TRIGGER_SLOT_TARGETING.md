@@ -183,7 +183,9 @@ combat damage step is processed.
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
+| `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_SURVEILS` | `MiscTriggerCollectorService` | Controller surveils; non-targeting effects enqueue directly |
+| `ON_CONTROLLER_SEEKS` | `SeekTriggerCollectorService` | Controller seeks one or more cards; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_DISCARD_EVENT` | `TriggerCollectionService.checkDiscardEventTriggers` → `DiscardTriggerCollectorService` | One trigger for a one-or-more-card discard event; the count is carried by the trigger context and stack entry |
 | `ON_BECOMES_TARGET_OF_SPELL` / `…_OR_ABILITY` / `…_OF_OPPONENT_SPELL` / `…_OF_OPPONENT_SPELL_ONLY` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `ON_CONTROLLER_BECOMES_TARGET_OF_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted player; spell path only) | Spell-target |
@@ -246,7 +248,8 @@ non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget`
 whenever an enchantment is put into a graveyard from the battlefield — checked in `PermanentRemovalService`),
 `ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Dingus Egg; fires on every permanent with the slot
 whenever a land is put into a graveyard from the battlefield — checked in `PermanentRemovalService`; the
-collector pre-sets the damage target to the land's controller),
+collector pre-sets the damage target to the land's controller; `TriggeringCardConditionalEffect`
+can filter the triggering land card and preserve its controller for resolution),
 `ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD`,
 `ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` (Sacred Ground; fires only on permanents the
 graveyard owner controls, and only when `GameData.currentlyResolvingControllerId` — the controller of

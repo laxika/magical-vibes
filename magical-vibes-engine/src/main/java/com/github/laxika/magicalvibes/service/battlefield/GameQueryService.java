@@ -4105,6 +4105,12 @@ public class GameQueryService {
                 powerBonus += modifier.powerBonus();
             }
         }
+        for (CardEffect effect : bonus.grantedEffects()) {
+            if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
+                usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
+                powerBonus += modifier.powerBonus();
+            }
+        }
         if (usesToughnessInsteadOfPower) {
             power = getEffectiveToughness(permanent, bonus);
         }
@@ -5000,6 +5006,12 @@ public class GameQueryService {
                     }
                 }
             }
+        }
+        GameData.PerpetualPowerToughnessModifier perpetualModifier =
+                gameData.perpetualCardPowerToughnessModifiers.get(target.getCard().getId());
+        if (perpetualModifier != null) {
+            accumulator.addPower(perpetualModifier.power());
+            accumulator.addToughness(perpetualModifier.toughness());
         }
         if (beforeIndefinite != null) {
             ModifierLine line = beforeIndefinite.diff("Indefinite buff", accumulator, false);

@@ -131,6 +131,7 @@ public enum Keyword {
     ASSEMBLE,
     WATERBEND,
     FIREBENDING,
+    INTENSITY,
     BLOW_UP,
     ALLIANCE,
     RECRUIT,

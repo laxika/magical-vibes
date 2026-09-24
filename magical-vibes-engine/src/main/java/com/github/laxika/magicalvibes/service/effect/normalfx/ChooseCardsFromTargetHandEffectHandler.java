@@ -103,6 +103,10 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                         e.returnAtNextEndStep(), e.exilePlayOpponentTax(),
                         e.chosenCardCondition(), e.chosenCardThenEffect());
             }
+            case KEEP_IN_HAND -> playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
+                    gameData, entry, count, e.excludedTypes(), e.includedTypes(), e.filter(),
+                    false, false, null, e.upTo(), false, 0, false, e.revealHand(),
+                    false, false, 0, e.chosenCardCondition(), e.chosenCardThenEffect(), true);
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count, e);
             case SHUFFLE_INTO_LIBRARY ->
                     playerInteractionSupport.resolveHandRevealAndChooseToShuffleIntoLibrary(gameData, entry, count);

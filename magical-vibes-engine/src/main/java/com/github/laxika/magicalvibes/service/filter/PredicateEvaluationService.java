@@ -287,6 +287,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
@@ -3695,6 +3696,7 @@ public class PredicateEvaluationService {
                     !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
+            case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
             case StackEntryIsCopyPredicate ignored -> entry.isCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
