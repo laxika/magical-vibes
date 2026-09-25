@@ -18,25 +18,31 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWi
 
 import java.util.List;
 
+@CardRegistration(set = "MSC", collectorNumber = "280")
+@CardRegistration(set = "MSC", collectorNumber = "335")
 @CardRegistration(set = "CMM", collectorNumber = "728")
 @CardRegistration(set = "CMM", collectorNumber = "760")
 public class TitanOfLittjara extends Card {
 
     public TitanOfLittjara() {
+        // As this creature enters, choose a creature type.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+
+        // This creature is the chosen type in addition to its other types.
         addEffect(EffectSlot.STATIC, GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
 
-        PermanentCount otherMatchingCreatures = new PermanentCount(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentSharesCreatureTypeWithSourcePermanentPredicate())),
-                CountScope.CONTROLLER,
-                true);
-        MayEffect drawAndDiscard = new MayEffect(
+        // Whenever this creature enters or attacks, you may draw a card for each other creature
+        // you control that shares a creature type with it. If you do, discard a card.
+        var drawAndDiscard = new MayEffect(
                 SequenceEffect.of(
-                        new DrawCardEffect(otherMatchingCreatures),
+                        new DrawCardEffect(new PermanentCount(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentSharesCreatureTypeWithSourcePermanentPredicate())),
+                                CountScope.CONTROLLER,
+                                true)),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
-                "Draw cards for each other creature sharing a creature type with Titan of Littjara?");
+                "Draw cards and discard a card?");
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, drawAndDiscard);
         addEffect(EffectSlot.ON_ATTACK, drawAndDiscard);
     }

@@ -415,6 +415,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  triggering Vehicle is stored on the resulting stack entry for effects that refer to it.
      *  Checked from {@code CrewCostHandler}. */
     ON_CREWS_VEHICLE,
+    /** Triggers whenever a creature the controller controls is tapped to pay a Vehicle's crew cost.
+     *  The event context carries both the crewing creature and the Vehicle. Checked from
+     *  {@code CrewCostHandler}; the source permanent itself is included. */
+    ON_ALLY_CREATURE_CREWS_VEHICLE,
     /** Triggers whenever this creature is tapped to pay a teamwork cost. */
     ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST,
     /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),
@@ -638,6 +642,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
+    /** Triggers once when one or more goaded creatures deal combat damage to one of this permanent's controller's opponents. */
+    ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers once whenever an opponent mills one or more cards. */
     ON_OPPONENT_MILLS,
@@ -865,6 +871,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers whenever any permanent the controller controls enters the battlefield while this card
+     *  is in the controller's graveyard. Checked in
+     *  {@code TriggerCollectionService.checkAllyPermanentEntersTriggers}. */
+    GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
     /** Triggers whenever any creature enters the battlefield, while this card is in its owner's
      *  graveyard. Like {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} but fired from the graveyard.
      *  Checked in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
@@ -928,6 +938,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
+    /** Triggers once per counter-placement event whenever the controller puts one or more counters
+     *  of any kind on another creature, regardless of that creature's controller. */
+    ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE,
     /** Triggers once for each lore counter put on a Saga the controller controls. */
     ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
     /** Triggers once for each counter put on a creature the controller controls. */
@@ -985,6 +998,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever a card is put from the controller's graveyard into their hand. */
+    ON_CONTROLLER_CARD_RETURNED_FROM_GRAVEYARD_TO_HAND,
     /** Triggers once for each instant or sorcery card that leaves the controller's graveyard. */
     ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
@@ -1013,6 +1028,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
     ON_ALLY_CREATURE_EXPLORES,
+    /** Triggers whenever a creature controlled by the same player connives. */
+    ON_ALLY_CREATURE_CONNIVES,
     /** Triggers when this permanent exploits a creature (CR 702.110): its controller sacrificed
      *  a creature as its {@code ExploitEffect} ETB ability resolved, and this permanent was still
      *  on the battlefield at the start of that resolution (sacrificing itself still counts).
@@ -1037,9 +1054,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  not the trigger's source permanent. Checked in {@code CombatBlockService}. Used by
      *  Stinkdrinker Bandit. */
     ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
-    /** Triggers once per combat when one or more creatures controlled by an opponent attack this
-     *  permanent's controller directly and are not blocked. The attacking player's ID is stored
-     *  as the non-targeting {@code targetId}; checked in {@code CombatBlockService}. */
+    /** Triggers once per combat when one or more creatures an opponent controls attack this
+     *  permanent's controller directly and end up unblocked. The attacking player's ID is stored
+     *  as the non-targeting {@code targetId}; checked during declare blockers. */
     ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      *  or ability controlled by an opponent. Fires on ALL permanents with this slot on the

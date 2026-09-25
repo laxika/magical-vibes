@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PanicAttack.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({PanicAttack.class, GrizzlyBears.class, JayemdaeTome.class})
 class PanicAttackTest extends BaseCardTest {
 
     @Test
@@ -29,8 +29,8 @@ class PanicAttackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, List.of(creature1.getId(), creature2.getId(), creature3.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0,
+                List.of(creature1.getId(), creature2.getId(), creature3.getId()));
 
         assertThat(creature1.isCantBlockThisTurn()).isTrue();
         assertThat(creature2.isCantBlockThisTurn()).isTrue();
@@ -46,8 +46,7 @@ class PanicAttackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, List.of(creature1.getId(), creature2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature1.getId(), creature2.getId()));
 
         assertThat(creature1.isCantBlockThisTurn()).isTrue();
         assertThat(creature2.isCantBlockThisTurn()).isTrue();
@@ -61,8 +60,7 @@ class PanicAttackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, List.of(creature1.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature1.getId()));
 
         assertThat(creature1.isCantBlockThisTurn()).isTrue();
     }
@@ -75,8 +73,7 @@ class PanicAttackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
@@ -90,8 +87,7 @@ class PanicAttackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, List.of(ownCreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId()));
 
         assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
         assertThat(untargetedCreature.isCantBlockThisTurn()).isFalse();
@@ -118,13 +114,13 @@ class PanicAttackTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new JayemdaeTome());
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID tomeId = harness.getPermanentId(player2, "Jayemdae Tome");
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(fountainId)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(tomeId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -138,8 +134,7 @@ class PanicAttackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, List.of(blocker.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId()));
 
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
@@ -148,6 +143,23 @@ class PanicAttackTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Restriction ends at the end of the turn")
+    void restrictionEndsAtEndOfTurn() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
     @Test
@@ -177,8 +189,7 @@ class PanicAttackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, List.of(creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
         harness.assertInGraveyard(player1, "Panic Attack");
     }

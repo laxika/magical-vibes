@@ -22,8 +22,7 @@ class CanopySpiderTest extends BaseCardTest {
         Permanent spider = addCreatureReady(player2, new CanopySpider());
         addCreatureReady(player1, new WindDrake());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -36,8 +35,7 @@ class CanopySpiderTest extends BaseCardTest {
         Permanent spider = addCreatureReady(player2, new CanopySpider());
         addCreatureReady(player1, new TrainedArmodon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSK", collectorNumber = "241")
+@CardRegistration(set = "SOC", collectorNumber = "340")
 public class ZimoneAllQuestioning extends Card {
 
     public ZimoneAllQuestioning() {

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnabaShaman.class, RagingGoblin.class})
+@CardUsed({AnabaShaman.class, RagingGoblin.class, ChandraNalaar.class})
 class AnabaShamanTest extends BaseCardTest {
 
     @Test
@@ -67,6 +69,20 @@ class AnabaShamanTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Anaba Shaman");
         assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ability deals 1 damage to a target planeswalker")
+    void deals1DamageToPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 2);
+        addCreatureReady(player1, new AnabaShaman());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
     @Test

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -20,9 +21,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DestroyAllCreaturesOfChosenTypeEffect} (Extinction): prompts the controller to
- * choose a creature type, then destroys every creature of that type on any battlefield
- * (Changeling-aware).
+ * Resolves {@link DestroyAllCreaturesOfChosenTypeEffect} (Extinction and Kindred Dominance):
+ * prompts the controller to choose a creature type, then destroys every matching or nonmatching
+ * creature on any battlefield (Changeling-aware).
  *
  * <p>Two-phase: the first resolution begins the creature-type choice and pauses (re-running once the
  * choice completes via {@code rerunCurrentEffectAfterInteraction}); the re-entry reads and clears
@@ -58,9 +59,12 @@ public class DestroyAllCreaturesOfChosenTypeEffectHandler implements NormalEffec
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(controllerId);
+        var chosenType = new PermanentHasSubtypePredicate(chosen);
         PermanentPredicate filter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentHasSubtypePredicate(chosen)));
+                ((DestroyAllCreaturesOfChosenTypeEffect) effect).destroyNonMatching()
+                        ? new PermanentNotPredicate(chosenType)
+                        : chosenType));
 
         List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {

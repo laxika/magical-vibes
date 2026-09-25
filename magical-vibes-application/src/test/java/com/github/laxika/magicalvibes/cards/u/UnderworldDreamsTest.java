@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,21 +19,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, Pariah.class})
+@CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, IvoryMask.class, Pariah.class})
 class UnderworldDreamsTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        advanceToUpkeep(activePlayer);
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
-    
-
     @Test
-    @DisplayName("Opponent draw step draw causes 1 life loss")
+    @DisplayName("Opponent draw step draw causes 1 damage")
     void triggersOnOpponentDrawStepDraw() {
         harness.addToBattlefield(player1, new UnderworldDreams());
         harness.setLife(player2, 20);
@@ -55,7 +52,7 @@ class UnderworldDreamsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Opponent drawing two cards from a spell loses 2 life")
+    @DisplayName("Opponent drawing two cards from a spell takes 2 damage")
     void triggersPerCardDrawnFromSpell() {
         harness.addToBattlefield(player1, new UnderworldDreams());
         harness.setLife(player2, 20);
@@ -67,10 +64,8 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.setHand(player2, List.of(new CounselOfTheSoratami()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve Counsel of the Soratami
-        harness.passBothPriorities(); // resolve first Underworld Dreams trigger
-        harness.passBothPriorities(); // resolve second Underworld Dreams trigger
+        harness.castAndResolveSorcery(player2, 0, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -99,12 +94,24 @@ class UnderworldDreamsTest extends BaseCardTest {
 
         Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariah.setAttachedTo(enchantedCreature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariah);
 
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("redirected Underworld Dreams damage"));
+    }
+
+    @Test
+    @DisplayName("Opponent shroud does not stop Underworld Dreams damage")
+    void damagesOpponentWithShroud() {
+        harness.addToBattlefield(player1, new UnderworldDreams());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player2);
+        harness.passBothPriorities(); // resolve Underworld Dreams trigger
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }

@@ -35,9 +35,7 @@ class ViashinoSandstalkerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -54,13 +52,11 @@ class ViashinoSandstalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers on the opponent's end step too")
     void triggersOnOpponentsEndStep() {
-        Permanent sandstalker = harness.addToBattlefieldAndReturn(player1, new ViashinoSandstalker());
+        harness.addToBattlefield(player1, new ViashinoSandstalker());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -72,15 +68,30 @@ class ViashinoSandstalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns to its owner's hand when controlled by another player")
+    void returnsToOwnersHandWhenControlledByAnotherPlayer() {
+        ViashinoSandstalker card = new ViashinoSandstalker();
+        card.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, card);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Viashino Sandstalker");
+        harness.assertInHand(player1, "Viashino Sandstalker");
+        harness.assertNotInHand(player2, "Viashino Sandstalker");
+    }
+
+    @Test
     @DisplayName("Does not return itself if it leaves the battlefield before the trigger resolves")
     void doesNotReturnIfItLeavesBeforeTriggerResolves() {
         Permanent sandstalker = harness.addToBattlefieldAndReturn(player1, new ViashinoSandstalker());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(sandstalker);

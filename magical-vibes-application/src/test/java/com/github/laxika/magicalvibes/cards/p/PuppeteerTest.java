@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.e.EmberBeast;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.MossfireEgg;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Puppeteer.class, EmberBeast.class, MossfireEgg.class})
+@CardUsed({Puppeteer.class, GrizzlyBears.class, HowlingMine.class, EmberBeast.class, MossfireEgg.class})
 class PuppeteerTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -26,8 +27,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
-        Permanent puppeteer = addReadyPuppeteer(player1);
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -35,14 +36,15 @@ class PuppeteerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(entry.getCard().getName()).isEqualTo("Puppeteer");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     @Test
     @DisplayName("Activating ability taps Puppeteer")
     void activatingTapsPuppeteer() {
-        Permanent puppeteer = addReadyPuppeteer(player1);
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        Permanent puppeteer = addCreatureReady(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -55,8 +57,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Taps an untapped creature")
     void tapsUntappedCreature() {
-        addReadyPuppeteer(player1);
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThat(target.isTapped()).isFalse();
@@ -73,8 +75,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps a tapped creature")
     void untapsTappedCreature() {
-        addReadyPuppeteer(player1);
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -92,8 +94,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Can tap own untapped creature")
     void canTapOwnCreature() {
-        addReadyPuppeteer(player1);
-        Permanent ownCreature = addCreatureReady(player1, new EmberBeast());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
@@ -106,8 +108,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Can untap own tapped creature")
     void canUntapOwnCreature() {
-        addReadyPuppeteer(player1);
-        Permanent ownCreature = addCreatureReady(player1, new EmberBeast());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -123,8 +125,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReadyPuppeteer(player1);
-        Permanent artifactPerm = harness.addToBattlefieldAndReturn(player2, new MossfireEgg());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent artifactPerm = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifactPerm.getId()))
@@ -137,8 +139,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyPuppeteer(player1);
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -147,9 +149,9 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent puppeteer = addReadyPuppeteer(player1);
+        Permanent puppeteer = addCreatureReady(player1, new Puppeteer());
         puppeteer.tap();
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -160,11 +162,8 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Puppeteer card = new Puppeteer();
-        Permanent puppeteer = new Permanent(card);
-        // summoningSick is true by default
-        gd.playerBattlefields.get(player1.getId()).add(puppeteer);
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        harness.addToBattlefieldAndReturn(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -172,13 +171,30 @@ class PuppeteerTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
+    @Test
+    @DisplayName("May decline to tap or untap the target")
+    void mayDeclineToTapOrUntap() {
+        addCreatureReady(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
     // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyPuppeteer(player1);
-        Permanent target = addCreatureReady(player2, new EmberBeast());
+        addCreatureReady(player1, new Puppeteer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -207,8 +223,6 @@ class PuppeteerTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
     }
-
-    // ===== Helpers =====
 
     private Permanent addReadyPuppeteer(Player player) {
         return addCreatureReady(player, new Puppeteer());

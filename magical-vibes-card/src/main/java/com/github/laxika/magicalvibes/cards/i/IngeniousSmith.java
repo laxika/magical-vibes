@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "AFR", collectorNumber = "21")
+@CardRegistration(set = "MSC", collectorNumber = "135")
 public class IngeniousSmith extends Card {
 
     public IngeniousSmith() {

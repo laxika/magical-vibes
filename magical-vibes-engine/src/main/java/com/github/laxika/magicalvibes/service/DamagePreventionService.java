@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
 import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
@@ -370,8 +371,10 @@ public class DamagePreventionService {
         }
         // Phytohydra: this is a damage replacement effect, not prevention, so it still applies
         // when damage can't be prevented.
-        if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof PreventDamageAndAddPlusCountersEffect)) {
+        if (damage > 0 && (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof PreventDamageAndAddPlusCountersEffect)
+                || gameQueryService.hasAuraWithEffect(
+                gameData, permanent, PreventDamageAndAddPlusCountersEffect.class))) {
             if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
                 int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
                 if (counters > 0) {
@@ -2035,6 +2038,10 @@ public class DamagePreventionService {
             if (shield.combatOnly() && !combatDamage) continue;
             if (shield.damageSourceId() != null && !shield.damageSourceId().equals(damageSourceId)) continue;
             if (!shield.includeControlledPermanents() && damagedPermanentId != null) continue;
+            if (shield.controlledCreaturesOnly() && damagedPermanentId != null) {
+                Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, damagedPermanentId);
+                if (damagedPermanent == null || !gameQueryService.isCreature(gameData, damagedPermanent)) continue;
+            }
             UUID targetId = shield.redirectTargetCreatureId();
             // Redirecting damage to the destination creature itself is a no-op; deal it normally.
             if (targetId.equals(damagedPermanentId)) continue;

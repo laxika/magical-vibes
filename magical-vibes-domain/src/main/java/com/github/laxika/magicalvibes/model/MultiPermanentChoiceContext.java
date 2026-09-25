@@ -643,6 +643,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put counters on the single chosen permanent on any battlefield. */
+    record AnyPermanentCounterPlacement(CounterType counterType, int count)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Put counters on the chosen permanent and attribute the placement to the choosing player. */
     record OwnPermanentCounterPlacementByPlayer(CounterType counterType, int count, UUID placingPlayerId)
             implements MultiPermanentChoiceContext {
@@ -732,7 +737,8 @@ public sealed interface MultiPermanentChoiceContext {
     /** Enlist support selection during attacker declaration, before attack triggers are stacked. */
     record Enlistment(UUID playerId, List<Integer> attackerIndices, Map<Integer, UUID> resolvedTargets,
                       List<Permanent> declaredAttackers, List<UUID> remainingAttackerIds,
-                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers)
+                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers,
+                      Map<UUID, UUID> enlistedSupporters)
             implements MultiPermanentChoiceContext {
 
         public Enlistment {
@@ -742,6 +748,7 @@ public sealed interface MultiPermanentChoiceContext {
             remainingAttackerIds = List.copyOf(remainingAttackerIds);
             usedSupporterIds = Set.copyOf(usedSupporterIds);
             boostPowers = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(boostPowers));
+            enlistedSupporters = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(enlistedSupporters));
         }
     }
 
@@ -990,6 +997,18 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Promise of Loyalty: each player chose the creature that receives a vow counter and survives. */
+    record EachPlayerChoosesCreaturePutsVowCounterChoice(
+            StackEntry resolvingEntry, java.util.List<UUID> playerIds, int playerIndex,
+            java.util.List<UUID> keptIds,
+            String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesCreaturePutsVowCounterChoice {
+            playerIds = List.copyOf(playerIds);
+            keptIds = List.copyOf(keptIds);
+        }
+    }
+
     /** Fade Away: the player selected creatures whose controllers will pay instead of sacrificing. */
     record FadeAwayKeep(UUID choosingPlayerId, java.util.List<UUID> creatureIds,
                         java.util.List<UUID> remainingPlayerIds,
@@ -1028,6 +1047,17 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
 
         public WinnowingChoice {
+            playerIds = List.copyOf(playerIds);
+            chosenByPlayer = Map.copyOf(chosenByPlayer);
+        }
+    }
+
+    /** Promise of Loyalty: each player chooses the creature that receives a vow counter. */
+    record PromiseOfLoyaltyChoice(List<UUID> playerIds, int playerIndex,
+                                  Map<UUID, UUID> chosenByPlayer, StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+
+        public PromiseOfLoyaltyChoice {
             playerIds = List.copyOf(playerIds);
             chosenByPlayer = Map.copyOf(chosenByPlayer);
         }

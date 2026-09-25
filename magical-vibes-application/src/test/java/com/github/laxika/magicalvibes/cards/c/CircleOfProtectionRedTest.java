@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialCrevasses;
+import com.github.laxika.magicalvibes.cards.g.GhostlyFlame;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.o.OrcishCannoneers;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,11 +17,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionRed.class, BalduvianBarbarians.class, BalduvianBears.class, CentaurArcher.class, GlacialCrevasses.class, Incinerate.class, OrcishCannoneers.class})
+@CardUsed({CircleOfProtectionRed.class, BalduvianBarbarians.class, BalduvianBears.class, CentaurArcher.class,
+        GlacialCrevasses.class, GhostlyFlame.class, Incinerate.class, OrcishCannoneers.class})
 class CircleOfProtectionRedTest extends BaseCardTest {
 
     @Test
@@ -89,6 +90,29 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A red source dealing damage as colorless bypasses the red-source shield")
+    void colorlessDamageFromChosenRedSourceBypassesShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent cannoneers = addReadyRedDamageSource(player2);
+        harness.addToBattlefield(player1, new GhostlyFlame());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, cannoneers.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(cannoneers.getId()));
     }
 
     @Test

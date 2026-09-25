@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BodyOfJukai;
+import com.github.laxika.magicalvibes.cards.f.ForkedBranchGarami;
+import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
+import com.github.laxika.magicalvibes.cards.s.SickeningShoal;
+import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,17 +18,26 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({
+        EnshrinedMemories.class,
+        BodyOfJukai.class,
+        ForkedBranchGarami.class,
+        SickeningShoal.class,
+        TendoIceBridge.class,
+        GodsEyeGateToTheReikai.class
+})
 class EnshrinedMemoriesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Reveals X cards, puts every creature into hand, and bottoms the rest")
     void putsAllRevealedCreaturesIntoHand() {
-        Card firstCreature = new GrizzlyBears();
-        Card firstNoncreature = new Shock();
-        Card secondCreature = new LlanowarElves();
-        Card secondNoncreature = new Plains();
-        Card untouched = new Shock();
-        setupTopCards(firstCreature, firstNoncreature, secondCreature, secondNoncreature, untouched);
+        Card firstCreature = new BodyOfJukai();
+        Card firstNoncreature = new SickeningShoal();
+        Card secondCreature = new ForkedBranchGarami();
+        Card secondNoncreature = new TendoIceBridge();
+        Card untouched = new GodsEyeGateToTheReikai();
+        harness.setLibrary(player1,
+                List.of(firstCreature, firstNoncreature, secondCreature, secondNoncreature, untouched));
 
         harness.setHand(player1, List.of(new EnshrinedMemories()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -35,8 +46,8 @@ class EnshrinedMemoriesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertInHand(player1, "Llanowar Elves");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(firstCreature, secondCreature);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
@@ -51,10 +62,10 @@ class EnshrinedMemoriesTest extends BaseCardTest {
     @Test
     @DisplayName("Only cards within X are revealed")
     void onlyLooksAtPaidXCards() {
-        Card creature = new GrizzlyBears();
-        Card noncreature = new Shock();
-        Card outsideX = new LlanowarElves();
-        setupTopCards(creature, noncreature, outsideX);
+        Card creature = new BodyOfJukai();
+        Card noncreature = new SickeningShoal();
+        Card outsideX = new ForkedBranchGarami();
+        harness.setLibrary(player1, List.of(creature, noncreature, outsideX));
 
         harness.setHand(player1, List.of(new EnshrinedMemories()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -63,17 +74,53 @@ class EnshrinedMemoriesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Llanowar Elves"));
+                .doesNotContain(outsideX);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactly(outsideX, noncreature);
     }
 
-    private void setupTopCards(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+    @Test
+    @DisplayName("A library shorter than X reveals all remaining cards")
+    void revealsShortLibrary() {
+        Card firstCreature = new BodyOfJukai();
+        Card noncreature = new SickeningShoal();
+        Card secondCreature = new ForkedBranchGarami();
+        harness.setLibrary(player1, List.of(firstCreature, noncreature, secondCreature));
+
+        harness.setHand(player1, List.of(new EnshrinedMemories()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, 4);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(firstCreature, secondCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(noncreature);
+    }
+
+    @Test
+    @DisplayName("With X equal to zero, the library is unchanged")
+    void zeroXRevealsNoCards() {
+        Card topCreature = new BodyOfJukai();
+        Card topNoncreature = new SickeningShoal();
+        harness.setLibrary(player1, List.of(topCreature, topNoncreature));
+
+        harness.setHand(player1, List.of(new EnshrinedMemories()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(topCreature, topNoncreature);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .doesNotContain(topCreature, topNoncreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

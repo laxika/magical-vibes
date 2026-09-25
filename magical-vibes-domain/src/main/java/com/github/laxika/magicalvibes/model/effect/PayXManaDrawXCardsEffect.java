@@ -4,17 +4,22 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 
 /**
- * "You may pay {X}, where X is less than or equal to the amount of life you gained. If you do,
- * draw X cards." The life-gain amount is snapshotted on the triggered stack entry, while X is
- * chosen and paid during resolution.
- *
- * @param maximumX optional resolution-time cap for cards whose life-gain amount is not a trigger
- *                event value; {@code null} uses the stack entry's snapshotted event value
+ * A resolution-time optional generic pay-X effect that draws X cards. The default constructor is
+ * the life-gain-capped form used by Well of Lost Dreams; {@link #uncapped()} is used when the
+ * oracle text has no event-based upper bound.
  */
-public record PayXManaDrawXCardsEffect(DynamicAmount maximumX) implements CardDrawingEffect {
+public record PayXManaDrawXCardsEffect(DynamicAmount maximumX, boolean capAtEventValue) implements CardDrawingEffect {
 
     public PayXManaDrawXCardsEffect() {
-        this(null);
+        this(null, true);
+    }
+
+    public PayXManaDrawXCardsEffect(DynamicAmount maximumX) {
+        this(maximumX, false);
+    }
+
+    public static PayXManaDrawXCardsEffect uncapped() {
+        return new PayXManaDrawXCardsEffect(null, false);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -222,6 +223,14 @@ public sealed interface ChoiceContext {
 
     record ChosenPlayerManaColorChoice(UUID playerId, UUID sourceControllerId, UUID recipientPlayerId,
                                        boolean fromCreature, int amount) implements ChoiceContext {}
+
+    record CommanderCastCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                               UUID sourcePermanentId, List<ManaColor> allowedColors)
+            implements ChoiceContext {
+        public CommanderCastCounterManaColorChoice {
+            allowedColors = List.copyOf(allowedColors);
+        }
+    }
 
     record EnchantedManaCostChoice(UUID playerId, List<Set<ManaColor>> choices,
                                    boolean fromCreature) implements ChoiceContext {
@@ -815,7 +824,13 @@ public sealed interface ChoiceContext {
     record DualCardNameChoice(Card card, UUID controllerId, UUID choosingPlayerId,
                               String firstChosenName) implements ChoiceContext {}
 
-    record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
+    record KeywordGrantChoice(UUID targetId, List<Keyword> options,
+                              GrantDuration duration, String sourceCardName,
+                              UUID sourcePermanentId) implements ChoiceContext {
+        public KeywordGrantChoice(UUID targetId, List<Keyword> options) {
+            this(targetId, options, GrantDuration.END_OF_TURN, null, null);
+        }
+    }
 
     record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
         public LegacyWordChoice {
@@ -1812,6 +1827,19 @@ public sealed interface ChoiceContext {
         public ExpropriateChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             moneyVoterIds = List.copyOf(moneyVoterIds);
+        }
+    }
+
+    /** Fateful Tempest: the current player voted for past or present. */
+    record FatefulTempestChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String PAST = "Past";
+        public static final String PRESENT = "Present";
+        public static final List<String> OPTIONS = List.of(PAST, PRESENT);
+
+        public FatefulTempestChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
         }
     }
 

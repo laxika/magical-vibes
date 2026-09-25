@@ -30,6 +30,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
+            entry.setEventValue(0);
             return;
         }
 
@@ -43,6 +44,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
             target.setCounterCount(counterType, 0);
         }
         gameData.recordOilCounterRemoved(target, oilRemoved);
+        entry.setEventValue(removed);
 
         if (removed > 0) {
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())

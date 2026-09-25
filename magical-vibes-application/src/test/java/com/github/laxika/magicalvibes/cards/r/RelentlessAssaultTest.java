@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
+import com.github.laxika.magicalvibes.cards.n.NorwoodRanger;
 import com.github.laxika.magicalvibes.cards.v.VedalkenOrrery;
-import com.github.laxika.magicalvibes.cards.w.WuInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinSpelunkers.class, RelentlessAssault.class, VedalkenOrrery.class, WuInfantry.class})
+@CardUsed({NorwoodRanger.class, RelentlessAssault.class, VedalkenOrrery.class})
 class RelentlessAssaultTest extends BaseCardTest {
 
     @Test
@@ -34,8 +33,8 @@ class RelentlessAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving untaps only creatures that attacked this turn")
     void resolvingUntapsOnlyAttackedCreatures() {
-        Permanent attackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
-        Permanent nonAttackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent attackedGoblin = addCreatureReady(player1, new NorwoodRanger());
+        Permanent nonAttackedGoblin = addCreatureReady(player1, new NorwoodRanger());
 
         declareAttackers(List.of(0));
         nonAttackedGoblin.tap();
@@ -56,7 +55,7 @@ class RelentlessAssaultTest extends BaseCardTest {
     @DisplayName("Resolving untaps creatures that attacked this turn regardless of controller")
     void resolvingUntapsAnOpponentsAttacker() {
         harness.addToBattlefield(player1, new VedalkenOrrery());
-        Permanent opponentAttacker = addCreatureReady(player2, new GoblinSpelunkers());
+        Permanent opponentAttacker = addCreatureReady(player2, new NorwoodRanger());
 
         declareAttackers(player2, List.of(0));
 
@@ -129,7 +128,7 @@ class RelentlessAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Attacked-this-turn status resets on turn change")
     void attackedThisTurnResetsOnTurnChange() {
-        Permanent goblin = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent goblin = addCreatureReady(player1, new NorwoodRanger());
 
         declareAttackers(List.of(0));
         assertThat(goblin.isAttackedThisTurn()).isTrue();
@@ -184,7 +183,7 @@ class RelentlessAssaultTest extends BaseCardTest {
     @DisplayName("Resolving outside a main phase only untaps attacked creatures")
     void resolvingOutsideMainPhaseOnlyUntapsAttackedCreatures() {
         harness.addToBattlefield(player1, new VedalkenOrrery());
-        Permanent attackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent attackedGoblin = addCreatureReady(player1, new NorwoodRanger());
         attackedGoblin.setAttackedThisTurn(true);
         attackedGoblin.tap();
 

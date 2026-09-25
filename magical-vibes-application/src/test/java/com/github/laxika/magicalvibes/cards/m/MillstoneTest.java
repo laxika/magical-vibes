@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Millstone.class)
+@CardUsed({Millstone.class})
 class MillstoneTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")

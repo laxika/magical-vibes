@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "23")
 @CardRegistration(set = "ECC", collectorNumber = "43")
 @CardRegistration(set = "TMC", collectorNumber = "71")
+@CardRegistration(set = "SOC", collectorNumber = "397")
 public class RainSlickedCopse extends Card {
 
     public RainSlickedCopse() {

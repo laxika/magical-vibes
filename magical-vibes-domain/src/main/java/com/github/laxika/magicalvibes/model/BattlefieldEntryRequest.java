@@ -24,7 +24,17 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       EnterBattlefieldOnDiscardEffect discardReplacement,
                                       EnterWithCountersEffect enterWithCounters,
                                       Zone landPlayZone,
-                                      StackEntry stackEntry) {
+                                      StackEntry sourceStackEntry) {
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts, int convokeCreatureCount,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters, Zone landPlayZone) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
+                landPlayZone, null);
+    }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
@@ -69,6 +79,6 @@ public record BattlefieldEntryRequest(UUID controllerId,
         return new BattlefieldEntryRequest(controllerId, new Permanent(permanent), enterTappedTypes,
                 simultaneouslyEntered.stream().map(Permanent::new).toList(), xValue, kicked,
                 repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
-                landPlayZone, stackEntry == null ? null : new StackEntry(stackEntry));
+                landPlayZone, sourceStackEntry == null ? null : new StackEntry(sourceStackEntry));
     }
 }

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.i.IcatianStore;
-import com.github.laxika.magicalvibes.cards.r.RainbowVale;
-import com.github.laxika.magicalvibes.cards.r.RuinsOfTrokair;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,13 +18,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrcishSpy.class, IcatianStore.class, RainbowVale.class, RuinsOfTrokair.class})
+@CardUsed({OrcishSpy.class, Forest.class, Mountain.class, Plains.class})
 class OrcishSpyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Looking at the top three cards leaves the library untouched and in order")
     void looksAtTopThreeWithoutChangingLibrary() {
-        List<UUID> topBefore = setTopThreeCards(player2.getId());
+        List<UUID> topBefore = setTopThreeCards(player2);
         int sizeBefore = gd.playerDecks.get(player2.getId()).size();
         setupSpy();
 
@@ -41,7 +42,7 @@ class OrcishSpyTest extends BaseCardTest {
     @Test
     @DisplayName("The looked-at cards' identities are never broadcast publicly")
     void doesNotLeakCardIdentities() {
-        setTopThreeCards(player2.getId());
+        setTopThreeCards(player2);
         setupSpy();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -49,11 +50,11 @@ class OrcishSpyTest extends BaseCardTest {
 
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_LIBRARY_TOP"))
                 .anySatisfy(message -> assertThat(message)
-                        .contains("Rainbow Vale", "Icatian Store", "Ruins of Trokair"));
+                        .contains("Forest", "Mountain", "Plains"));
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_LIBRARY_TOP")).isEmpty();
-        assertThat(gameLogContains("Rainbow Vale")).isFalse();
-        assertThat(gameLogContains("Icatian Store")).isFalse();
-        assertThat(gameLogContains("Ruins of Trokair")).isFalse();
+        assertThat(gameLogContains("Forest")).isFalse();
+        assertThat(gameLogContains("Mountain")).isFalse();
+        assertThat(gameLogContains("Plains")).isFalse();
     }
 
     @Test
@@ -69,8 +70,8 @@ class OrcishSpyTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can target the controller's short library")
     void looksAtAvailableCardsInOwnLibrary() {
-        Card first = new RainbowVale();
-        Card second = new IcatianStore();
+        Card first = new Forest();
+        Card second = new Mountain();
         harness.setLibrary(player1, List.of(first, second));
         setupSpy();
 
@@ -85,7 +86,7 @@ class OrcishSpyTest extends BaseCardTest {
     @DisplayName("The ability cannot target a permanent")
     void rejectsPermanentTarget() {
         setupSpy();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new RainbowVale());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Plains());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -105,7 +106,7 @@ class OrcishSpyTest extends BaseCardTest {
     @Test
     @DisplayName("An empty target library resolves with an empty-library log")
     void emptyLibraryResolvesGracefully() {
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
         setupSpy();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -115,14 +116,11 @@ class OrcishSpyTest extends BaseCardTest {
         assertThat(gameLogContains("library is empty")).isTrue();
     }
 
-    private List<UUID> setTopThreeCards(UUID playerId) {
-        List<Card> deck = gd.playerDecks.get(playerId);
-        Card third = new RuinsOfTrokair();
-        Card second = new IcatianStore();
-        Card first = new RainbowVale();
-        deck.addFirst(third);
-        deck.addFirst(second);
-        deck.addFirst(first);
+    private List<UUID> setTopThreeCards(Player player) {
+        Card first = new Forest();
+        Card second = new Mountain();
+        Card third = new Plains();
+        harness.setLibrary(player, List.of(first, second, third));
         return List.of(first.getId(), second.getId(), third.getId());
     }
 

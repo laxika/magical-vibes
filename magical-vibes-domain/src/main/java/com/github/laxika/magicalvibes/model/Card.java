@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -68,6 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Card {
 
     private static final Map<String, OracleData> oracleRegistry = new ConcurrentHashMap<>();
+    private static final Map<String, OracleData> embeddedOracleRegistry = new ConcurrentHashMap<>();
     private static volatile OracleDataResolver oracleDataResolver;
 
     /**
@@ -86,6 +88,12 @@ public class Card {
         oracleRegistry.put(className, data);
     }
 
+    /** Keeps card-specific oracle data available across test registry resets. */
+    public static void registerEmbeddedOracle(String className, OracleData data) {
+        embeddedOracleRegistry.put(className, data);
+        oracleRegistry.putIfAbsent(className, data);
+    }
+
     /**
      * Registers oracle data only if the class has none yet. Used for back-face registrations: a
      * back face may name a standalone card class (prepare-spell cards reuse the real spell's
@@ -98,6 +106,7 @@ public class Card {
 
     public static void clearOracleRegistry() {
         oracleRegistry.clear();
+        oracleRegistry.putAll(embeddedOracleRegistry);
     }
 
     public static void installOracleDataResolver(OracleDataResolver resolver) {
@@ -343,6 +352,11 @@ public class Card {
         this(source, source.id);
     }
 
+    /** Creates a mutable copy with a fresh card identity for conjured/duplicated cards. */
+    public Card createCardCopy() {
+        return new Card(this, UUID.randomUUID());
+    }
+
     private Card(Card source, UUID id) {
         this.id = id;
         this.ownerId = source.ownerId;
@@ -426,6 +440,11 @@ public class Card {
      */
     public Card createRuntimeCopy() {
         return new Card(this);
+    }
+
+    /** Creates an unfrozen copy with a fresh identity, for a newly conjured card. */
+    public Card createRuntimeCopyWithNewId() {
+        return new Card(this, UUID.randomUUID());
     }
 
     /** Creates a new-identity copy for conjured duplicates. */
@@ -853,6 +872,9 @@ public class Card {
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
+            // preserve its target-group binding for deferred trigger-time target selection.
+            case AllyCombatDamageTriggerEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case RollD20Effect e -> {
                 if (e.zeroOrLess() != null) registerEffectTargetIndex(e.zeroOrLess(), targetIndex);
                 if (e.oneToNine() != null) registerEffectTargetIndex(e.oneToNine(), targetIndex);

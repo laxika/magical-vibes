@@ -27,7 +27,7 @@ public class PalicoHuntersBestFriend extends Card {
 
     /* SLD #2257 is not in the public oracle feeds, so retain the leaked printing's oracle data. */
     static {
-        Card.registerOracle("PalicoHuntersBestFriend", new OracleData(
+        Card.registerEmbeddedOracle("PalicoHuntersBestFriend", new OracleData(
                 "Palico, Hunter's Best Friend",
                 CardType.CREATURE,
                 Set.of(),

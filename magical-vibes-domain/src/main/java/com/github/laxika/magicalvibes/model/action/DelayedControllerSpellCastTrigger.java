@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  * during its lifetime; the stack entry carries {@code sourcePermanentId} so self-referential
  * effects ({@code PutCountersOnSourceEffect}) find the permanent that granted the trigger. Cleared
  * at turn cleanup unless {@code untilNextTurn} is true, in which case it expires when the
- * registering controller's next turn begins.
+ * registering controller's next turn begins. One-shot boons can instead persist until consumed.
  *
  * @param controllerId      player whose spells the trigger watches (and who controls the trigger)
  * @param sourcePermanentId             permanent that registered the trigger
@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  *                                      trigger goes on the stack
  * @param untilNextTurn                 whether this trigger survives cleanup until the controller's
  *                                      next turn begins
+ * @param persistsUntilConsumed         whether a one-shot trigger remains until it fires
  * @param registrationTurnNumber        turn number on which the trigger was registered
  * @param sourcePermanentSnapshot        last-known source snapshot for source-relative filters
  * @param sourcePowerAtLastKnown         last-known effective source power for source-relative filters
@@ -47,6 +48,7 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                                 Permanent sourcePermanentSnapshot,
                                                 Integer sourcePowerAtLastKnown,
                                                 boolean untilNextTurn,
+                                                boolean persistsUntilConsumed,
                                                 int registrationTurnNumber)
         implements DelayedAction {
 
@@ -54,7 +56,7 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                              Card sourceCard, CardPredicate spellFilter,
                                              List<CardEffect> resolvedEffects) {
         this(controllerId, sourcePermanentId, sourceCard, spellFilter, null, resolvedEffects,
-                false, true, null, null, null, false, -1);
+                false, true, null, null, null, false, false, -1);
     }
 
     public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
@@ -62,7 +64,7 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                              List<CardEffect> resolvedEffects,
                                              boolean sourceMustRemainOnBattlefield) {
         this(controllerId, sourcePermanentId, sourceCard, spellFilter, null, resolvedEffects,
-                false, sourceMustRemainOnBattlefield, null, null, null, false, -1);
+                false, sourceMustRemainOnBattlefield, null, null, null, false, false, -1);
     }
 
     public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
@@ -70,7 +72,7 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                              List<CardEffect> resolvedEffects, boolean oneShot,
                                              boolean sourceMustRemainOnBattlefield) {
         this(controllerId, sourcePermanentId, sourceCard, spellFilter, null, resolvedEffects,
-                oneShot, sourceMustRemainOnBattlefield, null, null, null, false, -1);
+                oneShot, sourceMustRemainOnBattlefield, null, null, null, false, false, -1);
     }
 
     public DelayedControllerSpellCastTrigger withSourcePermanentSnapshot(Permanent snapshot) {
@@ -82,6 +84,6 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
         return new DelayedControllerSpellCastTrigger(
                 controllerId, sourcePermanentId, sourceCard, spellFilter, stackEntryFilter,
                 resolvedEffects, oneShot, sourceMustRemainOnBattlefield, targetFilter, snapshot,
-                powerAtLastKnown, untilNextTurn, registrationTurnNumber);
+                powerAtLastKnown, untilNextTurn, persistsUntilConsumed, registrationTurnNumber);
     }
 }

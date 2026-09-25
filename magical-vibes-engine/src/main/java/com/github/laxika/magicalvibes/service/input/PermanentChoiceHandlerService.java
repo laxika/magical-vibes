@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
@@ -76,6 +78,9 @@ public class PermanentChoiceHandlerService {
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler;
     private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
+    private final ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
+            conjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler;
+    private final ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler gutmornEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
@@ -101,7 +106,9 @@ public class PermanentChoiceHandlerService {
 
         PermanentChoiceContext context = permanentChoice.context();
 
-        if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice auraEntry) {
+        if (context instanceof PermanentChoiceContext.GutmornDiscardedCardPlayerChoice gutmornChoice) {
+            gutmornEffectHandler.completeChoice(gameData, permanentId, gutmornChoice);
+        } else if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice auraEntry) {
             battlefieldHandler.handleAuraEntryBatchChoice(gameData, permanentId, auraEntry);
         } else if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
@@ -121,6 +128,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamuraiTarget attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamuraiTarget(gameData, playerId, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.AttachOneOfEquipmentToCreature attachEquip) {
+            battlefieldHandler.handleAttachOneOfEquipmentToCreature(
+                    gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
         } else if (context instanceof PermanentChoiceContext.AttachAllAurasToAnotherPermanent attachAll) {
@@ -287,6 +297,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
         } else if (context instanceof PermanentChoiceContext.BouncePermanentThen bounceThen) {
             battlefieldHandler.handleBouncePermanentThen(gameData, permanentId, bounceThen);
+        } else if (context instanceof PermanentChoiceContext.ConjureDuplicateOfCombatDamageDealerChoice conjureChoice) {
+            conjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler.completeChoice(
+                    gameData, permanentId, conjureChoice);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ReturnPermanentAndPutCounterOnSource returnAndCounter) {
             battlefieldHandler.handleReturnPermanentAndPutCounterOnSource(gameData, permanentId, returnAndCounter);
         } else if (context instanceof PermanentChoiceContext.MayReturnPermanentToHandAndEnterWithCounters returnChoice) {
@@ -315,6 +329,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {
             triggerHandler.handleCopySpellForOtherControlledCreature(gameData, permanentId, copyChoice);
+        } else if (context instanceof PermanentChoiceContext.DemonstrateOpponentChoice demonstrate) {
+            triggerHandler.handleDemonstrateOpponentChoice(gameData, permanentId, demonstrate);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
             battlefieldHandler.handleSoulbondChoosePartner(gameData, permanentId, soulbondChoose);
         } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {
@@ -388,6 +404,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
         } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter aosc) {
             battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndCounter(gameData, permanentId, aosc);
+        } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand ansc) {
+            battlefieldHandler.handleAnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(gameData, permanentId, ansc);
         } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform aosc) {
             battlefieldHandler.handleAnyOpponentSacrificeCreatureForTransform(gameData, permanentId, aosc);
         } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw aosc) {
@@ -457,6 +475,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleCreateTokensAttacking(gameData, permanentId, createTokens);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateTokenCopiesAttacking(gameData, permanentId, tokenCopies);
+        } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesOfEnteredThisTurnAttacking tokenCopies) {
+            triggerHandler.handleCreateTokenCopiesOfEnteredThisTurnAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateMemoryCounterTokenCopiesAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.RevealUntilCardPredicateAttackTarget revealAttack) {
@@ -551,6 +571,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentPermanentAsEnter opa) {
+            battlefieldHandler.handleChooseOpponentPermanentAsEnter(gameData, permanentId, opa);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerAsEnter cpae) {
             battlefieldHandler.handleChoosePlayerAsEnter(gameData, permanentId, cpae);
         } else if (context instanceof PermanentChoiceContext.ChooseTwoPlayersAsEnter ctpae) {

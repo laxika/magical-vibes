@@ -135,6 +135,7 @@ public class GraveyardChoiceHandlerService {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
+                    || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
@@ -311,6 +312,7 @@ public class GraveyardChoiceHandlerService {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
+                    || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
@@ -344,6 +346,8 @@ public class GraveyardChoiceHandlerService {
                     card = gameData.playerGraveyards.get(playerId).get(cardIndex);
                 }
             } else if (destination == GraveyardChoiceDestination.COPY_ON_ENTER) {
+                card = cardPool.get(cardIndex);
+            } else if (destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD) {
                 card = cardPool.get(cardIndex);
             } else if (cardPool != null) {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
@@ -492,6 +496,20 @@ public class GraveyardChoiceHandlerService {
                         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
                     }
                     return;
+                }
+                case COPY_FROM_LEAVING_GRAVEYARD -> {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            mayAbilitySourceCard,
+                            mayAbilityControllerId,
+                            mayAbilitySourceCard.getName() + "'s ability",
+                            new ArrayList<>(List.of(new BecomeCopyOfCardUntilEndOfTurnEffect(card))),
+                            null,
+                            mayAbilitySourcePermanentId);
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " chooses ", card, " for "
+                                    + mayAbilitySourceCard.getName() + "'s copy ability."));
                 }
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> {
                     // Card already removed from the graveyard above; shuffle it into the owner's library.
@@ -1127,6 +1145,36 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        var eachPlayerExileContext = gameData.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard;
+        if (eachPlayerExileContext != null
+                && player.getId().equals(eachPlayerExileContext.currentPlayerId())) {
+            if (cardIds.size() != 1) {
+                throw new IllegalStateException("Choose exactly one card");
+            }
+            UUID chosenCardId = cardIds.getFirst();
+            Card chosenCard = gameData.playerGraveyards
+                    .getOrDefault(player.getId(), List.of()).stream()
+                    .filter(card -> card.getId().equals(chosenCardId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Selected card is no longer in your graveyard"));
+
+            gameData.interaction.clearAwaitingInput();
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, chosenCardId);
+            exileService.exileCard(gameData, player.getId(), chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", chosenCard, " from their graveyard."));
+            int nonlandCardsExiled = eachPlayerExileContext.nonlandCardsExiled()
+                    + (chosenCard.hasType(CardType.LAND) ? 0 : 1);
+            gameData.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard =
+                    new GraveyardTargetOperationState.EachPlayerExilesCardFromGraveyardContext(
+                            eachPlayerExileContext.controllerId(), eachPlayerExileContext.sourcePermanentId(),
+                            eachPlayerExileContext.thenEffect(), eachPlayerExileContext.remainingPlayerIds(),
+                            null, nonlandCardsExiled);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume) {
             gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume = false;
             gameData.interaction.clearAwaitingInput();
@@ -1429,7 +1477,8 @@ public class GraveyardChoiceHandlerService {
             gameData.graveyardTargetOperation.independentTargetGroupIndex++;
             gameData.interaction.clearAwaitingInput();
             if (graveyardTargetingService.beginIndependentGraveyardSpellTargeting(
-                    gameData, player.getId(), independentTargetEffect)) {
+                    gameData, player.getId(), independentTargetEffect,
+                    gameData.graveyardTargetOperation.kicked)) {
                 return;
             }
             cardIds = List.copyOf(gameData.graveyardTargetOperation.independentTargetCardIds);
@@ -1844,6 +1893,8 @@ public class GraveyardChoiceHandlerService {
                         List.of()
                 );
             }
+            triggeredEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
+            triggeredEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
             if (pendingTargetPlayerId != null) {
                 triggeredEntry.setTargetId(pendingTargetPlayerId);
             }

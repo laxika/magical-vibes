@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.k.KitsunePalliator;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,15 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PatronOfTheKitsune.class, GnarledMass.class, KitsunePalliator.class})
 class PatronOfTheKitsuneTest extends BaseCardTest {
 
     // "Whenever a creature attacks, you may gain 1 life."
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(attacker);
-        return attacker;
+        return addCreatureReady(owner, new GnarledMass());
     }
 
     @Test
@@ -29,7 +30,7 @@ class PatronOfTheKitsuneTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         declareAttackers(player2, List.of(0));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player1, 21);
@@ -43,10 +44,26 @@ class PatronOfTheKitsuneTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         declareAttackers(player2, List.of(0));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Fox offering sacrifices a Fox and pays the colored mana difference")
+    void foxOfferingSacrificesFoxAndPaysDifference() {
+        Permanent fox = harness.addToBattlefieldAndReturn(player1, new KitsunePalliator());
+        harness.setHand(player1, List.of(new PatronOfTheKitsune()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(fox.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Patron of the Kitsune");
+        harness.assertNotOnBattlefield(player1, "Kitsune Palliator");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -56,9 +73,9 @@ class PatronOfTheKitsuneTest extends BaseCardTest {
         addAttacker(player1);
         harness.setLife(player1, 20);
 
-        // Patron is at index 0, the attacking Grizzly Bears at index 1.
+        // Patron is at index 0, the attacking Gnarled Mass at index 1.
         declareAttackers(player1, List.of(1));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player1, 21);
@@ -76,9 +93,9 @@ class PatronOfTheKitsuneTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
 
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player1, 22);

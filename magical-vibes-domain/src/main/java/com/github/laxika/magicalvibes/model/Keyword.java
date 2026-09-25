@@ -47,6 +47,7 @@ public enum Keyword {
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
+    MELEE,
     ENLIST,
     AGGRESSIVE,
     DETHRONE,

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Rewind.class, GrizzlyBears.class, Island.class})
+@CardUsed({Rewind.class, GrizzlyBears.class, Island.class, GaeasHerald.class, Shock.class})
 class RewindTest extends BaseCardTest {
 
     private List<UUID> tappedIslandIds(Player player, int limit) {
@@ -68,6 +70,29 @@ class RewindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters a noncreature spell and untaps the chosen lands")
+    void countersNonCreatureSpellAndUntapsChosenLands() {
+        addTappedIslands(player2, 4);
+
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.setHand(player2, List.of(new Rewind()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, shock.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.handleMultiplePermanentsChosen(player2, tappedIslandIds(player2, 4));
+
+        assertThat(untappedIslands(player2)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Offers a choice of at most four lands even if more are tapped")
     void offersAtMostFourLands() {
         addTappedIslands(player2, 6);
@@ -108,6 +133,23 @@ class RewindTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of());
 
         assertThat(untappedIslands(player2)).isZero();
+    }
+
+    @Test
+    @DisplayName("Still untaps lands when the target creature spell cannot be countered")
+    void untapsLandsWhenTargetCannotBeCountered() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+        addTappedIslands(player2, 4);
+
+        GrizzlyBears bears = new GrizzlyBears();
+        castRewindCounteringBears(bears);
+
+        harness.handleMultiplePermanentsChosen(player2, tappedIslandIds(player2, 4));
+
+        assertThat(untappedIslands(player2)).isEqualTo(4);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -159,5 +201,20 @@ class RewindTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not untap lands when its target spell is no longer on the stack")
+    void doesNotUntapWhenTargetSpellIsRemoved() {
+        addTappedIslands(player2, 4);
+
+        GrizzlyBears bears = new GrizzlyBears();
+        castRewindCounteringBears(bears);
+        gd.stack.removeIf(stackEntry -> stackEntry.getCard().getId().equals(bears.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(untappedIslands(player2)).isZero();
+        harness.assertInGraveyard(player2, "Rewind");
     }
 }

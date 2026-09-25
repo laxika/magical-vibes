@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.Hipparion;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.w.WarCadence;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,22 +18,23 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Lure.class, FreshVolunteers.class, CloudSprite.class, Mountain.class, WarCadence.class,
-        AirElemental.class, GrizzlyBears.class, Hipparion.class})
+@CardUsed({AirElemental.class, BalduvianBarbarians.class, GrizzlyBears.class, Hipparion.class, Lure.class, Mountain.class, FreshVolunteers.class, CloudSprite.class, WarCadence.class})
 class LureTest extends BaseCardTest {
 
     @Test
     @DisplayName("All able creatures must block enchanted attacker")
     void allAbleCreaturesMustBlock() {
-        Permanent enchantedAttacker = attackingCreature(new FreshVolunteers());
+        Permanent enchantedAttacker = addCreatureReady(player1, new GrizzlyBears());
+        enchantedAttacker.setAttacking(true);
         Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
 
-        addCreatureReady(player2, new FreshVolunteers());
-        addCreatureReady(player2, new FreshVolunteers());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -51,12 +53,13 @@ class LureTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped creatures are not forced to block by Lure")
     void tappedCreaturesNotForcedToBlock() {
-        Permanent enchantedAttacker = attackingCreature(new FreshVolunteers());
+        Permanent enchantedAttacker = addCreatureReady(player1, new GrizzlyBears());
+        enchantedAttacker.setAttacking(true);
         Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
 
-        Permanent untapped = addCreatureReady(player2, new FreshVolunteers());
-        Permanent tapped = addCreatureReady(player2, new FreshVolunteers());
+        Permanent untapped = addCreatureReady(player2, new GrizzlyBears());
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
         tapped.tap();
 
         prepareDeclareBlockers();
@@ -69,12 +72,12 @@ class LureTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures unable to block enchanted attacker are not forced by Lure")
     void unableBlockersNotForced() {
-        Permanent enchantedAttacker = attackingCreature(new CloudSprite());
+        Permanent enchantedAttacker = addCreatureReady(player1, new AirElemental());
+        enchantedAttacker.setAttacking(true);
         Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
-
-        Permanent nonFlying = addCreatureReady(player2, new FreshVolunteers());
-        Permanent flying = addCreatureReady(player2, new CloudSprite());
+        Permanent nonFlying = addCreatureReady(player2, new GrizzlyBears());
+        Permanent flying = addCreatureReady(player2, new AirElemental());
 
         prepareDeclareBlockers();
 
@@ -91,17 +94,12 @@ class LureTest extends BaseCardTest {
     @Test
     @DisplayName("Lure does not require a blocker to pay a blocking cost")
     void blockCostIsNotRequiredForLure() {
-        harness.addToBattlefield(player1, new WarCadence());
-        Permanent enchantedAttacker = attackingCreature(new FreshVolunteers());
+        Permanent enchantedAttacker = addCreatureReady(player1, new BalduvianBarbarians());
+        enchantedAttacker.setAttacking(true);
         Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
 
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, 1, null);
-        harness.passBothPriorities();
-
-        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        Permanent blocker = addCreatureReady(player2, new Hipparion());
 
         prepareDeclareBlockers();
 
@@ -130,7 +128,7 @@ class LureTest extends BaseCardTest {
     @Test
     @DisplayName("Lure can enchant an opponent's creature")
     void canEnchantOpponentsCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Lure()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -144,7 +142,7 @@ class LureTest extends BaseCardTest {
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
-        harness.addToBattlefield(player2, new FreshVolunteers());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new Lure()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -154,16 +152,10 @@ class LureTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent attackingCreature(Card card) {
-        Permanent permanent = addCreatureReady(player1, card);
-        permanent.setAttacking(true);
-        return permanent;
-    }
-
     @Test
     @DisplayName("Casting Lure attaches it to a target creature")
     void castingLureAttachesToCreature() {
-        Permanent creature = addCreatureReady(player1, new FreshVolunteers());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Lure()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -201,5 +193,11 @@ class LureTest extends BaseCardTest {
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    private Permanent attackingCreature(Card card) {
+        Permanent permanent = addCreatureReady(player1, card);
+        permanent.setAttacking(true);
+        return permanent;
     }
 }

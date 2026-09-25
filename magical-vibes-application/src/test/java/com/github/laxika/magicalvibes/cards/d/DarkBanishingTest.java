@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
-import com.github.laxika.magicalvibes.cards.p.PitImp;
+import com.github.laxika.magicalvibes.cards.p.PatagiaGolem;
 import com.github.laxika.magicalvibes.cards.s.SoltariMonk;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarkBanishing.class, CanopySpider.class, Forest.class, MetallicSliver.class, PitImp.class,
+@CardUsed({DarkBanishing.class, BogImp.class, CanopySpider.class, Forest.class, PatagiaGolem.class,
         SoltariMonk.class})
 class DarkBanishingTest extends BaseCardTest {
 
@@ -44,7 +44,7 @@ class DarkBanishingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
-        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new PitImp());
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new BogImp());
 
         harness.setHand(player1, List.of(new DarkBanishing()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -140,15 +140,15 @@ class DarkBanishingTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a colorless creature")
     void canTargetColorlessCreature() {
-        Permanent sliver = harness.addToBattlefieldAndReturn(player2, new MetallicSliver());
+        Permanent colorlessCreature = harness.addToBattlefieldAndReturn(player2, new PatagiaGolem());
 
         harness.setHand(player1, List.of(new DarkBanishing()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castAndResolveInstant(player1, 0, sliver.getId());
+        harness.castAndResolveInstant(player1, 0, colorlessCreature.getId());
 
-        harness.assertNotOnBattlefield(player2, "Metallic Sliver");
-        harness.assertInGraveyard(player2, "Metallic Sliver");
+        harness.assertNotOnBattlefield(player2, "Patagia Golem");
+        harness.assertInGraveyard(player2, "Patagia Golem");
     }
 
     @Test

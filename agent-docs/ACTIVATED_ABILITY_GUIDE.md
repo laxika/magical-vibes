@@ -1184,6 +1184,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER` | Opponent dealt damage by your red instant/sorcery spell or red planeswalker, fired from your graveyard |
 | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` | A creature you control deals combat damage to a player |
 | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE` | One or more matching creatures you control deal combat damage to a player or battle; `oneOrMoreDealers=true` batches separately for each damaged player or battle and passes the matching dealer ids through `CombatDamageDealerAwareEffect` wrappers |
+| `ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT` | One or more goaded creatures deal combat damage to one of this permanent's controller's opponents; the combat-damage batch checks active goad requirements across all creatures and fires once per damaged opponent |
 | `ON_OPPONENT_MILLS` | An opponent mills one or more cards in a single mill event |
 | `ON_SELF_MILLED` | This card is milled into graveyard |
 | `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY` | This card moves from its library to its graveyard, including effects that do not mill |

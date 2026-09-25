@@ -2023,6 +2023,7 @@ public class AbilityActivationService {
                         targetId,
                         Map.of()
                 );
+        stackEntry.setSourceZone(Zone.GRAVEYARD);
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
@@ -2420,7 +2421,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
                 discarded = true;
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
@@ -2677,7 +2678,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
             }
@@ -6206,6 +6207,15 @@ public class AbilityActivationService {
             }
         }
 
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.paysLifeForEachCommanderColorIdentity())) {
+            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            int needed = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+            if (life < needed) {
+                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
+            }
+        }
+
         if (abilityEffects.stream().anyMatch(PayXLifeCost.class::isInstance)) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             if (life < xValue) {
@@ -8091,7 +8101,7 @@ public class AbilityActivationService {
             return new PaidHandCard(paid.getName(), manaValue);
         }
 
-        graveyardService.addCardToGraveyard(gameData, player.getId(), paid);
+        graveyardService.addCardToGraveyard(gameData, player.getId(), paid, Zone.HAND);
         gameData.discardCausedByOpponent = false;
         collectDiscardTriggersAsAbilityCost(gameData, player.getId(), paid);
 
@@ -8165,7 +8175,7 @@ public class AbilityActivationService {
         hand.clear();
         gameData.discardCausedByOpponent = false;
         for (Card card : discarded) {
-            graveyardService.addCardToGraveyard(gameData, playerId, card);
+            graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
             collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
         }
 
@@ -8186,7 +8196,7 @@ public class AbilityActivationService {
         for (int i = 0; i < count && !hand.isEmpty(); i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
             lastDiscarded = discarded;
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
             gameData.discardCausedByOpponent = false;
             collectDiscardTriggersAsAbilityCost(gameData, playerId, discarded);
 

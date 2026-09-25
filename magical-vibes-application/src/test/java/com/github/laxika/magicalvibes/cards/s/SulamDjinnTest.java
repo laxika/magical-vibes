@@ -1,33 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
+import com.github.laxika.magicalvibes.cards.t.TectonicInstability;
+import com.github.laxika.magicalvibes.cards.t.TidalVisionary;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SulamDjinn.class, KavuAggressor.class, GalinasKnight.class, TectonicInstability.class,
+        Island.class, TidalVisionary.class})
 class SulamDjinnTest extends BaseCardTest {
 
-    private static Card createCreature(String name, CardColor... colors) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setColor(colors[0]);
-        card.setColors(List.of(colors));
-        return card;
-    }
-
     private Permanent addSulamDjinn() {
-        harness.addToBattlefield(player1, new SulamDjinn());
-        return findPermanent(player1, "Sulam Djinn");
+        return harness.addToBattlefieldAndReturn(player1, new SulamDjinn());
     }
 
     @Test
@@ -43,7 +34,7 @@ class SulamDjinnTest extends BaseCardTest {
     @DisplayName("Shrinks when green is tied for most common color")
     void shrinksWhenGreenIsTied() {
         Permanent sulam = addSulamDjinn();
-        harness.addToBattlefield(player2, createCreature("Red Creature", CardColor.RED));
+        harness.addToBattlefield(player2, new KavuAggressor());
 
         assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(4);
@@ -53,8 +44,8 @@ class SulamDjinnTest extends BaseCardTest {
     @DisplayName("Does not shrink when another color is more common")
     void doesNotShrinkWhenAnotherColorIsMoreCommon() {
         Permanent sulam = addSulamDjinn();
-        harness.addToBattlefield(player2, createCreature("Red Creature 1", CardColor.RED));
-        harness.addToBattlefield(player2, createCreature("Red Creature 2", CardColor.RED));
+        harness.addToBattlefield(player2, new KavuAggressor());
+        harness.addToBattlefield(player2, new KavuAggressor());
 
         assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(6);
@@ -64,12 +55,51 @@ class SulamDjinnTest extends BaseCardTest {
     @DisplayName("Counts each color of multicolored permanents")
     void countsEachColorOfMulticoloredPermanents() {
         Permanent sulam = addSulamDjinn();
-        harness.addToBattlefield(player2,
-                createCreature("Red Blue Creature 1", CardColor.RED, CardColor.BLUE));
-        harness.addToBattlefield(player2,
-                createCreature("Red Blue Creature 2", CardColor.RED, CardColor.BLUE));
+        harness.addToBattlefield(player2, new GalinasKnight());
+        harness.addToBattlefield(player2, new GalinasKnight());
 
         assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Counts colored noncreature permanents")
+    void countsColoredNoncreaturePermanents() {
+        Permanent sulam = addSulamDjinn();
+        harness.addToBattlefield(player2, new TectonicInstability());
+        harness.addToBattlefield(player2, new TectonicInstability());
+
+        assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Does not count colorless permanents")
+    void doesNotCountColorlessPermanents() {
+        Permanent sulam = addSulamDjinn();
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Re-evaluates when a permanent changes color")
+    void reevaluatesWhenPermanentChangesColor() {
+        Permanent sulam = addSulamDjinn();
+        addCreatureReady(player1, new TidalVisionary());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KavuAggressor());
+        harness.addToBattlefield(player2, new KavuAggressor());
+
+        assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(6);
+
+        harness.activateAbility(player1, 1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(4);
     }
 }

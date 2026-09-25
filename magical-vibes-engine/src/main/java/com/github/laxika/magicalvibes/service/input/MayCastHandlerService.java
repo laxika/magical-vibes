@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -75,6 +76,7 @@ public class MayCastHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
     private final ExileFreeCastSupport exileFreeCastSupport;
+    private final ExileCastTargetSupport exileCastTargetSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     private final SpellCastingService spellCastingService;
@@ -447,7 +449,7 @@ public class MayCastHandlerService {
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects, player.getId());
             if (validTargets.isEmpty()) {
                 if (cardsToBottom == null) {
-                    graveyardService.addCardToGraveyard(gameData, ownerId, card);
+                    graveyardService.addCardToGraveyard(gameData, ownerId, card, Zone.LIBRARY);
                     gameLogService.append(gameData, GameLog.cardThen(card,
                             " has no legal targets, so it can't be cast. It is put into the graveyard."));
                 } else {
@@ -683,7 +685,8 @@ public class MayCastHandlerService {
                                             spellEffects, spellType, castEffect.exileInsteadOfGraveyard(),
                                             castEffect.withoutPayingManaCost(), graveyardOwnerId, false,
                                             castEffect.anyManaType(),
-                                            castEffect.copyCount()));
+                                            castEffect.copyCount(), castEffect.afterSuccessfulCastEffect(),
+                                            ability.sourcePermanentId()));
                             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                                     "Choose a target for " + cardToCast.getName() + ".");
 
@@ -729,6 +732,9 @@ public class MayCastHandlerService {
                                         copyCard.getId()));
                             }
                         }
+
+                        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, cardToCast, player.getId(),
+                                ability.sourcePermanentId(), castEffect.afterSuccessfulCastEffect());
 
                         gameData.recordSpellCast(player.getId(), cardToCast);
                         gameData.priorityPassedBy.clear();
@@ -1747,7 +1753,7 @@ public class MayCastHandlerService {
                     if (exileInsteadOfGraveyard) {
                         gameData.addToExile(ownerId, card);
                     } else {
-                        graveyardService.addCardToGraveyard(gameData, ownerId, card);
+                        graveyardService.addCardToGraveyard(gameData, ownerId, card, sourceZone);
                     }
                 }
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));

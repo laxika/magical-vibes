@@ -287,6 +287,7 @@ public class PermanentRemovalService {
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        boolean modifiedAtDeath = wasCreature && gameQueryService.isModified(gameData, target);
         boolean wasLand = gameQueryService.isLand(gameData, target);
         int dyingPowerAtDeath = wasCreature
                 ? gameQueryService.getEffectivePower(gameData, target)
@@ -331,7 +332,7 @@ public class PermanentRemovalService {
             triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
                     gameData, target, controllerId, Zone.GRAVEYARD);
         }
-        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
+        processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
                 wasLand, creatureSubtypesAtDeath, hadUndying, hadPersist, controllerId, ownerId,
                 destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath,
                 dyingToughnessAtDeath, selfGraveyardTriggerSuppressed, creatureDeathTriggersSuppressed,
@@ -442,6 +443,7 @@ public class PermanentRemovalService {
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        boolean modifiedAtDeath = wasCreature && gameQueryService.isModified(gameData, target, controllerId);
         boolean wasLand = gameQueryService.isLand(gameData, target);
         int dyingPowerAtDeath = wasCreature ? gameQueryService.getEffectivePower(gameData, target) : 0;
         int dyingToughnessAtDeath = wasCreature ? gameQueryService.getEffectiveToughness(gameData, target) : 0;
@@ -476,7 +478,7 @@ public class PermanentRemovalService {
             triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
                     gameData, target, info.controllerId(), Zone.GRAVEYARD);
         }
-        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
+        processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
                 wasLand, creatureSubtypesAtDeath, hadUndying, hadPersist, info.controllerId(), info.ownerId(), false,
                 grantedDeathEffects, dyingPowerAtDeath, dyingToughnessAtDeath, selfGraveyardTriggerSuppressed,
                 creatureDeathTriggersSuppressed, false);
@@ -1356,12 +1358,16 @@ public class PermanentRemovalService {
                                                    boolean checkExileInsteadOfDie, String destinationDescription) {
         boolean permanentGraveyardReplacement = checkExileInsteadOfDie
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
+        boolean perpetualGraveyardReplacement = checkExileInsteadOfDie
+                && target.getOriginalCard() != null
+                && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
         if (!target.isExileIfLeavesBattlefield()
                 && !target.isExileIfLeavesBattlefieldUntilEndOfTurn()
                 && !(checkExileInsteadOfDie && target.isExileIfDying())
                 && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
                 && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
-                && !permanentGraveyardReplacement) {
+                && !permanentGraveyardReplacement
+                && !perpetualGraveyardReplacement) {
             return false;
         }
         boolean exiled = removePermanentToExile(gameData, target);
@@ -1678,7 +1684,8 @@ public class PermanentRemovalService {
      * Sends a removed permanent's card to the graveyard and fires all death/graveyard triggers.
      */
     private void processGraveyardAndTriggers(GameData gameData, Permanent target,
-                                              boolean wasCreature, boolean wasArtifact,
+                                              boolean wasCreature, boolean modifiedAtDeath,
+                                              boolean wasArtifact,
                                               boolean wasEnchantment,
                                               boolean wasLand,
                                               Set<CardSubtype> creatureSubtypesAtDeath,
@@ -1809,6 +1816,9 @@ public class PermanentRemovalService {
                     gameData, graveyardEventSnapshot, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                if (modifiedAtDeath) {
+                    gameData.playersWhoControlledModifiedCreatureDiedThisTurn.add(controllerId);
+                }
                 gameData.creatureNamesDiedThisTurn.add(target.getCard().getName());
                 gameData.creaturesPutIntoOwnGraveyardThisTurnCount.merge(ownerId, 1, Integer::sum);
                 if (!target.getCard().isToken()) {
@@ -1843,7 +1853,7 @@ public class PermanentRemovalService {
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.triggerDelayedEffectOnDeath(
                         gameData, target.getCard().getId(), controllerId, target.getEffectivePower(),
-                        target.getCard().getManaValue());
+                        target.getCard().getManaValue(), Map.copyOf(target.getCounters()));
                 triggerCollectionService.triggerDelayedReturnOnDeath(
                         gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
             }

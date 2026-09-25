@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -349,6 +351,30 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleLifeLossToEachOpponentOnDiscardEvent(TriggerMatchContext match,
+            LoseLifeEffect trigger, TriggerContext ctx) {
+        if (trigger.recipient() != LoseLifeRecipient.EACH_OPPONENT) return false;
+
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(discardEvent.discardedCount());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller discard event (life loss to each opponent)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleDrawOnDiscardEvent(TriggerMatchContext match, DrawCardEffect trigger,
                                               TriggerContext ctx) {
@@ -451,6 +477,39 @@ public class DiscardTriggerCollectorService {
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (scry {})", gameData.id, sourceCard.getName(), trigger.count());
+        return true;
+    }
+
+    @CollectsTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
+            slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleGutmornOnDiscard(TriggerMatchContext match,
+            ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect trigger, TriggerContext ctx) {
+        TriggerContext.Discard discard = (TriggerContext.Discard) ctx;
+        if (!match.controllerId().equals(match.gameData().activePlayerId)
+                || discard.discardedCard() == null) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        // The player who discarded is retained in targetId for the resolution-time choice. The
+        // chosen recipient is not a rules target and is selected only when the ability resolves.
+        entry.setTargetId(discard.discardingPlayerId());
+        entry.setNonTargeting(true);
+        entry.setDiscardedCardSnapshot(discard.discardedCard().createCardCopy());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard to conjure a duplicate",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

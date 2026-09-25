@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +16,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlanchwoodArmor.class, Forest.class, FountainOfYouth.class, GoblinRaider.class, GrizzlyBears.class})
+@CardUsed({BlanchwoodArmor.class, Forest.class, GloriousAnthem.class, GoblinRaider.class,
+        GrizzlyBears.class, Swamp.class})
 class BlanchwoodArmorTest extends BaseCardTest {
 
     @Test
@@ -129,6 +131,18 @@ class BlanchwoodArmorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blanchwood Armor counts Forests by subtype, not other lands")
+    void countsForestsBySubtypeOnly() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new BlanchwoodArmor());
+        armor.setAttachedTo(bears.getId());
+
+        harness.addToBattlefield(player1, new Swamp());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Blanchwood Armor counts Forests controlled by aura controller, even on opponent creature")
     void countsAurasControllersForests() {
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -205,11 +219,11 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Blanchwood Armor")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
         harness.setHand(player1, List.of(new BlanchwoodArmor()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

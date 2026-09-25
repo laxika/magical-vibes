@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrystalRod.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({CrystalRod.class, AirElemental.class, Concentrate.class, GrizzlyBears.class})
 class CrystalRodTest extends BaseCardTest {
 
     // ===== Triggered ability: controller casts blue spell =====
@@ -100,6 +100,28 @@ class CrystalRodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Blue noncreature spell triggers Crystal Rod")
+    void blueNoncreatureSpellTriggers() {
+        harness.addToBattlefield(player1, new CrystalRod());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new Concentrate(), "{2}{U}{U}");
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Crystal Rod"));
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
     // ===== Triggered ability: opponent casts blue spell =====

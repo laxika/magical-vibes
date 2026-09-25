@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SerraAngel.class, GrizzlyBears.class})
+@CardUsed({SerraAngel.class, GrizzlyBears.class, CanopySpider.class})
 class SerraAngelTest extends BaseCardTest {
 
     @Test
@@ -37,8 +38,19 @@ class SerraAngelTest extends BaseCardTest {
         addCreatureReady(player1, new SerraAngel());
         Permanent blocker = addCreatureReady(player2, new SerraAngel());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with reach can block Serra Angel")
+    void reachCreatureCanBlock() {
+        addCreatureReady(player1, new SerraAngel());
+        Permanent blocker = addCreatureReady(player2, new CanopySpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

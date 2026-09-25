@@ -332,7 +332,7 @@ public class GraveyardService {
             gameData.priorityPassedBy.clear();
             return false;
         }
-        return addCardToGraveyard(gameData, ownerId, card);
+        return addCardToGraveyard(gameData, ownerId, card, Zone.HAND);
     }
 
     public Card findDiscardToLibraryReplacementSource(GameData gameData, UUID ownerId) {
@@ -695,10 +695,11 @@ public class GraveyardService {
             triggerCollectionService.checkNonblackCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
         if (!card.isToken() && card.hasType(CardType.CREATURE)) {
-            triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+                triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(
+                        gameData, ownerId, card, sourceZone);
             if (sourceZone != Zone.BATTLEFIELD) {
                 triggerCollectionService.checkCreatureCardPutIntoGraveyardFromNonBattlefieldTriggers(
-                        gameData, ownerId, card);
+                        gameData, ownerId, card, sourceZone);
             }
             if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkAnyCreatureCardPutIntoGraveyardFromLibraryTriggers(
@@ -1705,7 +1706,9 @@ public class GraveyardService {
                                 .withSourceCardId(sourceCard.getId())
                                 .withSourceControllerId(controllerId)
                                 .withSourcePermanentId(sourcePermanentId)
-                                .withSourcePermanentSnapshot(sourcePermanent))) {
+                                .withSourcePermanentSnapshot(sourcePermanent)
+                                .withTriggeringPermanentId(dyingPermanent == null ? null : dyingPermanent.getId())
+                                .withTriggeringPermanentControllerId(dyingControllerId))) {
                     continue;
                 }
                 effect = conditional.wrapped();
@@ -1811,7 +1814,10 @@ public class GraveyardService {
         gameData.graveyardLeaveNotificationDepth--;
         if (gameData.graveyardLeaveNotificationDepth == 0) {
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingOwners) {
-                triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
+                triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(
+                        gameData, ownerId,
+                        gameData.graveyardLeaveNotificationPendingCards
+                                .getOrDefault(ownerId, List.of()));
             }
             for (var pending : gameData.graveyardLeaveNotificationPendingInstantOrSorceryCards.entrySet()) {
                 for (Card card : pending.getValue()) {
@@ -1843,7 +1849,10 @@ public class GraveyardService {
                 }
             }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners) {
-                triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+                triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(
+                        gameData, ownerId,
+                        gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards
+                                .getOrDefault(ownerId, List.of()));
             }
             gameData.graveyardLeaveNotificationPendingOwners.clear();
             gameData.graveyardLeaveNotificationPendingInstantOrSorceryCards.clear();
@@ -1854,6 +1863,7 @@ public class GraveyardService {
             gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
             gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
+            gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards.clear();
         }
     }
 
@@ -1862,10 +1872,14 @@ public class GraveyardService {
      * When inside a batch ({@link #beginGraveyardLeaveBatch}), defers until the batch ends.
      */
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId) {
-        notifyCardsLeftGraveyard(gameData, ownerId, 1);
+        notifyCardsLeftGraveyard(gameData, ownerId, 1, List.of());
     }
 
     private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count) {
+        notifyCardsLeftGraveyard(gameData, ownerId, count, List.of());
+    }
+
+    private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count, List<Card> cards) {
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.
         gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
@@ -1875,9 +1889,14 @@ public class GraveyardService {
         pruneDamagedCreatureDiedTrackingNotInGraveyard(gameData);
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingOwners.add(ownerId);
+            if (!cards.isEmpty()) {
+                gameData.graveyardLeaveNotificationPendingCards
+                        .computeIfAbsent(ownerId, ignored -> new ArrayList<>())
+                        .addAll(cards);
+            }
             return;
         }
-        triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
+        triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId, cards);
     }
 
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
@@ -1888,6 +1907,7 @@ public class GraveyardService {
             }
             gameData.oncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
+            firePerpetualTriggeredAbilities(gameData, ownerId, List.of(leavingCard));
         }
         notifyCardsLeftGraveyard(gameData, ownerId, 1);
         notifyInstantOrSorceryCardLeftGraveyard(gameData, ownerId, leavingCard);
@@ -1895,7 +1915,7 @@ public class GraveyardService {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, 1);
         }
         if (isArtifactOrCreatureCard(leavingCard)) {
-            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
+            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId, List.of(leavingCard));
         }
     }
 
@@ -1910,6 +1930,7 @@ public class GraveyardService {
         }
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));
+        firePerpetualTriggeredAbilities(gameData, ownerId, leavingCards);
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size());
         for (Card card : leavingCards) {
             notifyInstantOrSorceryCardLeftGraveyard(gameData, ownerId, card);
@@ -1920,8 +1941,11 @@ public class GraveyardService {
         if (creatureCardCount > 0) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, creatureCardCount);
         }
-        if (leavingCards.stream().anyMatch(this::isArtifactOrCreatureCard)) {
-            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
+        List<Card> artifactOrCreatureCards = leavingCards.stream()
+                .filter(this::isArtifactOrCreatureCard)
+                .toList();
+        if (!artifactOrCreatureCards.isEmpty()) {
+            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId, artifactOrCreatureCards);
         }
     }
 
@@ -2024,19 +2048,43 @@ public class GraveyardService {
         }
     }
 
-    private void notifyArtifactOrCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+    private void notifyArtifactOrCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId,
+                                                            List<Card> cards) {
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.add(ownerId);
+            gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards
+                    .computeIfAbsent(ownerId, ignored -> new ArrayList<>())
+                    .addAll(cards);
             return;
         }
         triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(
-                gameData, ownerId);
+                gameData, ownerId, cards);
     }
 
     private boolean isArtifactOrCreatureCard(Card card) {
         return card != null
                 && !card.isToken()
                 && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE));
+    }
+
+    private void firePerpetualTriggeredAbilities(GameData gameData, UUID ownerId, List<Card> leavingCards) {
+        for (Card card : leavingCards) {
+            List<CardEffect> effects = gameData.perpetualTriggeredAbilities.get(card.getId());
+            if (effects == null) continue;
+            for (CardEffect effect : effects) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        ownerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        (UUID) null));
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} triggers on leaving its owner's graveyard",
+                        gameData.id, card.getName());
+            }
+        }
     }
 
     private boolean isInstantOrSorceryCard(Card card) {
@@ -2055,11 +2103,15 @@ public class GraveyardService {
         triggerCollectionService.checkCreatureCardLeavesOpponentGraveyardTriggers(gameData, ownerId, leavingCard);
     }
 
-    /** Adds a card from a graveyard to a hand and fires the card's self-return trigger, if any. */
+    /** Adds a card from a graveyard to a hand and fires applicable return-to-hand triggers. */
     public void addCardToHandFromGraveyard(GameData gameData, UUID graveyardOwnerId, UUID handOwnerId,
                                            Card card) {
         gameData.addCardToHand(handOwnerId, card);
-        if (graveyardOwnerId != null && graveyardOwnerId.equals(handOwnerId)) {
+        List<Card> hand = gameData.playerHands.get(handOwnerId);
+        if (graveyardOwnerId != null && graveyardOwnerId.equals(handOwnerId)
+                && hand != null && hand.contains(card)) {
+            triggerCollectionService.checkControllerCardReturnedFromGraveyardToHandTriggers(
+                    gameData, graveyardOwnerId, card);
             triggerCollectionService.checkCardReturnedToHandFromGraveyardTriggers(
                     gameData, graveyardOwnerId, card);
         }

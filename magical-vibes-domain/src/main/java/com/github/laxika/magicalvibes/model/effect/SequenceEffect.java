@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
+
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -43,17 +46,23 @@ import java.util.UUID;
  * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
  * "that player".</p>
  */
-public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
+public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed,
+                             boolean optionalTarget)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect,
-        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
+        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect,
+        DyingCreatureCountersAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
-        this(steps, 0, false);
+        this(steps, 0, false, false);
     }
 
     public SequenceEffect(List<CardEffect> steps, int controllerDrawCount) {
-        this(steps, controllerDrawCount, false);
+        this(steps, controllerDrawCount, false, false);
+    }
+
+    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed) {
+        this(steps, controllerDrawCount, onlyIfSacrificed, false);
     }
 
     public SequenceEffect {
@@ -82,6 +91,11 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         return new SequenceEffect(List.of(steps), 0, true);
     }
 
+    /** Creates a sequence whose single declared target may be omitted. */
+    public static SequenceEffect upToOneTarget(CardEffect... steps) {
+        return new SequenceEffect(List.of(steps), 0, false, true);
+    }
+
     @Override
     public boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) {
         return controllerDrawCount == 0 || controllerDrawCount == cardsDrawnThisTurn;
@@ -106,7 +120,19 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .map(step -> step instanceof DyingCreatureCardAwareEffect aware
                         ? aware.boundToDyingCard(dyingCardId) : step)
                 .toList();
-        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed);
+        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+    }
+
+    @Override
+    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
+        if (steps.stream().noneMatch(DyingCreatureCountersAwareEffect.class::isInstance)) {
+            return this;
+        }
+        List<CardEffect> boundSteps = steps.stream()
+                .map(step -> step instanceof DyingCreatureCountersAwareEffect aware
+                        ? aware.boundToDyingCreatureCounters(counters) : step)
+                .toList();
+        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 
     @Override
@@ -115,7 +141,7 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .map(step -> step instanceof DamageSourceControllerAwareEffect aware
                         ? aware.bindDamageSourceController(controllerId, damageDealt)
                         : step)
-                 .toList(), controllerDrawCount, onlyIfSacrificed);
+                 .toList(), controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 
     @Override
@@ -135,6 +161,7 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
 
     @Override
     public boolean hasOptionalTarget() {
+        if (optionalTarget) return true;
         for (CardEffect step : steps) {
             if (step.targetSpec().declaredTarget() != null) {
                 return step.hasOptionalTarget();
@@ -186,6 +213,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .map(step -> step instanceof CombatDamageDealerAwareEffect aware
                         ? aware.withCombatDamageDealerIds(dealerIds)
                         : step)
-                .toList(), controllerDrawCount, onlyIfSacrificed);
+                .toList(), controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 }

@@ -48,6 +48,18 @@ class IntruderAlarmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped entering creature is untapped by the trigger")
+    void enteringCreatureIsUntappedByTrigger() {
+        harness.addToBattlefield(player1, new IntruderAlarm());
+        Permanent enteringCreature = harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
+        enteringCreature.tap();
+
+        resolveAllTriggers();
+
+        assertThat(enteringCreature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("An opponent's creature entering untaps all creatures")
     void opponentCreatureEnteringUntapsAllCreatures() {
         harness.addToBattlefield(player1, new IntruderAlarm());

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfFire;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.w.WallOfStone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Invisibility.class, GrizzlyBears.class, AvenFisher.class, WallOfFire.class, FountainOfYouth.class})
+@CardUsed({Invisibility.class, GrizzlyBears.class, AvenFisher.class, WallOfStone.class, HowlingMine.class})
 class InvisibilityTest extends BaseCardTest {
 
     // ===== Casting and attaching =====
@@ -25,18 +25,19 @@ class InvisibilityTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Invisibility attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new Invisibility()));
+        Invisibility invisibility = new Invisibility();
+        harness.setHand(player1, List.of(invisibility));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Invisibility")
+                .anyMatch(p -> p.getCard() == invisibility
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bears.getId()));
+                        && p.getAttachedTo().equals(target.getId()));
     }
 
     // ===== Block restriction =====
@@ -74,7 +75,7 @@ class InvisibilityTest extends BaseCardTest {
     void canBeBlockedByWall() {
         attackingEnchantedCreature();
 
-        Permanent wall = addCreatureReady(player2, new WallOfFire());
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -88,25 +89,62 @@ class InvisibilityTest extends BaseCardTest {
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
         harness.setHand(player1, List.of(new Invisibility()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Invisibility restricts only its enchanted creature")
+    void restrictsOnlyEnchantedCreature() {
+        attackingEnchantedCreature();
+
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+        otherAttacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing Invisibility removes the blocking restriction")
+    void restrictionEndsWhenAuraLeavesBattlefield() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent aura = attachInvisibility(attacker);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent attackingEnchantedCreature() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        Permanent aura = new Permanent(new Invisibility());
-        aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        attachInvisibility(attacker);
 
         return attacker;
+    }
+
+    private Permanent attachInvisibility(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Invisibility());
+        aura.setAttachedTo(creature.getId());
+        return aura;
     }
 }

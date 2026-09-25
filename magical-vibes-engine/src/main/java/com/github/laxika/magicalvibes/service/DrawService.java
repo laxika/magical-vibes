@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomS
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
@@ -1929,6 +1930,12 @@ public class DrawService {
                     }
                     logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
                     effect = drawReveal.effectFor(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                }
+                if (effect instanceof DrawnCardTriggerEffect drawnCardTrigger) {
+                    effect = drawnCardTrigger.effectForDrawnCard(drawn);
                     if (effect == null) {
                         continue;
                     }

@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -100,6 +101,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMoreLifeThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSameTargetAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
@@ -1441,6 +1444,49 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentAttacksPlayerWithMoreLifeThanControllerPredicate compares direct player life")
+        void attacksPlayerWithMoreLifeThanControllerMatches() {
+            Permanent perm = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            perm.setAttacking(true);
+            perm.setAttackTarget(player2Id);
+            gd.playerLifeTotals.put(player1Id, 10);
+            gd.playerLifeTotals.put(player2Id, 20);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentAttacksPlayerWithMoreLifeThanControllerPredicate())).isTrue();
+
+            gd.playerLifeTotals.put(player2Id, 10);
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentAttacksPlayerWithMoreLifeThanControllerPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsAttackingSameTargetAsSourcePredicate matches the source attack target")
+        void attackingSameTargetAsSourceMatches() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", 2, 2, CardColor.GREEN));
+            source.setAttacking(true);
+            source.setAttackTarget(player2Id);
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player2Id);
+
+            FilterContext context = FilterContext.of(gd).withSourcePermanentId(source.getId());
+            assertThat(evaluator.matchesPermanentPredicate(attacker,
+                    new PermanentIsAttackingSameTargetAsSourcePredicate(), context)).isTrue();
+
+            Permanent sourceSnapshot = new Permanent(source);
+            source.setAttacking(false);
+            source.setAttackTarget(null);
+            context = context.withSourcePermanentSnapshot(sourceSnapshot);
+            assertThat(evaluator.matchesPermanentPredicate(attacker,
+                    new PermanentIsAttackingSameTargetAsSourcePredicate(), context)).isTrue();
+
+            attacker.setAttackTarget(player1Id);
+            assertThat(evaluator.matchesPermanentPredicate(attacker,
+                    new PermanentIsAttackingSameTargetAsSourcePredicate(), context)).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsUnblockedAttackingPredicate matches after blockers are declared")
         void unblockedAttackingMatchesAfterBlockers() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
@@ -1622,6 +1668,21 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(gd, greaterToughness, predicate)).isTrue();
             assertThat(evaluator.matchesPermanentPredicate(gd, equalPowerToughness, predicate)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(gd, greaterPower, predicate)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentBasePowerEqualsPredicate ignores counters and matches the current base power")
+        void basePowerEqualsPredicateIgnoresPowerModifiers() {
+            Permanent zeroBasePower = addPermanent(player1Id,
+                    createCreature("Zero Base Power", 0, 2, CardColor.GREEN));
+            zeroBasePower.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            Permanent nonzeroBasePower = addPermanent(player1Id,
+                    createCreature("Nonzero Base Power", 2, 2, CardColor.GREEN));
+            nonzeroBasePower.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+            PermanentBasePowerEqualsPredicate predicate = new PermanentBasePowerEqualsPredicate(0);
+            assertThat(evaluator.matchesPermanentPredicate(gd, zeroBasePower, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, nonzeroBasePower, predicate)).isFalse();
         }
 
         @Test

@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BenalishLancer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,14 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SleepersRobe.class, Forest.class, Mountain.class, BenalishLancer.class, ShivanZombie.class})
 class SleepersRobeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature has fear")
     void enchantedCreatureHasFear() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BenalishLancer());
         Permanent robe = addRobeReady(player1);
         robe.setAttachedTo(creature.getId());
 
@@ -33,7 +37,7 @@ class SleepersRobeTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses fear when Sleeper's Robe is removed")
     void creatureLosesFearWhenRobeIsRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BenalishLancer());
         Permanent robe = addRobeReady(player1);
         robe.setAttachedTo(creature.getId());
 
@@ -54,6 +58,54 @@ class SleepersRobeTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>());
 
         resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Enchanted creature cannot be blocked by a nonblack, nonartifact creature")
+    void fearPreventsNonblackCreatureFromBlocking() {
+        Permanent creature = addAttacker(player1);
+        Permanent robe = addRobeReady(player1);
+        robe.setAttachedTo(creature.getId());
+        Permanent blocker = addCreatureReady(player2, new BenalishLancer());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, creature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("fear");
+    }
+
+    @Test
+    @DisplayName("Enchanted creature can be blocked by a black creature")
+    void fearAllowsBlackCreatureToBlock() {
+        Permanent creature = addAttacker(player1);
+        Permanent robe = addRobeReady(player1);
+        robe.setAttachedTo(creature.getId());
+        Permanent blocker = addCreatureReady(player2, new ShivanZombie());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> declareBlock(blocker, creature))
+                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Aura's controller may draw when an enchanted opponent creature deals combat damage")
+    void mayDrawForAuraControllerWhenOpponentCreatureDealsCombatDamage() {
+        Permanent creature = addAttacker(player2);
+        Permanent robe = addRobeReady(player1);
+        robe.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, new ArrayList<>(List.of(new Forest(), new Forest())));
+        harness.setHand(player1, new ArrayList<>());
+
+        resolveCombatAndTrigger(player2);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -88,7 +140,7 @@ class SleepersRobeTest extends BaseCardTest {
         robe.setAttachedTo(creature.getId());
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BenalishLancer());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -100,7 +152,7 @@ class SleepersRobeTest extends BaseCardTest {
     @Test
     @DisplayName("Sleeper's Robe cannot enchant a land")
     void cannotEnchantALand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BenalishLancer());
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new SleepersRobe()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -121,13 +173,23 @@ class SleepersRobeTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player player) {
-        Permanent creature = addCreatureReady(player, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player, new BenalishLancer());
         creature.setAttacking(true);
         return creature;
     }
 
     private void resolveCombatAndTrigger() {
-        resolveCombat();
+        resolveCombatAndTrigger(player1);
+    }
+
+    private void resolveCombatAndTrigger(Player activePlayer) {
+        resolveCombat(activePlayer);
         harness.passBothPriorities();
+    }
+
+    private void declareBlock(Permanent blocker, Permanent attacker) {
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
     }
 }

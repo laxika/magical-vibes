@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeartlessHidetsugu.class})
 class HeartlessHidetsuguTest extends BaseCardTest {
 
     @Test
@@ -58,5 +61,29 @@ class HeartlessHidetsuguTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(findPermanent(player1, "Heartless Hidetsugu").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deals no damage when a player's life total is 1")
+    void dealsNoDamageAtOneLife() {
+        addCreatureReady(player1, new HeartlessHidetsugu());
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new HeartlessHidetsugu());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 }

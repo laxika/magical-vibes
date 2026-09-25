@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaLeak.class, Shock.class, YouthfulKnight.class})
+@CardUsed({ManaLeak.class, YouthfulKnight.class})
 class ManaLeakTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -186,6 +186,7 @@ class ManaLeakTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Shock.class)
     @DisplayName("Counters a noncreature spell")
     void countersNonCreatureSpell() {
         Shock shock = new Shock();

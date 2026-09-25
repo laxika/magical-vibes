@@ -534,6 +534,14 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.paysLifeForEachCommanderColorIdentity())) {
+            int amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+            }
+        }
+
         int xLifeCost = effectiveXValue;
         abilityEffects.stream()
                 .filter(PayXLifeCost.class::isInstance)
@@ -1680,6 +1688,7 @@ public class ActivatedAbilityExecutionService {
                         new Permanent(permanent),
                         null,
                         delayed.untilNextTurn(),
+                        delayed.persistsUntilConsumed(),
                         gameData.turnNumber));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),

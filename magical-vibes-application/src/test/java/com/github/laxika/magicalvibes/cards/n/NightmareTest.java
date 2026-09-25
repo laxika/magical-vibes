@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -26,10 +25,7 @@ class NightmareTest extends BaseCardTest {
     @DisplayName("Casting Nightmare puts it on the stack")
     void castingPutsOnStack() {
         Nightmare nightmare = new Nightmare();
-        harness.setHand(player1, List.of(nightmare));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, nightmare, "{5}{B}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -40,10 +36,7 @@ class NightmareTest extends BaseCardTest {
     @DisplayName("Nightmare dies to state-based actions with no Swamps")
     void diesWithNoSwamps() {
         Nightmare nightmare = new Nightmare();
-        harness.setHand(player1, List.of(nightmare));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, nightmare, "{5}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -57,10 +50,7 @@ class NightmareTest extends BaseCardTest {
     void survivesWithSwamp() {
         harness.addToBattlefield(player1, new Swamp());
         Nightmare nightmare = new Nightmare();
-        harness.setHand(player1, List.of(nightmare));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, nightmare, "{5}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

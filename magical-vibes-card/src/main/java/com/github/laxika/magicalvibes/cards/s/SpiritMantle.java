@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "PC2", collectorNumber = "12")
 @CardRegistration(set = "PCA", collectorNumber = "12")
 @CardRegistration(set = "SLD", collectorNumber = "2451")
+@CardRegistration(set = "SOC", collectorNumber = "175")
 public class SpiritMantle extends Card {
 
     public SpiritMantle() {

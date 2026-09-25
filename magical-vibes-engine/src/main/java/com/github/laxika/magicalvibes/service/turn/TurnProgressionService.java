@@ -658,6 +658,7 @@ public class TurnProgressionService {
                              boolean offerTimeVaultChoice, UUID excludedTimeVaultId) {
         if (snapshotEndingPlayer) {
             gameData.snapshotPlayerActionsForLastTurn(gameData.activePlayerId);
+            gameData.snapshotPlayerAttacksForLastTurn(gameData.activePlayerId);
         }
         // Clear any active mind control from the ending turn
         gameData.mindControlledPlayerId = null;
@@ -905,6 +906,7 @@ public class TurnProgressionService {
         gameData.nonlandPermanentLeftBattlefieldThisTurn = false;
         gameData.creatureDeathCountThisTurn.clear();
         gameData.creatureNamesDiedThisTurn.clear();
+        gameData.playersWhoControlledModifiedCreatureDiedThisTurn.clear();
         gameData.creaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
@@ -952,7 +954,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedAttackUntap.class);
         gameData.clearDelayedActions(DelayedVehicleAttack.class);
         gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class,
-                trigger -> !trigger.untilNextTurn());
+                trigger -> !trigger.untilNextTurn() && !trigger.persistsUntilConsumed());
         gameData.clearDelayedActions(DelayedUnblockedAttackerGainLife.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerCubeCounter.class);
