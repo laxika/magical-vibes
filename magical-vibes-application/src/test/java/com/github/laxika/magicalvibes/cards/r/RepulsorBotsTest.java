@@ -60,7 +60,6 @@ class RepulsorBotsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, creatureId);
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Repulsor Bots");

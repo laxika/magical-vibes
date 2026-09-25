@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MinotaurRoxxonCEO.class, GrizzlyBears.class, DoomBlade.class})
+@CardUsed({MinotaurRoxxonCEO.class, GrizzlyBears.class, DoomBlade.class, Murder.class})
 class MinotaurRoxxonCEOTest extends BaseCardTest {
 
     @Test
@@ -43,7 +43,10 @@ class MinotaurRoxxonCEOTest extends BaseCardTest {
     void selfDeathCreatesVillain() {
         Permanent roxxon = harness.addToBattlefieldAndReturn(player1, new MinotaurRoxxonCEO());
 
-        killWithDoomBlade(roxxon);
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castInstant(player1, 0, roxxon.getId());
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Villain")).hasSize(1);
     }

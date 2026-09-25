@@ -31,6 +31,7 @@ class MoonlitStriderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kitsune Palliator"));
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
         harness.assertInGraveyard(player1, "Moonlit Strider");
@@ -45,6 +46,7 @@ class MoonlitStriderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KitsunePalliator());
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kitsune Palliator"));
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 

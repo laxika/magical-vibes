@@ -27,6 +27,7 @@ class GutmornPactboundServantTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -53,7 +54,7 @@ class GutmornPactboundServantTest extends BaseCardTest {
 
         harness.castSorcery(player2, 0, player1.getId());
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(discarded.getId()));
+        harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

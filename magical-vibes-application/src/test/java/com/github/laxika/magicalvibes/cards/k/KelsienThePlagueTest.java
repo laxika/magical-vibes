@@ -38,6 +38,7 @@ class KelsienThePlagueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.passBothPriorities();
         assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(1);
     }
 
@@ -69,6 +70,6 @@ class KelsienThePlagueTest extends BaseCardTest {
         UUID targetId = findPermanent(player1, "Grizzly Bears").getId();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("opponent controls");
+                .hasMessageContaining("required predicate");
     }
 }

@@ -36,10 +36,11 @@ class IconicShieldTest extends BaseCardTest {
     void attackingProtectsAnotherAttacker() {
         Permanent equippedCreature = addReady(player1, new GrizzlyBears());
         Permanent otherAttacker = addReady(player1, new GrizzlyBears());
+        addReady(player1, new GrizzlyBears());
         Permanent shield = addReady(player1, new IconicShield());
         shield.setAttachedTo(equippedCreature.getId());
 
-        declareAttackers(List.of(0, 1));
+        declareAttackers(List.of(0, 1, 2));
 
         harness.handlePermanentChosen(player1, otherAttacker.getId());
         harness.passBothPriorities();

@@ -171,6 +171,9 @@ class CowardiceTest extends BaseCardTest {
     void returnsOpponentControlledCreatureToOwnersHand() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Confiscate()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 4);

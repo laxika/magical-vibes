@@ -69,6 +69,6 @@ class DragonManReformedRobotTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must discard a card");
+                .hasMessageContaining("Must discard");
     }
 }

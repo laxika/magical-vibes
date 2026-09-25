@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
@@ -26,20 +26,14 @@ public class GenjuOfTheCedars extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                 "Target must be a Forest"
-        ))
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                        new ActivatedAbility(
-                                false,
-                                "{2}",
-                                List.of(new AnimatePermanentsEffect(
-                                        4, 4, List.of(CardSubtype.SPIRIT), Set.of(), CardColor.GREEN)),
-                                "Enchanted Forest becomes a 4/4 green Spirit creature until end of turn. It's still a land."
-                        ),
-                        GrantScope.ENCHANTED_PERMANENT
-                ))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new MayEffect(
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Return Genju of the Cedars to your hand?"
-                ));
+        ));
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
+                new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.SPIRIT), Set.of(),
+                        CardColor.GREEN, Set.of(), GrantScope.ENCHANTED_PERMANENT,
+                        EffectDuration.UNTIL_END_OF_TURN)
+        ), "Enchanted Forest becomes a 4/4 green Spirit creature until end of turn. It's still a land."));
+        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new MayEffect(
+                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                "Return Genju of the Cedars to your hand?"));
     }
 }

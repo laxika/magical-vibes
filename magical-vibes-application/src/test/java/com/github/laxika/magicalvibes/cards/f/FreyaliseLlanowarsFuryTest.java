@@ -89,6 +89,7 @@ class FreyaliseLlanowarsFuryTest extends BaseCardTest {
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
         Card third = new SerraAngel();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, second, third));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 

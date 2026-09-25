@@ -24,6 +24,7 @@ class GravitonFundamentalForceTest extends BaseCardTest {
     void givesTargetCreatureFlying() {
         Permanent target = harness.addToBattlefieldAndReturn(player2,
                 new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new GravitonFundamentalForce());
         prepareLibrary();
 
@@ -42,6 +43,7 @@ class GravitonFundamentalForceTest extends BaseCardTest {
     void tapsTargetCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2,
                 new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new GravitonFundamentalForce());
         prepareLibrary();
 

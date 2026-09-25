@@ -327,7 +327,7 @@ class NomadMythmakerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Aura");
+                .hasMessageContaining("required predicate");
     }
 
     @Test

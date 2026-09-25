@@ -4786,6 +4786,11 @@ public class TriggerCollectionService {
             );
             entry.setTriggeringCardId(triggeringEntry.getCard().getId());
             entry.setTriggeringPermanentControllerId(triggeringEntry.getControllerId());
+            if (resolvedEffects.stream().anyMatch(
+                    com.github.laxika.magicalvibes.model.effect.TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect.class::isInstance)) {
+                entry.setTriggeringPermanentId(source.getAttachedTo());
+                entry.setNonTargeting(true);
+            }
             enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
             if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
 
@@ -5537,7 +5542,7 @@ public class TriggerCollectionService {
      */
     private void collectAnyCreatureBecomesTargetTriggers(
             GameData gameData, Permanent targetPermanent, StackEntry triggeringEntry) {
-        if (!targetPermanent.getCard().hasType(CardType.CREATURE)) return;
+        if (!gameQueryService.isCreature(gameData, targetPermanent)) return;
 
         UUID triggeringSourceControllerId = triggeringEntry.getSourcePermanentId() == null
                 ? null
@@ -5592,7 +5597,7 @@ public class TriggerCollectionService {
      */
     private void collectOpponentCreatureBecomesTargetOfYourSpellTriggers(
             GameData gameData, Permanent targetPermanent, UUID creatureControllerId, StackEntry triggeringEntry) {
-        if (!targetPermanent.getCard().hasType(CardType.CREATURE)) return;
+        if (!gameQueryService.isCreature(gameData, targetPermanent)) return;
 
         UUID triggeringControllerId = triggeringEntry.getControllerId();
         if (triggeringControllerId == null || triggeringControllerId.equals(creatureControllerId)) return;
@@ -5676,7 +5681,6 @@ public class TriggerCollectionService {
             if (triggered) {
                 OncePerTurnTriggerSupport.markIfNeeded(gameData, damagedCreature, authoredEffect);
             }
-            dispatch(match, slot, dispatchedEffect, ctx);
         }
     }
 

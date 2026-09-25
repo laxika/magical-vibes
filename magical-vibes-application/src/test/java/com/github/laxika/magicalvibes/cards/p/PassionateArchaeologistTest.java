@@ -21,12 +21,12 @@ class PassionateArchaeologistTest extends BaseCardTest {
     void commanderDealsDamageEqualToManaValueWhenSpellIsCastFromExile() {
         harness.addToBattlefield(player1, new PassionateArchaeologist());
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
-        commander.setCommander(true);
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
 
         GrizzlyBears spell = new GrizzlyBears();
         harness.setExile(player1, List.of(spell));
         gd.exilePlayPermissions.put(spell.getId(), player1.getId());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         prepareMainPhase();
 
         harness.castFromExile(player1, spell.getId());
@@ -48,7 +48,7 @@ class PassionateArchaeologistTest extends BaseCardTest {
         GrizzlyBears exiledSpell = new GrizzlyBears();
         harness.setExile(player1, List.of(exiledSpell));
         gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         prepareMainPhase();
 
         harness.castFromExile(player1, exiledSpell.getId());
@@ -63,9 +63,9 @@ class PassionateArchaeologistTest extends BaseCardTest {
     void doesNotTriggerWhenCommanderCastsSpellFromHand() {
         harness.addToBattlefield(player1, new PassionateArchaeologist());
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
-        commander.setCommander(true);
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         prepareMainPhase();
 
         harness.castCreature(player1, 0);

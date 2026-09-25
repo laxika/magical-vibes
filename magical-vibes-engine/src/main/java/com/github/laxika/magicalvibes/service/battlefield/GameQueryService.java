@@ -247,6 +247,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProwlGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RainOfGoreEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
@@ -3294,12 +3295,6 @@ public class GameQueryService {
                 .anyMatch(CantBeSacrificedEffect.class::isInstance)) {
             return true;
         }
-        UUID controllerId = findPermanentController(gameData, permanent.getId());
-        if (gameData.currentStep != TurnStep.END_STEP
-                || controllerId == null
-                || !controllerId.equals(gameData.activePlayerId)) {
-            return false;
-        }
         return hasGrantedEffect(gameData, permanent, CantBeSacrificedEffect.class);
     }
 
@@ -6130,7 +6125,7 @@ public class GameQueryService {
         if (target == null) {
             return false;
         }
-        Set<CardSubtype> protectedFrom = target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn();
+        Set<CardSubtype> protectedFrom = getNonSubtypeCreatureProtection(gameData, target);
         if (protectedFrom.isEmpty()) return false;
         if (!isCreature(gameData, source)) return false;
         for (CardSubtype subtype : protectedFrom) {
@@ -6150,7 +6145,15 @@ public class GameQueryService {
         if (target == null) {
             return false;
         }
-        Set<CardSubtype> protectedFrom = target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn();
+        Set<CardSubtype> protectedFrom = EnumSet.noneOf(CardSubtype.class);
+        protectedFrom.addAll(target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn());
+        if (!target.isLosesAllAbilitiesUntilEndOfTurn()) {
+            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ProtectionFromNonSubtypeCreaturesEffect protection) {
+                    protectedFrom.add(protection.subtype());
+                }
+            }
+        }
         if (protectedFrom.isEmpty()) return false;
         if (sourceCard.getType() != CardType.CREATURE
                 && !sourceCard.getAdditionalTypes().contains(CardType.CREATURE)) return false;
@@ -6161,6 +6164,24 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    private Set<CardSubtype> getNonSubtypeCreatureProtection(GameData gameData, Permanent target) {
+        Set<CardSubtype> protectedFrom = EnumSet.noneOf(CardSubtype.class);
+        protectedFrom.addAll(target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn());
+        if (!computeStaticBonus(gameData, target).losesAllAbilities()) {
+            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ProtectionFromNonSubtypeCreaturesEffect protection) {
+                    protectedFrom.add(protection.subtype());
+                }
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (effect instanceof ProtectionFromNonSubtypeCreaturesEffect protection) {
+                protectedFrom.add(protection.subtype());
+            }
+        }
+        return protectedFrom;
     }
 
     /**
@@ -8826,6 +8847,9 @@ public class GameQueryService {
     private int getDamageMultiplier(GameData gameData) {
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
+            if (p.isFaceDown() || hasLostPrintedAbilities(gameData, p)) {
+                return;
+            }
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GlobalDamageMultiplyingEffect multiplyingEffect) {
                     multiplier[0] *= MaroGoneNutsSupport.apply(

@@ -4575,7 +4575,7 @@ public class SpellCastingService {
             // Keep the distinct colored payment available to spell-cast triggers such as
             // Magmablood Archaic, even when the spell itself has no ColorSpentToCast condition.
             java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot =
-                    gameData.playerManaPools.get(playerId).getColoredManaTotals();
+                    gameData.playerManaPools.get(playerId).getAllManaTotals();
             int phyrexianManaPaidWithLife = 0;
             if (usingAlternateCost) {
                 if (usingWebSlingingCost) {
@@ -4637,8 +4637,8 @@ public class SpellCastingService {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
                         colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
-                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
-                        colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.manaSpentByColorIncludingColorless(
+                        colorsSpentSnapshot, pool.getAllManaTotals(), convokeContributions));
             }
             if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
                 stackX = gameData.getSpellCastManaSpent(card.getId());
@@ -4798,7 +4798,7 @@ public class SpellCastingService {
                             && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX()));
             boolean needsColorsSpent = EffectResolution.hasColorSpentCondition(card)
                     || EffectResolution.hasColorManaPairsSpentToCastAmount(card);
-            java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot = gameData.playerManaPools.get(playerId).getColoredManaTotals();
+            java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot = gameData.playerManaPools.get(playerId).getAllManaTotals();
             java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
                     ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
                     : null;
@@ -4976,8 +4976,8 @@ public class SpellCastingService {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
                         colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
-                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
-                        colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.manaSpentByColorIncludingColorless(
+                        colorsSpentSnapshot, pool.getAllManaTotals(), convokeContributions));
             }
             if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
                 resolvedXValue = gameData.getSpellCastManaSpent(card.getId());
@@ -5933,6 +5933,10 @@ public class SpellCastingService {
             }
             if (!gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setConvokeCreatureIds(convokeCreatureIds);
+                if (targetIsGraveyardCard && targetId != null) {
+                    gameData.stack.getLast().setTargetGraveyardEntryVersion(
+                            gameData.graveyardEntryVersion(targetId));
+                }
             }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
                     && !targetIds.isEmpty()) {
@@ -8442,7 +8446,7 @@ public class SpellCastingService {
                 ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
                 : null;
         java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot =
-                gameData.playerManaPools.get(playerId).getColoredManaTotals();
+                gameData.playerManaPools.get(playerId).getAllManaTotals();
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt,
                 grantedFlashbackOption, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
@@ -8515,8 +8519,8 @@ public class SpellCastingService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
                     colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
-            gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
-                    colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+            gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.manaSpentByColorIncludingColorless(
+                    colorsSpentSnapshot, pool.getAllManaTotals(), convokeContributions));
         }
         if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {
             effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
@@ -9009,6 +9013,9 @@ public class SpellCastingService {
             stackEntry.setCastWithFlashback(!isRetrace || isHarmonize);
         }
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        if (targetId != null && gameQueryService.findGraveyardOwnerById(gameData, targetId) != null) {
+            stackEntry.setTargetGraveyardEntryVersion(gameData.graveyardEntryVersion(targetId));
+        }
         preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
         gameData.stack.add(stackEntry);
 

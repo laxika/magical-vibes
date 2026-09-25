@@ -25,6 +25,7 @@ public class PromisedKannushi extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(7))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

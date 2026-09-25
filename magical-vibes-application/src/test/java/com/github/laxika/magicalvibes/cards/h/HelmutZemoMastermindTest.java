@@ -42,6 +42,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
     @DisplayName("Casts the chosen card for free, exiles it, and puts a counter on Helmut")
     void castsChosenCardAndPutsCounterOnHelmut() {
         Permanent helmut = addReadyHelmut();
+        helmut.setPowerModifier(2);
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.setGraveyard(player1, List.of(counsel));

@@ -21,9 +21,10 @@ class ImpulsivePilfererTest extends BaseCardTest {
     @Test
     @DisplayName("When it dies, Impulsive Pilferer creates a Treasure")
     void deathCreatesTreasure() {
-        addCreatureReady(player1, new ImpulsivePilferer());
+        Permanent pilferer = addCreatureReady(player1, new ImpulsivePilferer());
 
-        harness.sacrificePermanent(player1, 0, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, pilferer));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

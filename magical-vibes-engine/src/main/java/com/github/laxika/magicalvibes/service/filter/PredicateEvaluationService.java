@@ -505,11 +505,11 @@ public class PredicateEvaluationService {
                 if (gameData == null || !card.hasType(CardType.CREATURE)) {
                     yield false;
                 }
-                Permanent source = sourcePermanentId != null
-                        ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
-                        : sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
+                Permanent source = sourcePermanentSnapshot;
                 if (source == null) {
-                    source = sourcePermanentSnapshot;
+                    source = sourcePermanentId != null
+                            ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
+                            : sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
                 }
                 yield source != null && gameQueryService.isCreature(gameData, source)
                         && gameQueryService.shareCreatureType(gameData, source, card);

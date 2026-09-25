@@ -25,7 +25,7 @@ class HauntedOneTest extends BaseCardTest {
     void commanderTapBoostsSharingCreaturesAndGrantsUndying() {
         harness.addToBattlefield(player1, new HauntedOne());
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
-        commander.setCommander(true);
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
         Permanent otherZombie = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentZombie = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
@@ -52,7 +52,7 @@ class HauntedOneTest extends BaseCardTest {
     void grantEndsAtEndOfTurn() {
         harness.addToBattlefield(player1, new HauntedOne());
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
-        commander.setCommander(true);
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
         int powerBefore = gqs.getEffectivePower(gd, commander);
 
         tapAndResolve(commander);
@@ -72,13 +72,13 @@ class HauntedOneTest extends BaseCardTest {
     void grantedUndyingReturnsCreature() {
         harness.addToBattlefield(player1, new HauntedOne());
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
-        commander.setCommander(true);
-        harness.addToBattlefield(player1, new WalkingCorpse());
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
+        Permanent otherZombie = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         tapAndResolve(commander);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Walking Corpse"));
+        harness.castInstant(player1, 0, otherZombie.getId());
         resolveUntilStackEmpty();
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()

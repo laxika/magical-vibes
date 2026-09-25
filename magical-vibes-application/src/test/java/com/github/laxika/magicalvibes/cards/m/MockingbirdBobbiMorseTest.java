@@ -36,7 +36,8 @@ class MockingbirdBobbiMorseTest extends BaseCardTest {
     @Test
     @DisplayName("Lethal damage destroys Mockingbird before its trigger resolves")
     void lethalDamagePreventsCounter() {
-        harness.addToBattlefield(player2, new MockingbirdBobbiMorse());
+        Permanent mockingbird = harness.addToBattlefieldAndReturn(player2, new MockingbirdBobbiMorse());
+        mockingbird.setMarkedDamage(1);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 

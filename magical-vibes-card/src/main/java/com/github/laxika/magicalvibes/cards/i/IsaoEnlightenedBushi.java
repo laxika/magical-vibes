@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -18,7 +19,7 @@ public class IsaoEnlightenedBushi extends Card {
 
     public IsaoEnlightenedBushi() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(2));
+        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(2), TriggerMode.ONCE_PER_BLOCK);
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(2));
         addActivatedAbility(new ActivatedAbility(
                 false,

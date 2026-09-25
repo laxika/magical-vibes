@@ -46,8 +46,6 @@ class CreativeTechniqueTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, player2.getId());
-
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2)
                 .extracting(StackEntry::getControllerId)

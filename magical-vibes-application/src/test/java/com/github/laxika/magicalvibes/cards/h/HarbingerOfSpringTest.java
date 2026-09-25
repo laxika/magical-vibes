@@ -36,8 +36,7 @@ class HarbingerOfSpringTest extends BaseCardTest {
         addCreatureReady(player1, new HarbingerOfSpring());
         addCreatureReady(player2, new FrostOgre());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -50,8 +49,7 @@ class HarbingerOfSpringTest extends BaseCardTest {
         addCreatureReady(player1, new HarbingerOfSpring());
         Permanent blocker = addCreatureReady(player2, new KamiOfFalseHope());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
