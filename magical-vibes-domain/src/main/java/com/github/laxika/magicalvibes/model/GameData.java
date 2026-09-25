@@ -142,6 +142,8 @@ public class GameData {
     public final Set<UUID> playersWhoActedDuringTheirLastTurn = ConcurrentHashMap.newKeySet();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Per-player spell-cast counts by source zone for this turn. */
+    private final Map<UUID, Map<Zone, Integer>> spellCastCountsByZoneThisTurn = new ConcurrentHashMap<>();
     /** Card ids of spells that were kicked when cast, grouped by caster for the current turn. */
     private final Map<UUID, Set<UUID>> kickedSpellsCastThisTurn = new ConcurrentHashMap<>();
     /** Whether any spell was cast for its Warp cost this turn. */
@@ -250,6 +252,8 @@ public class GameData {
     public DayNight dayNight = DayNight.NEITHER;
     /** The player who currently is the monarch, or {@code null} when no player is monarch. */
     public UUID monarchPlayerId;
+    /** The player who currently has the initiative, or null if no player has it. */
+    public UUID initiativePlayerId;
     /** The Ring's current ability level for each player; presence means that player has The Ring emblem. */
     public final Map<UUID, Integer> ringLevels = new ConcurrentHashMap<>();
     /** The permanent currently designated as each player's Ring-bearer. */
@@ -360,6 +364,8 @@ public class GameData {
     public final Set<UUID> aiPlayerIds = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
+    /** Rad counters are held by players and resolve during their precombat main phase. */
+    public final Map<UUID, Integer> playerRadCounters = new ConcurrentHashMap<>();
     /** Players for whom Melira's poison replacement effect has already applied this turn. */
     public final Set<UUID> playersAffectedByMeliraPoisonReplacementThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerEnergyCounters = new ConcurrentHashMap<>();
@@ -3750,6 +3756,27 @@ public class GameData {
         if (card != null) spellsCastFromHandThisTurn.add(card.getId());
     }
 
+    /** Records the source zone of a spell cast for zone-restricted spell-cast triggers. */
+    public void recordSpellCastFromZone(UUID playerId, Zone sourceZone) {
+        if (playerId == null || sourceZone == null) return;
+        spellCastCountsByZoneThisTurn
+                .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
+                .merge(sourceZone, 1, Integer::sum);
+    }
+
+    public int getSpellsCastThisTurnCount(UUID playerId, Zone sourceZone) {
+        if (playerId == null || sourceZone == null) return 0;
+        return spellCastCountsByZoneThisTurn.getOrDefault(playerId, Map.of())
+                .getOrDefault(sourceZone, 0);
+    }
+
+    public int getTotalSpellsCastThisTurnCount(Zone sourceZone) {
+        if (sourceZone == null) return getTotalSpellsCastThisTurnCount();
+        return spellCastCountsByZoneThisTurn.values().stream()
+                .mapToInt(counts -> counts.getOrDefault(sourceZone, 0))
+                .sum();
+    }
+
     public boolean wasSpellCastFromHandThisTurn(UUID cardId) {
         return cardId != null && spellsCastFromHandThisTurn.contains(cardId);
     }
@@ -4398,6 +4425,7 @@ public class GameData {
         target.clear();
         spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
         spellsCastThisTurn.clear();
+        spellCastCountsByZoneThisTurn.clear();
         kickedSpellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
         mostRecentSpellCastThisTurn = null;
@@ -5552,6 +5580,7 @@ public class GameData {
         copy.currentStep = this.currentStep;
         copy.activePlayerId = this.activePlayerId;
         copy.monarchPlayerId = this.monarchPlayerId;
+        copy.initiativePlayerId = this.initiativePlayerId;
         copy.untapStepUntappedPermanentCount = this.untapStepUntappedPermanentCount;
         copy.untapStepPlayerId = this.untapStepPlayerId;
         copy.turnNumber = this.turnNumber;
@@ -6024,6 +6053,8 @@ public class GameData {
         copy.playersWhoActedDuringTheirLastTurn.addAll(this.playersWhoActedDuringTheirLastTurn);
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
+        this.spellCastCountsByZoneThisTurn.forEach((k, v) ->
+                copy.spellCastCountsByZoneThisTurn.put(k, new ConcurrentHashMap<>(v)));
         this.kickedSpellsCastThisTurn.forEach((k, v) ->
                 copy.kickedSpellsCastThisTurn.put(k, ConcurrentHashMap.newKeySet()));
         this.kickedSpellsCastThisTurn.forEach((k, v) ->
@@ -6040,6 +6071,7 @@ public class GameData {
         copy.manaSpentToCastSpellsThisTurn.putAll(this.manaSpentToCastSpellsThisTurn);
         copy.dayNight = this.dayNight;
         copy.monarchPlayerId = this.monarchPlayerId;
+        copy.initiativePlayerId = this.initiativePlayerId;
         copy.ringLevels.putAll(this.ringLevels);
         copy.ringBearerIds.putAll(this.ringBearerIds);
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
@@ -6079,6 +6111,7 @@ public class GameData {
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
+        copy.playerRadCounters.putAll(this.playerRadCounters);
         copy.playersAffectedByMeliraPoisonReplacementThisTurn
                 .addAll(this.playersAffectedByMeliraPoisonReplacementThisTurn);
         copy.playerEnergyCounters.putAll(this.playerEnergyCounters);

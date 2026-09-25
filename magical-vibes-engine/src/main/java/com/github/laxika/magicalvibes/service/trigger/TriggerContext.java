@@ -113,6 +113,9 @@ public sealed interface TriggerContext {
     /** Context for opponent-mill triggers. */
     record Mill(UUID milledPlayerId, int milledCount) implements TriggerContext {}
 
+    /** Context for a mill event containing one or more nonland cards. */
+    record NonlandCardsMilled(UUID milledPlayerId, int nonlandCardCount) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {

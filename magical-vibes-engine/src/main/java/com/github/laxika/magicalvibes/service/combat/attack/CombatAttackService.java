@@ -92,6 +92,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardPersistentAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -905,6 +906,9 @@ public class CombatAttackService {
         String logEntry = playerName + " declares " + attackerIndices.size() +
                 " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
+        int attackingPower = attackerIndices.stream()
+                .mapToInt(index -> gameQueryService.getEffectivePower(gameData, battlefield.get(index)))
+                .sum();
 
         // Collect all attack-step triggers, then reorder per APNAP (CR 603.3b)
         // Check for "when this creature attacks" triggers
@@ -1210,6 +1214,9 @@ public class CombatAttackService {
                             );
                             attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                             attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
+                            if (otherEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
+                                attackTrigger.setEventValue(attackingPower);
+                            }
                             gameData.stack.add(attackTrigger);
                             triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                                     gameData, attacker, attackTrigger);

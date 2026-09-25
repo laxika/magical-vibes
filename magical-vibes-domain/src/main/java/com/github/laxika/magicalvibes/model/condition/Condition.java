@@ -379,6 +379,7 @@ public sealed interface Condition permits
         TargetPlayerControlsPermanent,
         TargetPlayerControlsMoreLandsThanController,
         TargetPlayerTurn,
+        TargetPlayerIsController,
         TargetPlayerIsActivePlayer,
         TargetSpellCanBeCountered,
         TargetSpellManaSpentLessThanManaValue,

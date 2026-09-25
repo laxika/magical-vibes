@@ -205,8 +205,13 @@ public class GraveyardService {
         int cardsEntered = (int) cardsEnteredGraveyard.stream()
                 .filter(card -> !card.isToken())
                 .count();
+        int nonlandCardsEntered = (int) cardsEnteredGraveyard.stream()
+                .filter(card -> !card.isToken() && !card.hasType(CardType.LAND))
+                .count();
         triggerCollectionService.checkOpponentMillTriggers(
                 gameData, targetPlayerId, cardsEnteredGraveyard.size());
+        triggerCollectionService.checkNonlandCardsMilledTriggers(
+                gameData, targetPlayerId, nonlandCardsEntered);
         triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
                 gameData, targetPlayerId, cardsEntered, cardsEnteredGraveyard);
         triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(

@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -540,6 +541,7 @@ public class CombatDamageService {
         // stack for normal priority rather than being folded into the engine's auto-resolved
         // combat-damage trigger batch below.
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
         processSelfDealsCombatDamageTriggers(gameData, state);
@@ -682,6 +684,36 @@ public class CombatDamageService {
                 gameData.monarchPlayerId = controllerId;
                 return;
             }
+        }
+    }
+
+    private void queueInitiativeTransferFromCombatDamage(GameData gameData, CombatDamageState state,
+                                                         UUID defenderId) {
+        boolean combatDamageWasDealt = state.combatDamageDealtToPlayer.values().stream()
+                .anyMatch(damage -> damage > 0);
+        if (!defenderId.equals(gameData.initiativePlayerId) || !combatDamageWasDealt) {
+            return;
+        }
+
+        Set<UUID> controllers = new LinkedHashSet<>();
+        for (var damageEntry : state.combatDamageDealtToPlayer.entrySet()) {
+            if (damageEntry.getValue() <= 0) {
+                continue;
+            }
+            UUID controllerId = state.combatDamageDealerControllers.get(damageEntry.getKey());
+            if (controllerId != null && !controllerId.equals(defenderId)) {
+                controllers.add(controllerId);
+            }
+        }
+        for (UUID controllerId : controllers) {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    null,
+                    controllerId,
+                    "Combat damage causes a player to take the initiative",
+                    List.of(new TakeInitiativeEffect()));
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
         }
     }
 
@@ -1908,11 +1940,64 @@ public class CombatDamageService {
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false);
+            checkSameNameCreatureCombatDamageToPlayerTriggers(gameData, creature, defenderId, damageDealt);
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
         }
+    }
+
+    /**
+     * Checks global triggers that watch for a creature with the same name as the watcher dealing
+     * combat damage to a player. The watcher need not be controlled by the creature's controller;
+     * this models text such as Pirated Copy's "this creature or another creature with the same name".
+     */
+    private void checkSameNameCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature,
+                                                                    UUID defenderId,
+                                                                    int damageDealt) {
+        gameData.forEachPermanent((watcherControllerId, watcher) -> {
+            List<CardEffect> effects = new ArrayList<>(watcher.getCard().getEffects(
+                    EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(watcher.getTemporaryTriggeredEffects(
+                    EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(watcher.getPersistentTriggeredEffects(
+                    EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, watcher, EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+
+            FilterContext triggerContext = FilterContext.of(gameData)
+                    .withSourceCardId(watcher.getCard().getId())
+                    .withSourceControllerId(watcherControllerId)
+                    .withSourcePermanentId(watcher.getId());
+            for (CardEffect authoredEffect : effects) {
+                CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, watcher, authoredEffect);
+                if (!(effect instanceof AllyCombatDamageTriggerEffect trigger)) {
+                    continue;
+                }
+                if (trigger.dealerPredicate() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        creature, trigger.dealerPredicate(), triggerContext)) {
+                    continue;
+                }
+
+                CardEffect firedEffect = trigger.effect() instanceof CombatDamageAmountAwareEffect amountAware
+                        ? amountAware.snapshotCombatDamage(damageDealt) : trigger.effect();
+                StackEntry stackEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        watcherControllerId,
+                        watcher.getCard().getName() + "'s triggered ability",
+                        List.of(firedEffect),
+                        defenderId,
+                        watcher.getId());
+                setCombatDamageEventValue(stackEntry, firedEffect, damageDealt);
+                stackEntry.setNonTargeting(true);
+                gameData.stack.add(stackEntry);
+                gameLogService.append(gameData, GameLog.cardThen(watcher.getCard(),
+                        "'s same-name combat damage trigger goes on the stack."));
+            }
+        });
     }
 
     private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,

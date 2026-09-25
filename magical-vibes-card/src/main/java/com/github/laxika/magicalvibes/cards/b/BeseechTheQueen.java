@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "SHM", collectorNumber = "57")
 @CardRegistration(set = "HOP", collectorNumber = "19")
 @CardRegistration(set = "V16", collectorNumber = "1")
+@CardRegistration(set = "SLD", collectorNumber = "2484")
 public class BeseechTheQueen extends Card {
 
     public BeseechTheQueen() {

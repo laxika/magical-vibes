@@ -71,6 +71,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
         register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
+        register(PendingInteraction.StingingStudyCommanderChoice.class,
+                this::projectStingingStudyCommanderChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.TargetPlayerHandOrderChoice.class,
@@ -397,6 +399,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.commanders()), 1,
                 "Choose one of your commanders to put into your hand.");
+    }
+
+    private InteractionPromptMessage projectStingingStudyCommanderChoice(
+            GameData gameData, PendingInteraction.StingingStudyCommanderChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
+                "Choose a commander to determine X for Stinging Study.");
     }
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(

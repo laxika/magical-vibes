@@ -609,6 +609,7 @@ public class TriggerCollectionService {
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId,
                                        Zone castZone, UUID exiledSourcePermanentId) {
+        gameData.recordSpellCastFromZone(castingPlayerId, castZone);
         if (castZone == Zone.HAND) {
             gameData.recordSpellCastFromHand(spellCard);
         }
@@ -8000,6 +8001,20 @@ public class TriggerCollectionService {
         });
     }
 
+    /** Fires once for a mill event containing one or more nonland cards, regardless of player. */
+    public void checkNonlandCardsMilledTriggers(GameData gameData, UUID milledPlayerId,
+                                                int nonlandCardCount) {
+        if (nonlandCardCount <= 0) return;
+
+        var ctx = new TriggerContext.NonlandCardsMilled(milledPlayerId, nonlandCardCount);
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                dispatchSlot(gameData, permanent, controllerId,
+                        EffectSlot.ON_ANY_NONLAND_CARDS_MILLED, ctx);
+            }
+        });
+    }
+
     /** Fires once for a library-to-graveyard event containing one or more creature cards. */
     public void checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
             GameData gameData, UUID graveyardOwnerId, int creatureCardCount) {
@@ -13978,6 +13993,11 @@ public class TriggerCollectionService {
                 filterContext = filterContext
                         .withSourceCardId(watcher.getOriginalCard().getId())
                         .withSourcePermanentSnapshot(watcher);
+            } else if (dyingPermanent != null) {
+                filterContext = filterContext
+                        .withSourceCardId(dyingPermanent.getOriginalCard().getId())
+                        .withSourcePermanentSnapshot(dyingPermanent)
+                        .withSourcePermanentId(dyingPermanent.getId());
             }
             boolean matches = predicateEvaluationService.matchesPermanentPredicate(
                     perm, conditional.predicate(), filterContext);

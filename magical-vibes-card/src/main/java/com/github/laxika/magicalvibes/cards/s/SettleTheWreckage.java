@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerAttackingCre
 
 @CardRegistration(set = "XLN", collectorNumber = "34")
 @CardRegistration(set = "HOB", collectorNumber = "26")
+@CardRegistration(set = "SLD", collectorNumber = "2372")
 public class SettleTheWreckage extends Card {
 
     public SettleTheWreckage() {

@@ -634,11 +634,15 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever one or more matching creatures deal combat damage to a player or battle. */
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+    /** Triggers from a permanent whenever a creature with the same name deals combat damage to a player. */
+    ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers once whenever an opponent mills one or more cards. */
     ON_OPPONENT_MILLS,
+    /** Triggers once whenever one or more nonland cards are milled by any player. */
+    ON_ANY_NONLAND_CARDS_MILLED,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).

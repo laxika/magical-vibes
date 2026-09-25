@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "794")
+@CardRegistration(set = "SLD", collectorNumber = "2463")
 public class YoshimaruEverFaithful extends Card {
 
     public YoshimaruEverFaithful() {

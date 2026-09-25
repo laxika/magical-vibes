@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDam
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardIfEventValueAtLeastEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -1227,6 +1228,13 @@ public class DamageTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtDamageToOpponentMay(TriggerMatchContext match,
             MayEffect effect, TriggerContext ctx) {
+        return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);
+    }
+
+    @CollectsTrigger(value = DrawCardIfEventValueAtLeastEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtDamageToOpponentThresholdDraw(
+            TriggerMatchContext match, DrawCardIfEventValueAtLeastEffect effect, TriggerContext ctx) {
         return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);
     }
 

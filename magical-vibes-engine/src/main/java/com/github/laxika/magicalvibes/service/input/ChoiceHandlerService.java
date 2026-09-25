@@ -145,6 +145,8 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesMasterOfCeremoniesEffectHandler
+            eachOpponentChoosesMasterOfCeremoniesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
             expropriateEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
@@ -268,6 +270,11 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.PersistentManaColorChoice ctx) {
             handlePersistentManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.PersistentSpellOnlyManaColorChoice ctx) {
+            handlePersistentSpellOnlyManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
             return;
         }
 
@@ -763,6 +770,18 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.MasterOfCeremoniesChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Master of Ceremonies choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            eachOpponentChoosesMasterOfCeremoniesEffectHandler.completeChoice(
+                    gameData, colorName, player.getId(), ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -4212,6 +4231,44 @@ public class ChoiceHandlerService {
         String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
                 + colorName.toLowerCase() + " mana."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePersistentSpellOnlyManaColorChosen(
+            GameData gameData, Player player, String colorName, List<String> options,
+            ChoiceContext.PersistentSpellOnlyManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        if (ctx.anyColorCombination()) {
+            manaPool.addPersistentMana(manaColor, 1);
+            manaPool.addSpellOnlyMana(manaColor, 1);
+
+            int remaining = ctx.amount() - 1;
+            if (remaining > 0) {
+                ChoiceContext.PersistentSpellOnlyManaColorChoice nextContext =
+                        new ChoiceContext.PersistentSpellOnlyManaColorChoice(
+                                ctx.playerId(), remaining, true);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextContext,
+                        List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"),
+                        "Choose a color of mana to add (spells only)."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
+        } else {
+            manaPool.addPersistentMana(manaColor, ctx.amount());
+            manaPool.addSpellOnlyMana(manaColor, ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana (spells only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

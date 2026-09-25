@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTur
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -771,6 +772,29 @@ public class EnterTriggerCollectorService {
             entry.setNonTargeting(true);
             match.gameData().enqueueTrigger(entry);
         }
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
+                    slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleTokenEnterCopyForTargetPlayer(TriggerMatchContext match,
+                                                         CreateTokenCopyOfEnteringTokenForTargetPlayerEffect effect,
+                                                         TriggerContext ctx) {
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        if (tokensEnter.permanentIds().isEmpty()) {
+            return false;
+        }
+
+        UUID enteringTokenId = tokensEnter.permanentIds().getFirst();
+        MayEffect may = new MayEffect(effect, "Have target player create a token copy?");
+        match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                match.permanent().getCard(), match.controllerId(), List.of(may),
+                match.permanent().getId(), enteringTokenId, enteringTokenId));
         logTriggered(match);
         return true;
     }

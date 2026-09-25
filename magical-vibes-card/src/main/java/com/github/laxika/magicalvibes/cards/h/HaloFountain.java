@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "15")
+@CardRegistration(set = "SLD", collectorNumber = "2431")
 public class HaloFountain extends Card {
 
     public HaloFountain() {

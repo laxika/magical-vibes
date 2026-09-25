@@ -2156,6 +2156,39 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_NONLAND_CARDS_MILLED)
+    private boolean handleNonlandCardsMilled(TriggerMatchContext match,
+                                             CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.NonlandCardsMilled milled)) {
+            return false;
+        }
+
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                    "nonland cards milled", match.permanent().getId(), milled.nonlandCardCount()));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId());
+            entry.setEventValue(milled.nonlandCardCount());
+            gameData.enqueueTrigger(entry);
+        }
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on nonland cards being milled",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {

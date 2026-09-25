@@ -282,7 +282,7 @@ public class SpellCastingService {
     }
 
     private List<Integer> spellCastingAbilityGrantValuesForCard(GameData gameData, UUID playerId,
-                                                                 Card card, Keyword ability) {
+                                                                 Card card, Keyword ability, Zone sourceZone) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         List<Integer> values = new ArrayList<>();
@@ -290,7 +290,15 @@ public class SpellCastingService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent)
                         && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    if (grant.appliesOnlyToFirstMatchingSpellEachTurn()
+                            && gameData.getSpellsCastThisTurn(playerId).stream().anyMatch(previousSpell ->
+                            predicateEvaluationService.matchesCardPredicate(
+                                    previousSpell, grant.filter(), permanent.getCard().getId(), gameData, playerId))) {
+                        continue;
+                    }
                     values.add(grant.abilityValue());
                 }
             }
@@ -3269,7 +3277,7 @@ public class SpellCastingService {
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.extractAndRemove(gameData, playerId, card, preliminarySpellEffects);
         List<Integer> casualtyValues = spellCastingAbilityGrantValuesForCard(
-                gameData, playerId, card, Keyword.CASUALTY);
+                gameData, playerId, card, Keyword.CASUALTY, castSourceZone);
         validateCasualtyPayments(gameData, player, card, casualtyValues, casualtyCreatureIds,
                 sacrificePermanentId, convokeCreatureIds, conspireCreatureIds,
                 alternateCostSacrificePermanentIds, imposedSacrificePermanentIds,

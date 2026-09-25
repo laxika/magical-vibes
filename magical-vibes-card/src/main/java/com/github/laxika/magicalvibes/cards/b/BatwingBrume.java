@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatur
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "81")
+@CardRegistration(set = "SLD", collectorNumber = "2469")
 public class BatwingBrume extends Card {
 
     public BatwingBrume() {

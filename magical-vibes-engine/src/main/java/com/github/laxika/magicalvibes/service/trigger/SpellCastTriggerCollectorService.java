@@ -1431,12 +1431,21 @@ public class SpellCastTriggerCollectorService {
     })
     private boolean handleNthSpellCastTrigger(TriggerMatchContext match, NthSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.sourceZone() != null && trigger.sourceZone() != sc.castZone()) return false;
         int spellsCast = trigger.countScope() == CountScope.ANY_PLAYER
-                ? match.gameData().getTotalSpellsCastThisTurnCount()
-                : match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId());
+                ? match.gameData().getTotalSpellsCastThisTurnCount(trigger.sourceZone())
+                : trigger.sourceZone() == null
+                ? match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId())
+                : match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId(), trigger.sourceZone());
         if (spellsCast != trigger.spellNumber()) return false;
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        boolean carriesTriggeringSpellManaValue = resolved.stream()
+                .anyMatch(TriggeringSpellManaValueEffect.class::isInstance);
+        int triggeringSpellManaValue = triggeringSpell == null
+                ? sc.spellCard().getManaValue()
+                : triggeringSpell.getCard().getManaValue() + triggeringSpell.getXValue();
         boolean selfTarget = resolved.stream().anyMatch(e -> e.targetSpec().selfTargeting());
 
         if (match.rawEffect() instanceof MayEffect may) {
@@ -1459,6 +1468,10 @@ public class SpellCastTriggerCollectorService {
                         match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId())
                     : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                         match.permanent().getCard().getName() + "'s ability", resolved);
+            if (carriesTriggeringSpellManaValue) {
+                entry.setTriggeringCardId(sc.spellCard().getId());
+                entry.setEventValue(triggeringSpellManaValue);
+            }
             match.gameData().stack.add(entry);
         }
 

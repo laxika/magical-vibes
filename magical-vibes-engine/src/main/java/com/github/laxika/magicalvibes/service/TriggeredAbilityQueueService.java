@@ -470,7 +470,8 @@ public class TriggeredAbilityQueueService {
             if (dynamicTarget != null) {
                 int mutationCount = Math.max(0, amountEvaluationService.evaluate(gameData,
                         dynamicTarget.getDynamicMaxTargets(),
-                        new AmountContext(pending.controllerId(), sourcePermanentSnapshot, null, 0, 0)));
+                        new AmountContext(pending.controllerId(), sourcePermanentSnapshot, null, 0,
+                                pending.eventValue() == null ? 0 : pending.eventValue())));
                 int maxTargets = Math.min(mutationCount, result.validTargets().size());
 
                 gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);

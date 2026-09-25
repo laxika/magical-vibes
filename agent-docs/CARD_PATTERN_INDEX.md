@@ -67,9 +67,11 @@ This index has been split into smaller files for faster lookup. Each file is und
 | opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | exile top cards, play this turn, unplayed exiled cards to graveyard and tokens | `g/GlimpseTheImpossible.java` |
+| opponent-owned exile count + subtype-gated ETB exile-until-land | `u/UmbrisFearManifest.java` |
 | double any effect that doubles, quadruple | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
 | remove any number of counters from among permanents | CARD_PATTERNS_LANDS_SPELLS.md |
+| proliferate, then phase out permanents that received counters | `r/RipplesOfPotential.java` + `PhaseOutPermanentsThatReceivedCountersThisWayEffect` |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | target player's graveyard to bottom in random order | CARD_PATTERNS_CREATURES_ETB.md |
@@ -96,6 +98,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | attack trigger, death trigger, upkeep trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | attack trigger, memory counter, copy exiled creature cards | CARD_PATTERNS_CREATURES_TRIGGERED.md and EFFECTS_QUICK_REFERENCE.md |
 | controller end-step trigger, memory counter, copy creature card in exile | `t/TheAnimus.java` and EFFECTS_QUICK_REFERENCE.md |
+| clone copy with an added subtype and a same-name global combat-damage trigger | `p/PiratedCopy.java` + `CopyPermanentOnEnterEffect` + `ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER` |
 | combat damage → untap creatures + additional combat + repeat-player attack restriction | `p/PortRazer.java` |
 | combat damage modal, goad damaged player's creature, exile top card and cast with any-color mana | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
@@ -119,9 +122,11 @@ This index has been split into smaller files for faster lookup. Each file is und
 | destroy target creature, then create two half-sized token copies | `DestroyTargetCreatureAndCreateTokenCopiesEffect` |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| token enters, target another player to copy it, once-per-turn conditional draw | `l/LucyMacLeanPositivelyArmed.java` + `CreateTokenCopyOfEnteringTokenForTargetPlayerEffect` |
 | encore, graveyard ability creates hasty copies attacking each opponent | `i/ImpulsivePilferer.java` + `EncoreEffect` |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | each opponent may investigate, opponent choice plus controller Clues | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| each opponent chooses one of three modes, controller and chosen opponent receive the matching reward | `m/MasterOfCeremonies.java` + `EachOpponentChoosesMasterOfCeremoniesEffect` |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | damage prevention into counters | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | aura, enchant creature, pacifism | CARD_PATTERNS_PERMANENTS_STATIC.md |
