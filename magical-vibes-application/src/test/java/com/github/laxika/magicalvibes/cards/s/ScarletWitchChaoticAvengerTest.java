@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BenalishHero;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HeroInTraining;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,14 +14,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScarletWitchChaoticAvenger.class, BenalishHero.class, Divination.class,
+@CardUsed({ScarletWitchChaoticAvenger.class, HeroInTraining.class, Divination.class,
         Forest.class, GrizzlyBears.class})
 class ScarletWitchChaoticAvengerTest extends BaseCardTest {
 
     @Test
     void exilesTwoCardsFaceDownWithScarletWitchAndOffersHero() {
         Permanent scarletWitch = addAttackingScarletWitch();
-        BenalishHero hero = new BenalishHero();
+        HeroInTraining hero = new HeroInTraining();
         GrizzlyBears creature = new GrizzlyBears();
         harness.setLibrary(player1, List.of(hero, creature));
 

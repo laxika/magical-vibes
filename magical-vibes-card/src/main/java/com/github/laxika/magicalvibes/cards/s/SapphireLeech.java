@@ -13,6 +13,6 @@ public class SapphireLeech extends Card {
 
     public SapphireLeech() {
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
-                new CardColorPredicate(CardColor.BLUE), 1, CostModificationScope.SELF));
+                new CardColorPredicate(CardColor.BLUE), "{U}", CostModificationScope.SELF));
     }
 }

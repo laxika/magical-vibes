@@ -23,12 +23,14 @@ class SelvalaHeartOfTheWildsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SelvalaHeartOfTheWilds());
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.addToBattlefield(player2, new HillGiant());
+        harness.enterBattlefieldAndReturn(player2, new HillGiant());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         int handBefore = gd.playerHands.get(player2.getId()).size();
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
     }
@@ -40,12 +42,14 @@ class SelvalaHeartOfTheWildsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SelvalaHeartOfTheWilds());
         harness.setLibrary(player1, List.of(new Forest()));
 
-        harness.addToBattlefield(player1, new HillGiant());
+        harness.enterBattlefieldAndReturn(player1, new HillGiant());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }

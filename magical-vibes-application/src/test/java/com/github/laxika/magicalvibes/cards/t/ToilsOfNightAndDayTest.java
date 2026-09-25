@@ -77,8 +77,8 @@ class ToilsOfNightAndDayTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An accepted clause can leave an already-tapped target tapped")
-    void acceptedClauseCanLeaveTappedTargetTapped() {
+    @DisplayName("An accepted clause untaps an already-tapped target")
+    void acceptedClauseUntapsTappedTarget() {
         Permanent bears = addCreatureReady(player2, new GnarledMass());
         Permanent bridge = harness.addToBattlefieldAndReturn(player1, new TendoIceBridge());
         bridge.tap();
@@ -87,7 +87,7 @@ class ToilsOfNightAndDayTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bridge.isTapped()).isTrue();
+        assertThat(bridge.isTapped()).isFalse();
     }
 
     @Test

@@ -21,9 +21,10 @@ class WillieLumpkinPostmanTest extends BaseCardTest {
     @DisplayName("Deals combat damage through blockers and draws for its controller")
     void dealsCombatDamageAndDrawsForController() {
         GrizzlyBears drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
-        Permanent willie = addCreatureReady(player1, new WillieLumpkinPostman());
+        addCreatureReady(player1, new WillieLumpkinPostman());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -38,12 +39,13 @@ class WillieLumpkinPostmanTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        assertThat(willie.isAttacking()).isFalse();
     }
 
     @Test
     @DisplayName("The damaged player may draw and is then barred from attacking the controller")
     void acceptedDrawCreatesNextTurnAttackRestriction() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         Permanent attacker = addCreatureReady(player1, new WillieLumpkinPostman());

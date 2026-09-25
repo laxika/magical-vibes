@@ -122,7 +122,7 @@ class StackResolutionServiceTest {
         svc.resolveTopOfStack(gd);
 
         verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+                eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false), any(StackEntry.class));
         Permanent room = permanentCaptor.getValue();
         assertThat(room.isRoomDoorUnlocked(0)).isTrue();
         assertThat(room.getCard().getMaxTargets()).isEqualTo(2);
@@ -314,7 +314,7 @@ class StackResolutionServiceTest {
 
             // Second creature (top of stack) should have been passed to battlefield entry
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean(), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Second Creature");
             // First creature should still be on the stack
             assertThat(gd.stack).hasSize(1);
@@ -399,7 +399,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean(), any(StackEntry.class));
             Permanent permanent = permanentCaptor.getValue();
             assertThat(permanent.isWaterbendCostPaid()).isTrue();
             assertThat(new Permanent(permanent).isWaterbendCostPaid()).isTrue();
@@ -414,7 +414,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean(), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Creature");
             assertThat(gd.stack).isEmpty();
         }
@@ -428,7 +428,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER2_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+                    eq(gd), eq(PLAYER2_ID), permanentCaptor.capture(), anyInt(), anyBoolean(), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("P2 Creature");
         }
 
@@ -445,7 +445,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(3), eq(false));
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(3), eq(false), any(StackEntry.class));
         }
 
         @Test
@@ -459,7 +459,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(0), eq(true));
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(0), eq(true), any(StackEntry.class));
         }
 
         @Test
@@ -492,7 +492,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Enchantment");
         }
 
@@ -509,7 +509,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false), any(StackEntry.class));
             assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                     .anyMatch(action -> action.permanentId().equals(permanentCaptor.getValue().getId()));
         }
@@ -527,7 +527,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(3), eq(false));
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(3), eq(false), any(StackEntry.class));
         }
 
         @Test
@@ -547,7 +547,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean(), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getAttachedTo()).isEqualTo(targetId);
         }
 
@@ -579,7 +579,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean(), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getAttachedTo()).isEqualTo(PLAYER2_ID);
         }
 
@@ -634,7 +634,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LORE)).isEqualTo(1);
         }
 
@@ -669,7 +669,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LORE)).isZero();
             assertThat(gd.stack).isEmpty();
         }
@@ -701,7 +701,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false), any(StackEntry.class));
             UUID sagaPermanentId = permanentCaptor.getValue().getId();
 
             assertThat(gd.stack).hasSize(1);
@@ -724,7 +724,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean(), any(StackEntry.class));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Artifact");
         }
 
@@ -741,7 +741,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(5), eq(false));
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(5), eq(false), any(StackEntry.class));
         }
 
         @Test

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({StiltManToweringTerror.class, SolRing.class, Forest.class, GrizzlyBears.class})
@@ -23,7 +25,9 @@ class StiltManToweringTerrorTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
-        resolveCombat();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(artifact.getId())
