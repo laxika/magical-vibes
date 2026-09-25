@@ -105,6 +105,7 @@ public enum CardSubtype {
     WEREWOLF("Werewolf"),
     WOLF("Wolf"),
     MONK("Monk"),
+    MOONFOLK("Moonfolk"),
     GRIFFIN("Griffin"),
     SKELETON("Skeleton"),
     ELEPHANT("Elephant"),

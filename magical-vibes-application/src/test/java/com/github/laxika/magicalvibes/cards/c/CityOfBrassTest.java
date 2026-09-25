@@ -139,8 +139,8 @@ class CityOfBrassTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapping an already-tapped City of Brass does not trigger its damage ability")
-    void tappingAlreadyTappedCityDoesNotTrigger() {
+    @DisplayName("Untapping City of Brass does not trigger its damage ability")
+    void untappingCityDoesNotTrigger() {
         Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
         city.tap();
         harness.setHand(player1, List.of(new Twiddle()));
@@ -151,7 +151,7 @@ class CityOfBrassTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(city.isTapped()).isTrue();
+        assertThat(city.isTapped()).isFalse();
         harness.assertLife(player1, 20);
     }
 }

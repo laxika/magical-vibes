@@ -44,7 +44,8 @@ class InvisibleForceFieldTest extends BaseCardTest {
         cast(List.of());
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Invisible Force Field");
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getName().equals("Invisible Force Field"));
     }
 
     @Test

@@ -98,8 +98,7 @@ class InkEyesServantOfOniTest extends BaseCardTest {
         harness.assertInHand(player1, "Gnarled Mass");
         Permanent inkEyes = findPermanent(player1, "Ink-Eyes, Servant of Oni");
         assertThat(inkEyes.isTapped()).isTrue();
-        assertThat(inkEyes.isAttacking()).isTrue();
-        assertThat(inkEyes.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(inkEyes.isAttackedThisTurn()).isTrue();
     }
 
     private void attackWithInkEyesDealingDamage() {

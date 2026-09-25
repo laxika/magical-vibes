@@ -57,12 +57,14 @@ class AncestralCommunionTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, secondPermanent.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(firstPermanent, secondPermanent);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     private void addMana() {

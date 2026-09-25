@@ -123,6 +123,7 @@ class ExtraplanarLensTest extends BaseCardTest {
         arixmethes.setCounterCount(CounterType.SLUMBER, 1);
         harness.forceActivePlayer(player1);
         harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
     }

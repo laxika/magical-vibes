@@ -2264,6 +2264,9 @@ public class TriggeredAbilityQueueService {
 
             int declaredMinTargets = declaredMinimumTargetCount(pending.sourceCard(), pending.effects());
             int describedMinTargets = returnEffect != null && returnEffect.upTo()
+                    || pending.effects().stream().anyMatch(candidate ->
+                            unwrapConditionalEffect(candidate) instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect steal
+                                    && steal.upTo())
                     ? 0 : declaredMinTargets >= 0
                             ? declaredMinTargets : describedTarget == null ? 0 : describedTarget.minTargets();
             int minTargets = Math.max(pending.minCount(), describedMinTargets);

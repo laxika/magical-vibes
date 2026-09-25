@@ -29,6 +29,7 @@ class GrizzledHuntmasterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.RevealedHandChoice handChoice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
@@ -62,6 +63,7 @@ class GrizzledHuntmasterTest extends BaseCardTest {
         addMana();
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, -1);
 

@@ -13,6 +13,6 @@ public class JadeLeech extends Card {
 
     public JadeLeech() {
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
-                new CardColorPredicate(CardColor.GREEN), 1, CostModificationScope.SELF));
+                new CardColorPredicate(CardColor.GREEN), "{G}", CostModificationScope.SELF));
     }
 }

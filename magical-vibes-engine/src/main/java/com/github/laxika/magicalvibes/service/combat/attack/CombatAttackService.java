@@ -455,6 +455,9 @@ public class CombatAttackService {
         if (attackerIndices.size() > 1 && canOnlyAttackAlone(gameData, attacker)) {
             return true;
         }
+        if (gameQueryService.hasLostPrintedAbilities(gameData, attacker)) {
+            return false;
+        }
 
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction

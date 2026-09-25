@@ -1158,6 +1158,11 @@ public class DeathTriggerCollectorService {
         if (effect instanceof DyingCreaturePermanentAwareEffect aware
                 && death.dyingPermanent() != null) {
             resolvedEffect = aware.boundToDyingCreature(death.dyingPermanent());
+        } else if (effect instanceof MayEffect may
+                && may.wrapped() instanceof DyingCreaturePermanentAwareEffect aware
+                && death.dyingPermanent() != null) {
+            resolvedEffect = new MayEffect(aware.boundToDyingCreature(death.dyingPermanent()),
+                    may.prompt(), may.elseEffect(), may.choicePlayer());
         }
         if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
@@ -3123,6 +3128,18 @@ public class DeathTriggerCollectorService {
                 ? new RegisterDelayedReturnCardFromGraveyardToHandEffect(cd.dyingCard().getId())
                 : delayedReturn;
         return handleAllyNontokenDefault(match, bound, ctx);
+    }
+
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
+    boolean handleAllyNontokenPermanentConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        if (death.dyingPermanent() == null || !predicateEvaluationService.matchesPermanentPredicate(
+                match.gameData(), death.dyingPermanent(), conditional.predicate())) {
+            return false;
+        }
+        return handleAllyNontokenDefault(match, conditional.wrapped(), ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)

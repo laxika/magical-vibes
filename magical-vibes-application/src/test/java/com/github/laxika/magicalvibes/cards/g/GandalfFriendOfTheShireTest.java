@@ -46,6 +46,7 @@ class GandalfFriendOfTheShireTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, findPermanent(player1, "Grizzly Bears").getId());
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

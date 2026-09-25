@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinsPerHeadsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -55,6 +56,12 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.perHeads() instanceof CreateTokensAttackingEffect tokens) {
+            dispatch(gameData, entry, new CreateTokensAttackingEffect(
+                    tokens.amount() * heads, tokens.tokenEffect(), tokens.sacrificeAtEndStep(),
+                    tokens.useTriggeringPermanentController()));
+            return;
+        }
         for (int i = 0; i < heads; i++) {
             dispatch(gameData, entry, e.perHeads());
         }

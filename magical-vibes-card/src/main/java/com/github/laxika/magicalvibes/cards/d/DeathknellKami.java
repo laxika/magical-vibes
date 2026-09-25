@@ -29,6 +29,7 @@ public class DeathknellKami extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(1))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

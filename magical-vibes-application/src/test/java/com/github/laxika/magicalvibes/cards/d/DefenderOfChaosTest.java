@@ -61,7 +61,7 @@ class DefenderOfChaosTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, defender.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from white");
+                .hasMessageContaining("protection from the source");
     }
 
     @Test

@@ -2827,6 +2827,9 @@ public class CombatBlockService {
         if (hasCantAttackOrBlockAlone(blocker) && maximumAdditionalBlockers < 1) {
             return false;
         }
+        if (gameQueryService.hasLostPrintedAbilities(gameData, blocker)) {
+            return true;
+        }
 
         int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
         for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {

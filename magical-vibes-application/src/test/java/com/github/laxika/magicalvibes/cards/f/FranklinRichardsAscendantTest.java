@@ -59,7 +59,8 @@ class FranklinRichardsAscendantTest extends BaseCardTest {
     void doesNotDiscoverAfterCastingCreatureSpell() {
         Permanent franklin = harness.addToBattlefieldAndReturn(player1, new FranklinRichardsAscendant());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

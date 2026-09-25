@@ -4567,4 +4567,17 @@ public class ManaPool {
         }
         return manaSpent;
     }
+
+    /** Records colored and colorless mana spent on a spell without treating colorless as a color. */
+    public static EnumMap<ManaColor, Integer> manaSpentByColorIncludingColorless(
+            EnumMap<ManaColor, Integer> before, EnumMap<ManaColor, Integer> after,
+            Collection<ManaColor> convokeContributions) {
+        EnumMap<ManaColor, Integer> spent = coloredManaSpent(before, after, convokeContributions);
+        int colorless = before.getOrDefault(ManaColor.COLORLESS, 0)
+                - after.getOrDefault(ManaColor.COLORLESS, 0);
+        if (colorless > 0) {
+            spent.put(ManaColor.COLORLESS, colorless);
+        }
+        return spent;
+    }
 }

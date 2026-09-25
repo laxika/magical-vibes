@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -2018,7 +2019,7 @@ public class DrawService {
                                 drawingPlayerId,
                                 perm.getCard().getName() + "'s ability",
                                 new ArrayList<>(List.of(effect)),
-                                drawingPlayerId,
+                                effect instanceof ChooseOneEffect ? null : drawingPlayerId,
                                 perm.getId()
                         ));
 

@@ -755,6 +755,14 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.CantCastSpellsSharingColorWithMostRecentSpellEffect) {
+                        if (mostRecentSpell != null && card != null
+                                && gameQueryService.getEffectiveCardColors(gameData, mostRecentSpell).stream()
+                                .anyMatch(gameQueryService.getEffectiveCardColors(gameData, card)::contains)) {
+                            return true;
+                        }
+                        continue;
+                    }
                     if (effect instanceof SpellCastingRestrictionEffect restriction
                             && restriction.preventsCasting(perm, mostRecentSpell, card, chosenX)) {
                         return true;

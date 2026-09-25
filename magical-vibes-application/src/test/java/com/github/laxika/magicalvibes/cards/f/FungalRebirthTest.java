@@ -62,6 +62,6 @@ class FungalRebirthTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("permanent");
+                .hasMessageContaining("required predicate");
     }
 }

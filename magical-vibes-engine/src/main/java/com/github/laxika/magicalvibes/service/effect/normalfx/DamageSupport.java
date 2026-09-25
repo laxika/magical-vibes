@@ -277,13 +277,14 @@ public class DamageSupport {
                 processSourceRedirectDamage(gameData);
             }
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
-            if (sourcePermId != null) {
-                rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, sourcePermId, rawDamage);
+            UUID chosenSourceId = damageSourceKey(entry, damageSource);
+            if (chosenSourceId != null) {
+                rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, chosenSourceId, rawDamage);
                 processEyeForAnEyeReflections(gameData);
                 if (rawDamage <= 0) return 0;
                 // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
                 rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
-                        gameData, sourcePermId, target.getId(), rawDamage);
+                        gameData, chosenSourceId, target.getId(), rawDamage);
                 processSourceRedirectDamage(gameData);
                 if (rawDamage <= 0) return 0;
             }
@@ -1744,7 +1745,9 @@ public class DamageSupport {
             return null;
         }
 
-        Set<CardColor> sourceColors = sourceCardColors(entry.getEffectiveDamageSourceCard());
+        Card damageSource = entry.getEffectiveDamageSourceCard();
+        Set<CardColor> sourceColors = damageSource == null ? Set.of()
+                : gameData.spellColorOverrides.getOrDefault(damageSource.getId(), sourceCardColors(damageSource));
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(damagedPlayerId, List.of())) {
             if (permanent.getChosenColor() == null || !sourceColors.contains(permanent.getChosenColor())) {
                 continue;

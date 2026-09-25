@@ -2404,6 +2404,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** The controller is choosing the creature that will be their Ring-bearer. */
     record RingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
 
+    /** Ring-bearer choice for TemptTheRingEffect and its separate RingState model. */
+    record TemptTheRingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
+
     /** Chooses a controlled permanent from which a counter will be removed. */
     record RemoveCounterFromChosenOwnPermanent(PermanentPredicate permanentFilter)
             implements PermanentChoiceContext {}
