@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MyrServitor.class, Arachnoid.class})
 class MyrServitorTest extends BaseCardTest {
 
     @Test
@@ -19,7 +21,7 @@ class MyrServitorTest extends BaseCardTest {
         MyrServitor source = new MyrServitor();
         MyrServitor player1Servitor = new MyrServitor();
         MyrServitor player2Servitor = new MyrServitor();
-        Card unrelated = new GrizzlyBears();
+        Card unrelated = new Arachnoid();
 
         harness.addToBattlefield(player1, source);
         harness.setGraveyard(player1, List.of(player1Servitor, unrelated));
@@ -39,6 +41,52 @@ class MyrServitorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(unrelated.getId());
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger returns every matching Myr Servitor from each graveyard")
+    void returnsEveryMatchingMyrServitorFromEachGraveyard() {
+        MyrServitor source = new MyrServitor();
+        MyrServitor player1Servitor1 = new MyrServitor();
+        MyrServitor player1Servitor2 = new MyrServitor();
+        MyrServitor player2Servitor1 = new MyrServitor();
+        MyrServitor player2Servitor2 = new MyrServitor();
+        Arachnoid unrelated = new Arachnoid();
+
+        harness.addToBattlefield(player1, source);
+        harness.setGraveyard(player1, List.of(player1Servitor1, unrelated, player1Servitor2));
+        harness.setGraveyard(player2, List.of(player2Servitor1, player2Servitor2));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(source.getId(), player1Servitor1.getId(), player1Servitor2.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getCard)
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(player2Servitor1.getId(), player2Servitor2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(unrelated.getId());
+    }
+
+    @Test
+    @DisplayName("No trigger is created when no Myr Servitor is on the battlefield at upkeep")
+    void doesNotTriggerWithoutBattlefieldSource() {
+        MyrServitor graveyardServitor = new MyrServitor();
+
+        harness.setGraveyard(player1, List.of(graveyardServitor));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(graveyardServitor.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(graveyardServitor.getId());
     }
 
     @Test

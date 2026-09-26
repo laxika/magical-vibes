@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "4ED", collectorNumber = "275")
 @CardRegistration(set = "SUM", collectorNumber = "219")
 @CardRegistration(set = "3ED", collectorNumber = "219")
+@CardRegistration(set = "2ED", collectorNumber = "220")
 public class TimberWolves extends Card {
 
     public TimberWolves() {

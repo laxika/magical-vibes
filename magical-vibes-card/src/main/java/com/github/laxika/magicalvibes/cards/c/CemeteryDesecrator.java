@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CemeteryDesecratorEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "100")
+@CardRegistration(set = "DBL", collectorNumber = "367")
 public class CemeteryDesecrator extends Card {
 
     public CemeteryDesecrator() {

@@ -13,6 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "MPS", collectorNumber = "7")
+@CardRegistration(set = "AA1", collectorNumber = "3")
+@CardRegistration(set = "CMD", collectorNumber = "244")
+@CardRegistration(set = "CMM", collectorNumber = "375")
+@CardRegistration(set = "CMM", collectorNumber = "601")
+@CardRegistration(set = "CMM", collectorNumber = "654")
 public class ChampionsHelm extends Card {
 
     public ChampionsHelm() {

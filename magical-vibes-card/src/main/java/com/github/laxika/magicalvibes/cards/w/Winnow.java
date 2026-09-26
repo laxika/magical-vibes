@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -22,7 +22,7 @@ public class Winnow extends Card {
                 "Target must be a nonland permanent"
         )).addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentSharesNameWithAnotherPermanentPredicate()),
-                new DestroyTargetPermanentAndAllWithSameNameEffect(nonland)
+                new DestroyTargetPermanentEffect()
         )).addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

@@ -1,35 +1,32 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KamiOfAncientLaw;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.n.NinjaOfTheDeepHours;
+import com.github.laxika.magicalvibes.cards.t.TeardropKami;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RibbonsOfTheReikai.class, TeardropKami.class, NinjaOfTheDeepHours.class})
 class RibbonsOfTheReikaiTest extends BaseCardTest {
 
     private void castRibbons() {
-        harness.setLibrary(player1, new ArrayList<>(
-                IntStream.range(0, 6).mapToObj(i -> (Card) new GrizzlyBears()).toList()));
-        harness.setHand(player1, List.of(new RibbonsOfTheReikai()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.setLibrary(player1, List.of(
+                new NinjaOfTheDeepHours(), new NinjaOfTheDeepHours(), new NinjaOfTheDeepHours(),
+                new NinjaOfTheDeepHours(), new NinjaOfTheDeepHours(), new NinjaOfTheDeepHours()));
+        harness.castFromHand(player1, new RibbonsOfTheReikai(), "{4}{U}");
+        harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Draws a card for each Spirit the caster controls")
     void drawsOnePerSpirit() {
-        harness.addToBattlefield(player1, new KamiOfAncientLaw());
-        harness.addToBattlefield(player1, new KamiOfAncientLaw());
+        harness.addToBattlefield(player1, new TeardropKami());
+        harness.addToBattlefield(player1, new TeardropKami());
 
         castRibbons();
 
@@ -40,7 +37,7 @@ class RibbonsOfTheReikaiTest extends BaseCardTest {
     @Test
     @DisplayName("Draws nothing when no Spirits are controlled")
     void drawsNothingWithoutSpirits() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new NinjaOfTheDeepHours());
 
         castRibbons();
 
@@ -51,9 +48,9 @@ class RibbonsOfTheReikaiTest extends BaseCardTest {
     @Test
     @DisplayName("Spirits controlled by the opponent are not counted")
     void ignoresOpponentSpirits() {
-        harness.addToBattlefield(player1, new KamiOfAncientLaw());
-        harness.addToBattlefield(player2, new KamiOfAncientLaw());
-        harness.addToBattlefield(player2, new KamiOfAncientLaw());
+        harness.addToBattlefield(player1, new TeardropKami());
+        harness.addToBattlefield(player2, new TeardropKami());
+        harness.addToBattlefield(player2, new TeardropKami());
 
         castRibbons();
 

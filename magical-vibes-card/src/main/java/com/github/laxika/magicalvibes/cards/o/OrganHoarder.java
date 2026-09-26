@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "66")
+@CardRegistration(set = "DBL", collectorNumber = "66")
 public class OrganHoarder extends Card {
 
     public OrganHoarder() {

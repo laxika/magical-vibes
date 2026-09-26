@@ -54,6 +54,8 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
 
+        UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
+
         Permanent permanent = new Permanent(cardToReturn);
         graveyardReturnSupport.applyPermanentGrants(permanent, null, returnEffect.grantSubtype());
         permanent.getPersistentGrantedKeywords().addAll(returnEffect.grantKeywords());
@@ -66,11 +68,20 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
             permanent.tap();
         }
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
+        battlefieldEntryService.putPermanentOntoBattlefield(
+                gameData, battlefieldControllerId, permanent, enterTappedTypes);
 
+        if (!ownerId.equals(battlefieldControllerId)) {
+            graveyardReturnSupport.trackStolenCreature(
+                    gameData, permanent.getId(), battlefieldControllerId, ownerId);
+        }
+
+        String controlText = returnEffect.returnUnderController()
+                ? " under " + gameData.playerIdToName.get(battlefieldControllerId) + "'s control."
+                : " to the battlefield under its owner's control.";
         gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(ownerId) + " returns ", cardToReturn,
-                " to the battlefield under its owner's control."));
-        graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, cardToReturn);
+                gameData.playerIdToName.get(battlefieldControllerId) + " returns ", cardToReturn, controlText));
+        graveyardReturnSupport.handleCreatureEtbAndLegendRule(
+                gameData, battlefieldControllerId, permanent, cardToReturn);
     }
 }

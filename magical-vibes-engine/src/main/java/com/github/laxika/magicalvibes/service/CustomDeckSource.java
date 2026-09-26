@@ -13,6 +13,10 @@ import java.util.List;
  */
 public interface CustomDeckSource {
 
+    default com.github.laxika.magicalvibes.model.DeckDefinition buildDefinition(String deckId) {
+        return new com.github.laxika.magicalvibes.model.DeckDefinition(buildCustomDeck(deckId), buildCustomSideboard(deckId), null);
+    }
+
     boolean isCustomDeck(String deckId);
 
     List<Card> buildCustomDeck(String deckId);

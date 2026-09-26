@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "NPH", collectorNumber = "29")
+@CardRegistration(set = "SLD", collectorNumber = "1203")
 public class BlightedAgent extends Card {
 
     public BlightedAgent() {

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "TLA", collectorNumber = "196")
+@CardRegistration(set = "SOA", collectorNumber = "58")
+@CardRegistration(set = "SLD", collectorNumber = "2391")
 public class SharedRoots extends Card {
 
     public SharedRoots() {

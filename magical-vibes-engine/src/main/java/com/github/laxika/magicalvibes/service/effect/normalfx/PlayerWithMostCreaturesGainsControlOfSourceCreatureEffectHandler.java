@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsC
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +25,7 @@ public class PlayerWithMostCreaturesGainsControlOfSourceCreatureEffectHandler im
 
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,7 +72,8 @@ public class PlayerWithMostCreaturesGainsControlOfSourceCreatureEffectHandler im
                 for (Permanent permanent : battlefield) {
                     if (predicateEvaluationService.matchesPermanentPredicate(
                             permanent, creatureFilter, filterContext)) {
-                        creatureCount++;
+                        creatureCount += CreatureCountSupport.countsCreatures(creatureFilter)
+                                ? CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService) : 1;
                     }
                 }
             }

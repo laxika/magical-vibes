@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GlacialRay;
-import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
-import com.github.laxika.magicalvibes.cards.o.OrochiSustainer;
+import com.github.laxika.magicalvibes.cards.b.BriarknitKami;
+import com.github.laxika.magicalvibes.cards.g.GhostLitNourisher;
+import com.github.laxika.magicalvibes.cards.i.IntoTheFray;
+import com.github.laxika.magicalvibes.cards.m.MatsuTribeBirdstalker;
 import com.github.laxika.magicalvibes.cards.s.SosukeSonOfSeshiro;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,8 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KashiTribeElite.class, SosukeSonOfSeshiro.class, OrochiSustainer.class,
-        GlacialRay.class, KamiOfOldStone.class})
+@CardUsed({KashiTribeElite.class, SosukeSonOfSeshiro.class, MatsuTribeBirdstalker.class,
+        IntoTheFray.class, GhostLitNourisher.class, BriarknitKami.class})
 class KashiTribeEliteTest extends BaseCardTest {
 
     @Test
@@ -27,11 +28,11 @@ class KashiTribeEliteTest extends BaseCardTest {
     void grantsShroudToLegendarySnakesYouControl() {
         Permanent kashi = addCreatureReady(player1, new KashiTribeElite());
         Permanent sosuke = addCreatureReady(player1, new SosukeSonOfSeshiro());
-        Permanent ordinarySnake = addCreatureReady(player1, new OrochiSustainer());
+        Permanent ordinarySnake = addCreatureReady(player1, new MatsuTribeBirdstalker());
         Permanent opposingSosuke = addCreatureReady(player2, new SosukeSonOfSeshiro());
 
         assertThat(gqs.hasKeyword(gd, sosuke, Keyword.SHROUD)).isTrue();
-        assertThat(gqs.hasKeyword(gd, kashi, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, kashi, Keyword.SHROUD)).isTrue();
         assertThat(gqs.hasKeyword(gd, ordinarySnake, Keyword.SHROUD)).isFalse();
         assertThat(gqs.hasKeyword(gd, opposingSosuke, Keyword.SHROUD)).isFalse();
     }
@@ -41,8 +42,7 @@ class KashiTribeEliteTest extends BaseCardTest {
     void cannotBeTargetedBySpells() {
         addCreatureReady(player1, new KashiTribeElite());
         Permanent sosuke = addCreatureReady(player1, new SosukeSonOfSeshiro());
-        harness.setHand(player1, List.of(new GlacialRay()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new IntoTheFray()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, sosuke.getId(), null))
@@ -51,19 +51,38 @@ class KashiTribeEliteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Shroud prevents targeting a legendary Snake with abilities")
+    void cannotBeTargetedByAbilities() {
+        addCreatureReady(player1, new KashiTribeElite());
+        Permanent sosuke = addCreatureReady(player1, new SosukeSonOfSeshiro());
+        Permanent nourisher = addCreatureReady(player1, new GhostLitNourisher());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        int nourisherIndex = gd.playerBattlefields.get(player1.getId()).indexOf(nourisher);
+        assertThatThrownBy(() -> harness.activateAbility(player1, nourisherIndex, null, sosuke.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
     @DisplayName("Combat damage to a creature taps it and locks its next untap step")
     void combatDamageTapsAndLocksDamagedCreature() {
-        Permanent kashi = addCreatureReady(player1, new KashiTribeElite());
-        kashi.setAttacking(true);
-        addCreatureReady(player2, new KamiOfOldStone());
+        addCreatureReady(player1, new KashiTribeElite());
+        Permanent blocker = addCreatureReady(player2, new BriarknitKami());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
 
-        Permanent kami = findPermanent(player2, "Kami of Old Stone");
-        assertThat(kami.isTapped()).isTrue();
-        assertThat(kami.getSkipUntapCount()).isEqualTo(1);
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getSkipUntapCount()).isZero();
+
+        harness.performUntapStep(player2);
+        assertThat(blocker.isTapped()).isFalse();
     }
 }

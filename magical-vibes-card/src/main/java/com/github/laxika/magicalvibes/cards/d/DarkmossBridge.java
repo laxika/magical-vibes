@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "11")
+@CardRegistration(set = "MH2", collectorNumber = "245")
 public class DarkmossBridge extends Card {
 
     public DarkmossBridge() {

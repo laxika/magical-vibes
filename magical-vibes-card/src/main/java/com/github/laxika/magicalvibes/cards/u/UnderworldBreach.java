@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "161")
+@CardRegistration(set = "SLD", collectorNumber = "2040")
+@CardRegistration(set = "SLD", collectorNumber = "2045")
+@CardRegistration(set = "SPG", collectorNumber = "9")
+@CardRegistration(set = "PZA", collectorNumber = "10")
 public class UnderworldBreach extends Card {
 
     public UnderworldBreach() {

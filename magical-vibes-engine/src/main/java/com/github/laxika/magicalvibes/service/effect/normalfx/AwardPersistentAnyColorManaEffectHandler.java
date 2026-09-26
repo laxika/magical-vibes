@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -43,10 +44,15 @@ public class AwardPersistentAnyColorManaEffectHandler implements NormalEffectHan
             return;
         }
 
+        ChoiceContext choiceContext = manaEffect.restriction() == ManaSpendRestriction.SPELL_ONLY
+                ? new ChoiceContext.PersistentSpellOnlyManaColorChoice(
+                        entry.getControllerId(), amount, manaEffect.anyColorCombination())
+                : new ChoiceContext.PersistentManaColorChoice(entry.getControllerId(), amount);
+        String prompt = manaEffect.restriction() == ManaSpendRestriction.SPELL_ONLY
+                ? "Choose a color of mana to add (spells only)."
+                : "Choose a color of mana to add.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                entry.getControllerId(), null, null,
-                new ChoiceContext.PersistentManaColorChoice(entry.getControllerId(), amount),
-                ManaColor.COLORS.stream().map(Enum::name).toList(),
-                "Choose a color of mana to add."));
+                entry.getControllerId(), null, null, choiceContext,
+                ManaColor.COLORS.stream().map(Enum::name).toList(), prompt));
     }
 }

@@ -999,7 +999,7 @@ class StateBasedActionServiceTest {
         }
 
         @Test
-        @DisplayName("Both players drawing from empty library results in both loss checks")
+        @DisplayName("Both players drawing from empty library simultaneously draws the game")
         void bothPlayersDrawFromEmptyLibrary() {
             gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
             gd.playersAttemptedDrawFromEmptyLibrary.add(player2Id);
@@ -1007,13 +1007,12 @@ class StateBasedActionServiceTest {
                     .thenReturn(LossOutcome.LOSES);
             when(gameOutcomeService.resolveLoss(gd, player2Id, LossReason.EMPTY_LIBRARY))
                     .thenReturn(LossOutcome.LOSES);
-            when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
-            when(gameQueryService.getOpponentId(gd, player2Id)).thenReturn(player1Id);
-
             sut.performStateBasedActions(gd);
 
-            verify(gameOutcomeService).declareWinner(gd, player2Id);
-            verify(gameOutcomeService).declareWinner(gd, player1Id);
+            verify(gameOutcomeService).resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY);
+            verify(gameOutcomeService).resolveLoss(gd, player2Id, LossReason.EMPTY_LIBRARY);
+            verify(gameOutcomeService).declareDraw(gd);
+            verify(gameOutcomeService, never()).declareWinner(any(), any());
             assertThat(gd.playersAttemptedDrawFromEmptyLibrary).isEmpty();
         }
 

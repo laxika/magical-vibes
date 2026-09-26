@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "PLS", collectorNumber = "81")
+@CardRegistration(set = "DMU", collectorNumber = "164")
 public class GaeasMight extends Card {
 
     public GaeasMight() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -17,10 +18,10 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
+import java.util.ArrayList;
 import java.util.UUID;
 
-/** Applies Lazav, Familiar Stranger's temporary copy of the exiled creature card. */
+/** Applies a temporary copy of a captured artifact or creature card. */
 @Component
 @RequiredArgsConstructor
 public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
@@ -36,7 +37,8 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card card = ((BecomeCopyOfCardUntilEndOfTurnEffect) effect).card();
+        BecomeCopyOfCardUntilEndOfTurnEffect copyEffect = (BecomeCopyOfCardUntilEndOfTurnEffect) effect;
+        Card card = copyEffect.card();
         if (card == null || !card.hasType(CardType.CREATURE)) {
             return;
         }
@@ -51,7 +53,17 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
         }
 
         String originalName = source.getCard().getName();
-        permanentCopierService.applyCloneCopy(source, card, null, null, Set.of());
+        permanentCopierService.applyCloneCopy(source, card, null, null,
+                copyEffect.additionalTypesOverride());
+        if (!copyEffect.additionalSubtypesOverride().isEmpty()) {
+            ArrayList<CardSubtype> subtypes = new ArrayList<>(source.getCard().getSubtypes());
+            for (CardSubtype subtype : copyEffect.additionalSubtypesOverride()) {
+                if (!subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+            source.getCard().setSubtypes(subtypes);
+        }
         source.setCopyUntilEndOfTurn(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(),

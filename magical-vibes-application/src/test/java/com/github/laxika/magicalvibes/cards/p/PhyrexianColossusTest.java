@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -12,10 +11,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArgothianSwine.class, GrizzlyBears.class, PhyrexianColossus.class})
+@CardUsed({GrizzlyBears.class, PhyrexianColossus.class})
 class PhyrexianColossusTest extends BaseCardTest {
-
-    // ===== Doesn't untap during untap step =====
 
     @Test
     @DisplayName("Tapped Phyrexian Colossus does not untap during its controller's untap step")
@@ -27,8 +24,6 @@ class PhyrexianColossusTest extends BaseCardTest {
 
         assertThat(colossus.isTapped()).isTrue();
     }
-
-    // ===== Activated ability: pay 8 life to untap =====
 
     @Test
     @DisplayName("Paying 8 life untaps Phyrexian Colossus")
@@ -55,8 +50,6 @@ class PhyrexianColossusTest extends BaseCardTest {
                 .hasMessageContaining("Not enough life");
     }
 
-    // ===== Blocking restriction: can't be blocked by fewer than three =====
-
     @Test
     @DisplayName("Cannot be blocked by fewer than three creatures")
     void cannotBeBlockedByFewerThanThree() {
@@ -66,8 +59,7 @@ class PhyrexianColossusTest extends BaseCardTest {
             addCreatureReady(player2, new GrizzlyBears());
         }
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
@@ -75,15 +67,13 @@ class PhyrexianColossusTest extends BaseCardTest {
                 .hasMessageContaining("3 or more creatures");
     }
 
-    // ===== Blocking restriction: can't be blocked by fewer than three =====
-
     @Test
     @DisplayName("Cannot be blocked by fewer than three creatures")
     void cannotBeBlockedByFewerThanThreeUpstreamReview() {
         addCreatureReady(player1, new PhyrexianColossus());
 
         for (int i = 0; i < 3; i++) {
-            addCreatureReady(player2, new ArgothianSwine());
+            addCreatureReady(player2, new GrizzlyBears());
         }
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -103,8 +93,7 @@ class PhyrexianColossusTest extends BaseCardTest {
             addCreatureReady(player2, new GrizzlyBears());
         }
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -120,11 +109,10 @@ class PhyrexianColossusTest extends BaseCardTest {
         addCreatureReady(player1, new PhyrexianColossus());
 
         for (int i = 0; i < 3; i++) {
-            addCreatureReady(player2, new ArgothianSwine());
+            addCreatureReady(player2, new GrizzlyBears());
         }
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),

@@ -7,12 +7,15 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayCastExiledNonlandCardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +33,8 @@ public class LookAtTopCardsMayCastExiledNonlandCardEffectHandler implements Norm
 
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -41,8 +46,14 @@ public class LookAtTopCardsMayCastExiledNonlandCardEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LookAtTopCardsMayCastExiledNonlandCardEffect typedEffect =
                 (LookAtTopCardsMayCastExiledNonlandCardEffect) effect;
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         int count = amountEvaluationService.evaluate(gameData, typedEffect.count(),
-                AmountContext.forStackEntry(entry, null));
+                AmountContext.forStackEntry(entry, source));
         if (count <= 0) {
             return;
         }
@@ -61,6 +72,9 @@ public class LookAtTopCardsMayCastExiledNonlandCardEffectHandler implements Norm
 
         List<Card> nonlandCards = topCards.stream()
                 .filter(card -> !card.hasType(CardType.LAND))
+                .filter(card -> typedEffect.castPredicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        card, typedEffect.castPredicate(), entry.getCard().getId(), gameData, controllerId))
                 .toList();
         if (nonlandCards.isEmpty()) {
             Collections.shuffle(topCards);

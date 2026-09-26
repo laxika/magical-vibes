@@ -30,6 +30,7 @@ import java.util.Set;
  * III — Creatures you control gain deathtouch until end of turn.
  */
 @CardRegistration(set = "KHM", collectorNumber = "206")
+@CardRegistration(set = "ECC", collectorNumber = "120")
 public class BindingTheOldGods extends Card {
 
     public BindingTheOldGods() {

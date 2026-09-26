@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class ExileAndReturnTransformedService {
     private final GameLogService gameLogService;
     private final SagaChapterService sagaChapterService;
     private final CreatureControlService creatureControlService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Exiles the given permanent and immediately returns it transformed. No-op when the permanent
@@ -236,6 +238,7 @@ public class ExileAndReturnTransformedService {
         int loreCounters = gameQueryService.replaceCounters(
                 gameData, saga, CounterType.LORE, 1, controllerId);
         saga.setCounterCount(CounterType.LORE, loreCounters);
+        triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, controllerId);
         List<CardEffect> chapterEffects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
         if (!chapterEffects.isEmpty()) {
             gameData.stack.add(new StackEntry(

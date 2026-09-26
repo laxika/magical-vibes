@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "82")
+@CardRegistration(set = "SLD", collectorNumber = "407")
 public class RetreatToCoralhelm extends Card {
 
     public RetreatToCoralhelm() {

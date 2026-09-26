@@ -33,12 +33,11 @@ class LesserGargadonTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking with Lesser Gargadon sacrifices its controller's only land")
     void blockingSacrificesLand() {
-        Permanent attacker = addCreatureReady(player1, new GiantSpider());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GiantSpider());
         addCreatureReady(player2, new LesserGargadon());
         harness.addToBattlefield(player2, new Mountain());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 

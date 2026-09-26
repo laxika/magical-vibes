@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "16")
+@CardRegistration(set = "MH2", collectorNumber = "253")
 public class RustvaleBridge extends Card {
 
     public RustvaleBridge() {

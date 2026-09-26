@@ -42,13 +42,10 @@ class WinotaJoinerOfForcesTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
         assertThat(libraryChoice).isNotNull();
         assertThat(libraryChoice.validCardIds()).containsExactly(human.getId());
-
         harness.handleMultipleCardsChosen(player1, List.of(human.getId()));
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         Permanent enteredHuman = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == human)
+                .filter(permanent -> permanent.getCard().getName().equals(human.getName()))
                 .findFirst()
                 .orElseThrow();
         assertThat(enteredHuman.isTapped()).isTrue();

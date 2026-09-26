@@ -69,10 +69,10 @@ class RitesOfRefusalTest extends BaseCardTest {
     @DisplayName("The controller may decline to pay and the spell is countered")
     void controllerMayDeclineScaledPayment() {
         WoodlandDruid druid = new WoodlandDruid();
-        harness.setHand(player1, List.of(druid, new RitesOfRefusal()));
+        harness.setHand(player1, List.of(druid));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.setHand(player2, List.of(new RitesOfRefusal()));
+        harness.setHand(player2, List.of(new RitesOfRefusal(), new WoodlandDruid()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 

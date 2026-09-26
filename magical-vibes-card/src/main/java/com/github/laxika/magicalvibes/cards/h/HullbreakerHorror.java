@@ -13,6 +13,12 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "303")
 @CardRegistration(set = "INR", collectorNumber = "357")
 @CardRegistration(set = "VOW", collectorNumber = "63")
+@CardRegistration(set = "DBL", collectorNumber = "330")
+@CardRegistration(set = "SLZ", collectorNumber = "19")
+@CardRegistration(set = "SLZ", collectorNumber = "140")
+@CardRegistration(set = "SLZ", collectorNumber = "261")
+@CardRegistration(set = "SLD", collectorNumber = "2321")
+@CardRegistration(set = "SLD", collectorNumber = "2336")
 public class HullbreakerHorror extends Card {
 
     public HullbreakerHorror() {

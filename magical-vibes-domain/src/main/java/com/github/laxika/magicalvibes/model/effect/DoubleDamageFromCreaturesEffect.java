@@ -1,12 +1,21 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-/** Static replacement effect that doubles damage dealt by creatures controlled by this effect's controller. */
-public record DoubleDamageFromCreaturesEffect() implements SourceDamageMultiplyingEffect {
+import java.util.List;
 
-    private static final PermanentPredicate SOURCE_FILTER = new PermanentIsCreaturePredicate();
+/** Static replacement effect that doubles damage dealt by creatures controlled by this effect's controller,
+ * optionally restricted by an additional source predicate. */
+public record DoubleDamageFromCreaturesEffect(PermanentPredicate additionalSourceFilter)
+        implements SourceDamageMultiplyingEffect {
+
+    private static final PermanentPredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
+
+    public DoubleDamageFromCreaturesEffect() {
+        this(null);
+    }
 
     @Override
     public int damageMultiplier() {
@@ -15,6 +24,8 @@ public record DoubleDamageFromCreaturesEffect() implements SourceDamageMultiplyi
 
     @Override
     public PermanentPredicate sourceFilter() {
-        return SOURCE_FILTER;
+        return additionalSourceFilter == null
+                ? CREATURE_FILTER
+                : new PermanentAllOfPredicate(List.of(CREATURE_FILTER, additionalSourceFilter));
     }
 }

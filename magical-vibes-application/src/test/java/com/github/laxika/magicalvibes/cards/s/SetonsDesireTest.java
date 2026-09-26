@@ -109,7 +109,7 @@ class SetonsDesireTest extends BaseCardTest {
         Permanent attacker = addAttackingCreature(player1);
         attachAura(player1, attacker);
         Permanent blocker = addCreatureReady(player2, new PatrolHound());
-        blocker.setTapped(true);
+        blocker.tap();
 
         prepareDeclareBlockers();
 

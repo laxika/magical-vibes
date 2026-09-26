@@ -62,9 +62,8 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, blackSource.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
-                .anyMatch(shield -> shield.playerId().equals(player1.getId())
-                        && shield.sourceId().equals(blackSource.getId()));
+        assertThat(gd.sourceNextDamageToAnyTargetShields)
+                .anyMatch(shield -> shield.sourceId().equals(blackSource.getId()));
     }
 
     @Test
@@ -83,7 +82,7 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
     @Test
@@ -97,7 +96,7 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
     @Test
@@ -140,6 +139,23 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The chosen black source's damage to another player is prevented")
+    void preventsDamageToAnotherPlayer() {
+        Permanent pilgrim = addCreatureReady(player1, new PilgrimOfVirtue());
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, indexOf(player1, pilgrim), null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        attacker.setAttacking(true);
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
     private int indexOf(Player player, Permanent permanent) {

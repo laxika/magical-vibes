@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ public class MakeAllCreaturesUnblockableEffectHandler implements NormalEffectHan
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,19 +29,24 @@ public class MakeAllCreaturesUnblockableEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         boolean controllerOnly = ((MakeAllCreaturesUnblockableEffect) effect).controllerOnly();
+        var filter = ((MakeAllCreaturesUnblockableEffect) effect).filter();
         gameData.forEachPermanent((playerId, perm) -> {
             if (controllerOnly && !playerId.equals(entry.getControllerId())) {
                 return;
             }
-            if (gameQueryService.isCreature(gameData, perm)) {
+            if (gameQueryService.isCreature(gameData, perm)
+                    && (filter == null || predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, perm, filter))) {
                 perm.setCantBeBlocked(true);
             }
         });
 
-        String logEntry = controllerOnly
+        String logEntry = filter != null
+                ? "Matching creatures can't be blocked this turn."
+                : controllerOnly
                 ? "Creatures its controller controls can't be blocked this turn."
                 : "Creatures can't be blocked this turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - All creatures can't be blocked this turn", gameData.id);
+        log.info("Game {} - {}", gameData.id, logEntry);
     }
 }

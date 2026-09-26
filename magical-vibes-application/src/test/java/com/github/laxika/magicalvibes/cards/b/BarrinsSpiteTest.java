@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
+import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
+import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BarrinsSpite.class, BenalishLancer.class, CaptainSisay.class, EmpressGalina.class,
+        KavuAggressor.class})
 class BarrinsSpiteTest extends BaseCardTest {
 
     private void castBarrinsSpite(Permanent first, Permanent second) {
@@ -28,60 +32,58 @@ class BarrinsSpiteTest extends BaseCardTest {
     @Test
     @DisplayName("The targeted creatures' controller chooses which one to sacrifice")
     void controllerChoosesWhichCreatureToSacrifice() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        Permanent giant = addCreatureReady(player2, new HillGiant());
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+        Permanent lancer = addCreatureReady(player2, new BenalishLancer());
 
-        castBarrinsSpite(bears, giant);
+        castBarrinsSpite(kavu, lancer);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), giant.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(kavu.getId(), lancer.getId());
     }
 
     @Test
     @DisplayName("The chosen creature is sacrificed and the other returns to its owner's hand")
     void sacrificesChosenAndReturnsOther() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        Permanent giant = addCreatureReady(player2, new HillGiant());
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+        Permanent lancer = addCreatureReady(player2, new BenalishLancer());
 
-        castBarrinsSpite(bears, giant);
-        harness.handlePermanentChosen(player2, bears.getId());
+        castBarrinsSpite(kavu, lancer);
+        harness.handlePermanentChosen(player2, kavu.getId());
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Kavu Aggressor");
+        harness.assertNotOnBattlefield(player2, "Kavu Aggressor");
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInHand(player2, "Benalish Lancer");
     }
 
     @Test
     @DisplayName("With only one target left legal, that one is sacrificed and nothing returns")
     void singleRemainingTargetIsSacrificedWithoutReturningAnything() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        Permanent giant = addCreatureReady(player2, new HillGiant());
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+        Permanent lancer = addCreatureReady(player2, new BenalishLancer());
 
         harness.setHand(player1, List.of(new BarrinsSpite()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, List.of(bears.getId(), giant.getId()));
-        gd.playerBattlefields.get(player2.getId()).remove(giant);
+        harness.castSorcery(player1, 0, List.of(kavu.getId(), lancer.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(lancer);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(card -> card.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Kavu Aggressor");
+        harness.assertNotInHand(player2, "Kavu Aggressor");
+        harness.assertNotInHand(player2, "Benalish Lancer");
     }
 
     @Test
     @DisplayName("The two targets must be controlled by the same player")
     void cannotTargetCreaturesControlledByDifferentPlayers() {
-        Permanent own = addCreatureReady(player1, new GrizzlyBears());
-        Permanent theirs = addCreatureReady(player2, new HillGiant());
+        Permanent own = addCreatureReady(player1, new KavuAggressor());
+        Permanent theirs = addCreatureReady(player2, new BenalishLancer());
 
         harness.setHand(player1, List.of(new BarrinsSpite()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -90,5 +92,30 @@ class BarrinsSpiteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(own.getId(), theirs.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A target that changes controllers before resolution is not affected")
+    void targetChangingControllerBeforeResolutionIsNotAffected() {
+        addCreatureReady(player1, new EmpressGalina());
+        Permanent sisay = addCreatureReady(player2, new CaptainSisay());
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+
+        harness.setHand(player1, List.of(new BarrinsSpite()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, List.of(sisay.getId(), kavu.getId()));
+        harness.activateAbility(player1, 0, 0, null, sisay.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Captain Sisay");
+        harness.assertOnBattlefield(player2, "Kavu Aggressor");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Empress Galina");
+        harness.assertInGraveyard(player2, "Kavu Aggressor");
+        harness.assertNotInHand(player2, "Kavu Aggressor");
     }
 }

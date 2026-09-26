@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "61")
+@CardRegistration(set = "DBL", collectorNumber = "328")
 public class GeralfVisionaryStitcher extends Card {
 
     public GeralfVisionaryStitcher() {

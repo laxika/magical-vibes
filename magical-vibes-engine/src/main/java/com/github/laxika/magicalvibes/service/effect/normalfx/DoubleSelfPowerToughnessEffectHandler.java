@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,8 +39,10 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
         int currentPower = gameQueryService.getEffectivePower(gameData, self);
         int currentToughness = gameQueryService.getEffectiveToughness(gameData, self);
 
-        self.setPowerModifier(self.getPowerModifier() + currentPower);
-        self.setToughnessModifier(self.getToughnessModifier() + currentToughness);
+        self.setPowerModifier(self.getPowerModifier()
+                + MaroGoneNutsSupport.apply(gameData, effect, currentPower));
+        self.setToughnessModifier(self.getToughnessModifier()
+                + MaroGoneNutsSupport.apply(gameData, effect, currentToughness));
 
         
         gameLogService.append(gameData, GameLog.builder().card(self.getCard()).text("'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").").build());

@@ -32,12 +32,8 @@ public class TriggeringObjectControllerGainsControlOfEnchantedPermanentEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect) effect;
-        StackEntry triggeringEntry = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (triggeringEntry == null || aura == null || aura.getAttachedTo() == null) return;
-
-        Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-        UUID newControllerId = triggeringEntry.getControllerId();
+        Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        UUID newControllerId = entry.getTriggeringPermanentControllerId();
         if (enchantedPermanent == null || newControllerId == null) return;
 
         creatureControlService.applyControlEffect(gameData, newControllerId, enchantedPermanent,

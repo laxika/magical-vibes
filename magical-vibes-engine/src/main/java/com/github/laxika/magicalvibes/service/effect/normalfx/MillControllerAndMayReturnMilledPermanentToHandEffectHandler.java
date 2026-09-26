@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -37,8 +40,10 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MillControllerAndMayReturnMilledPermanentToHandEffect millEffect =
                 (MillControllerAndMayReturnMilledPermanentToHandEffect) effect;
+        int count = Math.max(0, amountEvaluationService.evaluate(
+                gameData, millEffect.count(), AmountContext.forStackEntry(entry, null)));
         List<Card> milled = graveyardService.resolveMillPlayer(
-                gameData, entry.getControllerId(), millEffect.count());
+                gameData, entry.getControllerId(), count);
 
         List<Card> permanentCards = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LightningBlast.class, RagingGoblin.class, RedwoodTreefolk.class, Plains.class, ChandraNalaar.class})
+@CardUsed({LightningBlast.class, RagingGoblin.class, RedwoodTreefolk.class, Plains.class, ChandraNalaar.class,
+        InvasionOfRegatha.class, DisciplesOfTheInferno.class})
 class LightningBlastTest extends BaseCardTest {
 
     @Test
@@ -70,6 +73,19 @@ class LightningBlastTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Deals 4 damage to a target battle")
+    void deals4DamageToBattle() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InvasionOfRegatha());
+        target.setCounterCount(CounterType.DEFENSE, 5);
+        harness.setHand(player1, List.of(new LightningBlast()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
     }
 
     @Test

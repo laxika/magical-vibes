@@ -148,7 +148,7 @@ public final class CombatDamageAssignmentHeuristic {
         if (deathtouch) {
             return Math.max(0, 1 - target.currentDamage());
         }
-        return Math.max(0, target.effectiveToughness() - target.currentDamage());
+        return Math.max(0, target.lethalDamageThreshold() - target.currentDamage());
     }
 
     private static int threat(CombatDamageTarget target, GameData gameData, GameQueryService gameQueryService) {
@@ -159,7 +159,7 @@ public final class CombatDamageAssignmentHeuristic {
             }
         }
         // Fallback when the permanent cannot be resolved (simulation edge cases).
-        return Math.max(0, target.effectiveToughness() - target.currentDamage());
+        return Math.max(0, target.lethalDamageThreshold() - target.currentDamage());
     }
 
     private static boolean isIndestructible(CombatDamageTarget target, GameData gameData,

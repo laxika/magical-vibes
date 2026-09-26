@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GenjuOfTheSpires.class, Mountain.class, Forest.class, StoneRain.class})
 class GenjuOfTheSpiresTest extends BaseCardTest {
 
     @Test
@@ -44,11 +45,11 @@ class GenjuOfTheSpiresTest extends BaseCardTest {
         activateGenju();
 
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
-        assertThat(mountain.getEffectivePower()).isEqualTo(6);
-        assertThat(mountain.getEffectiveToughness()).isEqualTo(1);
-        assertThat(mountain.getTransientSubtypes()).contains(CardSubtype.SPIRIT);
-        assertThat(mountain.getAnimatedColor()).isEqualTo(CardColor.RED);
-        assertThat(mountain.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, mountain)).containsExactly(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveColors(gd, mountain)).containsExactly(CardColor.RED);
+        assertThat(gqs.isLand(gd, mountain)).isTrue();
     }
 
     @Test
@@ -74,10 +75,8 @@ class GenjuOfTheSpiresTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the "may return" trigger
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Genju of the Spires"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Genju of the Spires"));
+        harness.assertInHand(player1, "Genju of the Spires");
+        harness.assertNotInGraveyard(player1, "Genju of the Spires");
     }
 
     @Test
@@ -89,22 +88,39 @@ class GenjuOfTheSpiresTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
+        harness.assertInGraveyard(player1, "Genju of the Spires");
+    }
+
+    @Test
+    @DisplayName("The trigger returns only the Genju that enchanted the destroyed Mountain")
+    void returnsOnlyTheTriggeringGenju() {
+        Permanent mountain = addMountainWithGenju();
+        UUID attachedGenjuId = findPermanent(player1, "Genju of the Spires").getCard().getId();
+        GenjuOfTheSpires otherGenju = new GenjuOfTheSpires();
+        harness.setGraveyard(player1, List.of(otherGenju));
+
+        destroyMountain(mountain);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(attachedGenjuId));
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Genju of the Spires"));
+                .contains(otherGenju)
+                .noneMatch(card -> card.getId().equals(attachedGenjuId));
     }
 
     private Permanent addMountainWithGenju() {
-        harness.addToBattlefield(player1, new Mountain());
-        UUID mountainId = harness.getPermanentId(player1, "Mountain");
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new GenjuOfTheSpires()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castEnchantment(player1, 0, mountainId);
+        harness.castEnchantment(player1, 0, mountain.getId());
         harness.passBothPriorities();
 
-        return findPermanent(player1, "Mountain");
+        return mountain;
     }
 
     private void activateGenju() {

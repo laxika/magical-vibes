@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 public class AlabasterLeech extends Card {
 
     public AlabasterLeech() {
-        // White spells you cast cost {W} more to cast (modeled as +1 generic).
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
-                new CardColorPredicate(CardColor.WHITE), 1, CostModificationScope.SELF));
+                new CardColorPredicate(CardColor.WHITE), "{W}", CostModificationScope.SELF));
     }
 }

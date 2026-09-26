@@ -14,7 +14,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -190,6 +192,24 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
+    void keepsTheFrontOfAThreeFaceSplitCardAndRecordsAllFaceNames() {
+        JsonNode cards = MAPPER.readTree("""
+                [
+                  { "faceName": "Smelt", "number": "100", "side": "a" },
+                  { "faceName": "Herd", "number": "100", "side": "b" },
+                  { "faceName": "Saw", "number": "100", "side": "c" }
+                ]
+                """);
+
+        MtgjsonOracleLoader.FaceIndex faces = MtgjsonOracleLoader.indexFacesByCollectorNumber(cards);
+
+        assertThat(faces.frontFaces().get("100").get("faceName").asText()).isEqualTo("Smelt");
+        assertThat(faces.backFaces().get("100").get("faceName").asText()).isEqualTo("Herd");
+        assertThat(faces.faceNamesByCollectorNumber().get("100"))
+                .containsExactly("Smelt", "Herd", "Saw");
+    }
+
+    @Test
     void parsesCreatureAndNonCreatureTokensUnderScryfallTokenSetCode() {
         JsonNode setData = MAPPER.readTree("""
                 {
@@ -221,5 +241,51 @@ class MtgjsonOracleLoaderTest {
 
         // Emblems are not tokens created by CreateTokenEffect
         assertThat(tokens).hasSize(2);
+    }
+
+    @Test
+    void mergesRegisteredTokenFacesIntoOracleData() {
+        JsonNode token = MAPPER.readTree("""
+                {
+                  "name": "Treasure",
+                  "number": "153",
+                  "type": "Token Artifact \\u2014 Treasure",
+                  "colors": [],
+                  "text": "{T}, Sacrifice this token: Add one mana of any color."
+                }
+                """);
+        Map<String, JsonNode> frontFaces = new HashMap<>();
+
+        MtgjsonOracleLoader.mergeImplementedTokenFaces(frontFaces, MAPPER.createArrayNode().add(token),
+                Set.of("153"));
+
+        assertThat(frontFaces).containsKey("153");
+        OracleData data = MtgjsonOracleLoader.parseOracleData(frontFaces.get("153"), false);
+        assertThat(data.name()).isEqualTo("Treasure");
+        assertThat(data.type()).isEqualTo(CardType.ARTIFACT);
+        assertThat(data.subtypes()).containsExactly(CardSubtype.TREASURE);
+        assertThat(data.cardText()).isEqualTo("{T}, Sacrifice this token: Add one mana of any color.");
+    }
+
+    @Test
+    void usesMscAlternatePrintingOnlyWhileBeginnerBoxNumberIsMissing() {
+        JsonNode alternate = MAPPER.readTree("""
+                { "name": "Ant-Man, Scott Lang", "number": "834", "rarity": "common" }
+                """);
+        JsonNode original = MAPPER.readTree("""
+                { "name": "Ant-Man, Scott Lang", "number": "513", "rarity": "rare" }
+                """);
+        Map<String, JsonNode> faces = new HashMap<>(Map.of("834", alternate));
+        Map<String, String> rarities = new HashMap<>(Map.of("834", "common"));
+
+        MtgjsonOracleLoader.applyMissingPrintingAliases("MSC", faces, rarities);
+        assertThat(faces.get("513")).isSameAs(alternate);
+        assertThat(rarities.get("513")).isEqualTo("common");
+
+        faces.put("513", original);
+        rarities.put("513", "rare");
+        MtgjsonOracleLoader.applyMissingPrintingAliases("MSC", faces, rarities);
+        assertThat(faces.get("513")).isSameAs(original);
+        assertThat(rarities.get("513")).isEqualTo("rare");
     }
 }

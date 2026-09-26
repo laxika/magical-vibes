@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "208")
+@CardRegistration(set = "MB1", collectorNumber = "208")
 public class SnappingSailback extends Card {
 
     public SnappingSailback() {

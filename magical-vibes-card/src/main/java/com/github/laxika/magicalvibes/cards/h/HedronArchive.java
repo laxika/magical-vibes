@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "691")
 @CardRegistration(set = "TSR", collectorNumber = "395")
 public class HedronArchive extends Card {
 

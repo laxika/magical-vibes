@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "167")
+@CardRegistration(set = "DMU", collectorNumber = "72")
 public class TolarianTerror extends Card {
 
     public TolarianTerror() {

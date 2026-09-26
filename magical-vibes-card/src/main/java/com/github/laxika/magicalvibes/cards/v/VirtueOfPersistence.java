@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.CardType;
 
 @CardRegistration(set = "WOE", collectorNumber = "115")
+@CardRegistration(set = "SLD", collectorNumber = "2129")
 public class VirtueOfPersistence extends Card {
 
     public VirtueOfPersistence() {

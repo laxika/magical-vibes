@@ -17,6 +17,8 @@ import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "104")
 @CardRegistration(set = "3ED", collectorNumber = "104")
+@CardRegistration(set = "ME4", collectorNumber = "76")
+@CardRegistration(set = "2ED", collectorNumber = "104")
 public class DemonicHordes extends Card {
 
     public DemonicHordes() {

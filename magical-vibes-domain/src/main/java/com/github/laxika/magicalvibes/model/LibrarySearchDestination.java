@@ -37,6 +37,8 @@ public enum LibrarySearchDestination {
     /** Like {@link #EXILE_PLAYABLE}, but the play permission lasts only until the searcher's next
      *  upkeep; if the card is still exiled then, it is put into its owner's graveyard (Grinning Totem). */
     EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+    /** Heist: exile one of three random nonland cards from an opponent's library face down with persistent cast permission. */
+    HEIST,
     TOP_OF_LIBRARY,
     GRAVEYARD,
     BATTLEFIELD_ATTACHED_TO_PLAYER,
@@ -54,6 +56,8 @@ public enum LibrarySearchDestination {
     /** Discover a qualifying card: cast it for free or put it into its controller's hand. */
     DISCOVER,
     CAST_ONE_AND_PUT_OTHER_INTO_HAND,
+    /** Cast one eligible card from a held-out pile for free, then put every other card into hand. */
+    CAST_ONE_AND_PUT_REST_INTO_HAND,
     PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,
     /** Exile one chosen card, then offer it for casting without paying its mana cost. */
     EXILE_AND_MAY_CAST_WITHOUT_PAYING,
@@ -75,6 +79,9 @@ public enum LibrarySearchDestination {
      *  carried in {@link LibrarySearchParams#accumulatedCards()} and handed to the opponent as a
      *  {@link PendingPileSeparation} with {@link CardPileDisposition#GIFTS_UNGIVEN}. */
     GIFTS_UNGIVEN_POOL,
+    /** Threats Undetected — the revealed cards are held out until an opponent chooses two to
+     * shuffle back into the controller's library and the rest go to hand. */
+    THREATS_UNDETECTED_POOL,
     /** Signal the Clans — the revealed creature cards are held out of every zone in
      *  {@link LibrarySearchParams#accumulatedCards()} until the search ends. If exactly three cards
      *  with different names were revealed, one of them is chosen at random and put into the

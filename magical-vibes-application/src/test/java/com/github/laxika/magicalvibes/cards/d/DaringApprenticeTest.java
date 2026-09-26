@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -117,6 +118,32 @@ class DaringApprenticeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Fog");
         harness.assertNotOnBattlefield(player2, "Fog");
         harness.assertInGraveyard(player1, "Daring Apprentice");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(GaeasHerald.class)
+    @DisplayName("Can target an uncounterable creature spell, but does not counter it")
+    void doesNotCounterUncounterableCreatureSpell() {
+        addCreatureReady(player1, new DaringApprentice());
+        harness.addToBattlefield(player2, new GaeasHerald());
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, bears, "{1}{G}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        // The ability resolves, but Gaea's Herald keeps the creature spell on the stack.
+        harness.assertInGraveyard(player1, "Daring Apprentice");
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(bears.getId()));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
     }
 

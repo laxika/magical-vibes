@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "153")
+@CardRegistration(set = "SLD", collectorNumber = "1504")
+@CardRegistration(set = "MB1", collectorNumber = "153")
 public class BowOfNylea extends Card {
 
     private static final String COST = "{1}{G}";

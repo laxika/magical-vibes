@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "23")
+@CardRegistration(set = "DBL", collectorNumber = "290")
 public class LanternFlare extends Card {
 
     public LanternFlare() {

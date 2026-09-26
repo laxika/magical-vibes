@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "142")
+@CardRegistration(set = "PIO", collectorNumber = "298")
+@CardRegistration(set = "C15", collectorNumber = "165")
 public class StoneshockGiant extends Card {
 
     public StoneshockGiant() {

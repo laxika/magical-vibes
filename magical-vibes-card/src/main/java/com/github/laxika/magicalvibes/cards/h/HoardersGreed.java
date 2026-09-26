@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "117")
+@CardRegistration(set = "ECC", collectorNumber = "47")
 public class HoardersGreed extends Card {
 
     public HoardersGreed() {

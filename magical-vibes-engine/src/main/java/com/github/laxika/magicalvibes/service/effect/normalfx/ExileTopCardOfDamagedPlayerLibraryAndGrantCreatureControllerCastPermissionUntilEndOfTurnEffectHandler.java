@@ -53,6 +53,10 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerCastPer
         if (!topCard.hasType(CardType.LAND)) {
             gameData.exilePlayPermissions.put(topCard.getId(), creatureControllerId);
             gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+            if (((ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerCastPermissionUntilEndOfTurnEffect)
+                    effect).anyManaType()) {
+                gameData.exilePlayAnyManaType.add(topCard.getId());
+            }
         }
 
         String creatureControllerName = gameData.playerIdToName.get(creatureControllerId);

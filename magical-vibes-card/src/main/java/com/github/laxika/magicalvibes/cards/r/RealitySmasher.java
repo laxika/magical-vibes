@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 
 @CardRegistration(set = "OGW", collectorNumber = "7")
+@CardRegistration(set = "SLD", collectorNumber = "1153")
 public class RealitySmasher extends Card {
 
     public RealitySmasher() {

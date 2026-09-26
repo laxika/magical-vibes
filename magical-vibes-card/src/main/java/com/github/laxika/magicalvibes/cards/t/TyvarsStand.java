@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "190")
+@CardRegistration(set = "SOC", collectorNumber = "291")
 public class TyvarsStand extends Card {
 
     public TyvarsStand() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,10 +39,14 @@ public class DoublePlusOneCountersOnSourceEffectHandler implements NormalEffectH
             return;
         }
 
-        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, current * 2);
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                current * MaroGoneNutsSupport.apply(gameData, effect, 2));
         permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                 gameData, source, entry.getControllerId());
-        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source, current, entry.getControllerId());
+        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                gameData, source,
+                current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current,
+                entry.getControllerId());
         permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source, entry.getControllerId());
     }
 }

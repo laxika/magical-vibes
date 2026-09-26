@@ -86,6 +86,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param chooseTotalManaValueAtMost when non-null, the selected cards' combined mana value may not
  *                                  exceed this resolution-time amount
  * @param battlefieldEntryReplacement optional replacement applied as a selected permanent enters
+ * @param gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard when true, gain life equal to the
+ *        greatest power among the cards this effect puts into the graveyard
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -108,8 +110,9 @@ public record LookAtTopCardsEffect(
         LibrarySelectionFollowUp battlefieldSelectionFollowUp,
         boolean selectedCardMayGoToHandIfBattlefieldDeclined,
         EnterWithCountersEffect battlefieldEntryReplacement,
-        DynamicAmount chooseTotalManaValueAtMost
-, CardPredicate selectedCardPredicate, CardEffect effectIfSelectedCardMatches) implements CombatDamageAmountAwareEffect {
+        DynamicAmount chooseTotalManaValueAtMost,
+        CardPredicate selectedCardPredicate, CardEffect effectIfSelectedCardMatches,
+        boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard) implements CombatDamageAmountAwareEffect {
         public LookAtTopCardsEffect(
         DynamicAmount lookCount,
         DynamicAmount chooseCount,
@@ -133,8 +136,30 @@ public record LookAtTopCardsEffect(
         EnterWithCountersEffect battlefieldEntryReplacement,
         DynamicAmount chooseTotalManaValueAtMost
 ) {
-            this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination, optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost, effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount, grantHaste, returnToHandAtEndStep, cloakChosenPermanents, payLifePerSelectedCard, battlefieldSelectionFollowUp, selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement, chooseTotalManaValueAtMost, null, null);
+            this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination, optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost, effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount, grantHaste, returnToHandAtEndStep, cloakChosenPermanents, payLifePerSelectedCard, battlefieldSelectionFollowUp, selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement, chooseTotalManaValueAtMost, null, null, false);
         }
+
+    public LookAtTopCardsEffect(
+            DynamicAmount lookCount, DynamicAmount chooseCount, CardPredicate choosePredicate,
+            LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            CardEffect effectIfNoCardChosen, boolean recordChosenCount, int loseLifePerSelectedCard,
+            boolean exactChooseCount, boolean grantHaste, boolean returnToHandAtEndStep,
+            boolean cloakChosenPermanents, int payLifePerSelectedCard,
+            LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+            boolean selectedCardMayGoToHandIfBattlefieldDeclined,
+            EnterWithCountersEffect battlefieldEntryReplacement,
+            DynamicAmount chooseTotalManaValueAtMost, CardPredicate selectedCardPredicate,
+            CardEffect effectIfSelectedCardMatches) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount,
+                grantHaste, returnToHandAtEndStep, cloakChosenPermanents, payLifePerSelectedCard,
+                battlefieldSelectionFollowUp, selectedCardMayGoToHandIfBattlefieldDeclined,
+                battlefieldEntryReplacement, chooseTotalManaValueAtMost, selectedCardPredicate,
+                effectIfSelectedCardMatches, false);
+    }
 
     public LookAtTopCardsEffect(DynamicAmount lookCount,
         DynamicAmount chooseCount,
@@ -455,6 +480,26 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect chooseOneToHandRestToGraveyardGainLifeEqualToManaValue(int lookCount) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
                 LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND, false, true);
+    }
+
+    /** Reveal the top cards, put exactly one into hand, the rest into the graveyard, and apply a
+     * follow-up if the chosen card matches the supplied predicate. */
+    public static LookAtTopCardsEffect chooseExactlyOneToHandRestToGraveyardWithSelectedCardFollowUp(
+            int lookCount, CardPredicate selectedCardPredicate, CardEffect effectIfSelectedCardMatches) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+                LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND, false, false, null,
+                null, false, 0, true, false, false, false, 0, null, false, null, null,
+                selectedCardPredicate, effectIfSelectedCardMatches);
+    }
+
+    /** Reveal the top cards, put one into hand, the rest into the graveyard, and gain life equal
+     * to the greatest power among creature cards put into the graveyard (Discerning Taste). */
+    public static LookAtTopCardsEffect chooseOneToHandRestToGraveyardGainLifeEqualToGreatestPower(
+            int lookCount) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+                LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND, false, false,
+                null, null, false, 0, true, false, false, false, 0, null, false, null, null,
+                null, null, true);
     }
 
     /** Up to {@code chooseCount} matching cards to hand (optionally revealed), the rest into the graveyard. */

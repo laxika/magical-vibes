@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "219")
+@CardRegistration(set = "PIO", collectorNumber = "252")
 public class ZendikarIncarnate extends Card {
 
     public ZendikarIncarnate() {

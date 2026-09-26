@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "128")
+@CardRegistration(set = "SLD", collectorNumber = "2346")
 public class BattleHymn extends Card {
 
     public BattleHymn() {

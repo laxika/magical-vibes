@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "169")
+@CardRegistration(set = "SOC", collectorNumber = "261")
 public class AnimistsAwakening extends Card {
 
     public AnimistsAwakening() {

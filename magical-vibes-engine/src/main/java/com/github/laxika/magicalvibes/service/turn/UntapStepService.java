@@ -695,6 +695,9 @@ public class UntapStepService {
         List<CrossPlayerUntap> result = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                    continue;
+                }
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
                 }
@@ -722,6 +725,9 @@ public class UntapStepService {
             TurnStep step,
             CardEffect effect,
             List<CrossPlayerUntap> result) {
+        if (gameQueryService.hasLostAllAbilities(gameData, source)) {
+            return;
+        }
         if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
                 && configuredEffect.step() == step
                 && configuredEffect.scope() == TapUntapScope.CONTROLLED) {

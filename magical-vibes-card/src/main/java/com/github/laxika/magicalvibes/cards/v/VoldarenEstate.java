@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "267")
+@CardRegistration(set = "DBL", collectorNumber = "534")
+@CardRegistration(set = "SLD", collectorNumber = "2504")
 public class VoldarenEstate extends Card {
 
     public VoldarenEstate() {

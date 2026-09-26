@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MikokoroCenterOfTheSea;
+import com.github.laxika.magicalvibes.cards.m.MirenTheMoaningWell;
+import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThoughtsOfRuin.class, MikokoroCenterOfTheSea.class, MirenTheMoaningWell.class,
+        OboroPalaceInTheClouds.class, TombOfUrami.class})
 class ThoughtsOfRuinTest extends BaseCardTest {
 
     private List<UUID> landIds(Player player, int limit) {
@@ -32,18 +36,23 @@ class ThoughtsOfRuinTest extends BaseCardTest {
                 .count();
     }
 
+    private void addSokLands(Player player) {
+        harness.addToBattlefield(player, new MikokoroCenterOfTheSea());
+        harness.addToBattlefield(player, new MirenTheMoaningWell());
+        harness.addToBattlefield(player, new OboroPalaceInTheClouds());
+        harness.addToBattlefield(player, new TombOfUrami());
+    }
+
     @Test
     @DisplayName("Each player sacrifices as many lands as the caster has cards in hand")
     void eachPlayerSacrificesBasedOnCastersHand() {
-        for (int i = 0; i < 4; i++) {
-            harness.addToBattlefield(player1, new Forest());
-            harness.addToBattlefield(player2, new Forest());
-        }
-        harness.setHand(player1, List.of(new ThoughtsOfRuin(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addSokLands(player1);
+        addSokLands(player2);
+        harness.setHand(player1, List.of(new ThoughtsOfRuin(), new ThoughtsOfRuin(), new ThoughtsOfRuin(),
+                new ThoughtsOfRuin()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice player1Choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -67,18 +76,14 @@ class ThoughtsOfRuinTest extends BaseCardTest {
     @Test
     @DisplayName("The opponent's hand size does not change the number of lands sacrificed")
     void usesCastersHandInsteadOfEachPlayersHand() {
-        for (int i = 0; i < 2; i++) {
-            harness.addToBattlefield(player1, new Forest());
-        }
-        for (int i = 0; i < 4; i++) {
-            harness.addToBattlefield(player2, new Forest());
-        }
-        harness.setHand(player1, List.of(new ThoughtsOfRuin(), new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addSokLands(player1);
+        addSokLands(player2);
+        harness.setHand(player1, List.of(new ThoughtsOfRuin(), new ThoughtsOfRuin()));
+        harness.setHand(player2, List.of(new ThoughtsOfRuin(), new ThoughtsOfRuin(), new ThoughtsOfRuin(),
+                new ThoughtsOfRuin(), new ThoughtsOfRuin()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleMultiplePermanentsChosen(player1, landIds(player1, 1));
         PendingInteraction.MultiPermanentChoice player2Choice =
@@ -89,7 +94,22 @@ class ThoughtsOfRuinTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, landIds(player2, 1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(landCount(player1)).isEqualTo(1);
+        assertThat(landCount(player1)).isEqualTo(3);
         assertThat(landCount(player2)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A caster with no cards in hand causes no land sacrifices")
+    void noCardsInCastersHandMeansNoSacrifices() {
+        addSokLands(player1);
+        addSokLands(player2);
+        harness.setHand(player1, List.of(new ThoughtsOfRuin()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(landCount(player1)).isEqualTo(4);
+        assertThat(landCount(player2)).isEqualTo(4);
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
+
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -132,6 +134,20 @@ class BattlefieldPlacementServiceTest {
             Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered) {
         target.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 enterTappedTypes, simultaneouslyEntered, 0, false, List.of()));
+    }
+
+    @Test
+    void enteringPermanentForgetsItsPreviousImprint() {
+        Card artifact = new Card();
+        artifact.setName("Returning imprint artifact");
+        artifact.setType(CardType.ARTIFACT);
+        Card oldImprint = new Card();
+        oldImprint.setName("Old imprint");
+        gd.setImprintedCard(artifact, oldImprint);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, new Permanent(artifact));
+
+        assertThat(gd.getImprintedCard(artifact)).isNull();
     }
 
     @Test

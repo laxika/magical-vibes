@@ -107,6 +107,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
         List<UUID> destroyedControllerIds = new ArrayList<>();
+        List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
         List<Integer> destroyedManaValues = new ArrayList<>();
         for (Permanent perm : destroyed) {
             UUID controllerId = controllerByPermanentId.get(perm.getId());
@@ -114,6 +115,9 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 continue;
             }
             destroyedControllerIds.add(controllerId);
+            if (!perm.getCard().isToken()) {
+                destroyedNontokenControllerIds.add(controllerId);
+            }
             destroyedManaValues.add(manaValueByPermanentId.getOrDefault(perm.getId(), 0));
         }
 
@@ -122,11 +126,15 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
             case CONTROLLER -> (int) destroyedControllerIds.stream()
                     .filter(entry.getControllerId()::equals)
                     .count();
+            case CONTROLLER_NONTOKEN -> (int) destroyedNontokenControllerIds.stream()
+                    .filter(entry.getControllerId()::equals)
+                    .count();
         };
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
         thenEntry.setEventValue(destroyedCount);
         thenEntry.setEventPlayerIds(destroyedControllerIds);
+        thenEntry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
         thenEntry.setEventManaValues(destroyedManaValues);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 

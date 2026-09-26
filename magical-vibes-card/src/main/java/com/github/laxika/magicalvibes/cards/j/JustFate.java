@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "P02", collectorNumber = "17")
+@CardRegistration(set = "ME4", collectorNumber = "16")
 public class JustFate extends Card {
 
     public JustFate() {

@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INV", collectorNumber = "52")
+@CardRegistration(set = "C14", collectorNumber = "107")
 public class DistortingWake extends Card {
 
     public DistortingWake() {
-        targetX(TargetFilters.nonlandPermanent(), 100)
+        targetExactlyX(TargetFilters.nonlandPermanent(), 100)
                 .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 }

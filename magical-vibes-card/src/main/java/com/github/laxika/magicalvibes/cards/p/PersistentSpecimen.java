@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "125")
+@CardRegistration(set = "DBL", collectorNumber = "392")
 public class PersistentSpecimen extends Card {
 
     public PersistentSpecimen() {

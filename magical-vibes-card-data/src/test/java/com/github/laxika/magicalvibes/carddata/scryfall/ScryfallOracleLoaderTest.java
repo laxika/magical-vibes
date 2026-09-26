@@ -45,6 +45,23 @@ class ScryfallOracleLoaderTest {
         }
     }
 
+    @Test
+    void parsesEveryFaceNameOfAThreeFaceSplitCard() {
+        JsonNode card = MAPPER.readTree("""
+                {
+                  "name": "Smelt // Herd // Saw",
+                  "card_faces": [
+                    { "name": "Smelt" },
+                    { "name": "Herd" },
+                    { "name": "Saw" }
+                  ]
+                }
+                """);
+
+        assertThat(ScryfallOracleLoader.parseFaceNames(card))
+                .containsExactly("Smelt", "Herd", "Saw");
+    }
+
     /**
      * SOS prepare-spell cards use Scryfall's "prepare" layout: like transform DFCs, the front
      * face's oracle text, power and toughness live in card_faces[0] and there is no top-level
@@ -65,6 +82,45 @@ class ScryfallOracleLoaderTest {
         assertThat(data.power()).isEqualTo(2);
         assertThat(data.toughness()).isEqualTo(3);
         assertThat(data.keywords()).contains(Keyword.FLYING);
+    }
+
+    @Test
+    void parsesFrontFaceOfReversibleCard() {
+        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+                {
+                  "name": "Okaun, Eye of Chaos // Okaun, Eye of Chaos",
+                  "layout": "reversible_card",
+                  "color_identity": ["R"],
+                  "keywords": ["Partner with", "Partner", "Double"],
+                  "card_faces": [
+                    {
+                      "name": "Okaun, Eye of Chaos",
+                      "mana_cost": "{4}{R}",
+                      "type_line": "Legendary Creature \\u2014 Cyclops Berserker",
+                      "oracle_text": "Partner with Zndrsplt, Eye of Wisdom (When this creature enters, target player may put Zndrsplt into their hand from their library, then shuffle.)\\nAt the beginning of combat on your turn, flip a coin until you lose a flip.\\nWhenever a player wins a coin flip, double Okaun's power and toughness until end of turn.",
+                      "colors": ["R"],
+                      "power": "3",
+                      "toughness": "3"
+                    },
+                    {
+                      "name": "Okaun, Eye of Chaos",
+                      "mana_cost": "{4}{R}",
+                      "type_line": "Legendary Creature \\u2014 Cyclops Berserker",
+                      "oracle_text": "Partner with Zndrsplt, Eye of Wisdom (When this creature enters, target player may put Zndrsplt into their hand from their library, then shuffle.)\\nAt the beginning of combat on your turn, flip a coin until you lose a flip.\\nWhenever a player wins a coin flip, double Okaun's power and toughness until end of turn.",
+                      "colors": ["R"],
+                      "power": "3",
+                      "toughness": "3"
+                    }
+                  ]
+                }
+                """));
+
+        assertThat(data.name()).isEqualTo("Okaun, Eye of Chaos");
+        assertThat(data.manaCost()).isEqualTo("{4}{R}");
+        assertThat(data.type()).isEqualTo(CardType.CREATURE);
+        assertThat(data.cardText()).contains("Whenever a player wins a coin flip");
+        assertThat(data.power()).isEqualTo(3);
+        assertThat(data.toughness()).isEqualTo(3);
     }
 
     /** The prepare spell itself is the back face, and keeps its own cost and text. */

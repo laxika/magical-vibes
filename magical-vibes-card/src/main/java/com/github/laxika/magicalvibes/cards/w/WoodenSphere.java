@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "324")
 @CardRegistration(set = "6ED", collectorNumber = "318")
 @CardRegistration(set = "SUM", collectorNumber = "281")
+@CardRegistration(set = "2ED", collectorNumber = "277")
 public class WoodenSphere extends Card {
 
     public WoodenSphere() {

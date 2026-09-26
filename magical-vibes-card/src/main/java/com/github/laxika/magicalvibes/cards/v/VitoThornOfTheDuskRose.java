@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "127")
+@CardRegistration(set = "SLD", collectorNumber = "2282")
+@CardRegistration(set = "SLZ", collectorNumber = "52")
+@CardRegistration(set = "SLZ", collectorNumber = "173")
+@CardRegistration(set = "SLZ", collectorNumber = "294")
 public class VitoThornOfTheDuskRose extends Card {
 
     public VitoThornOfTheDuskRose() {

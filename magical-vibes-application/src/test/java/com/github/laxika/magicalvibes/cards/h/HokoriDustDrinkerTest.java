@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HokoriDustDrinker.class, Forest.class, GrizzlyBears.class})
 class HokoriDustDrinkerTest extends BaseCardTest {
 
     @Test
@@ -22,12 +23,12 @@ class HokoriDustDrinkerTest extends BaseCardTest {
     void landsDontUntap() {
         harness.addToBattlefield(player1, new HokoriDustDrinker());
         Permanent land = addTapped(player1, new Forest());
-        Permanent bears = addTapped(player1, new GrizzlyBears());
+        Permanent creature = addTapped(player1, new GrizzlyBears());
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(bears.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
     }
 
     @Test
@@ -53,6 +54,7 @@ class HokoriDustDrinkerTest extends BaseCardTest {
         Permanent enemyLand = addTapped(player2, new Forest());
 
         advanceToUpkeep(player2);
+        assertThat(enemyLand.isTapped()).isTrue();
         harness.passBothPriorities();
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -83,14 +85,4 @@ class HokoriDustDrinkerTest extends BaseCardTest {
         return perm;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

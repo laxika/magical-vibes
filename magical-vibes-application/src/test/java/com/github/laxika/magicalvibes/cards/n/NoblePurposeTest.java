@@ -2,13 +2,17 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.c.CurseOfBloodletting;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({NoblePurpose.class, FreshVolunteers.class})
+
+@CardUsed({NoblePurpose.class, GrizzlyBears.class, FreshVolunteers.class})
 class NoblePurposeTest extends BaseCardTest {
 
     @Test
@@ -17,9 +21,9 @@ class NoblePurposeTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.addToBattlefield(player1, new NoblePurpose());
-        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
-        attacker.setAttacking(true);
+        addNoblePurpose(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
 
         resolveCombat();
         resolveAllTriggers();
@@ -35,8 +39,8 @@ class NoblePurposeTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.addToBattlefield(player1, new NoblePurpose());
-        FreshVolunteers big = new FreshVolunteers();
+        addNoblePurpose(player1);
+        GrizzlyBears big = new GrizzlyBears();
         big.setPower(5);
         big.setToughness(5);
         Permanent attacker = addCreatureReady(player1, big);
@@ -54,11 +58,11 @@ class NoblePurposeTest extends BaseCardTest {
     void gainsLifeOnCombatDamageToBlocker() {
         harness.setLife(player1, 20);
 
-        harness.addToBattlefield(player1, new NoblePurpose());
-        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        addNoblePurpose(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -76,13 +80,16 @@ class NoblePurposeTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 owns Noble Purpose but does not attack.
-        harness.addToBattlefield(player1, new NoblePurpose());
+        addNoblePurpose(player1);
 
         // Player2's creature deals combat damage to player1 — should NOT gain player1 life.
-        Permanent enemy = addCreatureReady(player2, new FreshVolunteers());
+        harness.forceActivePlayer(player2);
+        Permanent enemy = addCreatureReady(player2, new GrizzlyBears());
         enemy.setAttacking(true);
 
-        resolveCombat(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
         // Player2 controls no Noble Purpose, so no life gain.
@@ -95,10 +102,10 @@ class NoblePurposeTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.addToBattlefield(player1, new NoblePurpose());
-        Permanent a = addCreatureReady(player1, new FreshVolunteers());
+        addNoblePurpose(player1);
+        Permanent a = addCreatureReady(player1, new GrizzlyBears());
         a.setAttacking(true);
-        Permanent b = addCreatureReady(player1, new FreshVolunteers());
+        Permanent b = addCreatureReady(player1, new GrizzlyBears());
         b.setAttacking(true);
 
         resolveCombat();
@@ -107,6 +114,68 @@ class NoblePurposeTest extends BaseCardTest {
         // Two 2/2s deal 4 total to player2; controller gains 4.
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("A Noble Purpose controller gains life when their blocker deals combat damage")
+    void controllerGainsLifeWhenControlledBlockerDealsCombatDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        addNoblePurpose(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("Each Noble Purpose triggers separately")
+    void eachNoblePurposeTriggersSeparately() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        addNoblePurpose(player1);
+        addNoblePurpose(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("Life gain waits for Noble Purpose's triggered ability to resolve")
+    void lifeGainWaitsForTriggeredAbilityResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        addNoblePurpose(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
+
+    private void addNoblePurpose(Player controller) {
+        harness.addToBattlefield(controller, new NoblePurpose());
     }
 
     @Test
@@ -149,5 +218,4 @@ class NoblePurposeTest extends BaseCardTest {
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 24);
     }
-
 }

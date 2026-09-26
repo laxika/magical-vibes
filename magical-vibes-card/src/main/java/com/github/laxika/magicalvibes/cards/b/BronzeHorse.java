@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "CHR", collectorNumber = "96")
 @CardRegistration(set = "LEG", collectorNumber = "276")
+@CardRegistration(set = "ME4", collectorNumber = "186")
 public class BronzeHorse extends Card {
 
     public BronzeHorse() {

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "33")
+@CardRegistration(set = "SLD", collectorNumber = "1926")
 public class SkrelvDefectorMite extends Card {
 
     public SkrelvDefectorMite() {

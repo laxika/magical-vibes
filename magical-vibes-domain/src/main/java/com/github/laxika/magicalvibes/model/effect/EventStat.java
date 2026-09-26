@@ -14,6 +14,8 @@ public enum EventStat {
     TOUGHNESS,
     /** The destroyed creature's effective power, clamped to at least 0 (Cinder Cloud). */
     POWER,
+    /** The total number of counters on the affected permanent (Flay Essence). */
+    TOTAL_COUNTERS,
     /** The basic-land search count: two when a targeted land was actually destroyed, otherwise one (Dire-Strain Rampage). */
     BASIC_LAND_SEARCH_COUNT
 }

@@ -14,7 +14,7 @@ public class ScionOfDarkness extends Card {
     public ScionOfDarkness() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new PutCardFromOpponentGraveyardOntoBattlefieldEffect(
-                        false, new CardTypePredicate(CardType.CREATURE), false));
+                        false, new CardTypePredicate(CardType.CREATURE), false, null, true));
         addCycling("{3}");
     }
 }

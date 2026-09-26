@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "67")
+@CardRegistration(set = "DBL", collectorNumber = "334")
 public class LunarRejection extends Card {
 
     public LunarRejection() {

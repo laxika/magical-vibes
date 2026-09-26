@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "182")
 @CardRegistration(set = "GK1", collectorNumber = "42")
+@CardRegistration(set = "C13", collectorNumber = "202")
 public class NivixGuildmage extends Card {
 
     public NivixGuildmage() {

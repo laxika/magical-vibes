@@ -68,7 +68,7 @@ class ScreamingSeahawkTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondSeahawk);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstSeahawk, barrenMoor);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstSeahawk, barrenMoor);
     }
 
     @Test

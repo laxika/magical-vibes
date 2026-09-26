@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "136")
+@CardRegistration(set = "PIO", collectorNumber = "182")
 public class KraulHarpooner extends Card {
 
     public KraulHarpooner() {

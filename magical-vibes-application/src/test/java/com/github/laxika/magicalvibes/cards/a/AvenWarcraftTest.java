@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenWarcraft.class, KrosanVerge.class, SuntailHawk.class})
+@CardUsed({AvenWarcraft.class, EmberShot.class, KrosanVerge.class, SuntailHawk.class})
 class AvenWarcraftTest extends BaseCardTest {
 
     @Test
@@ -117,5 +119,59 @@ class AvenWarcraftTest extends BaseCardTest {
         return java.util.stream.IntStream.range(0, count)
                 .mapToObj(i -> (Card) new SuntailHawk())
                 .toList();
+    }
+
+    @Test
+    @DisplayName("Does not grant the threshold protection with only six cards in your graveyard")
+    void doesNotGrantProtectionBelowThreshold() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, fillerGraveyard(6));
+        harness.setGraveyard(player2, fillerGraveyard(7));
+
+        castAvenWarcraftForJudReview();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Chosen protection prevents a spell of that color from targeting your creatures")
+    void chosenProtectionPreventsChosenColorSpellFromTargeting() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, fillerGraveyard(7));
+        castAvenWarcraftForJudReview();
+        harness.handleListChoice(player1, CardColor.RED.name());
+
+        harness.setHand(player2, List.of(new EmberShot()));
+        harness.addMana(player2, ManaColor.RED, 7);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, ownCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("The boost and protection wear off at end of turn")
+    void effectsWearOffAtEndOfTurn() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, fillerGraveyard(7));
+        castAvenWarcraftForJudReview();
+        harness.handleListChoice(player1, CardColor.BLUE.name());
+
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isFalse();
+    }
+
+    private void castAvenWarcraftForJudReview() {
+        harness.castFromHand(player1, new AvenWarcraft(), "{2}{W}");
+        harness.passBothPriorities();
     }
 }

@@ -64,7 +64,7 @@ public class CompleteAmassGoblinsEffectHandler implements NormalEffectHandlerBea
                     new MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayerWithChosenReference(
                             CounterType.PLUS_ONE_PLUS_ONE, amass.count(), amass.playerId()),
                     "Choose an Army creature to put " + amass.count() + " +1/+1 counter(s) on.");
-            insertFollowUps(entry, effect, true, amass.drawCard());
+            insertFollowUps(entry, effect, amass.subtype(), true, amass.drawCard());
             return;
         }
 
@@ -77,20 +77,21 @@ public class CompleteAmassGoblinsEffectHandler implements NormalEffectHandlerBea
                 permanentCounterSupport.placeCounterOnPermanent(
                         gameData, placementEntry, chosen, CounterType.PLUS_ONE_PLUS_ONE, amass.count());
             }
-            insertFollowUps(entry, effect, true, amass.drawCard());
+            insertFollowUps(entry, effect, amass.subtype(), true, amass.drawCard());
             return;
         }
 
         if (amass.drawCard()) {
-            insertFollowUps(entry, effect, false, true);
+            insertFollowUps(entry, effect, amass.subtype(), false, true);
         }
     }
 
-    private void insertFollowUps(StackEntry entry, CardEffect current, boolean grantGoblinSubtype,
+    private void insertFollowUps(StackEntry entry, CardEffect current, CardSubtype subtype,
+                                 boolean grantSubtype,
                                  boolean drawCard) {
         List<CardEffect> followUps = new ArrayList<>();
-        if (grantGoblinSubtype) {
-            followUps.add(new GrantSubtypeToChosenPermanentEffect(CardSubtype.GOBLIN));
+        if (grantSubtype) {
+            followUps.add(new GrantSubtypeToChosenPermanentEffect(subtype));
         }
         if (drawCard) {
             followUps.add(new DrawCardEffect(1));

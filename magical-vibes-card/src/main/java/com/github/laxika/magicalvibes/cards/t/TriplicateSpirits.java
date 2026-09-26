@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "40")
+@CardRegistration(set = "PIO", collectorNumber = "41")
 public class TriplicateSpirits extends Card {
 
     public TriplicateSpirits() {

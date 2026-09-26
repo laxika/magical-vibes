@@ -91,10 +91,10 @@ class MirariTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(originalTarget.getId()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactlyInAnyOrder(originalTarget.getId(), newTarget.getId());
+                .containsExactly(newTarget.getId());
 
         harness.handlePermanentChosen(player1, newTarget.getId());
         harness.passBothPriorities();

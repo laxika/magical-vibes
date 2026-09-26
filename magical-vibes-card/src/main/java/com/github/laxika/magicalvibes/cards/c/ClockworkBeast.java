@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndO
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "356")
+@CardRegistration(set = "2ED", collectorNumber = "237")
 @CardRegistration(set = "4ED", collectorNumber = "307")
 @CardRegistration(set = "3ED", collectorNumber = "240")
 @CardRegistration(set = "ITP", collectorNumber = "49")

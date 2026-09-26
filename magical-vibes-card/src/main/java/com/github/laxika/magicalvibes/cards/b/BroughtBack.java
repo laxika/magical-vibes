@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "9")
+@CardRegistration(set = "TLE", collectorNumber = "1")
 public class BroughtBack extends Card {
 
     public BroughtBack() {

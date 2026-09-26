@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,17 +19,16 @@ class FodderCannonTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 4 damage to target creature, killing it; taps and sacrifices as cost")
     void deals4DamageToTargetCreature() {
-        harness.addToBattlefield(player1, new FodderCannon());
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new FodderCannon());
         addCreatureReady(player1, new GrizzlyBears()); // sacrifice fodder
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2 victim
-        UUID victim = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // 2/2 victim
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.activateAbility(player1, 0, null, victim);
+        harness.activateAbility(player1, 0, null, victim.getId());
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Fodder Cannon").isTapped()).isTrue();
+        assertThat(cannon.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -41,8 +38,7 @@ class FodderCannonTest extends BaseCardTest {
     void creatureSurvivesWithHighToughness() {
         harness.addToBattlefield(player1, new FodderCannon());
         addCreatureReady(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new AirElemental()); // 4/4
-        Permanent victim = findPermanent(player2, "Air Elemental");
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental()); // 4/4
         victim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // 5/5, survives 4 damage
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -58,19 +54,42 @@ class FodderCannonTest extends BaseCardTest {
     void cannotActivateWithoutMana() {
         harness.addToBattlefield(player1, new FodderCannon());
         addCreatureReady(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID victim = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3); // 1 short
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, victim))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, victim.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Fodder Cannon is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new FodderCannon());
+        Permanent firstFodder = addCreatureReady(player1, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, victim.getId());
+        Permanent secondFodder = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, victim.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.passBothPriorities();
+
+        assertThat(cannon.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(cannon, secondFodder);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstFodder.getCard());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Cannot activate without a creature to sacrifice")
     void cannotActivateWithoutCreatureToSacrifice() {
-        harness.addToBattlefield(player1, new FodderCannon());
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new FodderCannon());
         Permanent victim = addCreatureReady(player2, new GrizzlyBears());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -79,16 +98,15 @@ class FodderCannonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must choose a creature to sacrifice");
 
-        assertThat(findPermanent(player1, "Fodder Cannon").isTapped()).isFalse();
+        assertThat(cannon.isTapped()).isFalse();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        harness.addToBattlefield(player1, new FodderCannon());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FodderCannon());
         addCreatureReady(player1, new GrizzlyBears());
-        Permanent target = findPermanent(player1, "Fodder Cannon");
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

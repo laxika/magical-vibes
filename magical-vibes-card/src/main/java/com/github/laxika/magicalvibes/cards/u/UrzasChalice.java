@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "75")
 @CardRegistration(set = "ME1", collectorNumber = "171")
+@CardRegistration(set = "ME4", collectorNumber = "236")
 public class UrzasChalice extends Card {
 
     public UrzasChalice() {

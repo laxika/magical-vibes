@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "151")
+@CardRegistration(set = "SLD", collectorNumber = "78")
+@CardRegistration(set = "PIO", collectorNumber = "313")
 public class MogisGodOfSlaughter extends Card {
 
     public MogisGodOfSlaughter() {

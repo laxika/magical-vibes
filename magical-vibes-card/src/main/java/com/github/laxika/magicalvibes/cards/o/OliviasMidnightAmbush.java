@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "118")
+@CardRegistration(set = "DBL", collectorNumber = "118")
 public class OliviasMidnightAmbush extends Card {
 
     public OliviasMidnightAmbush() {

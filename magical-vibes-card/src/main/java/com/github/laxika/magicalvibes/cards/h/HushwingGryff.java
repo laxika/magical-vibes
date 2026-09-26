@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "15")
+@CardRegistration(set = "PIO", collectorNumber = "322")
 public class HushwingGryff extends Card {
 
     public HushwingGryff() {

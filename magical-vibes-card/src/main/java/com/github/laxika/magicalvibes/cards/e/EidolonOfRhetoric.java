@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 
 @CardRegistration(set = "JOU", collectorNumber = "10")
+@CardRegistration(set = "PIO", collectorNumber = "279")
 public class EidolonOfRhetoric extends Card {
 
     public EidolonOfRhetoric() {

@@ -19,8 +19,7 @@ class GiantSpiderTest extends BaseCardTest {
         addCreatureReady(player1, new WindDrake());
         Permanent spider = addCreatureReady(player2, new GiantSpider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(spider.isBlocking()).isTrue();

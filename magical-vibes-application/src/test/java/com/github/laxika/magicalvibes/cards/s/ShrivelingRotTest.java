@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShrivelingRot.class, GiantSpider.class, HillGiant.class, Shock.class})
 class ShrivelingRotTest extends BaseCardTest {
 
     @Test
@@ -87,6 +90,53 @@ class ShrivelingRotTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstantWithModes(
                 player1, 0, 1, 2, new int[]{0, 1}, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage mode destroys creatures dealt combat damage")
+    void damageModeDestroysCombatDamagedCreatures() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        attacker.setSummoningSick(false);
+        blocker.setSummoningSick(false);
+        harness.setHand(player1, List.of(new ShrivelingRot()));
+        addMana(false);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Registered modes stop triggering after cleanup")
+    void registeredModesExpireAtEndOfTurn() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new ShrivelingRot(), new Shock()));
+        addMana(false);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     private void addMana(boolean entwined) {

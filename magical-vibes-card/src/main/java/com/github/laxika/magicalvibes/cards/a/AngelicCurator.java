@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect
 import java.util.Set;
 
 @CardRegistration(set = "ULG", collectorNumber = "1")
+@CardRegistration(set = "MH2", collectorNumber = "262")
 public class AngelicCurator extends Card {
 
     public AngelicCurator() {

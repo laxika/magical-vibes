@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,11 +14,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShiftingSky.class, Forest.class, GrizzlyBears.class, ImprisonedInTheMoon.class})
+@CardUsed({ShiftingSky.class, Forest.class, GrizzlyBears.class, ImprisonedInTheMoon.class, Millstone.class})
 class ShiftingSkyTest extends BaseCardTest {
 
     private static Card createCreature(String name, CardColor color) {
@@ -73,6 +71,17 @@ class ShiftingSkyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Noncreature artifacts also become the chosen color")
+    void recolorsNoncreatureArtifacts() {
+        harness.addToBattlefield(player1, new Millstone());
+        addShiftingSky(CardColor.WHITE);
+
+        Permanent millstone = findPermanent(player1, "Millstone");
+
+        assertThat(gqs.getEffectiveColors(gd, millstone)).containsExactly(CardColor.WHITE);
+    }
+
+    @Test
     @DisplayName("Shifting Sky itself becomes the chosen color")
     void recolorsItself() {
         Permanent shiftingSky = addShiftingSky(CardColor.WHITE);
@@ -118,11 +127,7 @@ class ShiftingSkyTest extends BaseCardTest {
     @DisplayName("Full flow: cast, resolve, choose color, all nonland permanents become it")
     void fullFlow() {
         harness.addToBattlefield(player1, createCreature("Red Goblin", CardColor.RED));
-        harness.setHand(player1, List.of(new ShiftingSky()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);

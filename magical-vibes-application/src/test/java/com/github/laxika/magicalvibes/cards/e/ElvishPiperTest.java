@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.Bribery;
+import com.github.laxika.magicalvibes.cards.g.GiantBadger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElvishPiper.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ElvishPiper.class, Bribery.class, GiantBadger.class})
 class ElvishPiperTest extends BaseCardTest {
 
     @Test
@@ -42,7 +42,7 @@ class ElvishPiperTest extends BaseCardTest {
     @DisplayName("Resolving ability prompts may choice first")
     void resolvingPromptsMayChoiceFirst() {
         addCreatureReady(player1, new ElvishPiper());
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
+        harness.setHand(player1, List.of(new Bribery(), new GiantBadger(), new Bribery()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -57,7 +57,7 @@ class ElvishPiperTest extends BaseCardTest {
     @DisplayName("Accepting may then resolving prompts card choice with only creature indices")
     void resolvingPromptsOnlyCreatureChoices() {
         addCreatureReady(player1, new ElvishPiper());
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
+        harness.setHand(player1, List.of(new Bribery(), new GiantBadger(), new Bribery()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -75,7 +75,7 @@ class ElvishPiperTest extends BaseCardTest {
     @DisplayName("Choosing a creature puts it onto the battlefield")
     void choosingCreaturePutsItOntoBattlefield() {
         addCreatureReady(player1, new ElvishPiper());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GiantBadger()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -85,8 +85,26 @@ class ElvishPiperTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Giant Badger");
+        assertThat(findPermanent(player1, "Giant Badger").isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Piper leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent piper = addReadyPiper();
+        harness.setHand(player1, List.of(new GiantBadger()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(piper);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Giant Badger");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -94,7 +112,7 @@ class ElvishPiperTest extends BaseCardTest {
     @DisplayName("Declining may leaves hand unchanged")
     void decliningMayLeavesHandUnchanged() {
         addCreatureReady(player1, new ElvishPiper());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GiantBadger()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -113,7 +131,7 @@ class ElvishPiperTest extends BaseCardTest {
     @DisplayName("Ability does not prompt when controller has no creature cards in hand")
     void noCreaturesInHandSkipsChoice() {
         addCreatureReady(player1, new ElvishPiper());
-        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new Bribery(), new Bribery()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -124,6 +142,24 @@ class ElvishPiperTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("has no creature cards in hand"));
+    }
+
+    @Test
+    @DisplayName("Ability cannot put a creature from an opponent's hand onto the battlefield")
+    void onlyUsesControllersHand() {
+        addReadyPiper();
+        harness.setHand(player1, List.of(new Bribery()));
+        harness.setHand(player2, List.of(new GiantBadger()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        harness.assertInHand(player2, "Giant Badger");
+        harness.assertNotOnBattlefield(player1, "Giant Badger");
     }
 
     @Test

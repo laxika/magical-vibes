@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "110")
+@CardRegistration(set = "DBL", collectorNumber = "110")
 public class LordOfTheForsaken extends Card {
 
     public LordOfTheForsaken() {

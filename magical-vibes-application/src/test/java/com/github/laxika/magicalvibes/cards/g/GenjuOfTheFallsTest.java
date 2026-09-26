@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GenjuOfTheFalls.class, Island.class, Forest.class, StoneRain.class})
 class GenjuOfTheFallsTest extends BaseCardTest {
 
     @Test
@@ -50,7 +51,7 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         assertThat(island.getTransientSubtypes()).contains(CardSubtype.SPIRIT);
         assertThat(island.getAnimatedColor()).isEqualTo(CardColor.BLUE);
         assertThat(gqs.hasKeyword(gd, island, Keyword.FLYING)).isTrue();
-        assertThat(island.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.isLand(gd, island)).isTrue();
     }
 
     @Test
@@ -94,6 +95,25 @@ class GenjuOfTheFallsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Genju of the Falls"));
+    }
+
+    @Test
+    @DisplayName("The trigger returns only the Genju that enchanted the destroyed Island")
+    void returnsOnlyTheTriggeringGenju() {
+        Permanent island = addIslandWithGenju();
+        UUID attachedGenjuId = findPermanent(player1, "Genju of the Falls").getCard().getId();
+        GenjuOfTheFalls otherGenju = new GenjuOfTheFalls();
+        harness.setGraveyard(player1, List.of(otherGenju));
+
+        destroyIsland(island);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(attachedGenjuId));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(otherGenju)
+                .noneMatch(card -> card.getId().equals(attachedGenjuId));
     }
 
     private Permanent addIslandWithGenju() {

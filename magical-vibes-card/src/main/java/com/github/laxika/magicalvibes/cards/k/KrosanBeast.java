@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "248")
+@CardRegistration(set = "SLD", collectorNumber = "196")
 public class KrosanBeast extends Card {
 
     public KrosanBeast() {

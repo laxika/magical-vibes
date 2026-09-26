@@ -40,6 +40,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class GameSetupService {
     @org.springframework.beans.factory.annotation.Autowired
+    private DeckValidationService deckValidationService;
+
+    @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
 
@@ -95,6 +98,16 @@ public class GameSetupService {
 
     public GameData createGame(String gameName, Player player, String deckId, boolean allRandom,
                                String randomSetCode, boolean planechase) {
+        return createGame(gameName, player, deckId, allRandom, randomSetCode, planechase, com.github.laxika.magicalvibes.model.DeckFormat.CASUAL);
+    }
+
+    public GameData createGame(String gameName, Player player, String deckId, boolean allRandom,
+            String randomSetCode, boolean planechase, com.github.laxika.magicalvibes.model.DeckFormat format) {
+        if (allRandom && format != com.github.laxika.magicalvibes.model.DeckFormat.CASUAL)
+            throw new IllegalArgumentException("All Random requires Casual format");
+        if (planechase && format == com.github.laxika.magicalvibes.model.DeckFormat.COMMANDER)
+            throw new IllegalArgumentException("Commander with Planechase is not supported");
+        var accepted = allRandom ? null : validatedDeck(deckId, format);
         UUID gameId = UUID.randomUUID();
 
         if (allRandom) {
@@ -105,6 +118,8 @@ public class GameSetupService {
         gameData.setCardsExiledListener(triggerCollectionService::checkControllerCardsExiledDuringTurnTriggers);
         String selectedDeckId = deckId;
         mutationCoordinator.mutate(gameData, () -> {
+            gameData.format = format;
+            if (accepted != null) gameData.acceptedDecks.put(player.getId(), accepted);
             gameData.allRandom = allRandom;
             if (planechase) planechaseService.initializeDeck(gameData);
             gameData.randomSetCode = allRandom ? randomSetCode : null;
@@ -128,9 +143,14 @@ public class GameSetupService {
      * runs and the game advances to the mulligan phase.
      */
     public void joinGame(GameData gameData, Player player, String deckId) {
+        joinGame(gameData, player, deckId, null);
+    }
+
+    public void joinGame(GameData gameData, Player player, String deckId,
+                         com.github.laxika.magicalvibes.model.DeckDefinition acceptedDeck) {
         String requestedDeckId = deckId;
         if (!mutationCoordinator.isInAction(gameData)) {
-            mutationCoordinator.mutate(gameData, () -> joinGame(gameData, player, requestedDeckId));
+            mutationCoordinator.mutate(gameData, () -> joinGame(gameData, player, requestedDeckId, acceptedDeck));
             return;
         }
         synchronized (gameData) {
@@ -145,6 +165,8 @@ public class GameSetupService {
             if (gameData.allRandom) {
                 deckId = RandomDeckGenerator.RANDOM_DECK_ID;
             }
+
+            if (!gameData.allRandom) gameData.acceptedDecks.put(player.getId(), acceptedDeck == null ? validatedDeck(deckId, gameData.format) : acceptedDeck);
 
             gameData.playerIds.add(player.getId());
             gameData.orderedPlayerIds.add(player.getId());
@@ -169,8 +191,10 @@ public class GameSetupService {
     private void initializeGame(GameData gameData) {
         for (UUID playerId : gameData.playerIds) {
             String deckId = gameData.playerDeckChoices.get(playerId);
-            List<Card> deck = resolveDeck(deckId, gameData.randomSetCode);
-            List<Card> sideboard = resolveSideboard(deckId);
+            var definition = gameData.acceptedDecks.get(playerId);
+            List<Card> deck = definition == null ? resolveDeck(deckId, gameData.randomSetCode) : new ArrayList<>(definition.mainDeck());
+            List<Card> sideboard = definition == null ? resolveSideboard(deckId) : new ArrayList<>(definition.sideboard());
+            Card commander = definition == null ? null : definition.commander();
             if (java.util.stream.Stream.concat(deck.stream(), sideboard.stream())
                     .anyMatch(card -> card.getType() != null && card.getType().isPlanar())) {
                 throw new IllegalArgumentException("Planar cards belong in the planar deck");
@@ -190,16 +214,24 @@ public class GameSetupService {
             }
 
             Collections.shuffle(deck, random);
+            gameData.startingDeckSizes.put(playerId, deck.size());
             gameData.playerSideboards.put(playerId, sideboard);
             gameData.mulliganCounts.put(playerId, 0);
             gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             gameData.playerGraveyards.put(playerId, new ArrayList<>());
             gameData.playerCommandZones.put(playerId, new ArrayList<>());
+            gameData.playerCommanders.put(playerId, new ArrayList<>());
             gameData.playerManaPools.put(playerId, new ManaPool());
-            gameData.playerLifeTotals.put(playerId, 20);
+            gameData.playerLifeTotals.put(playerId, gameData.startingLife());
+            if (commander != null) {
+                commander.setOwnerId(playerId);
+                commander.freeze();
+                gameData.makeCommander(playerId, commander);
+                gameData.playerCommandZones.get(playerId).add(commander);
+                gameData.startingDeckSizes.put(playerId, deck.size() + 1);
+            }
 
-            List<Card> hand = new ArrayList<>(deck.subList(0, 7));
-            deck.subList(0, 7).clear();
+            List<Card> hand = drawOpeningHand(gameData, playerId, deck);
             gameData.playerDecks.put(playerId, deck);
             gameData.playerHands.put(playerId, hand);
             gameData.playerMulliganDecisionIds.put(playerId, UUID.randomUUID());
@@ -251,6 +283,51 @@ public class GameSetupService {
         }
 
         log.info("Game {} - Mulligan phase begins. Starting player: {}", gameData.id, startingPlayerName);
+    }
+
+    /** Initializes pregame play from transferred libraries rather than submitted decks. */
+    public void initializeSubgame(GameData game, java.util.Map<UUID, List<Card>> decks) {
+        game.setCardsExiledListener(triggerCollectionService::checkControllerCardsExiledDuringTurnTriggers);
+        for (UUID player : game.orderedPlayerIds) {
+            List<Card> deck = new ArrayList<>(decks.get(player));
+            deck.forEach(card -> game.subgameCards.put(card.getId(), card));
+            Collections.shuffle(deck, random);
+            game.startingDeckSizes.put(player, deck.size());
+            game.playerBattlefields.put(player, game.newBattlefieldList());
+            game.playerGraveyards.put(player, new ArrayList<>());
+            game.playerCommandZones.put(player, new ArrayList<>());
+            game.playerCommanders.put(player, new ArrayList<>());
+            game.playerManaPools.put(player, new com.github.laxika.magicalvibes.model.ManaPool());
+            game.playerLifeTotals.put(player, game.startingLife());
+            game.mulliganCounts.put(player, 0);
+            game.playerHands.put(player, drawOpeningHand(game, player, deck));
+            game.playerDecks.put(player, deck);
+            game.playerMulliganDecisionIds.put(player, UUID.randomUUID());
+        }
+        game.startingPlayerId = game.orderedPlayerIds.get(random.nextInt(game.orderedPlayerIds.size()));
+        game.status = GameStatus.MULLIGAN;
+        gameLogService.append(game, GameLogEntry.text("Subgame started. Decide whether to keep your opening hand."));
+        for (UUID player : game.orderedPlayerIds) {
+            mutationCoordinator.emit(game, new GameEventFact.DecisionRequested(
+                    game.playerMulliganDecisionIds.get(player), player, GameEventFact.DecisionKind.MULLIGAN),
+                    GameEventAudience.player(player));
+        }
+    }
+
+    private List<Card> drawOpeningHand(GameData game, UUID player, List<Card> deck) {
+        int count = Math.min(7, deck.size());
+        if (count < 7) game.playersAttemptedDrawFromEmptyLibrary.add(player);
+        List<Card> hand = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+        return hand;
+    }
+
+    public com.github.laxika.magicalvibes.model.DeckDefinition validatedDeck(String deckId, com.github.laxika.magicalvibes.model.DeckFormat format) {
+        CustomDeckSource source = customDeckSourceProvider.getIfAvailable();
+        var definition = source != null && source.isCustomDeck(deckId) ? source.buildDefinition(deckId)
+                : new com.github.laxika.magicalvibes.model.DeckDefinition(resolveDeck(deckId, null), resolveSideboard(deckId), null);
+        if (deckValidationService != null) deckValidationService.validate(definition, format).requireValid();
+        return definition;
     }
 
     private boolean isCustomDeck(String deckId) {

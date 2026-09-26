@@ -76,7 +76,38 @@ class ReturnCardFromGraveyardEffectHandlerTest {
         verify(interactionHandlerRegistry).begin(eq(gd), argThat(interaction ->
                 interaction instanceof PendingInteraction.GraveyardChoice choice
                         && choice.cardPool().equals(List.of(creature))
-                        && choice.mandatory() && choice.returnEffect().equals(effect)));
+                && choice.mandatory() && choice.returnEffect().equals(effect)));
+    }
+
+    @Test
+    void graveyardChoiceCanBeRestrictedToCardsPutThereFromLibrary() {
+        Card eligible = createCard("Eligible creature");
+        eligible.setOwnerId(player2Id);
+        Card ineligible = createCard("Ineligible creature");
+        ineligible.setOwnerId(player2Id);
+        gd.playerGraveyards.get(player2Id).addAll(List.of(eligible, ineligible));
+        gd.cardsPutIntoGraveyardFromLibraryThisTurn
+                .computeIfAbsent(player2Id, ignored -> new java.util.HashSet<>())
+                .add(eligible.getId());
+
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .filter(filter)
+                .targetPutIntoGraveyardFromLibraryThisTurn(true)
+                .build();
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Return source"),
+                player1Id, "Return source", new ArrayList<>(List.of(effect)));
+        when(predicateEvaluationService.matchesCardPredicate(
+                any(Card.class), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
+                isNull(), isNull(), anyInt())).thenReturn(true);
+
+        returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+        verify(interactionHandlerRegistry).begin(eq(gd), argThat(interaction ->
+                interaction instanceof PendingInteraction.GraveyardChoice choice
+                        && choice.cardPool().equals(List.of(eligible))));
     }
 
     @Mock

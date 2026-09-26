@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "NEM", collectorNumber = "140")
+@CardRegistration(set = "C13", collectorNumber = "269")
 public class Viseling extends Card {
 
     public Viseling() {

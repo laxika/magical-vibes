@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MOR", collectorNumber = "87")
+@CardRegistration(set = "C15", collectorNumber = "142")
 public class BorderlandBehemoth extends Card {
 
     public BorderlandBehemoth() {

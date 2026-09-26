@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
+import com.github.laxika.magicalvibes.cards.d.DarksteelPendant;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,18 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChromescaleDrake.class, CrazedGoblin.class, DarksteelIngot.class,
+        DarksteelPendant.class, EchoingTruth.class})
 class ChromescaleDrakeTest extends BaseCardTest {
-
-    private static Card createCard(String name, CardType type) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(type);
-        return card;
-    }
 
     private void castDrake() {
         harness.setHand(player1, List.of(new ChromescaleDrake()));
-        harness.addMana(player1, ManaColor.BLUE, 9);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -31,12 +29,10 @@ class ChromescaleDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Artifact cards among the top three go to hand")
     void artifactCardsGoToHand() {
-        Card artifact1 = createCard("Spellbook", CardType.ARTIFACT);
-        Card creature = createCard("Grizzly Bears", CardType.CREATURE);
-        Card artifact2 = createCard("Prophetic Prism", CardType.ARTIFACT);
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(artifact1, creature, artifact2));
+        DarksteelIngot artifact1 = new DarksteelIngot();
+        CrazedGoblin creature = new CrazedGoblin();
+        DarksteelPendant artifact2 = new DarksteelPendant();
+        harness.setLibrary(player1, List.of(artifact1, creature, artifact2));
 
         castDrake();
 
@@ -47,16 +43,14 @@ class ChromescaleDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Non-artifact cards among the top three go to the graveyard")
     void nonArtifactCardsGoToGraveyard() {
-        Card land = createCard("Island", CardType.LAND);
-        Card instant = createCard("Shock", CardType.INSTANT);
-        Card artifact = createCard("Spellbook", CardType.ARTIFACT);
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(land, instant, artifact));
+        EchoingTruth instant = new EchoingTruth();
+        CrazedGoblin creature = new CrazedGoblin();
+        DarksteelIngot artifact = new DarksteelIngot();
+        harness.setLibrary(player1, List.of(instant, creature, artifact));
 
         castDrake();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, instant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(instant, creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(artifact);
         assertThat(gd.playerHands.get(player1.getId())).contains(artifact);
     }
@@ -64,18 +58,42 @@ class ChromescaleDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Cards below the top three stay in the library")
     void onlyTopThreeAreProcessed() {
-        Card land = createCard("Island", CardType.LAND);
-        Card artifact = createCard("Spellbook", CardType.ARTIFACT);
-        Card instant = createCard("Shock", CardType.INSTANT);
-        Card deepArtifact = createCard("Darksteel Ingot", CardType.ARTIFACT);
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(land, artifact, instant, deepArtifact));
+        EchoingTruth instant = new EchoingTruth();
+        DarksteelIngot artifact = new DarksteelIngot();
+        CrazedGoblin creature = new CrazedGoblin();
+        DarksteelPendant deepArtifact = new DarksteelPendant();
+        harness.setLibrary(player1, List.of(instant, artifact, creature, deepArtifact));
 
         castDrake();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(artifact);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(deepArtifact);
-        assertThat(deck).contains(deepArtifact);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(deepArtifact);
+    }
+
+    @Test
+    @DisplayName("Processes all cards when the library has fewer than three cards")
+    void processesShortLibrary() {
+        DarksteelIngot artifact = new DarksteelIngot();
+        EchoingTruth nonArtifact = new EchoingTruth();
+        harness.setLibrary(player1, List.of(artifact, nonArtifact));
+
+        castDrake();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonArtifact);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does nothing when the library is empty")
+    void emptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        castDrake();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }

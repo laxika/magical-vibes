@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOT", collectorNumber = "24")
+@CardRegistration(set = "BOT", collectorNumber = "10")
 public class FlamewarBrashVeteran extends Card {
 
     public FlamewarBrashVeteran() {

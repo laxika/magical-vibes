@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UncontrolledInfestation.class, Glimmerpost.class, Swamp.class})
+@CardUsed({UncontrolledInfestation.class, Glimmerpost.class, Swamp.class, Memnite.class})
 class UncontrolledInfestationTest extends BaseCardTest {
 
     @Test
@@ -40,6 +41,19 @@ class UncontrolledInfestationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot enchant a nonland permanent")
+    void cannotEnchantNonlandPermanent() {
+        harness.addToBattlefield(player2, new Glimmerpost());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Memnite());
+        harness.setHand(player1, List.of(new UncontrolledInfestation()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a nonbasic land");
+    }
+
+    @Test
     @DisplayName("Tapping the enchanted nonbasic land destroys it")
     void tappingEnchantedNonbasicLandDestroysIt() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Glimmerpost());
@@ -47,7 +61,7 @@ class UncontrolledInfestationTest extends BaseCardTest {
         aura.setAttachedTo(land.getId());
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Glimmerpost");
     }
@@ -58,7 +72,7 @@ class UncontrolledInfestationTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Glimmerpost());
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Glimmerpost");
     }
@@ -74,9 +88,4 @@ class UncontrolledInfestationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
     }
 
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
-    }
 }

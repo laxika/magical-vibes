@@ -1,69 +1,69 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.a.Arrest;
+import com.github.laxika.magicalvibes.cards.a.ArmadilloCloak;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.e.EyeOfRamos;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
-import com.github.laxika.magicalvibes.cards.s.SpidersilkArmor;
+import com.github.laxika.magicalvibes.cards.l.LlanowarVanguard;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Tranquility.class, SpidersilkArmor.class, Arrest.class, FreshVolunteers.class,
+@CardUsed({Tranquility.class, DuelingGrounds.class, ArmadilloCloak.class, LlanowarVanguard.class,
         Forest.class, EyeOfRamos.class})
 class TranquilityTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys enchantments controlled by both players")
     void destroysEnchantmentsFromBothPlayers() {
-        harness.addToBattlefield(player1, new SpidersilkArmor());
-        harness.addToBattlefield(player2, new SpidersilkArmor());
+        harness.addToBattlefield(player1, new DuelingGrounds());
+        harness.addToBattlefield(player2, new DuelingGrounds());
         harness.castFromHand(player1, new Tranquility(), "{2}{G}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Spidersilk Armor");
-        harness.assertNotOnBattlefield(player2, "Spidersilk Armor");
-        harness.assertInGraveyard(player1, "Spidersilk Armor");
-        harness.assertInGraveyard(player2, "Spidersilk Armor");
+        harness.assertNotOnBattlefield(player1, "Dueling Grounds");
+        harness.assertNotOnBattlefield(player2, "Dueling Grounds");
+        harness.assertInGraveyard(player1, "Dueling Grounds");
+        harness.assertInGraveyard(player2, "Dueling Grounds");
     }
 
     @Test
     @DisplayName("Destroys auras attached to creatures but not the creatures")
     void destroysAurasButNotCreatures() {
-        Permanent volunteer = addCreatureReady(player1, new FreshVolunteers());
+        Permanent vanguard = addCreatureReady(player1, new LlanowarVanguard());
 
-        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Arrest());
-        auraPerm.setAttachedTo(volunteer.getId());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new ArmadilloCloak());
+        auraPerm.setAttachedTo(vanguard.getId());
 
         harness.castFromHand(player1, new Tranquility(), "{2}{G}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Arrest");
-        harness.assertOnBattlefield(player1, "Fresh Volunteers");
-        harness.assertInGraveyard(player1, "Arrest");
+        harness.assertNotOnBattlefield(player1, "Armadillo Cloak");
+        harness.assertOnBattlefield(player1, "Llanowar Vanguard");
+        harness.assertInGraveyard(player1, "Armadillo Cloak");
     }
 
     @Test
-    @DisplayName("Does not destroy creatures")
-    void doesNotDestroyCreatures() {
-        harness.addToBattlefield(player1, new FreshVolunteers());
-        harness.castFromHand(player1, new Tranquility(), "{2}{G}");
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player1, "Fresh Volunteers");
-    }
-
-    @Test
-    @DisplayName("Does not destroy non-enchantment artifacts or lands")
-    void doesNotDestroyNonEnchantmentArtifactsOrLands() {
+    @DisplayName("Does not destroy creatures or lands")
+    void doesNotDestroyCreaturesOrLands() {
+        harness.addToBattlefield(player1, new LlanowarVanguard());
         harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new Tranquility(), "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Llanowar Vanguard");
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a non-enchantment artifact")
+    void doesNotDestroyArtifact() {
         harness.addToBattlefield(player2, new EyeOfRamos());
         harness.castFromHand(player1, new Tranquility(), "{2}{G}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Eye of Ramos");
     }
 }

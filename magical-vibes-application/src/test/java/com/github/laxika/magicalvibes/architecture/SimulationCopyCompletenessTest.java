@@ -63,7 +63,9 @@ class SimulationCopyCompletenessTest {
     @Test
     @DisplayName("simulationCopy() references every GameData instance field")
     void simulationCopyCoversEveryField() throws IOException {
-        String body = stripComments(extractSimulationCopyBody(readGameDataSource()));
+        String source = readGameDataSource();
+        String body = stripComments(extractSimulationCopyBody(source, "public GameData simulationCopy()")
+                + extractSimulationCopyBody(source, "GameData simulationFrameCopy()"));
 
         List<String> missing = new ArrayList<>();
         for (Field field : GameData.class.getDeclaredFields()) {
@@ -107,8 +109,8 @@ class SimulationCopyCompletenessTest {
     }
 
     /** Extracts the text of {@code simulationCopy()} by brace-matching from its declaration. */
-    private static String extractSimulationCopyBody(String source) {
-        int start = source.indexOf("public GameData simulationCopy()");
+    private static String extractSimulationCopyBody(String source, String declaration) {
+        int start = source.indexOf(declaration);
         assertThat(start).as("simulationCopy() declaration not found in GameData").isNotEqualTo(-1);
 
         int open = source.indexOf('{', start);

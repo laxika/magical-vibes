@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SkullOfOrm.class, Pacifism.class, GrizzlyBears.class})
@@ -31,6 +33,20 @@ class SkullOfOrmTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Pacifism");
         harness.assertNotInGraveyard(player1, "Pacifism");
+    }
+
+    @Test
+    @DisplayName("Activating the ability taps Skull of Orm")
+    void activatingAbilityTapsSkullOfOrm() {
+        Permanent skull = harness.addToBattlefieldAndReturn(player1, new SkullOfOrm());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        Card pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+
+        harness.activateAbility(player1, 0, 0, null, pacifism.getId(), Zone.GRAVEYARD);
+
+        assertThat(skull.isTapped()).isTrue();
     }
 
     @Test

@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "271")
 @CardRegistration(set = "TSR", collectorNumber = "276")
+@CardRegistration(set = "CMD", collectorNumber = "271")
 public class DreadshipReef extends Card {
 
     public DreadshipReef() {

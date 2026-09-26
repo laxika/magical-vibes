@@ -11,6 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "61")
+@CardRegistration(set = "MAR", collectorNumber = "14")
+@CardRegistration(set = "OMB", collectorNumber = "14")
+@CardRegistration(set = "SOC", collectorNumber = "202")
+@CardRegistration(set = "C14", collectorNumber = "122")
+@CardRegistration(set = "C15", collectorNumber = "105")
 public class RiteOfReplication extends Card {
 
     public RiteOfReplication() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "153")
+@CardRegistration(set = "DBL", collectorNumber = "420")
 public class DaybreakCombatants extends Card {
 
     public DaybreakCombatants() {

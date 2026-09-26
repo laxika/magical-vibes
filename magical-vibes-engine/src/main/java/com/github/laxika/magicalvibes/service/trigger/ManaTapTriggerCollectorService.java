@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenCreatureTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +28,39 @@ import java.util.List;
 public class ManaTapTriggerCollectorService {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
+
+    @CollectsTrigger(value = GainControlOfTargetEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)
+    private boolean handleGainControlOfOpponentArtifact(TriggerMatchContext match,
+                                                         GainControlOfTargetEffect effect,
+                                                         TriggerContext ctx) {
+        TriggerContext.PermanentTapForMana permanentTap = (TriggerContext.PermanentTapForMana) ctx;
+        Permanent tappedPermanent = gameQueryService.findPermanentById(
+                match.gameData(), permanentTap.tappedPermanentId());
+        if (match.permanent() == null || tappedPermanent == null
+                || !tappedPermanent.getCard().hasType(CardType.ARTIFACT)
+                || !permanentTap.tappingPlayerId().equals(
+                        gameQueryService.getOpponentId(match.gameData(), match.controllerId()))) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of((CardEffect) effect)),
+                permanentTap.tappedPermanentId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers when an opponent taps an artifact for mana",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = AddManaWhenCreatureTappedForManaEffect.class,
             slot = EffectSlot.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA)

@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "323")
+@CardRegistration(set = "EOS", collectorNumber = "32")
+@CardRegistration(set = "EOS", collectorNumber = "77")
+@CardRegistration(set = "EOS", collectorNumber = "122")
+@CardRegistration(set = "EOS", collectorNumber = "167")
 public class PetrifiedField extends Card {
 
     public PetrifiedField() {

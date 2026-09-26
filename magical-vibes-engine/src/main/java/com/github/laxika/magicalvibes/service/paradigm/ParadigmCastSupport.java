@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
@@ -87,7 +88,7 @@ public class ParadigmCastSupport {
                 // Single-target keeps the historical behavior of putting the copy into the graveyard.
                 // A multi-target copy that can't be legally cast ceases to exist instead (CR 707.10a).
                 if (!multiTarget) {
-                    graveyardService.addCardToGraveyard(gameData, playerId, card);
+                    graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.EXILE);
                 }
                 
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));

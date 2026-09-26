@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "58")
+@CardRegistration(set = "PIO", collectorNumber = "83")
 public class BasilicaScreecher extends Card {
 
     public BasilicaScreecher() {

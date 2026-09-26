@@ -34,6 +34,37 @@ class SmokespewInvokerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new SmokespewInvoker());
+        GrizzlyBears targetCard = new GrizzlyBears();
+        targetCard.setPower(4);
+        targetCard.setToughness(4);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, targetCard);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature with three or less toughness dies from the -3/-3 effect")
+    void destroysCreatureWithThreeOrLessToughness() {
+        harness.addToBattlefield(player1, new SmokespewInvoker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("The -3/-3 effect wears off at end of turn")
     void wearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new SmokespewInvoker());
@@ -69,6 +100,17 @@ class SmokespewInvokerTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         harness.addToBattlefield(player1, new SmokespewInvoker());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with eight colorless mana and no black mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        harness.addToBattlefield(player1, new SmokespewInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -83,6 +84,22 @@ public class TokenCopySupport {
                 tokens.add(new Permanent(tokenCard));
             }
         }
+        boolean creatureTokenEvent = tokens.stream()
+                .anyMatch(token -> token.getCard().hasType(CardType.CREATURE));
+        int additionalSoldierTokenCount = TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
+                gameData, tokenControllerId, creatureTokenEvent);
+        CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
+                        gameData, tokenControllerId, creatureTokenEvent,
+                        effect.tappedAndAttacking(), effect.tapped())
+                : null;
+        for (int i = 0; i < additionalSoldierTokenCount; i++) {
+            Card soldierTokenCard = TokenCardFactory.create(additionalSoldier, 1, 1,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            soldierTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, tokenControllerId, soldierTokenCard);
+            tokens.add(new Permanent(soldierTokenCard));
+        }
         int additionalMapTokenCount = TokenCreationReplacementSupport.additionalMapTokenCount(
                 gameData, tokenControllerId, artifactTokenTemplate, 1);
         for (int map = 0; map < additionalMapTokenCount; map++) {
@@ -93,6 +110,16 @@ public class TokenCopySupport {
                     0,
                     entry.getCard() == null ? null : entry.getCard().getSetCode());
             tokens.add(new Permanent(mapTokenCard));
+        }
+        int additionalMutagenTokenCount = TokenCreationReplacementSupport.additionalMutagenTokenCount(
+                gameData, tokenControllerId, sourceCards.size());
+        for (int mutagen = 0; mutagen < additionalMutagenTokenCount; mutagen++) {
+            Card mutagenTokenCard = TokenCardFactory.create(
+                    TokenCreationReplacementSupport.additionalMutagenToken(effect.tapped(), effect.tappedAndAttacking()),
+                    0,
+                    0,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            tokens.add(new Permanent(mutagenTokenCard));
         }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "71")
+@CardRegistration(set = "DBL", collectorNumber = "71")
 public class PoppetStitcher extends Card {
 
     public PoppetStitcher() {

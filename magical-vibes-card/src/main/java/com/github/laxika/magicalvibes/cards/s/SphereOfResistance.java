@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 @CardRegistration(set = "EXO", collectorNumber = "139")
 @CardRegistration(set = "VMA", collectorNumber = "284")
 @CardRegistration(set = "MPS", collectorNumber = "47")
+@CardRegistration(set = "SLD", collectorNumber = "1484")
 public class SphereOfResistance extends Card {
 
     public SphereOfResistance() {

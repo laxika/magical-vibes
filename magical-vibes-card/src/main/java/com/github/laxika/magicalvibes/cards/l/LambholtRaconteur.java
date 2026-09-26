@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "167")
+@CardRegistration(set = "DBL", collectorNumber = "434")
 public class LambholtRaconteur extends Card {
 
     public LambholtRaconteur() {

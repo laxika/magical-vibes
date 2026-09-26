@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "89")
+@CardRegistration(set = "DBL", collectorNumber = "356")
 public class WingedPortent extends Card {
 
     public WingedPortent() {

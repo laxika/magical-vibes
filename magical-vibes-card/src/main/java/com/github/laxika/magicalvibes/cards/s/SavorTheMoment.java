@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "50")
+@CardRegistration(set = "SLD", collectorNumber = "1006")
 public class SavorTheMoment extends Card {
 
     public SavorTheMoment() {

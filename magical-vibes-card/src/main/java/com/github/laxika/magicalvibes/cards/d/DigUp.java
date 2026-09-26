@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "VOW", collectorNumber = "197")
+@CardRegistration(set = "DBL", collectorNumber = "464")
 public class DigUp extends Card {
 
     public DigUp() {

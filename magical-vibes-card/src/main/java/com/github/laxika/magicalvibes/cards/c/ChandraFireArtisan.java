@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "119")
+@CardRegistration(set = "SLD", collectorNumber = "512")
 public class ChandraFireArtisan extends Card {
 
     public ChandraFireArtisan() {

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.ability.cost;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -101,11 +104,23 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         }
         if (cost instanceof CrewCost && sourcePermanentId != null) {
             gameData.recordCreatureCrewingPermanent(sourcePermanentId, chosen.getId());
+            Set<CardSubtype> subtypes = gameQueryService.effectiveCreatureSubtypes(gameData, chosen);
+            subtypes.stream()
+                    .filter(gameQueryService::isCreatureSubtype)
+                    .forEach(subtype -> gameData.recordCreatureCrewingPermanentSubtype(sourcePermanentId, subtype));
+            if (gameQueryService.hasKeyword(gameData, chosen, Keyword.CHANGELING)) {
+                for (CardSubtype subtype : CardSubtype.values()) {
+                    if (gameQueryService.isCreatureSubtype(subtype)) {
+                        gameData.recordCreatureCrewingPermanentSubtype(sourcePermanentId, subtype);
+                    }
+                }
+            }
         } else if (cost instanceof SaddleCost && sourcePermanentId != null) {
             gameData.recordCreatureSaddlingPermanent(sourcePermanentId, chosen.getId());
         }
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         triggerCollectionService.checkCrewsVehicleTriggers(gameData, chosen, sourcePermanent);
+        triggerCollectionService.checkAllyCreatureCrewsVehicleTriggers(gameData, chosen, sourcePermanent);
         triggerCollectionService.checkSelfSaddlesOrCrewsDuringMainPhaseTriggers(
                 gameData, player.getId(), chosen, sourcePermanentId);
 

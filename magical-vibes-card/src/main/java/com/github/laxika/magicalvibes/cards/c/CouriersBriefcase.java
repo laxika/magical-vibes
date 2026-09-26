@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "142")
+@CardRegistration(set = "PIO", collectorNumber = "171")
 public class CouriersBriefcase extends Card {
 
     public CouriersBriefcase() {

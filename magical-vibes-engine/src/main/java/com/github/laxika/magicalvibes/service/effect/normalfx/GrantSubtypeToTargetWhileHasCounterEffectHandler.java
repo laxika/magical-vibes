@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -20,7 +19,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Creates a dynamic basic-subtype grant tied to a counter on the targeted permanent. */
+/** Creates a dynamic subtype grant tied to a counter on the targeted permanent. */
 @Component
 @RequiredArgsConstructor
 public class GrantSubtypeToTargetWhileHasCounterEffectHandler implements NormalEffectHandlerBean {
@@ -43,11 +42,10 @@ public class GrantSubtypeToTargetWhileHasCounterEffectHandler implements NormalE
 
             PermanentPredicate scope = new PermanentAllOfPredicate(List.of(
                     new PermanentIsSpecificPermanentPredicate(targetId),
-                    new PermanentIsLandPredicate(),
                     new PermanentHasCountersPredicate(grant.counterType())));
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                    new GrantSubtypeEffect(grant.subtype(), GrantScope.ALL_PERMANENTS, false, scope),
+                    new GrantSubtypeEffect(grant.subtype(), GrantScope.ALL_PERMANENTS, grant.overriding(), scope),
                     null, null, scope, EffectDuration.PERMANENT, 0));
         }
     }

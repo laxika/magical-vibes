@@ -396,7 +396,7 @@
 
     @if (choice.targeting.selectingGraveyardCastDiscard) {
       <div class="side-prompt prompt-targeting">
-        <span class="side-prompt-text">Select a card in your hand to discard for {{ choice.targeting.graveyardCastDiscardCardName }}</span>
+        <span class="side-prompt-text">Select {{ choice.targeting.graveyardCastDiscardCount }} card{{ choice.targeting.graveyardCastDiscardCount === 1 ? '' : 's' }} in your hand to discard for {{ choice.targeting.graveyardCastDiscardCardName }}</span>
         <div class="side-prompt-buttons">
           <button class="btn-side-prompt" (click)="choice.targeting.cancelGraveyardCastDiscard()">Cancel</button>
         </div>

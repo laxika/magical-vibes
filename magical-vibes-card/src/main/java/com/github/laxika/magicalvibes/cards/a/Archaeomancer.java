@@ -14,7 +14,11 @@ import java.util.List;
 @CardRegistration(set = "M13", collectorNumber = "41")
 @CardRegistration(set = "M14", collectorNumber = "43")
 @CardRegistration(set = "DDM", collectorNumber = "13")
+@CardRegistration(set = "SLD", collectorNumber = "283")
+@CardRegistration(set = "SLD", collectorNumber = "2242")
 @CardRegistration(set = "UMA", collectorNumber = "45")
+@CardRegistration(set = "PIO", collectorNumber = "284")
+@CardRegistration(set = "SPG", collectorNumber = "149")
 public class Archaeomancer extends Card {
 
     public Archaeomancer() {

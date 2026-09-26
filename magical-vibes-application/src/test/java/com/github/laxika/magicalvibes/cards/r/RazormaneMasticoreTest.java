@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrawler;
+import com.github.laxika.magicalvibes.cards.s.SylvokExplorer;
+import com.github.laxika.magicalvibes.cards.w.WayfarersBauble;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +16,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RazormaneMasticore.class, GoblinBrawler.class, SylvokExplorer.class, WayfarersBauble.class})
 class RazormaneMasticoreTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     // ===== Upkeep — sacrifice unless discard any card =====
@@ -30,7 +32,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
     @DisplayName("Upkeep with card in hand — prompts may ability choice")
     void upkeepWithCardInHandPromptsMayAbility() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GoblinBrawler()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
@@ -43,7 +45,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
     @DisplayName("Accepting upkeep discard keeps Masticore and discards the card")
     void acceptingUpkeepDiscardKeepsMasticore() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GoblinBrawler()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
@@ -57,32 +59,35 @@ class RazormaneMasticoreTest extends BaseCardTest {
         // Masticore is still on the battlefield
         harness.assertOnBattlefield(player1, "Razormane Masticore");
 
-        // Grizzly Bears is in the graveyard
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        // Goblin Brawler is in the graveyard
+        harness.assertInGraveyard(player1, "Goblin Brawler");
     }
 
     @Test
     @DisplayName("Any card type can be discarded for upkeep cost (not limited to creatures)")
     void anyCardTypeCanBeDiscardedForUpkeep() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        // Hand has only a non-creature card (land-type card via LlanowarElves as creature)
-        // Use a creature since that's all we have, but verify all indices are valid
-        harness.setHand(player1, List.of(new LlanowarElves(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WayfarersBauble(), new GoblinBrawler()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // All indices should be valid since any card can be discarded
+        // Both a noncreature artifact and a creature can be discarded.
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactlyInAnyOrder(0, 1);
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Razormane Masticore");
+        harness.assertInGraveyard(player1, "Wayfarer's Bauble");
     }
 
     @Test
     @DisplayName("Declining upkeep discard sacrifices Masticore")
     void decliningUpkeepDiscardSacrificesMasticore() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GoblinBrawler()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -134,7 +139,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
     @DisplayName("Draw step triggers may ability prompt for controller")
     void drawStepTriggersMayAbilityPrompt() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GoblinBrawler());
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
@@ -147,7 +152,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
     @DisplayName("Accepting draw step ability prompts for target creature")
     void acceptingDrawStepAbilityPromptsForTarget() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GoblinBrawler());
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
@@ -162,40 +167,40 @@ class RazormaneMasticoreTest extends BaseCardTest {
     @DisplayName("Draw step ability deals 3 damage to chosen creature and destroys it if lethal")
     void drawStepAbilityDeals3DamageAndKills() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new GoblinBrawler());
+        UUID brawlerId = harness.getPermanentId(player2, "Goblin Brawler");
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, brawlerId);
 
-        // Grizzly Bears (2/2) should be destroyed by 3 damage
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Goblin Brawler (2/2) should be destroyed by 3 damage
+        harness.assertNotOnBattlefield(player2, "Goblin Brawler");
+        harness.assertInGraveyard(player2, "Goblin Brawler");
     }
 
     @Test
     @DisplayName("Declining draw step ability does nothing")
     void decliningDrawStepAbilityDoesNothing() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GoblinBrawler());
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         harness.handleMayAbilityChosen(player1, false);
 
-        // Grizzly Bears should still be on the battlefield
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        // Goblin Brawler should still be on the battlefield
+        harness.assertOnBattlefield(player2, "Goblin Brawler");
     }
 
     @Test
     @DisplayName("Draw step trigger only fires on controller's draw step, not opponent's")
     void drawStepTriggerOnlyOnControllersDrawStep() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GoblinBrawler());
 
         // Advance to opponent's draw step — Masticore should NOT trigger
         advanceToDraw(player2);
@@ -203,17 +208,17 @@ class RazormaneMasticoreTest extends BaseCardTest {
         // No may ability prompt should fire for Masticore
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        // Grizzly Bears should still be on the battlefield
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        // Goblin Brawler should still be on the battlefield
+        harness.assertOnBattlefield(player2, "Goblin Brawler");
     }
 
     @Test
     @DisplayName("Draw step ability can target own creatures")
     void drawStepAbilityCanTargetOwnCreatures() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        LlanowarElves elves = new LlanowarElves();
+        SylvokExplorer elves = new SylvokExplorer();
         harness.addToBattlefield(player1, elves);
-        UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
+        UUID elvesId = harness.getPermanentId(player1, "Sylvok Explorer");
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
@@ -221,24 +226,30 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, elvesId);
 
-        // Llanowar Elves (1/1) should be destroyed by 3 damage
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-        harness.assertInGraveyard(player1, "Llanowar Elves");
+        // Sylvok Explorer (1/1) should be destroyed by 3 damage
+        harness.assertNotOnBattlefield(player1, "Sylvok Explorer");
+        harness.assertInGraveyard(player1, "Sylvok Explorer");
     }
 
     @Test
-    @DisplayName("Draw step ability with no creatures on battlefield skips ability")
-    void drawStepAbilityWithNoCreaturesSkips() {
+    @DisplayName("Draw step ability only offers creature targets")
+    void drawStepAbilityOnlyOffersCreatureTargets() {
         harness.addToBattlefield(player1, new RazormaneMasticore());
-        // Remove all other creatures
-        gd.playerBattlefields.get(player1.getId()).removeIf(
-                p -> !p.getCard().getName().equals("Razormane Masticore"));
-        gd.playerBattlefields.get(player2.getId()).clear();
+        UUID masticoreId = harness.getPermanentId(player1, "Razormane Masticore");
+        harness.addToBattlefield(player2, new WayfarersBauble());
+        UUID baubleId = harness.getPermanentId(player2, "Wayfarer's Bauble");
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
-        // May ability prompt should appear — Masticore itself is a valid target
+        // The may ability prompt appears even though the Masticore is its only creature target.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(masticoreId);
+        assertThat(choice.validPermanentIds()).doesNotContain(baubleId);
     }
 }

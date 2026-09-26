@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "143")
+@CardRegistration(set = "DBL", collectorNumber = "410")
 public class BallistaWatcher extends Card {
 
     public BallistaWatcher() {

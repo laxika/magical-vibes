@@ -1,22 +1,20 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KavuClimber;
+import com.github.laxika.magicalvibes.cards.m.MetathranTransport;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarigaazTheIgniter.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({DarigaazTheIgniter.class, KavuClimber.class, MetathranTransport.class})
 class DarigaazTheIgniterTest extends BaseCardTest {
 
     @Test
@@ -24,9 +22,10 @@ class DarigaazTheIgniterTest extends BaseCardTest {
     void paidAbilityDealsDamageForChosenColorCards() {
         harness.setLife(player2, 20);
         addAttackingDarigaaz();
-        harness.setHand(player2, new ArrayList<>(List.of(new AirElemental(), new GrizzlyBears())));
+        harness.setHand(player2, List.of(new MetathranTransport(), new KavuClimber()));
 
-        resolveCombatToMayPrompt();
+        resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         addPaymentMana();
@@ -35,8 +34,25 @@ class DarigaazTheIgniterTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("Air Elemental")
-                && log.plainText().contains("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("Metathran Transport")
+                && log.plainText().contains("Kavu Climber"));
+    }
+
+    @Test
+    @DisplayName("Paid ability deals one damage for each card of the chosen color")
+    void paidAbilityCountsEachMatchingCard() {
+        harness.setLife(player2, 20);
+        addAttackingDarigaaz();
+        harness.setHand(player2, List.of(
+                new MetathranTransport(), new MetathranTransport(), new KavuClimber()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
 
     @Test
@@ -44,9 +60,10 @@ class DarigaazTheIgniterTest extends BaseCardTest {
     void noMatchingCardsDealNoAdditionalDamage() {
         harness.setLife(player2, 20);
         addAttackingDarigaaz();
-        harness.setHand(player2, new ArrayList<>(List.of(new AirElemental())));
+        harness.setHand(player2, List.of(new MetathranTransport()));
 
-        resolveCombatToMayPrompt();
+        resolveCombat();
+        harness.passBothPriorities();
         addPaymentMana();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "RED");
@@ -59,9 +76,10 @@ class DarigaazTheIgniterTest extends BaseCardTest {
     void decliningPaymentDoesNothing() {
         harness.setLife(player2, 20);
         addAttackingDarigaaz();
-        harness.setHand(player2, new ArrayList<>(List.of(new AirElemental())));
+        harness.setHand(player2, List.of(new MetathranTransport()));
 
-        resolveCombatToMayPrompt();
+        resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -72,10 +90,10 @@ class DarigaazTheIgniterTest extends BaseCardTest {
     @DisplayName("Blocked Darigaaz does not trigger the ability")
     void blockedDarigaazDoesNotTrigger() {
         addAttackingDarigaaz();
-        Permanent blocker = addCreatureReady(player2, new AirElemental());
+        Permanent blocker = addCreatureReady(player2, new MetathranTransport());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.setHand(player2, new ArrayList<>(List.of(new AirElemental())));
+        harness.setHand(player2, List.of(new MetathranTransport()));
 
         resolveCombat();
 
@@ -86,14 +104,6 @@ class DarigaazTheIgniterTest extends BaseCardTest {
         Permanent darigaaz = addCreatureReady(player1, new DarigaazTheIgniter());
         darigaaz.setAttacking(true);
         return darigaaz;
-    }
-
-    private void resolveCombatToMayPrompt() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private void addPaymentMana() {

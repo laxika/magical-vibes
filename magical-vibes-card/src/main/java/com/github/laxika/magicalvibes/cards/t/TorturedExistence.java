@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "74")
+@CardRegistration(set = "SLD", collectorNumber = "2507")
 public class TorturedExistence extends Card {
 
     public TorturedExistence() {

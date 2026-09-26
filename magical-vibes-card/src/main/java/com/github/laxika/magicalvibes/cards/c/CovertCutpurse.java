@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "92")
+@CardRegistration(set = "DBL", collectorNumber = "92")
 public class CovertCutpurse extends Card {
 
     public CovertCutpurse() {

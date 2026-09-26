@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.s.ShiftingSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlatedSliver.class, BonescytheSliver.class, GrizzlyBears.class})
+@CardUsed({PlatedSliver.class, ShiftingSliver.class, FugitiveWizard.class})
 class PlatedSliverTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,8 @@ class PlatedSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Boosts Slivers controlled by either player")
     void boostsSliversControlledByEitherPlayer() {
-        Permanent ownSliver = addCreatureReady(player1, new BonescytheSliver());
-        Permanent opponentSliver = addCreatureReady(player2, new BonescytheSliver());
+        Permanent ownSliver = addCreatureReady(player1, new ShiftingSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new ShiftingSliver());
         int ownBaseToughness = gqs.getEffectiveToughness(gd, ownSliver);
         int opponentBaseToughness = gqs.getEffectiveToughness(gd, opponentSliver);
 
@@ -40,9 +40,32 @@ class PlatedSliverTest extends BaseCardTest {
     @DisplayName("Does not boost a non-Sliver creature")
     void doesNotBoostNonSliver() {
         addCreatureReady(player1, new PlatedSliver());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        int baseToughness = gqs.getEffectiveToughness(gd, bears);
+        Permanent wizard = addCreatureReady(player1, new FugitiveWizard());
+        int baseToughness = gqs.getEffectiveToughness(gd, wizard);
 
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(baseToughness);
+    }
+
+    @Test
+    @DisplayName("Boosts a Sliver that enters after Plated Sliver")
+    void boostsSliverThatEntersAfterSource() {
+        addCreatureReady(player1, new PlatedSliver());
+        Permanent sliver = addCreatureReady(player2, new ShiftingSliver());
+
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Bonus disappears when Plated Sliver leaves the battlefield")
+    void bonusRemovedWhenSourceLeaves() {
+        Permanent platedSliver = addCreatureReady(player1, new PlatedSliver());
+        Permanent sliver = addCreatureReady(player2, new ShiftingSliver());
+
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(platedSliver);
+
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(2);
     }
 }

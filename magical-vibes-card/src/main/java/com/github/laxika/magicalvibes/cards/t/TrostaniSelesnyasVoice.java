@@ -11,6 +11,8 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "206")
 @CardRegistration(set = "GK1", collectorNumber = "102")
+@CardRegistration(set = "SLD", collectorNumber = "2429")
+@CardRegistration(set = "SLD", collectorNumber = "2443")
 public class TrostaniSelesnyasVoice extends Card {
 
     public TrostaniSelesnyasVoice() {

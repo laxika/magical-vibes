@@ -15,6 +15,11 @@ import java.util.List;
 @CardRegistration(set = "USG", collectorNumber = "190")
 @CardRegistration(set = "V09", collectorNumber = "5")
 @CardRegistration(set = "VMA", collectorNumber = "167")
+@CardRegistration(set = "SLD", collectorNumber = "20")
+@CardRegistration(set = "SLD", collectorNumber = "919")
+@CardRegistration(set = "SLD", collectorNumber = "920")
+@CardRegistration(set = "SLD", collectorNumber = "1311")
+@CardRegistration(set = "SLD", collectorNumber = "2425")
 public class GoblinLackey extends Card {
 
     public GoblinLackey() {

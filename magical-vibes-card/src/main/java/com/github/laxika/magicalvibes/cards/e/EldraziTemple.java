@@ -14,6 +14,11 @@ import java.util.List;
 @CardRegistration(set = "ROE", collectorNumber = "227")
 @CardRegistration(set = "MM2", collectorNumber = "240")
 @CardRegistration(set = "DDP", collectorNumber = "68")
+@CardRegistration(set = "SLD", collectorNumber = "1154")
+@CardRegistration(set = "EOS", collectorNumber = "14")
+@CardRegistration(set = "EOS", collectorNumber = "59")
+@CardRegistration(set = "EOS", collectorNumber = "104")
+@CardRegistration(set = "EOS", collectorNumber = "149")
 public class EldraziTemple extends Card {
 
     public EldraziTemple() {

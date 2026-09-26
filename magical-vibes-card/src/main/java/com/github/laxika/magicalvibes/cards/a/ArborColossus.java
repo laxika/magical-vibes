@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "150")
+@CardRegistration(set = "C15", collectorNumber = "174")
 public class ArborColossus extends Card {
 
     public ArborColossus() {

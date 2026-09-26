@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Gravedigger.class, LowlandGiant.class, Shatter.class, TrainedArmodon.class})
+@CardUsed({Gravedigger.class, GrizzlyBears.class, Shatter.class, TrainedArmodon.class})
 class GravediggerTest extends BaseCardTest {
 
     private void castGravedigger() {
@@ -182,7 +182,7 @@ class GravediggerTest extends BaseCardTest {
     @DisplayName("Choosing a specific creature when multiple creatures are in the graveyard")
     void choosesSpecificCreatureFromGraveyard() {
         TrainedArmodon first = new TrainedArmodon();
-        LowlandGiant second = new LowlandGiant();
+        GrizzlyBears second = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(first, second));
         castGravedigger();
         harness.passBothPriorities();
@@ -196,9 +196,9 @@ class GravediggerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertInHand(player1, "Lowland Giant");
+        harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Trained Armodon");
-        harness.assertNotInGraveyard(player1, "Lowland Giant");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

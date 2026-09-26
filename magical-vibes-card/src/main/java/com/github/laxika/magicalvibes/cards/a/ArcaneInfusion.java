@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "210")
+@CardRegistration(set = "DBL", collectorNumber = "210")
 public class ArcaneInfusion extends Card {
 
     public ArcaneInfusion() {

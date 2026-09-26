@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LCI", collectorNumber = "2")
+@CardRegistration(set = "TLE", collectorNumber = "151")
 public class AcrobaticLeap extends Card {
 
     public AcrobaticLeap() {

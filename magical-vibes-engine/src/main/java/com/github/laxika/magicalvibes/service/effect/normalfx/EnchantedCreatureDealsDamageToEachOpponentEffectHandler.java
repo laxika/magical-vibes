@@ -50,7 +50,7 @@ public class EnchantedCreatureDealsDamageToEachOpponentEffectHandler implements 
 
         UUID sourcePermanentId = enchantedCreature == null ? entry.getTriggeringPermanentId() : enchantedCreature.getId();
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(entry.getControllerId())) continue;
+            if (playerId.equals(entry.getControllerId()) || playerId.equals(entry.getTargetId())) continue;
 
             StackEntry damageEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

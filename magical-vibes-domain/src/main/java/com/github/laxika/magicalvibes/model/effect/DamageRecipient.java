@@ -6,8 +6,12 @@ public enum DamageRecipient {
     TARGET_PLAYER,
     /** Every opponent of the effect's controller. */
     EACH_OPPONENT,
+    /** Every opponent of the effect's controller except the player recorded on the stack entry. */
+    EACH_OTHER_OPPONENT,
     /** Every player (including the controller). */
     EACH_PLAYER,
+    /** The player remembered by the source permanent's as-enters choice. */
+    CHOSEN_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
     /** The effect's controller ("deals N damage to you"). */
@@ -16,6 +20,8 @@ public enum DamageRecipient {
     ENCHANTED_PLAYER,
     /** The controller of the permanent an Aura is attached to ({@code entry.getTargetId()} baked at trigger time; e.g. Feedback). */
     ENCHANTED_PERMANENT_CONTROLLER,
+    /** The player being attacked, or the controller of an attacked planeswalker. */
+    DEFENDING_PLAYER,
     /** The controller of the targeted permanent ("… and N damage to that creature's controller"). */
     TARGET_PERMANENT_CONTROLLER,
     /**

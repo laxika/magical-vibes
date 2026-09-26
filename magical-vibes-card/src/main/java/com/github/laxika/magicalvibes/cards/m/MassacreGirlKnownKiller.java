@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 
 @CardRegistration(set = "MKM", collectorNumber = "94")
 @CardRegistration(set = "MKM", collectorNumber = "344")
+@CardRegistration(set = "ECC", collectorNumber = "79")
 public class MassacreGirlKnownKiller extends Card {
 
     public MassacreGirlKnownKiller() {

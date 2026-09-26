@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "267")
+@CardRegistration(set = "C13", collectorNumber = "268")
 public class TowerOfFortunes extends Card {
 
     public TowerOfFortunes() {

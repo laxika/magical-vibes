@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
 /**
- * Static effect that multiplies the number of matching tokens created under the controller's control.
+ * Static effect that multiplies the number of matching tokens created under the controller's control,
+ * or globally when {@code global} is true.
  * Used by Parallel Lives (multiplier=2), Doubling Season (token half, multiplier=2), and similar cards.
- * Unlike {@link DoubleDamageEffect} which is global, this only applies to the controller's
- * own token creation — multiple instances on the battlefield stack multiplicatively.
+ * Normal instances apply only to the controller's own token creation; multiple instances on the
+ * battlefield stack multiplicatively.
  *
  * @param multiplier the factor by which token creation is multiplied (e.g. 2 for doubling)
  * @param affectedSubtype the token subtype this replacement applies to, or {@code null} for all tokens
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  */
 public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype, boolean creatureTokensOnly,
                                           boolean appliesToAllPlayers)
-        implements TokenCreationReplacementEffect {
+        implements TokenCreationReplacementEffect, DoublingEffect {
     public MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype) {
         this(multiplier, affectedSubtype, false, false);
     }
@@ -44,5 +45,10 @@ public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSu
     @Override
     public int replacementOrder() {
         return 1;
+    }
+
+    @Override
+    public boolean isDoublingEffect() {
+        return multiplier == 2;
     }
 }

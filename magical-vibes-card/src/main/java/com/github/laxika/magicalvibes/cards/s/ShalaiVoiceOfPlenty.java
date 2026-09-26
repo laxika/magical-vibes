@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "35")
+@CardRegistration(set = "SLD", collectorNumber = "244")
+@CardRegistration(set = "SLD", collectorNumber = "2343")
+@CardRegistration(set = "SLD", collectorNumber = "2433")
 public class ShalaiVoiceOfPlenty extends Card {
 
     public ShalaiVoiceOfPlenty() {

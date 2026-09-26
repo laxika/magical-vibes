@@ -43,15 +43,27 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
             return;
         }
 
+        if (e.scope() == GrantScope.TARGETS) {
+            for (UUID targetId : entry.targetsForEffect(e)) {
+                resolveForTarget(gameData, entry, e.requirement(), targetId);
+            }
+            return;
+        }
+
         UUID targetId = e.scope() == GrantScope.SELF
                 ? (entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId())
                 : entry.targetsForEffect(effect).stream().findFirst().orElse(entry.getTargetId());
+        resolveForTarget(gameData, entry, e.requirement(), targetId);
+    }
+
+    private void resolveForTarget(GameData gameData, StackEntry entry,
+                                  CombatRequirement requirement, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }
 
-        switch (e.requirement()) {
+        switch (requirement) {
             case MUST_ATTACK -> {
                 target.setMustAttackThisTurn(true);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must attack this turn if able."));

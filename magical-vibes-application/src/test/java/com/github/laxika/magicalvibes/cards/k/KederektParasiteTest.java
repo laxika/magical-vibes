@@ -40,6 +40,25 @@ class KederektParasiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing the red permanent before resolution prevents the optional damage")
+    void redPermanentRemovedBeforeResolutionDealsNoDamage() {
+        harness.addToBattlefield(player1, new KederektParasite());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player2);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard() instanceof HillGiant);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Declining the may deals no damage")
     void decliningMayDealsNoDamage() {
         harness.addToBattlefield(player1, new KederektParasite());

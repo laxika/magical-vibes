@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MurderousBetrayal.class, MoggToady.class, SpinelessThug.class})
@@ -79,6 +80,23 @@ class MurderousBetrayalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Requires two black mana to activate")
+    void requiresTwoBlackMana() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new MurderousBetrayal());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent toady = harness.addToBattlefieldAndReturn(player2, new MoggToady());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(enchantment);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, toady.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player2, "Mogg Toady");
+    }
+
+    @Test
     @DisplayName("Destroys a nonblack creature despite a regeneration shield")
     void cannotBeRegenerated() {
         Permanent enchantment = betrayal(20);
@@ -91,5 +109,22 @@ class MurderousBetrayalTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Mogg Toady");
         harness.assertInGraveyard(player2, "Mogg Toady");
+    }
+
+    @Test
+    @DisplayName("Pays costs even when the target becomes illegal before resolution")
+    void paysCostsWhenTargetBecomesIllegalBeforeResolution() {
+        Permanent enchantment = betrayal(20);
+        Permanent toady = harness.addToBattlefieldAndReturn(player2, new MoggToady());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(enchantment);
+        harness.activateAbility(player1, idx, null, toady.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, toady));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.assertInGraveyard(player2, "Mogg Toady");
+        assertThat(gd.stack).isEmpty();
     }
 }

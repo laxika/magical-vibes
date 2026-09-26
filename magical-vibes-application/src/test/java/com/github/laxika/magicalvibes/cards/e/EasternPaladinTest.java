@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.b.BullHippo;
-import com.github.laxika.magicalvibes.cards.g.GreaterGood;
+import com.github.laxika.magicalvibes.cards.f.Fecundity;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.Guma;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.n.NaturesRevolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BullHippo.class, EasternPaladin.class, GreaterGood.class, GrizzlyBears.class, Guma.class, HillGiant.class, NaturesRevolt.class})
+@CardUsed({EasternPaladin.class, Fecundity.class, GrizzlyBears.class, HillGiant.class})
 class EasternPaladinTest extends BaseCardTest {
 
     @Test
@@ -36,13 +33,30 @@ class EasternPaladinTest extends BaseCardTest {
     @DisplayName("Resolving destroys target green creature")
     void resolvingDestroysTargetGreenCreatureUpstreamReview() {
         setupPaladin();
-        Permanent target = addCreatureReady(player2, new BullHippo());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Bull Hippo");
-        harness.assertInGraveyard(player2, "Bull Hippo");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        setupPaladin();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(findPermanent(player1, "Eastern Paladin").isTapped()).isTrue();
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -75,13 +89,13 @@ class EasternPaladinTest extends BaseCardTest {
     @DisplayName("Can target a green creature controlled by its controller")
     void canTargetOwnGreenCreatureUpstreamReview() {
         setupPaladin();
-        Permanent target = addCreatureReady(player1, new BullHippo());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Bull Hippo");
-        harness.assertInGraveyard(player1, "Bull Hippo");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -99,7 +113,7 @@ class EasternPaladinTest extends BaseCardTest {
     @DisplayName("Cannot target a non-green creature")
     void cannotTargetNonGreenCreatureUpstreamReview() {
         setupPaladin();
-        Permanent target = addCreatureReady(player2, new Guma());
+        Permanent target = addCreatureReady(player2, new HillGiant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -110,7 +124,7 @@ class EasternPaladinTest extends BaseCardTest {
     @DisplayName("Cannot target a green noncreature permanent")
     void cannotTargetGreenNoncreaturePermanent() {
         setupPaladin();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new NaturesRevolt());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Fecundity());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -121,12 +135,12 @@ class EasternPaladinTest extends BaseCardTest {
     @DisplayName("Cannot target a green noncreature permanent")
     void cannotTargetGreenNoncreaturePermanentUpstreamReview() {
         setupPaladin();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GreaterGood());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Fecundity());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("green creature");
-        harness.assertOnBattlefield(player2, "Greater Good");
+        harness.assertOnBattlefield(player2, "Fecundity");
     }
 
     @Test
@@ -167,7 +181,7 @@ class EasternPaladinTest extends BaseCardTest {
     @DisplayName("Activation pays two black mana and taps Eastern Paladin")
     void activationPaysManaAndTapsSource() {
         Permanent paladin = setupPaladin();
-        Permanent target = addCreatureReady(player2, new BullHippo());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -179,7 +193,7 @@ class EasternPaladinTest extends BaseCardTest {
     @DisplayName("Cannot activate with only one black mana")
     void cannotActivateWithOnlyOneBlackMana() {
         setupPaladin(1);
-        Permanent target = addCreatureReady(player2, new BullHippo());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -192,7 +206,7 @@ class EasternPaladinTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EasternPaladin());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        Permanent target = addCreatureReady(player2, new BullHippo());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "227")
+@CardRegistration(set = "SOC", collectorNumber = "329")
 public class RoothaMercurialArtist extends Card {
 
     public RoothaMercurialArtist() {

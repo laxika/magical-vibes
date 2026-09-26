@@ -11,6 +11,9 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "84")
 @CardRegistration(set = "AKR", collectorNumber = "98")
+@CardRegistration(set = "SLZ", collectorNumber = "36")
+@CardRegistration(set = "SLZ", collectorNumber = "157")
+@CardRegistration(set = "SLZ", collectorNumber = "278")
 public class CruelReality extends Card {
 
     public CruelReality() {

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BloodstoneCameo;
+import com.github.laxika.magicalvibes.cards.c.CoastalTower;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GhostTown;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Harrow.class, Forest.class, GhostTown.class, MetallicSliver.class, Mountain.class, Plains.class})
+@CardUsed({Harrow.class, BloodstoneCameo.class, CoastalTower.class, Forest.class, Mountain.class, Plains.class})
 class HarrowTest extends BaseCardTest {
 
     @Test
@@ -43,7 +43,8 @@ class HarrowTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC))
-                .noneMatch(c -> c.getName().equals("Ghost Town"));
+                .noneMatch(c -> c.getName().equals("Coastal Tower"));
+        assertThat(search.params().remainingCount()).isEqualTo(2);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
         assertThat(search.params().canFailToFind()).isTrue();
     }
@@ -90,7 +91,7 @@ class HarrowTest extends BaseCardTest {
     @DisplayName("With no basic lands, search puts nothing onto the battlefield")
     void noBasicLandsToFind() {
         castHarrow();
-        harness.setLibrary(player1, List.of(new GhostTown(), new MetallicSliver()));
+        harness.setLibrary(player1, List.of(new CoastalTower(), new BloodstoneCameo()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -125,13 +126,13 @@ class HarrowTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a non-land permanent")
     void cannotSacrificeNonLand() {
-        Permanent creature = new Permanent(new MetallicSliver());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent nonLandPermanent = new Permanent(new BloodstoneCameo());
+        gd.playerBattlefields.get(player1.getId()).add(nonLandPermanent);
 
         harness.setHand(player1, List.of(new Harrow()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, creature.getId()))
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, nonLandPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -142,7 +143,7 @@ class HarrowTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castInstantWithSacrifice(player1, 0, null, land.getId());
 
-        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new GhostTown()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new CoastalTower()));
         return land;
     }
 }

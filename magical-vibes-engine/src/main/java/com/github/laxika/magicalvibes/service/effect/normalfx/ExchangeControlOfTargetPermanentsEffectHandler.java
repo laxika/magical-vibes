@@ -113,7 +113,8 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
             }
         }
         boolean controllersDiffer = !ownController.equals(opponentController);
-        boolean ownershipSplitOk = !exchange.requireFirstTargetControlledByController()
+        boolean ownershipSplitOk = exchange.sourceIsFirstTarget()
+                || !exchange.requireFirstTargetControlledByController()
                 || (ownController.equals(exchangeControllerId) && !opponentController.equals(exchangeControllerId));
         boolean triggeringPermanentTargetLegal = !exchange.triggeringPermanentIsFirstTarget()
                 || !opponentController.equals(exchangeControllerId);

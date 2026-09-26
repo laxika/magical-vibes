@@ -9,7 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 
 @CardRegistration(set = "KTK", collectorNumber = "36")
+@CardRegistration(set = "SLD", collectorNumber = "97")
 @CardRegistration(set = "UMA", collectorNumber = "50")
+@CardRegistration(set = "SOC", collectorNumber = "195")
+@CardRegistration(set = "MAR", collectorNumber = "54")
+@CardRegistration(set = "SLZ", collectorNumber = "16")
+@CardRegistration(set = "SLZ", collectorNumber = "137")
+@CardRegistration(set = "SLZ", collectorNumber = "258")
 public class DigThroughTime extends Card {
 
     public DigThroughTime() {

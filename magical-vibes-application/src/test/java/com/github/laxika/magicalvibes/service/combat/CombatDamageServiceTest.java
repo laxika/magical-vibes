@@ -199,6 +199,11 @@ class CombatDamageServiceTest {
                     Permanent perm = inv.getArgument(1);
                     return perm.getCard().getToughness() - perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
                 });
+        lenient().when(gameQueryService.getLethalDamageThreshold(eq(gameData), any(Permanent.class)))
+                .thenAnswer(inv -> {
+                    Permanent perm = inv.getArgument(1);
+                    return perm.getCard().getToughness() - perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+                });
         when(gameQueryService.isPreventedFromDealingDamage(eq(gameData), any(Permanent.class), anyBoolean()))
                 .thenReturn(false);
         // The state-based action check (which now performs all combat casualties) asks whether
@@ -221,7 +226,12 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applySourceNextCombatDamageToControllerShield(
                 eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
-        when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
+        lenient().when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(),
+                any(), any()))
+                .thenAnswer(inv -> (int) inv.getArgument(1));
+        lenient().when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(),
+                any(Permanent.class), org.mockito.ArgumentMatchers.nullable(Permanent.class),
+                org.mockito.ArgumentMatchers.nullable(UUID.class)))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gameData), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
@@ -264,6 +274,12 @@ class CombatDamageServiceTest {
             gameData.playerBattlefields.values().forEach(bf -> bf.remove(dead));
             return null;
         }).when(permanentRemovalService).removePermanentToGraveyard(eq(gameData), any(Permanent.class));
+        lenient().when(permanentRemovalService.destroyPermanentByStateBasedAction(
+                eq(gameData), any(Permanent.class))).thenAnswer(inv -> {
+            Permanent dead = inv.getArgument(1);
+            gameData.playerBattlefields.values().forEach(bf -> bf.remove(dead));
+            return true;
+        });
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
@@ -286,6 +302,9 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyChannelHarmPrevention(
                         eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyComeuppancePrevention(
+                        eq(gameData), any(), anyInt(), any(), any(), any(), anyBoolean()))
+                .thenAnswer(inv -> inv.getArgument(2));
         lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
                         eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
@@ -556,8 +575,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, blocker);
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(20);
         }
 
@@ -569,8 +588,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gameData, blocker);
         }
     }
 
@@ -613,9 +632,9 @@ class CombatDamageServiceTest {
             combatDamageService.resolveCombatDamage(gameData);
 
             assertThat(attackerA.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attackerA);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attackerA);
             // C took only the division's leftover damage (5 - 4 lethal to A = 1) and survives
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, attackerC);
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gameData, attackerC);
             assertThat(attackerC.getMarkedDamage()).isEqualTo(1);
         }
     }
@@ -643,8 +662,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, atk1);
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, atk1);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, blocker);
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(18);
         }
 
@@ -683,8 +702,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gameData, blocker);
         }
 
         @Test
@@ -696,8 +715,8 @@ class CombatDamageServiceTest {
             combatDamageService.resolveCombatDamage(gameData);
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gameData, blocker);
         }
 
         @Test
@@ -708,8 +727,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, blocker);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, attacker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, blocker);
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gameData, attacker);
         }
     }
 
@@ -746,8 +765,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, blocker);
         }
     }
 
@@ -869,8 +888,8 @@ class CombatDamageServiceTest {
 
             assertThat(attacker.getMarkedDamage()).isEqualTo(2);
             assertThat(blocker.getMarkedDamage()).isEqualTo(2);
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, blocker);
         }
     }
 
@@ -895,8 +914,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, blocker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gameData, blocker);
         }
 
         @Test
@@ -967,7 +986,7 @@ class CombatDamageServiceTest {
 
             assertThat(result).isEqualTo(CombatResult.ADVANCE_AND_AUTO_PASS);
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(eq(gameData), any());
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(eq(gameData), any());
         }
     }
 
@@ -993,7 +1012,7 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gameData, attacker);
             assertThat(blocker.isBlocking()).isFalse();
             assertThat(blocker.getBlockingTargets()).isEmpty();
         }
@@ -1157,6 +1176,23 @@ class CombatDamageServiceTest {
                     gameData, player2, 0, Map.of()))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Only the active player");
+        }
+
+        @Test
+        @DisplayName("Rejects negative assignments even when the total equals the creature's power")
+        void rejectsNegativeAssignmentWithCorrectTotal() {
+            Permanent blocker1 = setupPendingAssignment();
+            Permanent blocker2 = gameData.playerBattlefields.get(player2Id).get(1);
+            when(gameQueryService.getOpponentId(gameData, player1Id)).thenReturn(player2Id);
+            when(gameQueryService.getEffectiveCombatDamage(eq(gameData), any(Permanent.class)))
+                    .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getPower());
+            int power = gameData.playerBattlefields.get(player1Id).getFirst().getCard().getPower();
+
+            assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
+                    gameData, player1, 0, Map.of(blocker1.getId(), power + 1, blocker2.getId(), -1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("negative");
+            assertThat(gameData.combatDamagePlayerAssignments).isEmpty();
         }
 
         @Test

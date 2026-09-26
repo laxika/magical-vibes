@@ -37,8 +37,7 @@ class PlowUnderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PlowUnder()));
         giveMana();
 
-        harness.castSorcery(player1, 0, List.of(forestId, mountainId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(forestId, mountainId));
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -61,14 +60,34 @@ class PlowUnderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PlowUnder()));
         giveMana();
 
-        harness.castSorcery(player1, 0, List.of(myForestId, theirMountainId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(myForestId, theirMountainId));
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(p1DeckBefore + 1);
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Mountain");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Puts the remaining land on top when the other target is gone")
+    void resolvesWithOneLegalTarget() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID mountainId = harness.getPermanentId(player2, "Mountain");
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new PlowUnder()));
+        giveMana();
+        harness.castSorcery(player1, 0, List.of(forestId, mountainId));
+
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(forestId));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore + 1);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Mountain");
     }
 
     @Test

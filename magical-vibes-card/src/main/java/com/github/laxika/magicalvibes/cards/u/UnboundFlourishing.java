@@ -7,14 +7,19 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleXValueForPermanentSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleXValueOfTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1331")
 @CardRegistration(set = "MH1", collectorNumber = "189")
+@CardRegistration(set = "SOC", collectorNumber = "126")
 public class UnboundFlourishing extends Card {
 
     public UnboundFlourishing() {

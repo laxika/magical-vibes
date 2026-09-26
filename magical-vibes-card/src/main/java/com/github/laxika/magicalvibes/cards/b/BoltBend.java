@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "115")
+@CardRegistration(set = "TLE", collectorNumber = "163")
 public class BoltBend extends Card {
 
     public BoltBend() {

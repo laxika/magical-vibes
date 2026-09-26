@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.Deathlace;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.s.Stasis;
+import com.github.laxika.magicalvibes.cards.t.Thoughtlace;
 import com.github.laxika.magicalvibes.cards.v.VolcanicEruption;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,10 +21,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class, Stasis.class, VolcanicEruption.class})
+@CardUsed(CircleOfProtectionBlue.class)
 class CircleOfProtectionBlueTest extends BaseCardTest {
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, ProdigalSorcerer.class})
     @DisplayName("Resolving the ability prompts for a blue source choice")
     void resolvingAbilityPromptsForBlueSource() {
         addReadyCircle(player1);
@@ -41,6 +44,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class})
     @DisplayName("Choosing a blue source records a one-shot prevention shield")
     void choosingBlueSourceRecordsShield() {
         addReadyCircle(player1);
@@ -56,6 +60,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class})
     @DisplayName("Prevents the next combat damage from the chosen source and consumes the shield")
     void preventsNextCombatDamageAndConsumesShield() {
         harness.setLife(player1, 20);
@@ -75,6 +80,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class})
     @DisplayName("Only the chosen source is prevented; a different blue source still deals damage")
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
@@ -97,6 +103,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class})
     @DisplayName("Non-blue permanents are not valid source choices")
     void nonBlueSourceNotValid() {
         addReadyCircle(player1);
@@ -112,6 +119,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, Mountain.class, VolcanicEruption.class})
     @DisplayName("A blue spell on the stack is a legal source choice")
     void blueSpellOnStackIsLegalSourceChoice() {
         addReadyCircle(player1);
@@ -135,6 +143,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, Stasis.class})
     @DisplayName("A blue permanent is a valid source even when it cannot deal damage")
     void bluePermanentNeedNotDealDamage() {
         addReadyCircle(player1);
@@ -151,6 +160,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class})
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyCircle(player1);
@@ -226,6 +236,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class})
     @DisplayName("Prevents the next noncombat damage from the chosen source")
     void preventsNextNoncombatDamage() {
         harness.setLife(player1, 20);
@@ -253,6 +264,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, ProdigalSorcerer.class})
     @DisplayName("Damage from the chosen blue source to your creature is not prevented")
     void chosenSourceDamageToControlledCreatureIsNotPrevented() {
         addReadyCircle(player1);
@@ -273,8 +285,8 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, Mountain.class, VolcanicEruption.class})
     @DisplayName("Prevents damage from a blue spell chosen while it is on the stack")
-    @CardUsed({Mountain.class, VolcanicEruption.class})
     void preventsDamageFromBlueSpellOnStack() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
@@ -302,6 +314,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class})
     @DisplayName("Prevents the next noncombat damage from the chosen blue source")
     void preventsNextNoncombatDamageAndConsumesShield() {
         harness.setLife(player1, 20);
@@ -317,6 +330,39 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlue.class, Deathlace.class, ProdigalSorcerer.class, Thoughtlace.class})
+    @DisplayName("The chosen source must still be blue when it deals damage")
+    void chosenSourceColorIsRecheckedWhenItDealsDamage() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent wizard = addReadyBlueCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, wizard.getId());
+
+        harness.setHand(player2, List.of(new Deathlace()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player2, 0, wizard.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+
+        harness.performUntapStep(player2);
+        harness.setHand(player2, List.of(new Thoughtlace()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, wizard.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 }

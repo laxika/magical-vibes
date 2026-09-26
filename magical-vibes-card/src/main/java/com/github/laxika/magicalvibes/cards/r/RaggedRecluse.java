@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "127")
+@CardRegistration(set = "DBL", collectorNumber = "394")
 public class RaggedRecluse extends Card {
 
     public RaggedRecluse() {

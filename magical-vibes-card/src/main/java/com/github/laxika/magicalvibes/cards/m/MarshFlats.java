@@ -18,6 +18,9 @@ import java.util.List;
 @CardRegistration(set = "MM3", collectorNumber = "239")
 @CardRegistration(set = "ZNE", collectorNumber = "6")
 @CardRegistration(set = "SLU", collectorNumber = "1")
+@CardRegistration(set = "SPG", collectorNumber = "110")
+@CardRegistration(set = "SPG", collectorNumber = "115")
+@CardRegistration(set = "MH2", collectorNumber = "248")
 public class MarshFlats extends Card {
 
     public MarshFlats() {

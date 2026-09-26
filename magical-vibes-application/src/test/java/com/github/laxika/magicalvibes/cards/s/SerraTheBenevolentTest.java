@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,17 +10,17 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SerraTheBenevolent.class, GrizzlyBears.class, SerraAngel.class, Shock.class})
+@CardUsed({SerraTheBenevolent.class, AirElemental.class, GrizzlyBears.class, Shock.class, SerraAngel.class})
 class SerraTheBenevolentTest extends BaseCardTest {
 
     @Test
@@ -27,6 +29,7 @@ class SerraTheBenevolentTest extends BaseCardTest {
         Permanent serra = addReadySerra(4);
         Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingAngel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
         harness.activateAbility(player1, indexOf(serra), 0, null, null);
         harness.passBothPriorities();
@@ -35,6 +38,7 @@ class SerraTheBenevolentTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingAngel)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -54,6 +58,8 @@ class SerraTheBenevolentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(serra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().hasType(CardType.CREATURE)

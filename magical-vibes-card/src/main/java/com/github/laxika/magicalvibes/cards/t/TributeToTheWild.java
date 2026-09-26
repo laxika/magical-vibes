@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "238")
+@CardRegistration(set = "CMD", collectorNumber = "175")
+@CardRegistration(set = "C15", collectorNumber = "206")
 public class TributeToTheWild extends Card {
 
     public TributeToTheWild() {

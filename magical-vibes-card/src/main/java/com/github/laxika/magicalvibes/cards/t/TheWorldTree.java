@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "275")
+@CardRegistration(set = "SLD", collectorNumber = "1266")
 public class TheWorldTree extends Card {
 
     public TheWorldTree() {

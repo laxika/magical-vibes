@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,19 +13,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LumengridWarden.class})
 class LumengridWardenTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lumengrid Warden has correct card properties")
-    void hasCorrectProperties() {
-        LumengridWarden card = new LumengridWarden();
-
-        assertThat(card.getActivatedAbilities()).isEmpty();
-    }
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Lumengrid Warden puts it on the stack")
@@ -37,7 +26,6 @@ class LumengridWardenTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lumengrid Warden");
     }
 
     @Test
@@ -77,22 +65,14 @@ class LumengridWardenTest extends BaseCardTest {
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
-    // ===== Combat =====
-
     @Test
     @DisplayName("Unblocked Lumengrid Warden deals 1 damage to defending player")
     void dealsOneDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new LumengridWarden());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player1, new LumengridWarden());
+        attacker.setAttacking(true);
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }

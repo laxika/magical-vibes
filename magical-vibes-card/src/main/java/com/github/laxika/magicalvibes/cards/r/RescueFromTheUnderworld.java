@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 @CardRegistration(set = "THS", collectorNumber = "102")
+@CardRegistration(set = "PIO", collectorNumber = "105")
 public class RescueFromTheUnderworld extends Card {
 
     public RescueFromTheUnderworld() {

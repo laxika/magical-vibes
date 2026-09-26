@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasNoAbilitiesPredic
 
 @CardRegistration(set = "FUT", collectorNumber = "146")
 @CardRegistration(set = "TSR", collectorNumber = "220")
+@CardRegistration(set = "YDFT", collectorNumber = "31")
 public class MuragandaPetroglyphs extends Card {
 
     public MuragandaPetroglyphs() {

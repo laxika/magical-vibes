@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.model.PlanechaseView;
+import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
-import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
+import com.github.laxika.magicalvibes.networking.model.PlanechaseView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,7 +49,47 @@ public record GameStateMessage(
         List<Integer> speeds,
         DayNight dayNight,
         PlanechaseView planechase,
+        UUID monarchPlayerId, com.github.laxika.magicalvibes.networking.model.CommanderView commander) {
+    public GameStateMessage(
+        MessageType type,
+        GameStatus status,
+        UUID activePlayerId,
+        int turnNumber,
+        TurnStep currentStep,
+        UUID priorityPlayerId,
+        List<List<PermanentView>> battlefields,
+        List<StackEntryView> stack,
+        List<List<CardView>> graveyards,
+        List<Integer> deckSizes,
+        List<Integer> handSizes,
+        List<Integer> lifeTotals,
+        List<Integer> poisonCounters,
+        List<Integer> energyCounters,
+        List<CardView> hand,
+        List<CardView> opponentHand,
+        int mulliganCount,
+        Map<String, Integer> manaPool,
+        List<TurnStep> autoStopSteps,
+        List<Integer> playableCardIndices,
+        List<Integer> playableForetellIndices,
+        List<Integer> playableGraveyardLandIndices,
+        List<CardView> playableExileCards,
+        List<GameLogEntryView> newLogEntries,
+        int searchTaxCost,
+        UUID mindControlledPlayerId,
+        List<List<CardView>> revealedLibraryTopCards,
+        List<Integer> playableFlashbackIndices,
+        List<CardView> playableLibraryTopCards,
+        List<Integer> potentialPlayableCardIndices,
+        int potentialManaTotal,
+        Map<UUID, List<Integer>> potentialPayableAbilityIndices,
+        List<Integer> speeds,
+        DayNight dayNight,
+        PlanechaseView planechase,
         UUID monarchPlayerId) {
+        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, null);
+    }
+
     public GameStateMessage(MessageType type,
         GameStatus status,
         UUID activePlayerId,

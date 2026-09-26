@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "53")
+@CardRegistration(set = "SPG", collectorNumber = "4")
 public class MephidrossVampire extends Card {
 
     public MephidrossVampire() {

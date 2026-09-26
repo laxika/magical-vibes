@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "140")
+@CardRegistration(set = "PIO", collectorNumber = "189")
 public class OathOfNissa extends Card {
 
     public OathOfNissa() {

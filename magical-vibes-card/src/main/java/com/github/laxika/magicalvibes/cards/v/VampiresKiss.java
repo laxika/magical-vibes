@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "136")
+@CardRegistration(set = "DBL", collectorNumber = "403")
 public class VampiresKiss extends Card {
 
     public VampiresKiss() {

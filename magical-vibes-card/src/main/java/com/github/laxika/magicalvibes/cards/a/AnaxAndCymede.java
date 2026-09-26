@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "186")
 @CardRegistration(set = "DDL", collectorNumber = "11")
+@CardRegistration(set = "PIO", collectorNumber = "202")
 public class AnaxAndCymede extends Card {
 
     public AnaxAndCymede() {

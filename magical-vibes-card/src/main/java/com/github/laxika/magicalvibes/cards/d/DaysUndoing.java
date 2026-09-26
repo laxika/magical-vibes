@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLi
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "51")
+@CardRegistration(set = "SLD", collectorNumber = "2153")
+@CardRegistration(set = "PIO", collectorNumber = "53")
+@CardRegistration(set = "CMM", collectorNumber = "85")
+@CardRegistration(set = "CMM", collectorNumber = "486")
 public class DaysUndoing extends Card {
 
     public DaysUndoing() {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.e.Earthquake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBlast;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Earthquake.class, GrizzlyBears.class, LightningBlast.class, SamiteHealer.class})
+@CardUsed({Earthquake.class, GrizzlyBears.class, LightningBlast.class, Plains.class, SamiteHealer.class})
 class SamiteHealerTest extends BaseCardTest {
 
     @Test
@@ -46,6 +47,18 @@ class SamiteHealerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("requires a target");
+    }
+
+    @Test
+    @DisplayName("Activating ability cannot target a land")
+    void activatingCannotTargetLand() {
+        addReadyHealer(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -112,8 +125,7 @@ class SamiteHealerTest extends BaseCardTest {
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        declareAttackers(player1, List.of(attackerIndex));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(attackerIndex));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
         harness.passBothPriorities();
 

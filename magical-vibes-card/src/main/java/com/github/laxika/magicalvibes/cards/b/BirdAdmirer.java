@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.WingShredder;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "MID", collectorNumber = "169")
+@CardRegistration(set = "DBL", collectorNumber = "169")
 public class BirdAdmirer extends Card {
 
     public BirdAdmirer() {

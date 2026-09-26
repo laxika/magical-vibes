@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "92")
+@CardRegistration(set = "SLD", collectorNumber = "810")
 public class ThrunTheLastTroll extends Card {
 
     public ThrunTheLastTroll() {

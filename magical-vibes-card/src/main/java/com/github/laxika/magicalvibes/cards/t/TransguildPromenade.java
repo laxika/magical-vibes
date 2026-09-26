@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "249")
+@CardRegistration(set = "C13", collectorNumber = "330")
 public class TransguildPromenade extends Card {
 
     public TransguildPromenade() {

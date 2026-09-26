@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.m.MasterDecoy;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
-import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Counterspell.class, GiantGrowth.class, GrizzlyBears.class, Ornithopter.class, PhyrexianHulk.class, ProdigalSorcerer.class, RemoveSoul.class})
+@CardUsed({GiantGrowth.class, GrizzlyBears.class, MasterDecoy.class, PhyrexianHulk.class, RemoveSoul.class})
 class RemoveSoulTest extends BaseCardTest {
 
     @Test
@@ -79,17 +77,17 @@ class RemoveSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an artifact creature spell")
     void canTargetArtifactCreatureSpellUpstreamReview() {
-        Ornithopter ornithopter = new Ornithopter();
+        PhyrexianHulk hulk = new PhyrexianHulk();
 
         harness.setHand(player2, List.of(new RemoveSoul()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castFromHand(player1, ornithopter, "{0}");
+        harness.castFromHand(player1, hulk, "{6}");
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, ornithopter.getId());
+        harness.castAndResolveInstant(player2, 0, hulk.getId());
 
-        harness.assertInGraveyard(player1, "Ornithopter");
-        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Phyrexian Hulk");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Hulk");
     }
 
     @Test
@@ -164,8 +162,8 @@ class RemoveSoulTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
 
-        Counterspell counterspell = new Counterspell();
-        harness.setHand(player1, List.of(counterspell));
+        RemoveSoul secondRemoveSoul = new RemoveSoul();
+        harness.setHand(player1, List.of(secondRemoveSoul));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
@@ -174,6 +172,23 @@ class RemoveSoulTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Remove Soul still goes to graveyard
         harness.assertInGraveyard(player2, "Remove Soul");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature permanent")
+    void cannotTargetCreaturePermanent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        RemoveSoul removeSoul = new RemoveSoul();
+        harness.setHand(player2, List.of(removeSoul));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(
+                player2, 0, harness.getPermanentId(player1, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(removeSoul);
     }
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")
@@ -201,16 +216,19 @@ class RemoveSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an activated ability")
     void cannotTargetActivatedAbility() {
-        ProdigalSorcerer sorcerer = new ProdigalSorcerer();
-        addCreatureReady(player1, sorcerer);
-        harness.activateAbility(player1, 0, null, player2.getId());
+        MasterDecoy decoy = new MasterDecoy();
+        addCreatureReady(player1, decoy);
+        PhyrexianHulk hulk = new PhyrexianHulk();
+        addCreatureReady(player2, hulk);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Phyrexian Hulk"));
 
         RemoveSoul removeSoul = new RemoveSoul();
         harness.setHand(player2, List.of(removeSoul));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, sorcerer.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, decoy.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("spell on the stack");
         assertThat(gd.stack).hasSize(1);

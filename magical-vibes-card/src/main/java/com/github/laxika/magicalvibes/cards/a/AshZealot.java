@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "86")
+@CardRegistration(set = "PIO", collectorNumber = "294")
 public class AshZealot extends Card {
 
     public AshZealot() {

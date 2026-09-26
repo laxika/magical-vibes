@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TalismanOfResilience.class)
+@CardUsed({TalismanOfResilience.class})
 class TalismanOfResilienceTest extends BaseCardTest {
 
     @Test
@@ -39,6 +39,7 @@ class TalismanOfResilienceTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "BLACK");
 
         Permanent talisman = gd.playerBattlefields.get(player1.getId()).getFirst();

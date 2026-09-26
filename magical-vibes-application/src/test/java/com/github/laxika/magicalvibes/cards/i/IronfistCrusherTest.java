@@ -45,8 +45,6 @@ class IronfistCrusherTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
         Permanent crusher = findPermanent(player1, "Ironfist Crusher");
         assertThat(crusher.isFaceDown()).isTrue();
@@ -66,9 +64,8 @@ class IronfistCrusherTest extends BaseCardTest {
         harness.setHand(player2, List.of(new IronfistCrusher()));
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
+        harness.forceActivePlayer(player2);
         harness.castCreatureWithMorph(player2, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent crusher = findPermanent(player2, "Ironfist Crusher");

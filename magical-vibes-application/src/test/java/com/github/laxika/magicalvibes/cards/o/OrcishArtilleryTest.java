@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -19,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrcishArtillery.class, LlanowarElves.class, GrizzlyBears.class})
+@CardUsed({OrcishArtillery.class, BirdsOfParadise.class, GrizzlyBears.class})
 class OrcishArtilleryTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -111,19 +111,19 @@ class OrcishArtilleryTest extends BaseCardTest {
     // ===== Dealing damage to creature =====
 
     @Test
-    @DisplayName("Deals 2 damage to target creature, destroying a 1/1, and 3 damage to controller")
+    @DisplayName("Deals 2 damage to target creature, destroying a 0/1, and 3 damage to controller")
     void deals2DamageDestroying1ToughnessAnd3ToController() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new BirdsOfParadise());
 
         addCreatureReady(player1, new OrcishArtillery());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Birds of Paradise");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Birds of Paradise");
+        harness.assertInGraveyard(player2, "Birds of Paradise");
         harness.assertLife(player1, 17);
     }
 

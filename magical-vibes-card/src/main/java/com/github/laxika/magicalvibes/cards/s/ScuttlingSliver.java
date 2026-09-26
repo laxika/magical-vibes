@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "623")
 @CardRegistration(set = "MH1", collectorNumber = "68")
 public class ScuttlingSliver extends Card {
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesNonlandPermanentThenReturnRestEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "53")
+@CardRegistration(set = "DBL", collectorNumber = "320")
 public class ConsumingTide extends Card {
 
     public ConsumingTide() {

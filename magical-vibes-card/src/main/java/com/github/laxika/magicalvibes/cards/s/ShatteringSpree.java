@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "75")
 @CardRegistration(set = "GK1", collectorNumber = "34")
+@CardRegistration(set = "TLE", collectorNumber = "36")
 public class ShatteringSpree extends Card {
 
     public ShatteringSpree() {

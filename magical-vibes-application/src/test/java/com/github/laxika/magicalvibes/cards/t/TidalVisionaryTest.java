@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TidalVisionary.class, GrizzlyBears.class})
 class TidalVisionaryTest extends BaseCardTest {
 
     @Test
@@ -53,9 +55,6 @@ class TidalVisionaryTest extends BaseCardTest {
     }
 
     private Permanent addReadyVisionary() {
-        Permanent visionary = new Permanent(new TidalVisionary());
-        visionary.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(visionary);
-        return visionary;
+        return addCreatureReady(player1, new TidalVisionary());
     }
 }

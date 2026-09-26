@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MRD", collectorNumber = "169")
 @CardRegistration(set = "MPS", collectorNumber = "38")
+@CardRegistration(set = "CMM", collectorNumber = "381")
+@CardRegistration(set = "CMM", collectorNumber = "604")
+@CardRegistration(set = "CMM", collectorNumber = "656")
 public class ExtraplanarLens extends Card {
 
     public ExtraplanarLens() {

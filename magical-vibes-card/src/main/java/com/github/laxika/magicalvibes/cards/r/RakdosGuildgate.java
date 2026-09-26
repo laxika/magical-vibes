@@ -15,7 +15,9 @@ import java.util.List;
 @CardRegistration(set = "RNA", collectorNumber = "255")
 @CardRegistration(set = "RNA", collectorNumber = "256")
 @CardRegistration(set = "MM3", collectorNumber = "242")
+@CardRegistration(set = "PIO", collectorNumber = "272")
 @CardRegistration(set = "RVR", collectorNumber = "284")
+@CardRegistration(set = "C13", collectorNumber = "314")
 public class RakdosGuildgate extends Card {
 
     public RakdosGuildgate() {

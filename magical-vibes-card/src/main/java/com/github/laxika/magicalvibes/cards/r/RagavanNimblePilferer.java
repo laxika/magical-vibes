@@ -15,6 +15,8 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "21")
 @CardRegistration(set = "MUL", collectorNumber = "86")
 @CardRegistration(set = "MUL", collectorNumber = "151")
+@CardRegistration(set = "FCA", collectorNumber = "43")
+@CardRegistration(set = "MH2", collectorNumber = "138")
 public class RagavanNimblePilferer extends Card {
 
     public RagavanNimblePilferer() {

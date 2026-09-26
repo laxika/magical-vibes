@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ElvishSoultiller.class, ElvishWarrior.class, GrizzlyBears.class, AvianChangeling.class,
-        WrathOfGod.class})
+        WrathOfGod.class, ElvishPromenade.class})
 class ElvishSoultillerTest extends BaseCardTest {
 
     @Test
@@ -58,6 +58,25 @@ class ElvishSoultillerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getId)
                 .contains(opponentBear.getId());
+    }
+
+    @Test
+    @DisplayName("A noncreature card with the chosen creature subtype stays in the graveyard")
+    void doesNotShuffleNoncreatureCardOfChosenType() {
+        Card soultiller = new ElvishSoultiller();
+        Card elfKindred = new ElvishPromenade();
+        harness.addToBattlefield(player1, soultiller);
+        harness.setGraveyard(player1, List.of(elfKindred));
+
+        destroySoultiller();
+        harness.handleListChoice(player1, "ELF");
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId)
+                .doesNotContain(elfKindred.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .contains(elfKindred.getId());
     }
 
     private void destroySoultiller() {

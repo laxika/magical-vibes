@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "116")
+@CardRegistration(set = "DBL", collectorNumber = "383")
 public class GrislyRitual extends Card {
 
     public GrislyRitual() {

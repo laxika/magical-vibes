@@ -22,12 +22,14 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -77,6 +79,22 @@ class DrawServiceTest {
     }
 
     @Test
+    void drawFromBottomReplacementUsesTheControllerBottomOfLibrary() {
+        Card lantern = createCard("Lantern of Undersight", CardType.ARTIFACT);
+        lantern.addEffect(EffectSlot.STATIC, new DrawFromBottomOfLibraryEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(lantern));
+        Card top = createCard("Top", CardType.CREATURE);
+        Card bottom = createCard("Bottom", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(top, bottom)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+
+        sut.resolveDrawCard(gd, player1Id);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(bottom);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(top);
+    }
+
+    @Test
     void anotherPlayersDrawInstructionWaitsBehindCurrentReplacement() {
         Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
         abundance.addEffect(EffectSlot.STATIC, new AbundanceDrawReplacementEffect());
@@ -119,6 +137,27 @@ class DrawServiceTest {
 
         assertThat(gd.playerHands.get(player1Id)).containsExactly(first, second);
         assertThat(gd.pendingCardDraws).isEmpty();
+    }
+
+    @Test
+    void opponentMultiCardDrawIsReplacedWithOneCardForEachPlayer() {
+        when(gameQueryService.getOpponentId(gd, player2Id)).thenReturn(player1Id);
+        Card almsCollector = createCard("Alms Collector", CardType.CREATURE);
+        almsCollector.addEffect(EffectSlot.STATIC, new OpponentDrawTwoOrMoreReplacedEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(almsCollector));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        gd.playerHands.put(player2Id, new ArrayList<>());
+        Card player1Card = createCard("Player 1 card", CardType.CREATURE);
+        Card player2Card = createCard("Player 2 card", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(player1Card)));
+        gd.playerDecks.put(player2Id, new ArrayList<>(List.of(player2Card)));
+
+        sut.resolveDrawCards(gd, player2Id, 2);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(player1Card);
+        assertThat(gd.playerHands.get(player2Id)).containsExactly(player2Card);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+        assertThat(gd.playerDecks.get(player2Id)).isEmpty();
     }
 
     @Mock
@@ -237,6 +276,21 @@ class DrawServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
+        }
+
+        @Test
+        @DisplayName("duplicates a draw trigger when an additional-trigger effect applies")
+        void additionalTriggerEffectDuplicatesDrawTrigger() {
+            Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
+            crawlerCard.addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new BoostSelfEffect(1, 1));
+            Permanent crawler = new Permanent(crawlerCard);
+            gd.playerBattlefields.get(player1Id).add(crawler);
+            when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, player1Id, crawler))
+                    .thenReturn(1);
+
+            sut.checkControllerDrawTriggers(gd, player1Id);
+
+            assertThat(gd.stack).hasSize(2);
         }
     }
 

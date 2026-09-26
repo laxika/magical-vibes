@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToBattlefiel
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "125")
+@CardRegistration(set = "C13", collectorNumber = "214")
 public class SkywardEyeProphets extends Card {
 
     public SkywardEyeProphets() {

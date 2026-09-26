@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandAndCardToGraveyardEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "93")
+@CardRegistration(set = "CMM", collectorNumber = "160")
 public class FinalParting extends Card {
 
     public FinalParting() {

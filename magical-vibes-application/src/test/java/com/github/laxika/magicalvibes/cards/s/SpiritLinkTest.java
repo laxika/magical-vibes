@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionGreen;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpiritLink.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class})
+@CardUsed({SpiritLink.class, GrizzlyBears.class, AnabaShaman.class, CircleOfProtectionGreen.class})
 class SpiritLinkTest extends BaseCardTest {
 
     // ===== Unblocked attacker deals damage to player =====
@@ -165,12 +165,36 @@ class SpiritLinkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No life gained when damage from enchanted creature is prevented")
+    void noLifeGainWhenDamageIsPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        attachSpiritLink(player1, bears);
+        harness.addToBattlefield(player2, new CircleOfProtectionGreen());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, bears.getId());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     void noncombatDamageWaitsForTriggeredLifeGain() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent pinger = addCreatureReady(player1, new AnabaShaman());
         attachSpiritLink(player1, pinger);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -189,9 +213,10 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent pinger = addCreatureReady(player1, new AnabaShaman());
         attachSpiritLink(player1, pinger);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -227,7 +252,6 @@ class SpiritLinkTest extends BaseCardTest {
     @DisplayName("A queued life-gain trigger resolves after Spirit Link leaves the battlefield")
     void triggeredLifeGainResolvesAfterSpiritLinkLeavesBattlefield() {
         harness.setLife(player1, 20);
-        harness.setLife(player2, 20);
 
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
@@ -248,9 +272,6 @@ class SpiritLinkTest extends BaseCardTest {
     @Test
     @DisplayName("Spirit Link life gain is logged")
     void spiritLinkLifeGainIsLogged() {
-        harness.setLife(player1, 20);
-        harness.setLife(player2, 20);
-
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
         attachSpiritLink(player1, bears);
@@ -281,15 +302,15 @@ class SpiritLinkTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot enchant a land")
-    void cannotEnchantALand() {
-        // A creature must exist so the spell is playable; targeting the land is then rejected.
+    @DisplayName("Cannot enchant a noncreature permanent")
+    void cannotEnchantANoncreaturePermanent() {
+        // A creature must exist so the spell is playable; targeting the noncreature is then rejected.
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new CircleOfProtectionGreen());
         harness.setHand(player1, List.of(new SpiritLink()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

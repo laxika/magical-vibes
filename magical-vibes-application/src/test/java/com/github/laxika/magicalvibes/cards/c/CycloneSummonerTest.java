@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.Test;
 
@@ -48,17 +47,15 @@ class CycloneSummonerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new FugitiveWizard());
         harness.addToBattlefield(player2, new Island());
-        harness.setGraveyard(player1, List.of(new CycloneSummoner()));
+        CycloneSummoner target = new CycloneSummoner();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        assertThat(harness.getGameData().interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Cyclone Summoner");
         harness.assertOnBattlefield(player1, "Blind-Spot Giant");
         harness.assertOnBattlefield(player1, "Glorious Anthem");

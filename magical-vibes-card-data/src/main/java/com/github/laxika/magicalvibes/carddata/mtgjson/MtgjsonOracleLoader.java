@@ -1,22 +1,15 @@
 package com.github.laxika.magicalvibes.carddata.mtgjson;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.carddata.CardDataSupport;
-import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry.TokenImageData;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.carddata.FaceOracleMapper;
 import com.github.laxika.magicalvibes.carddata.OracleLoader;
 import com.github.laxika.magicalvibes.carddata.RawFace;
 import com.github.laxika.magicalvibes.carddata.SetJsonCache;
 import com.github.laxika.magicalvibes.carddata.SetOracleData;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
-
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.OracleData;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -29,6 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Loads the oracle registry from MTGJSON (https://mtgjson.com) set files instead of the Scryfall
@@ -57,17 +56,46 @@ public class MtgjsonOracleLoader implements OracleLoader {
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(20);
     private static final Duration REQUEST_TIMEOUT = Duration.ofMinutes(2);
+    // MTGJSON omits these MSC Beginner Box numbers but includes the same cards as alternate
+    // printings. Prefer the real number if the upstream set file gains it later.
+    private static final Map<String, String> MSC_BEGINNER_BOX_ALIASES = Map.of(
+            "513", "834", "514", "835", "515", "836", "516", "837", "519", "839",
+            "521", "841", "524", "843", "526", "844", "527", "845", "542", "847");
 
     private final SetJsonCache cache;
+    private final SetJsonCache legalityCache;
 
     public MtgjsonOracleLoader(@Value("${card-data.cache-dir:./card-data-cache}") String cacheDir) {
         this.cache = new SetJsonCache(cacheDir, "mtgjson-", "MTGJSON", MtgjsonOracleLoader::fetchFromMtgjson);
+        this.legalityCache = new SetJsonCache(cacheDir, "legality-mtgjson-", "MTGJSON", MtgjsonOracleLoader::fetchFromMtgjson);
+    }
+
+    @Override
+    public com.github.laxika.magicalvibes.carddata.LegalitySnapshot loadLegalities(String setCode) {
+        String source = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
+        try {
+            Map<String, JsonNode> nodes = indexFacesByCollectorNumber(MAPPER.readTree(legalityCache.getRefreshing(source, java.time.Duration.ofHours(24))).get("data").get("cards")).frontFaces();
+            Map<String, Map<String, String>> result = new HashMap<>();
+            nodes.forEach((number, node) -> {
+                Map<String, String> formats = new HashMap<>();
+                JsonNode legalities = node.get("legalities");
+                if (legalities != null) legalities.properties().forEach(entry ->
+                        formats.put(entry.getKey().toLowerCase(java.util.Locale.ROOT), entry.getValue().asText().toLowerCase(java.util.Locale.ROOT)));
+                result.put(number, formats);
+            });
+            return new com.github.laxika.magicalvibes.carddata.LegalitySnapshot(result, legalityCache.updatedAt(source));
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            LOG.warning("Could not refresh legalities for " + setCode + ": " + e.getMessage());
+            return com.github.laxika.magicalvibes.carddata.LegalitySnapshot.empty();
+        }
     }
 
     @Override
     public SetOracleData loadSet(String setCode, Set<String> implementedCollectorNumbers) {
         try {
-            JsonNode setData = MAPPER.readTree(cache.get(setCode)).get("data");
+            String sourceSetCode = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
+            JsonNode setData = MAPPER.readTree(cache.get(sourceSetCode)).get("data");
             if (setData == null) {
                 throw new IOException("MTGJSON file for set " + setCode + " has no data node");
             }
@@ -75,17 +103,21 @@ public class MtgjsonOracleLoader implements OracleLoader {
             String setName = setData.has("name") ? setData.get("name").asText() : null;
 
             FaceIndex faces = indexFacesByCollectorNumber(setData.get("cards"));
-            Map<String, JsonNode> frontFaceNodes = faces.frontFaces();
+            Map<String, JsonNode> cardFrontFaceNodes = faces.frontFaces();
+            Map<String, JsonNode> frontFaceNodes = new HashMap<>(cardFrontFaceNodes);
+            mergeImplementedTokenFaces(frontFaceNodes, setData.get("tokens"), implementedCollectorNumbers);
+            int cardTotal = frontFaceNodes.size();
             Map<String, JsonNode> backFaceNodes = faces.backFaces();
 
             // Rarity covers every card in the set, implemented or not.
             Map<String, String> rarities = new HashMap<>();
-            for (Map.Entry<String, JsonNode> entry : frontFaceNodes.entrySet()) {
+            for (Map.Entry<String, JsonNode> entry : cardFrontFaceNodes.entrySet()) {
                 JsonNode cardNode = entry.getValue();
                 if (cardNode.has("rarity")) {
                     rarities.put(entry.getKey(), cardNode.get("rarity").asText());
                 }
             }
+            applyMissingPrintingAliases(sourceSetCode, frontFaceNodes, rarities);
 
             // Oracle text is parsed only for printings the game implements.
             Map<String, OracleData> frontFaces = new HashMap<>();
@@ -105,15 +137,17 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
             // Total cards in the set (one entry per collector number, meld results included —
             // the same count Scryfall yields) — the set-completeness denominator.
-            return new SetOracleData(setName, frontFaceNodes.size(), rarities,
-                    frontFaces, backFaces, parseTokens(setCode, setData));
+            return new SetOracleData(setName, cardTotal, rarities,
+                    frontFaces, backFaces, faces.faceNamesByCollectorNumber(),
+                    parseTokens(sourceSetCode, setData));
         } catch (Exception e) {
             throw new RuntimeException("Failed to load MTGJSON oracle data for set " + setCode, e);
         }
     }
 
     /** The set's card entries keyed by collector number, one map per side. */
-    record FaceIndex(Map<String, JsonNode> frontFaces, Map<String, JsonNode> backFaces) {
+    record FaceIndex(Map<String, JsonNode> frontFaces, Map<String, JsonNode> backFaces,
+                     Map<String, List<String>> faceNamesByCollectorNumber) {
     }
 
     /**
@@ -127,18 +161,60 @@ public class MtgjsonOracleLoader implements OracleLoader {
     static FaceIndex indexFacesByCollectorNumber(JsonNode cards) {
         Map<String, JsonNode> frontFaces = new HashMap<>();
         Map<String, JsonNode> backFaces = new HashMap<>();
+        Map<String, List<String>> faceNames = new HashMap<>();
         if (cards != null) {
             for (JsonNode cardNode : cards) {
                 String number = cardNode.get("number").asText();
-                if (cardNode.has("side") && "b".equals(cardNode.get("side").asText())) {
+                String side = cardNode.has("side") ? cardNode.get("side").asText() : null;
+                String faceName = cardNode.has("faceName")
+                        ? cardNode.get("faceName").asText()
+                        : cardNode.has("name") ? cardNode.get("name").asText() : null;
+                if (faceName != null) {
+                    faceNames.computeIfAbsent(number, ignored -> new ArrayList<>()).add(faceName);
+                }
+                if ("b".equals(side)) {
                     backFaces.put(number, cardNode);
-                } else {
+                } else if (!"c".equals(side)) {
                     frontFaces.put(number, cardNode);
                 }
             }
             backFaces.forEach(frontFaces::putIfAbsent);
         }
-        return new FaceIndex(frontFaces, backFaces);
+        return new FaceIndex(frontFaces, backFaces, faceNames);
+    }
+
+    /** Adds token faces only when a token class is explicitly registered for the set. */
+    static void mergeImplementedTokenFaces(Map<String, JsonNode> frontFaces, JsonNode tokens,
+                                           Set<String> implementedCollectorNumbers) {
+        if (tokens == null || !tokens.isArray()) {
+            return;
+        }
+        for (JsonNode token : tokens) {
+            if (!token.has("number")) {
+                continue;
+            }
+            String number = token.get("number").asText();
+            if (implementedCollectorNumbers.contains(number)) {
+                frontFaces.putIfAbsent(number, token);
+            }
+        }
+    }
+
+    static void applyMissingPrintingAliases(String setCode, Map<String, JsonNode> frontFaces,
+                                            Map<String, String> rarities) {
+        if (!"MSC".equalsIgnoreCase(setCode)) {
+            return;
+        }
+        MSC_BEGINNER_BOX_ALIASES.forEach((missingNumber, alternateNumber) -> {
+            JsonNode alternate = frontFaces.get(alternateNumber);
+            if (alternate != null && !frontFaces.containsKey(missingNumber)) {
+                frontFaces.put(missingNumber, alternate);
+                String rarity = rarities.get(alternateNumber);
+                if (rarity != null) {
+                    rarities.put(missingNumber, rarity);
+                }
+            }
+        });
     }
 
     private static String fetchFromMtgjson(String setCode) throws IOException, InterruptedException {

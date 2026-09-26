@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "99")
+@CardRegistration(set = "PIO", collectorNumber = "336")
 public class OathOfLiliana extends Card {
 
     public OathOfLiliana() {
