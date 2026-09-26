@@ -45,7 +45,7 @@ class OpalPalaceTest extends BaseCardTest {
     }
 
     @Test
-    void commanderEntersWithCountersEqualToPriorCommandZoneCasts() {
+    void commanderEntersWithCountersEqualToCommandZoneCastsIncludingCurrentCast() {
         GrizzlyBears commander = prepareCommander();
         gd.commanderTaxByCardId.put(commander.getId(), 4);
         harness.addToBattlefield(player1, new OpalPalace());
@@ -63,7 +63,7 @@ class OpalPalaceTest extends BaseCardTest {
                 .filter(candidate -> candidate.getCard().getId().equals(commander.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(permanent.getCounters().get(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(permanent.getCounters().get(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     private GrizzlyBears prepareCommander() {

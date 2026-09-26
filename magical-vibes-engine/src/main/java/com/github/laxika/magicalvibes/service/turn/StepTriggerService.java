@@ -1331,6 +1331,7 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), namesCheck.minCount());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
                         && conditional.condition() instanceof ControlsPermanentCountAtMost atMostCheck) {
                     // Intervening-if: only trigger if controller has few enough matching permanents
                     // (Sheltered Valley "three or fewer lands"; Kookus "don't control a Keeper of Kookus")

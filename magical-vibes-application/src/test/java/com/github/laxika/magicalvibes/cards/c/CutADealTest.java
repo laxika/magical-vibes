@@ -17,6 +17,7 @@ class CutADealTest extends BaseCardTest {
         CutADeal opponentDraw = new CutADeal();
         harness.setLibrary(player1, List.of(controllerDraw));
         harness.setLibrary(player2, List.of(opponentDraw));
+        harness.setHand(player2, List.of());
 
         harness.castFromHand(player1, new CutADeal(), "{2}{W}");
         harness.passBothPriorities();

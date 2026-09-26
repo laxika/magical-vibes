@@ -1742,7 +1742,7 @@ public class CastingCostService {
 
     public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card,
                                                             ManaPool pool, int additionalCost, Zone sourceZone) {
-        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost,
+        return findAffordableAlternativeCostSelection(gameData, playerId, card, pool, additionalCost,
                 sourceZone) != null;
     }
 

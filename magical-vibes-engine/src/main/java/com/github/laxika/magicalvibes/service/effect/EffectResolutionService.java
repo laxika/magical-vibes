@@ -179,6 +179,14 @@ public class EffectResolutionService {
 
             // CR 603.5 — resolution-time "you may" re-entry after player responded
             if (effectToResolve instanceof MayEffect may
+                    && may.wrapped() instanceof ConditionalEffect conditional
+                    && conditional.interveningIf()
+                    && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                    entry.getEventValue())) {
+                continue;
+            }
+
+            if (effectToResolve instanceof MayEffect may
                     && shouldSkipAcceptedOncePerTurnMay(gameData, entry, may)) {
                 log.info("Game {} - {}'s once-per-turn may ability already resolved", gameData.id,
                         entry.getCard().getName());
@@ -382,8 +390,7 @@ public class EffectResolutionService {
 
     private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {
         if (entry.getSourcePermanentId() == null
-                || !entry.isMarkSourceOncePerTurnOnAcceptance()
-                || gameData.resolvedMayAccepted != null) {
+                || !entry.isMarkSourceOncePerTurnOnAcceptance()) {
             return false;
         }
         if (may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy) {
@@ -391,6 +398,7 @@ public class EffectResolutionService {
                     && !copy.accepted()
                     && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
         }
-        return gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
+        return gameData.resolvedMayAccepted == null
+                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
     }
 }

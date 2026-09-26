@@ -26,7 +26,7 @@ class CrystalInhumanPrincessTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     @Test
@@ -46,7 +46,7 @@ class CrystalInhumanPrincessTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Crystal adds one mana of a chosen color")
     void tapsForChosenColor() {
-        harness.addToBattlefield(player1, new CrystalInhumanPrincess());
+        addCreatureReady(player1, new CrystalInhumanPrincess());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.BLUE.name());

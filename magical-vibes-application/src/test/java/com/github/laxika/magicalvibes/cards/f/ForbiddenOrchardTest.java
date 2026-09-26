@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ForbiddenOrchard.class})
@@ -76,8 +78,12 @@ class ForbiddenOrchardTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn() {
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }

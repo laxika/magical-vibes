@@ -122,7 +122,11 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "ki counters");
+        assertThat(altar.getCounterCount(CounterType.KI)).isZero();
+        assertThat(altar.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
     }
 
     @Test

@@ -133,13 +133,12 @@ class BloodSpeakerTest extends BaseCardTest {
     void upkeepSearchRequiresSuccessfulSacrifice() {
         harness.addToBattlefield(player1, new BloodSpeaker());
         harness.setLibrary(player1, List.of(new GutwrencherOni()));
-        harness.setHand(player2, List.of(new BlindWithAnger()));
-        harness.addMana(player2, ManaColor.RED, 4); // {3}{R}
-
         advanceToUpkeep(player1);
         UUID bloodSpeakerId = harness.getPermanentId(player1, "Blood Speaker");
-        harness.castInstant(player2, 0, bloodSpeakerId);
-        harness.passBothPriorities(); // resolve Blind with Anger
+        var bloodSpeaker = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getId().equals(bloodSpeakerId)).findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(bloodSpeaker);
+        gd.playerBattlefields.get(player2.getId()).add(bloodSpeaker);
         harness.passBothPriorities(); // resolve the upkeep trigger -> may prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

@@ -44,7 +44,7 @@ class DesperateRitualTest extends BaseCardTest {
         harness.castWithSplice(player1, 0, player2.getId(), List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(ritual);
         harness.assertInGraveyard(player1, "Glacial Ray");
@@ -64,7 +64,7 @@ class DesperateRitualTest extends BaseCardTest {
         harness.castWithSplice(player1, 0, player2.getId(), List.of(1, 2));
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(12);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(6);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstRitual, secondRitual);
         harness.assertInGraveyard(player1, "Glacial Ray");

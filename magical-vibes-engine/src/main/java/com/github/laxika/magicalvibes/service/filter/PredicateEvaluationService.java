@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -1165,8 +1164,17 @@ public class PredicateEvaluationService {
                 if (gameData == null) {
                     yield false;
                 }
-                yield permanent.getEffectiveColors().stream()
-                        .anyMatch(color -> ColorMostCommonAmongAllPermanents.isMostCommon(gameData, color));
+                var counts = new java.util.EnumMap<CardColor, Integer>(CardColor.class);
+                gameData.forEachPermanent((playerId, candidate) -> {
+                    Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, candidate);
+                    for (CardColor color : colors) {
+                        counts.merge(color, 1, Integer::sum);
+                    }
+                });
+                Set<CardColor> targetColors = gameQueryService.getEffectiveColors(gameData, permanent);
+                yield targetColors.stream()
+                        .anyMatch(color -> counts.values().stream()
+                                .allMatch(count -> count <= counts.getOrDefault(color, 0)));
             }
             case PermanentIsAuraAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {

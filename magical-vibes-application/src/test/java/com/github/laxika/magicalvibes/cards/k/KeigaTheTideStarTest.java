@@ -92,7 +92,8 @@ class KeigaTheTideStarTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, mossKamiId);
 
-        harness.castEnchantment(player2, 0, mossKamiId);
+        var aura = harness.addToBattlefieldAndReturn(player2, new ImprisonedInTheMoon());
+        aura.setAttachedTo(mossKamiId);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

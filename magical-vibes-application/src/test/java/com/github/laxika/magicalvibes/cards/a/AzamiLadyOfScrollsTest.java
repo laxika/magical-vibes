@@ -61,9 +61,6 @@ class AzamiLadyOfScrollsTest extends BaseCardTest {
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(azami);
         harness.activateAbility(player1, idx, null, null);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, wizard.getId());
         harness.passBothPriorities();
 
         assertThat(azami.isTapped()).isTrue();

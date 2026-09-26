@@ -185,17 +185,29 @@ public class UntapStepService {
         Set<UUID> restrictedPermanentIds = new java.util.HashSet<>();
         if (untapRestrictions != null) {
             for (var restriction : untapRestrictions) {
-                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(activePlayerId, List.of())) {
-                    if (restriction.filter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, restriction.filter())) {
-                        restrictedPermanentIds.add(permanent.getId());
+                if (restriction.allPlayersAtUntap()) {
+                    gameData.forEachPermanent((playerId, permanent) -> {
+                        if (restriction.filter() == null
+                                || predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, restriction.filter())) {
+                            restrictedPermanentIds.add(permanent.getId());
+                        }
+                    });
+                } else {
+                    for (Permanent permanent : gameData.playerBattlefields.getOrDefault(activePlayerId, List.of())) {
+                        if (restriction.filter() == null
+                                || predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, restriction.filter())) {
+                            restrictedPermanentIds.add(permanent.getId());
+                        }
                     }
                 }
                 if (restriction.untapSteps() > 1) {
                     gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
                             activePlayerId, id -> new ArrayList<>()).add(
                             new SkipNextUntapEffect(
-                                    restriction.scope(), restriction.filter(), restriction.untapSteps() - 1, true));
+                                    restriction.scope(), restriction.filter(), restriction.untapSteps() - 1,
+                                    true, restriction.allPlayersAtUntap()));
                 }
             }
         }
@@ -294,7 +306,7 @@ public class UntapStepService {
         gameLogService.append(gameData, GameLog.text(untapLog));
         log.info("Game {} - {} untaps their permanents", gameData.id, activePlayerName);
 
-        untapAllPermanentsDuringEachPlayersUntapStep(gameData, activePlayerId);
+        untapAllPermanentsDuringEachPlayersUntapStep(gameData, activePlayerId, restrictedPermanentIds);
 
         // Queue may-not-untap choices for tapped permanents with MayNotUntapDuringUntapStepEffect
         for (Permanent p : mayNotUntapPermanents) {
@@ -317,6 +329,7 @@ public class UntapStepService {
             boolean hasUnfilteredEffect = untapEffects.stream().anyMatch(e -> e.effect().filter() == null);
 
             for (Permanent p : playerBattlefield) {
+                if (restrictedPermanentIds.contains(p.getId())) continue;
                 if (hasUnfilteredEffect || untapEffects.stream().anyMatch(e -> e.effect().filter() != null
                         && predicateEvaluationService.matchesPermanentPredicate(p, e.effect().filter(),
                         FilterContext.of(gameData)
@@ -339,11 +352,12 @@ public class UntapStepService {
             }
         });
 
-        untapSelfPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
-        untapEnchantedPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
+        untapSelfPermanentsDuringOtherPlayersStep(gameData, activePlayerId, restrictedPermanentIds);
+        untapEnchantedPermanentsDuringOtherPlayersStep(gameData, activePlayerId, restrictedPermanentIds);
     }
 
-    private void untapAllPermanentsDuringEachPlayersUntapStep(GameData gameData, UUID activePlayerId) {
+    private void untapAllPermanentsDuringEachPlayersUntapStep(GameData gameData, UUID activePlayerId,
+                                                               Set<UUID> restrictedPermanentIds) {
         if (!allPermanentsUntapDuringEachPlayersUntapStepApplies(gameData)) {
             return;
         }
@@ -352,7 +366,9 @@ public class UntapStepService {
             if (playerId.equals(activePlayerId)) {
                 return;
             }
-            playerBattlefield.forEach(permanent -> tapUntapSupport.untapPermanent(gameData, permanent));
+            playerBattlefield.stream()
+                    .filter(permanent -> !restrictedPermanentIds.contains(permanent.getId()))
+                    .forEach(permanent -> tapUntapSupport.untapPermanent(gameData, permanent));
         });
     }
 
@@ -365,12 +381,14 @@ public class UntapStepService {
                         .anyMatch(effect -> effect instanceof AllPermanentsUntapDuringEachPlayersUntapStepEffect));
     }
 
-    private void untapSelfPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId) {
+    private void untapSelfPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId,
+                                                           Set<UUID> restrictedPermanentIds) {
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             if (playerId.equals(activePlayerId)) return;
 
             for (Permanent permanent : playerBattlefield) {
-                if (!permanent.isTapped() || !hasSelfCrossPlayerUntap(gameData, permanent, playerId, TurnStep.UNTAP)) {
+                if (!permanent.isTapped() || restrictedPermanentIds.contains(permanent.getId())
+                        || !hasSelfCrossPlayerUntap(gameData, permanent, playerId, TurnStep.UNTAP)) {
                     continue;
                 }
 
@@ -418,12 +436,14 @@ public class UntapStepService {
      * lives on the enchanted permanent, so it is the host's controller — not the aura's — that
      * decides whether this untap step counts as "each other player's".
      */
-    private void untapEnchantedPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId) {
+    private void untapEnchantedPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId,
+                                                                Set<UUID> restrictedPermanentIds) {
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             if (playerId.equals(activePlayerId)) return;
 
             for (Permanent p : playerBattlefield) {
-                if (!p.isTapped() || !hasEnchantedCrossPlayerUntap(gameData, p)) continue;
+                if (!p.isTapped() || restrictedPermanentIds.contains(p.getId())
+                        || !hasEnchantedCrossPlayerUntap(gameData, p)) continue;
 
                 tapUntapSupport.untapPermanent(gameData, p);
                 String logLine = gameData.playerIdToName.get(playerId) + " untaps " + p.getCard().getName()

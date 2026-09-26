@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
@@ -30,9 +31,12 @@ class CommodoreGuffTest extends BaseCardTest {
         addReadyGuff(5);
         Permanent huatli = addReadyHuatli(3);
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player1, huatli.getId());
+        }
         harness.passBothPriorities();
 
         assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
@@ -44,7 +48,7 @@ class CommodoreGuffTest extends BaseCardTest {
         addReadyGuff(5);
         addReadyHuatli(player2, 3);
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -88,6 +92,7 @@ class CommodoreGuffTest extends BaseCardTest {
         Card first = new Shock();
         Card second = new Shock();
         harness.setLibrary(player1, new ArrayList<>(List.of(first, second)));
+        harness.setHand(player1, List.of());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 1, null, null);

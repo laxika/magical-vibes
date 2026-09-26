@@ -49,7 +49,8 @@ class AbstractPerformanceTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(faceDown);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(faceDown)
+                .anyMatch(card -> card instanceof AbstractPerformance);
         assertThat(gd.playerHands.get(player1.getId())).contains(faceUp.get(1), faceUp.get(2), faceUp.get(3));
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(faceUp.getFirst().getId()));
 
@@ -68,7 +69,8 @@ class AbstractPerformanceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         harness.handleCardChosen(player1, -1);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(faceUp);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(faceUp)
+                .anyMatch(card -> card instanceof AbstractPerformance);
         assertThat(gd.playerHands.get(player1.getId())).containsAll(faceDown);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

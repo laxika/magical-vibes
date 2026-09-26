@@ -21,9 +21,6 @@ public class ONaginata extends Card {
         setAttachRestriction(POWER_THREE_OR_GREATER);
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
-        addActivatedAbility(new EquipActivatedAbility(
-                "{2}",
-                POWER_THREE_OR_GREATER,
-                "O-Naginata can be attached only to a creature with power 3 or greater"));
+        addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

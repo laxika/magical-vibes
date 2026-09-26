@@ -4584,6 +4584,9 @@ public class TargetLegalityService {
             if (stackEntry.getSourcePermanentId() != null) {
                 Permanent abilitySource = gameQueryService.findPermanentById(
                         gameData, stackEntry.getSourcePermanentId());
+                if (abilitySource == null) {
+                    abilitySource = stackEntry.getSourcePermanentSnapshot();
+                }
                 if (abilitySource != null) {
                     return gameQueryService.getEffectiveCardTypes(gameData, abilitySource).stream()
                             .anyMatch(cardTypeInPredicate.cardTypes()::contains);

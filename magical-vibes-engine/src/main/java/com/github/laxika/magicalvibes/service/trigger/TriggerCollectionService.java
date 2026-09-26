@@ -169,6 +169,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterCreatureConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
@@ -5089,6 +5090,15 @@ public class TriggerCollectionService {
                 .toList();
         if (effects.isEmpty()) return;
 
+        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                    source.getCard(), controllerId, new ArrayList<>(effects), source.getId(),
+                    controllerId, spellOrAbilityControllerId));
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+            return;
+        }
+
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 source.getCard(),
@@ -6267,6 +6277,7 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.AnyCreatureDealtDamage(
                 damagedCreature, damagedCreatureControllerId, damageDealt);
         gameData.forEachPermanent((playerId, perm) -> {
+            if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE);
             if (effects == null || effects.isEmpty()) return;
 
@@ -14101,7 +14112,11 @@ public class TriggerCollectionService {
                                                       Permanent source, CardEffect effect) {
         if (effect instanceof EnterCreatureConditionalEffect conditional) {
             Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
-            if (!conditional.testEnteringPermanent(enteringPermanent)) {
+            boolean conditionMet = conditional instanceof EnteringCreatureMinPowerConditionalEffect minPower
+                    ? enteringPermanent != null
+                            && gameQueryService.getEffectivePower(gameData, enteringPermanent) >= minPower.minPower()
+                    : conditional.testEnteringPermanent(enteringPermanent);
+            if (!conditionMet) {
                 return null;
             }
             log.info("Game {} - {} triggers for {} entering ({})",

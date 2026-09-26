@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CranialExtraction.class, GrizzlyBears.class, Peek.class})
 class CranialExtractionTest extends BaseCardTest {
@@ -68,8 +67,8 @@ class CranialExtractionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not allow choosing fewer than all matching cards")
-    void doesNotAllowPartialSelection() {
+    @DisplayName("May exile fewer than all matching cards")
+    void allowsPartialSelection() {
         Card bears1 = new GrizzlyBears();
         Card bears2 = new GrizzlyBears();
         harness.setHand(player2, new ArrayList<>(List.of(bears1, bears2)));
@@ -84,8 +83,10 @@ class CranialExtractionTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Grizzly Bears");
 
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(bears1.getId())))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bears1);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears2);
     }
 
     @Test

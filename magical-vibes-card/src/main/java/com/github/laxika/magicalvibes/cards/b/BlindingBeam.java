@@ -39,7 +39,7 @@ public class BlindingBeam extends Card {
                         "Creatures don't untap during target player's next untap step",
                         new SkipNextUntapEffect(
                                 TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate()),
+                                new PermanentIsCreaturePredicate(), 1, true, true),
                         playerFilter)
         )));
     }

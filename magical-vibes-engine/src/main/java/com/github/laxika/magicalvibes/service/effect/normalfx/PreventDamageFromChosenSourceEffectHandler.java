@@ -91,8 +91,6 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
         }
 
         String label = sourceLabel == null ? "" : sourceLabel + " ";
-        Set<CardColor> requiredDamageColors = sourceFilter instanceof PermanentColorInPredicate colors
-                ? colors.colors() : null;
         PermanentChoiceContext context;
         String prompt;
         switch (e.scope()) {
@@ -100,7 +98,7 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceChoice(
                         controllerId, e.gainLife(), e.exileFromLibrary(),
                         e.damageSourceController() ? entry.getCard() : null,
-                        e.preventHalfDamage(), e.drawCards(), requiredDamageColors,
+                        e.preventHalfDamage(), e.drawCards(), null,
                         sourceFilter instanceof PermanentColorInPredicate ? null : sourceFilter);
                 String prevention = e.preventHalfDamage()
                         ? "prevent half that damage, rounded down"

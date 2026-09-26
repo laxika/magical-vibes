@@ -38,10 +38,9 @@ class KangDynastyTest extends BaseCardTest {
         opponentCreature.setAttacking(true);
         int handSizeBeforeCombat = gd.playerHands.get(player1.getId()).size();
         resolveCombat(player2);
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBeforeCombat + 1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
     @Test

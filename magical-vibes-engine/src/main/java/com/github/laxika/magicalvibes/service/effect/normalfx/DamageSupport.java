@@ -1093,7 +1093,8 @@ public class DamageSupport {
                 }
                 // CR 306.8: damage dealt to a planeswalker removes that many loyalty counters from it
                 // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
-                int loyaltyDamage = Math.max(0, rawDamage);
+                int loyaltyDamage = gameQueryService.applyDamageReplacementEffects(
+                        gameData, entry, null, Math.max(0, rawDamage));
                 // Djeru, With Eyes Open: prevent N of the damage dealt to a planeswalker you control.
                 UUID pwControllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
                 Permanent sourcePermanent = entry.getSourcePermanentId() == null

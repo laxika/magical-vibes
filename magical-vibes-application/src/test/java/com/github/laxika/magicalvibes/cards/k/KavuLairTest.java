@@ -65,6 +65,7 @@ class KavuLairTest extends BaseCardTest {
     @DisplayName("Triggers when a creature enters with power 4 or greater from counters")
     void triggersForPowerAfterEnteringCounters() {
         harness.addToBattlefield(player1, new KavuLair());
+        harness.setLibrary(player1, List.of(new KavuTitan()));
         harness.setHand(player1, List.of(new KavuTitan()));
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.castKickedCreature(player1, 0);

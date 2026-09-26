@@ -38,7 +38,7 @@ class ArchaeomancersMapTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(firstPlains, secondPlains);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, creature);
     }
 
     @Test

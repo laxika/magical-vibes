@@ -79,6 +79,7 @@ class InfernalRebirthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Infernal Rebirth");
+        harness.handleCardChosen(player1, 0);
         harness.assertInHand(player1, "Forest");
     }
 }

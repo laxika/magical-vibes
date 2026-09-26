@@ -221,7 +221,7 @@ public final class AnyColorManaChoiceSupport {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
             case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
-            case COMMANDER_COLOR_IDENTITY, PATH_OF_ANCESTRY,
+            case COMMANDER_COLOR_IDENTITY, COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS, PATH_OF_ANCESTRY,
                     COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY ->
                     ManaProductionSupport.commanderColorIdentity(gameData, playerId);
             default -> effect.allowedColors();

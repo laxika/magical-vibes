@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -28,6 +29,9 @@ class FlayerOfLoyaltiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         harness.castCreature(player1, 0, target.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -49,12 +53,14 @@ class FlayerOfLoyaltiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         harness.castCreature(player1, 0, target.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(target);
         declareAttackers(player1, List.of(attackerIndex));
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

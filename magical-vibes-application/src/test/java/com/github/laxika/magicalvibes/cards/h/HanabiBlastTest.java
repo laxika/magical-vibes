@@ -74,6 +74,7 @@ class HanabiBlastTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

@@ -42,8 +42,8 @@ class KashiTribeReaverTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.resolveCombatDamage();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(mossKami.isTapped()).isTrue();
         assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);

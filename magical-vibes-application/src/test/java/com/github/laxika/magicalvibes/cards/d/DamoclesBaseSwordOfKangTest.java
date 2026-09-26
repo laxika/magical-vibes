@@ -41,13 +41,14 @@ class DamoclesBaseSwordOfKangTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         damocles.setAttacking(true);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombatAndTrigger();
         harness.handleListChoice(player2, SACRIFICE);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 5);
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -58,12 +59,13 @@ class DamoclesBaseSwordOfKangTest extends BaseCardTest {
         damocles.setAttacking(true);
         List<Card> library = List.of(new Forest(), new Forest());
         harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         resolveCombatAndTrigger();
         harness.handleListChoice(player2, LIFE_AND_DRAW);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 7);
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
                 .containsExactlyElementsOf(library.stream().map(Card::getId).toList());
     }

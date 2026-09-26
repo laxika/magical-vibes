@@ -67,7 +67,8 @@ public record DistributeCountersAmongCreaturesOnDeathEffect(
      * The printed ability targets, but the engine models the distribution the same way it models
      * Vastwood Hydra's: the receiving creatures and their per-creature amounts are chosen as the
      * trigger resolves rather than announced as it is put on the stack (CR 603.3d / CR 601.2d).
-     * Practically identical, except that targeting legality (shroud, protection) is not checked.
+     * Targeting restrictions such as shroud and protection are checked when the recipients are
+     * chosen.
      */
     public static DistributeCountersAmongCreaturesOnDeathEffect fixedAmongAnyCreatures(
             CounterType counterType, int count) {

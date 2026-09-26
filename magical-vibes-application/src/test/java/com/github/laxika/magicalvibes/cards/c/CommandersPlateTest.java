@@ -62,6 +62,7 @@ class CommandersPlateTest extends BaseCardTest {
         Permanent plate = addPlateReady(player1);
         Permanent commander = addCreatureReady(player1, new GrizzlyBears());
         commander.setCommander(true);
+        gd.playerCommanders.get(player1.getId()).add(commander.getCard());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, commander.getId());
