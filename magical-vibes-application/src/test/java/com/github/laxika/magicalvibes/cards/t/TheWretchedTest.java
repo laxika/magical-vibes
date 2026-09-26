@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.c.CrawWurm;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfBone;
+import com.github.laxika.magicalvibes.cards.c.CrawGiant;
+import com.github.laxika.magicalvibes.cards.w.WallOfEarth;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,21 +12,19 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheWretched.class, GrizzlyBears.class, CrawWurm.class, WallOfBone.class})
+@CardUsed({TheWretched.class, CrawGiant.class, WallOfEarth.class})
 class TheWretchedTest extends BaseCardTest {
 
     @Test
     @DisplayName("End-of-combat ability is not created during blocker declaration")
     void doesNotTriggerDuringBlockerDeclaration() {
         addCreatureReady(player1, new TheWretched());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new WallOfEarth());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() instanceof TheWretched);
@@ -38,17 +34,15 @@ class TheWretchedTest extends BaseCardTest {
     @DisplayName("At end of combat, controller gains control of all creatures blocking The Wretched")
     void gainsControlOfAllBlockersAtEndOfCombat() {
         addCreatureReady(player1, new TheWretched());
-        Permanent blocker1 = addCreatureReady(player2, new WallOfBone());
-        Permanent blocker2 = addCreatureReady(player2, new WallOfBone());
+        Permanent blocker1 = addCreatureReady(player2, new WallOfEarth());
+        Permanent blocker2 = addCreatureReady(player2, new WallOfEarth());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
-        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.END_OF_COMBAT));
-        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.END_OF_COMBAT));
-        resolveAllTriggers();
-        resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker1.getId(), 2));
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            resolveCombat();
+            harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker1.getId(), 2));
+        });
 
         // Not yet stolen while combat is ongoing.
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker1, blocker2);
@@ -63,10 +57,9 @@ class TheWretchedTest extends BaseCardTest {
     @DisplayName("Control ends when The Wretched leaves the battlefield")
     void controlEndsWhenSourceLeaves() {
         Permanent wretched = addCreatureReady(player1, new TheWretched());
-        Permanent blocker = addCreatureReady(player2, new WallOfBone());
+        Permanent blocker = addCreatureReady(player2, new WallOfEarth());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         leaveEndOfCombat();
@@ -84,19 +77,35 @@ class TheWretchedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not gain control if The Wretched leaves before its ability resolves")
+    void doesNotGainControlIfSourceLeavesBeforeAbilityResolves() {
+        Permanent wretched = addCreatureReady(player1, new TheWretched());
+        Permanent blocker = addCreatureReady(player2, new WallOfEarth());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wretched));
+        leaveEndOfCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blocker);
+    }
+
+    @Test
     @DisplayName("Does nothing when The Wretched is not blocked")
     void noControlWhenNotBlocked() {
         addCreatureReady(player1, new TheWretched());
-        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new WallOfEarth());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.clearPriorityPassed();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         leaveEndOfCombat();
 
-        assertThat(gd.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)).isFalse();
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
     }
 
     @Test
@@ -104,10 +113,9 @@ class TheWretchedTest extends BaseCardTest {
     void doesNotGainControlOfBlockerAfterSourceRegenerates() {
         Permanent wretched = addCreatureReady(player1, new TheWretched());
         wretched.setRegenerationShield(1);
-        Permanent blocker = addCreatureReady(player2, new CrawWurm());
+        Permanent blocker = addCreatureReady(player2, new CrawGiant());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         leaveEndOfCombat();

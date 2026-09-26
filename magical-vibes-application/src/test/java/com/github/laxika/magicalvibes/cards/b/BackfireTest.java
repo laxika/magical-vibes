@@ -76,6 +76,27 @@ class BackfireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not reflect damage dealt to a player other than Backfire's controller")
+    void noReflectionWhenDamageHitsAnotherPlayer() {
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+
+        harness.setHand(player1, List.of(new Backfire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+
+        int auraControllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int creatureControllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(auraControllerLifeBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(creatureControllerLifeBefore - 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Reflects noncombat damage and uses Backfire as the reflected damage source")
     void reflectsNoncombatDamageFromTheAura() {
         Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());

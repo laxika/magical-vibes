@@ -26,7 +26,7 @@ class LandTaxTest extends BaseCardTest {
         setupLibrary();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -41,7 +41,7 @@ class LandTaxTest extends BaseCardTest {
         setupLibrary();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -81,7 +81,7 @@ class LandTaxTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
@@ -102,7 +102,7 @@ class LandTaxTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, -1);
@@ -121,7 +121,7 @@ class LandTaxTest extends BaseCardTest {
         setupLibrary();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -139,7 +139,7 @@ class LandTaxTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -155,7 +155,7 @@ class LandTaxTest extends BaseCardTest {
         setupLibrary();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -168,7 +168,7 @@ class LandTaxTest extends BaseCardTest {
         setupLibrary();
 
         advanceToUpkeep(player2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -189,6 +189,43 @@ class LandTaxTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2)
                 .allMatch(card -> card instanceof GrizzlyBears || card instanceof MishrasFactory);
+    }
+
+    @Test
+    @DisplayName("Search accepts any basic land type, not only Plains")
+    void searchesForAnyBasicLandType() {
+        setupLandTax();
+        givePlayerLands(player2, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(), new MishrasFactory()));
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .singleElement()
+                .isInstanceOf(Forest.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof Forest);
+    }
+
+    @Test
+    @DisplayName("No search occurs if the land-count condition is false on resolution")
+    void noSearchWhenConditionChangesBeforeResolution() {
+        setupLandTax();
+        givePlayerLands(player2, 1);
+        setupLibrary();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int libraryBefore = gd.playerDecks.get(player1.getId()).size();
+        advanceToUpkeep(player1);
+        givePlayerLands(player1, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
     }
 
     private void setupLandTax() {

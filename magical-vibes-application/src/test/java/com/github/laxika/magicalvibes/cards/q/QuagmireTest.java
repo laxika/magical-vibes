@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.EnumSet;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Quagmire.class, Swamp.class, Forest.class, GrizzlyBears.class})
@@ -30,10 +30,12 @@ class QuagmireTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Swamp());
         harness.addToBattlefield(player2, new Quagmire());
         Permanent attacker = addWalker(player1, Keyword.SWAMPWALK);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        beginBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
@@ -42,12 +44,26 @@ class QuagmireTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new Quagmire());
         Permanent attacker = addWalker(player1, Keyword.FORESTWALK);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Quagmire works even when controlled by the attacking player")
+    void swampwalkCanBeBlockedWhenAttackerControlsQuagmire() {
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player1, new Quagmire());
+        Permanent attacker = addWalker(player1, Keyword.SWAMPWALK);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {
@@ -65,22 +81,8 @@ class QuagmireTest extends BaseCardTest {
         card.setPower(2);
         card.setToughness(2);
         card.setKeywords(EnumSet.of(landwalk));
-        Permanent permanent = readyCreature(player, card);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
         return permanent;
-    }
-
-    private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

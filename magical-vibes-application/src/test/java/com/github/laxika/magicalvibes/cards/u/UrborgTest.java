@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Urborg.class, WhiteKnight.class, BogWraith.class})
+@CardUsed({Urborg.class, WhiteKnight.class, BogWraith.class, Island.class})
 class UrborgTest extends BaseCardTest {
 
     @Test
@@ -52,6 +52,21 @@ class UrborgTest extends BaseCardTest {
         activate(urborg, target, "It loses swampwalk");
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isFalse();
+
+        endTurn();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can choose a keyword the target does not have")
+    void choosingAbsentKeywordHasNoEffect() {
+        Permanent urborg = setUpUrborg();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+
+        activate(urborg, target, "It loses swampwalk");
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test

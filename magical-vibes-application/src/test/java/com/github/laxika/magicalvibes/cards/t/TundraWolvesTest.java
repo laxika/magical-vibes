@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.p.PearledUnicorn;
-import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
+import com.github.laxika.magicalvibes.cards.f.FireSprites;
+import com.github.laxika.magicalvibes.cards.h.HeadlessHorseman;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TundraWolves.class, ScrybSprites.class, PearledUnicorn.class})
+@CardUsed({TundraWolves.class, FireSprites.class, HeadlessHorseman.class})
 class TundraWolvesTest extends BaseCardTest {
 
     @Test
@@ -19,7 +19,7 @@ class TundraWolvesTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new TundraWolves());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new ScrybSprites());
+        Permanent blocker = addCreatureReady(player2, new FireSprites());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -38,7 +38,7 @@ class TundraWolvesTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new TundraWolves());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new PearledUnicorn());
+        Permanent blocker = addCreatureReady(player2, new HeadlessHorseman());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -48,6 +48,7 @@ class TundraWolvesTest extends BaseCardTest {
                 .extracting(Permanent::getId).doesNotContain(attacker.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(Permanent::getId).contains(blocker.getId());
+                .extracting(Permanent::getId).doesNotContain(blocker.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
     }
 }

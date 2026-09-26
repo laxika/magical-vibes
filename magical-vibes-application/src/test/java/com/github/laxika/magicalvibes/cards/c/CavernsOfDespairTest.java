@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AvatarOfHope;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CavernsOfDespair.class, GrizzlyBears.class})
+@CardUsed({CavernsOfDespair.class, GrizzlyBears.class, AvatarOfHope.class})
 class CavernsOfDespairTest extends BaseCardTest {
 
     @Test
@@ -73,10 +74,23 @@ class CavernsOfDespairTest extends BaseCardTest {
                 new BlockerAssignment(1, 1)))).doesNotThrowAnyException();
     }
 
+    @Test
+    @DisplayName("One blocker can block two attackers and still counts as one blocker")
+    void countsDistinctBlockers() {
+        addReadyPermanent(player1, new CavernsOfDespair());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new AvatarOfHope());
+        declareAttackersAndPrepareBlockers(player1, List.of(1, 2));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)))).doesNotThrowAnyException();
+    }
+
     private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

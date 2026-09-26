@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpiritLink.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class})
+@CardUsed({SpiritLink.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class, Fog.class})
 class SpiritLinkTest extends BaseCardTest {
 
     // ===== Unblocked attacker deals damage to player =====
@@ -162,6 +163,30 @@ class SpiritLinkTest extends BaseCardTest {
 
         // Player1 gains no life — enchanted creature didn't deal damage
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("No life gained when combat damage is prevented")
+    void noLifeGainWhenCombatDamageIsPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attachSpiritLink(player1, attacker);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.setHand(player2, List.of(new Fog()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test

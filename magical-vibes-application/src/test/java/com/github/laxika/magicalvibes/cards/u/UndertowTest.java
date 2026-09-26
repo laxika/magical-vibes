@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,33 +17,50 @@ import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Undertow.class, Island.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Undertow.class, BarbaryApes.class})
 class UndertowTest extends BaseCardTest {
 
     @Test
     @DisplayName("Islandwalk can be blocked through an Island while Undertow is on the battlefield")
     void islandwalkCanBeBlocked() {
-        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, basicLand(CardSubtype.ISLAND));
         harness.addToBattlefield(player2, new Undertow());
         Permanent attacker = addWalker(player1, Keyword.ISLANDWALK);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
-        beginBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Undertow does not affect other landwalk abilities")
     void otherLandwalkRemainsUnblockable() {
-        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, basicLand(CardSubtype.FOREST));
         harness.addToBattlefield(player2, new Undertow());
         Permanent attacker = addWalker(player1, Keyword.FORESTWALK);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
-        beginBlockers();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Undertow does not affect non-landwalk evasion")
+    void nonLandwalkEvasionRemainsUnblockable() {
+        harness.addToBattlefield(player2, new Undertow());
+        Permanent attacker = addWalker(player1, Keyword.FLYING);
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
@@ -65,22 +81,17 @@ class UndertowTest extends BaseCardTest {
         card.setPower(2);
         card.setToughness(2);
         card.setKeywords(EnumSet.of(landwalk));
-        Permanent permanent = readyCreature(player, card);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
         return permanent;
     }
 
-    private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    private Card basicLand(CardSubtype subtype) {
+        Card card = new Card();
+        card.setName(subtype.getDisplayName());
+        card.setType(CardType.LAND);
+        card.setSupertypes(Set.of(CardSupertype.BASIC));
+        card.setSubtypes(List.of(subtype));
+        return card;
     }
 }

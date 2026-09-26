@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BatonOfMorale;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.Karakas;
 import com.github.laxika.magicalvibes.cards.m.MasterOfTheHunt;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,25 +15,20 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShelkinBrownie.class, MasterOfTheHunt.class, BatonOfMorale.class, Forest.class})
+@CardUsed({ShelkinBrownie.class, MasterOfTheHunt.class, BatonOfMorale.class, Karakas.class})
 class ShelkinBrownieTest extends BaseCardTest {
 
     @Test
     @DisplayName("Removes only bands with other until end of turn")
     void removesOnlyBandsWithOtherUntilEndOfTurn() {
-        Permanent master = harness.addToBattlefieldAndReturn(player1, new MasterOfTheHunt());
-        master.setSummoningSick(false);
+        addCreatureReady(player1, new MasterOfTheHunt());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent wolf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
-        Permanent brownie = harness.addToBattlefieldAndReturn(player1, new ShelkinBrownie());
-        brownie.setSummoningSick(false);
+        Permanent wolf = findPermanent(player1, "Wolves of the Hunt");
+        Permanent brownie = addCreatureReady(player1, new ShelkinBrownie());
         Permanent baton = harness.addToBattlefieldAndReturn(player1, new BatonOfMorale());
 
         int batonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(baton);
@@ -46,6 +41,7 @@ class ShelkinBrownieTest extends BaseCardTest {
 
         int brownieIndex = gd.playerBattlefields.get(player1.getId()).indexOf(brownie);
         harness.activateAbility(player1, brownieIndex, null, wolf.getId());
+        assertThat(brownie.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gqs.bandsWithOtherNames(gd, wolf)).isEmpty();
@@ -59,13 +55,32 @@ class ShelkinBrownieTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        addCreatureReady(player2, new MasterOfTheHunt());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent wolf = findPermanent(player2, "Wolves of the Hunt");
+        assertThat(gqs.bandsWithOtherNames(gd, wolf)).containsExactly("Wolves of the Hunt");
+        addCreatureReady(player1, new ShelkinBrownie());
+        int brownieIndex = gd.playerBattlefields.get(player1.getId()).size() - 1;
+
+        harness.activateAbility(player1, brownieIndex, null, wolf.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.bandsWithOtherNames(gd, wolf)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        Permanent brownie = harness.addToBattlefieldAndReturn(player1, new ShelkinBrownie());
-        brownie.setSummoningSick(false);
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        addCreatureReady(player1, new ShelkinBrownie());
+        Permanent karakas = harness.addToBattlefieldAndReturn(player2, new Karakas());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, karakas.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

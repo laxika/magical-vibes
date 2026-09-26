@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,36 +17,54 @@ import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UrDrago.class, Swamp.class, Forest.class, GrizzlyBears.class})
+@CardUsed({UrDrago.class, BarbaryApes.class})
 class UrDragoTest extends BaseCardTest {
 
     @Test
     @DisplayName("Swampwalk can be blocked while Ur-Drago is on the battlefield")
     void swampwalkCanBeBlocked() {
-        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, basicLand(CardSubtype.SWAMP));
         harness.addToBattlefield(player2, new UrDrago());
         Permanent attacker = addWalker(player1, Keyword.SWAMPWALK);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
-        beginBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Ur-Drago does not affect other landwalk abilities")
     void otherLandwalkRemainsUnblockable() {
-        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, basicLand(CardSubtype.FOREST));
         harness.addToBattlefield(player2, new UrDrago());
         Permanent attacker = addWalker(player1, Keyword.FORESTWALK);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ur-Drago lets a swampwalking attacker be blocked when controlled by that attacker")
+    void swampwalkCanBeBlockedWhenAttackerControlsUrDrago() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.SWAMP));
+        harness.addToBattlefield(player1, new UrDrago());
+        Permanent attacker = addWalker(player1, Keyword.SWAMPWALK);
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {
@@ -65,22 +82,17 @@ class UrDragoTest extends BaseCardTest {
         card.setPower(2);
         card.setToughness(2);
         card.setKeywords(EnumSet.of(landwalk));
-        Permanent permanent = readyCreature(player, card);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
         return permanent;
     }
 
-    private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    private Card basicLand(CardSubtype subtype) {
+        Card card = new Card();
+        card.setName(subtype.getDisplayName());
+        card.setType(CardType.LAND);
+        card.setSupertypes(Set.of(CardSupertype.BASIC));
+        card.setSubtypes(List.of(subtype));
+        return card;
     }
 }

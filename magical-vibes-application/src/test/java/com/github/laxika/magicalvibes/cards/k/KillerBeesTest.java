@@ -87,4 +87,15 @@ class KillerBeesTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Cannot pay the green activation cost with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new KillerBees());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
 }

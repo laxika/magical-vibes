@@ -60,6 +60,28 @@ class AbominationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("When Abomination becomes blocked by multiple creatures, each green or white blocker is scheduled for destruction")
+    void becomesBlockedByMultipleColoredCreaturesSchedulesEachMatchingBlocker() {
+        Permanent abomination = addCreatureReady(player1, new Abomination());
+        abomination.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        Permanent lions = addCreatureReady(player2, new SavannahLions());
+        addCreatureReady(player2, new ScatheZombies());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)));
+
+        resolveAllTriggers();
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .extracting(DelayedPermanentAction::permanentId)
+                .containsExactlyInAnyOrder(spider.getId(), lions.getId());
+    }
+
+    @Test
     @DisplayName("A green blocker survives combat damage but is destroyed at end of combat")
     void greenBlockerDestroyedAtEndOfCombat() {
         harness.setLife(player1, 20);

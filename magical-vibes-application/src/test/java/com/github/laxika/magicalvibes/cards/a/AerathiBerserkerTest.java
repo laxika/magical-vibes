@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AerathiBerserker.class, GrizzlyBears.class})
+@CardUsed({AerathiBerserker.class, BarbaryApes.class})
 class AerathiBerserkerTest extends BaseCardTest {
 
     @Test
@@ -48,12 +49,29 @@ class AerathiBerserkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Rampage bonus expires at end of turn")
+    void rampageBonusExpiresAtEndOfTurn() {
+        Permanent berserker = addBerserkerAndDeclareBlockers(2);
+
+        assertThat(berserker.getEffectivePower()).isEqualTo(5);
+        assertThat(berserker.getEffectiveToughness()).isEqualTo(7);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(berserker.getEffectivePower()).isEqualTo(2);
+        assertThat(berserker.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("If unblocked Aerathi Berserker gets no rampage bonus")
     void unblockedGivesNoBonus() {
         Permanent berserker = addCreatureReady(player1, new AerathiBerserker());
-        berserker.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
@@ -63,16 +81,15 @@ class AerathiBerserkerTest extends BaseCardTest {
 
     private Permanent addBerserkerAndDeclareBlockers(int blockerCount) {
         Permanent berserker = addCreatureReady(player1, new AerathiBerserker());
-        berserker.setAttacking(true);
         for (int i = 0; i < blockerCount; i++) {
-            addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player2, new BarbaryApes());
         }
 
         List<BlockerAssignment> assignments = new ArrayList<>();
         for (int i = 0; i < blockerCount; i++) {
             assignments.add(new BlockerAssignment(i, 0));
         }
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, assignments);
         harness.passBothPriorities();
         return berserker;

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CatWarriors;
+import com.github.laxika.magicalvibes.cards.q.Quagmire;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TouchOfDarkness.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TouchOfDarkness.class, CatWarriors.class, Quagmire.class})
 class TouchOfDarknessTest extends BaseCardTest {
 
     @Test
     @DisplayName("Makes one or more target creatures black until end of turn")
     void makesAllTargetsBlack() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CatWarriors());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new CatWarriors());
 
         cast(List.of(ownCreature.getId(), opposingCreature.getId()));
 
@@ -34,7 +34,7 @@ class TouchOfDarknessTest extends BaseCardTest {
     @Test
     @DisplayName("The color change wears off at end of turn")
     void colorChangeWearsOffAtEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CatWarriors());
 
         cast(List.of(creature.getId()));
 
@@ -50,11 +50,11 @@ class TouchOfDarknessTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new Quagmire());
         harness.setHand(player1, List.of(new TouchOfDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

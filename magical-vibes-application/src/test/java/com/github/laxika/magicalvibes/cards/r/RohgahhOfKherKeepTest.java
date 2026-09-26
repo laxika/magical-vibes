@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.k.KherKeep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RohgahhOfKherKeep.class, KherKeep.class, GrizzlyBears.class})
+@CardUsed({RohgahhOfKherKeep.class, KherKeep.class, BarbaryApes.class})
 class RohgahhOfKherKeepTest extends BaseCardTest {
 
     @Test
@@ -21,7 +20,7 @@ class RohgahhOfKherKeepTest extends BaseCardTest {
     void boostsKoboldsYouControl() {
         Permanent kobold = createKoboldToken(player1);
         Permanent opponentKobold = createKoboldToken(player2);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
 
         harness.addToBattlefield(player1, new RohgahhOfKherKeep());
 
@@ -55,7 +54,7 @@ class RohgahhOfKherKeepTest extends BaseCardTest {
         Permanent kobold = createKoboldToken(player1);
         Permanent opponentKobold = createKoboldToken(player2);
         Permanent rohgahh = harness.addToBattlefieldAndReturn(player1, new RohgahhOfKherKeep());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
 
         beginUpkeep(player1);
 
@@ -67,6 +66,12 @@ class RohgahhOfKherKeepTest extends BaseCardTest {
         assertThat(opponentKobold.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears).doesNotContain(rohgahh, kobold);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(rohgahh, kobold, opponentKobold);
+        assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentKobold)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentKobold)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     private void beginUpkeep(com.github.laxika.magicalvibes.model.Player activePlayer) {

@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.c.CursedTotem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandraNalaar.class, CursedTotem.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Pyrotechnics.class})
+@CardUsed({ChandraNalaar.class, CursedTotem.class, GrizzlyBears.class, Mountain.class, Pyrotechnics.class})
 class PyrotechnicsTest extends BaseCardTest {
 
     @Test
@@ -32,7 +30,6 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(bear.getId(), 4));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears is 2/2, 4 damage kills it
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bear.getId()));
@@ -50,7 +47,6 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(bears1.getId(), 2, bears2.getId(), 2));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Both are 2/2, both die
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bears1.getId()))
@@ -86,6 +82,22 @@ class PyrotechnicsTest extends BaseCardTest {
     }
 
     @Test
+    void canDivideDamageAmongBothPlayers() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        harness.castSorcery(player1, 0, Map.of(player1.getId(), 1, player2.getId(), 3));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore - 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 3);
+    }
+
+    @Test
     void splitsDamageAmongCreatureAndPlayer() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new Pyrotechnics()));
@@ -97,7 +109,6 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(bears.getId(), 2, player2.getId(), 2));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Bears is 2/2, 2 damage kills it
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bears.getId()));
@@ -168,7 +179,6 @@ class PyrotechnicsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     void canTargetPlaneswalker() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new Pyrotechnics()));

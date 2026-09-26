@@ -47,10 +47,22 @@ class WinterBlastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WinterBlast()));
         harness.addMana(player1, ManaColor.GREEN, 2); // X=1: {1}{G} = 2
 
-        harness.castSorcery(player1, 0, 1, List.of(falcon.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, falcon.getId());
 
         harness.assertInGraveyard(player2, "Zephyr Falcon");
+    }
+
+    @Test
+    @DisplayName("Can target a creature I control")
+    void canTargetOwnCreature() {
+        Permanent ownFlier = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new WinterBlast()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1, ownFlier.getId());
+
+        assertThat(ownFlier.isTapped()).isTrue();
+        assertThat(ownFlier.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -71,8 +83,7 @@ class WinterBlastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WinterBlast()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(flier.isTapped()).isFalse();
         assertThat(flier.getMarkedDamage()).isZero();

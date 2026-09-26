@@ -84,6 +84,24 @@ class SylvanLibraryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cards drawn earlier in the turn are eligible for the follow-up choice")
+    void cardsDrawnEarlierThisTurnCanBePutBack() {
+        setup();
+
+        advanceToDrawStep();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(library()).extracting(Card::getId)
+                .containsExactly(bears.getId(), filler2.getId());
+        assertThat(hand()).extracting(Card::getId)
+                .containsExactlyInAnyOrder(elves.getId(), thirdCard.getId(), filler1.getId());
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
     @DisplayName("Multiple Sylvan Libraries resolve their draw choices one at a time")
     void multipleLibrariesResolveInSequence() {
         setup();
@@ -211,6 +229,42 @@ class SylvanLibraryTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         assertThat(hand()).hasSize(3);
         harness.assertLife(player1, 12);
+    }
+
+    @Test
+    @CardUsed(Abundance.class)
+    @DisplayName("Cards put into hand by Abundance are not treated as cards drawn")
+    void abundanceReplacementsDoNotCountAsSylvanDraws() {
+        setup();
+        harness.addToBattlefield(player1, new Abundance());
+        advanceToDrawStep();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "NONLAND");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Sylvan Library");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Abundance");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "NONLAND");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Abundance");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "NONLAND");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(hand()).extracting(Card::getId)
+                .containsExactlyInAnyOrder(bears.getId(), elves.getId(), thirdCard.getId());
+        assertThat(gd.cardsDrawnThisTurnIds).doesNotContainKey(player1.getId());
+        harness.assertLife(player1, 20);
     }
 
     @Test

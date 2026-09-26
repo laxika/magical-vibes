@@ -31,9 +31,7 @@ class IvoryGuardiansTest extends BaseCardTest {
     @Test
     @DisplayName("Base 3/3 when no opponent controls a nontoken red permanent")
     void baseWithoutRedPermanent() {
-        harness.addToBattlefield(player1, new IvoryGuardians());
-
-        Permanent guardians = findPermanent(player1, "Ivory Guardians");
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
         assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(3);
     }
@@ -41,10 +39,9 @@ class IvoryGuardiansTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 (4/4) when an opponent controls a nontoken red permanent")
     void boostWhenOpponentControlsRedPermanent() {
-        harness.addToBattlefield(player1, new IvoryGuardians());
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
         harness.addToBattlefield(player2, new MonssGoblinRaiders());
 
-        Permanent guardians = findPermanent(player1, "Ivory Guardians");
         assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(4);
     }
@@ -52,12 +49,11 @@ class IvoryGuardiansTest extends BaseCardTest {
     @Test
     @DisplayName("No boost when the opponent's red permanent is a token")
     void noBoostWhenRedPermanentIsToken() {
-        harness.addToBattlefield(player1, new IvoryGuardians());
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
         Card token = new MonssGoblinRaiders();
         token.setToken(true);
         harness.addToBattlefield(player2, token);
 
-        Permanent guardians = findPermanent(player1, "Ivory Guardians");
         assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(3);
     }
@@ -65,10 +61,9 @@ class IvoryGuardiansTest extends BaseCardTest {
     @Test
     @DisplayName("No boost when the opponent's nontoken permanent is not red")
     void noBoostWhenPermanentNotRed() {
-        harness.addToBattlefield(player1, new IvoryGuardians());
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent guardians = findPermanent(player1, "Ivory Guardians");
         assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(3);
     }
@@ -76,10 +71,9 @@ class IvoryGuardiansTest extends BaseCardTest {
     @Test
     @DisplayName("The controller's own red permanent does not grant the boost")
     void noBoostFromOwnRedPermanent() {
-        harness.addToBattlefield(player1, new IvoryGuardians());
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
         harness.addToBattlefield(player1, new MonssGoblinRaiders());
 
-        Permanent guardians = findPermanent(player1, "Ivory Guardians");
         assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(3);
     }
@@ -87,12 +81,26 @@ class IvoryGuardiansTest extends BaseCardTest {
     @Test
     @DisplayName("A nontoken red enchantment grants the boost")
     void boostWhenOpponentControlsRedEnchantment() {
-        harness.addToBattlefield(player1, new IvoryGuardians());
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
         harness.addToBattlefield(player2, new Manabarbs());
 
-        Permanent guardians = findPermanent(player1, "Ivory Guardians");
         assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost disappears when the qualifying red permanent leaves")
+    void boostDisappearsWhenRedPermanentLeaves() {
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
+        Permanent redPermanent = harness.addToBattlefieldAndReturn(player2, new MonssGoblinRaiders());
+
+        assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player2.getId()).remove(redPermanent);
+
+        assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(3);
     }
 
     @Test
@@ -106,6 +114,20 @@ class IvoryGuardiansTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownGuardians)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, opposingGuardians)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, opposingGuardians)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each active Ivory Guardians ability contributes its own boost")
+    void boostsStackWhenBothPlayersControlRedPermanents() {
+        Permanent ownGuardians = addCreatureReady(player1, new IvoryGuardians());
+        Permanent opposingGuardians = addCreatureReady(player2, new IvoryGuardians());
+        harness.addToBattlefield(player1, new MonssGoblinRaiders());
+        harness.addToBattlefield(player2, new MonssGoblinRaiders());
+
+        assertThat(gqs.getEffectivePower(gd, ownGuardians)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownGuardians)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opposingGuardians)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposingGuardians)).isEqualTo(5);
     }
 
     @Test

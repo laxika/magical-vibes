@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({SpiritualSanctuary.class, Plains.class})
+@CardUsed({SpiritualSanctuary.class, Plains.class, ZuranOrb.class})
 class SpiritualSanctuaryTest extends BaseCardTest {
 
     @Test
@@ -33,6 +34,22 @@ class SpiritualSanctuaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("The ability does nothing if the Plains leaves before the trigger resolves")
+    void doesNotGainLifeWhenPlainsLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new SpiritualSanctuary());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.setLife(player1, 18);
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertLife(player1, 20);
     }
 
     @Test

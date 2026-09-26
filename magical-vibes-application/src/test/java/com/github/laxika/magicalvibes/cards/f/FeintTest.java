@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,16 +14,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Feint.class, GrizzlyBears.class})
+@CardUsed({Feint.class, BarbaryApes.class})
 class FeintTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps all blockers and prevents combat damage from the target and those blockers")
     void tapsBlockersAndPreventsTheirCombatDamage() {
-        Permanent targetAttacker = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent targetAttacker = addCreatureReady(player1, new BarbaryApes());
+        addCreatureReady(player1, new BarbaryApes());
+        Permanent firstBlocker = addCreatureReady(player2, new BarbaryApes());
+        Permanent secondBlocker = addCreatureReady(player2, new BarbaryApes());
 
         declareAttackers(player1, List.of(0, 1));
         prepareDeclareBlockers();
@@ -47,9 +47,32 @@ class FeintTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents combat damage from an unblocked target attacker")
+    void preventsUnblockedTargetAttackerCombatDamage() {
+        Permanent targetAttacker = addCreatureReady(player1, new BarbaryApes());
+        addCreatureReady(player1, new BarbaryApes());
+        Permanent otherBlocker = addCreatureReady(player2, new BarbaryApes());
+
+        declareAttackers(player1, List.of(0, 1));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        harness.setHand(player1, List.of(new Feint()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, targetAttacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(otherBlocker.isTapped()).isFalse();
+        resolveCombat();
+
+        assertThat(targetAttacker.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Can target only an attacking creature")
     void cannotTargetNonAttackingCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BarbaryApes());
         harness.setHand(player1, List.of(new Feint()));
         harness.addMana(player1, ManaColor.RED, 1);
 

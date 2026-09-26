@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,13 +9,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KoboldDrillSergeant.class, KherKeep.class, GrizzlyBears.class})
+@CardUsed({KoboldDrillSergeant.class, KoboldTaskmaster.class, KasimirTheLoneWolf.class})
 class KoboldDrillSergeantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Other Kobold creatures you control get +0/+1 and have trample")
     void buffsOtherKoboldsYouControlAndGrantsTrample() {
-        Permanent kobold = createKoboldToken(player1);
+        Permanent kobold = createKobold(player1);
         int basePower = gqs.getEffectivePower(gd, kobold);
         int baseToughness = gqs.getEffectiveToughness(gd, kobold);
 
@@ -31,46 +29,60 @@ class KoboldDrillSergeantTest extends BaseCardTest {
     @Test
     @DisplayName("Kobold Drill Sergeant does not affect itself")
     void doesNotAffectItself() {
-        harness.addToBattlefield(player1, new KoboldDrillSergeant());
+        Permanent sergeant = harness.addToBattlefieldAndReturn(player1, new KoboldDrillSergeant());
+        Permanent opponentSergeant = harness.addToBattlefieldAndReturn(player2, new KoboldDrillSergeant());
 
-        Permanent sergeant = findPermanent(player1, "Kobold Drill Sergeant");
-
-        assertThat(gqs.getEffectivePower(gd, sergeant)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, sergeant)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, sergeant, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, sergeant)).isEqualTo(gqs.getEffectivePower(gd, opponentSergeant));
+        assertThat(gqs.getEffectiveToughness(gd, sergeant))
+                .isEqualTo(gqs.getEffectiveToughness(gd, opponentSergeant));
+        assertThat(gqs.hasKeyword(gd, sergeant, Keyword.TRAMPLE))
+                .isEqualTo(gqs.hasKeyword(gd, opponentSergeant, Keyword.TRAMPLE));
     }
 
     @Test
     @DisplayName("Does not affect non-Kobold creatures")
     void doesNotAffectNonKobolds() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent nonKobold = harness.addToBattlefieldAndReturn(player1, new KasimirTheLoneWolf());
+        int basePower = gqs.getEffectivePower(gd, nonKobold);
+        int baseToughness = gqs.getEffectiveToughness(gd, nonKobold);
+        boolean hadTrample = gqs.hasKeyword(gd, nonKobold, Keyword.TRAMPLE);
 
         harness.addToBattlefield(player1, new KoboldDrillSergeant());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, nonKobold)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, nonKobold)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, nonKobold, Keyword.TRAMPLE)).isEqualTo(hadTrample);
     }
 
     @Test
     @DisplayName("Does not affect an opponent's Kobolds")
     void doesNotAffectOpponentsKobolds() {
-        Permanent opponentKobold = createKoboldToken(player2);
+        Permanent opponentKobold = createKobold(player2);
+        int basePower = gqs.getEffectivePower(gd, opponentKobold);
         int baseToughness = gqs.getEffectiveToughness(gd, opponentKobold);
+        boolean hadTrample = gqs.hasKeyword(gd, opponentKobold, Keyword.TRAMPLE);
 
         harness.addToBattlefield(player1, new KoboldDrillSergeant());
 
+        assertThat(gqs.getEffectivePower(gd, opponentKobold)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, opponentKobold)).isEqualTo(baseToughness);
-        assertThat(gqs.hasKeyword(gd, opponentKobold, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentKobold, Keyword.TRAMPLE)).isEqualTo(hadTrample);
     }
 
-    private Permanent createKoboldToken(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addToBattlefield(player, new KherKeep());
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.addMana(player, ManaColor.RED, 1);
-        harness.activateAbility(player, 0, 1, null, null);
-        harness.passBothPriorities();
-        return findPermanent(player, "Kobolds of Kher Keep");
+    @Test
+    @DisplayName("Kobolds entering later also gain the bonus and trample")
+    void affectsKoboldsEnteringLater() {
+        harness.addToBattlefield(player1, new KoboldDrillSergeant());
+        Permanent baseline = createKobold(player2);
+        Permanent laterKobold = createKobold(player1);
+
+        assertThat(gqs.getEffectivePower(gd, laterKobold)).isEqualTo(gqs.getEffectivePower(gd, baseline));
+        assertThat(gqs.getEffectiveToughness(gd, laterKobold))
+                .isEqualTo(gqs.getEffectiveToughness(gd, baseline) + 1);
+        assertThat(gqs.hasKeyword(gd, laterKobold, Keyword.TRAMPLE)).isTrue();
+    }
+
+    private Permanent createKobold(com.github.laxika.magicalvibes.model.Player player) {
+        return harness.addToBattlefieldAndReturn(player, new KoboldTaskmaster());
     }
 }

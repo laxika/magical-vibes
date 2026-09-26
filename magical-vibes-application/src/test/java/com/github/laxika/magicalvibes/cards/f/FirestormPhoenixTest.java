@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FirestormPhoenix.class, WrathOfGod.class})
+@CardUsed(FirestormPhoenix.class)
 class FirestormPhoenixTest extends BaseCardTest {
 
     @Test
@@ -25,10 +24,8 @@ class FirestormPhoenixTest extends BaseCardTest {
         Card phoenixCard = phoenix.getCard();
         Card otherPhoenix = new FirestormPhoenix();
 
-        harness.setHand(player1, List.of(new WrathOfGod(), otherPhoenix));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(otherPhoenix));
+        killPhoenix(phoenix);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phoenix);
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(phoenixCard.getId()));
@@ -39,7 +36,7 @@ class FirestormPhoenixTest extends BaseCardTest {
 
         assertThat(harness.getConn2().getSentMessages())
                 .anyMatch(message -> message.contains("\"opponentHand\":[")
-                        && !message.contains("\"opponentHand\":[]"));
+                        && message.contains(phoenixCard.getId().toString()));
     }
 
     @Test
@@ -49,10 +46,8 @@ class FirestormPhoenixTest extends BaseCardTest {
         Card returnedPhoenix = phoenix.getCard();
         Card otherPhoenix = new FirestormPhoenix();
 
-        harness.setHand(player1, List.of(new WrathOfGod(), otherPhoenix));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(otherPhoenix));
+        killPhoenix(phoenix);
 
         harness.addMana(player1, ManaColor.RED, 6);
         assertThatThrownBy(() -> harness.castCreature(player1, 1))
@@ -74,10 +69,8 @@ class FirestormPhoenixTest extends BaseCardTest {
         Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new FirestormPhoenix());
         Card returnedPhoenix = phoenix.getCard();
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        killPhoenix(phoenix);
 
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
@@ -88,5 +81,26 @@ class FirestormPhoenixTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(returnedPhoenix.getId()));
+    }
+
+    @Test
+    @DisplayName("A stolen Firestorm Phoenix returns to its owner's hand")
+    void returnsToOwnersHandWhenControlledByAnotherPlayer() {
+        Card phoenixCard = new FirestormPhoenix();
+        phoenixCard.setOwnerId(player2.getId());
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, phoenixCard);
+        gd.stolenCreatures.put(phoenix.getId(), player2.getId());
+
+        killPhoenix(phoenix);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phoenix);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(phoenixCard);
+        assertThat(gd.playerHands.get(player2.getId())).contains(phoenixCard);
+    }
+
+    private void killPhoenix(Permanent phoenix) {
+        phoenix.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
     }
 }

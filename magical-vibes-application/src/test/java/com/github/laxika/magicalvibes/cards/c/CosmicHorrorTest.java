@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelPlate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -73,6 +74,24 @@ class CosmicHorrorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline → destruction is replaced by regeneration
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @CardUsed(DarksteelPlate.class)
+    @DisplayName("An indestructible Cosmic Horror survives without dealing damage")
+    void indestructibleSurvivesWithoutDamage() {
+        Permanent horror = harness.addToBattlefieldAndReturn(player1, new CosmicHorror());
+        Permanent plate = harness.addToBattlefieldAndReturn(player1, new DarksteelPlate());
+        plate.setAttachedTo(horror.getId());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 

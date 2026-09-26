@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SpiritLink;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LoxodonWarhammer.class, GrizzlyBears.class, SpiritLink.class})
 class LoxodonWarhammerTest extends BaseCardTest {
 
     // ===== Card properties =====
@@ -317,7 +320,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
-        com.github.laxika.magicalvibes.cards.s.SpiritLink spiritLink = new com.github.laxika.magicalvibes.cards.s.SpiritLink();
+        SpiritLink spiritLink = new SpiritLink();
         Permanent aura = new Permanent(spiritLink);
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);

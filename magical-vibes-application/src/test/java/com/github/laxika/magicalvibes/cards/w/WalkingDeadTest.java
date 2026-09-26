@@ -13,7 +13,7 @@ class WalkingDeadTest extends BaseCardTest {
 
     @Test
     void activatingRegenerationAbilityTargetsWalkingDeadAndConsumesMana() {
-        Permanent walkingDead = addWalkingDeadReady();
+        Permanent walkingDead = addCreatureReady(player1, new WalkingDead());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -26,7 +26,7 @@ class WalkingDeadTest extends BaseCardTest {
 
     @Test
     void resolvingRegenerationAbilityGrantsShield() {
-        Permanent walkingDead = addWalkingDeadReady();
+        Permanent walkingDead = addCreatureReady(player1, new WalkingDead());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -36,10 +36,20 @@ class WalkingDeadTest extends BaseCardTest {
         assertThat(walkingDead.getRegenerationShield()).isEqualTo(1);
     }
 
-    private Permanent addWalkingDeadReady() {
-        Permanent permanent = new Permanent(new WalkingDead());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    @Test
+    void regenerationShieldPreventsLethalDamageAndIsSpent() {
+        Permanent walkingDead = addCreatureReady(player1, new WalkingDead());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        walkingDead.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(walkingDead);
+        assertThat(walkingDead.isTapped()).isTrue();
+        assertThat(walkingDead.getRegenerationShield()).isZero();
+        assertThat(walkingDead.getMarkedDamage()).isZero();
     }
 }

@@ -23,10 +23,9 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders cannot be blocked by non-Wall non-flying creature")
     void cannotBeBlockedByNormalCreature() {
-        attackingRiders();
+        addCreatureReady(player1, new ElvenRiders());
         addCreatureReady(player2, new WirewoodElf());
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -36,10 +35,10 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders can be blocked by a Wall")
     void canBeBlockedByWall() {
-        attackingRiders();
+        addCreatureReady(player1, new ElvenRiders());
         addCreatureReady(player2, new WallOfMulch());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
@@ -48,10 +47,10 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders can be blocked by a creature with flying")
     void canBeBlockedByFlyingCreature() {
-        attackingRiders();
+        addCreatureReady(player1, new ElvenRiders());
         Permanent flyer = addCreatureReady(player2, new GoblinSkyRaider());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(flyer.isBlocking()).isTrue();
@@ -60,18 +59,12 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Reach is not enough to block Elven Riders")
     void reachIsNotEnoughToBlock() {
-        attackingRiders();
+        addCreatureReady(player1, new ElvenRiders());
         addCreatureReady(player2, new SilklashSpider());
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only be blocked by creatures with flying or Walls");
-    }
-
-    private void attackingRiders() {
-        Permanent riders = addCreatureReady(player1, new ElvenRiders());
-        riders.setAttacking(true);
     }
 }

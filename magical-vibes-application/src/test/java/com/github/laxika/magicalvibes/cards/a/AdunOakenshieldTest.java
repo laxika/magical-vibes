@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AdunOakenshield.class, GrizzlyBears.class, Shock.class})
+@CardUsed({AdunOakenshield.class, BarbaryApes.class, Boomerang.class})
 class AdunOakenshieldTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns a target creature card from the graveyard to hand")
     void returnsTargetCreatureCardToHand() {
         Permanent adun = addCreatureReady(player1, new AdunOakenshield());
-        Card creature = new GrizzlyBears();
+        Card creature = new BarbaryApes();
         harness.setGraveyard(player1, List.of(creature));
         addAbilityMana(player1);
 
@@ -31,15 +31,15 @@ class AdunOakenshieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(adun.isTapped()).isTrue();
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Barbary Apes");
+        harness.assertNotInGraveyard(player1, "Barbary Apes");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature card in the graveyard")
     void cannotTargetNoncreatureCard() {
         addCreatureReady(player1, new AdunOakenshield());
-        Card noncreature = new Shock();
+        Card noncreature = new Boomerang();
         harness.setGraveyard(player1, List.of(noncreature));
         addAbilityMana(player1);
 
@@ -49,10 +49,23 @@ class AdunOakenshieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a creature card in an opponent's graveyard")
+    void cannotTargetCreatureCardInOpponentsGraveyard() {
+        addCreatureReady(player1, new AdunOakenshield());
+        Card creature = new BarbaryApes();
+        harness.setGraveyard(player2, List.of(creature));
+        addAbilityMana(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Cannot activate without the required colored mana")
     void cannotActivateWithoutRequiredMana() {
         addCreatureReady(player1, new AdunOakenshield());
-        Card creature = new GrizzlyBears();
+        Card creature = new BarbaryApes();
         harness.setGraveyard(player1, List.of(creature));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);

@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HeadlessHorseman;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AllHallowsEve.class, GrizzlyBears.class})
+@CardUsed({AllHallowsEve.class, HeadlessHorseman.class})
 class AllHallowsEveTest extends BaseCardTest {
 
     @Test
@@ -38,10 +36,12 @@ class AllHallowsEveTest extends BaseCardTest {
     void removesOneScreamCounterDuringOwnersUpkeep() {
         AllHallowsEve card = exileWithScreamCounters(2);
 
-        triggerUpkeep(player2);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
         assertThat(gd.exiledCardScreamCounters).containsEntry(card.getId(), 2);
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
         assertThat(gd.exiledCardScreamCounters).containsEntry(card.getId(), 1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
@@ -51,10 +51,7 @@ class AllHallowsEveTest extends BaseCardTest {
     void doesNothingIfItLeavesExileBeforeTriggerResolves() {
         AllHallowsEve card = exileWithScreamCounters(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         gd.removeFromExile(card.getId());
         harness.passBothPriorities();
 
@@ -66,13 +63,14 @@ class AllHallowsEveTest extends BaseCardTest {
     @DisplayName("Returns all creature cards after its last scream counter is removed")
     void returnsAllCreatureCardsAfterLastCounterIsRemoved() {
         AllHallowsEve card = exileWithScreamCounters(1);
-        Card player1Creature = new GrizzlyBears();
-        Card player2Creature = new GrizzlyBears();
+        Card player1Creature = new HeadlessHorseman();
+        Card player2Creature = new HeadlessHorseman();
         Card unrelated = new AllHallowsEve();
         harness.setGraveyard(player1, List.of(player1Creature, unrelated));
         harness.setGraveyard(player2, List.of(player2Creature));
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardScreamCounters).doesNotContainKey(card.getId());
         assertThat(gd.findExiledCard(card.getId())).isNull();
@@ -92,11 +90,4 @@ class AllHallowsEveTest extends BaseCardTest {
         return card;
     }
 
-    private void triggerUpkeep(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
 }

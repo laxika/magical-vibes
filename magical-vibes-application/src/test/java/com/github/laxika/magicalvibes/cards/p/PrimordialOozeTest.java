@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PrimordialOoze.class})
@@ -20,7 +21,7 @@ class PrimordialOozeTest extends BaseCardTest {
 
     private void advanceToUpkeepAndResolveTrigger(Player activePlayer) {
         advanceToUpkeep(activePlayer);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
@@ -31,6 +32,15 @@ class PrimordialOozeTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("Does not require a tapped Ooze to attack")
+    void tappedOozeDoesNotHaveToAttack() {
+        Permanent ooze = addCreatureReady(player1, new PrimordialOoze());
+        ooze.tap();
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
     }
 
     @Test
@@ -62,6 +72,23 @@ class PrimordialOozeTest extends BaseCardTest {
 
         Permanent ooze = findPermanent(player1, "Primordial Ooze");
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ooze.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Paying uses the number of counters after the new counter is added")
+    void payUsesCurrentCounterCount() {
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
+        ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeepAndResolveTrigger(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(ooze.isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();

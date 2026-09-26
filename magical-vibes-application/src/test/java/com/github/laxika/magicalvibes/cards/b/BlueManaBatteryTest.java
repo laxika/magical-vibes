@@ -113,6 +113,18 @@ class BlueManaBatteryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot produce mana while the battery is already tapped")
+    void secondAbilityRejectedWhenTapped() {
+        Permanent battery = harness.addToBattlefieldAndReturn(player1, new BlueManaBattery());
+        battery.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(blueMana()).isZero();
+    }
+
+    @Test
     @CardUsed(FalseDawn.class)
     @DisplayName("False Dawn replaces mana from both the battery and removed counters")
     void falseDawnReplacesAllManaFromBattery() {
