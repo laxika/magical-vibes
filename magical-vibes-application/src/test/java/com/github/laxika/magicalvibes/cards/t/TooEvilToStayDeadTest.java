@@ -36,7 +36,7 @@ class TooEvilToStayDeadTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target card does not match the required predicate");
+                .hasMessageContaining("mana value 4 or less");
     }
 
     @Test

@@ -2299,7 +2299,9 @@ public class CombatDamageService {
                         continue;
                     }
                     if ((firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            || firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && (perm.getCard().hasEffectTargetIndex(authoredEffect)
+                            || perm.getCard().hasEffectTargetIndex(firedEffect))))
                             && (!(firedEffect instanceof CombatDamageTriggerContextEffect contextEffect)
                             || contextEffect.combatDamageTriggerContext() == null
                             || perm.getCard().hasEffectTargetIndex(firedEffect))

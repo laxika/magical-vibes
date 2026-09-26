@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -213,7 +214,10 @@ public class TargetValidationService {
         if (!predicateEvaluationService.matchesCardPredicate(
                 target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
                 ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
-            throw new IllegalStateException("Target card does not match the required predicate");
+            String description = CardPredicateUtils.describeFilter(restriction.inner());
+            throw new IllegalStateException(description.equals("card")
+                    ? "Target card does not match the required predicate"
+                    : "Target card must be a " + description);
         }
     }
 

@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -2170,7 +2171,7 @@ public class TriggeredAbilityQueueService {
                 for (CardEffect effect : pending.effects()) {
                     CardEffect targetEffect = unwrapConditionalEffect(effect);
                     if (targetEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect
-                            && pending.sourceCard().getEffectTargetIndex(targetEffect) >= 0
+                            && pending.sourceCard().getEffectTargetIndex(effect) >= 0
                             && pending.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                         filter = graveyardFilter.predicate();
                         scope = graveyardFilter.scope();
@@ -2200,6 +2201,11 @@ public class TriggeredAbilityQueueService {
                         break;
                     }
                 }
+            }
+            if ((filter == null || filter instanceof CardTruePredicate)
+                    && pending.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                filter = graveyardFilter.predicate();
+                scope = graveyardFilter.scope();
             }
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
             int maxManaValue = lifeGainedCap
