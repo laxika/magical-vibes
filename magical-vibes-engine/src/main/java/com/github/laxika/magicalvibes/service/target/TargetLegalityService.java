@@ -1053,11 +1053,6 @@ public class TargetLegalityService {
                     : "Ability requires a target");
         }
 
-        targetValidationService.validateEffectTargets(abilityEffects,
-                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
-                        playerId, null, deferCostDerivedXValueChecks,
-                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
-
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
@@ -1081,6 +1076,13 @@ public class TargetLegalityService {
                         filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             }
         }
+
+        // Prefer the ability's printed target restriction when both it and an individual effect
+        // reject the same target. The effect check still runs for all remaining restrictions.
+        targetValidationService.validateEffectTargets(abilityEffects,
+                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
+                        playerId, null, deferCostDerivedXValueChecks,
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
 
         if (targetId != null && gameData.playerIds.contains(targetId)) {
             validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
