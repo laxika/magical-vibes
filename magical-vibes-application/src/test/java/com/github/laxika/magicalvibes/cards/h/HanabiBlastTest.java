@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.k.KitsuneBlademaster;
+import com.github.laxika.magicalvibes.cards.p.PerplexingChimera;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HanabiBlast.class, KitsuneBlademaster.class, WanderingOnes.class})
 class HanabiBlastTest extends BaseCardTest {
 
     @Test
@@ -26,11 +29,11 @@ class HanabiBlastTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 2 damage to a target creature")
     void dealsTwoDamageToCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KitsuneBlademaster());
 
-        castHanabiBlast(List.of(new HanabiBlast()), bears.getId());
+        castHanabiBlast(List.of(new HanabiBlast()), creature.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
     }
 
     @Test
@@ -46,13 +49,39 @@ class HanabiBlastTest extends BaseCardTest {
     @Test
     @DisplayName("With cards in hand exactly one card is discarded and the hand keeps its size")
     void discardsExactlyOneCardWithNonEmptyHand() {
-        castHanabiBlast(List.of(new HanabiBlast(), new Shock(), new GrizzlyBears()), player2.getId());
+        castHanabiBlast(List.of(new HanabiBlast(), new WanderingOnes(), new WanderingOnes()), player2.getId());
 
-        // Either Hanabi Blast discarded itself (hand keeps Shock + Bears) or it returned and one of
+        // Either Hanabi Blast discarded itself (hand keeps both Wandering Ones) or it returned and one of
         // them was discarded (hand keeps Hanabi Blast + the other) — two cards either way, one in
         // the graveyard.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed(PerplexingChimera.class)
+    @DisplayName("A controller other than the owner discards from the controller's hand")
+    void controllerDiscardsFromTheirOwnHand() {
+        harness.addToBattlefield(player2, new PerplexingChimera());
+        harness.setHand(player1, List.of(new HanabiBlast()));
+        harness.setHand(player2, List.of(new WanderingOnes()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Hanabi Blast");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Wandering Ones");
     }
 
     private void castHanabiBlast(List<Card> hand, java.util.UUID targetId) {
@@ -62,7 +91,6 @@ class HanabiBlastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

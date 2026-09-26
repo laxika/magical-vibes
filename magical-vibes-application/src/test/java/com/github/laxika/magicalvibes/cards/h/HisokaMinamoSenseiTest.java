@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HisokaMinamoSensei.class, Shock.class, GrizzlyBears.class})
 class HisokaMinamoSenseiTest extends BaseCardTest {
 
     @Test
@@ -40,6 +44,35 @@ class HisokaMinamoSenseiTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Shock");
         harness.assertInGraveyard(player1, "Shock");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CounselOfTheSoratami.class, Fireball.class})
+    @DisplayName("Uses the discarded card's mana value when countering an X spell")
+    void countersXSpellUsingAnnouncedManaValue() {
+        harness.addToBattlefield(player1, new HisokaMinamoSensei());
+        harness.setHand(player1, List.of(new CounselOfTheSoratami())); // MV 3
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        Fireball fireball = new Fireball();
+        harness.setHand(player2, List.of(fireball));
+        harness.addMana(player2, ManaColor.RED, 3); // X=2 plus {R}, so MV 3 on the stack
+
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, 2, player1.getId());
+        harness.passPriority(player2);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.activateAbility(player1, 0, null, fireball.getId(), Zone.STACK);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Counsel of the Soratami");
+        harness.assertInGraveyard(player2, "Fireball");
         harness.assertLife(player1, lifeBefore);
         assertThat(gd.stack).isEmpty();
     }

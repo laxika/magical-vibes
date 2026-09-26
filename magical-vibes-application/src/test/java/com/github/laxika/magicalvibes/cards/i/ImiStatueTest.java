@@ -90,12 +90,11 @@ class ImiStatueTest extends BaseCardTest {
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 }

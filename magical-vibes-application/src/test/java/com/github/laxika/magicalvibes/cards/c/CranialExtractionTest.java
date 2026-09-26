@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CranialExtraction.class, GrizzlyBears.class, Peek.class})
 class CranialExtractionTest extends BaseCardTest {
 
     @Test
@@ -62,6 +65,27 @@ class CranialExtractionTest extends BaseCardTest {
         harness.assertInHand(player2, "Peek");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("shuffles their library"));
+    }
+
+    @Test
+    @DisplayName("Does not allow choosing fewer than all matching cards")
+    void doesNotAllowPartialSelection() {
+        Card bears1 = new GrizzlyBears();
+        Card bears2 = new GrizzlyBears();
+        harness.setHand(player2, new ArrayList<>(List.of(bears1, bears2)));
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of());
+
+        harness.setHand(player1, List.of(new CranialExtraction()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(bears1.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

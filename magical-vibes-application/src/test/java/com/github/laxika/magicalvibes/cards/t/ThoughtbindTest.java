@@ -1,20 +1,25 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.m.MeteorShower;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Thoughtbind.class, GiantSpider.class, GrizzlyBears.class, MeteorShower.class,
+        SerraAngel.class, Shock.class})
 class ThoughtbindTest extends BaseCardTest {
 
     @Test
@@ -58,6 +63,41 @@ class ThoughtbindTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Shock");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, bears);
+
+        Thoughtbind thoughtbind = new Thoughtbind();
+        harness.setHand(player2, List.of(thoughtbind));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+        assertThat(harness.getGameData().playerHands.get(player2.getId())).containsExactly(thoughtbind);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a double-X spell whose mana value exceeds 4")
+    void cannotTargetDoubleXSpellAboveManaValueLimit() {
+        MeteorShower meteorShower = new MeteorShower();
+        harness.setHand(player1, List.of(meteorShower));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        // Meteor Shower costs {X}{X}{R}; X = 3 gives it mana value 6.
+        harness.castSorceryForX(player1, 0, 3, Map.of(player2.getId(), 4));
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Thoughtbind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, meteorShower.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

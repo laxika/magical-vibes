@@ -49,6 +49,28 @@ class LureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A blocker that can block multiple attackers must block the Lure attacker")
+    void lureRequirementTakesPriorityOverOtherAttackers() {
+        Permanent enchantedAttacker = attackingCreature(new FreshVolunteers());
+        attackingCreature(new FreshVolunteers());
+        Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
+        lure.setAttachedTo(enchantedAttacker.getId());
+
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block enchanted creature if able");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(enchantedAttacker.getId());
+    }
+
+    @Test
     @DisplayName("Tapped creatures are not forced to block by Lure")
     void tappedCreaturesNotForcedToBlock() {
         Permanent enchantedAttacker = attackingCreature(new FreshVolunteers());

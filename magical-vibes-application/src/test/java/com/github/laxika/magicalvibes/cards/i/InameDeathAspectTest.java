@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.a.ApothecaryGeist;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,45 +12,46 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InameDeathAspect.class, KamiOfOldStone.class, WanderingOnes.class, IsamaruHoundOfKonda.class})
 @DisplayName("Iname, Death Aspect")
 class InameDeathAspectTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB search puts any number of Spirit cards into the graveyard")
     void etbSearchPutsSpiritsIntoGraveyard() {
-        setupAndCast(List.of(new KamiOfOldStone(), new GrizzlyBears(), new ApothecaryGeist()));
+        setupAndCast(List.of(new KamiOfOldStone(), new IsamaruHoundOfKonda(), new WanderingOnes()));
 
         resolveToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactlyInAnyOrder("Kami of Old Stone", "Apothecary Geist");
+                .containsExactlyInAnyOrder("Kami of Old Stone", "Wandering Ones");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Isamaru, Hound of Konda");
     }
 
     @Test
     @DisplayName("Search can stop after fewer Spirits than are available")
     void searchCanStopEarly() {
-        setupAndCast(List.of(new KamiOfOldStone(), new ApothecaryGeist()));
+        setupAndCast(List.of(new KamiOfOldStone(), new WanderingOnes()));
 
         resolveToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Kami of Old Stone");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Apothecary Geist");
+                .containsExactly("Wandering Ones");
     }
 
     @Test
@@ -68,9 +67,25 @@ class InameDeathAspectTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting the search may still choose zero Spirit cards")
+    void acceptedSearchMayChooseZeroSpirits() {
+        setupAndCast(List.of(new KamiOfOldStone(), new IsamaruHoundOfKonda()));
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Kami of Old Stone", "Isamaru, Hound of Konda");
+    }
+
+    @Test
     @DisplayName("No Spirits in the library means nothing is put into the graveyard")
     void noSpiritsFindsNothing() {
-        setupAndCast(List.of(new GrizzlyBears()));
+        setupAndCast(List.of(new IsamaruHoundOfKonda()));
 
         resolveToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
@@ -80,10 +95,7 @@ class InameDeathAspectTest extends BaseCardTest {
     }
 
     private void setupAndCast(List<Card> library) {
-        harness.setHand(player1, List.of(new InameDeathAspect()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new InameDeathAspect(), "{4}{B}{B}");
         harness.setLibrary(player1, library);
     }
 

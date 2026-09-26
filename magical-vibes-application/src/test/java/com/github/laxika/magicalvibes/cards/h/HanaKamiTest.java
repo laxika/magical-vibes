@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HanaKami.class, BlessedBreath.class, IsamaruHoundOfKonda.class})
 class HanaKamiTest extends BaseCardTest {
 
     @Test
@@ -38,14 +40,14 @@ class HanaKamiTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Arcane card in the graveyard")
     void cannotTargetNonArcaneCard() {
         Permanent kami = addReadyKami();
-        Card shock = new Shock();
-        harness.setGraveyard(player1, List.of(shock));
+        Card nonArcane = new IsamaruHoundOfKonda();
+        harness.setGraveyard(player1, List.of(nonArcane));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(kami);
-        assertThatThrownBy(() -> harness.activateAbility(player1, idx, 0, null, shock.getId(), Zone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, 0, null, nonArcane.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -55,7 +57,7 @@ class HanaKamiTest extends BaseCardTest {
         Permanent kami = addReadyKami();
         Card ownBreath = new BlessedBreath();
         Card opponentBreath = new BlessedBreath();
-        harness.setGraveyard(player1, List.of(ownBreath, new Shock()));
+        harness.setGraveyard(player1, List.of(ownBreath, new IsamaruHoundOfKonda()));
         harness.setGraveyard(player2, List.of(opponentBreath));
 
         ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
@@ -66,10 +68,7 @@ class HanaKamiTest extends BaseCardTest {
     }
 
     private Permanent addReadyKami() {
-        Permanent perm = new Permanent(new HanaKami());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new HanaKami());
     }
 
     private void activate(Permanent kami, Card graveyardCard) {
@@ -78,8 +77,6 @@ class HanaKamiTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(kami);
         harness.activateAbility(player1, idx, 0, null, graveyardCard.getId(), Zone.GRAVEYARD);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
     }
 }

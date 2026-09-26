@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
+import com.github.laxika.magicalvibes.cards.g.GracefulAdept;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AzamiLadyOfScrolls.class, GracefulAdept.class, DevotedRetainer.class})
 class AzamiLadyOfScrollsTest extends BaseCardTest {
 
     @Test
@@ -31,7 +34,7 @@ class AzamiLadyOfScrollsTest extends BaseCardTest {
     @DisplayName("Can tap another Wizard instead of itself as the cost")
     void tapsAnotherWizard() {
         Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());
-        Permanent wizard = addCreatureReady(player1, new FugitiveWizard());
+        Permanent wizard = addCreatureReady(player1, new GracefulAdept());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -48,6 +51,27 @@ class AzamiLadyOfScrollsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can tap another Wizard even when Azami is already tapped")
+    void canTapAnotherWizardWithTappedSource() {
+        Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());
+        azami.tap();
+        Permanent wizard = addCreatureReady(player1, new GracefulAdept());
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(azami);
+        harness.activateAbility(player1, idx, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, wizard.getId());
+        harness.passBothPriorities();
+
+        assertThat(azami.isTapped()).isTrue();
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
     @DisplayName("Cannot activate with no untapped Wizard to tap")
     void cannotActivateWithoutUntappedWizard() {
         Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());
@@ -56,5 +80,33 @@ class AzamiLadyOfScrollsTest extends BaseCardTest {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(azami);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot tap a non-Wizard as the cost")
+    void cannotActivateWithOnlyNonWizard() {
+        Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());
+        azami.tap();
+        Permanent nonWizard = addCreatureReady(player1, new DevotedRetainer());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(azami);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(nonWizard.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot tap an opponent's Wizard as the cost")
+    void cannotActivateWithOnlyOpponentsWizard() {
+        Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());
+        azami.tap();
+        Permanent opponentWizard = addCreatureReady(player2, new GracefulAdept());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(azami);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(opponentWizard.isTapped()).isFalse();
     }
 }

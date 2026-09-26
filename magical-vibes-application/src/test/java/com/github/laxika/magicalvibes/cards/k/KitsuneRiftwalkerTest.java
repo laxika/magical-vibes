@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.r.RendFlesh;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
+import com.github.laxika.magicalvibes.cards.y.YamabushisFlame;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,50 +17,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KitsuneRiftwalker.class, WanderingOnes.class, IsamaruHoundOfKonda.class,
+        RendFlesh.class, YamabushisFlame.class, KamiOfTwistedReflection.class})
 class KitsuneRiftwalkerTest extends BaseCardTest {
-
-    private static Card createCreature(String name, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setPower(2);
-        card.setToughness(2);
-        if (subtype != null) {
-            card.setSubtypes(List.of(subtype));
-        }
-        return card;
-    }
-
-    private static Card createInstant(String name, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{R}");
-        card.setColor(CardColor.RED);
-        if (subtype != null) {
-            card.setSubtypes(List.of(subtype));
-        }
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Spirit creature cannot block Kitsune Riftwalker")
     void spiritCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new KitsuneRiftwalker());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new KitsuneRiftwalker());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Spirit", CardSubtype.SPIRIT));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new WanderingOnes());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -73,19 +39,12 @@ class KitsuneRiftwalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Spirit creature can block Kitsune Riftwalker")
     void nonSpiritCreatureCanBlock() {
-        Permanent attacker = new Permanent(new KitsuneRiftwalker());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new KitsuneRiftwalker());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new IsamaruHoundOfKonda());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -95,18 +54,12 @@ class KitsuneRiftwalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Arcane instant cannot target Kitsune Riftwalker")
     void arcaneInstantCannotTarget() {
-        Permanent riftwalker = new Permanent(new KitsuneRiftwalker());
-        riftwalker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(riftwalker);
+        Permanent riftwalker = addCreatureReady(player2, new KitsuneRiftwalker());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        harness.setHand(player1, List.of(new RendFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.setHand(player1, List.of(createInstant("Arcane Bolt", CardSubtype.ARCANE)));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, riftwalker.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, riftwalker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
     }
@@ -114,16 +67,42 @@ class KitsuneRiftwalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Arcane instant can target Kitsune Riftwalker")
     void nonArcaneInstantCanTarget() {
-        Permanent riftwalker = new Permanent(new KitsuneRiftwalker());
-        riftwalker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(riftwalker);
+        Permanent riftwalker = addCreatureReady(player2, new KitsuneRiftwalker());
 
-        harness.setHand(player1, List.of(createInstant("Regular Bolt", null)));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new YamabushisFlame()));
+        harness.addMana(player1, ManaColor.RED, 3);
 
-        gs.playCard(gd, player1, 0, 0, riftwalker.getId(), null);
+        harness.castInstant(player1, 0, riftwalker.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Regular Bolt");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Yamabushi's Flame");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Kitsune Riftwalker");
+    }
+
+    @Test
+    @DisplayName("Spirit ability cannot target Kitsune Riftwalker")
+    void spiritAbilityCannotTarget() {
+        Permanent kami = addCreatureReady(player1, new KamiOfTwistedReflection());
+        Permanent riftwalker = addCreatureReady(player1, new KitsuneRiftwalker());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, riftwalker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(kami, riftwalker);
+    }
+
+    @Test
+    @DisplayName("Spirit combat damage to Kitsune Riftwalker is prevented")
+    void spiritCombatDamageIsPrevented() {
+        addCreatureReady(player1, new WanderingOnes());
+        Permanent riftwalker = addCreatureReady(player2, new KitsuneRiftwalker());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(riftwalker.getMarkedDamage()).isZero();
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InameAsOne.class, KamiOfOldStone.class, GrizzlyBears.class, HundredTalonKami.class,
+        WrathOfGod.class, Zombify.class})
 class InameAsOneTest extends BaseCardTest {
 
     @Test
@@ -32,7 +34,7 @@ class InameAsOneTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Kami of Old Stone");
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -107,7 +109,7 @@ class InameAsOneTest extends BaseCardTest {
     private void castWrathOfGod() {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
     }
 }
