@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
 import com.github.laxika.magicalvibes.cards.s.SoratamiCloudskater;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +62,9 @@ class EarthshakerTest extends BaseCardTest {
     void opponentSpiritSpellDoesNotTrigger() {
         Permanent earthshaker = addCreatureReady(player1, new Earthshaker());
         Permanent ground = addCreatureReady(player2, new DevotedRetainer());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castFromHand(player2, new HarshDeceiver(), "{3}{W}");
 
         harness.passBothPriorities();

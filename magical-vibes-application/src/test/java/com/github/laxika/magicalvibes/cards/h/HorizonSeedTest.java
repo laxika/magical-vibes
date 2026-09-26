@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -80,6 +81,9 @@ class HorizonSeedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HorizonSeed());
         Permanent target = addCreatureReady(player1, new IsamaruHoundOfKonda());
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castFromHand(player2, new HarshDeceiver(), "{3}{W}");
         harness.passBothPriorities();
 

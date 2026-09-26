@@ -86,6 +86,9 @@ class HikariTwilightGuardianTest extends BaseCardTest {
     @DisplayName("A Spirit spell cast by an opponent does not trigger Hikari")
     void opponentSpiritSpellDoesNotTriggerHikari() {
         harness.addToBattlefield(player1, new HikariTwilightGuardian());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new HarshDeceiver()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
@@ -103,6 +106,9 @@ class HikariTwilightGuardianTest extends BaseCardTest {
         HikariTwilightGuardian hikari = new HikariTwilightGuardian();
         hikari.setOwnerId(player1.getId());
         harness.addToBattlefield(player2, hikari);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new HarshDeceiver()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
