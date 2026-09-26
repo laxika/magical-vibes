@@ -103,6 +103,7 @@ class PristineAngelTest extends BaseCardTest {
         angel.tap();
         harness.setHand(player2, List.of(new DarksteelIngot()));
         harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
 
         harness.castArtifact(player2, 0);
 

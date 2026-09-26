@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
+import com.github.laxika.magicalvibes.cards.b.BoonSatyr;
+import com.github.laxika.magicalvibes.cards.e.EsikaGodOfTheTree;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfTolvada;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +23,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TimeStop.class, GrizzlyBears.class, InvasionOfTolvada.class, SerraAngel.class,
+        TheBrokenSky.class, EsikaGodOfTheTree.class, ThePrismaticBridge.class, BoonSatyr.class})
 class TimeStopTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -32,11 +37,9 @@ class TimeStopTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Time Stop");
     }
 
     // ===== Basic resolution =====
@@ -48,12 +51,10 @@ class TimeStopTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GameData gd = harness.getGameData();
         UUID activePlayerBefore = gd.activePlayerId;
         int turnBefore = gd.turnNumber;
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         // Time Stop is exiled, not in graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -71,10 +72,7 @@ class TimeStopTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
+        harness.castAndResolveInstant(player1, 0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -99,7 +97,6 @@ class TimeStopTest extends BaseCardTest {
         harness.passPriority(player2);
         harness.castInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
@@ -113,6 +110,37 @@ class TimeStopTest extends BaseCardTest {
         // Time Stop itself is exiled
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Time Stop"));
+    }
+
+    @Test
+    @DisplayName("Resolving exiles other spells into their owners' exile zones")
+    void exilesOtherSpellsIntoTheirOwnersExileZones() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new TimeStop()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        gd.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(bears.getId()))
+                .findFirst()
+                .orElseThrow()
+                .setOwnerIdOverride(player2.getId());
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(bears.getId()));
     }
 
     @Test
@@ -142,10 +170,7 @@ class TimeStopTest extends BaseCardTest {
         harness.passPriority(player2);
 
         // Player1 responds with Time Stop
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
+        harness.castAndResolveInstant(player1, 0);
 
         // Serra Angel is exiled from the stack
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -158,19 +183,123 @@ class TimeStopTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Resolving exiles Battle spells on the stack")
+    void exilesBattleSpellOnStack() {
+        InvasionOfTolvada invasion = new InvasionOfTolvada();
+        harness.setHand(player2, List.of(invasion));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.setHand(player1, List.of(new TimeStop()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        // Choose player1 as the opponent protecting the Siege, then respond before it resolves.
+        gs.playCard(gd, player2, 0, 0, player1.getId(), null);
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Invasion of Tolvada"));
+        harness.assertNotOnBattlefield(player2, "Invasion of Tolvada");
+        harness.assertNotInGraveyard(player2, "Invasion of Tolvada");
+    }
+
+    @Test
+    @DisplayName("Resolving exiles modal double-faced spells as their physical cards")
+    void exilesModalDoubleFacedSpellsAsPhysicalCards() {
+        EsikaGodOfTheTree esika = new EsikaGodOfTheTree();
+        harness.setHand(player1, List.of(esika));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.setHand(player2, List.of(new TimeStop()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(esika.getId()));
+    }
+
+    @Test
+    @DisplayName("Resolving exiles bestowed spells as their physical cards")
+    void exilesBestowedSpellsAsPhysicalCards() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        BoonSatyr boonSatyr = new BoonSatyr();
+        harness.setHand(player1, List.of(boonSatyr));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.setHand(player2, List.of(new TimeStop()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castWithAlternateCost(player1, 0, bears.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card == boonSatyr);
+    }
+
+    @Test
+    @DisplayName("Resolving does not put spell copies into exile")
+    void doesNotExileSpellCopies() {
+        GrizzlyBears copiedBears = new GrizzlyBears();
+        StackEntry copiedSpell = new StackEntry(StackEntryType.CREATURE_SPELL, copiedBears,
+                player2.getId(), "Copy of Grizzly Bears", List.of());
+        copiedSpell.setCopy(true);
+        gd.stack.add(copiedSpell);
+
+        harness.setHand(player1, List.of(new TimeStop()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getId().equals(copiedBears.getId()));
+    }
+
     // ===== Combat state =====
 
     @Test
     @DisplayName("Resolving during combat clears combat state")
     void clearsCombatStateDuringCombat() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
+        Permanent attackingBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        GameData gd = harness.getGameData();
         // Simulate a creature that is attacking
-        Permanent attackingBears = gd.playerBattlefields.get(player1.getId()).get(0);
         attackingBears.setAttacking(true);
 
         harness.setHand(player2, List.of(new TimeStop()));
@@ -189,19 +318,14 @@ class TimeStopTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving resets end-of-turn modifiers on permanents")
     void resetsEndOfTurnModifiers() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-
-        GameData gd = harness.getGameData();
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).get(0);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         perm.setPowerModifier(3);
         perm.setToughnessModifier(3);
 
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(perm.getPowerModifier()).isZero();
         assertThat(perm.getToughnessModifier()).isZero();
@@ -218,7 +342,6 @@ class TimeStopTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         // Simulate a pending may ability that exists when Time Stop resolves
-        GameData gd = harness.getGameData();
         gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                 new GrizzlyBears(), player1.getId(), List.of(), "Do something?"
         ));
@@ -236,11 +359,9 @@ class TimeStopTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("The turn ends"));
+        assertThat(gameLogContains("The turn ends")).isTrue();
     }
 
     @Test
@@ -262,9 +383,7 @@ class TimeStopTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Grizzly Bears") && log.contains("exiled"));
+        assertThat(gameLogContains("Grizzly Bears is exiled")).isTrue();
     }
 
     // ===== End-of-combat sacrifices =====
@@ -275,13 +394,87 @@ class TimeStopTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        GameData gd = harness.getGameData();
         gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolving processes permanents scheduled for the next cleanup")
+    void processesPermanentsScheduledForNextCleanup() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setSacrificeAtNextCleanup(true);
+
+        harness.setHand(player1, List.of(new TimeStop()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Resolving makes the active player discard down to maximum hand size")
+    void discardsActivePlayerDownToMaximumHandSize() {
+        harness.setHand(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()
+        ));
+        harness.setHand(player2, List.of(new TimeStop()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Resolving removes damage marked on permanents")
+    void removesMarkedDamage() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setMarkedDamage(1);
+
+        harness.setHand(player1, List.of(new TimeStop()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolving checks lethal damage before cleanup removes it")
+    void checksStateBasedActionsBeforeRemovingLethalDamage() {
+        harness.setHand(player1, List.of(new TimeStop()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castInstant(player1, 0);
+
+        // Add lethal damage after the cast-time state-based-action check, while Time Stop is on the stack.
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setMarkedDamage(2);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }
 

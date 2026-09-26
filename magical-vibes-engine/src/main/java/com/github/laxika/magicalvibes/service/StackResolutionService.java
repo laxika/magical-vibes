@@ -1554,6 +1554,8 @@ public class StackResolutionService {
         if (placed <= 0) return;
         target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + placed);
         triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
+        permanentCounterSupport.fireYouPutCountersOnAnotherCreatureTriggers(
+                gameData, target, CounterType.PHYLACTERY, placed, controllerId);
         gameLogService.append(gameData,
                 GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());

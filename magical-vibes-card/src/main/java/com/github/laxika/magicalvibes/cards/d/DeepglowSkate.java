@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermane
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "1093")
+@CardRegistration(set = "SLD", collectorNumber = "2362")
 @CardRegistration(set = "2XM", collectorNumber = "48")
 public class DeepglowSkate extends Card {
 

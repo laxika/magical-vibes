@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GazeOfAdamaro.class, ArabaMothrider.class})
 class GazeOfAdamaroTest extends BaseCardTest {
 
     @Test
@@ -37,7 +37,8 @@ class GazeOfAdamaroTest extends BaseCardTest {
     void dealsDamageEqualToHandSize() {
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new GazeOfAdamaro()));
-        harness.setHand(player2, List.of(new Plains(), new Island(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(
+                new ArabaMothrider(), new ArabaMothrider(), new ArabaMothrider()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castInstant(player1, 0, player2.getId());
@@ -51,11 +52,11 @@ class GazeOfAdamaroTest extends BaseCardTest {
     void usesHandSizeOnResolution() {
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new GazeOfAdamaro()));
-        harness.setHand(player2, List.of(new Plains(), new Island()));
+        harness.setHand(player2, List.of(new ArabaMothrider(), new ArabaMothrider()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castInstant(player1, 0, player2.getId());
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
+        gd.playerHands.get(player2.getId()).add(new ArabaMothrider());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -78,13 +79,12 @@ class GazeOfAdamaroTest extends BaseCardTest {
     @Test
     @DisplayName("Gaze of Adamaro cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
 
         harness.setHand(player1, List.of(new GazeOfAdamaro()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, bear.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

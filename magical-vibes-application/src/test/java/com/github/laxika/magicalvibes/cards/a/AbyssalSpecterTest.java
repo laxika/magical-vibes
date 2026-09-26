@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -15,14 +14,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbyssalSpecter.class, Counterspell.class, Island.class, WindDrake.class})
+@CardUsed({AbyssalSpecter.class, Island.class, WindDrake.class})
 class AbyssalSpecterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage to a player makes that player discard a card of their choice")
     void combatDamageMakesDamagedPlayerDiscard() {
         addCreatureReady(player1, new AbyssalSpecter());
-        harness.setHand(player2, List.of(new Counterspell(), new Island()));
+        harness.setHand(player2, List.of(new WindDrake(), new Island()));
 
         resolveCombatAndTrigger();
 
@@ -43,25 +42,7 @@ class AbyssalSpecterTest extends BaseCardTest {
         addCreatureReady(player1, new AbyssalSpecter());
         addCreatureReady(player2, new WindDrake());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-
-        harness.passBothPriorities();
-        resolveAllTriggers();
-
-        // No combat damage reached the player, so no discard was prompted.
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
-    }
-
-    @Test
-    @DisplayName("No trigger when the Specter is blocked and deals no combat damage to a player")
-    void noTriggerWhenBlockedUpstreamReview() {
-        Permanent specter = addCreatureReady(player1, new AbyssalSpecter());
-        specter.setAttacking(true);
-        addCreatureReady(player2, new WindDrake());
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
@@ -88,7 +69,7 @@ class AbyssalSpecterTest extends BaseCardTest {
     @DisplayName("Noncombat damage to a player also makes that player discard a card")
     void noncombatDamageMakesDamagedPlayerDiscard() {
         Permanent specter = addPingingSpecter();
-        harness.setHand(player2, List.of(new Counterspell()));
+        harness.setHand(player2, List.of(new WindDrake()));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
                 null, player2.getId());
@@ -138,7 +119,7 @@ class AbyssalSpecterTest extends BaseCardTest {
         card.addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
         Permanent specter = addCreatureReady(player1, card);
-        harness.setHand(player1, List.of(new Counterspell()));
+        harness.setHand(player1, List.of(new Island()));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
                 null, player1.getId());

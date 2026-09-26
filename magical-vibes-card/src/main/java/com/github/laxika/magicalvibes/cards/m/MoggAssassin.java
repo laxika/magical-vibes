@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "88")
+@CardRegistration(set = "SLD", collectorNumber = "2517")
 public class MoggAssassin extends Card {
 
     public MoggAssassin() {

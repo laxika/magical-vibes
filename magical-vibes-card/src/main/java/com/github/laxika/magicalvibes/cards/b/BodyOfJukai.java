@@ -22,6 +22,7 @@ public class BodyOfJukai extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(8))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

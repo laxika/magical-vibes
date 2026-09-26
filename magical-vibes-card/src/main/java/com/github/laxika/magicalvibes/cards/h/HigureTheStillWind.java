@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "PC2", collectorNumber = "18")
 @CardRegistration(set = "PCA", collectorNumber = "18")
 @CardRegistration(set = "SLD", collectorNumber = "1267")
+@CardRegistration(set = "SLD", collectorNumber = "2368")
 public class HigureTheStillWind extends Card {
 
     public HigureTheStillWind() {

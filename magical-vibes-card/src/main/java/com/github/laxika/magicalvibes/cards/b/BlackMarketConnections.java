@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MSC", collectorNumber = "155")
+@CardRegistration(set = "MSC", collectorNumber = "346")
 @CardRegistration(set = "ACR", collectorNumber = "87")
 public class BlackMarketConnections extends Card {
 
@@ -23,12 +25,15 @@ public class BlackMarketConnections extends Card {
                         List.of(CreateTokenEffect.ofTreasureToken(1), new LoseLifeEffect(1))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Buy Information — Draw a card. You lose 2 life.",
-                        List.of(new DrawCardEffect(1), new LoseLifeEffect(2))),
+                        List.of(new DrawCardEffect(), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Hire a Mercenary — Create a 3/2 colorless Shapeshifter creature token with changeling. You lose 3 life.",
-                        List.of(
-                                new CreateTokenEffect("Shapeshifter", 3, 2, null,
-                                        List.of(CardSubtype.SHAPESHIFTER), Set.of(Keyword.CHANGELING), Set.of()),
-                                new LoseLifeEffect(3))))));
+                        List.of(shapeshifterToken(), new LoseLifeEffect(3))))));
+    }
+
+    private static CreateTokenEffect shapeshifterToken() {
+        return new CreateTokenEffect(
+                "Shapeshifter", 3, 2, null,
+                List.of(CardSubtype.SHAPESHIFTER), Set.of(Keyword.CHANGELING), Set.of());
     }
 }

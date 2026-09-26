@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -212,7 +214,10 @@ public class TargetValidationService {
         if (!predicateEvaluationService.matchesCardPredicate(
                 target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
                 ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
-            throw new IllegalStateException("Target card does not match the required predicate");
+            String description = CardPredicateUtils.describeFilter(restriction.inner());
+            throw new IllegalStateException(description.equals("card")
+                    ? "Target card does not match the required predicate"
+                    : "Target card must be a " + description);
         }
     }
 
@@ -356,18 +361,21 @@ public class TargetValidationService {
     public void checkProtection(TargetValidationContext ctx, Permanent target) {
         Permanent sourcePermanent = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(ctx.gameData(), ctx.sourcePermanentId());
+        Set<CardColor> sourceColors = sourcePermanent == null
+                ? gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())
+                : gameQueryService.getEffectiveColors(ctx.gameData(), sourcePermanent);
+        for (CardColor effectiveColor : sourceColors) {
+            if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
+                throw new IllegalStateException(target.getCard().getName() + " has protection from "
+                        + effectiveColor.name().toLowerCase());
+            }
+        }
         if (sourcePermanent != null && gameQueryService.hasProtectionFromSource(
                 ctx.gameData(), target, sourcePermanent)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source");
         }
         if (hasProtectionFromSourceController(ctx, target)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
-        }
-        for (CardColor effectiveColor : gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())) {
-            if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
-                throw new IllegalStateException(target.getCard().getName() + " has protection from "
-                        + effectiveColor.name().toLowerCase());
-            }
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(ctx.gameData(), target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");

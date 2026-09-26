@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -7,9 +9,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlindingAngel.class})
+@CardUsed({BlindingAngel.class, Shock.class})
 class BlindingAngelTest extends BaseCardTest {
 
     @Test
@@ -61,6 +65,21 @@ class BlindingAngelTest extends BaseCardTest {
         assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Noncombat damage to a player does not trigger Blinding Angel")
+    void noFlagForNoncombatDamage() {
+        addCreatureReady(player1, new BlindingAngel());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+    }
+
     /** Gives player2 a creature that can attack, so normal combat halts in the combat phase. */
     private void addReadyAttackerForPlayer2() {
         addCreatureReady(player2, new BlindingAngel());
@@ -88,9 +107,7 @@ class BlindingAngelTest extends BaseCardTest {
         gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         // The skip was consumed
@@ -103,9 +120,7 @@ class BlindingAngelTest extends BaseCardTest {
         addReadyAttackerForPlayer2();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
 
         // Progression entered the combat phase rather than skipping to postcombat main.
         assertThat(gd.currentStep).isNotEqualTo(TurnStep.POSTCOMBAT_MAIN);

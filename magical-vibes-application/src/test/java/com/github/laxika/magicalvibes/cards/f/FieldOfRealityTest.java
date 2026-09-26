@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,86 +15,87 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FieldOfReality.class, Forest.class, IsamaruHoundOfKonda.class, LanternKami.class})
 class FieldOfRealityTest extends BaseCardTest {
-
-    private static Card createCreature(String name, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setPower(2);
-        card.setToughness(2);
-        if (subtype != null) {
-            card.setSubtypes(List.of(subtype));
-        }
-        return card;
-    }
 
     @Test
     @DisplayName("Resolving Field of Reality attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = addCreatureReady(player1, new IsamaruHoundOfKonda());
 
         harness.setHand(player1, List.of(new FieldOfReality()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Field of Reality")
                         && p.isAttached()
-                        && bears.getId().equals(p.getAttachedTo()));
+                        && creature.getId().equals(p.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Spirit cannot block the enchanted creature")
     void spiritCannotBlockEnchantedCreature() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent aura = new Permanent(new FieldOfReality());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieldOfReality());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        Permanent blocker = new Permanent(createCreature("Spirit", CardSubtype.SPIRIT));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new LanternKami());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Non-Spirit creature can block the enchanted creature")
     void nonSpiritCanBlockEnchantedCreature() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent aura = new Permanent(new FieldOfReality());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieldOfReality());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new IsamaruHoundOfKonda());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Field of Reality only restricts the creature it enchants")
+    void onlyEnchantedCreatureCannotBeBlockedBySpirits() {
+        Permanent enchantedCreature = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        enchantedCreature.setAttacking(true);
+        Permanent otherAttacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        otherAttacker.setAttacking(true);
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieldOfReality());
+        aura.setAttachedTo(enchantedCreature.getId());
+
+        Permanent blocker = addCreatureReady(player2, new LanternKami());
+
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int otherAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, otherAttackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
@@ -104,25 +103,18 @@ class FieldOfRealityTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability returns Field of Reality to its owner's hand")
     void activatedAbilityReturnsSelfToHand() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = addCreatureReady(player1, new IsamaruHoundOfKonda());
 
-        harness.setHand(player1, List.of(new FieldOfReality()));
+        FieldOfReality auraCard = new FieldOfReality();
+        harness.setHand(player1, List.of(auraCard));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        int auraIndex = -1;
-        var battlefield = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals("Field of Reality")) {
-                auraIndex = i;
-                break;
-            }
-        }
-        assertThat(auraIndex).isGreaterThanOrEqualTo(0);
+        Permanent aura = findPermanent(player1, "Field of Reality");
+        int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(aura);
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, auraIndex, null, null);
@@ -130,5 +122,38 @@ class FieldOfRealityTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Field of Reality");
         harness.assertInHand(player1, "Field of Reality");
+    }
+
+    @Test
+    @DisplayName("Field of Reality cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.setHand(player1, List.of(new FieldOfReality()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Field of Reality goes to its owner's graveyard if its target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        FieldOfReality aura = new FieldOfReality();
+
+        harness.setHand(player1, List.of(aura));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Field of Reality");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == aura);
     }
 }

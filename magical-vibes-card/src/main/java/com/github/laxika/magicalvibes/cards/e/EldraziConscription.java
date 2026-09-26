@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "ROE", collectorNumber = "3")
 @CardRegistration(set = "SLD", collectorNumber = "1218")
 @CardRegistration(set = "UMA", collectorNumber = "3")
+@CardRegistration(set = "SOC", collectorNumber = "131")
 public class EldraziConscription extends Card {
 
     public EldraziConscription() {

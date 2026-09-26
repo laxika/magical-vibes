@@ -144,6 +144,30 @@ class BrassHeraldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The reveal keeps the chosen type if Brass Herald leaves before the trigger resolves")
+    void revealUsesChosenTypeFromLastKnownInformation() {
+        Card elf = new UrborgElf();
+        Card coast = new YavimayaCoast();
+
+        harness.setLibrary(player1, List.of(elf, coast));
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+
+        castHeraldAndChoose("ELF");
+
+        Permanent herald = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof BrassHerald)
+                .findFirst()
+                .orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(herald);
+
+        harness.passBothPriorities();
+        finishAnyReorder();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elf);
+        assertThat(deck).containsExactly(coast);
+    }
+
+    @Test
     @DisplayName("Creatures you control of the chosen type get +1/+1")
     void boostsOwnCreaturesOfChosenType() {
         Permanent elfPerm = harness.addToBattlefieldAndReturn(player1, new UrborgElf());

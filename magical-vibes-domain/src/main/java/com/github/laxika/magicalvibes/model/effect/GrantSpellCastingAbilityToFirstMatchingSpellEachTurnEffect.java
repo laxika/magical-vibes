@@ -6,12 +6,22 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /** Static effect: the first matching spell cast by the source controller each turn has an extra casting ability. */
 public record GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
-        Keyword grantedAbility, CardPredicate filter, Zone sourceZone)
+        Keyword grantedAbility, CardPredicate filter, Zone sourceZone, int abilityValue)
         implements SpellCastingAbilityGrantingEffect {
 
     public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
             Keyword grantedAbility, CardPredicate filter) {
-        this(grantedAbility, filter, null);
+        this(grantedAbility, filter, null, 0);
+    }
+
+    public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
+            Keyword grantedAbility, int abilityValue, CardPredicate filter) {
+        this(grantedAbility, filter, null, abilityValue);
+    }
+
+    public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
+            Keyword grantedAbility, CardPredicate filter, Zone sourceZone) {
+        this(grantedAbility, filter, sourceZone, 0);
     }
 
     public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect {

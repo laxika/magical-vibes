@@ -3,32 +3,33 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RageWeaver.class, DrudgeSkeletons.class, GrizzlyBears.class, SteadfastGuard.class,
+        FugitiveWizard.class, Lure.class})
+@DisplayName("Rage Weaver")
 class RageWeaverTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability puts it on the stack with target")
     void activatingPutsOnStackWithTarget() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyBlackCreature(player1);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -44,8 +45,8 @@ class RageWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability grants haste to black creature")
     void resolvingGrantsHasteToBlackCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyBlackCreature(player1);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -57,8 +58,8 @@ class RageWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability grants haste to green creature")
     void resolvingGrantsHasteToGreenCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyGreenCreature(player1);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -70,8 +71,8 @@ class RageWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Can target opponent's green creature")
     void canTargetOpponentGreenCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyGreenCreature(player2);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -83,8 +84,8 @@ class RageWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Haste is removed at end of turn")
     void hasteRemovedAtEndOfTurn() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyBlackCreature(player1);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -101,8 +102,8 @@ class RageWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target white creature")
     void cannotTargetWhiteCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyWhiteCreature(player1);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player1, new SteadfastGuard());
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -113,8 +114,20 @@ class RageWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target blue creature")
     void cannotTargetBlueCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyBlueCreature(player1);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player1, new FugitiveWizard());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a");
+    }
+
+    @Test
+    @DisplayName("Cannot target a green noncreature permanent")
+    void cannotTargetGreenNoncreaturePermanent() {
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Lure());
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -125,53 +138,13 @@ class RageWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyBlackCreature(player1);
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addReadyWeaver(Player player) {
-        RageWeaver card = new RageWeaver();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBlackCreature(Player player) {
-        DrudgeSkeletons card = new DrudgeSkeletons();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyGreenCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyWhiteCreature(Player player) {
-        SteadfastGuard card = new SteadfastGuard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBlueCreature(Player player) {
-        FugitiveWizard card = new FugitiveWizard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }
 

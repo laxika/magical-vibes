@@ -36,6 +36,8 @@ public class ExileSameNameCardsFromHandAndLibraryThenSeekEffectHandler
         ExileSameNameCardsFromHandAndLibraryThenSeekEffect exileThenSeek =
                 (ExileSameNameCardsFromHandAndLibraryThenSeekEffect) effect;
         if (exileThenSeek.cardName() == null) {
+            entry.setTargetId(entry.getControllerId());
+            entry.setNonTargeting(true);
             playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
                     gameData, entry, 1, List.of(), List.of(CardType.INSTANT, CardType.SORCERY),
                     null, false, true, null, true, false, 0, false,

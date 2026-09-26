@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.d.DampenThought;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTheHunt;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OrbweaverKumo.class, KamiOfTheHunt.class, DampenThought.class, HumbleBudoka.class})
 class OrbweaverKumoTest extends BaseCardTest {
 
     private Permanent addKumo() {
-        harness.addToBattlefield(player1, new OrbweaverKumo());
+        Permanent kumo = harness.addToBattlefieldAndReturn(player1, new OrbweaverKumo());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return kumo;
     }
 
     @Test
@@ -48,8 +50,7 @@ class OrbweaverKumoTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DampenThought()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isTrue();
     }
@@ -59,9 +60,26 @@ class OrbweaverKumoTest extends BaseCardTest {
     void noTriggerOnUnrelatedSpell() {
         Permanent kumo = addKumo();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new HumbleBudoka()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when an opponent casts a Spirit or Arcane spell")
+    void noTriggerOnOpponentSpell() {
+        Permanent kumo = addKumo();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new KamiOfTheHunt()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isFalse();
@@ -74,8 +92,7 @@ class OrbweaverKumoTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DampenThought()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isTrue();
 

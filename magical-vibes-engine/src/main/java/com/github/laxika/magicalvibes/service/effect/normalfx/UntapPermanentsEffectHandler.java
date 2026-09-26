@@ -137,7 +137,10 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
     private void resolveEnchanted(GameData gameData, StackEntry entry) {
         Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (auraPerm == null) {
-            log.info("Game {} - Aura {} no longer on battlefield, skipping untap enchanted creature",
+            auraPerm = entry.getSourcePermanentSnapshot();
+        }
+        if (auraPerm == null) {
+            log.info("Game {} - Aura {} has no last known attachment, skipping untap enchanted creature",
                     gameData.id, entry.getCard().getName());
             return;
         }

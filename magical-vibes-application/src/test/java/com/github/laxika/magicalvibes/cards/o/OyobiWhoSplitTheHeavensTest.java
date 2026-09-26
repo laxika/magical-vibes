@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.c.CallousDeceiver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
+import com.github.laxika.magicalvibes.cards.f.FrostOgre;
+import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
+import com.github.laxika.magicalvibes.cards.v.VitalSurge;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OyobiWhoSplitTheHeavens.class, KamiOfFalseHope.class, VitalSurge.class, FrostOgre.class})
 class OyobiWhoSplitTheHeavensTest extends BaseCardTest {
 
     @Test
@@ -22,16 +27,16 @@ class OyobiWhoSplitTheHeavensTest extends BaseCardTest {
     void spiritSpellCreatesToken() {
         addOyobi();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new CallousDeceiver()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new KamiOfFalseHope(), "{W}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         List<Permanent> tokens = spiritTokens();
         assertThat(tokens).hasSize(1);
         Permanent token = tokens.getFirst();
+        assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
@@ -42,11 +47,8 @@ class OyobiWhoSplitTheHeavensTest extends BaseCardTest {
     void arcaneSpellCreatesToken() {
         addOyobi();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new ReachThroughMists()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
 
-        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(spiritTokens()).hasSize(1);
@@ -57,11 +59,19 @@ class OyobiWhoSplitTheHeavensTest extends BaseCardTest {
     void unrelatedSpellCreatesNoToken() {
         addOyobi();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new FrostOgre(), "{3}{R}{R}");
 
-        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(spiritTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting a Spirit spell by an opponent creates no token")
+    void opponentSpiritSpellCreatesNoToken() {
+        addOyobi();
+        prepareMainPhase(player2);
+        harness.castFromHand(player2, new KamiOfFalseHope(), "{W}");
         harness.passBothPriorities();
 
         assertThat(spiritTokens()).isEmpty();
@@ -76,7 +86,11 @@ class OyobiWhoSplitTheHeavensTest extends BaseCardTest {
     }
 
     private void prepareMainPhase() {
-        harness.forceActivePlayer(player1);
+        prepareMainPhase(player1);
+    }
+
+    private void prepareMainPhase(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
     }

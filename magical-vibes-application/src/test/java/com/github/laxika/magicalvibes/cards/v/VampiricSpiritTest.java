@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -30,7 +31,7 @@ class VampiricSpiritTest extends BaseCardTest {
         castVampiricSpirit();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 4);
+        harness.assertLife(player1, lifeBefore - 4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -42,10 +43,28 @@ class VampiricSpiritTest extends BaseCardTest {
         castVampiricSpirit();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("The creature's controller loses 4 life when an opponent casts it")
+    void opponentControllerLosesLife() {
+        int playerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        castVampiricSpirit(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, playerLifeBefore);
+        harness.assertLife(player2, opponentLifeBefore - 4);
     }
 
     private void castVampiricSpirit() {
-        harness.castFromHand(player1, new VampiricSpirit(), "{2}{B}{B}");
+        castVampiricSpirit(player1);
+    }
+
+    private void castVampiricSpirit(Player player) {
+        harness.forceActivePlayer(player);
+        harness.castFromHand(player, new VampiricSpirit(), "{2}{B}{B}");
     }
 }

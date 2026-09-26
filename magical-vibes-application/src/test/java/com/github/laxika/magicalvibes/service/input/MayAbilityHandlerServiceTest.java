@@ -169,7 +169,7 @@ class MayAbilityHandlerServiceTest {
         acceptMayAbility(specEffect(TargetPredicates.land()));
 
         verify(playerInputService, org.mockito.Mockito.never())
-                .beginPermanentChoice(any(), any(), anyList(), anyString());
+                .beginAnyTargetChoice(any(), any(), anyList(), anyList(), anyString());
     }
 
     @Test
@@ -291,7 +291,8 @@ class MayAbilityHandlerServiceTest {
     private List<UUID> offeredTargets() {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<UUID>> captor = ArgumentCaptor.forClass(List.class);
-        verify(playerInputService).beginPermanentChoice(eq(gd), eq(PLAYER1_ID), captor.capture(), anyString());
+        verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(PLAYER1_ID), captor.capture(),
+                eq(List.of()), anyString());
         return captor.getValue();
     }
 

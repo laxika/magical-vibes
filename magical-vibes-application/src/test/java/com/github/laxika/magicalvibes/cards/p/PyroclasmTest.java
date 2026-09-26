@@ -19,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pyroclasm.class, GrizzlyBears.class, GiantSpider.class, PaladinEnVec.class})
+@CardUsed({Pyroclasm.class, GrizzlyBears.class, GiantSpider.class, PaladinEnVec.class,
+        Forest.class, DarksteelMyr.class})
 class PyroclasmTest extends BaseCardTest {
 
     @Test

@@ -2455,9 +2455,10 @@ public class CardChoiceHandlerService {
         if (source == null) {
             return;
         }
-        source.untap();
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-        log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
+        if (tapUntapSupport.untapPermanent(gameData, source)) {
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+            log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
+        }
     }
 
     private void checkPendingBoostSourceByDiscardedManaValue(GameData gameData, Card discardedCard) {
@@ -2487,15 +2488,19 @@ public class CardChoiceHandlerService {
         if (pending == null) {
             return;
         }
+        boolean lastDiscard = pending.remainingDiscards() == 1;
         gameData.pendingConnive = pending.remainingDiscards() > 1
                 ? new PendingConnive(pending.sourcePermanentId(), pending.remainingDiscards() - 1)
                 : null;
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
         if (!discardedCard.hasType(CardType.LAND)) {
-            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-            if (source == null) {
-                return;
-            }
             permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
+        }
+        if (lastDiscard) {
+            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
         }
     }
 

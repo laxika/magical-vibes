@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
 
+@CardUsed({KumanoMasterYamabushi.class, GrizzlyBears.class, LlanowarElves.class,
+        ProdigalPyromancer.class})
 class KumanoMasterYamabushiTest extends BaseCardTest {
 
     private boolean isExiled(String cardName) {
@@ -52,6 +56,35 @@ class KumanoMasterYamabushiTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(isExiled("Grizzly Bears")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The exile replacement expires at the end of the turn")
+    void replacementExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new KumanoMasterYamabushi());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, targetId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.activateAbility(player1, 2, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
     }
 
     @Test

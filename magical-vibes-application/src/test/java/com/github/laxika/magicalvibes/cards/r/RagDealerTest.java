@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,14 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RagDealer.class, HumbleBudoka.class, BlessedBreath.class, Forest.class})
 class RagDealerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles three chosen cards from an opponent's graveyard")
     void exilesThreeCardsFromOpponentGraveyard() {
-        Permanent dealer = addReadyDealer(player1);
-        Card card1 = new GrizzlyBears();
-        Card card2 = new LightningBolt();
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card1 = new HumbleBudoka();
+        Card card2 = new BlessedBreath();
         Card card3 = new Forest();
         harness.setGraveyard(player2, new ArrayList<>(List.of(card1, card2, card3)));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -40,9 +41,9 @@ class RagDealerTest extends BaseCardTest {
     @Test
     @DisplayName("Can exile fewer than three cards, and from the controller's own graveyard")
     void exilesFewerCardsFromOwnGraveyard() {
-        Permanent dealer = addReadyDealer(player1);
-        Card card1 = new GrizzlyBears();
-        Card card2 = new LightningBolt();
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card1 = new HumbleBudoka();
+        Card card2 = new BlessedBreath();
         harness.setGraveyard(player1, new ArrayList<>(List.of(card1, card2)));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -57,11 +58,28 @@ class RagDealerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate without choosing any graveyard cards")
+    void canActivateWithoutChoosingTargets() {
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card = new HumbleBudoka();
+        harness.setGraveyard(player2, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(card.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(dealer.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Targets must all come from a single graveyard")
     void targetsMustShareOneGraveyard() {
-        Permanent dealer = addReadyDealer(player1);
-        Card mine = new GrizzlyBears();
-        Card theirs = new LightningBolt();
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card mine = new HumbleBudoka();
+        Card theirs = new BlessedBreath();
         harness.setGraveyard(player1, new ArrayList<>(List.of(mine)));
         harness.setGraveyard(player2, new ArrayList<>(List.of(theirs)));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -75,11 +93,11 @@ class RagDealerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target more than three cards")
     void cannotTargetMoreThanThree() {
-        Permanent dealer = addReadyDealer(player1);
-        Card card1 = new GrizzlyBears();
-        Card card2 = new LightningBolt();
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card1 = new HumbleBudoka();
+        Card card2 = new BlessedBreath();
         Card card3 = new Forest();
-        Card card4 = new GrizzlyBears();
+        Card card4 = new HumbleBudoka();
         harness.setGraveyard(player2, new ArrayList<>(List.of(card1, card2, card3, card4)));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -92,8 +110,8 @@ class RagDealerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating taps Rag Dealer")
     void activatingTapsDealer() {
-        Permanent dealer = addReadyDealer(player1);
-        Card card1 = new GrizzlyBears();
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card1 = new HumbleBudoka();
         harness.setGraveyard(player2, new ArrayList<>(List.of(card1)));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -105,8 +123,8 @@ class RagDealerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        Permanent dealer = addReadyDealer(player1);
-        Card card1 = new GrizzlyBears();
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card1 = new HumbleBudoka();
         harness.setGraveyard(player2, new ArrayList<>(List.of(card1)));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -118,9 +136,9 @@ class RagDealerTest extends BaseCardTest {
     @Test
     @DisplayName("A target that leaves the graveyard before resolution is skipped")
     void removedTargetIsSkipped() {
-        Permanent dealer = addReadyDealer(player1);
-        Card card1 = new GrizzlyBears();
-        Card card2 = new LightningBolt();
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card1 = new HumbleBudoka();
+        Card card2 = new BlessedBreath();
         harness.setGraveyard(player2, new ArrayList<>(List.of(card1, card2)));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -138,10 +156,4 @@ class RagDealerTest extends BaseCardTest {
         return gd.playerBattlefields.get(player1.getId()).indexOf(dealer);
     }
 
-    private Permanent addReadyDealer(Player player) {
-        Permanent perm = new Permanent(new RagDealer());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

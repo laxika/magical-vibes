@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
@@ -125,7 +126,9 @@ public class CombatTriggerService {
                                 effectsForStack.add(conditional.wrapped());
                                 autoTargetOpponent = true;
                             }
-                        } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
+                        } else if (slot != EffectSlot.ON_ATTACK
+                                && effect instanceof CombatOpponentReferencingEffect c
+                                && c.referencesCombatOpponent()) {
                             if (combatOpponent != null
                                     && (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
                                     || predicateEvaluationService.matchesPermanentPredicate(
@@ -150,6 +153,17 @@ public class CombatTriggerService {
                                     ConditionContext.forPermanent(creature, finalCreatureControllerId)));
                     effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
                             && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
+
+                    if (slot == EffectSlot.ON_ATTACK) {
+                        ConditionContext attackTargetContext = ConditionContext
+                                .forPermanent(creature, finalCreatureControllerId)
+                                .withTargetId(creature.getAttackTarget());
+                        effectsForStack.removeIf(e -> e instanceof ConditionalEffect ce
+                                && ce.condition() instanceof AttackedTargetIsMonarch
+                                && !conditionEvaluationService.isMet(gameData, ce.condition(), attackTargetContext));
+                        effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
+                                && ce.condition() instanceof AttackedTargetIsMonarch ? ce.wrapped() : e);
+                    }
 
                     if (effectsForStack.isEmpty()) return;
 
@@ -213,10 +227,23 @@ public class CombatTriggerService {
                                                     List.of(), firstGroup, 0, skippedGroups, 0, List.of(), false,
                                                     null, creature.getId()));
                                 } else {
+                                    UUID attackedTargetId = slot == EffectSlot.ON_ATTACK
+                                            ? creature.getAttackTarget() : null;
+                                    UUID defendingPlayerId = attackedTargetId == null ? null
+                                            : gameData.playerIds.contains(attackedTargetId)
+                                                    ? attackedTargetId
+                                                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                                    UUID targetChooserId = slot == EffectSlot.ON_ATTACK
+                                            && perm.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
+                                            ? defendingPlayerId : auraOwnerId;
                                     gameData.queueInteraction(
-                                            new PermanentChoiceContext.AttackTriggerTarget(
-                                                    perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                    auraOwnerId, creature.getAttackTarget(), creature.getId()));
+                                            slot == EffectSlot.ON_ATTACK
+                                                    ? new PermanentChoiceContext.AttackTriggerTarget(
+                                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                            targetChooserId, attackedTargetId, creature.getId())
+                                                    : new PermanentChoiceContext.AttackTriggerTarget(
+                                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                            auraOwnerId, null, creature.getId()));
                                 }
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",

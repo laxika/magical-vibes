@@ -24,6 +24,9 @@ class DemonOfFatesDesignTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new DemonOfFatesDesign());
         harness.setHand(player1, List.of(new Aluren()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castEnchantment(player1, 0);
 
@@ -37,6 +40,9 @@ class DemonOfFatesDesignTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new DemonOfFatesDesign());
         harness.setHand(player1, List.of(new Aluren()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
@@ -58,7 +64,6 @@ class DemonOfFatesDesignTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();
 
         assertThat(demon.getPowerModifier()).isEqualTo(4);

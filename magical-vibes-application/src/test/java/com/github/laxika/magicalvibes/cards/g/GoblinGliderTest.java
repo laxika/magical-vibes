@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,10 +19,8 @@ class GoblinGliderTest extends BaseCardTest {
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new GoblinGlider());
 
-        Permanent attacker = addCreatureReady(player1, new RagingGoblin());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers(player1);
+        addCreatureReady(player1, new RagingGoblin());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

@@ -35,7 +35,9 @@ class KratosGodOfWarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLife(player1, 20);
 
-        declareAttackers(player1, List.of(0));
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
         resolveEndStep(player1);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);

@@ -35,6 +35,18 @@ class VexingArcanixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activating the ability pays three generic mana and taps Vexing Arcanix")
+    void activationPaysManaAndTapsSource() {
+        Permanent arcanix = addReadyArcanix(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(arcanix.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Correct name puts the top card into the target's hand with no damage")
     void correctNameGoesToHand() {
         harness.setLife(player2, 20);
@@ -74,6 +86,24 @@ class VexingArcanixTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
         assertThat(gd.playerDecks.get(player2.getId())).noneMatch(c -> c.getId().equals(topCard.getId()));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("The controller may be targeted and takes damage on a miss")
+    void controllerCanBeTargeted() {
+        harness.setLife(player1, 20);
+        addReadyArcanix(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        Card topCard = new Incinerate();
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Vexing Arcanix");
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
     @Test

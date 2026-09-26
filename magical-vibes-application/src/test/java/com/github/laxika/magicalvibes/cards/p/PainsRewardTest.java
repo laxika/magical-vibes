@@ -1,29 +1,28 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PainsReward.class, OboroPalaceInTheClouds.class})
 class PainsRewardTest extends BaseCardTest {
 
     private void cast() {
-        harness.setHand(player1, List.of(new PainsReward()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PainsReward(), "{2}{B}");
         harness.passBothPriorities();
     }
 
     private void setFourCardLibrary(Player player) {
         harness.setLibrary(player, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new OboroPalaceInTheClouds(), new OboroPalaceInTheClouds(),
+                new OboroPalaceInTheClouds(), new OboroPalaceInTheClouds()));
     }
 
     @Test
@@ -75,6 +74,20 @@ class PainsRewardTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 0);
 
         harness.assertLife(player1, -7);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    void zeroOpeningBidStillAwardsFourCards() {
+        setFourCardLibrary(player1);
+
+        cast();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 20);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
     }

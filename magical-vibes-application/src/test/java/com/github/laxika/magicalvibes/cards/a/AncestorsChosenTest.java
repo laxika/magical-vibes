@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
-import com.github.laxika.magicalvibes.cards.e.ErhnamDjinn;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({AncestorsChosen.class, AvenWarcraft.class, BenevolentBodyguard.class, Cagemail.class, ErhnamDjinn.class, SuntailHawk.class})
+@CardUsed({AncestorsChosen.class, AvenWarcraft.class, BenevolentBodyguard.class, Cagemail.class, GnarledMass.class, SuntailHawk.class})
 class AncestorsChosenTest extends BaseCardTest {
 
     @Test
@@ -89,7 +89,7 @@ class AncestorsChosenTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new AncestorsChosen());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new ErhnamDjinn());
+        Permanent blocker = addCreatureReady(player2, new GnarledMass());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -98,7 +98,7 @@ class AncestorsChosenTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertOnBattlefield(player1, "Ancestor's Chosen");
-        harness.assertInGraveyard(player2, "Erhnam Djinn");
+        harness.assertInGraveyard(player2, "Gnarled Mass");
     }
 
     private void castAncestorsChosenForJudReview() {

@@ -27,7 +27,7 @@ public class JinSakaiGhostOfTsushima extends Card {
                                         new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TRIGGERING_PERMANENT)),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Ghost — It can't be blocked this turn",
-                                        new MakeCreatureUnblockableEffect())
+                                        MakeCreatureUnblockableEffect.forTriggeringPermanent())
                         ))));
     }
 }

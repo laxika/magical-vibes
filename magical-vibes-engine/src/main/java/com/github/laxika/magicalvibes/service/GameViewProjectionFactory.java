@@ -389,6 +389,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PubliclyRevealedHandEffect reveal) {
                         if (!reveal.controllerOnly()) {
@@ -409,6 +410,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf != null) {
                 for (Permanent perm : bf) {
+                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof RevealOpponentHandsEffect) {
                             fullHandRevealed = true;

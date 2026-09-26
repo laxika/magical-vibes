@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.i.IntoTheFray;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpiritualVisit.class, IntoTheFray.class, SakuraTribeScout.class})
 class SpiritualVisitTest extends BaseCardTest {
 
     @Test
@@ -37,17 +38,15 @@ class SpiritualVisitTest extends BaseCardTest {
     @Test
     @DisplayName("Splices onto an Arcane spell and stays in hand")
     void splicesOntoArcaneSpell() {
-        Card arcaneShock = new Shock().createRuntimeCopy();
-        arcaneShock.setSubtypes(List.of(CardSubtype.ARCANE));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SakuraTribeScout());
         SpiritualVisit visit = new SpiritualVisit();
-        harness.setHand(player1, List.of(arcaneShock, visit));
+        harness.setHand(player1, List.of(new IntoTheFray(), visit));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castWithSplice(player1, 0, player2.getId(), List.of(1));
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(visit);
     }

@@ -9,18 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtyp
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "280")
+@CardRegistration(set = "MSC", collectorNumber = "287")
 public class HeraldsHorn extends Card {
 
     public HeraldsHorn() {
-        // As this artifact enters, choose a creature type.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-
-        // Creature spells you cast of the chosen type cost {1} less to cast.
         addEffect(EffectSlot.STATIC, new ReduceCastCostForChosenSubtypeSpellsEffect(1));
-
-        // At the beginning of your upkeep, look at the top card of your library. If it's a creature
-        // card of the chosen type, you may reveal it and put it into your hand.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new LookAtTopCardMayRevealMatchingToHandEffect(
-                new CardHasSourceChosenSubtypePredicate(), false));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                new LookAtTopCardMayRevealMatchingToHandEffect(
+                        new CardHasSourceChosenSubtypePredicate(), false));
     }
 }

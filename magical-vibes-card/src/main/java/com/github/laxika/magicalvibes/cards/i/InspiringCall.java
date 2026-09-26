@@ -20,6 +20,8 @@ import java.util.List;
 @CardRegistration(set = "DTK", collectorNumber = "191")
 @CardRegistration(set = "IMA", collectorNumber = "169")
 @CardRegistration(set = "TLE", collectorNumber = "168")
+@CardRegistration(set = "SLD", collectorNumber = "2313")
+@CardRegistration(set = "SLD", collectorNumber = "2328")
 public class InspiringCall extends Card {
 
     public InspiringCall() {

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -855,6 +856,35 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(artillerist.getId());
             assertThat(entry.getEventValue()).isEqualTo(3);
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — LoseLifeEffect")
+    class ControllerDiscardEventLifeLossToEachOpponent {
+
+        @Test
+        @DisplayName("queues life loss using the discard event")
+        void queuesLifeLossTrigger() {
+            Permanent doom = createPermanent("Doctor Doom, King of Latveria");
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            Card land = createCard("Forest");
+            land.setType(CardType.LAND);
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 2,
+                    List.of(land, createCard("Grizzly Bears")));
+
+            boolean result = registry.dispatch(
+                    match(doom, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(doom.getId());
+                assertThat(entry.getEventValue()).isEqualTo(2);
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            });
         }
     }
 

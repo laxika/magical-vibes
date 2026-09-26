@@ -43,6 +43,8 @@ public class StackEntry {
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
+    /** Index of the effect currently being dispatched by EffectResolutionService. */
+    @Setter private int resolvingEffectIndex = -1;
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
@@ -316,6 +318,8 @@ public class StackEntry {
     /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
     @Setter private Card triggeringCardSnapshot;
     @Setter private long triggeringCardGraveyardEntryVersion;
+    /** Graveyard entry chosen as this spell's primary target when it was cast. */
+    @Setter private long targetGraveyardEntryVersion = -1;
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
@@ -676,6 +680,7 @@ public class StackEntry {
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
+        this.resolvingEffectIndex = source.resolvingEffectIndex;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
@@ -791,6 +796,7 @@ public class StackEntry {
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;

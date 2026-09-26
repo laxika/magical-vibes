@@ -20,6 +20,6 @@ public class AngelicFieldMarshal extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)));
     }
 }

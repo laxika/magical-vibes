@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KashiTribeWarriors;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoratamiCloudskater.class, Island.class, Plains.class, Forest.class, KashiTribeWarriors.class})
 class SoratamiCloudskaterTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class SoratamiCloudskaterTest extends BaseCardTest {
     void returnsLandThenLoots() {
         harness.addToBattlefield(player1, new SoratamiCloudskater());
         harness.addToBattlefield(player1, new Island());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new KashiTribeWarriors()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -36,14 +38,14 @@ class SoratamiCloudskaterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Hand is [Grizzly Bears, Island, Forest] after the draw
+        // Hand is [Kashi-Tribe Warriors, Island, Forest] after the draw
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Kashi-Tribe Warriors");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -51,6 +53,18 @@ class SoratamiCloudskaterTest extends BaseCardTest {
     @DisplayName("Cannot activate without a land to return")
     void cannotActivateWithoutLand() {
         harness.addToBattlefield(player1, new SoratamiCloudskater());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Soratami Cloudskater"), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot use an opponent's land to pay the return cost")
+    void cannotActivateWithOnlyOpponentsLand() {
+        harness.addToBattlefield(player1, new SoratamiCloudskater());
+        harness.addToBattlefield(player2, new Island());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(

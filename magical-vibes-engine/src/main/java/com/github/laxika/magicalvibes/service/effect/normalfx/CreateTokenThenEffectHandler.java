@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -49,7 +50,8 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (createThen.thenEffect() instanceof AttachCreatedEquipmentToTargetCreatureEffect
-                || createThen.thenEffect() instanceof ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect) {
+                || createThen.thenEffect() instanceof ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect
+                || createThen.thenEffect() instanceof ReturnCardFromGraveyardEffect ret && ret.attachToSource()) {
             queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect(),
                     entry.getCreatedPermanentIds().get(createdBefore), false);
         } else {
@@ -67,7 +69,7 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
             GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(thenEffect));
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(thenEffect), null,
-                    target.minTargets(), 0, target.maxTargets(), null, false, sourcePermanentId));
+                    target.minTargets(), 0, target.maxTargets(), null, false, null, sourcePermanentId));
             return;
         }
 

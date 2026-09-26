@@ -29,8 +29,7 @@ class WarpedDevotionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities(); // Boomerang resolves, bounces the bear, queues the trigger
+        harness.castAndResolveInstant(player1, 0, targetId); // Boomerang resolves, bounces the bear, queues the trigger
         harness.passBothPriorities(); // Warped Devotion's trigger resolves
 
         // The bounced creature's owner (player2) chooses which card to discard.
@@ -55,8 +54,7 @@ class WarpedDevotionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -79,8 +77,7 @@ class WarpedDevotionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Only the bounced bear was added; nothing was discarded.
@@ -99,8 +96,7 @@ class WarpedDevotionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -124,8 +120,7 @@ class WarpedDevotionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -150,8 +145,7 @@ class WarpedDevotionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

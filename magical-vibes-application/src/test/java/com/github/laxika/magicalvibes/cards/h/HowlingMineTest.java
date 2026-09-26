@@ -123,6 +123,23 @@ class HowlingMineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Untapping before trigger resolution allows the extra draw")
+    void triggerResolvesWhenSourceIsUntappedBeforeResolution() {
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToDraw(player1);
+        howlingMine.tap();
+        howlingMine.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 2);
+    }
+
+    @Test
     @DisplayName("Removing source from battlefield after trigger still allows the draw (last known state was untapped)")
     void triggerStillResolvesWhenSourceLeavesTheBattlefield() {
         Permanent howlingMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());

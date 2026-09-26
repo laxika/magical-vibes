@@ -42,7 +42,6 @@ class BattleAtTheHelvaultTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, ownBear.getId());
         harness.handlePermanentChosen(player1, opponentBear.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownBear);
@@ -55,7 +54,6 @@ class BattleAtTheHelvaultTest extends BaseCardTest {
         Permanent chapterTwoBear = addCreatureReady(player2, new GrizzlyBears());
         triggerChapter();
         harness.handlePermanentChosen(player1, chapterTwoBear.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(chapterTwoBear);
@@ -73,7 +71,6 @@ class BattleAtTheHelvaultTest extends BaseCardTest {
         triggerChapter();
         harness.handlePermanentChosen(player1, ownBear.getId());
         harness.handlePermanentChosen(player1, opponentBear.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.forceActivePlayer(player2);
@@ -83,8 +80,10 @@ class BattleAtTheHelvaultTest extends BaseCardTest {
         harness.castInstant(player2, 0, saga.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownBear);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentBear);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == ownBear.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard() == opponentBear.getCard());
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 

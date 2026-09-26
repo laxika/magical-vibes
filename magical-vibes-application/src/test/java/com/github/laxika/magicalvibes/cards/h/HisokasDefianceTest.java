@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HisokasDefiance.class, KamiOfOldStone.class, BlessedBreath.class, DevotedRetainer.class})
 class HisokasDefianceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Counters a Spirit spell")
     void countersSpiritSpell() {
         KamiOfOldStone kami = new KamiOfOldStone();
-        harness.setHand(player1, List.of(kami));
-        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castFromHand(player1, kami, "{3}{W}");
 
         harness.setHand(player2, List.of(new HisokasDefiance()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, kami.getId());
         harness.passBothPriorities();
@@ -42,7 +42,7 @@ class HisokasDefianceTest extends BaseCardTest {
     @Test
     @DisplayName("Counters an Arcane spell")
     void countersArcaneSpell() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent retainer = harness.addToBattlefieldAndReturn(player1, new DevotedRetainer());
         BlessedBreath breath = new BlessedBreath();
         harness.setHand(player1, List.of(breath));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -50,7 +50,7 @@ class HisokasDefianceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HisokasDefiance()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, bears.getId());
+        harness.castInstant(player1, 0, retainer.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, breath.getId());
         harness.passBothPriorities();
@@ -63,17 +63,15 @@ class HisokasDefianceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a spell that is neither Spirit nor Arcane")
     void cannotTargetOtherSpell() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        DevotedRetainer retainer = new DevotedRetainer();
+        harness.castFromHand(player1, retainer, "{W}");
 
         harness.setHand(player2, List.of(new HisokasDefiance()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, retainer.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

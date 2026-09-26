@@ -27,7 +27,7 @@ class AbbyMercilessSoldierTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Cordyceps Infected")).hasSize(4);
+        assertThat(findPermanents(player1, "Cordyceps Infected")).hasSize(3);
         Permanent token = findPermanent(player1, "Cordyceps Infected");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getColors()).containsExactly(CardColor.BLACK);

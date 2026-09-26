@@ -1,25 +1,85 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({OpalEyeKondasYojimbo.class, FirstVolley.class, GrizzlyBears.class, ProdigalPyromancer.class})
 class OpalEyeKondasYojimboTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Defender prevents Opal-Eye from attacking")
+    void defenderPreventsAttacking() {
+        addCreatureReady(player1, new OpalEyeKondasYojimbo());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Bushido gives Opal-Eye +1/+1 when it becomes blocked")
+    void becomesBlockedGetsBushidoBonus() {
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        opalEye.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, opalEye)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opalEye)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Bushido gives Opal-Eye +1/+1 when it blocks")
+    void blocksGetsBushidoBonus() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent opalEye = addCreatureReady(player2, new OpalEyeKondasYojimbo());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, opalEye)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opalEye)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Bushido does not trigger when Opal-Eye is unblocked")
+    void unblockedGetsNoBushidoBonus() {
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        opalEye.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, opalEye)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opalEye)).isEqualTo(4);
+    }
 
     @Test
     @DisplayName("Activating the tap ability prompts for a damage source choice")
     void tapAbilityPromptsForSourceChoice() {
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
         addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
@@ -32,8 +92,8 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
     @DisplayName("Noncombat damage the chosen source would deal to a player is dealt to Opal-Eye instead")
     void redirectsNoncombatPlayerDamageToSelf() {
         harness.setLife(player2, 20);
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
         harness.passBothPriorities();
@@ -50,8 +110,8 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage the chosen source would deal to a creature is dealt to Opal-Eye instead")
     void redirectsNoncombatCreatureDamageToSelf() {
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
         Permanent victim = addReadyStats(player2, 3, 3);
 
         harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
@@ -69,7 +129,7 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
     @DisplayName("Combat damage the chosen attacker would deal to the controller is dealt to Opal-Eye instead")
     void redirectsCombatDamageToSelf() {
         harness.setLife(player1, 20);
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
         Permanent attacker = addReadyStats(player2, 3, 3);
 
         harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
@@ -87,8 +147,8 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
     @DisplayName("Damage from a source other than the chosen one is not redirected")
     void doesNotRedirectOtherSources() {
         harness.setLife(player2, 20);
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
         Permanent decoy = addReadyStats(player1, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
@@ -107,8 +167,8 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
     @DisplayName("Only the next damage event from the chosen source is redirected")
     void onlyNextDamageEventIsRedirected() {
         harness.setLife(player2, 20);
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
         harness.passBothPriorities();
@@ -128,7 +188,7 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
     @Test
     @DisplayName("The redirect shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
         addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
@@ -147,8 +207,8 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
     @Test
     @DisplayName("The {1}{W} ability prevents the next 1 damage dealt to Opal-Eye")
     void preventsNextDamageToSelf() {
-        Permanent opalEye = addReadyPermanent(player1, new OpalEyeKondasYojimbo());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -161,21 +221,56 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
         assertThat(opalEye.getMarkedDamage()).isEqualTo(0);
     }
 
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("The {1}{W} prevention shield applies only to the next damage")
+    void preventionShieldAppliesOnlyToNextDamage() {
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, indexOf(player1, opalEye), 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, opalEye.getId());
+        harness.passBothPriorities();
+        assertThat(opalEye.getMarkedDamage()).isZero();
+
+        pyromancer.untap();
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, opalEye.getId());
+        harness.passBothPriorities();
+
+        assertThat(opalEye.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The tap ability can choose a damage-dealing spell on the stack as its source")
+    void canChooseSpellOnStackAsDamageSource() {
+        harness.setLife(player2, 20);
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        FirstVolley firstVolley = new FirstVolley();
+        harness.setHand(player1, List.of(firstVolley));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, victim.getId());
+        harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatCode(() -> harness.handlePermanentChosen(player1, firstVolley.getId()))
+                .doesNotThrowAnyException();
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(opalEye.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 19);
     }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();
         card.setPower(power);
         card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 
     private int indexOf(Player player, Permanent perm) {

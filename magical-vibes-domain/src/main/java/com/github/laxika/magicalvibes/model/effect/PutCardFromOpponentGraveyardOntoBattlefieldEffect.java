@@ -19,7 +19,7 @@ import java.util.List;
  */
 public record PutCardFromOpponentGraveyardOntoBattlefieldEffect(
         boolean tapped, CardPredicate filter, boolean requireManaValueEqualsX,
-        DynamicAmount maxManaValue) implements CardEffect {
+        DynamicAmount maxManaValue, boolean upTo) implements CardEffect {
 
     public PutCardFromOpponentGraveyardOntoBattlefieldEffect() {
         this(false);
@@ -30,13 +30,21 @@ public record PutCardFromOpponentGraveyardOntoBattlefieldEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.CREATURE))),
-                true, null);
+                true, null, false);
     }
 
     public PutCardFromOpponentGraveyardOntoBattlefieldEffect(
             boolean tapped, CardPredicate filter, boolean requireManaValueEqualsX) {
-        this(tapped, filter, requireManaValueEqualsX, null);
+        this(tapped, filter, requireManaValueEqualsX, null, false);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)); }
+    public PutCardFromOpponentGraveyardOntoBattlefieldEffect(
+            boolean tapped, CardPredicate filter, boolean requireManaValueEqualsX,
+            DynamicAmount maxManaValue) {
+        this(tapped, filter, requireManaValueEqualsX, maxManaValue, false);
+    }
+
+    @Override public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.graveyardCards(filter, GraveyardSearchScope.OPPONENT_GRAVEYARD));
+    }
 }

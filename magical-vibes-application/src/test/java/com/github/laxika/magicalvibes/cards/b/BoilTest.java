@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Boil.class, GrizzlyBears.class, Island.class, LowlandGiant.class, Mountain.class, Plains.class, VolcanicIsland.class})
+@CardUsed({Boil.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
 class BoilTest extends BaseCardTest {
 
     @Test
@@ -45,6 +44,7 @@ class BoilTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys nonbasic lands with the Island subtype")
+    @CardUsed({VolcanicIsland.class})
     void destroysNonbasicIslands() {
         harness.addToBattlefield(player1, new VolcanicIsland());
         harness.castFromHand(player1, new Boil(), "{3}{R}");

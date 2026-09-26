@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
+import com.github.laxika.magicalvibes.cards.k.KenzoTheHardhearted;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BushiTenderfoot.class, KenzoTheHardhearted.class, KamiOfOldStone.class, Befoul.class})
 class BushiTenderfootTest extends BaseCardTest {
 
     @Test
@@ -21,11 +23,20 @@ class BushiTenderfootTest extends BaseCardTest {
         Permanent bushi = flipBushi();
 
         assertThat(bushi.isTransformed()).isTrue();
-        assertThat(bushi.getCard().getName()).isEqualTo("Kenzo the Hardhearted");
-        assertThat(gqs.getEffectivePower(gd, bushi)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bushi)).isEqualTo(4);
-        assertThat(gqs.hasKeyword(gd, bushi, Keyword.DOUBLE_STRIKE)).isTrue();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Kami of Old Stone");
+    }
+
+    @Test
+    @DisplayName("Kenzo deals both first-strike and regular combat damage")
+    void kenzoDealsDoubleStrikeDamage() {
+        addCreatureReady(player1, new KenzoTheHardhearted());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(14);
     }
 
     @Test
@@ -35,17 +46,15 @@ class BushiTenderfootTest extends BaseCardTest {
         bushi.untap();
         bushi.setAttacking(true);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player2, new KamiOfOldStone());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bushi)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, bushi)).isEqualTo(6);
+        resolveAllTriggers();
+
+        assertThat(bushi.getPowerModifier()).isEqualTo(2);
+        assertThat(bushi.getToughnessModifier()).isEqualTo(2);
     }
 
     @Test
@@ -55,42 +64,46 @@ class BushiTenderfootTest extends BaseCardTest {
         bushi.untap();
         bushi.setAttacking(false);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent attacker = findPermanent(player2, "Grizzly Bears");
-        attacker.setSummoningSick(false);
+        addCreatureReady(player2, new KamiOfOldStone());
+        Permanent attacker = findPermanent(player2, "Kami of Old Stone");
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bushi)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, bushi)).isEqualTo(6);
+        resolveAllTriggers();
+
+        assertThat(bushi.getPowerModifier()).isEqualTo(2);
+        assertThat(bushi.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not flip when an undamaged creature dies")
+    void doesNotFlipWhenUndamagedCreatureDies() {
+        Permanent bushi = addCreatureReady(player1, new BushiTenderfoot());
+        Permanent victim = addCreatureReady(player2, new KamiOfOldStone());
+
+        harness.setHand(player1, List.of(new Befoul()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castAndResolveSorcery(player1, 0, victim.getId());
+
+        assertThat(bushi.isTransformed()).isFalse();
     }
 
     private Permanent flipBushi() {
-        harness.addToBattlefield(player1, new BushiTenderfoot());
+        Permanent bushi = addCreatureReady(player1, new BushiTenderfoot());
 
-        GrizzlyBears blockerCard = new GrizzlyBears();
+        KamiOfOldStone blockerCard = new KamiOfOldStone();
         blockerCard.setPower(0);
         blockerCard.setToughness(1);
-        harness.addToBattlefield(player2, blockerCard);
+        addCreatureReady(player2, blockerCard);
 
-        Permanent bushi = findPermanent(player1, "Bushi Tenderfoot");
-        bushi.setSummoningSick(false);
         bushi.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
         return bushi;
     }
 }

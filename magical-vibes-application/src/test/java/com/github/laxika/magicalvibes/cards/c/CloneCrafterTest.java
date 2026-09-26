@@ -26,6 +26,7 @@ class CloneCrafterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Card conjured = gd.playerHands.get(player1.getId()).stream()
                 .filter(card -> card.getName().equals("Grizzly Bears"))

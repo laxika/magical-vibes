@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1889")
+@CardRegistration(set = "SOC", collectorNumber = "124")
 public class BenevolentHydra extends Card {
 
     public BenevolentHydra() {

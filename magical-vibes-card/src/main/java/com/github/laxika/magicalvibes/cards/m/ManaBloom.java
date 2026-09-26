@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "130")
+@CardRegistration(set = "SOC", collectorNumber = "275")
 public class ManaBloom extends Card {
 
     public ManaBloom() {

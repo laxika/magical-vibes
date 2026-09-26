@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LoafingGiant.class, Forest.class, KavuAggressor.class})
 class LoafingGiantTest extends BaseCardTest {
 
     @Test
@@ -34,7 +36,7 @@ class LoafingGiantTest extends BaseCardTest {
     @DisplayName("Attacking does not prevent combat damage when the milled card is not a land")
     void attackingWithNonlandMilledDealsDamage() {
         addCreatureReady(player1, new LoafingGiant());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new KavuAggressor()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -47,7 +49,7 @@ class LoafingGiantTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking mills a card and prevents the Giant's combat damage when it is a land")
     void blockingWithLandMilledPreventsGiantDamage() {
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new KavuAggressor());
         Permanent giant = addCreatureReady(player2, new LoafingGiant());
         harness.setLibrary(player2, List.of(new Forest()));
 
@@ -59,5 +61,24 @@ class LoafingGiantTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(giant.getId());
+    }
+
+    @Test
+    @DisplayName("Blocking mills a card and allows the Giant's combat damage when it is not a land")
+    void blockingWithNonlandMilledDealsGiantDamage() {
+        addCreatureReady(player1, new KavuAggressor());
+        Permanent giant = addCreatureReady(player2, new LoafingGiant());
+        harness.setLibrary(player2, List.of(new KavuAggressor()));
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(giant.getId());
+        harness.assertInGraveyard(player1, "Kavu Aggressor");
     }
 }

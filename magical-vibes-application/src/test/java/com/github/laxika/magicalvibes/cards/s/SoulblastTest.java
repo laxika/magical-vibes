@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +13,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Soulblast.class, GrizzlyBears.class, RagingGoblin.class})
 class SoulblastTest extends BaseCardTest {
 
-    
-
     @Test
-    @DisplayName("Casting Soulblast sacrifices all your creatures and stores total power in X")
-    void castingSacrificesAllYourCreaturesAndStoresTotalPower() {
+    @DisplayName("Casting Soulblast sacrifices all your creatures as an additional cost")
+    void castingSacrificesAllYourCreaturesAsAdditionalCost() {
         harness.setHand(player1, List.of(new Soulblast()));
         harness.addMana(player1, ManaColor.RED, 6);
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -31,17 +27,8 @@ class SoulblastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gd.stack).hasSize(1);
-        StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Soulblast");
-        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
-        assertThat(entry.getXValue()).isEqualTo(3);
-        assertThat(entry.getEffectsToResolve()).hasSize(1);
-        assertThat(entry.getEffectsToResolve().getFirst()).isEqualTo(new DealDamageToAnyTargetEffect(new XValue()));
-
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears") || p.getCard().getName().equals("Raging Goblin"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Raging Goblin");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -56,10 +43,9 @@ class SoulblastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new RagingGoblin());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -69,10 +55,9 @@ class SoulblastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Soulblast()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -84,11 +69,38 @@ class SoulblastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Soulblast can deal its damage to an opposing creature")
+    void dealsDamageToCreatureTarget() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Soulblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.addToBattlefield(player1, new RagingGoblin());
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A creature sacrificed as an additional cost becomes an illegal target")
+    void sacrificedTargetMakesSoulblastFizzle() {
+        var target = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new Soulblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Raging Goblin");
     }
 
     @Test

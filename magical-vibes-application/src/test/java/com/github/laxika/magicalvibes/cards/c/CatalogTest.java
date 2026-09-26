@@ -24,8 +24,7 @@ class CatalogTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         // After drawing two, the effect awaits one discard choice.
         // Hand: 1 (GrizzlyBears left after cast) + 2 drawn = 3.

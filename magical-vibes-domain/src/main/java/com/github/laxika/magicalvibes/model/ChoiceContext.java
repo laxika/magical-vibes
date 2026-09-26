@@ -152,6 +152,8 @@ public sealed interface ChoiceContext {
     record KickedSpellManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record PersistentSpellOnlyManaColorChoice(UUID playerId, int amount, boolean anyColorCombination)
+            implements ChoiceContext {}
     record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record SourceTrackedManaColorChoice(UUID playerId, UUID sourcePermanentId, UUID recipientPlayerId,
                                         boolean fromCreature, int amount, boolean fromSnowSource,
@@ -221,6 +223,14 @@ public sealed interface ChoiceContext {
 
     record ChosenPlayerManaColorChoice(UUID playerId, UUID sourceControllerId, UUID recipientPlayerId,
                                        boolean fromCreature, int amount) implements ChoiceContext {}
+
+    record CommanderCastCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                               UUID sourcePermanentId, List<ManaColor> allowedColors)
+            implements ChoiceContext {
+        public CommanderCastCounterManaColorChoice {
+            allowedColors = List.copyOf(allowedColors);
+        }
+    }
 
     record EnchantedManaCostChoice(UUID playerId, List<Set<ManaColor>> choices,
                                    boolean fromCreature) implements ChoiceContext {
@@ -1815,6 +1825,23 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Master of Ceremonies: the current opponent chooses money, friends, or secrets. */
+    record MasterOfCeremoniesChoice(UUID effectControllerId, List<UUID> remainingOpponentIds,
+                                    List<UUID> moneyPlayerIds, List<UUID> friendsPlayerIds,
+                                    List<UUID> secretsPlayerIds, String sourceName) implements ChoiceContext {
+        public static final String MONEY = "Money";
+        public static final String FRIENDS = "Friends";
+        public static final String SECRETS = "Secrets";
+        public static final List<String> OPTIONS = List.of(MONEY, FRIENDS, SECRETS);
+
+        public MasterOfCeremoniesChoice {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            moneyPlayerIds = List.copyOf(moneyPlayerIds);
+            friendsPlayerIds = List.copyOf(friendsPlayerIds);
+            secretsPlayerIds = List.copyOf(secretsPlayerIds);
+        }
+    }
+
     /** Expropriate: the current player voted for time or money. */
     record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                              List<UUID> moneyVoterIds, int timeVotes, String sourceName)
@@ -1826,6 +1853,19 @@ public sealed interface ChoiceContext {
         public ExpropriateChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             moneyVoterIds = List.copyOf(moneyVoterIds);
+        }
+    }
+
+    /** Fateful Tempest: the current player voted for past or present. */
+    record FatefulTempestChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String PAST = "Past";
+        public static final String PRESENT = "Present";
+        public static final List<String> OPTIONS = List.of(PAST, PRESENT);
+
+        public FatefulTempestChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
         }
     }
 

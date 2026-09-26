@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -60,6 +61,30 @@ class SpittingSpiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed(WindDrake.class)
+    @DisplayName("Deals exactly 1 damage to a flying creature each time it resolves")
+    void dealsOneDamagePerActivation() {
+        harness.addToBattlefield(player1, new SpittingSpider());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new WindDrake());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Forest"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Wind Drake");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wind Drake");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 

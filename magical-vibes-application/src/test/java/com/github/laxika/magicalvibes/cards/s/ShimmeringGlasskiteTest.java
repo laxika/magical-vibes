@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.f.FirstVolley;
+import com.github.laxika.magicalvibes.cards.m.MatsuTribeSniper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +15,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShimmeringGlasskite.class, FirstVolley.class, MatsuTribeSniper.class})
 class ShimmeringGlasskiteTest extends BaseCardTest {
 
     private UUID addGlasskite() {
-        harness.addToBattlefield(player1, new ShimmeringGlasskite());
-        Permanent kite = findPermanent(player1, "Shimmering Glasskite");
-        kite.setSummoningSick(false);
-        return kite.getId();
+        return addCreatureReady(player1, new ShimmeringGlasskite()).getId();
     }
 
     @Test
@@ -27,17 +27,18 @@ class ShimmeringGlasskiteTest extends BaseCardTest {
     void countersFirstSpellEachTurn() {
         UUID kiteId = addGlasskite();
 
-        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.setHand(player2, List.of(new FirstVolley()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, kiteId);
 
-        // Lightning Bolt plus the counter trigger on top.
+        // First Volley plus the counter trigger on top.
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
 
         harness.passBothPriorities(); // resolve the counter trigger
 
         harness.assertOnBattlefield(player1, "Shimmering Glasskite");
-        harness.assertInGraveyard(player2, "Lightning Bolt");
+        harness.assertInGraveyard(player2, "First Volley");
     }
 
     @Test
@@ -45,21 +46,35 @@ class ShimmeringGlasskiteTest extends BaseCardTest {
     void countersTargetingAbility() {
         UUID kiteId = addGlasskite();
 
-        harness.addToBattlefield(player2, new IcyManipulator());
-        Permanent icy = findPermanent(player2, "Icy Manipulator");
-        icy.setSummoningSick(false);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        Permanent sniper = addCreatureReady(player2, new MatsuTribeSniper());
 
         harness.activateAbility(player2,
-                gd.playerBattlefields.get(player2.getId()).indexOf(icy), null, kiteId);
+                gd.playerBattlefields.get(player2.getId()).indexOf(sniper), null, kiteId);
 
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
 
         harness.passBothPriorities(); // resolve the counter trigger
 
-        Permanent kite = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(kiteId)).findFirst().orElseThrow();
+        Permanent kite = findPermanent(player1, "Shimmering Glasskite");
         assertThat(kite.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Counters a spell cast by its own controller")
+    void countersControllersOwnSpell() {
+        UUID kiteId = addGlasskite();
+
+        harness.setHand(player1, List.of(new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, kiteId);
+
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shimmering Glasskite");
+        harness.assertInGraveyard(player1, "First Volley");
     }
 
     @Test
@@ -67,20 +82,70 @@ class ShimmeringGlasskiteTest extends BaseCardTest {
     void secondSpellSameTurnNotCountered() {
         UUID kiteId = addGlasskite();
 
-        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.setHand(player2, List.of(new FirstVolley(), new FirstVolley()));
         harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player2, 0, kiteId);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Shimmering Glasskite");
 
-        // Second bolt the same turn: the trigger does not fire again.
+        // Second spell the same turn: the trigger does not fire again.
         harness.castInstant(player2, 0, kiteId);
         assertThat(gd.stack).hasSize(1);
 
-        harness.passBothPriorities(); // 3 damage is lethal to the 2/3
+        harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Shimmering Glasskite");
-        harness.assertInGraveyard(player1, "Shimmering Glasskite");
+        Permanent kite = findPermanent(player1, "Shimmering Glasskite");
+        assertThat(kite.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The first-target limit is shared by abilities and spells")
+    void spellAfterAbilitySameTurnIsNotCountered() {
+        UUID kiteId = addGlasskite();
+        Permanent sniper = addCreatureReady(player2, new MatsuTribeSniper());
+
+        harness.setHand(player2, List.of(new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(sniper), null, kiteId);
+        harness.passBothPriorities();
+
+        harness.castInstant(player2, 0, kiteId);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        Permanent kite = findPermanent(player1, "Shimmering Glasskite");
+        assertThat(kite.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The first-target trigger resets at the start of a new turn")
+    void firstTargetTriggerResetsNextTurn() {
+        UUID kiteId = addGlasskite();
+
+        harness.setHand(player2, List.of(new FirstVolley(), new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, kiteId);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of());
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, kiteId);
+
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "First Volley");
+        assertThat(findPermanent(player1, "Shimmering Glasskite").getMarkedDamage()).isZero();
     }
 }

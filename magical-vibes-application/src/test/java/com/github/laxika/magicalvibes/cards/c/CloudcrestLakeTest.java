@@ -2,15 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(CloudcrestLake.class)
 class CloudcrestLakeTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class CloudcrestLakeTest extends BaseCardTest {
         assertThat(mana(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(lake.isTapped()).isTrue();
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
 
         assertThat(lake.isTapped()).isFalse();
     }
@@ -37,7 +36,7 @@ class CloudcrestLakeTest extends BaseCardTest {
 
         assertThat(mana(ManaColor.WHITE)).isEqualTo(1);
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
 
         assertThat(lake.isTapped()).isTrue();
     }
@@ -51,24 +50,11 @@ class CloudcrestLakeTest extends BaseCardTest {
 
         assertThat(mana(ManaColor.BLUE)).isEqualTo(1);
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
         assertThat(lake.isTapped()).isTrue();
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
         assertThat(lake.isTapped()).isFalse();
-    }
-
-    /**
-     * Ends player2's turn so play cascades into player1's untap step and then their upkeep.
-     */
-    private void advanceToPlayerOneUpkeep() {
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private Permanent addLake() {

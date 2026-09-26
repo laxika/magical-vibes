@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HolyStrength.class, GrizzlyBears.class, Plains.class})
+@CardUsed({HolyStrength.class, GrizzlyBears.class, HowlingMine.class})
 class HolyStrengthTest extends BaseCardTest {
 
     @Test
@@ -109,11 +108,11 @@ class HolyStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Holy Strength")
     void cannotTargetNonCreature() {
-        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
         harness.setHand(player1, List.of(new HolyStrength()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, plains.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

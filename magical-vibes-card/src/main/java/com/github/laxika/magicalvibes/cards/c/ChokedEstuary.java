@@ -13,6 +13,8 @@ import java.util.Set;
 @CardRegistration(set = "SOI", collectorNumber = "270")
 @CardRegistration(set = "SIR", collectorNumber = "264")
 @CardRegistration(set = "LTC", collectorNumber = "299")
+@CardRegistration(set = "MSC", collectorNumber = "229")
+@CardRegistration(set = "MSC", collectorNumber = "464")
 public class ChokedEstuary extends Card {
 
     public ChokedEstuary() {

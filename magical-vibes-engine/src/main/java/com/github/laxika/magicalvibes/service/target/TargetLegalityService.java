@@ -1053,11 +1053,6 @@ public class TargetLegalityService {
                     : "Ability requires a target");
         }
 
-        targetValidationService.validateEffectTargets(abilityEffects,
-                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
-                        playerId, null, deferCostDerivedXValueChecks,
-                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
-
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
@@ -1081,6 +1076,13 @@ public class TargetLegalityService {
                         filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             }
         }
+
+        // Prefer the ability's printed target restriction when both it and an individual effect
+        // reject the same target. The effect check still runs for all remaining restrictions.
+        targetValidationService.validateEffectTargets(abilityEffects,
+                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
+                        playerId, null, deferCostDerivedXValueChecks,
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
 
         if (targetId != null && gameData.playerIds.contains(targetId)) {
             validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
@@ -3348,7 +3350,7 @@ public class TargetLegalityService {
             }
         }
 
-        if (!targetFizzled) {
+        if (!targetFizzled && entry.getTargetId() == null && entry.getTargetIds().isEmpty()) {
             targetFizzled = allTargetsGone(entry.getTargetCardIds(),
                     id -> isTargetCardLegalOnResolution(gameData, entry, id));
         }
@@ -4582,6 +4584,9 @@ public class TargetLegalityService {
             if (stackEntry.getSourcePermanentId() != null) {
                 Permanent abilitySource = gameQueryService.findPermanentById(
                         gameData, stackEntry.getSourcePermanentId());
+                if (abilitySource == null) {
+                    abilitySource = stackEntry.getSourcePermanentSnapshot();
+                }
                 if (abilitySource != null) {
                     return gameQueryService.getEffectiveCardTypes(gameData, abilitySource).stream()
                             .anyMatch(cardTypeInPredicate.cardTypes()::contains);
@@ -4616,11 +4621,15 @@ public class TargetLegalityService {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return manaValue <= maxManaValuePredicate.maxManaValue();
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return stackEntry.getManaSpentToCast() < manaValue;
         }
         if (predicate instanceof StackEntryManaValueEqualsXPredicate) {

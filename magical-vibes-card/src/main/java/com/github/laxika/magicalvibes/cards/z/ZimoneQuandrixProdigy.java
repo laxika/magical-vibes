@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "250")
+@CardRegistration(set = "SOC", collectorNumber = "341")
 public class ZimoneQuandrixProdigy extends Card {
 
     public ZimoneQuandrixProdigy() {

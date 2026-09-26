@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KumanosPupils.class, GrizzlyBears.class, ProdigalPyromancer.class,
+        GiantSpider.class, LlanowarElves.class})
 class KumanosPupilsTest extends BaseCardTest {
 
     private boolean isExiled(String cardName) {
@@ -26,10 +29,9 @@ class KumanosPupilsTest extends BaseCardTest {
         addCreatureReady(player1, new KumanosPupils());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -43,10 +45,9 @@ class KumanosPupilsTest extends BaseCardTest {
         addCreatureReady(player1, new ProdigalPyromancer());
         harness.addToBattlefield(player2, new GiantSpider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
         harness.assertOnBattlefield(player2, "Giant Spider");
 
         UUID targetId = harness.getPermanentId(player2, "Giant Spider");
@@ -54,7 +55,30 @@ class KumanosPupilsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertNotInGraveyard(player2, "Giant Spider");
         assertThat(isExiled("Giant Spider")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The replacement stops applying once Kumano's Pupils leaves the battlefield")
+    void replacementStopsWhenPupilsLeaves() {
+        var pupils = addCreatureReady(player1, new KumanosPupils());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        UUID targetId = harness.getPermanentId(player2, "Giant Spider");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, pupils));
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Giant Spider");
+        assertThat(isExiled("Giant Spider")).isFalse();
     }
 
     @Test

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTur
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -775,6 +776,29 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    @CollectsTriggers({
+            @CollectsTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
+                    slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleTokenEnterCopyForTargetPlayer(TriggerMatchContext match,
+                                                         CreateTokenCopyOfEnteringTokenForTargetPlayerEffect effect,
+                                                         TriggerContext ctx) {
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        if (tokensEnter.permanentIds().isEmpty()) {
+            return false;
+        }
+
+        UUID enteringTokenId = tokensEnter.permanentIds().getFirst();
+        MayEffect may = new MayEffect(effect, "Have target player create a token copy?");
+        match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                match.permanent().getCard(), match.controllerId(), List.of(may),
+                match.permanent().getId(), enteringTokenId, enteringTokenId));
+        logTriggered(match);
+        return true;
+    }
+
     /**
      * The "any other creature enters" default queues the trigger directly when it needs no target
      * and routes targeted effects through the normal enter-trigger target choice.
@@ -911,7 +935,7 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.sourceCard();
-        if (!mayInterveningIfIsMet(match, may)) {
+        if (!mayInterveningIfIsMet(match, may, pe.defaultTargetPlayerId())) {
             return false;
         }
         boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
@@ -978,7 +1002,7 @@ public class EnterTriggerCollectorService {
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleTokenEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        if (!mayInterveningIfIsMet(match, may)) {
+        if (!mayInterveningIfIsMet(match, may, null)) {
             return false;
         }
 
@@ -994,11 +1018,13 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    private boolean mayInterveningIfIsMet(TriggerMatchContext match, MayEffect may) {
-        return !(may.wrapped() instanceof ConditionalEffect conditional)
-                || !conditional.interveningIf()
-                || conditionEvaluationService.isInterveningIfMet(
-                match.gameData(), conditional, match.permanent(), match.controllerId());
+    private boolean mayInterveningIfIsMet(TriggerMatchContext match, MayEffect may, UUID targetPlayerId) {
+        if (!(may.wrapped() instanceof ConditionalEffect conditional) || !conditional.interveningIf()) {
+            return true;
+        }
+        ConditionContext context = ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                .withTargetId(targetPlayerId);
+        return conditionEvaluationService.isMet(match.gameData(), conditional.condition(), context);
     }
 
     @CollectsTrigger(value = MayEffect.class,
@@ -2207,6 +2233,7 @@ public class EnterTriggerCollectorService {
                     targetPlayerId,
                     match.permanent().getId()
             );
+            entry.setNonTargeting(!isTargeting(effect));
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);

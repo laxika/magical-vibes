@@ -106,13 +106,25 @@ public sealed interface TriggerContext {
     }
 
     /** Context for a discard event containing one or more cards. */
-    record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
+    record DiscardEvent(UUID discardingPlayerId, int discardedCount, List<Card> discardedCards)
+            implements TriggerContext {
+        public DiscardEvent {
+            discardedCards = discardedCards == null ? List.of() : List.copyOf(discardedCards);
+        }
+
+        public DiscardEvent(UUID discardingPlayerId, int discardedCount) {
+            this(discardingPlayerId, discardedCount, List.of());
+        }
+    }
 
     /** Context for cycling triggers. */
     record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
 
     /** Context for opponent-mill triggers. */
     record Mill(UUID milledPlayerId, int milledCount) implements TriggerContext {}
+
+    /** Context for a mill event containing one or more nonland cards. */
+    record NonlandCardsMilled(UUID milledPlayerId, int nonlandCardCount) implements TriggerContext {}
 
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
@@ -307,6 +319,9 @@ public sealed interface TriggerContext {
 
     /** Context for a creature controlled by a player mutating. */
     record CreatureMutates(Permanent mutatedPermanent, UUID controllerId) implements TriggerContext {}
+
+    /** Context for a creature controlled by a player conniving. */
+    record CreatureConnives(Permanent connivingCreature, UUID controllerId) implements TriggerContext {}
 
     /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
     record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,
@@ -779,7 +794,16 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
      */
-    record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
+    record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId, List<Card> cards)
+            implements TriggerContext {
+        public ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) {
+            this(graveyardOwnerId, List.of());
+        }
+
+        public ControllerCardsLeaveGraveyard {
+            cards = List.copyOf(cards);
+        }
+    }
 
     /** Context for a card put from the controller's graveyard into their hand. */
     record ControllerCardReturnedFromGraveyardToHand(UUID graveyardOwnerId, Card returnedCard)

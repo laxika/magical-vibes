@@ -57,9 +57,7 @@ class WallOfShadowsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new DwarvenDemolitionTeam());
-        Permanent source = findPermanent(player1, "Dwarven Demolition Team");
-        source.setSummoningSick(false);
+        Permanent source = addCreatureReady(player1, new DwarvenDemolitionTeam());
         Permanent wall = addCreatureReady(player2, new WallOfShadows());
 
         int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);

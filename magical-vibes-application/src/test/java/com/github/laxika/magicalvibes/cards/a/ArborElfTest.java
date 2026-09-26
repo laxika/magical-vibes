@@ -50,7 +50,7 @@ class ArborElfTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target does not match the required predicate");
+                .hasMessageContaining("Target must be a Forest");
     }
 
     @Test

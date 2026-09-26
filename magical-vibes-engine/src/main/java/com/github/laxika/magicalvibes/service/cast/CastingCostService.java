@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.DefenderAttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
@@ -1741,7 +1742,7 @@ public class CastingCostService {
 
     public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card,
                                                             ManaPool pool, int additionalCost, Zone sourceZone) {
-        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost,
+        return findAffordableAlternativeCostSelection(gameData, playerId, card, pool, additionalCost,
                 sourceZone) != null;
     }
 
@@ -2345,6 +2346,11 @@ public class CastingCostService {
     }
 
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId, UUID attackTargetId) {
+        return getAttackPaymentPerCreature(gameData, attackingPlayerId, attackTargetId, null);
+    }
+
+    public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId, UUID attackTargetId,
+                                           Permanent attackingCreature) {
         UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defenderBattlefield == null) return 0;
@@ -2364,6 +2370,11 @@ public class CastingCostService {
                                 gameData, tax.activeCondition(), ConditionContext.forPermanent(perm, defenderId)))) {
                     totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
                             AmountContext.forStaticEffect(perm, defenderId));
+                } else if (attackingCreature != null
+                        && !gameQueryService.hasLostAllAbilities(gameData, perm)
+                        && effect instanceof DefenderAttackCostEffect tax
+                        && (!attackingPlaneswalker || tax.protectsPlaneswalkers())) {
+                    totalTax += tax.attackCost(attackingCreature);
                 }
             }
         }
@@ -2377,6 +2388,26 @@ public class CastingCostService {
             }
         }
         return totalTax;
+    }
+
+    public boolean hasAttackPaymentForAnyCreature(GameData gameData, UUID attackingPlayerId) {
+        if (getAttackPaymentPerCreature(gameData, attackingPlayerId) > 0) {
+            return true;
+        }
+        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackingBattlefield = gameData.playerBattlefields.get(attackingPlayerId);
+        if (defenderBattlefield == null || attackingBattlefield == null) {
+            return false;
+        }
+        return defenderBattlefield.stream()
+                .filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
+                .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(DefenderAttackCostEffect.class::isInstance)
+                .map(DefenderAttackCostEffect.class::cast)
+                .anyMatch(tax -> attackingBattlefield.stream()
+                        .filter(attacker -> gameQueryService.isCreature(gameData, attacker))
+                        .anyMatch(attacker -> tax.attackCost(attacker) > 0));
     }
 
     public List<ManaColor> getPhyrexianAttackPaymentsPerCreature(GameData gameData, UUID attackingPlayerId) {

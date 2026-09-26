@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.Addle;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScoutingTrek.class, Addle.class, Forest.class, Plains.class})
 class ScoutingTrekTest extends BaseCardTest {
 
     @Test
@@ -26,7 +23,7 @@ class ScoutingTrekTest extends BaseCardTest {
     void offersBasicLandsOnly() {
         Card plains = new Plains();
         Card forest = new Forest();
-        setLibrary(List.of(new GrizzlyBears(), plains, new DiabolicTutor(), forest));
+        harness.setLibrary(player1, List.of(new Addle(), plains, new Addle(), forest));
 
         cast();
 
@@ -34,8 +31,6 @@ class ScoutingTrekTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.pool()).containsExactlyInAnyOrder(plains, forest);
-        assertThat(choice.pool()).allMatch(card -> card.hasType(CardType.LAND)
-                && card.getSupertypes().contains(CardSupertype.BASIC));
     }
 
     @Test
@@ -43,7 +38,7 @@ class ScoutingTrekTest extends BaseCardTest {
     void choosingMultipleBasicLandsPutsThemOnTop() {
         Card plains = new Plains();
         Card forest = new Forest();
-        setLibrary(List.of(plains, new GrizzlyBears(), forest));
+        harness.setLibrary(player1, List.of(plains, new Addle(), forest));
 
         cast();
         harness.handleMultipleCardsChosen(player1, List.of(plains.getId(), forest.getId()));
@@ -54,11 +49,30 @@ class ScoutingTrekTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing a subset reveals it and returns unchosen cards to the library")
+    void choosingSubsetRevealsAndReturnsUnchosenCards() {
+        Card chosen = new Plains();
+        Card unchosen = new Forest();
+        Card nonland = new Addle();
+        harness.setLibrary(player1, List.of(chosen, nonland, unchosen));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(3)
+                .contains(unchosen, nonland);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(chosen);
+        assertThat(gameLogContains("reveals " + chosen.getName())).isTrue();
+    }
+
+    @Test
     @DisplayName("Choosing no basic lands leaves the library intact")
     void choosingNoBasicLandsLeavesLibraryIntact() {
         Card forest = new Forest();
-        Card nonland = new GrizzlyBears();
-        setLibrary(List.of(nonland, forest));
+        Card nonland = new Addle();
+        harness.setLibrary(player1, List.of(nonland, forest));
 
         cast();
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -70,7 +84,7 @@ class ScoutingTrekTest extends BaseCardTest {
     @Test
     @DisplayName("No basic lands in the library does not prompt")
     void noBasicLandsDoesNotPrompt() {
-        setLibrary(List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Addle()));
 
         cast();
 
@@ -78,15 +92,7 @@ class ScoutingTrekTest extends BaseCardTest {
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new ScoutingTrek()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ScoutingTrek(), "{1}{G}");
         harness.passBothPriorities();
-    }
-
-    private void setLibrary(List<Card> cards) {
-        GameData gameData = harness.getGameData();
-        gameData.playerDecks.get(player1.getId()).clear();
-        gameData.playerDecks.get(player1.getId()).addAll(cards);
     }
 }

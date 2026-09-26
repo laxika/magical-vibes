@@ -55,6 +55,7 @@ class NekusarTheMindrazerTest extends BaseCardTest {
     void doesNotDamageControllerForDrawing() {
         harness.addToBattlefield(player1, new NekusarTheMindrazer());
         harness.setLife(player1, 20);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
         advanceToDraw(player1);

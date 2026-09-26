@@ -98,7 +98,7 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     @Override
     public TriggerContext combatDamageTriggerContext() {
         return switch (recipient) {
-            case TARGET_PLAYER -> TriggerContext.DAMAGED_PLAYER;
+            case TARGET_PLAYER, EACH_OTHER_OPPONENT -> TriggerContext.DAMAGED_PLAYER;
             case CHOSEN_PLAYER -> TriggerContext.CHOSEN_PLAYER;
             default -> null;
         };

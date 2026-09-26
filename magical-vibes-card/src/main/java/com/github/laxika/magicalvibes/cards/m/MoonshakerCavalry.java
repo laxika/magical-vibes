@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "21")
+@CardRegistration(set = "SOC", collectorNumber = "110")
 public class MoonshakerCavalry extends Card {
 
     public MoonshakerCavalry() {

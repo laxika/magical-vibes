@@ -62,7 +62,7 @@ class BrashTaunterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("Target must be another creature");
     }
 
     private Permanent addReadyTaunter(com.github.laxika.magicalvibes.model.Player owner) {

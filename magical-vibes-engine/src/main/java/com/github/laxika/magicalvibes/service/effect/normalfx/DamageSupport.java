@@ -277,13 +277,14 @@ public class DamageSupport {
                 processSourceRedirectDamage(gameData);
             }
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
-            if (sourcePermId != null) {
-                rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, sourcePermId, rawDamage);
+            UUID chosenSourceId = damageSourceKey(entry, damageSource);
+            if (chosenSourceId != null) {
+                rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, chosenSourceId, rawDamage);
                 processEyeForAnEyeReflections(gameData);
                 if (rawDamage <= 0) return 0;
                 // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
                 rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
-                        gameData, sourcePermId, target.getId(), rawDamage);
+                        gameData, chosenSourceId, target.getId(), rawDamage);
                 processSourceRedirectDamage(gameData);
                 if (rawDamage <= 0) return 0;
             }
@@ -661,7 +662,8 @@ public class DamageSupport {
                 int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
                 if (counters > 0) {
                     target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    permanentCounterSupport.notifyCountersPlaced(gameData, entry, target, counters);
+                    permanentCounterSupport.notifyCountersPlaced(
+                            gameData, entry, target, counters, CounterType.MINUS_ONE_MINUS_ONE);
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                             " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
                     log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());
@@ -1091,7 +1093,8 @@ public class DamageSupport {
                 }
                 // CR 306.8: damage dealt to a planeswalker removes that many loyalty counters from it
                 // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
-                int loyaltyDamage = Math.max(0, rawDamage);
+                int loyaltyDamage = gameQueryService.applyDamageReplacementEffects(
+                        gameData, entry, null, Math.max(0, rawDamage));
                 // Djeru, With Eyes Open: prevent N of the damage dealt to a planeswalker you control.
                 UUID pwControllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
                 Permanent sourcePermanent = entry.getSourcePermanentId() == null
@@ -1283,11 +1286,10 @@ public class DamageSupport {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard(), entry.getControllerId())) continue;
-            // Mark before the damage lands so lethal damage is replaced by exile straight away.
-            if (exileInsteadOfDie && gameQueryService.isCreature(gameData, p)) {
+            int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
+            if (exileInsteadOfDie && damageDealt > 0 && gameQueryService.isCreature(gameData, p)) {
                 p.setExileInsteadOfDieThisTurn(true);
             }
-            int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
             if (cantRegenerate && damageDealt > 0) {
                 p.setCantRegenerateThisTurn(true);
             }
@@ -1743,7 +1745,9 @@ public class DamageSupport {
             return null;
         }
 
-        Set<CardColor> sourceColors = sourceCardColors(entry.getEffectiveDamageSourceCard());
+        Card damageSource = entry.getEffectiveDamageSourceCard();
+        Set<CardColor> sourceColors = damageSource == null ? Set.of()
+                : gameData.spellColorOverrides.getOrDefault(damageSource.getId(), sourceCardColors(damageSource));
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(damagedPlayerId, List.of())) {
             if (permanent.getChosenColor() == null || !sourceColors.contains(permanent.getChosenColor())) {
                 continue;

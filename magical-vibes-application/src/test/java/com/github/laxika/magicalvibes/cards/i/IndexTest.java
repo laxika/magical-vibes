@@ -79,6 +79,21 @@ class IndexTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Index resolves a single available card without a reorder prompt")
+    void resolvesSingleAvailableCardWithoutReorderPrompt() {
+        Card onlyCard = new Index();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.castFromHand(player1, new Index(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        harness.assertInGraveyard(player1, "Index");
+    }
+
+    @Test
     @DisplayName("Index resolves without a reorder prompt when the library is empty")
     void resolvesWithEmptyLibrary() {
         harness.setLibrary(player1, List.of());

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,13 +11,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AzusaLostButSeeking.class, Forest.class})
 class AzusaLostButSeekingTest extends BaseCardTest {
-
-    private long forestCount() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> "Forest".equals(p.getCard().getName()))
-                .count();
-    }
 
     @Test
     @DisplayName("Controller may play two additional lands each turn; opponents may not")
@@ -37,7 +33,7 @@ class AzusaLostButSeekingTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.playLand(player1, 0);
 
-        assertThat(forestCount()).isEqualTo(3);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(3);
     }
 
     @Test
@@ -54,7 +50,7 @@ class AzusaLostButSeekingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
 
-        assertThat(forestCount()).isEqualTo(3);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(3);
         harness.assertInHand(player1, "Forest");
     }
 

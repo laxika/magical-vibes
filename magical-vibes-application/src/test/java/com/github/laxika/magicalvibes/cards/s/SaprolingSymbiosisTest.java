@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LlanowarVanguard;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,25 +18,26 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SaprolingSymbiosis.class, LlanowarVanguard.class, Forest.class})
 class SaprolingSymbiosisTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creates one 1/1 green Saproling token for each creature controlled")
     void createsTokenPerCreatureControlled() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarVanguard());
+        harness.addToBattlefield(player1, new LlanowarVanguard());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new LlanowarVanguard());
         harness.setHand(player1, List.of(new SaprolingSymbiosis()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
             assertThat(token.getCard().getName()).isEqualTo("Saproling");
             assertThat(token.getCard().getPower()).isEqualTo(1);
             assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -52,8 +55,7 @@ class SaprolingSymbiosisTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
     }
 
     @Test

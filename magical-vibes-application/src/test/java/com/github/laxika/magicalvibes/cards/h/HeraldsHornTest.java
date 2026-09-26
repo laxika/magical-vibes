@@ -65,7 +65,8 @@ class HeraldsHornTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -73,7 +74,7 @@ class HeraldsHornTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A nonmatching top card stays on top")
+    @DisplayName("A nonmatching top card stays on top of the library")
     void nonmatchingTopCardStaysOnTop() {
         addHorn(CardSubtype.BEAR);
         WalkingCorpse corpse = new WalkingCorpse();
@@ -82,14 +83,13 @@ class HeraldsHornTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(corpse);
     }
 
     private Permanent addHorn(CardSubtype chosenSubtype) {
-        Permanent horn = new Permanent(new HeraldsHorn());
-        horn.setChosenSubtype(chosenSubtype);
-        gd.playerBattlefields.get(player1.getId()).add(horn);
-        return horn;
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new HeraldsHorn());
+        permanent.setChosenSubtype(chosenSubtype);
+        return permanent;
     }
 }

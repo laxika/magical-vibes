@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -178,6 +179,14 @@ public class EffectResolutionService {
 
             // CR 603.5 — resolution-time "you may" re-entry after player responded
             if (effectToResolve instanceof MayEffect may
+                    && may.wrapped() instanceof ConditionalEffect conditional
+                    && conditional.interveningIf()
+                    && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                    entry.getEventValue())) {
+                continue;
+            }
+
+            if (effectToResolve instanceof MayEffect may
                     && shouldSkipAcceptedOncePerTurnMay(gameData, entry, may)) {
                 log.info("Game {} - {}'s once-per-turn may ability already resolved", gameData.id,
                         entry.getCard().getName());
@@ -278,6 +287,12 @@ public class EffectResolutionService {
             // Sequence expansion: splice the steps into this entry's effect list so they resolve
             // in order through this same loop (pause/resume and nested wrappers work unchanged).
             if (effectToResolve instanceof SequenceEffect sequence) {
+                if (!sequence.steps().isEmpty()
+                        && sequence.steps().getFirst() instanceof ExileSourceCardFromGraveyardEffect
+                        && gameData.playerGraveyards.values().stream().noneMatch(graveyard -> graveyard.stream()
+                                .anyMatch(card -> card.getId().equals(entry.getCard().getId())))) {
+                    continue;
+                }
                 entry.insertEffectsToResolve(i + 1, sequence.steps());
                 effects = entry.getEffectsToResolve();
                 continue;
@@ -312,6 +327,7 @@ public class EffectResolutionService {
             }
 
             if (!skipEffect) {
+                entry.setResolvingEffectIndex(i);
                 EffectHandler handler = registry.getHandler(effectToResolve);
                 if (handler != null) {
                     handler.resolve(gameData, entry, effectToResolve);
@@ -347,6 +363,7 @@ public class EffectResolutionService {
         }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
+        entry.setResolvingEffectIndex(-1);
         entry.setResolvingEffectTargetGroup(null);
         // Cast-time mana snapshots (converge, colors spent) live until resolution truly finishes.
         // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast
@@ -373,8 +390,7 @@ public class EffectResolutionService {
 
     private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {
         if (entry.getSourcePermanentId() == null
-                || !entry.isMarkSourceOncePerTurnOnAcceptance()
-                || gameData.resolvedMayAccepted != null) {
+                || !entry.isMarkSourceOncePerTurnOnAcceptance()) {
             return false;
         }
         if (may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy) {
@@ -382,6 +398,7 @@ public class EffectResolutionService {
                     && !copy.accepted()
                     && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
         }
-        return gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
+        return gameData.resolvedMayAccepted == null
+                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
     }
 }

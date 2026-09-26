@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShimmeringWings.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({ShimmeringWings.class, GalinasKnight.class, Mountain.class})
 class ShimmeringWingsTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -26,12 +26,12 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Shimmering Wings puts it on the stack as enchantment spell")
     void castingPutsOnStack() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.castEnchantment(player1, 0, knightPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -40,37 +40,37 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Shimmering Wings attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.castEnchantment(player1, 0, knightPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() instanceof ShimmeringWings
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
+                        && p.getAttachedTo().equals(knightPerm.getId()));
     }
 
     @Test
     @DisplayName("Shimmering Wings can enchant a creature an opponent controls")
     void canEnchantOpponentCreature() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player2, new GalinasKnight());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.castEnchantment(player1, 0, knightPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() instanceof ShimmeringWings
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+                        && p.getAttachedTo().equals(knightPerm.getId()));
+        assertThat(gqs.hasKeyword(gd, knightPerm, Keyword.FLYING)).isTrue();
     }
 
     // ===== Flying =====
@@ -78,25 +78,25 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has flying")
     void enchantedCreatureHasFlying() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
-        wingsPerm.setAttachedTo(bearsPerm.getId());
+        wingsPerm.setAttachedTo(knightPerm.getId());
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knightPerm, Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Shimmering Wings does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
-        Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherKnight = addCreatureReady(player1, new GalinasKnight());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
-        wingsPerm.setAttachedTo(bearsPerm.getId());
+        wingsPerm.setAttachedTo(knightPerm.getId());
 
-        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherKnight, Keyword.FLYING)).isFalse();
     }
 
     // ===== Activated ability: return to hand =====
@@ -104,10 +104,10 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Activating {U} ability returns Shimmering Wings to owner's hand")
     void activateAbilityReturnsToHand() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
-        wingsPerm.setAttachedTo(bearsPerm.getId());
+        wingsPerm.setAttachedTo(knightPerm.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -119,22 +119,20 @@ class ShimmeringWingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof ShimmeringWings);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof ShimmeringWings);
+        harness.assertInHand(player1, "Shimmering Wings");
+        harness.assertNotOnBattlefield(player1, "Shimmering Wings");
     }
 
     @Test
     @DisplayName("Creature loses flying after Shimmering Wings returns to hand")
     void creatureLosesFlyingAfterBounce() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
-        wingsPerm.setAttachedTo(bearsPerm.getId());
+        wingsPerm.setAttachedTo(knightPerm.getId());
 
         // Verify flying is granted
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knightPerm, Keyword.FLYING)).isTrue();
 
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -143,7 +141,26 @@ class ShimmeringWingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature no longer has flying
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, knightPerm, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returning a controlled Shimmering Wings puts it into its owner's hand")
+    void returnsToOwnersHandWhenControlledByOpponent() {
+        Permanent knight = addCreatureReady(player2, new GalinasKnight());
+
+        ShimmeringWings card = new ShimmeringWings();
+        card.setOwnerId(player1.getId());
+        Permanent wingsPerm = harness.addToBattlefieldAndReturn(player2, card);
+        wingsPerm.setAttachedTo(knight.getId());
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Shimmering Wings");
+        harness.assertNotInHand(player2, "Shimmering Wings");
+        harness.assertNotOnBattlefield(player2, "Shimmering Wings");
     }
 
     // ===== Re-cast after bounce =====
@@ -151,10 +168,10 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Shimmering Wings can be re-cast after returning to hand")
     void canRecastAfterBounce() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
-        wingsPerm.setAttachedTo(bearsPerm.getId());
+        wingsPerm.setAttachedTo(knightPerm.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -162,8 +179,7 @@ class ShimmeringWingsTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof ShimmeringWings);
+        harness.assertInHand(player1, "Shimmering Wings");
 
         // Re-cast it
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -175,14 +191,14 @@ class ShimmeringWingsTest extends BaseCardTest {
                 break;
             }
         }
-        harness.castEnchantment(player1, wingsIndex, bearsPerm.getId());
+        harness.castEnchantment(player1, wingsIndex, knightPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() instanceof ShimmeringWings
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+                        && p.getAttachedTo().equals(knightPerm.getId()));
+        assertThat(gqs.hasKeyword(gd, knightPerm, Keyword.FLYING)).isTrue();
     }
 
     // ===== Fizzle =====
@@ -190,22 +206,20 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Shimmering Wings fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.castEnchantment(player1, 0, knightPerm.getId());
 
         // Remove the target before resolution
         gd.playerBattlefields.get(player1.getId()).clear();
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof ShimmeringWings);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof ShimmeringWings);
+        harness.assertInGraveyard(player1, "Shimmering Wings");
+        harness.assertNotOnBattlefield(player1, "Shimmering Wings");
     }
 
     // ===== Orphaned aura =====
@@ -213,12 +227,12 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Shimmering Wings goes to graveyard when enchanted creature dies")
     void goesToGraveyardWhenCreatureDies() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent knightPerm = addCreatureReady(player2, new GalinasKnight());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player2, new ShimmeringWings());
-        wingsPerm.setAttachedTo(bearsPerm.getId());
+        wingsPerm.setAttachedTo(knightPerm.getId());
 
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GalinasKnight());
 
         declareAttackers(player1, List.of(0));
 
@@ -226,10 +240,8 @@ class ShimmeringWingsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof ShimmeringWings);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card instanceof ShimmeringWings);
+        harness.assertNotOnBattlefield(player2, "Shimmering Wings");
+        harness.assertInGraveyard(player2, "Shimmering Wings");
     }
 
     // ===== Targeting restriction =====
@@ -238,7 +250,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GalinasKnight());
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);

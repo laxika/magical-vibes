@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.a.Assassinate;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.d.DeathcurseOgre;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.r.RendSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JuganTheRisingStar.class, RendSpirit.class, DeathcurseOgre.class, HumbleBudoka.class})
 class JuganTheRisingStarTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,8 @@ class JuganTheRisingStarTest extends BaseCardTest {
     void deathDistributesFiveCounters() {
         Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
         jugan.tap();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
 
         gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3, giant.getId(), 2);
 
@@ -43,8 +45,8 @@ class JuganTheRisingStarTest extends BaseCardTest {
     void deathDistributesToOpponentCreatures() {
         Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
         jugan.tap();
-        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent oppGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        Permanent oppGiant = harness.addToBattlefieldAndReturn(player2, new DeathcurseOgre());
 
         gd.pendingETBDamageAssignments = Map.of(ownBears.getId(), 1, oppGiant.getId(), 4);
 
@@ -63,7 +65,7 @@ class JuganTheRisingStarTest extends BaseCardTest {
     void deathDistributeCanBeDeclined() {
         Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
         jugan.tap();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
 
         gd.pendingETBDamageAssignments = Map.of(bears.getId(), 5);
 
@@ -75,15 +77,51 @@ class JuganTheRisingStarTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Accepting with no targets places no counters")
+    void deathDistributeCanChooseNoTargets() {
+        Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
+        jugan.tap();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+
+        gd.pendingETBDamageAssignments = Map.of();
+
+        killJugan(jugan);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Shrouded creatures are not legal targets")
+    void deathDistributeDoesNotAffectShroudedCreature() {
+        Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
+        jugan.tap();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        Permanent shroudedBudoka = harness.addToBattlefieldAndReturn(player1, new HumbleBudoka());
+
+        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3, shroudedBudoka.getId(), 2);
+
+        killJugan(jugan);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(shroudedBudoka.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void killJugan(Permanent jugan) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Assassinate()));
+        harness.setHand(player1, List.of(new RendSpirit()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID juganId = jugan.getId();
         gs.playCard(gd, player1, 0, 0, juganId, null);
-        harness.passBothPriorities(); // Assassinate resolves → Jugan dies → death trigger on stack
+        harness.passBothPriorities(); // Rend Spirit resolves → Jugan dies → death trigger on stack
     }
 }

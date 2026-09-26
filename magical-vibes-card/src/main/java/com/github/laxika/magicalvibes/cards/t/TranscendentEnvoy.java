@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "40")
+@CardRegistration(set = "SOC", collectorNumber = "183")
 public class TranscendentEnvoy extends Card {
 
     public TranscendentEnvoy() {

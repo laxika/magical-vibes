@@ -43,6 +43,6 @@ public class BumiKingOfThreeTrials extends Card {
                         new ChooseOneEffect.ChooseOneOption("Put three +1/+1 counters on Bumi.", counters),
                         new ChooseOneEffect.ChooseOneOption("Target player scries 3.", scry, playerTarget),
                         new ChooseOneEffect.ChooseOneOption("Earthbend 3.", earthbend, TargetFilters.landYouControl())
-                )), lessonCount));
+                ), true, 0, 3), lessonCount));
     }
 }

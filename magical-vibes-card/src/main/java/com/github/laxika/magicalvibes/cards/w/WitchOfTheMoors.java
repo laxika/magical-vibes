@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1722")
+@CardRegistration(set = "SOC", collectorNumber = "230")
 public class WitchOfTheMoors extends Card {
 
     public WitchOfTheMoors() {

@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HondenOfNightsReach.class, HondenOfSeeingWinds.class})
 class HondenOfNightsReachTest extends BaseCardTest {
 
     @Test
@@ -30,7 +28,8 @@ class HondenOfNightsReachTest extends BaseCardTest {
     @DisplayName("Target opponent discards one card with a single Shrine")
     void discardsOneCardWithOneShrine() {
         harness.addToBattlefield(player1, new HondenOfNightsReach());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Forest())));
+        harness.setHand(player2, List.of(
+                new HondenOfNightsReach(), new HondenOfSeeingWinds(), new HondenOfNightsReach()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -41,7 +40,7 @@ class HondenOfNightsReachTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Honden of Night's Reach");
     }
 
     @Test
@@ -49,29 +48,58 @@ class HondenOfNightsReachTest extends BaseCardTest {
     void discardCountScalesWithShrines() {
         harness.addToBattlefield(player1, new HondenOfNightsReach());
         harness.addToBattlefield(player1, new HondenOfSeeingWinds());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Forest())));
+        harness.setHand(player2, List.of(
+                new HondenOfNightsReach(), new HondenOfSeeingWinds(), new HondenOfNightsReach()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         // Honden of Seeing Winds' own upkeep draw trigger may resolve first; drain both triggers.
-        while (gd.interaction.activeInteraction() == null && !gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.playerHands.get(player2.getId()).getFirst().getName())
+                .isEqualTo("Honden of Night's Reach");
+    }
+
+    @Test
+    @DisplayName("Counts Shrines when the discard trigger resolves")
+    void recountsShrinesAtResolution() {
+        harness.addToBattlefield(player1, new HondenOfNightsReach());
+        harness.setHand(player2, List.of(
+                new HondenOfNightsReach(), new HondenOfSeeingWinds(), new HondenOfNightsReach()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player1, new HondenOfSeeingWinds());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new HondenOfNightsReach());
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
     }
 
     @Test
     @DisplayName("Opponent with an empty hand is not prompted")
     void emptyHandNoPrompt() {
         harness.addToBattlefield(player1, new HondenOfNightsReach());
-        harness.setHand(player2, new ArrayList<>(List.of()));
+        harness.setHand(player2, List.of());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -86,7 +114,8 @@ class HondenOfNightsReachTest extends BaseCardTest {
     void opponentShrinesDoNotCount() {
         harness.addToBattlefield(player1, new HondenOfNightsReach());
         harness.addToBattlefield(player2, new HondenOfSeeingWinds());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Forest())));
+        harness.setHand(player2, List.of(
+                new HondenOfNightsReach(), new HondenOfSeeingWinds(), new HondenOfNightsReach()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());

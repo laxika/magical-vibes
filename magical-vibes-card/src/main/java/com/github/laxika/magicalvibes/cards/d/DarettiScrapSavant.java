@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingArtifactUnderControlEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -55,7 +55,7 @@ public class DarettiScrapSavant extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(new CreateEmblemEffect(
-                        List.of(new RegisterDelayedReturnDyingArtifactUnderControlEffect()), EMBLEM_TEXT)),
+                        List.of(new EmblemArtifactGraveyardReturnTriggerEffect()), EMBLEM_TEXT)),
                 "−10: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));
     }

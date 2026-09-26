@@ -198,6 +198,18 @@ public class GraveyardTargetingService {
         int maxTargets = exile.maxTargetsFromMultikicker()
                 ? exile.maxTargetsForX(multikickerPaymentCount)
                 : exile.maxTargets();
+        if (exile.exactTargets()) {
+            int requiredTargets = maxTargets;
+            boolean enoughTargets = exile.singleGraveyard()
+                    ? graveyardOwners.stream().anyMatch(ownerId -> matchingCards.stream()
+                            .filter(candidate -> gameData.playerGraveyards.getOrDefault(ownerId, List.of())
+                                    .contains(candidate))
+                            .count() >= requiredTargets)
+                    : matchingCards.size() >= requiredTargets;
+            if (!enoughTargets) {
+                return;
+            }
+        }
         if (matchingCards.isEmpty() || maxTargets == 0) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -218,7 +230,9 @@ public class GraveyardTargetingService {
                     ? sourcePermanentId : null;
             gameData.graveyardTargetOperation.singleGraveyard = exile.singleGraveyard();
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
+                    exile.exactTargets() ? maxTargets : 0,
+                    "Choose " + (exile.exactTargets() ? "exactly " : "up to ") + maxTargets
+                            + " target card" + (maxTargets != 1 ? "s" : "")
                             + (exile.ownGraveyardOnly() ? " from your graveyard"
                             : exile.singleGraveyard() ? " from a single graveyard" : " from graveyards")
                             + " to exile.");

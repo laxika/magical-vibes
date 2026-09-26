@@ -1,35 +1,32 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BakuAltar;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChiseiHeartOfOceans.class, BakuAltar.class, GnarledMass.class})
 class ChiseiHeartOfOceansTest extends BaseCardTest {
-
-    private boolean controlsChisei(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Chisei, Heart of Oceans"));
-    }
 
     @Test
     @DisplayName("Removing a counter from a permanent you control keeps Chisei")
     void removingACounterKeepsIt() {
         harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(controlsChisei(player1)).isTrue();
+        harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -37,7 +34,7 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
     @DisplayName("Declining the counter removal sacrifices Chisei")
     void decliningSacrifices() {
         harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToUpkeep(player1);
@@ -46,7 +43,7 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(controlsChisei(player1)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Chisei, Heart of Oceans");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -54,26 +51,26 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
     @DisplayName("With no counters anywhere Chisei is sacrificed without a prompt")
     void noCountersSacrificesImmediately() {
         harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GnarledMass());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(controlsChisei(player1)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Chisei, Heart of Oceans");
     }
 
     @Test
     @DisplayName("Counters on an opponent's permanent do not pay the cost")
     void opponentCountersDoNotCount() {
         harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
-        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
         opponentBears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(controlsChisei(player1)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Chisei, Heart of Oceans");
         assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
@@ -81,8 +78,8 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
     @DisplayName("Several counter-bearing permanents pause for a choice")
     void multipleCandidatesPromptForChoice() {
         harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
         first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
@@ -93,9 +90,43 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, second.getId());
 
-        assertThat(controlsChisei(player1)).isTrue();
+        harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A counter on a noncreature permanent can pay the cost")
+    void nonCreatureCounterPays() {
+        harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new BakuAltar());
+        altar.setCounterCount(CounterType.KI, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
+        assertThat(altar.getCounterCount(CounterType.KI)).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing a permanent with multiple counter types asks which counter to remove")
+    void multipleCounterTypesRequireChoice() {
+        harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new BakuAltar());
+        altar.setCounterCount(CounterType.KI, 1);
+        altar.setCounterCount(CounterType.CHARGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "ki counters");
+        assertThat(altar.getCounterCount(CounterType.KI)).isZero();
+        assertThat(altar.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
     }
 
     @Test
@@ -106,7 +137,7 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(controlsChisei(player1)).isTrue();
+        harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -120,7 +151,7 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(controlsChisei(player1)).isTrue();
+        harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
         assertThat(chisei.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

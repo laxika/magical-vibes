@@ -6,14 +6,15 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GracefulAdept.class, Forest.class, Mountain.class, Plains.class})
 class GracefulAdeptTest extends BaseCardTest {
 
     @Test
@@ -23,11 +24,11 @@ class GracefulAdeptTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addToBattlefield(player1, new GracefulAdept());
 
-        harness.setHand(player1, new ArrayList<>(List.of(
+        harness.setHand(player1, List.of(
                 new Forest(), new Forest(), new Forest(),
                 new Mountain(), new Mountain(), new Mountain(),
                 new Plains(), new Plains(), new Plains()
-        )));
+        ));
 
         harness.getGameService().advanceStep(gd);
 
@@ -42,11 +43,11 @@ class GracefulAdeptTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addToBattlefield(player2, new GracefulAdept());
 
-        harness.setHand(player1, new ArrayList<>(List.of(
+        harness.setHand(player1, List.of(
                 new Forest(), new Forest(), new Forest(),
                 new Mountain(), new Mountain(), new Mountain(),
                 new Plains(), new Plains(), new Plains()
-        )));
+        ));
 
         harness.getGameService().advanceStep(gd);
 

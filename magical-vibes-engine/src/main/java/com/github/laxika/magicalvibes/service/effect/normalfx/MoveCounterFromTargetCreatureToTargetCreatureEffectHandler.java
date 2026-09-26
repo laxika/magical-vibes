@@ -94,7 +94,8 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
                 }
                 count = gameQueryService.replaceCounters(gameData, destination, kind, count);
                 destination.setCounterCount(kind, destination.getCounterCount(kind) + count);
-                permanentCounterSupport.notifyCountersPlaced(gameData, entry, destination, kind, count);
+                permanentCounterSupport.notifyCountersPlaced(
+                        gameData, entry, destination, count, kind);
             }
             gameLogService.append(gameData, GameLog.builder().text("All counters are moved from ").card(source.getCard()).text(" onto ").card(destination.getCard()).text(".").build());
             log.info("Game {} - {} moves all counters from {} to {}", gameData.id, entry.getCard().getName(),
@@ -125,7 +126,8 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
         }
         int placed = gameQueryService.replaceCounters(gameData, destination, toMove, 1);
         destination.setCounterCount(toMove, destination.getCounterCount(toMove) + placed);
-        permanentCounterSupport.notifyCountersPlaced(gameData, entry, destination, toMove, placed);
+        permanentCounterSupport.notifyCountersPlaced(
+                gameData, entry, destination, placed, toMove);
 
         gameLogService.append(gameData, GameLog.builder().text("A counter is moved from ").card(source.getCard()).text(" onto ").card(destination.getCard()).text(".").build());
         log.info("Game {} - {} moves a {} counter from {} to {}", gameData.id, entry.getCard().getName(),

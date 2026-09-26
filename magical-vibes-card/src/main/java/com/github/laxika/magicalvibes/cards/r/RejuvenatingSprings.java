@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
+@CardRegistration(set = "MSC", collectorNumber = "260")
+@CardRegistration(set = "MSC", collectorNumber = "488")
 @CardRegistration(set = "CMM", collectorNumber = "424")
 @CardRegistration(set = "CMM", collectorNumber = "617")
 @CardRegistration(set = "CMM", collectorNumber = "662")
@@ -17,10 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 public class RejuvenatingSprings extends Card {
 
     public RejuvenatingSprings() {
-        // This land enters tapped unless you have two or more opponents.
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new NotCondition(new ControllerHasAtLeastOpponents(2)),
-                new EntersTappedEffect()));
+                new NotCondition(new ControllerHasAtLeastOpponents(2)), new EntersTappedEffect()));
 
         // {T}: Add {G} or {U}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));

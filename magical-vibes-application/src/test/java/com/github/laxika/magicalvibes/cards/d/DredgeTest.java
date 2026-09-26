@@ -1,68 +1,94 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.k.KavuTitan;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianLens;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Dredge.class, KavuTitan.class, Mountain.class, PhyrexianLens.class})
 class DredgeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Sacrificing a creature lets Dredge draw a card")
+    @DisplayName("Sacrificing a creature on resolution lets Dredge draw a card")
     void sacrificesCreatureAndDrawsCard() {
-        Permanent creature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KavuTitan());
+        KavuTitan drawnCard = new KavuTitan();
+        harness.setLibrary(player1, List.of(drawnCard));
 
-        harness.setHand(player1, List.of(new Dredge()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromHand(player1, new Dredge(), "{B}");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
 
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.castInstantWithSacrifice(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-        harness.assertInGraveyard(player1, "Llanowar Elves");
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        harness.assertNotOnBattlefield(player1, "Kavu Titan");
+        harness.assertInGraveyard(player1, "Kavu Titan");
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 
     @Test
-    @DisplayName("Sacrificing a land lets Dredge draw a card")
+    @DisplayName("Sacrificing a land on resolution lets Dredge draw a card")
     void sacrificesLandAndDrawsCard() {
-        Permanent land = new Permanent(new Mountain());
-        gd.playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        KavuTitan drawnCard = new KavuTitan();
+        harness.setLibrary(player1, List.of(drawnCard));
 
-        harness.setHand(player1, List.of(new Dredge()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromHand(player1, new Dredge(), "{B}");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
 
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.castInstantWithSacrifice(player1, 0, null, land.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertInGraveyard(player1, "Mountain");
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 
     @Test
-    @DisplayName("Cannot sacrifice a permanent that is neither a creature nor a land")
-    void cannotSacrificeNonCreatureNonLandPermanent() {
-        Permanent artifact = new Permanent(new Spellbook());
-        gd.playerBattlefields.get(player1.getId()).add(artifact);
+    @DisplayName("With no creature or land, Dredge still draws a card")
+    void drawsWithoutMatchingPermanent() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PhyrexianLens());
+        KavuTitan drawnCard = new KavuTitan();
+        harness.setLibrary(player1, List.of(drawnCard));
 
-        harness.setHand(player1, List.of(new Dredge()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromHand(player1, new Dredge(), "{B}");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
 
-        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, artifact.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature or land");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        harness.assertNotInGraveyard(player1, "Phyrexian Lens");
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    @DisplayName("With multiple eligible permanents, Dredge chooses one on resolution")
+    void choosesOnePermanentOnResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KavuTitan());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        KavuTitan drawnCard = new KavuTitan();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.castFromHand(player1, new Dredge(), "{B}");
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature).doesNotContain(land);
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 }
