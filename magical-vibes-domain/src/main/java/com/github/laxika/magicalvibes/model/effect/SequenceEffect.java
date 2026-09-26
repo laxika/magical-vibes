@@ -37,10 +37,8 @@ import java.util.UUID;
  * <p><b>Targeting.</b> {@link #targetSpec()} returns the first step with an explicitly declared
  * target, so at cast time the entry selects a single target for the sequence exactly as multiple
  * flat targeting effects on one slot share the entry's one target. An implicit source binding such
- * as {@link SacrificeSelfEffect} does not consume a target slot. Multi-target groups inside a sequence
- * are <em>unsupported</em>: the spliced steps are not registered in the card's effect→target-group
- * table, so every targeting step reads the entry's shared {@code targetId}. Use flat, group-bound
- * effects on the card for genuinely multi-target abilities.</p>
+ * as {@link SacrificeSelfEffect} does not consume a target slot. A sequence bound to a target group
+ * registers its spliced steps with that group; other target groups may be read by position.</p>
  *
  * <p>When used in an end-step trigger, the active end-step player is also carried in the stack
  * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on

@@ -4179,9 +4179,14 @@ public class GameQueryService {
      */
     public boolean hasCantBeBlocked(GameData gameData, Permanent creature) {
         if (creature.isCantBeBlocked()) return true;
-        if (!creature.isFaceDown() && !computeStaticBonus(gameData, creature).losesAllAbilities()
-                && creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
+        if (!computeStaticBonus(gameData, creature).losesAllAbilities()) {
+            if (!creature.isFaceDown() && creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
+            if (creature.getTemporaryTriggeredEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
+            if (creature.getPersistentTriggeredEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
+        }
         if (hasAuraWithEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
         if (hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
         return controllerMakesMatchingCreaturesUnblockable(gameData, creature);

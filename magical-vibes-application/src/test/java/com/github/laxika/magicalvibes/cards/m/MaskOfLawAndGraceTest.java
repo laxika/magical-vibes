@@ -105,7 +105,7 @@ class MaskOfLawAndGraceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from the source");
+                .hasMessageContaining("protection from red");
     }
 
     @Test

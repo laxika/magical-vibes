@@ -85,7 +85,7 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
             } else if (after.getCard().hasType(CardType.BATTLE)) {
                 damageDealt = resolvedDamage;
             } else {
-                damageDealt = resolvedDamage;
+                damageDealt = Math.max(0, after.getMarkedDamage() - damageBefore);
             }
         }
 

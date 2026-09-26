@@ -1078,7 +1078,7 @@ public class TriggeredAbilityQueueService {
         return card.getSpellTargets().stream()
                 .anyMatch(group -> group.getMaxTargets() > 1
                         && effects.stream().anyMatch(effect ->
-                        card.getEffectTargetIndex(effect) == group.getIndex()));
+                        card.isEffectBoundToTargetGroup(effect, group.getIndex())));
     }
 
     private boolean hasLegalTriggeredModeTarget(GameData gameData,

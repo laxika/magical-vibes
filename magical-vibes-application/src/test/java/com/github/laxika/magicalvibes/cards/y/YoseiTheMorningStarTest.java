@@ -29,8 +29,9 @@ class YoseiTheMorningStarTest extends BaseCardTest {
 
         killYosei();
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), forest.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(forest.isTapped()).isTrue();
@@ -50,8 +51,8 @@ class YoseiTheMorningStarTest extends BaseCardTest {
 
         killYosei();
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         endTurn();
         endTurn(); // player 2's turn — untap step skipped
@@ -71,8 +72,8 @@ class YoseiTheMorningStarTest extends BaseCardTest {
 
         killYosei();
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
 
         endTurn();
         endTurn(); // player 2's turn — untap step still skipped
@@ -88,8 +89,8 @@ class YoseiTheMorningStarTest extends BaseCardTest {
 
         killYosei();
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
@@ -108,13 +109,11 @@ class YoseiTheMorningStarTest extends BaseCardTest {
 
         killYosei();
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
 
-        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.validIds())
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds())
                 .contains(enemyBears.getId(), enemyForest.getId())
                 .doesNotContain(ownBears.getId());
-        assertThat(choice.maxCount()).isEqualTo(2);
     }
 
     @Test
@@ -129,8 +128,8 @@ class YoseiTheMorningStarTest extends BaseCardTest {
                 .contains(player1.getId(), player2.getId());
 
         harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, ownBears.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownBears.getId()));
 
         assertThat(ownBears.isTapped()).isTrue();
     }

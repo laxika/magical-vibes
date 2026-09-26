@@ -96,6 +96,7 @@ class DakkonShadowSlayerTest extends BaseCardTest {
         addReadyDakkon(player1, 7);
         Card solRing = new SolRing();
         Card nonArtifact = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(solRing, nonArtifact));
 
         harness.activateAbility(player1, 0, 2, null, null);

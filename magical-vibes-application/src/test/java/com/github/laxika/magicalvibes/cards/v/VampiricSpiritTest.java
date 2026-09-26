@@ -64,6 +64,7 @@ class VampiricSpiritTest extends BaseCardTest {
     }
 
     private void castVampiricSpirit(Player player) {
+        harness.forceActivePlayer(player);
         harness.castFromHand(player, new VampiricSpirit(), "{2}{B}{B}");
     }
 }

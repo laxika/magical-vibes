@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 /**
  * Necromancy-style ETB: "When this enchantment enters, if it's on the battlefield, it becomes an
@@ -17,6 +19,7 @@ public record BecomeAuraReanimateFromGraveyardEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
+        return TargetSpec.benign(TargetPredicates.graveyardCards(
+                new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

@@ -55,8 +55,8 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(target.getEffectivePower()).isEqualTo(8);
+        assertThat(target.getEffectiveToughness()).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
     }
 

@@ -72,7 +72,7 @@ class SinstrikersWillTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("Target must be an attacking or blocking creature");
     }
 
     private Permanent addAttachedAura(Permanent enchantedCreature) {

@@ -65,8 +65,7 @@ class VodalianZombieTest extends BaseCardTest {
         addCreatureReady(player1, new VodalianZombie());
         addCreatureReady(player2, new PincerSpider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

@@ -1709,6 +1709,14 @@ public class CombatDamageService {
                 }
 
                 if (effect instanceof MayEffect may) {
+                    if (may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                creature.getCard(), attackerId, List.of(effect), attackerId,
+                                1, 0, 1, null, false, null, creature.getId()));
+                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        continue;
+                    }
                     if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
@@ -3907,6 +3915,8 @@ public class CombatDamageService {
             if (damage > 0) restoreSourceShieldForCombatChunk(gameData, state, atk.getId(), pw.getId(), false);
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
             processEyeForAnEyeReflections(gameData);
+            damage = damagePreventionService.applyTargetSourcePreventionShield(
+                    gameData, pw.getId(), atk.getId(), damage, true);
             if (damagePreventionService.isColorDamagePreventedForTarget(
                     gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk), true)) {
                 damage = 0;

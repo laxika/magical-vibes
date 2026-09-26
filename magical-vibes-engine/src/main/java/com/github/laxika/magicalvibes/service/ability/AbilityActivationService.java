@@ -1459,18 +1459,7 @@ public class AbilityActivationService {
         // Validate timing restrictions applicable to graveyard abilities (e.g. Raid, activation conditions)
         validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
 
-        // Pithing Needle check: block non-mana activated abilities of the chosen name
-        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
-            for (Permanent perm : gameData.playerBattlefields.get(opponentId)) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect
-                            && perm.getChosenName() != null
-                            && perm.getChosenName().equals(card.getName())) {
-                        throw new IllegalStateException("Activated abilities of " + card.getName() + " can't be activated (Pithing Needle)");
-                    }
-                }
-            }
-        }
+        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
@@ -2086,19 +2075,6 @@ public class AbilityActivationService {
                 gameData, playerId, ability, ability.getEffects(), targetId, null, card, effectiveXValue);
         validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
 
-        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
-            for (Permanent perm : gameData.playerBattlefields.get(opponentId)) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect
-                            && perm.getChosenName() != null
-                            && perm.getChosenName().equals(card.getName())) {
-                        throw new IllegalStateException("Activated abilities of " + card.getName()
-                                + " can't be activated (Pithing Needle)");
-                    }
-                }
-            }
-        }
-
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
         validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
@@ -2161,6 +2137,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Invalid ability index");
         }
         ActivatedAbility ability = abilities.get(idx);
+        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
         validateNotBlockedByCyclingRestriction(gameData, ability);
         List<CardEffect> abilityEffects = ability.getEffects();
         int effectiveXValue = xValue != null ? xValue : 0;

@@ -42,7 +42,7 @@ class ZilorthaStrengthIncarnateTest extends BaseCardTest {
     }
 
     @Test
-    void trampleUsesPowerBasedLethalDamageForBlockerAssignment() {
+    void trampleUsesOpposingBlockersToughnessForLethalDamage() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new YavimayaWurm());
         addCreatureReady(player1, new ZilorthaStrengthIncarnate());
@@ -57,11 +57,11 @@ class ZilorthaStrengthIncarnateTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                blocker.getId(), 2,
-                player2.getId(), 4
+                blocker.getId(), 4,
+                player2.getId(), 2
         ));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
 }

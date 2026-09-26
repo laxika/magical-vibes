@@ -32,6 +32,9 @@ public class RegisterDelayedEndStepTriggerEffectHandler implements NormalEffectH
 
         if (registration.targetGroups().isEmpty()) {
             List<UUID> affectedPermanentIds = entry.targetsForEffect(registration);
+            if (affectedPermanentIds.isEmpty() && !entry.getTargetIds().isEmpty()) {
+                affectedPermanentIds = entry.getTargetIds();
+            }
             if (!affectedPermanentIds.isEmpty()) {
                 for (UUID affectedPermanentId : affectedPermanentIds) {
                     queueDelayedTrigger(gameData, entry, triggerCard, affectedPermanentId, registration);

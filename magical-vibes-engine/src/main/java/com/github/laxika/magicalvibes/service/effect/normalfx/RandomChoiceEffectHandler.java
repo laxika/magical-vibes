@@ -24,9 +24,6 @@ public class RandomChoiceEffectHandler implements NormalEffectHandlerBean {
         var selectedEffects = randomChoice.options().get(selectedOption);
         int currentIndex = entry.getResolvingEffectIndex();
 
-        entry.replaceEffectToResolve(currentIndex, selectedEffects.getFirst());
-        if (selectedEffects.size() > 1) {
-            entry.insertEffectsToResolve(currentIndex + 1, selectedEffects.subList(1, selectedEffects.size()));
-        }
+        entry.insertEffectsToResolve(currentIndex + 1, selectedEffects);
     }
 }

@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -589,6 +590,7 @@ public class CombatBlockService {
         // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeBlockerTriggers = gameData.stack.size();
         Set<Integer> blockersWithOncePerBlockTrigger = new HashSet<>();
+        Set<UUID> blockersWithBushidoTrigger = new HashSet<>();
         Set<UUID> auraOncePerBlockTriggers = new HashSet<>();
 
         // Check for "when this creature blocks" triggers (defending player's / NAP's)
@@ -597,6 +599,9 @@ public class CombatBlockService {
             List<CardEffect> blockEffects = new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
+            if (!blockersWithBushidoTrigger.add(blocker.getId())) {
+                blockEffects.removeIf(BushidoEffect.class::isInstance);
+            }
             boolean hasOncePerBlockEffect = blocker.getCard().getEffectRegistrations(EffectSlot.ON_BLOCK).stream()
                     .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
             boolean collectBlockTrigger = !hasOncePerBlockEffect

@@ -261,6 +261,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.SpellbookCardChoice.class, this::projectSpellbookCardChoice);
+        register(PendingInteraction.ApplejackToyChoice.class, this::projectApplejackToyChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
@@ -1446,6 +1447,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectApplejackToyChoice(
+            GameData gameData, PendingInteraction.ApplejackToyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.toys()), 1,
+                "Choose a toy.");
     }
 
     private InteractionPromptMessage projectVividCardChoice(

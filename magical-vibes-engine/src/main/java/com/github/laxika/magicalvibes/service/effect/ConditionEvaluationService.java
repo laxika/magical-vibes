@@ -1790,6 +1790,9 @@ public class ConditionEvaluationService {
         if (!(effect instanceof ConditionalEffect conditional)) {
             return true;
         }
+        if (!conditional.interveningIf()) {
+            return true;
+        }
         return isMet(gameData, conditional.condition(), ConditionContext.forPermanent(source, controllerId)
                 .withTriggeringPermanentId(triggeringPermanentId));
     }

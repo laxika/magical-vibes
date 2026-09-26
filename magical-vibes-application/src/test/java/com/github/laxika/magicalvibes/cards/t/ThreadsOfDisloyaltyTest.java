@@ -63,6 +63,10 @@ class ThreadsOfDisloyaltyTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true); // Pay the cloaked creature's ward {2}.
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Threads of Disloyalty"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))

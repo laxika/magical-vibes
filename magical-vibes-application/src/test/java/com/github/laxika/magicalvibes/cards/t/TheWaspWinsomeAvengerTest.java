@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinHero;
+import com.github.laxika.magicalvibes.cards.c.CaptainAmericaTeamLeader;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,17 +17,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheWaspWinsomeAvenger.class, GoblinHero.class, GrizzlyBears.class})
+@CardUsed({TheWaspWinsomeAvenger.class, CaptainAmericaTeamLeader.class, GrizzlyBears.class})
 class TheWaspWinsomeAvengerTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB grants a target Hero hexproof until end of turn")
     void etbGrantsHeroHexproof() {
-        Permanent hero = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new CaptainAmericaTeamLeader());
 
         castWasp(hero.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gqs.hasKeyword(gd, hero, Keyword.HEXPROOF)).isTrue();
 

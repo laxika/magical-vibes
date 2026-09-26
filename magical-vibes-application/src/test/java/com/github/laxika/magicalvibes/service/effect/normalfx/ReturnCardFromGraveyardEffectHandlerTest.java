@@ -100,7 +100,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Return source"),
                 player1Id, "Return source", new ArrayList<>(List.of(effect)));
         when(predicateEvaluationService.matchesCardPredicate(
-                any(Card.class), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
+                any(Card.class), eq(filter), eq(entry.getCard().getId()), eq(gd), eq(player2Id),
                 isNull(), isNull(), anyInt())).thenReturn(true);
 
         returnCardFromGraveyardHandler.resolve(gd, entry, effect);

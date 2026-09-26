@@ -3350,7 +3350,7 @@ public class TargetLegalityService {
             }
         }
 
-        if (!targetFizzled) {
+        if (!targetFizzled && entry.getTargetId() == null && entry.getTargetIds().isEmpty()) {
             targetFizzled = allTargetsGone(entry.getTargetCardIds(),
                     id -> isTargetCardLegalOnResolution(gameData, entry, id));
         }
@@ -4621,11 +4621,15 @@ public class TargetLegalityService {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return manaValue <= maxManaValuePredicate.maxManaValue();
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return stackEntry.getManaSpentToCast() < manaValue;
         }
         if (predicate instanceof StackEntryManaValueEqualsXPredicate) {

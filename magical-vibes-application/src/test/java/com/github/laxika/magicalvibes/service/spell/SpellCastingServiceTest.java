@@ -396,7 +396,7 @@ class SpellCastingServiceTest {
 
         assertThat(gd.playerHands.get(player1Id)).isEmpty();
         verify(permanentRemovalService).removeCardFromGraveyardById(gd, spell.getId());
-        verify(graveyardService).addCardToGraveyard(gd, player1Id, discarded);
+        verify(graveyardService).addCardToGraveyard(gd, player1Id, discarded, Zone.HAND);
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getCard()).isSameAs(spell);
             assertThat(entry.isCastWithFlashback()).isTrue();

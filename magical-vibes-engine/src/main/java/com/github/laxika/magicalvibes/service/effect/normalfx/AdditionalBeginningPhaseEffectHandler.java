@@ -24,9 +24,15 @@ public class AdditionalBeginningPhaseEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.additionalBeginningPhasesAfterCombat++;
-        gameLogService.append(gameData, GameLog.text(
-                "After this combat phase, there is an additional beginning phase."));
+        var beginningPhase = (AdditionalBeginningPhaseEffect) effect;
+        if (beginningPhase.afterPostcombatMain()) {
+            gameData.additionalBeginningPhasesAfterPostcombatMain++;
+        } else {
+            gameData.additionalBeginningPhasesAfterCombat++;
+        }
+        gameLogService.append(gameData, GameLog.text(beginningPhase.afterPostcombatMain()
+                ? "After this postcombat main phase, there is an additional beginning phase."
+                : "After this combat phase, there is an additional beginning phase."));
         log.info("Game {} - {} queued an additional beginning phase",
                 gameData.id, entry.getCard().getName());
     }

@@ -1611,11 +1611,11 @@ public class PredicateEvaluationService {
                         .getSpellCastColorsSpent(filterContext.sourceCardId()).size();
             }
             case PermanentMaxManaValuePredicate maxManaValuePredicate ->
-                    permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();
+                    (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) <= maxManaValuePredicate.maxManaValue();
             case PermanentMinManaValuePredicate minManaValuePredicate ->
-                    permanent.getCard().getManaValue() >= minManaValuePredicate.minManaValue();
+                    (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) >= minManaValuePredicate.minManaValue();
             case PermanentManaValueParityPredicate parityPredicate ->
-                    parityPredicate.parity().matches(permanent.getCard().getManaValue());
+                    parityPredicate.parity().matches(permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
             case PermanentManaValueEqualsSourceCountersPredicate equalsSourceCounters -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -3871,9 +3871,13 @@ public class PredicateEvaluationService {
             case StackEntryManaValuePredicate manaValue ->
                     entry.getCard().getManaValue() + entry.getXValue() == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
-                    entry.getCard().getManaValue() + entry.getXValue() <= maxManaValue.maxManaValue();
+                    entry.getCard().getManaValue() + entry.getXValue()
+                            * (entry.getCard().getParsedManaCost() == null ? 0
+                            : entry.getCard().getParsedManaCost().getXSymbolCount()) <= maxManaValue.maxManaValue();
             case StackEntryManaSpentLessThanManaValuePredicate ignored ->
-                    entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue();
+                    entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue()
+                            * (entry.getCard().getParsedManaCost() == null ? 0
+                            : entry.getCard().getParsedManaCost().getXSymbolCount());
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;

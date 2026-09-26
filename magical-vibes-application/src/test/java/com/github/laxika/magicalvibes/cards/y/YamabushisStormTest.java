@@ -113,11 +113,14 @@ class YamabushisStormTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         castStorm();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
 
         declareAttackersAndPrepareBlockers(List.of(0));
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(target);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        resolveAllTriggers();
         resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Devoted Retainer");

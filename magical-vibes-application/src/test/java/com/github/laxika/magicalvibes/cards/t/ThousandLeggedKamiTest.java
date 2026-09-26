@@ -40,6 +40,8 @@ class ThousandLeggedKamiTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(spirit.getId()));

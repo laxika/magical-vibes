@@ -2455,9 +2455,10 @@ public class CardChoiceHandlerService {
         if (source == null) {
             return;
         }
-        source.untap();
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-        log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
+        if (tapUntapSupport.untapPermanent(gameData, source)) {
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+            log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
+        }
     }
 
     private void checkPendingBoostSourceByDiscardedManaValue(GameData gameData, Card discardedCard) {

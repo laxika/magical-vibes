@@ -95,7 +95,9 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
 
         // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy".
-        if (!copyEffect.tokenCopy() && !copyEffect.tokenWithHaste() && copyEntry.getTargetId() != null) {
+        if (!copyEffect.tokenCopy() && !copyEffect.tokenWithHaste()
+                && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
+                || !copyEntry.getTargetCardIds().isEmpty())) {
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     copyControllerId,
