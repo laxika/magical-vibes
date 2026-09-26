@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -76,6 +77,9 @@ class BriarknitKamiTest extends BaseCardTest {
         addBriarknitKami();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new ArabaMothrider());
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castFromHand(player2, new DeathknellKami(), "{1}{B}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();

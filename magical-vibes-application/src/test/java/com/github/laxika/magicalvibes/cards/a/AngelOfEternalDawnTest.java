@@ -33,7 +33,8 @@ class AngelOfEternalDawnTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -49,7 +50,8 @@ class AngelOfEternalDawnTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castCreature(player2, 0);
 

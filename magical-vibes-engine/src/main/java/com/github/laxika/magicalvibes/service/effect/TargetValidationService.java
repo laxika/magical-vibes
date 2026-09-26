@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -356,18 +357,21 @@ public class TargetValidationService {
     public void checkProtection(TargetValidationContext ctx, Permanent target) {
         Permanent sourcePermanent = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(ctx.gameData(), ctx.sourcePermanentId());
+        Set<CardColor> sourceColors = sourcePermanent == null
+                ? gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())
+                : gameQueryService.getEffectiveColors(ctx.gameData(), sourcePermanent);
+        for (CardColor effectiveColor : sourceColors) {
+            if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
+                throw new IllegalStateException(target.getCard().getName() + " has protection from "
+                        + effectiveColor.name().toLowerCase());
+            }
+        }
         if (sourcePermanent != null && gameQueryService.hasProtectionFromSource(
                 ctx.gameData(), target, sourcePermanent)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source");
         }
         if (hasProtectionFromSourceController(ctx, target)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
-        }
-        for (CardColor effectiveColor : gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())) {
-            if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
-                throw new IllegalStateException(target.getCard().getName() + " has protection from "
-                        + effectiveColor.name().toLowerCase());
-            }
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(ctx.gameData(), target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");

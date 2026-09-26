@@ -5914,6 +5914,11 @@ public class GameData {
         copy.goblinGame.index = this.goblinGame.index;
         copy.goblinGame.itemCounts.putAll(this.goblinGame.itemCounts);
         copy.goblinGame.currentPlayerId = this.goblinGame.currentPlayerId;
+        copy.wheelOfMisfortune.active = this.wheelOfMisfortune.active;
+        copy.wheelOfMisfortune.order.addAll(this.wheelOfMisfortune.order);
+        copy.wheelOfMisfortune.index = this.wheelOfMisfortune.index;
+        copy.wheelOfMisfortune.chosenNumbers.putAll(this.wheelOfMisfortune.chosenNumbers);
+        copy.wheelOfMisfortune.currentPlayerId = this.wheelOfMisfortune.currentPlayerId;
         copy.illicitAuction.active = this.illicitAuction.active;
         copy.illicitAuction.order.addAll(this.illicitAuction.order);
         copy.illicitAuction.index = this.illicitAuction.index;
