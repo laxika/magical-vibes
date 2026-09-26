@@ -1,49 +1,51 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArcadesSabboth.class, DurkwoodBoars.class})
 class ArcadesSabbothTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untapped creatures you control that are not attacking get +0/+2")
     void boostsUntappedNonattackingCreaturesYouControl() {
         Permanent arcades = addCreatureReady(player1, new ArcadesSabboth());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent boars = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
 
         assertThat(gqs.getEffectiveToughness(gd, arcades)).isEqualTo(9);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(6);
     }
 
     @Test
     @DisplayName("The static bonus is removed while a creature is tapped or attacking")
     void staticBonusFollowsTapAndAttackState() {
         addCreatureReady(player1, new ArcadesSabboth());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent boars = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
 
-        bears.tap();
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        boars.tap();
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(4);
 
-        bears.untap();
-        bears.setAttacking(true);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        boars.untap();
+        boars.setAttacking(true);
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("The static bonus does not affect an opponent's creature")
     void doesNotBoostOpponentCreature() {
         addCreatureReady(player1, new ArcadesSabboth());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent boars = harness.addToBattlefieldAndReturn(player2, new DurkwoodBoars());
 
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(4);
     }
 
     @Test

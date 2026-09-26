@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GlyphOfLife.class, WallOfWood.class, GrizzlyBears.class, Shock.class})
+@CardUsed({GlyphOfLife.class, WallOfWood.class, GrizzlyBears.class, Shock.class, ShivanHellkite.class,
+        GiantSpider.class})
 class GlyphOfLifeTest extends BaseCardTest {
 
     @Test
@@ -51,6 +53,26 @@ class GlyphOfLifeTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Gains life from noncombat damage dealt by an attacking creature")
+    void gainsLifeFromNoncombatDamageByAttackingCreature() {
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player1, new ShivanHellkite());
+        castGlyph(wall);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, wall.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(21);
     }
 
     @Test

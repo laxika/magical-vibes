@@ -1,34 +1,34 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HorrorOfHorrors.class, DrudgeSkeletons.class, GlorySeeker.class, Swamp.class, Forest.class})
 class HorrorOfHorrorsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a Swamp puts the regeneration ability on the stack targeting the black creature")
     void activatingTargetsBlackCreature() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent zombie = addCreatureReady(player1, createBlackCreature());
-        harness.addToBattlefield(player1, createSwamp());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player1, new Swamp());
 
-        harness.activateAbility(player1, 0, null, zombie.getId());
+        harness.activateAbility(player1, 0, null, skeleton.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(zombie.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(skeleton.getId());
         // Swamp is sacrificed as a cost.
         harness.assertInGraveyard(player1, "Swamp");
     }
@@ -37,21 +37,21 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Resolving the ability grants a regeneration shield to the target black creature")
     void resolvingGrantsShield() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent zombie = addCreatureReady(player1, createBlackCreature());
-        harness.addToBattlefield(player1, createSwamp());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player1, new Swamp());
 
-        harness.activateAbility(player1, 0, null, zombie.getId());
+        harness.activateAbility(player1, 0, null, skeleton.getId());
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Cannot target a non-black creature")
     void cannotTargetNonBlackCreature() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent whiteCreature = addCreatureReady(player1, createWhiteCreature());
-        harness.addToBattlefield(player1, createSwamp());
+        Permanent whiteCreature = addCreatureReady(player1, new GlorySeeker());
+        harness.addToBattlefield(player1, new Swamp());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, whiteCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -62,40 +62,37 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Cannot activate the ability without a Swamp to sacrifice")
     void cannotActivateWithoutSwamp() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent zombie = addCreatureReady(player1, createBlackCreature());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player1, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, zombie.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, skeleton.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can target an opponent's black creature")
+    void canTargetOpponentsBlackCreature() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent opponentSkeleton = addCreatureReady(player2, new DrudgeSkeletons());
 
-    private Card createBlackCreature() {
-        Card card = new Card();
-        card.setName("Zombie");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.BLACK);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(CardSubtype.ZOMBIE));
-        return card;
+        harness.activateAbility(player1, 0, null, opponentSkeleton.getId());
+        harness.passBothPriorities();
+
+        assertThat(opponentSkeleton.getRegenerationShield()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Swamp");
     }
 
-    private Card createWhiteCreature() {
-        Card card = new Card();
-        card.setName("Soldier");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.WHITE);
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
-    }
+    @Test
+    @DisplayName("Cannot target a black noncreature permanent")
+    void cannotTargetBlackNoncreature() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent blackEnchantment = harness.addToBattlefieldAndReturn(player1, new HorrorOfHorrors());
+        harness.addToBattlefield(player1, new Swamp());
 
-    private Card createSwamp() {
-        Card card = new Card();
-        card.setName("Swamp");
-        card.setType(CardType.LAND);
-        card.setSubtypes(List.of(CardSubtype.SWAMP));
-        return card;
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blackEnchantment.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("black creature");
+        harness.assertNotInGraveyard(player1, "Swamp");
     }
 }

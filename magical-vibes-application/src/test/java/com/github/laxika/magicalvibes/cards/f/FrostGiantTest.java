@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,17 +13,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrostGiant.class, GrizzlyBears.class})
+@CardUsed({FrostGiant.class, ZephyrFalcon.class})
 class FrostGiantTest extends BaseCardTest {
 
     @Test
     @DisplayName("With one blocker Rampage 2 grants no bonus")
     void oneBlockerGivesNothing() {
-        Permanent giant = addReadyGiant(player1);
-        giant.setAttacking(true);
-        addReadyBears(player2);
+        Permanent giant = addCreatureReady(player1, new FrostGiant());
+        addCreatureReady(player2, new ZephyrFalcon());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -34,12 +33,11 @@ class FrostGiantTest extends BaseCardTest {
     @Test
     @DisplayName("With two blockers Rampage 2 grants +2/+2 until end of turn")
     void twoBlockersGivesPlusTwo() {
-        Permanent giant = addReadyGiant(player1);
-        giant.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        Permanent giant = addCreatureReady(player1, new FrostGiant());
+        addCreatureReady(player2, new ZephyrFalcon());
+        addCreatureReady(player2, new ZephyrFalcon());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -53,13 +51,12 @@ class FrostGiantTest extends BaseCardTest {
     @Test
     @DisplayName("With three blockers Rampage 2 grants +4/+4 until end of turn")
     void threeBlockersGivesPlusFour() {
-        Permanent giant = addReadyGiant(player1);
-        giant.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        Permanent giant = addCreatureReady(player1, new FrostGiant());
+        addCreatureReady(player2, new ZephyrFalcon());
+        addCreatureReady(player2, new ZephyrFalcon());
+        addCreatureReady(player2, new ZephyrFalcon());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0),
@@ -74,10 +71,9 @@ class FrostGiantTest extends BaseCardTest {
     @Test
     @DisplayName("If unblocked no becomes-blocked trigger is created")
     void unblockedCreatesNoTrigger() {
-        Permanent giant = addReadyGiant(player1);
-        giant.setAttacking(true);
+        Permanent giant = addCreatureReady(player1, new FrostGiant());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
@@ -85,16 +81,28 @@ class FrostGiantTest extends BaseCardTest {
         assertThat(giant.getToughnessModifier()).isZero();
     }
 
-    private Permanent addReadyGiant(Player player) {
-        Permanent permanent = new Permanent(new FrostGiant());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("The rampage bonus wears off at end of turn")
+    void rampageBonusWearsOffAtEndOfTurn() {
+        Permanent giant = addCreatureReady(player1, new FrostGiant());
+        addCreatureReady(player2, new ZephyrFalcon());
+        addCreatureReady(player2, new ZephyrFalcon());
 
-    private void addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+        harness.passBothPriorities();
+
+        assertThat(giant.getPowerModifier()).isEqualTo(2);
+        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(giant.getPowerModifier()).isZero();
+        assertThat(giant.getToughnessModifier()).isZero();
     }
 }

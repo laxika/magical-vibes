@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrappleWithDeath;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClergyOfTheHolyNimbus.class, GrappleWithDeath.class, GrizzlyBears.class})
+@CardUsed({ClergyOfTheHolyNimbus.class, PsychicPurge.class})
 class ClergyOfTheHolyNimbusTest extends BaseCardTest {
 
     @Test
@@ -23,14 +22,13 @@ class ClergyOfTheHolyNimbusTest extends BaseCardTest {
     void intrinsicRegenerationSavesFromDestruction() {
         Permanent clergy = addCreatureReady(player1, new ClergyOfTheHolyNimbus());
 
-        harness.setHand(player2, List.of(new GrappleWithDeath()));
+        harness.setHand(player2, List.of(new PsychicPurge()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        addGrappleMana();
+        addPsychicPurgeMana();
 
-        harness.castSorcery(player2, 0, 0, clergy.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, clergy.getId());
 
         harness.assertOnBattlefield(player1, "Clergy of the Holy Nimbus");
         assertThat(clergy.isTapped()).isTrue();
@@ -56,6 +54,25 @@ class ClergyOfTheHolyNimbusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration prevention expires at the end of the turn")
+    void abilityPreventionExpiresAtEndOfTurn() {
+        Permanent clergy = addCreatureReady(player1, new ClergyOfTheHolyNimbus());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(clergy.isCantRegenerateThisTurn()).isTrue();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(clergy.isCantRegenerateThisTurn()).isFalse();
+    }
+
+    @Test
     @DisplayName("The opponent's ability prevents intrinsic regeneration this turn")
     void abilityPreventsIntrinsicRegeneration() {
         Permanent clergy = addCreatureReady(player1, new ClergyOfTheHolyNimbus());
@@ -64,21 +81,18 @@ class ClergyOfTheHolyNimbusTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        harness.setHand(player2, List.of(new GrappleWithDeath()));
+        harness.setHand(player2, List.of(new PsychicPurge()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        addGrappleMana();
-        harness.castSorcery(player2, 0, 0, clergy.getId());
-        harness.passBothPriorities();
+        addPsychicPurgeMana();
+        harness.castAndResolveSorcery(player2, 0, clergy.getId());
 
         harness.assertNotOnBattlefield(player1, "Clergy of the Holy Nimbus");
         harness.assertInGraveyard(player1, "Clergy of the Holy Nimbus");
     }
 
-    private void addGrappleMana() {
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+    private void addPsychicPurgeMana() {
+        harness.addMana(player2, ManaColor.BLUE, 1);
     }
 }

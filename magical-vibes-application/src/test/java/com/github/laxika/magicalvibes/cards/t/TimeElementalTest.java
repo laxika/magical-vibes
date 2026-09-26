@@ -50,9 +50,25 @@ class TimeElementalTest extends BaseCardTest {
         addCreatureReady(player2, new TimeElemental());
 
         // 1/1 attacker so Time Elemental (0/2) survives combat damage and reaches the end-of-combat sacrifice.
-        Permanent attacker = addCreatureReady(player1, new BenalishHero());
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player1);
+        addCreatureReady(player1, new BenalishHero());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertNotOnBattlefield(player2, "Time Elemental");
+        harness.assertInGraveyard(player2, "Time Elemental");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Blocking Time Elemental that dies in combat still deals 5 damage to its controller")
+    void blockingElementalThatDiesInCombatStillDealsDamage() {
+        harness.setLife(player2, 20);
+
+        addCreatureReady(player2, new TimeElemental());
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);

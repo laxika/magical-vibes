@@ -72,4 +72,19 @@ class GreedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Paying exactly 2 life is legal, but the player loses before drawing")
+    void canPayExactlyTwoLife() {
+        harness.addToBattlefield(player1, new Greed());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
 }

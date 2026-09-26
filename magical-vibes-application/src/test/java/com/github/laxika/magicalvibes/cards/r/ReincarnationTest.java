@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.a.ActiveVolcano;
+import com.github.laxika.magicalvibes.cards.a.AzureDrake;
+import com.github.laxika.magicalvibes.cards.k.Karakas;
+import com.github.laxika.magicalvibes.cards.k.KoboldsOfKherKeep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,91 +18,146 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reincarnation.class, GoForTheThroat.class, GrizzlyBears.class, GiantSpider.class,
-        Shock.class, Spellbook.class})
+@CardUsed({Reincarnation.class, ActiveVolcano.class, AzureDrake.class, Karakas.class,
+        KoboldsOfKherKeep.class})
 class ReincarnationTest extends BaseCardTest {
-
-    private void resolveStack() {
-        int guard = 0;
-        while (!gd.stack.isEmpty() && !gd.interaction.isAwaitingInput() && guard++ < 12) {
-            harness.passBothPriorities();
-        }
-    }
 
     @Test
     @DisplayName("Lets its controller choose a creature from the targeted creature owner's graveyard")
     void choosesCreatureFromTargetOwnersGraveyard() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card target = new AzureDrake();
+        target.setOwnerId(player2.getId());
+        harness.addToBattlefield(player2, target);
 
-        Card spider = new GiantSpider();
-        spider.setOwnerId(player2.getId());
-        Card shock = new Shock();
-        shock.setOwnerId(player2.getId());
-        harness.setGraveyard(player2, List.of(spider, shock));
+        Card returned = new KoboldsOfKherKeep();
+        returned.setOwnerId(player2.getId());
+        Card nonCreature = new Karakas();
+        nonCreature.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(returned, nonCreature));
 
-        harness.setHand(player1, List.of(new Reincarnation(), new GoForTheThroat()));
+        harness.setHand(player1, List.of(new Reincarnation(), new ActiveVolcano()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Azure Drake");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        resolveStack();
+        harness.castInstant(player1, 0, 0, targetId);
+        resolveAllTriggers();
 
         PendingInteraction.GraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.cardPool()).contains(spider).doesNotContain(shock).hasSize(2);
+        assertThat(choice.cardPool()).contains(returned).doesNotContain(nonCreature).hasSize(2);
 
-        harness.handleGraveyardCardChosen(player1, choice.cardPool().indexOf(spider));
-        resolveStack();
+        harness.handleGraveyardCardChosen(player1, choice.cardPool().indexOf(returned));
+        resolveAllTriggers();
 
-        harness.assertOnBattlefield(player2, "Giant Spider");
-        harness.assertNotInGraveyard(player2, "Giant Spider");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player2, "Kobolds of Kher Keep");
+        harness.assertNotInGraveyard(player2, "Kobolds of Kher Keep");
+        harness.assertInGraveyard(player2, "Azure Drake");
+        harness.assertInGraveyard(player2, "Karakas");
     }
 
     @Test
     @DisplayName("Returns the targeted creature when it is the only creature in its owner's graveyard")
     void returnsTargetWhenItIsOnlyCreatureInGraveyard() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card target = new AzureDrake();
+        target.setOwnerId(player2.getId());
+        harness.addToBattlefield(player2, target);
 
-        Card shock = new Shock();
-        shock.setOwnerId(player2.getId());
-        harness.setGraveyard(player2, List.of(shock));
+        Card nonCreature = new Karakas();
+        nonCreature.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(nonCreature));
 
-        harness.setHand(player1, List.of(new Reincarnation(), new GoForTheThroat()));
+        harness.setHand(player1, List.of(new Reincarnation(), new ActiveVolcano()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Azure Drake");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        resolveStack();
+        harness.castInstant(player1, 0, 0, targetId);
+        resolveAllTriggers();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player2, "Azure Drake");
+        harness.assertNotInGraveyard(player2, "Azure Drake");
+        harness.assertInGraveyard(player2, "Karakas");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Uses the targeted creature's owner's graveyard when another player controls it")
+    void usesTargetOwnersGraveyardWhenControllerDiffers() {
+        Card target = new AzureDrake();
+        target.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, target);
+
+        Card returned = new KoboldsOfKherKeep();
+        returned.setOwnerId(player2.getId());
+        Card nonCreature = new Karakas();
+        nonCreature.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(returned, nonCreature));
+
+        harness.setHand(player2, List.of(new Reincarnation(), new ActiveVolcano()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player1, "Azure Drake");
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.castInstant(player2, 0, 0, targetId);
+        resolveAllTriggers();
+
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.cardPool()).contains(returned).doesNotContain(nonCreature).hasSize(2);
+
+        harness.handleGraveyardCardChosen(player2, choice.cardPool().indexOf(returned));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Kobolds of Kher Keep");
+        harness.assertInGraveyard(player2, "Azure Drake");
+        harness.assertNotOnBattlefield(player1, "Azure Drake");
+    }
+
+    @Test
+    @DisplayName("Does not return a creature when the target survives")
+    void doesNothingWhenTargetSurvives() {
+        Card target = new AzureDrake();
+        target.setOwnerId(player2.getId());
+        harness.addToBattlefield(player2, target);
+
+        Card returned = new KoboldsOfKherKeep();
+        returned.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(returned));
+        harness.setHand(player1, List.of(new Reincarnation()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        UUID targetId = harness.getPermanentId(player2, "Azure Drake");
+        harness.castInstant(player1, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Azure Drake");
+        harness.assertInGraveyard(player2, "Kobolds of Kher Keep");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new Spellbook());
+        harness.addToBattlefield(player2, new Karakas());
         harness.setHand(player1, List.of(new Reincarnation()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        UUID spellbookId = harness.getPermanentId(player2, "Spellbook");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, spellbookId))
+        UUID karakasId = harness.getPermanentId(player2, "Karakas");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, karakasId))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

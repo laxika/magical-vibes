@@ -83,12 +83,13 @@ class ElderLandWurmTest extends BaseCardTest {
     void doesNotTriggerWhenItDoesNotBlock() {
         Permanent attacker = addCreatureReady(player1, new GiantSpider());
         attacker.setAttacking(true);
-        addCreatureReady(player2, new ElderLandWurm());
+        Permanent wurm = addCreatureReady(player2, new ElderLandWurm());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, wurm, Keyword.DEFENDER)).isTrue();
     }
 }

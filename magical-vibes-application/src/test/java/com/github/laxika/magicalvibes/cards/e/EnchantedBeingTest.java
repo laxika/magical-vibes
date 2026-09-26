@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
+import com.github.laxika.magicalvibes.cards.g.GiantStrength;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EnchantedBeing.class, GrizzlyBears.class, HolyStrength.class, ProdigalPyromancer.class})
+@CardUsed({EnchantedBeing.class, DAvenantArcher.class, GiantStrength.class})
 class EnchantedBeingTest extends BaseCardTest {
 
     @Test
@@ -22,14 +21,27 @@ class EnchantedBeingTest extends BaseCardTest {
         being.setBlocking(true);
         being.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attachHolyStrength(attacker);
+        Permanent attacker = addCreatureReady(player1, new DAvenantArcher());
+        attachGiantStrength(attacker);
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(being.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage from an enchanted creature regardless of Aura controller")
+    void preventsCombatDamageFromEnchantedCreatureRegardlessOfAuraController() {
+        Permanent being = addCreatureReady(player2, new EnchantedBeing());
+        being.setBlocking(true);
+        being.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player1, new DAvenantArcher());
+        attachGiantStrength(player2, attacker);
+        attacker.setAttacking(true);
+
+        resolveCombat();
 
         assertThat(being.getMarkedDamage()).isZero();
     }
@@ -41,23 +53,21 @@ class EnchantedBeingTest extends BaseCardTest {
         being.setBlocking(true);
         being.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DAvenantArcher());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
-        assertThat(being.getMarkedDamage()).isEqualTo(2);
+        assertThat(being.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Does not prevent noncombat damage from an enchanted creature")
     void doesNotPreventNoncombatDamageFromEnchantedCreature() {
         Permanent being = addCreatureReady(player2, new EnchantedBeing());
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
-        attachHolyStrength(pyromancer);
+        being.setBlocking(true);
+        Permanent archer = addCreatureReady(player1, new DAvenantArcher());
+        attachGiantStrength(archer);
 
         harness.activateAbility(player1, 0, null, being.getId());
         harness.passBothPriorities();
@@ -65,9 +75,13 @@ class EnchantedBeingTest extends BaseCardTest {
         assertThat(being.getMarkedDamage()).isEqualTo(1);
     }
 
-    private void attachHolyStrength(Permanent creature) {
-        Permanent aura = new Permanent(new HolyStrength());
+    private void attachGiantStrength(Permanent creature) {
+        attachGiantStrength(player1, creature);
+    }
+
+    private void attachGiantStrength(Player auraController, Permanent creature) {
+        Permanent aura = new Permanent(new GiantStrength());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        gd.playerBattlefields.get(auraController.getId()).add(aura);
     }
 }

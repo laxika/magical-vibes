@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.k.Karakas;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShieldWall.class, GrizzlyBears.class, Forest.class})
+@CardUsed({ShieldWall.class, BarbaryApes.class, Karakas.class})
 class ShieldWallTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving boosts all own creatures +0/+2")
     void resolvingBoostsAllOwnCreatures() {
-        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstCreature = addCreatureReady(player1, new BarbaryApes());
+        Permanent secondCreature = addCreatureReady(player1, new BarbaryApes());
         harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
@@ -29,8 +29,8 @@ class ShieldWallTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost opponent's creatures")
     void doesNotBoostOpponentCreatures() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new BarbaryApes());
+        Permanent opponentCreature = addCreatureReady(player2, new BarbaryApes());
         harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
@@ -44,20 +44,20 @@ class ShieldWallTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost noncreatures you control")
     void doesNotBoostNoncreaturesYouControl() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = addCreatureReady(player1, new BarbaryApes());
+        Permanent karakas = harness.addToBattlefieldAndReturn(player1, new Karakas());
         harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
         assertBoostedCreature(creature);
-        assertThat(forest.getPowerModifier()).isEqualTo(0);
-        assertThat(forest.getToughnessModifier()).isEqualTo(0);
+        assertThat(karakas.getPowerModifier()).isEqualTo(0);
+        assertThat(karakas.getToughnessModifier()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Boost resets at cleanup step")
     void boostResetsAtCleanup() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BarbaryApes());
         harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
@@ -89,7 +89,7 @@ class ShieldWallTest extends BaseCardTest {
         harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
-        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent laterCreature = addCreatureReady(player1, new BarbaryApes());
 
         assertThat(laterCreature.getPowerModifier()).isEqualTo(0);
         assertThat(laterCreature.getToughnessModifier()).isEqualTo(0);

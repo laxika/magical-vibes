@@ -25,12 +25,9 @@ class CatWarriorsTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent cat = addCreatureReady(player1, new CatWarriors());
-        cat.setAttacking(true);
-
-        prepareDeclareBlockers();
-
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(cat);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class)
@@ -43,12 +40,9 @@ class CatWarriorsTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent cat = addCreatureReady(player1, new CatWarriors());
-        cat.setAttacking(true);
-
-        prepareDeclareBlockers();
-
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(cat);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
@@ -62,12 +56,9 @@ class CatWarriorsTest extends BaseCardTest {
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent cat = addCreatureReady(player1, new CatWarriors());
-        cat.setAttacking(true);
-
-        prepareDeclareBlockers();
-
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(cat);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 

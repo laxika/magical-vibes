@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,14 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Recall.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class})
+@CardUsed({Recall.class, BarbaryApes.class, DurkwoodBoars.class})
 class RecallTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discard X cards, then return that many from graveyard to hand, and exile Recall")
     void discardsThenReturnsThenExiles() {
-        harness.setGraveyard(player1, List.of(new Forest(), new Mountain()));
-        harness.setHand(player1, List.of(new Recall(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new BarbaryApes(), new DurkwoodBoars()));
+        harness.setHand(player1, List.of(new Recall(), new DurkwoodBoars(), new DurkwoodBoars()));
         harness.addMana(player1, ManaColor.BLUE, 3); // {X}{X}{U} with X=1 => 3 mana
 
         harness.castSorcery(player1, 0, 1);
@@ -35,9 +33,9 @@ class RecallTest extends BaseCardTest {
 
         // The discarded card is now in the graveyard; the controller returns one card from it.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0); // return Forest
+        harness.handleGraveyardCardChosen(player1, 0); // return Barbary Apes
 
-        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Barbary Apes");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         // Recall is exiled, not put into the graveyard.
@@ -49,8 +47,8 @@ class RecallTest extends BaseCardTest {
     @Test
     @DisplayName("Only min(X, hand size) cards are discarded and returned")
     void returnCountCappedByHandSize() {
-        harness.setGraveyard(player1, List.of(new Forest()));
-        harness.setHand(player1, List.of(new Recall(), new GrizzlyBears(), new Island()));
+        harness.setGraveyard(player1, List.of(new BarbaryApes()));
+        harness.setHand(player1, List.of(new Recall(), new DurkwoodBoars(), new BarbaryApes()));
         harness.addMana(player1, ManaColor.BLUE, 7); // X=3 => 7 mana
 
         harness.castSorcery(player1, 0, 3);
@@ -76,7 +74,7 @@ class RecallTest extends BaseCardTest {
     @Test
     @DisplayName("Can return cards that were discarded by Recall")
     void returnsCardsDiscardedByRecall() {
-        harness.setHand(player1, List.of(new Recall(), new GrizzlyBears(), new Island()));
+        harness.setHand(player1, List.of(new Recall(), new BarbaryApes(), new DurkwoodBoars()));
         harness.addMana(player1, ManaColor.BLUE, 5); // X=2 => 5 mana
 
         harness.castSorcery(player1, 0, 2);
@@ -91,7 +89,7 @@ class RecallTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactlyInAnyOrder("Grizzly Bears", "Island");
+                .containsExactlyInAnyOrder("Barbary Apes", "Durkwood Boars");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Recall"));
@@ -115,14 +113,14 @@ class RecallTest extends BaseCardTest {
     @Test
     @DisplayName("X=0 discards and returns nothing but still exiles Recall")
     void zeroXDiscardsNothing() {
-        harness.setHand(player1, List.of(new Recall(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Recall(), new BarbaryApes()));
         harness.addMana(player1, ManaColor.BLUE, 1); // X=0 => {U}
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Barbary Apes");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Recall"));
     }
@@ -130,7 +128,7 @@ class RecallTest extends BaseCardTest {
     @Test
     @DisplayName("Returning cards for discarded cards cannot be declined")
     void returningCardsIsMandatory() {
-        harness.setHand(player1, List.of(new Recall(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Recall(), new BarbaryApes()));
         harness.addMana(player1, ManaColor.BLUE, 3); // X=1 => {X}{X}{U}
 
         harness.castSorcery(player1, 0, 1);

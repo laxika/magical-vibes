@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.c.ChainLightning;
+import com.github.laxika.magicalvibes.cards.p.PsionicEntity;
+import com.github.laxika.magicalvibes.cards.s.SpiritLink;
+import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,16 +18,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WallOfPutridFlesh.class, HolyStrength.class, ProdigalPyromancer.class,
-        Shock.class, SwordsToPlowshares.class})
+@CardUsed({WallOfPutridFlesh.class, SpiritLink.class, PsionicEntity.class,
+        BarbaryApes.class, TundraWolves.class, ChainLightning.class})
 class WallOfPutridFleshTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents damage from an enchanted creature")
     void preventsDamageFromEnchantedCreature() {
         Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
-        attachHolyStrength(pyromancer);
+        Permanent psionicEntity = addCreatureReady(player1, new PsionicEntity());
+        attachSpiritLink(psionicEntity);
 
         harness.activateAbility(player1, 0, null, wall.getId());
         harness.passBothPriorities();
@@ -37,42 +39,67 @@ class WallOfPutridFleshTest extends BaseCardTest {
     @DisplayName("Does not prevent damage from an unenchanted creature")
     void doesNotPreventDamageFromUnenchantedCreature() {
         Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
-        addCreatureReady(player1, new ProdigalPyromancer());
+        addCreatureReady(player1, new PsionicEntity());
 
         harness.activateAbility(player1, 0, null, wall.getId());
-        harness.passBothPriorities();
-
-        assertThat(wall.getMarkedDamage()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Does not prevent damage from a noncreature source")
-    void doesNotPreventDamageFromNoncreatureSource() {
-        Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castInstant(player1, 0, wall.getId());
         harness.passBothPriorities();
 
         assertThat(wall.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
+    @DisplayName("Prevents combat damage from an enchanted creature")
+    void preventsCombatDamageFromEnchantedCreature() {
+        Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
+        Permanent attacker = addCreatureReady(player1, new BarbaryApes());
+        attachSpiritLink(attacker);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Protection from white prevents damage from a white creature")
+    void protectionFromWhitePreventsWhiteCreatureDamage() {
+        Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
+        addCreatureReady(player1, new TundraWolves());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage from a noncreature source")
+    void doesNotPreventDamageFromNoncreatureSource() {
+        Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
+        harness.setHand(player1, List.of(new ChainLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, wall.getId());
+        harness.passBothPriorities();
+
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
+        harness.handleMayAbilityChosen(player2, false);
+    }
+
+    @Test
     @DisplayName("Cannot be targeted by a white spell")
     void cannotBeTargetedByWhiteSpell() {
         Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
-        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.setHand(player1, List.of(new SpiritLink()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, wall.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, wall.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from white");
     }
 
-    private void attachHolyStrength(Permanent creature) {
-        Permanent aura = new Permanent(new HolyStrength());
+    private void attachSpiritLink(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SpiritLink());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
     }
 }

@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Stangg.class)
 class StanggTest extends BaseCardTest {
 
     @Test
@@ -23,6 +23,7 @@ class StanggTest extends BaseCardTest {
         Permanent twin = findPermanent(player1, "Stangg Twin");
         assertThat(twin.getCard().isToken()).isTrue();
         assertThat(twin.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(twin.getCard().getSupertypes()).containsExactly(CardSupertype.LEGENDARY);
         assertThat(twin.getCard().getPower()).isEqualTo(3);
         assertThat(twin.getCard().getToughness()).isEqualTo(4);
         assertThat(twin.getCard().getColor()).isEqualTo(CardColor.RED);
@@ -41,6 +42,7 @@ class StanggTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Stangg Twin");
         harness.assertInGraveyard(player1, "Stangg");
+        assertThat(gameLogContains("Stangg Twin is exiled.")).isTrue();
     }
 
     @Test
@@ -78,11 +80,7 @@ class StanggTest extends BaseCardTest {
     }
 
     private Permanent castStangg() {
-        harness.setHand(player1, List.of(new Stangg()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Stangg(), "{4}{R}{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Stangg");
     }

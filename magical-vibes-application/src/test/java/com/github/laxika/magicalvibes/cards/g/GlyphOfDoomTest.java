@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.w.WallOfEarth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,16 +16,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GlyphOfDoom.class, WallOfWood.class, GrizzlyBears.class})
+@CardUsed({GlyphOfDoom.class, WallOfEarth.class, DurkwoodBoars.class})
 class GlyphOfDoomTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys creatures blocked by the targeted Wall at the next end of combat")
     void destroysCreaturesBlockedByTargetedWall() {
-        Permanent wall = addCreatureReady(player2, new WallOfWood());
-        Permanent otherBlocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent affectedAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent unaffectedAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        Permanent otherBlocker = addCreatureReady(player2, new WallOfEarth());
+        Permanent affectedAttacker = addCreatureReady(player1, new DurkwoodBoars());
+        Permanent unaffectedAttacker = addCreatureReady(player1, new DurkwoodBoars());
         affectedAttacker.setAttacking(true);
         unaffectedAttacker.setAttacking(true);
 
@@ -35,19 +36,20 @@ class GlyphOfDoomTest extends BaseCardTest {
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 1)));
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(affectedAttacker, unaffectedAttacker);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(affectedAttacker, unaffectedAttacker);
 
         advanceThroughEndOfCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(unaffectedAttacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(wall, otherBlocker);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Durkwood Boars");
     }
 
     @Test
     @DisplayName("Cannot target a non-Wall creature")
     void cannotTargetNonWallCreature() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new DurkwoodBoars());
 
         harness.setHand(player1, List.of(new GlyphOfDoom()));
         harness.addMana(player1, ManaColor.BLACK, 1);

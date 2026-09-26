@@ -24,9 +24,8 @@ class AntiMagicAuraTest extends BaseCardTest {
     private Permanent enchantedBears() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new AntiMagicAura());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new AntiMagicAura());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return bears;
     }
 

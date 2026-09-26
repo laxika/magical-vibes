@@ -1,60 +1,77 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.b.BlackKnight;
+import com.github.laxika.magicalvibes.cards.a.AmrouKithkin;
+import com.github.laxika.magicalvibes.cards.a.ArenaOfTheAncients;
 import com.github.laxika.magicalvibes.cards.b.BlightsteelColossus;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HowlingMine;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.ClergyOfTheHolyNimbus;
+import com.github.laxika.magicalvibes.cards.w.WalkingDead;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-@CardUsed({Hellfire.class, BlackKnight.class, GrizzlyBears.class, HowlingMine.class, BlightsteelColossus.class})
+@CardUsed({Hellfire.class, AmrouKithkin.class, ArenaOfTheAncients.class,
+        WalkingDead.class, BlightsteelColossus.class, ClergyOfTheHolyNimbus.class})
 class HellfireTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys nonblack creatures and deals three damage plus the number destroyed")
     void destroysNonblackCreaturesAndDealsDamageBasedOnDestroyedCount() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new BlackKnight());
-        harness.addToBattlefield(player2, new HowlingMine());
+        harness.addToBattlefield(player1, new AmrouKithkin());
+        harness.addToBattlefield(player2, new AmrouKithkin());
+        harness.addToBattlefield(player1, new WalkingDead());
+        harness.addToBattlefield(player2, new ArenaOfTheAncients());
 
         castHellfire();
 
-        GameData gameData = harness.getGameData();
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Black Knight");
-        harness.assertOnBattlefield(player2, "Howling Mine");
-        assertThat(gameData.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        harness.assertNotOnBattlefield(player1, "Amrou Kithkin");
+        harness.assertNotOnBattlefield(player2, "Amrou Kithkin");
+        harness.assertOnBattlefield(player1, "Walking Dead");
+        harness.assertOnBattlefield(player2, "Arena of the Ancients");
+        harness.assertLife(player1, 15);
     }
 
     @Test
     @DisplayName("Does not count an indestructible creature in the damage")
     void doesNotCountIndestructibleCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AmrouKithkin());
         harness.addToBattlefield(player2, new BlightsteelColossus());
 
         castHellfire();
 
-        GameData gameData = harness.getGameData();
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Amrou Kithkin");
         harness.assertOnBattlefield(player2, "Blightsteel Colossus");
-        assertThat(gameData.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Does not count a creature that regenerates in the damage")
+    void doesNotCountRegeneratedCreature() {
+        harness.addToBattlefield(player1, new AmrouKithkin());
+        harness.addToBattlefield(player2, new ClergyOfTheHolyNimbus());
+
+        castHellfire();
+
+        harness.assertNotOnBattlefield(player1, "Amrou Kithkin");
+        harness.assertOnBattlefield(player2, "Clergy of the Holy Nimbus");
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Deals only three damage when no nonblack creature dies")
+    void dealsOnlyBaseDamageWhenNoCreatureDies() {
+        harness.addToBattlefield(player1, new ArenaOfTheAncients());
+        harness.addToBattlefield(player2, new WalkingDead());
+
+        castHellfire();
+
+        harness.assertOnBattlefield(player1, "Arena of the Ancients");
+        harness.assertOnBattlefield(player2, "Walking Dead");
+        harness.assertLife(player1, 17);
     }
 
     private void castHellfire() {
-        harness.setHand(player1, List.of(new Hellfire()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Hellfire(), "{2}{B}{B}{B}");
         harness.passBothPriorities();
     }
 }

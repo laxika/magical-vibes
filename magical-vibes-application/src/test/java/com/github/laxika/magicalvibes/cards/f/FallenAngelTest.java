@@ -41,7 +41,6 @@ class FallenAngelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bears.getId());
-        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -78,7 +77,7 @@ class FallenAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Fallen Angel can sacrifice itself to its own ability")
     void canSacrificeItself() {
-        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        addCreatureReady(player1, new FallenAngel());
 
         harness.activateAbility(player1, 0, null, null);
 

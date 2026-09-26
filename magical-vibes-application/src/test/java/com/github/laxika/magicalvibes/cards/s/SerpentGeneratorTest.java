@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Delirium;
+import com.github.laxika.magicalvibes.cards.p.PitScorpion;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,12 +36,17 @@ class SerpentGeneratorTest extends BaseCardTest {
     @DisplayName("Activating the ability creates a 1/1 colorless Snake artifact creature token")
     void createsSnakeToken() {
         Permanent token = createSnakeToken();
+        Permanent generator = findPermanent(player1, "Serpent Generator");
 
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isNull();
+        assertThat(token.getCard().getColors()).isEmpty();
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SNAKE);
         assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(generator.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -73,11 +79,26 @@ class SerpentGeneratorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, token.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, token.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(PitScorpion.class)
+    @DisplayName("The created Snake token does not give poison when it deals damage to a creature")
+    void snakeTokenDoesNotGivePoisonWhenBlocked() {
+        Permanent token = createSnakeToken();
+        token.setSummoningSick(false);
+        token.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new PitScorpion());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(token));
+
+        resolveCombat();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
     }
 }

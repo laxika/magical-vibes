@@ -144,6 +144,44 @@ class GaseousFormTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Merfolk of the Pearl Trident");
     }
 
+    @Test
+    @DisplayName("Enchanted blocker deals no combat damage to the attacking creature")
+    void enchantedBlockerDealsNoCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new GaseousForm());
+        aura.setAttachedTo(blocker.getId());
+
+        resolveCombat();
+
+        // Attacker survives because the enchanted blocker's combat damage is prevented
+        harness.assertOnBattlefield(player1, "Merfolk of the Pearl Trident");
+    }
+
+    @Test
+    @DisplayName("Unpreventable combat damage still reaches a creature enchanted with Gaseous Form")
+    void unpreventableDamageStillReachesEnchantedCreature() {
+        Permanent attacker = addCreatureReady(player1, new Malignus());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new MerfolkOfThePearlTrident());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new GaseousForm());
+        aura.setAttachedTo(blocker.getId());
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Merfolk of the Pearl Trident");
+        harness.assertOnBattlefield(player1, "Malignus");
+    }
+
     // ===== Non-combat damage is NOT prevented =====
 
     @Test

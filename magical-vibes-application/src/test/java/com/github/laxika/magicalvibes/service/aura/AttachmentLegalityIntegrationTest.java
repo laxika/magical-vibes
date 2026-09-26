@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.SpiritLink;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
  * End-to-end CR 704.5n check: an aura whose enchanted creature gains protection from the
  * aura's color is put into its owner's graveyard by state-based actions.
  */
+@CardUsed({ApostlesBlessing.class, GrizzlyBears.class, SpiritLink.class})
 class AttachmentLegalityIntegrationTest extends BaseCardTest {
 
     @Test

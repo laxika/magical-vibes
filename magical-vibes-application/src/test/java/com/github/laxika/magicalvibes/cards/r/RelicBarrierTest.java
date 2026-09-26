@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.b.BatteredGolem;
-import com.github.laxika.magicalvibes.cards.e.EonHub;
-import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
+import com.github.laxika.magicalvibes.cards.a.AzureDrake;
+import com.github.laxika.magicalvibes.cards.b.BronzeHorse;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RelicBarrier.class, EonHub.class, FurnaceWhelp.class, BatteredGolem.class})
+@CardUsed({RelicBarrier.class, BronzeHorse.class, AzureDrake.class})
 class RelicBarrierTest extends BaseCardTest {
 
     @Test
@@ -44,10 +43,22 @@ class RelicBarrierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tap ability can target an artifact creature")
+    void canTargetArtifactCreature() {
+        addReadyBarrier(player1);
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new BronzeHorse());
+
+        harness.activateAbility(player1, 0, null, artifactCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifactCreature.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Tap ability can target an already-tapped artifact creature")
     void canTargetAlreadyTappedArtifactCreature() {
         addReadyBarrier(player1);
-        Permanent artifactCreature = addArtifactCreature(player2);
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new BronzeHorse());
         artifactCreature.tap();
 
         harness.activateAbility(player1, 0, null, artifactCreature.getId());
@@ -60,7 +71,7 @@ class RelicBarrierTest extends BaseCardTest {
     @DisplayName("Tap ability rejects a non-artifact target")
     void rejectsNonArtifactTarget() {
         addReadyBarrier(player1);
-        Permanent creature = addCreatureReady(player2, new FurnaceWhelp());
+        Permanent creature = addCreatureReady(player2, new AzureDrake());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -73,10 +84,6 @@ class RelicBarrierTest extends BaseCardTest {
     }
 
     private Permanent addArtifact(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new EonHub());
-    }
-
-    private Permanent addArtifactCreature(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new BatteredGolem());
+        return harness.addToBattlefieldAndReturn(player, new RelicBarrier());
     }
 }

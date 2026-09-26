@@ -16,8 +16,7 @@ class FireSpritesTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {G} and tapping Fire Sprites adds {R}")
     void addsRedMana() {
-        Permanent sprites = harness.addToBattlefieldAndReturn(player1, new FireSprites());
-        sprites.setSummoningSick(false);
+        Permanent sprites = addCreatureReady(player1, new FireSprites());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -31,8 +30,7 @@ class FireSpritesTest extends BaseCardTest {
     @Test
     @DisplayName("Fire Sprites cannot activate without green mana")
     void requiresGreenMana() {
-        Permanent sprites = harness.addToBattlefieldAndReturn(player1, new FireSprites());
-        sprites.setSummoningSick(false);
+        Permanent sprites = addCreatureReady(player1, new FireSprites());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,6 +38,20 @@ class FireSpritesTest extends BaseCardTest {
 
         assertThat(sprites.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Fire Sprites cannot use red mana to pay its green activation cost")
+    void requiresGreenManaSpecifically() {
+        Permanent sprites = addCreatureReady(player1, new FireSprites());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(sprites.isTapped()).isFalse();
     }
 
     @Test

@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.p.Pariah;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, IvoryMask.class, Pariah.class})
+@CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, Pariah.class,
+        PlatinumAngel.class, IvoryMask.class})
 class UnderworldDreamsTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -37,7 +36,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -48,11 +47,24 @@ class UnderworldDreamsTest extends BaseCardTest {
 
         advanceToDraw(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
-    @DisplayName("Opponent drawing two cards from a spell takes 2 damage")
+    @DisplayName("An unsuccessful empty-library draw does not trigger Underworld Dreams")
+    void doesNotTriggerWhenOpponentCannotDraw() {
+        harness.addToBattlefield(player1, new UnderworldDreams());
+        harness.addToBattlefield(player2, new PlatinumAngel());
+        harness.setLibrary(player2, List.of());
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player2);
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Opponent drawing two cards from a spell causes 2 damage")
     void triggersPerCardDrawnFromSpell() {
         harness.addToBattlefield(player1, new UnderworldDreams());
         harness.setLife(player2, 20);
@@ -61,13 +73,12 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castFromHand(player2, new CounselOfTheSoratami(), "{2}{U}");
+        harness.passBothPriorities(); // resolve Counsel of the Soratami
+        harness.passBothPriorities(); // resolve first Underworld Dreams trigger
+        harness.passBothPriorities(); // resolve second Underworld Dreams trigger
 
-        harness.castAndResolveSorcery(player2, 0, 0);
-        resolveAllTriggers();
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -81,7 +92,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve first trigger
         harness.passBothPriorities(); // resolve second trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -98,8 +109,8 @@ class UnderworldDreamsTest extends BaseCardTest {
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("redirected Underworld Dreams damage"));
+        harness.assertLife(player2, 20);
+        assertThat(gameLogContains("redirected Underworld Dreams damage")).isTrue();
     }
 
     @Test

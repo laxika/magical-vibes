@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.j.JeditOjanen;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,12 +9,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Karakas.class, GrizzlyBears.class})
+@CardUsed({Karakas.class, JeditOjanen.class, BarbaryApes.class})
 class KarakasTest extends BaseCardTest {
 
     @Test
@@ -31,24 +29,33 @@ class KarakasTest extends BaseCardTest {
     @DisplayName("Tapping Karakas returns a target legendary creature to its owner's hand")
     void returnsLegendaryCreatureToOwnersHand() {
         harness.addToBattlefield(player1, new Karakas());
-        GrizzlyBears legendaryBears = new GrizzlyBears();
-        legendaryBears.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, legendaryBears);
+        Permanent jedit = harness.addToBattlefieldAndReturn(player2, new JeditOjanen());
 
-        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.activateAbility(player1, 0, 1, null, jedit.getId());
         harness.passBothPriorities();
 
-        harness.assertInHand(player2, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Jedit Ojanen");
+        harness.assertNotOnBattlefield(player2, "Jedit Ojanen");
     }
 
     @Test
     @DisplayName("Karakas cannot target a nonlegendary creature")
     void cannotTargetNonlegendaryCreature() {
         harness.addToBattlefield(player1, new Karakas());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent apes = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, apes.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("legendary creature");
+    }
+
+    @Test
+    @DisplayName("Karakas cannot target a legendary noncreature permanent")
+    void cannotTargetLegendaryNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new Karakas());
+        Permanent legendaryLand = harness.addToBattlefieldAndReturn(player2, new Karakas());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, legendaryLand.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("legendary creature");
     }
