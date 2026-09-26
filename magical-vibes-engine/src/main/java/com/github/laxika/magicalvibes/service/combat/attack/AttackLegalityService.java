@@ -263,7 +263,7 @@ public class AttackLegalityService {
         UUID protectedPlayerId = targetIsPlayer ? targetId
                 : gameQueryService.findPermanentController(gameData, targetId);
         if (protectedPlayerId == null) return true;
-        if (cantAttackCardOwner(attacker, targetPermanent, targetIsPlayer, targetId, protectedPlayerId)) {
+        if (cantAttackCardOwner(gameData, attacker, targetPermanent, targetIsPlayer, targetId, protectedPlayerId)) {
             return false;
         }
         // Restrictions come from static abilities of the protected player's permanents (Form of the
@@ -445,9 +445,11 @@ public class AttackLegalityService {
                 .contains(targetId);
     }
 
-    private boolean cantAttackCardOwner(Permanent attacker, Permanent targetPermanent,
+    private boolean cantAttackCardOwner(GameData gameData, Permanent attacker, Permanent targetPermanent,
                                         boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
         boolean restrictionPresent = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackCardOwnerEffect.class::isInstance)
+                || gameQueryService.getGrantedEffects(gameData, attacker).stream()
                 .anyMatch(CantAttackCardOwnerEffect.class::isInstance);
         if (!restrictionPresent || attacker.getOriginalCard().getOwnerId() == null) {
             return false;

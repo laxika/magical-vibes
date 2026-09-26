@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,10 +65,21 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                     entry.getTargetId());
             case TRIGGERING_PLAYER -> entry.getTargetId();
             case TRIGGERING_SPELL_CONTROLLER -> entry.getTargetId();
+            case ACTIVE_PLAYER -> entry.getActivePlayerId() != null
+                    ? entry.getActivePlayerId() : gameData.activePlayerId;
             case ANY_PLAYER, ANY_OTHER_PLAYER -> null;
         };
         if (payer == null) {
             return;
+        }
+
+        String manaCost = e.manaCost();
+        if (e.dynamicManaCost() != null) {
+            Permanent source = entry.getSourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            int amount = amountEvaluationService.evaluate(gameData, e.dynamicManaCost(),
+                    AmountContext.forStackEntry(entry, source).withControllerId(payer));
+            manaCost = "{" + amount + "}";
         }
 
         gameData.resolvingMayEffectFromStack = true;
@@ -74,7 +89,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 e.wrapped() == null ? List.of() : List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
                 entry.getTargetId(),
-                e.manaCost(),
+                manaCost,
                 entry.getSourcePermanentId(),
                 null,
                 0,

@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "272")
 @CardRegistration(set = "SIR", collectorNumber = "265")
+@CardRegistration(set = "LTC", collectorNumber = "310")
 public class ForebodingRuins extends Card {
 
     public ForebodingRuins() {

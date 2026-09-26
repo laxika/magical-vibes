@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -33,7 +32,13 @@ public class MayCastMilledSpellWithoutPayingHandler implements MayEffectHandlerB
             gameData.pendingMayAbilities.removeIf(pma -> pma.effects().stream()
                     .anyMatch(e -> e instanceof MayCastMilledSpellWithoutPayingManaCostEffect));
         }
+        MayCastMilledSpellWithoutPayingManaCostEffect marker = ability.effects().stream()
+                .filter(MayCastMilledSpellWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastMilledSpellWithoutPayingManaCostEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
         mayCastHandlerService.handleCastFromGraveyardChoice(gameData, player, accepted, ability,
-                new CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope.OPPONENT_GRAVEYARD, true));
+                new CastTargetInstantOrSorceryFromGraveyardEffect(
+                        marker.graveyardScope(), true, false, marker.filter()));
     }
 }

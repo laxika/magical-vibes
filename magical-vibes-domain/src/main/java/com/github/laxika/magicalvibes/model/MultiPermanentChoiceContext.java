@@ -1139,6 +1139,55 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Secret council: the current player secretly voted for a creature. */
+    record SecretCouncilChoice(UUID effectControllerId,
+                               java.util.List<UUID> remainingPlayerIds,
+                               java.util.Map<UUID, Integer> votes,
+                               String sourceName)
+            implements MultiPermanentChoiceContext {
+        public SecretCouncilChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Círdan the Shipwright: the current player secretly voted for a player. */
+    record ElrondFellowshipChoice(UUID effectControllerId,
+                                  java.util.List<UUID> remainingVoterIds,
+                                  java.util.List<UUID> chosenCreatureIds,
+                                  int aidVotes,
+                                  String sourceName)
+            implements MultiPermanentChoiceContext {
+        public ElrondFellowshipChoice {
+            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
+            chosenCreatureIds = java.util.List.copyOf(chosenCreatureIds);
+        }
+    }
+
+    /** Cirdan the Shipwright: the current player secretly voted for a player. */
+    record CirdanVoteChoice(UUID effectControllerId,
+                            java.util.List<UUID> remainingVoterIds,
+                            java.util.Map<UUID, Integer> votes,
+                            String sourceName)
+            implements MultiPermanentChoiceContext {
+        public CirdanVoteChoice {
+            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
+            votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Círdan the Shipwright: a player chose a permanent card to put onto the battlefield. */
+    record CirdanHandChoice(UUID playerId,
+                            java.util.List<UUID> remainingPlayerIds,
+                            java.util.List<UUID> chosenCardIds,
+                            String sourceName)
+            implements MultiPermanentChoiceContext {
+        public CirdanHandChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            chosenCardIds = java.util.List.copyOf(chosenCardIds);
+        }
+    }
+
     /** Expropriate: the controller chooses a permanent owned by the current money voter. */
     record ExpropriatePermanentChoice(UUID effectControllerId, UUID voterId,
                                       java.util.List<UUID> remainingMoneyVoterIds,

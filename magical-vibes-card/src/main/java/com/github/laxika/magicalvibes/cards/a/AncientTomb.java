@@ -20,6 +20,8 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "46")
 @CardRegistration(set = "EOS", collectorNumber = "91")
 @CardRegistration(set = "EOS", collectorNumber = "136")
+@CardRegistration(set = "LTC", collectorNumber = "357")
+@CardRegistration(set = "LTC", collectorNumber = "387")
 public class AncientTomb extends Card {
 
     public AncientTomb() {

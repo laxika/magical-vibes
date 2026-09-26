@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "C15", collectorNumber = "37")
+@CardRegistration(set = "LTC", collectorNumber = "247")
 public class GreatOakGuardian extends Card {
 
     public GreatOakGuardian() {

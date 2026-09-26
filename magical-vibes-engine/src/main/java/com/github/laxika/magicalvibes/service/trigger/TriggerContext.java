@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.VotingResult;
 
 import java.util.UUID;
 import java.util.Map;
@@ -876,6 +877,9 @@ public sealed interface TriggerContext {
     }
 
     record Crime(UUID committingPlayerId) implements TriggerContext {}
+
+    /** Context for abilities that trigger after all players finish voting. */
+    record VotingFinished(VotingResult result) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
     record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,

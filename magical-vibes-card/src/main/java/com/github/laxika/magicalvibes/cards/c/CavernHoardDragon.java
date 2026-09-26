@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "HOC", collectorNumber = "23")
 @CardRegistration(set = "HOC", collectorNumber = "63")
+@CardRegistration(set = "LTC", collectorNumber = "31")
+@CardRegistration(set = "LTC", collectorNumber = "114")
 public class CavernHoardDragon extends Card {
 
     public CavernHoardDragon() {

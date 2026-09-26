@@ -277,6 +277,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
@@ -325,6 +326,7 @@ public class GameQueryService {
 
     public static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
     public static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+    private static final PermanentIsLandPredicate LAND_FILTER = new PermanentIsLandPredicate();
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST,
             CardSubtype.MOUNTAIN,
@@ -2692,7 +2694,12 @@ public class GameQueryService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (isLand(gameData, permanent)) {
+            // Static conditions can ask for land counts while the layered board is being built.
+            // Calling isLand there would re-enter static-bonus assembly for a conditional static
+            // effect such as Verge Rangers, so use the already-computed layer-4 state instead.
+            if (isStaticEvaluationActive()
+                    ? predicateEvaluationService.matchesStaticLeaf(permanent, LAND_FILTER)
+                    : isLand(gameData, permanent)) {
                 count++;
             }
         }
@@ -3240,12 +3247,6 @@ public class GameQueryService {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantBeSacrificedEffect.class::isInstance)) {
             return true;
-        }
-        UUID controllerId = findPermanentController(gameData, permanent.getId());
-        if (gameData.currentStep != TurnStep.END_STEP
-                || controllerId == null
-                || !controllerId.equals(gameData.activePlayerId)) {
-            return false;
         }
         return hasGrantedEffect(gameData, permanent, CantBeSacrificedEffect.class);
     }
@@ -6157,6 +6158,9 @@ public class GameQueryService {
         if (target == null || computeStaticBonus(gameData, target).protectionRemoved()) {
             return false;
         }
+        if (hasProtectionFromRingBearer(gameData, target, source)) {
+            return true;
+        }
         if (hasProtectionFromOpponentCreature(gameData, target, source)) {
             return true;
         }
@@ -6179,6 +6183,24 @@ public class GameQueryService {
                 || hasProtectionFromPermanentsWithCounters(gameData, target, source)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, source)
                 || hasProtectionFromSourceManaValue(target, source.getCard());
+    }
+
+    private boolean hasProtectionFromRingBearer(GameData gameData, Permanent target, Permanent source) {
+        if (target == null || source == null || !isRingBearer(gameData, source)) {
+            return false;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, target);
+        if (bonus.losesAllAbilities() || bonus.protectionRemoved()) {
+            return false;
+        }
+        return target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(ProtectionGrantingEffect.class::isInstance)
+                .map(ProtectionGrantingEffect.class::cast)
+                .anyMatch(ProtectionGrantingEffect::protectionFromRingBearers)
+                || bonus.grantedEffects().stream()
+                .filter(ProtectionGrantingEffect.class::isInstance)
+                .map(ProtectionGrantingEffect.class::cast)
+                .anyMatch(ProtectionGrantingEffect::protectionFromRingBearers);
     }
 
     private boolean hasProtectionFromModifiedCreatures(GameData gameData, Permanent target, Permanent source) {

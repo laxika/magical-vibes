@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -97,13 +98,15 @@ public class WarpWorldService {
             batch.add(permanent);
 
             if (placement.attachmentTargetId() != null) {
-                boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
-                if (hasControlEffect) {
+                CardEffect controlEffect = card.getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElse(null);
+                if (controlEffect != null) {
                     Permanent target = gameQueryService.findPermanentById(gameData, placement.attachmentTargetId());
                     if (target != null) {
                         creatureControlService.applyControlEffect(gameData, controllerId, target,
-                                new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                                controlEffect, EffectDuration.WHILE_ATTACHED,
                                 permanent.getId(), card.getName());
                     }
                 }

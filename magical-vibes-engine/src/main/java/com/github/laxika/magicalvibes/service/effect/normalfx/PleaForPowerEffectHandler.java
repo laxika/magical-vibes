@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PleaForPowerEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class PleaForPowerEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,6 +54,7 @@ public class PleaForPowerEffectHandler implements NormalEffectHandlerBean {
                                UUID effectControllerId, Map<String, Integer> votes, String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             if (pendingEntry == null) {
                 throw new IllegalStateException("Plea for Power resolution is not resumable");

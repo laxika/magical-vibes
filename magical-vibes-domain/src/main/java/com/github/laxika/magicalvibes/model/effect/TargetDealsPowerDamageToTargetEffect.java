@@ -14,7 +14,8 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup,
                                                    int victimTargetGroup,
-                                                   int powerMultiplier) implements CardEffect {
+                                                   int powerMultiplier,
+                                                   boolean recordExcessDamage) implements CardEffect {
 
     public TargetDealsPowerDamageToTargetEffect {
         if (powerMultiplier < 1) {
@@ -23,20 +24,32 @@ public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup,
     }
 
     public TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int victimTargetGroup) {
-        this(sourceTargetGroup, victimTargetGroup, 1);
+        this(sourceTargetGroup, victimTargetGroup, 1, false);
     }
 
     /** "Target creature deals damage equal to its power to another target" — groups 0 and 1. */
     public TargetDealsPowerDamageToTargetEffect() {
-        this(0, 1, 1);
+        this(0, 1, 1, false);
     }
 
     public TargetDealsPowerDamageToTargetEffect(int powerMultiplier) {
-        this(0, 1, powerMultiplier);
+        this(0, 1, powerMultiplier, false);
+    }
+
+    public TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int victimTargetGroup,
+                                                int powerMultiplier) {
+        this(sourceTargetGroup, victimTargetGroup, powerMultiplier, false);
+    }
+
+    /** Bite variant that records excess damage for a following {@link com.github.laxika.magicalvibes.model.amount.EventValue}. */
+    public static TargetDealsPowerDamageToTargetEffect recordingExcessDamage() {
+        return new TargetDealsPowerDamageToTargetEffect(0, 1, 1, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.playerOrPermanent());
+        return recordExcessDamage
+                ? TargetSpec.harmful(TargetPredicates.creature())
+                : TargetSpec.benign(TargetPredicates.playerOrPermanent());
     }
 }

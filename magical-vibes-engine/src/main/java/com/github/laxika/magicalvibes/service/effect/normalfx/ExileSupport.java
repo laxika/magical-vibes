@@ -153,9 +153,15 @@ public class ExileSupport {
      * that turn by {@code TurnCleanupService}.
      */
     public void grantPlayUntilOwnersNextTurn(GameData gameData, UUID cardId, UUID ownerId) {
+        grantPlayUntilNextTurnOfPlayer(gameData, cardId, ownerId, ownerId);
+    }
+
+    /** Grants {@code permissionPlayerId} permission until the end of {@code expiryPlayerId}'s next turn. */
+    public void grantPlayUntilNextTurnOfPlayer(GameData gameData, UUID cardId,
+                                                UUID permissionPlayerId, UUID expiryPlayerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
-        int expireTurn = gameData.turnNumber + (ownerId.equals(gameData.activePlayerId) ? 2 : 1);
-        gameData.exilePlayPermissions.put(cardId, ownerId);
+        int expireTurn = gameData.turnNumber + (expiryPlayerId.equals(gameData.activePlayerId) ? 2 : 1);
+        gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
     }
 

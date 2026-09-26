@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "PIO", collectorNumber = "273")
 @CardRegistration(set = "C15", collectorNumber = "302")
 @CardRegistration(set = "CMM", collectorNumber = "426")
+@CardRegistration(set = "LTC", collectorNumber = "326")
 public class RoguesPassage extends Card {
 
     public RoguesPassage() {

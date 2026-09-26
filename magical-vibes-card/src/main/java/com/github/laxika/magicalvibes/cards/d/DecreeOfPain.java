@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "C13", collectorNumber = "72")
 @CardRegistration(set = "CMM", collectorNumber = "148")
 @CardRegistration(set = "CMM", collectorNumber = "508")
+@CardRegistration(set = "LTC", collectorNumber = "199")
 public class DecreeOfPain extends Card {
 
     public DecreeOfPain() {

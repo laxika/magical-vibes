@@ -1264,10 +1264,10 @@ public class MiscTriggerCollectorService {
             PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
+        int lifeGained = ((TriggerContext.LifeGain) ctx).lifeGainedAmount();
 
         if (sourceCard.getSpellTargets().stream()
                 .anyMatch(target -> target.getDynamicMaxTargets() != null)) {
-            int lifeGained = ((TriggerContext.LifeGain) ctx).lifeGainedAmount();
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     sourceCard,
                     match.controllerId(),
@@ -1294,7 +1294,9 @@ public class MiscTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 List.of(effect),
-                match.permanent().getId()));
+                match.permanent().getId(),
+                false,
+                lifeGained));
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on life gain (put counter on target)",
@@ -1422,14 +1424,20 @@ public class MiscTriggerCollectorService {
     private boolean handleLifeChangeBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        if (ctx instanceof TriggerContext.LifeGain lifeGain) {
+            entry.setEventValue(lifeGain.lifeGainedAmount());
+        } else if (ctx instanceof TriggerContext.LifeLoss lifeLoss) {
+            entry.setEventValue(lifeLoss.lifeLostAmount());
+        }
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }

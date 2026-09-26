@@ -12,6 +12,8 @@ import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "141")
 @CardRegistration(set = "EXP", collectorNumber = "41")
+@CardRegistration(set = "LTC", collectorNumber = "368")
+@CardRegistration(set = "LTC", collectorNumber = "398")
 public class KorHaven extends Card {
 
     public KorHaven() {

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "147")
 @CardRegistration(set = "V12", collectorNumber = "11")
+@CardRegistration(set = "LTC", collectorNumber = "320")
 public class MurmuringBosk extends Card {
 
     public MurmuringBosk() {

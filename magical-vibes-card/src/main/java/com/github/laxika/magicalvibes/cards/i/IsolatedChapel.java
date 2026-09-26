@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "739")
 @CardRegistration(set = "DMR", collectorNumber = "249")
 @CardRegistration(set = "YEOE", collectorNumber = "36")
+@CardRegistration(set = "LTC", collectorNumber = "318")
 public class IsolatedChapel extends Card {
 
     public IsolatedChapel() {

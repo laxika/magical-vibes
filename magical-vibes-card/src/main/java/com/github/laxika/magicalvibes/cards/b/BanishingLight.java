@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "THB", collectorNumber = "4")
 @CardRegistration(set = "TSR", collectorNumber = "291")
 @CardRegistration(set = "C15", collectorNumber = "61")
+@CardRegistration(set = "LTC", collectorNumber = "161")
 public class BanishingLight extends Card {
 
     public BanishingLight() {

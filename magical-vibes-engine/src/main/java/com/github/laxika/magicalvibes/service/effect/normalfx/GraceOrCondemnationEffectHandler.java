@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class GraceOrCondemnationEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,6 +60,7 @@ public class GraceOrCondemnationEffectHandler implements NormalEffectHandlerBean
                                UUID effectControllerId, Map<String, Integer> votes, String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             if (pendingEntry == null) {
                 throw new IllegalStateException("Grace-or-condemnation resolution is not resumable");

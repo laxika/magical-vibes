@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "265")
+@CardRegistration(set = "LTC", collectorNumber = "312")
 public class FrostboilSnarl extends Card {
 
     public FrostboilSnarl() {

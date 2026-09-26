@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "60")
+@CardRegistration(set = "LTC", collectorNumber = "192")
 public class LearnFromThePast extends Card {
 
     public LearnFromThePast() {

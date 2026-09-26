@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "1845")
+@CardRegistration(set = "LTC", collectorNumber = "227")
 public class ShinyImpetus extends Card {
 
     public ShinyImpetus() {

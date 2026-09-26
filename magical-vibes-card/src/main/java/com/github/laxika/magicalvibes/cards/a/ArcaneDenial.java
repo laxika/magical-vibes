@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 @CardRegistration(set = "A25", collectorNumber = "41")
 @CardRegistration(set = "SLD", collectorNumber = "1545")
 @CardRegistration(set = "C13", collectorNumber = "28")
+@CardRegistration(set = "LTC", collectorNumber = "184")
 public class ArcaneDenial extends Card {
 
     public ArcaneDenial() {

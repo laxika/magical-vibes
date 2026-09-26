@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "CMM", collectorNumber = "424")
 @CardRegistration(set = "CMM", collectorNumber = "617")
 @CardRegistration(set = "CMM", collectorNumber = "662")
+@CardRegistration(set = "LTC", collectorNumber = "325")
 public class RejuvenatingSprings extends Card {
 
     public RejuvenatingSprings() {

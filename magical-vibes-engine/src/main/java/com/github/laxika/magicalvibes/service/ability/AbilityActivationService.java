@@ -4231,9 +4231,8 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (putExiledCardIntoGraveyardCost != null) {
-            List<UUID> validExiledCardIds = gameData.getCardsExiledByPermanent(permanent.getId()).stream()
-                    .map(Card::getId)
-                    .toList();
+            List<UUID> validExiledCardIds = matchingCardsExiledWithSource(
+                    gameData, permanent, putExiledCardIntoGraveyardCost);
             if (validExiledCardIds.isEmpty()) {
                 throw new IllegalStateException("No card is exiled with this permanent");
             }
@@ -4413,7 +4412,8 @@ public class AbilityActivationService {
         Card paidExiledCardSnapshot = null;
         if (putExiledCardIntoGraveyardCost != null) {
             paidExiledCardSnapshot = payPutCardExiledWithSourceIntoGraveyardCost(
-                    gameData, player, permanent, putExiledCardIntoGraveyardCardId, Zone.EXILE);
+                    gameData, player, permanent, putExiledCardIntoGraveyardCardId, Zone.EXILE,
+                    putExiledCardIntoGraveyardCost);
         }
         if (putOpponentOwnedExiledCardIntoGraveyard) {
             payPutOpponentOwnedExiledCardIntoGraveyardCost(
@@ -6333,8 +6333,13 @@ public class AbilityActivationService {
             throw new IllegalStateException("No instant or sorcery spell you control to exile from the stack");
         }
 
-        if (abilityEffects.stream().anyMatch(PutCardExiledWithSourceIntoGraveyardCost.class::isInstance)
-                && gameData.getCardsExiledByPermanent(permanent.getId()).isEmpty()) {
+        PutCardExiledWithSourceIntoGraveyardCost putExiledCardIntoGraveyardCost = abilityEffects.stream()
+                .filter(PutCardExiledWithSourceIntoGraveyardCost.class::isInstance)
+                .map(PutCardExiledWithSourceIntoGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (putExiledCardIntoGraveyardCost != null
+                && matchingCardsExiledWithSource(gameData, permanent, putExiledCardIntoGraveyardCost).isEmpty()) {
             throw new IllegalStateException("No card is exiled with this permanent");
         }
 
@@ -8246,13 +8251,18 @@ public class AbilityActivationService {
 
     private Card payPutCardExiledWithSourceIntoGraveyardCost(GameData gameData, Player player,
                                                               Permanent source, UUID targetId,
-                                                              Zone targetZone) {
+                                                              Zone targetZone,
+                                                              PutCardExiledWithSourceIntoGraveyardCost cost) {
         if (targetZone != Zone.EXILE || targetId == null) {
             throw new IllegalStateException("Choose a card exiled with this permanent");
         }
         ExiledCardEntry exiled = gameData.findExiledCard(targetId);
         if (exiled == null || !source.getId().equals(exiled.sourcePermanentId())) {
             throw new IllegalStateException("Card was not exiled with this permanent");
+        }
+        if (cost.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                exiled.card(), cost.filter(), source.getCard().getId(), gameData, exiled.ownerId())) {
+            throw new IllegalStateException("Exiled card does not match the cost restriction");
         }
         if (!gameData.removeFromExile(targetId)) {
             throw new IllegalStateException("Card is no longer in exile");
@@ -8261,6 +8271,16 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", exiled.card(), " into its owner's graveyard as an activation cost."));
         return exiled.card();
+    }
+
+    private List<UUID> matchingCardsExiledWithSource(
+            GameData gameData, Permanent source, PutCardExiledWithSourceIntoGraveyardCost cost) {
+        return gameData.getCardsExiledByPermanent(source.getId()).stream()
+                .filter(card -> cost.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, cost.filter(), source.getCard().getId(), gameData,
+                        gameData.findExiledCard(card.getId()).ownerId()))
+                .map(Card::getId)
+                .toList();
     }
 
     private void payPutOpponentOwnedExiledCardIntoGraveyardCost(GameData gameData, Player player,

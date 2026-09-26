@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
@@ -29,6 +30,9 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TargetDealsPowerDamageToTargetEffect) effect;
+        if (e.recordExcessDamage()) {
+            entry.setEventValue(0);
+        }
 
         List<UUID> sourceGroup = entry.targetsForGroup(e.sourceTargetGroup());
         List<UUID> victimGroup = entry.targetsForGroup(e.victimTargetGroup());
@@ -58,6 +62,13 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
         int power = gameQueryService.getPowerBasedDamage(gameData, biter);
         int rawDamage = gameQueryService.applyDamageMultiplier(
                 gameData, Math.multiplyExact(power, e.powerMultiplier()), entry);
-        damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, biter);
+        int markedDamageBefore = e.recordExcessDamage() ? target.getMarkedDamage() : 0;
+        boolean deathtouch = e.recordExcessDamage()
+                && gameQueryService.sourceHasKeyword(gameData, entry, biter, Keyword.DEATHTOUCH);
+        int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, biter);
+        if (e.recordExcessDamage()) {
+            entry.setEventValue(damageSupport.computeExcessDamageToCreature(
+                    gameData, target, damageDealt, markedDamageBefore, deathtouch));
+        }
     }
 }

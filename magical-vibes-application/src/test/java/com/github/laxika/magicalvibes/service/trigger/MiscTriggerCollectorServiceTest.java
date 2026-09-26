@@ -268,6 +268,27 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("targeted life-gain counter trigger preserves the gained amount")
+    void targetedLifeGainCounterTriggerPreservesEventValue() {
+        Card card = createCard("Treebeard, Gracious Host");
+        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
+        card.target(TargetFilters.creature())
+                .addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);
+        Permanent perm = new Permanent(card);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+                effect,
+                new TriggerContext.LifeGain(player1Id, 3));
+
+        assertThat(result).isTrue();
+        var choice = gd.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.eventValue()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("exactly-one life-loss sequence trigger queues once")
     void exactlyOneLifeLossSequenceTriggerQueuesOnce() {
         Permanent perm = createPermanent("Ob Nixilis, Captive Kingpin");

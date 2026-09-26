@@ -299,6 +299,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DefendingPlayerChoosesCreatureToBlock(UUID choosingPlayerId, UUID sourcePermanentId,
                                                  String sourceCardName) implements PermanentChoiceContext {}
 
+    /** The attacking player chooses one of their attacking creatures to receive a temporary boost. */
+    record AttackingPlayerChoosesCreatureToBoost(Card sourceCard, UUID sourcePermanentId,
+                                                 UUID controllerId, UUID attackingPlayerId,
+                                                 int powerBoost, int toughnessBoost)
+            implements PermanentChoiceContext {}
+
     /** Balduvian Warlord's controller chooses an attacking creature for the removed blocker to block. */
     record BalduvianWarlordChoosesAttacker(UUID blockerId, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -1777,10 +1783,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                    UUID sourcePermanentId, boolean creaturesOnly) implements PermanentChoiceContext {
+                                    UUID sourcePermanentId, boolean creaturesOnly, Integer eventValue)
+            implements PermanentChoiceContext {
         /** Any-target (creature or player) life-gain trigger — the historical Firesong/Sunspeaker form. */
         public LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, false);
+            this(sourceCard, controllerId, effects, sourcePermanentId, false, null);
+        }
+
+        public LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                        UUID sourcePermanentId, boolean creaturesOnly) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, creaturesOnly, null);
         }
     }
 

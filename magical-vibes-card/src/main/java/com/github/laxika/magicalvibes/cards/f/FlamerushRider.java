@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "99")
+@CardRegistration(set = "LTC", collectorNumber = "216")
 public class FlamerushRider extends Card {
 
     public FlamerushRider() {

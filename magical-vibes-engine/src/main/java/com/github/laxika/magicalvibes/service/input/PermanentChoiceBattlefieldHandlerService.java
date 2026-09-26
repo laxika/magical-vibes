@@ -232,6 +232,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureThenBoostOthersEffectHandler chooseOpponentCreatureThenBoostOthersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.AttackingPlayerChoosesCreatureToBoostEffectHandler attackingPlayerChoosesCreatureToBoostEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
 
@@ -792,6 +793,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleDefendingPlayerChoosesCreatureToBlock(GameData gameData, UUID permanentId,
                                                             PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock context) {
         defendingPlayerChoosesCreatureToBlockEffectHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAttackingPlayerChoosesCreatureToBoost(GameData gameData, UUID permanentId,
+                                                            PermanentChoiceContext.AttackingPlayerChoosesCreatureToBoost context) {
+        attackingPlayerChoosesCreatureToBoostEffectHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

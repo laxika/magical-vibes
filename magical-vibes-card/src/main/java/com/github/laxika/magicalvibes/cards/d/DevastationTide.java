@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "48")
+@CardRegistration(set = "LTC", collectorNumber = "189")
 public class DevastationTide extends Card {
 
     public DevastationTide() {

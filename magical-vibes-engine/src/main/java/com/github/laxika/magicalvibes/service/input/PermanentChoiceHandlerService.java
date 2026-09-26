@@ -195,6 +195,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleExileCombatOpponent(gameData, permanentId, exileCombatOpponent);
         } else if (context instanceof PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock chooseBlocker) {
             battlefieldHandler.handleDefendingPlayerChoosesCreatureToBlock(gameData, permanentId, chooseBlocker);
+        } else if (context instanceof PermanentChoiceContext.AttackingPlayerChoosesCreatureToBoost chooseBoost) {
+            battlefieldHandler.handleAttackingPlayerChoosesCreatureToBoost(gameData, permanentId, chooseBoost);
         } else if (context instanceof PermanentChoiceContext.BalduvianWarlordChoosesAttacker chooseAttacker) {
             battlefieldHandler.handleBalduvianWarlordChoosesAttacker(gameData, permanentId, chooseAttacker);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureYouGainControl richesChoice) {

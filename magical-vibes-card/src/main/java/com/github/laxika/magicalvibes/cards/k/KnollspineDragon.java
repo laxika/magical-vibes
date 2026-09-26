@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "98")
 @CardRegistration(set = "GN3", collectorNumber = "82")
+@CardRegistration(set = "LTC", collectorNumber = "224")
 public class KnollspineDragon extends Card {
 
     public KnollspineDragon() {

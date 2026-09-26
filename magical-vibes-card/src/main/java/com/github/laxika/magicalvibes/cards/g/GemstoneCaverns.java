@@ -21,6 +21,8 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "61")
 @CardRegistration(set = "EOS", collectorNumber = "106")
 @CardRegistration(set = "EOS", collectorNumber = "151")
+@CardRegistration(set = "LTC", collectorNumber = "364")
+@CardRegistration(set = "LTC", collectorNumber = "394")
 public class GemstoneCaverns extends Card {
 
     public GemstoneCaverns() {

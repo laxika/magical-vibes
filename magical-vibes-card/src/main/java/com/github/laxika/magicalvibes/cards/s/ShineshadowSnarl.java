@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "272")
+@CardRegistration(set = "LTC", collectorNumber = "331")
 public class ShineshadowSnarl extends Card {
 
     public ShineshadowSnarl() {

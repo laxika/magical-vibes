@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 @CardRegistration(set = "FDN", collectorNumber = "221")
 @CardRegistration(set = "FDN", collectorNumber = "334")
 @CardRegistration(set = "FDN", collectorNumber = "396")
+@CardRegistration(set = "LTC", collectorNumber = "245")
 public class GenesisWave extends Card {
 
     public GenesisWave() {

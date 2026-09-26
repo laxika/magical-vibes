@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOppo
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
@@ -2199,7 +2200,8 @@ public class CombatAttackService {
                         }
                         if (conditional.condition() instanceof AttacksEnchantedPlayer
                                 || conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
-                                || conditional.condition() instanceof OpponentAttacksPlaneswalker) {
+                                || conditional.condition() instanceof OpponentAttacksPlaneswalker
+                                || conditional.condition() instanceof PlayerAttacksNotController) {
                             if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                     ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
                                 continue;

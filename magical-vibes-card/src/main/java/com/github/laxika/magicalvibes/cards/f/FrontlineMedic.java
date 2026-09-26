@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "12")
+@CardRegistration(set = "LTC", collectorNumber = "169")
 public class FrontlineMedic extends Card {
 
     public FrontlineMedic() {

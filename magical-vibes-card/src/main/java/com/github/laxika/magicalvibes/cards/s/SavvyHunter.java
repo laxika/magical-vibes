@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "200")
+@CardRegistration(set = "LTC", collectorNumber = "271")
 public class SavvyHunter extends Card {
 
     public SavvyHunter() {

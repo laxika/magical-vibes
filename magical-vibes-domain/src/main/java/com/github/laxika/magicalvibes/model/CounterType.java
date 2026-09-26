@@ -143,6 +143,7 @@ public enum CounterType {
     QUEST,
     REV,
     REVIVAL,
+    RIBBON,
     REJECTION,
     RITUAL,
     RUST,

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -60,7 +61,8 @@ public record FlickerEffect(
         int counterAmountOnReturn,
         Set<CardSubtype> bonusSubtypes,
         boolean returnFaceDown,
-        boolean returnAttacking, boolean tapOnImmediateReturn) implements AttachedPermanentSelfTargetingEffect {
+        boolean returnAttacking, boolean tapOnImmediateReturn,
+        Map<CounterType, Integer> countersOnReturn) implements AttachedPermanentSelfTargetingEffect {
     public FlickerEffect(
         FlickerScope scope,
         PermanentPredicate filter,
@@ -85,7 +87,7 @@ public record FlickerEffect(
         Set<CardSubtype> bonusSubtypes,
         boolean returnFaceDown,
         boolean returnAttacking) {
-        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect, plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkersOnReturn, addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn, chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst, counterTypeOnReturn, counterAmountOnReturn, bonusSubtypes, returnFaceDown, returnAttacking, false);
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect, plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkersOnReturn, addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn, chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst, counterTypeOnReturn, counterAmountOnReturn, bonusSubtypes, returnFaceDown, returnAttacking, false, Map.of());
     }
 
 
@@ -94,6 +96,7 @@ public record FlickerEffect(
                 ? Set.of()
                 : Set.copyOf(grantedKeywordsOnReturn);
         bonusSubtypes = bonusSubtypes == null ? Set.of() : Set.copyOf(bonusSubtypes);
+        countersOnReturn = countersOnReturn == null ? Map.of() : Map.copyOf(countersOnReturn);
     }
 
     public FlickerEffect(
@@ -253,6 +256,14 @@ public record FlickerEffect(
                 counterType, 1, Set.of(), false, false);
     }
 
+    /** Exile target permanent, returning it at the next end step with the given counters. */
+    public static FlickerEffect exileTargetReturnAtEndStepWithCounters(Map<CounterType, Integer> counters) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), false, false, false,
+                null, 0, Set.of(), false, false, false, counters);
+    }
+
     /** Exile target permanent, returning it with +1/+1 counters only if it is a creature. */
     public static FlickerEffect exileTargetReturnAtEndStepWithCreatureCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
@@ -351,7 +362,7 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetReturningTapped() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, false, false,
-                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true);
+                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true, Map.of());
     }
 
     /** Exile a target permanent matching {@code filter}, immediately return it under its owner's control. */
@@ -387,7 +398,7 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetUnderYourControlTappedAndAttacking() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, true, null, null, 0, true, false,
-                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true);
+                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true, Map.of());
     }
 
     /** Immediate flicker that returns the permanent with {@code counters} +1/+1 counters (Daydream). */

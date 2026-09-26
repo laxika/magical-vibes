@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "148")
+@CardRegistration(set = "LTC", collectorNumber = "370")
 public class MouthOfRonom extends Card {
 
     public MouthOfRonom() {

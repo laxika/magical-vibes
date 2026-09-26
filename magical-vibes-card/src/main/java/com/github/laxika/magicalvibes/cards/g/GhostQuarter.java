@@ -28,6 +28,7 @@ import java.util.List;
 @CardRegistration(set = "HA2", collectorNumber = "22")
 @CardRegistration(set = "C14", collectorNumber = "298")
 @CardRegistration(set = "C15", collectorNumber = "285")
+@CardRegistration(set = "LTC", collectorNumber = "314")
 public class GhostQuarter extends Card {
 
     public GhostQuarter() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounter
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -36,6 +37,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -757,6 +759,8 @@ public class GameData {
     public final LandCopyOperationState landCopyOperation = new LandCopyOperationState();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
+    /** Votes collected while a voting spell or ability is resolving, keyed by its controller. */
+    public final Map<UUID, Map<UUID, Set<String>>> votingChoicesByController = new ConcurrentHashMap<>();
     public PendingReverseMiracleSearch pendingReverseMiracleSearch;
     /** CR 603.5 — set when a MayEffect is encountered during stack resolution, cleared after player responds. */
     public boolean resolvingMayEffectFromStack;
@@ -2014,6 +2018,9 @@ public class GameData {
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+    /** Tracks which players were dealt combat damage by a creature with each name this game. */
+    public final Map<String, Set<UUID>> combatDamageToPlayersByCreatureNameThisGame =
+            new ConcurrentHashMap<>();
     /** Tracks which players each permanent dealt combat damage to during the current combat. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisCombat = new ConcurrentHashMap<>();
     /** Tracks how much combat damage each player was dealt this turn. */
@@ -2267,6 +2274,16 @@ public class GameData {
             return;
         }
         combatDamageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
+    }
+
+    /** Records that a creature with {@code creatureName} dealt combat damage to a player this game. */
+    public void recordCombatDamageByCreatureNameToPlayer(String creatureName, UUID playerId) {
+        if (creatureName == null || playerId == null) {
+            return;
+        }
+        combatDamageToPlayersByCreatureNameThisGame
+                .computeIfAbsent(creatureName, ignored -> ConcurrentHashMap.newKeySet())
+                .add(playerId);
     }
 
     /** Records that {@code amount} noncombat damage was dealt to {@code playerId} this turn. */
@@ -3181,6 +3198,10 @@ public class GameData {
      * for everything else it is the controller of the spell/ability that created the effect.
      */
     public UUID resolveControlEffectController(FloatingContinuousEffect fe) {
+        if (fe.effect() instanceof ControlEnchantedCreatureEffect control
+                && control.controlledByMonarch()) {
+            return monarchPlayerId != null ? monarchPlayerId : defaultControllerOf(fe.affectedPermanentId());
+        }
         if (fe.duration() == EffectDuration.WHILE_ATTACHED && fe.sourcePermanentId() != null) {
             UUID auraController = findControllerOf(fe.sourcePermanentId());
             if (auraController != null) {
@@ -5659,6 +5680,12 @@ public class GameData {
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
+        this.votingChoicesByController.forEach((controllerId, choicesByPlayer) -> {
+            Map<UUID, Set<String>> choicesCopy = new LinkedHashMap<>();
+            choicesByPlayer.forEach((playerId, choices) ->
+                    choicesCopy.put(playerId, new LinkedHashSet<>(choices)));
+            copy.votingChoicesByController.put(controllerId, choicesCopy);
+        });
         copy.wordOfCommandPendingResolutionEntry = this.wordOfCommandPendingResolutionEntry != null
                 ? new StackEntry(this.wordOfCommandPendingResolutionEntry) : null;
         copy.pendingReverseMiracleSearch = this.pendingReverseMiracleSearch;
@@ -6220,6 +6247,8 @@ public class GameData {
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        this.combatDamageToPlayersByCreatureNameThisGame.forEach((k, v) ->
+                copy.combatDamageToPlayersByCreatureNameThisGame.put(k, new HashSet<>(v)));
         this.combatDamageToPlayersThisCombat.forEach((k, v) ->
                 copy.combatDamageToPlayersThisCombat.put(k, new HashSet<>(v)));
         copy.combatDamageDealtToPlayersThisTurn.putAll(this.combatDamageDealtToPlayersThisTurn);

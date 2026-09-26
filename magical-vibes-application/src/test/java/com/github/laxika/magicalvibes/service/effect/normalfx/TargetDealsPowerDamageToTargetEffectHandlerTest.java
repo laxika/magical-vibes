@@ -111,4 +111,32 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
                 gd, angel, 4, player1Id, bears.getCard(), bears.getId());
     }
+
+    @Test
+    @DisplayName("Records excess damage when requested")
+    void recordsExcessDamage() {
+        Card sliceCard = createCard("Windswift Slice");
+        Permanent source = addPermanent(player1Id, createCreature("Hill Giant", 3, 3));
+        Permanent target = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+        StackEntry entry = createMultiTargetEntry(sliceCard, player1Id, List.of(source.getId(), target.getId()));
+
+        stubDamagePreventable();
+        stubNoDamageMultiplier();
+        stubCreatureDamageCore(target, 2);
+        stubCreatureSourceRedirects();
+        when(gameQueryService.getLethalDamageThreshold(gd, target)).thenReturn(2);
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+        when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+        when(gameQueryService.getPowerBasedDamage(gd, source)).thenReturn(3);
+        when(gameQueryService.isPreventedFromDealingDamage(gd, source)).thenReturn(false);
+        when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), any(Permanent.class))).thenReturn(false);
+        when(gameQueryService.findPermanentController(eq(gd), eq(source.getId()))).thenReturn(player1Id);
+        stubNoKeywordsOnSourceWithDamageSource(entry, source);
+
+        targetDealsPowerDamageToTargetHandler.resolve(
+                gd, entry, TargetDealsPowerDamageToTargetEffect.recordingExcessDamage());
+
+        assertThat(entry.getEventValue()).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
 }

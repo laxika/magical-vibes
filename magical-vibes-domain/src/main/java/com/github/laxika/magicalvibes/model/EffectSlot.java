@@ -191,6 +191,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers after all players finish a voting event. */
+    ON_PLAYERS_FINISH_VOTING,
     /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
     ON_CONTROLLER_TEMPTS_RING,
     /** Triggers when this permanent's controller investigates for the first time each turn. */

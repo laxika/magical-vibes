@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "IMA", collectorNumber = "210")
 @CardRegistration(set = "2X2", collectorNumber = "280")
 @CardRegistration(set = "EA1", collectorNumber = "18")
+@CardRegistration(set = "LTC", collectorNumber = "272")
 public class SupremeVerdict extends Card {
 
     public SupremeVerdict() {

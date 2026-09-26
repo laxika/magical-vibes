@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCre
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagedPlayerControlsTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -2109,6 +2110,15 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires triggers that care about all players finishing a voting event. */
+    public void checkVotingFinishedTriggers(GameData gameData,
+                                             com.github.laxika.magicalvibes.model.VotingResult result) {
+        TriggerContext context = new TriggerContext.VotingFinished(result);
+        gameData.forEachPermanent((controllerId, permanent) ->
+                dispatchSlot(gameData, permanent, controllerId,
+                        EffectSlot.ON_PLAYERS_FINISH_VOTING, context));
+    }
+
     /** Fires triggers whenever a player is tempted by the Ring. */
     public void checkRingTemptTriggers(GameData gameData, UUID temptingPlayerId, UUID ringBearerId) {
         if (temptingPlayerId == null || ringBearerId == null) {
@@ -2528,9 +2538,9 @@ public class TriggerCollectionService {
                     source.getId(), controllerId, damagedPlayerId));
             return;
         }
-        if (damageEffect instanceof com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect destroy) {
-            if (damageDealt >= destroy.minimumDamage()) {
-                CardEffect targeted = destroy.forDamagedPlayer(damagedPlayerId);
+        if (damageEffect instanceof DamagedPlayerControlsTargetEffect damageTargetEffect) {
+            if (damageDealt >= damageTargetEffect.minimumDamage()) {
+                CardEffect targeted = damageTargetEffect.forDamagedPlayer(damagedPlayerId);
                 if (toQueue instanceof MayEffect may) {
                     targeted = new MayEffect(targeted, may.prompt(), may.elseEffect(), may.choicePlayer());
                 }

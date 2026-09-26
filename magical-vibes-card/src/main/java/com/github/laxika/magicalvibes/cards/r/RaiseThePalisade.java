@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCreaturesExceptChose
 @CardRegistration(set = "SLD", collectorNumber = "1897")
 @CardRegistration(set = "HOC", collectorNumber = "18")
 @CardRegistration(set = "HOC", collectorNumber = "58")
+@CardRegistration(set = "LTC", collectorNumber = "23")
+@CardRegistration(set = "LTC", collectorNumber = "106")
 public class RaiseThePalisade extends Card {
 
     public RaiseThePalisade() {

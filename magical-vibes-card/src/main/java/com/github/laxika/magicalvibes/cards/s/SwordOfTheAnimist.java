@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "SLD", collectorNumber = "1642")
 @CardRegistration(set = "CMM", collectorNumber = "413")
 @CardRegistration(set = "CMM", collectorNumber = "616")
+@CardRegistration(set = "LTC", collectorNumber = "355")
+@CardRegistration(set = "LTC", collectorNumber = "385")
 public class SwordOfTheAnimist extends Card {
 
     public SwordOfTheAnimist() {

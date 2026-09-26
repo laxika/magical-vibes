@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandType
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -123,6 +124,7 @@ public class ChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    private final VotingFinishedSupport votingFinishedSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
@@ -148,6 +150,10 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TravelThroughCaradhrasEffectHandler
+            travelThroughCaradhrasEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SailIntoTheWestEffectHandler
+            sailIntoTheWestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
             expropriateEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
@@ -158,6 +164,10 @@ public class ChoiceHandlerService {
             graceOrCondemnationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
             coercivePortalEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.GaladrielElvenQueenEffectHandler
+            galadrielElvenQueenEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
+            elrondOfTheWhiteCouncilEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
 
     @Autowired @Lazy
@@ -179,6 +189,8 @@ public class ChoiceHandlerService {
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
+
+        recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
         if (colorChoice.context() instanceof ChoiceContext.RegenerationShieldChoice choice) {
             if (!choice.shields().containsKey(colorName)) {
@@ -771,6 +783,28 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.TravelThroughCaradhrasChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Travel Through Caradhras vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            travelThroughCaradhrasEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SailIntoTheWestChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Sail into the West vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            sailIntoTheWestEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ExpropriateChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Expropriate vote: " + colorName);
@@ -821,6 +855,28 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             coercivePortalEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.GaladrielElvenQueenChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Galadriel, Elven-Queen vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            galadrielElvenQueenEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Elrond of the White Council vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            elrondOfTheWhiteCouncilEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -917,6 +973,41 @@ public class ChoiceHandlerService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId, String choice,
+                                                ChoiceContext context) {
+        if (context instanceof ChoiceContext.PleaForPowerChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.TravelThroughCaradhrasChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.SailIntoTheWestChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.ExpropriateChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.VoteForDenialOrDuplicationChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.TyrantsChoiceChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.GraceOrCondemnationChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.CoercivePortalChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.GaladrielElvenQueenChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        }
     }
 
     private void handleDevotionManaColorChosen(GameData gameData, Player player, String colorName,

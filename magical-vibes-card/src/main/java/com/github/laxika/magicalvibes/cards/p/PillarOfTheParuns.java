@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "176")
 @CardRegistration(set = "2X2", collectorNumber = "328")
+@CardRegistration(set = "LTC", collectorNumber = "372")
 public class PillarOfTheParuns extends Card {
 
     public PillarOfTheParuns() {

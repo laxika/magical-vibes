@@ -216,7 +216,7 @@ public class CombatTriggerService {
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.AttackTriggerTarget(
                                                     perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                    auraOwnerId, null, creature.getId()));
+                                                    auraOwnerId, creature.getAttackTarget(), creature.getId()));
                                 }
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",

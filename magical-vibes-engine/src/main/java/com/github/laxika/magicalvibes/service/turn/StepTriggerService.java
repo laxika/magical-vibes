@@ -210,6 +210,7 @@ import com.github.laxika.magicalvibes.service.effect.SurvivalTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerIfLifeAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.EndStepPlayerTargetedEffect;
+import com.github.laxika.magicalvibes.model.effect.MonarchEndStepTriggeredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
@@ -280,6 +281,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -3812,6 +3814,16 @@ public class StepTriggerService {
                     perm.setCounterCount(pending.counterTypeOnReturn(), counters);
                 }
             }
+            for (Map.Entry<CounterType, Integer> counter : pending.countersOnReturn().entrySet()) {
+                if (counter.getValue() <= 0) {
+                    continue;
+                }
+                int counters = gameQueryService.replaceCounters(
+                        gameData, perm, controllerId, counter.getKey(), counter.getValue(), controllerId);
+                if (counters > 0) {
+                    perm.setCounterCount(counter.getKey(), counters);
+                }
+            }
             perm.setEnteredFromExile(true);
             if (pending.grantHaste()) {
                 perm.getPersistentGrantedKeywords().add(Keyword.HASTE);
@@ -5030,6 +5042,10 @@ public class StepTriggerService {
                 if (endStepEffects == null || endStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : endStepEffects) {
+                    if (effect instanceof MonarchEndStepTriggeredEffect
+                            && !activePlayerId.equals(gameData.monarchPlayerId)) {
+                        continue;
+                    }
                     if (effect instanceof ConditionalEffect conditional
                             && conditional.interveningIf()
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),

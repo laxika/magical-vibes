@@ -117,6 +117,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValu
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.GreatestPermanentCountAmongOpponents;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
@@ -233,6 +234,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -569,6 +571,8 @@ public class AmountEvaluationService {
                     greatestManaValueAmongCardsInGraveyard(gameData, a, ctx);
             case GreatestManaValueAmongControlled a ->
                     greatestManaValueAmongControlled(gameData, a, ctx);
+            case GreatestManaValueAmongOwnedCommanders ignored ->
+                    greatestManaValueAmongOwnedCommanders(gameData, ctx);
             case GreatestStackSourceCountThisTurn ignored ->
                     gameData.getGreatestStackSourceCountThisTurn();
             case GreatestCreatureCountAmongPlayers ignored ->
@@ -2119,6 +2123,34 @@ public class AmountEvaluationService {
                 continue;
             }
             greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
+        }
+        return greatest;
+    }
+
+    private int greatestManaValueAmongOwnedCommanders(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+
+        Set<UUID> commanderIds = gameData.playerCommanders
+                .getOrDefault(ctx.controllerId(), List.of())
+                .stream()
+                .map(Card::getId)
+                .collect(Collectors.toSet());
+        if (commanderIds.isEmpty()) return 0;
+
+        int greatest = 0;
+        for (Card card : gameData.playerCommandZones.values().stream()
+                .flatMap(List::stream)
+                .filter(card -> commanderIds.contains(card.getId()))
+                .toList()) {
+            greatest = Math.max(greatest, card.getManaValue());
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (commanderIds.contains(permanent.getOriginalCard().getId())) {
+                    greatest = Math.max(greatest,
+                            permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
+                }
+            }
         }
         return greatest;
     }

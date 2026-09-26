@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "IKO", collectorNumber = "237")
 @CardRegistration(set = "SLD", collectorNumber = "1741")
+@CardRegistration(set = "LTC", collectorNumber = "351")
+@CardRegistration(set = "LTC", collectorNumber = "381")
 public class TheOzolith extends Card {
 
     public TheOzolith() {

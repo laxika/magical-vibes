@@ -43,5 +43,8 @@ public enum MayPayPayer {
     TRIGGERING_PLAYER,
 
     /** The controller of the spell that caused the trigger. */
-    TRIGGERING_SPELL_CONTROLLER
+    TRIGGERING_SPELL_CONTROLLER,
+
+    /** The active player at the time the ability resolves. */
+    ACTIVE_PLAYER
 }
