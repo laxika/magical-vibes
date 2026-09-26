@@ -348,6 +348,12 @@ public class TriggeredAbilityQueueService {
 
         if (matchingCards.isEmpty()) {
             if (target.minTargets() == 0) {
+                // A trigger consisting only of an optional graveyard return has nothing to do
+                // when no card can be returned. Avoid leaving an empty Soulshift trigger above
+                // another ability on the stack.
+                if (pending.effects().stream().allMatch(effect -> targetedReturnEffect(effect) != null)) {
+                    return false;
+                }
                 // "Any number of target cards" is legally satisfied by zero targets, so the trigger
                 // still goes on the stack and its non-targeting half still resolves (Iname, Life
                 // Aspect's "you may exile it").

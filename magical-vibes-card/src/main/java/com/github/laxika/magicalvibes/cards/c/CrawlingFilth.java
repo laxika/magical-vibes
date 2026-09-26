@@ -27,6 +27,7 @@ public class CrawlingFilth extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(5))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build(), "Return the targeted Spirit card to your hand?"));
     }
 }
