@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Diminish;
-import com.github.laxika.magicalvibes.cards.g.GoldenBear;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RavenousRats;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwarmOfRats.class, RavenousRats.class, GoldenBear.class})
+@CardUsed({SwarmOfRats.class, RavenousRats.class, GrizzlyBears.class})
 class SwarmOfRatsTest extends BaseCardTest {
 
     @Test
@@ -41,7 +41,7 @@ class SwarmOfRatsTest extends BaseCardTest {
     @DisplayName("Swarm of Rats counts only Rats, not other creatures you control")
     void countsOnlyRats() {
         Permanent swarm = addCreatureReady(player1, new SwarmOfRats());
-        harness.addToBattlefield(player1, new GoldenBear());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);

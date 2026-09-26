@@ -9,10 +9,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,7 +24,7 @@ class TwoHeadedDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability gives +2/+0")
     void activatingAbilityBoostsPower() {
-        Permanent dragon = addCreatureReady(player1, new TwoHeadedDragon());
+        Permanent dragon = addReadyDragon(player1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -39,7 +38,7 @@ class TwoHeadedDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Pump can be activated repeatedly, stacking +2/+0")
     void pumpStacks() {
-        Permanent dragon = addCreatureReady(player1, new TwoHeadedDragon());
+        Permanent dragon = addReadyDragon(player1);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -55,7 +54,7 @@ class TwoHeadedDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Pump wears off at end of turn")
     void pumpWearsOff() {
-        Permanent dragon = addCreatureReady(player1, new TwoHeadedDragon());
+        Permanent dragon = addReadyDragon(player1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -115,6 +114,35 @@ class TwoHeadedDragonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two-Headed Dragon's extra block does not affect other creatures")
+    void additionalBlockIsLimitedToDragon() {
+        addCreatureReady(player2, new TwoHeadedDragon());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        int bearsIdx = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
+
+        addAttacker(player1);
+        addAttacker(player1);
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(bearsIdx, 0),
+                new BlockerAssignment(bearsIdx, 1)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    private void addAttacker(Player attacker) {
+        Permanent atkPerm = addCreatureReady(attacker, new GrizzlyBears());
+        atkPerm.setAttacking(true);
+    }
+
+    private Permanent addReadyDragon(Player player) {
+        return addCreatureReady(player, new TwoHeadedDragon());
+    }
+
+    @Test
     @DisplayName("Flying prevents a ground creature from blocking")
     void flyingPreventsGroundCreatureFromBlocking() {
         Permanent dragon = addCreatureReady(player1, new TwoHeadedDragon());
@@ -163,10 +191,5 @@ class TwoHeadedDragonTest extends BaseCardTest {
         assertThat(secondBlocker.isBlocking()).isTrue();
         assertThat(firstBlocker.getBlockingTargets()).containsExactly(0);
         assertThat(secondBlocker.getBlockingTargets()).containsExactly(0);
-    }
-
-    private void addAttacker(Player attacker) {
-        Permanent atkPerm = addCreatureReady(attacker, new GrizzlyBears());
-        atkPerm.setAttacking(true);
     }
 }

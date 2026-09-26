@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "1")
+@CardRegistration(set = "C13", collectorNumber = "2")
 public class AerieMystics extends Card {
 
     public AerieMystics() {

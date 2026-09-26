@@ -13,7 +13,7 @@ public class Restock extends Card {
 
     public Restock() {
         // Return two target cards from your graveyard to your hand.
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(
+        addEffect(EffectSlot.SPELL, ReturnTargetCardsFromGraveyardToHandEffect.exactly(
                 new CardTruePredicate(), 2));
 
         // Exile Restock.

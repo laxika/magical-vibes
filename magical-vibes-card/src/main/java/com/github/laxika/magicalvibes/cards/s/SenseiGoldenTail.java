@@ -20,6 +20,8 @@ import java.util.List;
 public class SenseiGoldenTail extends Card {
 
     public SenseiGoldenTail() {
+        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
+        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{W}",

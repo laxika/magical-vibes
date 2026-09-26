@@ -20,14 +20,9 @@ public class FungusSliver extends Card {
         GrantTriggeredAbilityEffect damagedSliverGetsCounter = new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_DEALT_DAMAGE,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 sliver);
 
         addEffect(EffectSlot.STATIC, damagedSliverGetsCounter);
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_DEALT_DAMAGE,
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                GrantScope.SELF,
-                sliver));
     }
 }

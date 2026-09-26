@@ -21,8 +21,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link CounterSpellAndDiscardSplicedNamesEffect}: counters the target spell, then its
  * controller reveals their hand and discards every card sharing a name with a card spliced onto that
- * spell. The spliced names were recorded at cast time in {@link GameData#spellCastSplicedNames}; with
- * none the effect is a plain counterspell and no hand is revealed.
+ * spell. The spliced names were recorded at cast time in {@link GameData#spellCastSplicedNames}.
  */
 @Slf4j
 @Component
@@ -56,7 +55,7 @@ public class CounterSpellAndDiscardSplicedNamesEffectHandler implements NormalEf
         counterSupport.counterSpell(gameData, entry, targetEntry);
         gameData.clearSpellCastSplicedNames(targetEntry.getTargetableId());
 
-        if (splicedNames.isEmpty() || controllerId == null) {
+        if (controllerId == null) {
             return;
         }
 

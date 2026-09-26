@@ -138,6 +138,23 @@ class RemoveSoulTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a creature permanent")
+    void cannotTargetCreaturePermanent() {
+        harness.addToBattlefield(player1, new DurkwoodBoars());
+
+        RemoveSoul removeSoul = new RemoveSoul();
+        harness.setHand(player2, List.of(removeSoul));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(
+                player2, 0, harness.getPermanentId(player1, "Durkwood Boars")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(removeSoul);
+    }
+
+    @Test
     @DisplayName("Cannot target an activated ability")
     void cannotTargetActivatedAbility() {
         KillerBees bees = new KillerBees();

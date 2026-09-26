@@ -35,12 +35,15 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        BalduvianWarlordEffect warlordEffect = (BalduvianWarlordEffect) effect;
         Permanent blocker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (blocker == null || !blocker.isBlocking()) {
+        if (blocker == null || (!warlordEffect.reblockOnly() && !blocker.isBlocking())) {
             return;
         }
 
-        removeFromCombatAndUpdateAttackers(gameData, blocker);
+        if (!warlordEffect.reblockOnly()) {
+            removeFromCombatAndUpdateAttackers(gameData, blocker);
+        }
 
         List<UUID> legalAttackerIds = legalAttackerIds(gameData, blocker);
         if (legalAttackerIds.isEmpty()) {
@@ -84,6 +87,10 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
         boolean wasBlocked = attacker.isBlockedWithoutBlockers()
                 || gameQueryService.isBlockedByAnyCreature(gameData, attacker);
         combatBlockService.applyBlockFromEffect(gameData, blocker, attacker, wasBlocked, context.sourceCardName());
+    }
+
+    public boolean hasLegalAttacker(GameData gameData, Permanent blocker) {
+        return !legalAttackerIds(gameData, blocker).isEmpty();
     }
 
     private void removeFromCombatAndUpdateAttackers(GameData gameData, Permanent blocker) {

@@ -218,6 +218,7 @@ abstract class AbstractDamageHandlerTest {
         // Lenient: record-only damage no longer reads toughness — destruction happens at the
         // SBA check, outside these handler unit tests. Excess-damage paths still read it.
         lenient().when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
+        lenient().when(gameQueryService.getLethalDamageThreshold(gd, target)).thenReturn(toughness);
     }
 
     protected void stubCreatureSourceRedirects() {

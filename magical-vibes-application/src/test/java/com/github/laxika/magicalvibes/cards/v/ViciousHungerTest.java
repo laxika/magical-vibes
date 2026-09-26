@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.s.SealOfDoom;
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ViciousHunger.class, SpinelessThug.class, SealOfDoom.class})
+@CardUsed({ViciousHunger.class, SpinelessThug.class, HornedTurtle.class, HowlingMine.class})
 class ViciousHungerTest extends BaseCardTest {
 
     @Test
@@ -26,16 +27,16 @@ class ViciousHungerTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Spineless Thug");
-        harness.assertInGraveyard(player2, "Spineless Thug");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
         harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("A tougher creature survives with 2 marked damage; controller still gains 2 life")
     void tougherTargetSurvivesButLifeStillGained() {
-        SpinelessThug creature = new SpinelessThug();
-        creature.setToughness(5);
+        HornedTurtle creature = new HornedTurtle();
         Permanent target = harness.addToBattlefieldAndReturn(player2, creature);
         harness.setHand(player1, List.of(new ViciousHunger()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -43,14 +44,14 @@ class ViciousHungerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        harness.assertOnBattlefield(player2, "Spineless Thug");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         harness.assertLife(player1, 22);
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new SealOfDoom());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
         harness.setHand(player1, List.of(new ViciousHunger()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -67,13 +68,12 @@ class ViciousHungerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castSorcery(player1, 0, target.getId());
-        gd.playerBattlefields.get(player2.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertLife(player1, 20);
     }
 }

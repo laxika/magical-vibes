@@ -52,6 +52,7 @@ public class SeparateCreaturesIntoPilesAndChooseBlockersEffectHandler implements
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(entry.getControllerId(), defendingPlayerId,
                 creatureIds, List.of(), Map.of(), List.of(), List.of(), CardPileDisposition.BLOCKERS, false));
         playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), creatureIds,

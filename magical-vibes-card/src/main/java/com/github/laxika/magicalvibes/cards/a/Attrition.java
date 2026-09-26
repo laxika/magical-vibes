@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "UDS", collectorNumber = "52")
 @CardRegistration(set = "MP2", collectorNumber = "19")
+@CardRegistration(set = "CMD", collectorNumber = "72")
 public class Attrition extends Card {
 
     public Attrition() {

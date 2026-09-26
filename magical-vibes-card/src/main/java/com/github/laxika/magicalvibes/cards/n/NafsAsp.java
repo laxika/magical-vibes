@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterLoseLifeAtNextDrawStepUnlessPaysEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "264")
+@CardRegistration(set = "ARN", collectorNumber = "52")
 public class NafsAsp extends Card {
 
     public NafsAsp() {

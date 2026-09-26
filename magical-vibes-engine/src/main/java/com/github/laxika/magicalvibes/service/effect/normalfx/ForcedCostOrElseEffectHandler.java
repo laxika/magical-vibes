@@ -798,6 +798,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                     destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                     return;
                 }
+                if (!gameQueryService.canEffectCauseSacrifice(gameData, payerId, sourceControllerId)) {
+                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    return;
+                }
                 UUID sourcePermanentId = entry.getSourcePermanentId();
                 FilterContext costFilterContext = FilterContext.of(gameData)
                         .withSourceCardId(entry.getCard().getId())

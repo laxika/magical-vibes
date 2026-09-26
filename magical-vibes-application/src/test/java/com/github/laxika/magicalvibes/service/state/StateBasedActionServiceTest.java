@@ -114,6 +114,9 @@ class StateBasedActionServiceTest {
                 eq(Keyword.START_YOUR_ENGINES))).thenReturn(false);
         // Lethal-damage SBA reads losesAllAbilities via computeStaticBonus (Ogre Enforcer path).
         lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(EMPTY_BONUS);
+        lenient().when(gameQueryService.getLethalDamageThreshold(any(), any())).thenAnswer(invocation ->
+                gameQueryService.getEffectiveToughness(
+                        invocation.getArgument(0, GameData.class), invocation.getArgument(1, Permanent.class)));
         lenient().when(gameQueryService.withQueryScope(any(), any())).thenAnswer(invocation ->
                 invocation.<Supplier<?>>getArgument(1).get());
     }
@@ -212,7 +215,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, perm);
         }
 
         @Test
@@ -315,7 +318,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, perm);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is destroyed (lethal damage).")));
         }
 
@@ -334,7 +337,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, perm);
         }
 
         @Test
@@ -389,8 +392,8 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, doomedCreature);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, protectedCreature);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, doomedCreature);
+            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gd, protectedCreature);
         }
 
         @Test
@@ -1075,15 +1078,15 @@ class StateBasedActionServiceTest {
             when(graveyardService.tryRegenerate(eq(gd), any())).thenReturn(false);
             doAnswer(inv -> {
                 battlefield.remove((Permanent) inv.getArgument(1));
-                return null;
-            }).when(permanentRemovalService).removePermanentToGraveyard(eq(gd), any());
+                return true;
+            }).when(permanentRemovalService).destroyPermanentByStateBasedAction(eq(gd), any());
 
             sut.performStateBasedActions(gd);
 
             // First pass: bear survives (2 damage < 3 toughness), lord dies. Second pass: the
             // bear's marked damage is now lethal (2 >= 2) and it must die before anything else.
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, lord);
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, bear);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, lord);
+            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, bear);
         }
 
         @Test
@@ -1121,7 +1124,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, times(1)).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, times(1)).destroyPermanentByStateBasedAction(gd, perm);
         }
     }
 

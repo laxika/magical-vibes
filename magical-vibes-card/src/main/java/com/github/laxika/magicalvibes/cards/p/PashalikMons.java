@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "138")
 @CardRegistration(set = "DMR", collectorNumber = "133")
+@CardRegistration(set = "SLD", collectorNumber = "2408")
 public class PashalikMons extends Card {
 
     public PashalikMons() {

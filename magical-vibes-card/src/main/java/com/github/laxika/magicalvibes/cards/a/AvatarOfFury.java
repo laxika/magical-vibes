@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PCY", collectorNumber = "82")
+@CardRegistration(set = "CMD", collectorNumber = "110")
 public class AvatarOfFury extends Card {
 
     public AvatarOfFury() {

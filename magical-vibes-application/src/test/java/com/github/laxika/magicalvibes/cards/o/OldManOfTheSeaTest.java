@@ -42,7 +42,7 @@ class OldManOfTheSeaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, oldMan), null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("power less than or equal to Old Man of the Sea's power");
     }
 
     @Test

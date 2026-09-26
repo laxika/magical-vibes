@@ -44,6 +44,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             case EXILE -> counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
             case LIBRARY_TOP -> counterSupport.counterSpellAndPutOnTopOfLibrary(gameData, entry, targetEntry);
             case HAND -> counterSupport.counterSpellAndPutInHand(gameData, entry, targetEntry);
+            case LIBRARY_BOTTOM -> counterSupport.counterSpellAndPutOnBottomOfLibrary(gameData, entry, targetEntry);
             case LIBRARY_TOP_OR_BOTTOM -> counterOntoChosenLibraryEnd(gameData, entry, targetEntry);
         }
     }
@@ -53,7 +54,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
      * whether it stays there or goes to the bottom.
      */
     private void counterOntoChosenLibraryEnd(GameData gameData, StackEntry entry, StackEntry targetEntry) {
-        UUID ownerId = targetEntry.getControllerId();
+        UUID ownerId = targetEntry.getOwnerId();
         Card countered = counterSupport.counterSpellOntoLibraryPendingEndChoice(gameData, entry, targetEntry);
         if (countered == null) {
             return;

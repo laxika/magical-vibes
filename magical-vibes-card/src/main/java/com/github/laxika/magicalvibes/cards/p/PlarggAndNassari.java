@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "18")
+@CardRegistration(set = "SOC", collectorNumber = "250")
 public class PlarggAndNassari extends Card {
 
     public PlarggAndNassari() {

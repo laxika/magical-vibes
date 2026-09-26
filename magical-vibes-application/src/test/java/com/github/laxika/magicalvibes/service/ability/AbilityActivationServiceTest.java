@@ -84,13 +84,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class AbilityActivationServiceTest {
@@ -171,6 +169,10 @@ class AbilityActivationServiceTest {
         // No Angel of Jubilation — life payments and creature sacrifices are legal ability costs.
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))
                 .thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData)).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData, false)).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData, true)).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(true);
     }
 
     @Test
@@ -836,7 +838,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             assertThat(gameData.playerHands.get(player1Id)).isEmpty();
-            verify(graveyardService, times(2)).addCardToGraveyard(eq(gameData), eq(player1Id), any(Card.class));
+            verify(graveyardService, times(2)).addCardToGraveyard(eq(gameData), eq(player1Id), any(Card.class), eq(Zone.HAND));
         }
 
         @Test
@@ -1763,7 +1765,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)).thenReturn(false);
+            when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)

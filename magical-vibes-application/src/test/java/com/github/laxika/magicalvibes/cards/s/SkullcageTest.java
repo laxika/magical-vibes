@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,21 +12,22 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Skullcage.class, Arachnoid.class})
 class SkullcageTest extends BaseCardTest {
 
     private List<Card> handOf(int size) {
-        return IntStream.range(0, size).mapToObj(i -> (Card) new GrizzlyBears()).toList();
+        return IntStream.range(0, size).mapToObj(i -> (Card) new Arachnoid()).toList();
     }
 
     private void assertNoDamageWithHandSize(int handSize) {
         harness.addToBattlefield(player1, new Skullcage());
         harness.setHand(player2, handOf(handSize));
-        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player2, lifeBefore);
     }
 
     @Test
@@ -33,12 +35,12 @@ class SkullcageTest extends BaseCardTest {
     void dealsDamageWithSmallHand() {
         harness.addToBattlefield(player1, new Skullcage());
         harness.setHand(player2, handOf(2));
-        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertLife(player2, lifeBefore - 2);
     }
 
     @Test
@@ -58,12 +60,12 @@ class SkullcageTest extends BaseCardTest {
     void dealsDamageWithLargeHand() {
         harness.addToBattlefield(player1, new Skullcage());
         harness.setHand(player2, handOf(5));
-        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertLife(player2, lifeBefore - 2);
     }
 
     @Test
@@ -71,13 +73,13 @@ class SkullcageTest extends BaseCardTest {
     void checksHandSizeAtResolution() {
         harness.addToBattlefield(player1, new Skullcage());
         harness.setHand(player2, handOf(3));
-        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
 
         advanceToUpkeep(player2);
-        gd.playerHands.get(player2.getId()).remove(0);
+        harness.setHand(player2, handOf(2));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertLife(player2, lifeBefore - 2);
     }
 
     @Test
@@ -85,11 +87,23 @@ class SkullcageTest extends BaseCardTest {
     void doesNotTriggerDuringOwnUpkeep() {
         harness.addToBattlefield(player1, new Skullcage());
         harness.setHand(player1, handOf(5));
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int lifeBefore = gd.getLife(player1.getId());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Its upkeep ability does not target the opponent")
+    void upkeepAbilityDoesNotTargetOpponent() {
+        harness.addToBattlefield(player1, new Skullcage());
+        harness.setHand(player2, handOf(2));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.hasCommittedCrimeThisTurn(player1.getId())).isFalse();
     }
 }

@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
+import com.github.laxika.magicalvibes.cards.a.AnodetLurker;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.g.GemstoneArray;
-import com.github.laxika.magicalvibes.cards.k.KrarkClanIronworks;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,8 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StasisCocoon.class, AnimateArtifact.class, GemstoneArray.class,
-        KrarkClanIronworks.class, DrossCrocodile.class})
+@CardUsed({StasisCocoon.class, AnodetLurker.class, GemstoneArray.class,
+        DrossCrocodile.class})
 class StasisCocoonTest extends BaseCardTest {
 
     @Test
@@ -64,19 +62,39 @@ class StasisCocoonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enchanted artifact creature cannot attack")
-    void enchantedArtifactCreatureCannotAttack() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new KrarkClanIronworks());
-        artifact.setSummoningSick(false);
-        addAura(player1, artifact, new AnimateArtifact());
+    @DisplayName("Enchanted artifact cannot activate mana abilities")
+    void enchantedArtifactCannotActivateManaAbilities() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GemstoneArray());
+        artifact.setCounterCount(CounterType.CHARGE, 1);
         addAura(player2, artifact);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Artifact can activate abilities after Stasis Cocoon is removed")
+    void artifactCanActivateAfterStasisCocoonRemoved() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GemstoneArray());
+        Permanent aura = addAura(player2, artifact);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Enchanted artifact creature cannot attack")
+    void enchantedArtifactCreatureCannotAttack() {
+        Permanent artifact = addCreatureReady(player1, new AnodetLurker());
+        addAura(player2, artifact);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -84,19 +102,13 @@ class StasisCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted artifact creature cannot block")
     void enchantedArtifactCreatureCannotBlock() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new KrarkClanIronworks());
-        artifact.setSummoningSick(false);
-        addAura(player2, artifact, new AnimateArtifact());
+        Permanent artifact = addCreatureReady(player2, new AnodetLurker());
         addAura(player1, artifact);
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DrossCrocodile());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -105,11 +117,7 @@ class StasisCocoonTest extends BaseCardTest {
     }
 
     private Permanent addAura(com.github.laxika.magicalvibes.model.Player controller, Permanent host) {
-        return addAura(controller, host, new StasisCocoon());
-    }
-
-    private Permanent addAura(com.github.laxika.magicalvibes.model.Player controller, Permanent host, Card auraCard) {
-        Permanent aura = harness.addToBattlefieldAndReturn(controller, auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new StasisCocoon());
         aura.setAttachedTo(host.getId());
         return aura;
     }

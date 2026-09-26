@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "38")
 @CardRegistration(set = "LEG", collectorNumber = "29")
+@CardRegistration(set = "ME4", collectorNumber = "21")
 public class OsaiVultures extends Card {
 
     public OsaiVultures() {

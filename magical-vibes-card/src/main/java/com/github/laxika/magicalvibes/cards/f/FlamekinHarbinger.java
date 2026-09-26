@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "167")
 @CardRegistration(set = "HOP", collectorNumber = "53")
+@CardRegistration(set = "SLD", collectorNumber = "1255")
 public class FlamekinHarbinger extends Card {
 
     public FlamekinHarbinger() {

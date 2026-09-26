@@ -1,19 +1,37 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.c.CharcoalDiamond;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CharcoalDiamond.class, FallenAngel.class, GrizzlyBears.class, HowlingMine.class})
+@CardUsed({FallenAngel.class, GrizzlyBears.class, HowlingMine.class, IronStar.class})
 class FallenAngelTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Flying prevents a non-flying creature from blocking Fallen Angel")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(angel.isAttacking()).isTrue();
+    }
 
     @Test
     @DisplayName("Sacrificing a creature to the ability gives Fallen Angel +2/+1")
@@ -108,18 +126,18 @@ class FallenAngelTest extends BaseCardTest {
     void cannotSacrificeNoncreaturePermanent() {
         Permanent angel = addCreatureReady(player1, new FallenAngel());
         Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent diamond = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
+        Permanent ironStar = harness.addToBattlefieldAndReturn(player1, new IronStar());
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, diamond.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ironStar.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
 
         harness.handlePermanentChosen(player1, ownBears.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Charcoal Diamond");
+        harness.assertOnBattlefield(player1, "Iron Star");
         assertThat(angel.getPowerModifier()).isEqualTo(2);
         assertThat(angel.getToughnessModifier()).isEqualTo(1);
     }

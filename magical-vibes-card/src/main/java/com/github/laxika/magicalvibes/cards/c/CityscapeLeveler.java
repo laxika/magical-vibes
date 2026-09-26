@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BRO", collectorNumber = "233")
+@CardRegistration(set = "TLE", collectorNumber = "53")
 public class CityscapeLeveler extends Card {
 
     public CityscapeLeveler() {

@@ -6,13 +6,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlacialRay.class, GrizzlyBears.class, Shock.class})
 class GlacialRayTest extends BaseCardTest {
 
     @Test
@@ -24,8 +27,7 @@ class GlacialRayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
     }
@@ -39,8 +41,7 @@ class GlacialRayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -62,5 +63,18 @@ class GlacialRayTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(ray);
+    }
+
+    @Test
+    @DisplayName("Cannot splice onto a non-Arcane spell")
+    void cannotSpliceOntoNonArcaneSpell() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Shock(), new GlacialRay()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, player2.getId(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot be spliced");
     }
 }

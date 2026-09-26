@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "234")
+@CardRegistration(set = "SOC", collectorNumber = "331")
 public class StormcatchMentor extends Card {
 
     public StormcatchMentor() {

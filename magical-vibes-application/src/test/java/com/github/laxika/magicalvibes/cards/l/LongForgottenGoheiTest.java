@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.a.ApothecaryGeist;
-import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GlacialRay;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.h.HonorWornShaku;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LongForgottenGohei.class, GlacialRay.class, HonorWornShaku.class,
+        LanternKami.class, HumbleBudoka.class})
 class LongForgottenGoheiTest extends BaseCardTest {
 
     @Test
@@ -34,12 +36,9 @@ class LongForgottenGoheiTest extends BaseCardTest {
     @DisplayName("Non-Arcane spells are not reduced")
     void nonArcaneSpellNotReduced() {
         harness.addToBattlefield(player1, new LongForgottenGohei());
-        // Divination {2}{U} stays {2}{U}; only {1}{U} available
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        // Honor-Worn Shaku {3} stays {3}; only {2} available.
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new HonorWornShaku(), "{2}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -58,31 +57,31 @@ class LongForgottenGoheiTest extends BaseCardTest {
     @Test
     @DisplayName("Spirit creatures you control get +1/+1")
     void boostsOwnSpirits() {
-        Permanent geist = addCreatureReady(player1, new ApothecaryGeist());
+        Permanent kami = addCreatureReady(player1, new LanternKami());
         harness.addToBattlefield(player1, new LongForgottenGohei());
 
-        // Apothecary Geist is a 2/3 Spirit -> 3/4
-        assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(4);
+        // Lantern Kami is a 1/1 Spirit -> 2/2.
+        assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Non-Spirit creatures are not boosted")
     void doesNotBoostNonSpirits() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent budoka = addCreatureReady(player1, new HumbleBudoka());
         harness.addToBattlefield(player1, new LongForgottenGohei());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, budoka)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, budoka)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Opponent's Spirits are not boosted")
     void doesNotBoostOpponentSpirits() {
-        Permanent geist = addCreatureReady(player2, new ApothecaryGeist());
+        Permanent kami = addCreatureReady(player2, new LanternKami());
         harness.addToBattlefield(player1, new LongForgottenGohei());
 
-        assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(1);
     }
 }

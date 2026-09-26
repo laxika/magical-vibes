@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(OrochiHatchery.class)
 class OrochiHatcheryTest extends BaseCardTest {
 
     @Test
@@ -21,10 +22,10 @@ class OrochiHatcheryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OrochiHatchery()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.castArtifact(player1, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(findHatchery(player1).getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(findPermanent(player1, "Orochi Hatchery").getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     @Test
@@ -32,10 +33,10 @@ class OrochiHatcheryTest extends BaseCardTest {
     void entersWithNoCountersForXZero() {
         harness.setHand(player1, List.of(new OrochiHatchery()));
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castArtifact(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(findHatchery(player1).getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(findPermanent(player1, "Orochi Hatchery").getCounterCount(CounterType.CHARGE)).isZero();
     }
 
     @Test
@@ -47,7 +48,7 @@ class OrochiHatcheryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        List<Permanent> snakes = snakes(player1);
+        List<Permanent> snakes = findPermanents(player1, "Snake");
         assertThat(snakes).hasSize(3);
         assertThat(snakes).allSatisfy(snake -> {
             assertThat(gqs.getEffectivePower(gd, snake)).isEqualTo(1);
@@ -66,26 +67,12 @@ class OrochiHatcheryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(snakes(player1)).isEmpty();
+        assertThat(findPermanents(player1, "Snake")).isEmpty();
     }
 
     private Permanent addHatcheryReady(Player player, int chargeCounters) {
-        Permanent perm = new Permanent(new OrochiHatchery());
-        perm.setSummoningSick(false);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new OrochiHatchery());
         perm.setCounterCount(CounterType.CHARGE, chargeCounters);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private Permanent findHatchery(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Orochi Hatchery"))
-                .findFirst().orElseThrow();
-    }
-
-    private List<Permanent> snakes(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.SNAKE))
-                .toList();
     }
 }

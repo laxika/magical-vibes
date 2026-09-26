@@ -69,6 +69,7 @@ class FinalPunishmentTest extends BaseCardTest {
         carbonizePlayer(player2.getId());
         harness.assertLife(player2, 17);
 
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

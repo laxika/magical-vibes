@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "3")
+@CardRegistration(set = "2ED", collectorNumber = "85")
 public class Timetwister extends Card {
 
     public Timetwister() {

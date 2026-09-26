@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -20,7 +23,18 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       int convokeCreatureCount,
                                       EnterBattlefieldOnDiscardEffect discardReplacement,
                                       EnterWithCountersEffect enterWithCounters,
-                                      Zone landPlayZone) {
+                                      Zone landPlayZone,
+                                      StackEntry sourceStackEntry) {
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts, int convokeCreatureCount,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters, Zone landPlayZone) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
+                landPlayZone, null);
+    }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
@@ -28,7 +42,7 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                    EnterBattlefieldOnDiscardEffect discardReplacement,
                                    EnterWithCountersEffect enterWithCounters) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters, null);
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters, null, null);
     }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
@@ -37,7 +51,7 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                    EnterBattlefieldOnDiscardEffect discardReplacement,
                                    EnterWithCountersEffect enterWithCounters) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, 0, discardReplacement, enterWithCounters, null);
+                repeatedAdditionalCosts, 0, discardReplacement, enterWithCounters, null, null);
     }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
@@ -45,14 +59,14 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                    List<String> repeatedAdditionalCosts,
                                    EnterBattlefieldOnDiscardEffect discardReplacement) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, 0, discardReplacement, null, null);
+                repeatedAdditionalCosts, 0, discardReplacement, null, null, null);
     }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
                                    List<String> repeatedAdditionalCosts) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, 0, null, null, null);
+                repeatedAdditionalCosts, 0, null, null, null, null);
     }
 
     public BattlefieldEntryRequest {
@@ -64,6 +78,7 @@ public record BattlefieldEntryRequest(UUID controllerId,
     public BattlefieldEntryRequest deepCopy() {
         return new BattlefieldEntryRequest(controllerId, new Permanent(permanent), enterTappedTypes,
                 simultaneouslyEntered.stream().map(Permanent::new).toList(), xValue, kicked,
-                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters, landPlayZone);
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
+                landPlayZone, sourceStackEntry == null ? null : new StackEntry(sourceStackEntry));
     }
 }

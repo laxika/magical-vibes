@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.i.Inflame;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.g.GiantBadger;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpiketailHatchling.class, Inflame.class, SiltCrawler.class})
+@CardUsed({SpiketailHatchling.class, GiantBadger.class, Unsummon.class})
 class SpiketailHatchlingTest extends BaseCardTest {
 
     @Test
@@ -128,8 +128,12 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        Inflame targetSpell = new Inflame();
-        harness.castFromHand(player1, targetSpell, "{R}");
+        var targetPermanent = harness.addToBattlefieldAndReturn(player1, new GiantBadger());
+
+        Unsummon targetSpell = new Unsummon();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, targetPermanent.getId());
         harness.passPriority(player1);
         harness.activateAbility(player2, 0, null, targetSpell.getId());
 
@@ -137,7 +141,7 @@ class SpiketailHatchlingTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -149,6 +153,19 @@ class SpiketailHatchlingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        SpiketailHatchling hatchling = new SpiketailHatchling();
+        harness.addToBattlefield(player1, hatchling);
+
+        var permanent = harness.addToBattlefieldAndReturn(player2, new GiantBadger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, permanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spiketail Hatchling");
     }
 
     @Test
@@ -222,15 +239,19 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        Inflame targetSpell = new Inflame();
-        harness.castFromHand(player1, targetSpell, "{R}");
+        var targetPermanent = harness.addToBattlefieldAndReturn(player1, new GiantBadger());
+
+        Unsummon targetSpell = new Unsummon();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, targetPermanent.getId());
         harness.passPriority(player1);
         harness.activateAbility(player2, 0, null, targetSpell.getId());
 
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Inflame");
-        harness.assertNotOnBattlefield(player1, "Inflame");
+        harness.assertInGraveyard(player1, "Unsummon");
+        harness.assertNotOnBattlefield(player1, "Unsummon");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -238,7 +259,7 @@ class SpiketailHatchlingTest extends BaseCardTest {
     @DisplayName("Flying prevents a creature without flying or reach from blocking")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new SpiketailHatchling());
-        addCreatureReady(player2, new SiltCrawler());
+        addCreatureReady(player2, new GiantBadger());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

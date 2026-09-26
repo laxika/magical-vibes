@@ -106,4 +106,27 @@ class BrowbeatTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, hawk.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The caster can be the target of the fallback draw")
+    void casterDrawsWhenEveryoneDeclines() {
+        castAndResolveToChoiceForJudReview(player1.getId());
+        int casterHandBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(casterHandBefore + 3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+    }
+
+    private void castAndResolveToChoiceForJudReview(java.util.UUID targetPlayerId) {
+        harness.setHand(player1, List.of(new Browbeat()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
+    }
 }

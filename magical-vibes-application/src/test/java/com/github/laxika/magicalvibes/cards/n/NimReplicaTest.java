@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NimReplica.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class})
 class NimReplicaTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,20 @@ class NimReplicaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.assertNotOnBattlefield(player1, "Nim Replica");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new NimReplica());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);

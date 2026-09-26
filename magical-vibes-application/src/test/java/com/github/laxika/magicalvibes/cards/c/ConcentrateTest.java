@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Concentrate.class, CabalPit.class, CarefulStudy.class, CephalidScout.class})
+@CardUsed(Concentrate.class)
 class ConcentrateTest extends BaseCardTest {
 
     @Test

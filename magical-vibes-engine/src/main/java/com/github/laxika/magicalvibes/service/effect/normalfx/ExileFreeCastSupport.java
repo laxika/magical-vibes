@@ -72,6 +72,7 @@ public class ExileFreeCastSupport {
         }
 
         Card card = exiledEntry.card();
+        boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
         if (card.isCastOnlyFromGraveyard()) {
             if (returnToHandIfUnable) {
                 returnExiledCardToHand(gameData, exileCardId);
@@ -110,6 +111,9 @@ public class ExileFreeCastSupport {
 
             // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on the stack.
             gameData.removeFromExile(exileCardId);
+            if (exileInsteadOfGraveyard) {
+                gameData.exileInsteadOfGraveyard.add(exileCardId);
+            }
             if (grantHaste && card.hasType(CardType.CREATURE)) {
                 gameData.spellsGrantedHasteOnEntry.add(exileCardId);
             }
@@ -125,16 +129,17 @@ public class ExileFreeCastSupport {
         }
 
         gameData.removeFromExile(exileCardId);
-        if (grantHaste && card.hasType(CardType.CREATURE)) {
-            gameData.spellsGrantedHasteOnEntry.add(exileCardId);
-        }
-        gameData.recordCardPlayedFromExile(playerId);
         StackEntry stackEntry = new StackEntry(
                 spellType, card, playerId, card.getName(),
                 spellEffects, 0, (UUID) null, null
         );
+        stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         stackEntry.setSourceZone(Zone.EXILE);
+        if (grantHaste && card.hasType(CardType.CREATURE)) {
+            gameData.spellsGrantedHasteOnEntry.add(exileCardId);
+        }
+        gameData.recordCardPlayedFromExile(playerId);
         gameData.stack.add(stackEntry);
 
         gameData.recordSpellCast(playerId, card);

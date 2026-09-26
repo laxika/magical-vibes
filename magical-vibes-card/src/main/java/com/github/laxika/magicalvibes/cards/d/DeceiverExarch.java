@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "33")
+@CardRegistration(set = "C13", collectorNumber = "37")
 public class DeceiverExarch extends Card {
 
     public DeceiverExarch() {

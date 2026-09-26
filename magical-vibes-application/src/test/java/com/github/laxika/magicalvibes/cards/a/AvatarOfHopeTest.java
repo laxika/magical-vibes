@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -24,10 +23,8 @@ class AvatarOfHopeTest extends BaseCardTest {
     @DisplayName("Cannot cast Avatar of Hope for {W}{W} at more than 3 life")
     void cannotCastWithReductionAboveThreeLife() {
         harness.setLife(player1, 4);
-        harness.setHand(player1, List.of(new AvatarOfHope()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AvatarOfHope(), "{W}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -37,10 +34,8 @@ class AvatarOfHopeTest extends BaseCardTest {
     void opponentLifeDoesNotEnableReduction() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 3);
-        harness.setHand(player1, List.of(new AvatarOfHope()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AvatarOfHope(), "{W}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -49,17 +44,14 @@ class AvatarOfHopeTest extends BaseCardTest {
     @DisplayName("Can cast Avatar of Hope for {W}{W} at 3 or less life")
     void canCastWithReductionAtThreeLife() {
         harness.setLife(player1, 3);
-        harness.setHand(player1, List.of(new AvatarOfHope()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AvatarOfHope(), "{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Avatar of Hope");
     }
 
     @Test

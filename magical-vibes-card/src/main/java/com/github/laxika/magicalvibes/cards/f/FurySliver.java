@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "157")
 @CardRegistration(set = "H09", collectorNumber = "25")
+@CardRegistration(set = "SLD", collectorNumber = "638")
 @CardRegistration(set = "TSR", collectorNumber = "164")
 public class FurySliver extends Card {
 

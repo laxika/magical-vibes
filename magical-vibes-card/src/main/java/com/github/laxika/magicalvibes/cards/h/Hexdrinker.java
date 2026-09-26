@@ -17,10 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "1222")
 @CardRegistration(set = "MH1", collectorNumber = "168")
 public class Hexdrinker extends Card {
 

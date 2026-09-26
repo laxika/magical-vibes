@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "ME1", collectorNumber = "75")
+@CardRegistration(set = "ARN", collectorNumber = "30")
 public class KhabLGhoul extends Card {
 
     public KhabLGhoul() {

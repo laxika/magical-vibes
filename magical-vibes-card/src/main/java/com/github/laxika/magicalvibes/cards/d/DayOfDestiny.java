@@ -13,7 +13,7 @@ public class DayOfDestiny extends Card {
 
     public DayOfDestiny() {
         // Legendary creatures you control get +2/+2.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
     }
 }

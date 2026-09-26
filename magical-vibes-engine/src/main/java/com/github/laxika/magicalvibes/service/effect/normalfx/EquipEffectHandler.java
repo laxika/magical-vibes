@@ -73,7 +73,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         equipment.setTimestamp(gameData.nextTimestamp());
 
         
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (target creature no longer exists)."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " equips ", target.getCard(), "."));
         log.info("Game {} - {} equipped to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());

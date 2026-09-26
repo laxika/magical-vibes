@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SUM", collectorNumber = "191")
 @CardRegistration(set = "ATQ", collectorNumber = "32")
 @CardRegistration(set = "3ED", collectorNumber = "191")
+@CardRegistration(set = "ME4", collectorNumber = "147")
 public class Crumble extends Card {
 
     public Crumble() {

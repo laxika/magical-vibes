@@ -7,7 +7,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "1418")
+@CardRegistration(set = "SLD", collectorNumber = "1766")
 @CardRegistration(set = "2XM", collectorNumber = "209")
+@CardRegistration(set = "SOC", collectorNumber = "319")
+@CardRegistration(set = "C15", collectorNumber = "48")
 public class MazirekKraulDeathPriest extends Card {
 
     public MazirekKraulDeathPriest() {

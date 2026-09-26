@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HidetsugusSecondRite.class, ArabaMothrider.class})
 class HidetsugusSecondRiteTest extends BaseCardTest {
 
     @Test
@@ -63,7 +65,7 @@ class HidetsugusSecondRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var creature = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
         harness.setHand(player1, List.of(new HidetsugusSecondRite()));
         addMana();
 

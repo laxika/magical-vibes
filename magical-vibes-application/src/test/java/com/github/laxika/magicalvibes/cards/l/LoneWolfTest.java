@@ -34,7 +34,7 @@ class LoneWolfTest extends BaseCardTest {
         // Assign all 2 damage to defending player (as though unblocked)
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 2));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         // Blocker survives since no damage was assigned to it
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -61,7 +61,7 @@ class LoneWolfTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         // Life unchanged since damage went to blocker
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -84,8 +84,34 @@ class LoneWolfTest extends BaseCardTest {
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 2));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Blocked Lone Wolf can decline the ability and divide damage among blockers")
+    void blockedLoneWolfCanAssignDamageAmongMultipleBlockers() {
+        harness.setLife(player2, 20);
+        Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        loneWolf.setAttacking(true);
+        firstBlocker.setBlocking(true);
+        firstBlocker.addBlockingTarget(0);
+        secondBlocker.setBlocking(true);
+        secondBlocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        // Decline the optional ability by assigning the 2 damage among the blockers.
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1,
+                secondBlocker.getId(), 1));
+
+        harness.assertLife(player2, 20);
+        assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(2);
+        harness.assertInGraveyard(player1, "Lone Wolf");
     }
 
     @Test
@@ -97,7 +123,7 @@ class LoneWolfTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -135,6 +161,6 @@ class LoneWolfTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 }

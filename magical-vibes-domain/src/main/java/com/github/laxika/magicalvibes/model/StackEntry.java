@@ -1,26 +1,25 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class StackEntry {
@@ -44,6 +43,8 @@ public class StackEntry {
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
+    /** Index of the effect currently being dispatched by EffectResolutionService. */
+    @Setter private int resolvingEffectIndex = -1;
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
@@ -58,6 +59,8 @@ public class StackEntry {
     private boolean targetIdOverriddenForEffectResolution;
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
+    /** Controller of the source permanent when an activated ability was put on the stack. */
+    @Setter private UUID sourcePermanentControllerId;
     @Setter private com.github.laxika.magicalvibes.model.planar.PlanarObject sourcePlanarObject;
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
@@ -212,6 +215,8 @@ public class StackEntry {
     /** Whether this creature spell was cast for its Sneak alternate cost. */
     @Setter private boolean sneak;
     @Setter private boolean castForForetell;
+    /** The foreteller's turn count when this spell was exiled by foretell. */
+    @Setter private int foretellControllerTurnsAtExile = -1;
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
     @Setter private Integer webSlingingReturnedCreatureManaValue;
@@ -239,6 +244,8 @@ public class StackEntry {
     @Setter private boolean spellDamageContinuation;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
+    /** Whether this spell or ability has already been counted for a pile grouping or guess this turn. */
+    @Setter private boolean causedPileGroupingOrGuessThisTurn;
     /**
      * The integer payload of the event (or prior resolution step) behind this entry — life gained,
      * damage dealt, excess damage, etc. Snapshotted by the trigger collector that enqueues the entry
@@ -247,6 +254,7 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
     */
     @Setter private int eventValue;
+    @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
     @Setter private boolean markSourceOncePerTurnOnAcceptance;
     /** The mana type produced by the tap event that created this triggered ability. */
     @Setter private ManaColor producedManaColor;
@@ -264,6 +272,9 @@ public class StackEntry {
      * Duplicates are meaningful: a player who lost three lands appears three times.
      */
     @Setter private List<UUID> eventPlayerIds = List.of();
+    /** Controllers of the nontoken permanents actually destroyed by the event, positionally aligned
+     * with the nontoken subset of {@link #eventPlayerIds}. */
+    @Setter private List<UUID> eventNontokenPlayerIds = List.of();
     /** Card ids of the permanents actually destroyed by the event that produced this entry. */
     @Setter private List<UUID> eventCardIds = List.of();
     /**
@@ -302,9 +313,13 @@ public class StackEntry {
      * Last-known card id of the event that produced this triggered ability, when an effect needs to
      * act on "that card" rather than a chosen target — e.g. the creature that died for Seraph's
      * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
-     */
+    */
     @Setter private UUID triggeringCardId;
+    /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
+    @Setter private Card triggeringCardSnapshot;
     @Setter private long triggeringCardGraveyardEntryVersion;
+    /** Graveyard entry chosen as this spell's primary target when it was cast. */
+    @Setter private long targetGraveyardEntryVersion = -1;
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
@@ -323,6 +338,8 @@ public class StackEntry {
     @Setter private int sacrificedToughness;
     /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
     private List<UUID> convokeCreatureIds = List.of();
+    /** Remaining convoke creatures for a resolving effect that makes them connive one at a time. */
+    private List<UUID> convokeConniveCreatureIdsToProcess;
     /** Permanents chosen to pay a cost and retained for a later effect in the same ability. */
     private List<UUID> chosenCostPermanentIds = List.of();
     /** Last-known snapshots of permanents chosen to pay a tracked cost. */
@@ -366,7 +383,8 @@ public class StackEntry {
     @Setter private boolean primaryTargetStoredSeparately;
     /**
      * How many targets each declared target group actually contributed to the flat {@link #targetIds}
-     * list, in group order. Only set by the slot-by-slot trigger walker, which lets a controller
+     * list, in group order. Set by the slot-by-slot trigger walker and by casts whose variable target
+     * groups are separated explicitly, which lets a controller
      * decline an optional ("up to N") group — there the default assumption that every group consumed
      * its full {@code maxTargets} would shift the later groups' slices onto the wrong targets. Empty
      * means "unknown", which keeps the positional slicing every ordinary multi-target spell uses.
@@ -386,6 +404,13 @@ public class StackEntry {
      * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
+    /** Colors granted to the permanent as this spell enters the battlefield. */
+    private final Set<CardColor> grantedColorsOnEntry = EnumSet.noneOf(CardColor.class);
+    /** Creature subtypes granted to the permanent as this spell enters the battlefield. */
+    private final Set<CardSubtype> grantedSubtypesOnEntry = EnumSet.noneOf(CardSubtype.class);
+    /** Base power/toughness overrides carried by this permanent spell onto the battlefield. */
+    @Setter private Integer basePowerOverrideOnEntry;
+    @Setter private Integer baseToughnessOverrideOnEntry;
     /** Keywords this spell gains while it is on the stack. */
     private final Set<Keyword> grantedKeywordsWhileOnStack = EnumSet.noneOf(Keyword.class);
     /**
@@ -399,6 +424,8 @@ public class StackEntry {
     @Setter private int grantedDevour;
     /** Triggered abilities granted to the permanent as this spell enters the battlefield. */
     private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
+    /** Triggered abilities granted indefinitely to the permanent as this spell enters the battlefield. */
+    private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
     /** Explicit starting loyalty for a copied planeswalker spell, when the copy defines one. */
@@ -653,6 +680,7 @@ public class StackEntry {
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
+        this.resolvingEffectIndex = source.resolvingEffectIndex;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
@@ -723,6 +751,7 @@ public class StackEntry {
         this.spectacle = source.spectacle;
         this.sneak = source.sneak;
         this.castForForetell = source.castForForetell;
+        this.foretellControllerTurnsAtExile = source.foretellControllerTurnsAtExile;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
@@ -741,13 +770,17 @@ public class StackEntry {
         this.spellDamageContinuation = source.spellDamageContinuation;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
+        this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
         this.eventValue = source.eventValue;
+        this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
         this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
+        this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
@@ -761,7 +794,9 @@ public class StackEntry {
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.searchedPermanentIds);
         this.triggeringCardId = source.triggeringCardId;
+        this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
@@ -784,6 +819,8 @@ public class StackEntry {
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
+        this.convokeConniveCreatureIdsToProcess = source.convokeConniveCreatureIdsToProcess == null
+                ? null : new ArrayList<>(source.convokeConniveCreatureIdsToProcess);
         this.chosenCostPermanentIds = source.chosenCostPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.chosenCostPermanentIds);
         this.chosenCostPermanentSnapshots = source.chosenCostPermanentSnapshots.isEmpty()
@@ -798,11 +835,17 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.grantedColorsOnEntry.addAll(source.grantedColorsOnEntry);
+        this.grantedSubtypesOnEntry.addAll(source.grantedSubtypesOnEntry);
+        this.basePowerOverrideOnEntry = source.basePowerOverrideOnEntry;
+        this.baseToughnessOverrideOnEntry = source.baseToughnessOverrideOnEntry;
         this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.grantedDevour = source.grantedDevour;
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
+        source.persistentTriggeredEffectsOnEntry.forEach((slot, effects) ->
+                this.persistentTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.startingLoyalty = source.startingLoyalty;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
@@ -816,6 +859,14 @@ public class StackEntry {
 
     public Map<EffectSlot, List<CardEffect>> getGrantedTriggeredEffectsOnEntry() {
         return grantedTriggeredEffectsOnEntry;
+    }
+
+    public void addPersistentTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
+        persistentTriggeredEffectsOnEntry.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(effect);
+    }
+
+    public Map<EffectSlot, List<CardEffect>> getPersistentTriggeredEffectsOnEntry() {
+        return persistentTriggeredEffectsOnEntry;
     }
 
     public int getCounterCount(CounterType counterType) {
@@ -913,6 +964,10 @@ public class StackEntry {
         this.targetIdsFromAssignments = false;
         this.primaryTargetStoredSeparately = false;
         this.illegalTargetIndices.clear();
+        this.grantedColorsOnEntry.clear();
+        this.grantedSubtypesOnEntry.clear();
+        this.basePowerOverrideOnEntry = null;
+        this.baseToughnessOverrideOnEntry = null;
 
         // Cast-time choices and replacement effects belong to the old spell, not the exchanged card.
         this.modalModeCount = null;
@@ -1068,6 +1123,10 @@ public class StackEntry {
 
     public void setConvokeCreatureIds(List<UUID> convokeCreatureIds) {
         this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
+    }
+
+    public void setConvokeConniveCreatureIdsToProcess(List<UUID> creatureIds) {
+        this.convokeConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
     }
 
     public void setChosenCostPermanentIds(List<UUID> chosenCostPermanentIds) {

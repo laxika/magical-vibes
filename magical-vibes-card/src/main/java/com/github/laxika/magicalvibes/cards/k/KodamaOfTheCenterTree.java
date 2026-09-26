@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -20,11 +21,11 @@ public class KodamaOfTheCenterTree extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT), CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(spirits, spirits));
 
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_DEATH, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardSubtypePredicate(CardSubtype.SPIRIT))
                 .targetGraveyard(true)
                 .dynamicMaxManaValue(spirits)
-                .build());
+                .build(), "Return target Spirit card to your hand?"));
     }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 /**
  * "Exile target creature card from a graveyard. You gain life equal to that card's toughness."
@@ -17,6 +19,7 @@ public record ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
+        return TargetSpec.benign(TargetPredicates.graveyardCards(
+                new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

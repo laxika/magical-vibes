@@ -1,19 +1,17 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GlacialWall;
-import com.github.laxika.magicalvibes.cards.g.GoblinHero;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianColossus;
 import com.github.laxika.magicalvibes.cards.s.SeaMonster;
+import com.github.laxika.magicalvibes.cards.w.WallOfStone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FountainOfYouth.class, GlacialWall.class, GoblinHero.class, HowlingMine.class, Inferno.class, MahamotiDjinn.class, PhyrexianColossus.class, SeaMonster.class})
+@CardUsed({Inferno.class, HowlingMine.class, MahamotiDjinn.class, PhyrexianColossus.class, SeaMonster.class, WallOfStone.class})
 class InfernoTest extends BaseCardTest {
 
     @Test
@@ -42,7 +40,7 @@ class InfernoTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Inferno does not destroy creatures with toughness greater than 6")
+    @DisplayName("Inferno does not destroy an 8/8 creature")
     void doesNotDestroyLargeCreatures() {
         var phyrexianColossus = harness.addToBattlefieldAndReturn(player2, new PhyrexianColossus());
 
@@ -54,15 +52,15 @@ class InfernoTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Inferno does not destroy creatures with toughness greater than 6")
-    void doesNotDestroyLargeCreaturesUpstreamReview() {
-        var glacialWall = harness.addToBattlefieldAndReturn(player2, new GlacialWall());
+    @DisplayName("Inferno does not destroy a 0/8 creature")
+    void doesNotDestroyEightToughnessCreature() {
+        var wallOfStone = harness.addToBattlefieldAndReturn(player2, new WallOfStone());
 
         harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Glacial Wall");
-        assertThat(glacialWall.getMarkedDamage()).isEqualTo(6);
+        harness.assertOnBattlefield(player2, "Wall of Stone");
+        assertThat(wallOfStone.getMarkedDamage()).isEqualTo(6);
     }
 
     @Test

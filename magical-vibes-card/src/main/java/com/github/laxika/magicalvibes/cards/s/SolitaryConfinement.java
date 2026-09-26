@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTyp
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "24")
+@CardRegistration(set = "MH2", collectorNumber = "265")
 public class SolitaryConfinement extends Card {
 
     public SolitaryConfinement() {

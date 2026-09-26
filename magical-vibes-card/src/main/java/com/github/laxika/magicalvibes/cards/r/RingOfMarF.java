@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawFromOutsideGa
 import java.util.List;
 
 @CardRegistration(set = "ME1", collectorNumber = "163")
+@CardRegistration(set = "ARN", collectorNumber = "68")
 public class RingOfMarF extends Card {
 
     public RingOfMarF() {

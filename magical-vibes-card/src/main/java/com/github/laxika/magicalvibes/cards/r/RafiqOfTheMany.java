@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "ALA", collectorNumber = "250")
 @CardRegistration(set = "V11", collectorNumber = "10")
 @CardRegistration(set = "2X2", collectorNumber = "268")
+@CardRegistration(set = "CMM", collectorNumber = "352")
+@CardRegistration(set = "CMM", collectorNumber = "589")
 public class RafiqOfTheMany extends Card {
 
     public RafiqOfTheMany() {

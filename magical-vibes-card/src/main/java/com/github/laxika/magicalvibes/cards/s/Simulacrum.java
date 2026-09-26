@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "4ED", collectorNumber = "161")
 @CardRegistration(set = "SUM", collectorNumber = "130")
 @CardRegistration(set = "3ED", collectorNumber = "130")
+@CardRegistration(set = "2ED", collectorNumber = "129")
 public class Simulacrum extends Card {
 
     public Simulacrum() {

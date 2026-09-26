@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MetathranZombie;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,31 +12,37 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UrborgDrake.class, MetathranZombie.class})
 class UrborgDrakeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Declaring no attackers while Urborg Drake can attack throws exception")
     void mustAttackWhenAble() {
         addDrake(false);
-        beginAttackers();
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("Urborg Drake attacks when declared")
+    void attacksWhenDeclared() {
+        harness.setLife(player2, 20);
+        addDrake(false);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     @Test
     @DisplayName("Omitting Urborg Drake while declaring another attacker throws exception")
     void mustBeIncludedAmongAttackers() {
         addDrake(false);
+        addCreatureReady(player1, new MetathranZombie());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        beginAttackers();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -44,25 +50,27 @@ class UrborgDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Urborg Drake does not have to attack while summoning sick")
     void doesNotAttackWithSummoningSickness() {
-        addDrake(true);
+        Permanent drake = addDrake(true);
 
-        beginAttackers();
+        declareAttackers(List.of());
 
-        gs.declareAttackers(gd, player1, List.of());
-
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isFalse();
+        assertThat(drake.isAttacking()).isFalse();
     }
 
-    private void addDrake(boolean summoningSick) {
-        Permanent drake = new Permanent(new UrborgDrake());
+    @Test
+    @DisplayName("Urborg Drake does not have to attack while tapped")
+    void doesNotAttackWhileTapped() {
+        Permanent drake = addDrake(false);
+        drake.tap();
+
+        declareAttackers(List.of());
+
+        assertThat(drake.isAttacking()).isFalse();
+    }
+
+    private Permanent addDrake(boolean summoningSick) {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new UrborgDrake());
         drake.setSummoningSick(summoningSick);
-        gd.playerBattlefields.get(player1.getId()).add(drake);
-    }
-
-    private void beginAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        return drake;
     }
 }

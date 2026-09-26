@@ -28,18 +28,18 @@ class GildedLightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RewardTheFaithful()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(player1.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.setHand(player1, List.of(new RewardTheFaithful()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
+        harness.castInstant(player1, 0, List.of(player1.getId()));
         harness.passBothPriorities();
 
         harness.assertLife(player1, 22);

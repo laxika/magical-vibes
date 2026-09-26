@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "54")
+@CardRegistration(set = "SLD", collectorNumber = "886")
+@CardRegistration(set = "SLD", collectorNumber = "1022")
 public class SolveTheEquation extends Card {
 
     public SolveTheEquation() {

@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
+import com.github.laxika.magicalvibes.cards.e.EchoingDecay;
+import com.github.laxika.magicalvibes.cards.m.Memnarch;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,31 +17,35 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PristineAngel.class, EchoingDecay.class, Memnarch.class, DarksteelIngot.class})
 class PristineAngelTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Untapped Pristine Angel has protection from colors")
-    void untappedAngelHasProtectionFromColors() {
+    @DisplayName("Untapped Pristine Angel has protection from black")
+    void untappedAngelHasProtectionFromBlack() {
         Permanent angel = addAngel(player2);
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, angel.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, angel.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from red");
+                .hasMessageContaining("protection from black");
     }
 
     @Test
     @DisplayName("Untapped Pristine Angel has protection from artifacts")
     void untappedAngelHasProtectionFromArtifacts() {
         Permanent angel = addAngel(player2);
-        harness.setHand(player1, List.of(createArtifactDamageSpell()));
+        harness.addToBattlefield(player1, new Memnarch());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, angel.getId(), null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, angel.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
         angel.tap();
-        gs.playCard(gd, player1, 0, 0, angel.getId(), null);
+        harness.activateAbility(player1, 0, 0, null, angel.getId());
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -53,10 +55,11 @@ class PristineAngelTest extends BaseCardTest {
     void tappedAngelLosesProtectionFromColors() {
         Permanent angel = addAngel(player2);
         angel.tap();
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player1, 0, 0, angel.getId(), null);
+        harness.castInstant(player1, 0, angel.getId());
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -66,7 +69,8 @@ class PristineAngelTest extends BaseCardTest {
     void castingSpellMayUntapAngel() {
         Permanent angel = addAngel(player1);
         angel.tap();
-        harness.setHand(player1, List.of(new Spellbook()));
+        harness.setHand(player1, List.of(new DarksteelIngot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castArtifact(player1, 0);
 
@@ -83,7 +87,8 @@ class PristineAngelTest extends BaseCardTest {
     void decliningUntapLeavesAngelTapped() {
         Permanent angel = addAngel(player1);
         angel.tap();
-        harness.setHand(player1, List.of(new Spellbook()));
+        harness.setHand(player1, List.of(new DarksteelIngot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castArtifact(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
@@ -91,20 +96,22 @@ class PristineAngelTest extends BaseCardTest {
         assertThat(angel.isTapped()).isTrue();
     }
 
-    private Permanent addAngel(Player player) {
-        Permanent angel = new Permanent(new PristineAngel());
-        angel.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(angel);
-        return angel;
+    @Test
+    @DisplayName("Opponent's spell does not trigger Pristine Angel's untap ability")
+    void opponentSpellDoesNotTriggerUntapAbility() {
+        Permanent angel = addAngel(player1);
+        angel.tap();
+        harness.setHand(player2, List.of(new DarksteelIngot()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castArtifact(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(angel.isTapped()).isTrue();
     }
 
-    private Card createArtifactDamageSpell() {
-        Card card = new Card();
-        card.setName("Artifact Bolt");
-        card.setType(CardType.INSTANT);
-        card.setAdditionalTypes(java.util.Set.of(CardType.ARTIFACT));
-        card.setManaCost("{0}");
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
+    private Permanent addAngel(Player player) {
+        return addCreatureReady(player, new PristineAngel());
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({UrzasArmor.class, Shock.class, HillGiant.class})
+@CardUsed({UrzasArmor.class, Shock.class, HillGiant.class, RodOfRuin.class})
 class UrzasArmorTest extends BaseCardTest {
 
     @Test
@@ -25,6 +26,21 @@ class UrzasArmorTest extends BaseCardTest {
 
         // Shock deals 2; 1 is prevented, so player1 takes 1.
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Prevents damage from a noncombat permanent source")
+    void preventsNoncombatPermanentSourceDamage() {
+        harness.addToBattlefield(player1, new UrzasArmor());
+        harness.addToBattlefield(player2, new RodOfRuin());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        // Rod of Ruin deals 1; Urza's Armor prevents all of that source's damage.
+        harness.assertLife(player1, 20);
     }
 
     @Test

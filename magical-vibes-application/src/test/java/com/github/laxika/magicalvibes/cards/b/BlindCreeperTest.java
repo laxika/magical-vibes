@@ -1,27 +1,23 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlindCreeper.class, ConjurersBauble.class})
 class BlindCreeperTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a spell gives Blind Creeper -1/-1")
     void controllerCastingSpellShrinksBlindCreeper() {
         harness.addToBattlefield(player1, new BlindCreeper());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ConjurersBauble(), "{1}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(2);
@@ -35,10 +31,7 @@ class BlindCreeperTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new ConjurersBauble(), "{1}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(2);
@@ -49,10 +42,7 @@ class BlindCreeperTest extends BaseCardTest {
     @DisplayName("Blind Creeper's spell-cast penalty wears off at end of turn")
     void penaltyWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new BlindCreeper());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ConjurersBauble(), "{1}");
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(2);
 
@@ -62,6 +52,24 @@ class BlindCreeperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each spell cast gives Blind Creeper another -1/-1 until end of turn")
+    void eachSpellCastAddsAnotherPenalty() {
+        harness.addToBattlefield(player1, new BlindCreeper());
+
+        harness.castFromHand(player1, new ConjurersBauble(), "{1}");
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new ConjurersBauble(), "{1}");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(1);
     }
 
     private Permanent blindCreeper() {

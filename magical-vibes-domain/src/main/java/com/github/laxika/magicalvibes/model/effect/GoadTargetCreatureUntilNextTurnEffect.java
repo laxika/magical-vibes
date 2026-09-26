@@ -4,11 +4,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /** Goads the targeted creature until the ability controller's next turn. */
-public record GoadTargetCreatureUntilNextTurnEffect() implements CombatAttackRequirementEffect {
+public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRestriction)
+        implements CombatAttackRequirementEffect {
+
+    public GoadTargetCreatureUntilNextTurnEffect() {
+        this(null);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.creature());
+        return TargetSpec.harmful(TargetPredicates.creature(), targetRestriction);
     }
 
     @Override

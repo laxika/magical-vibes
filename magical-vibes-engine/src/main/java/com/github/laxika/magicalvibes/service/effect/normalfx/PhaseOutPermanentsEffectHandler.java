@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -43,13 +44,20 @@ public class PhaseOutPermanentsEffectHandler implements NormalEffectHandlerBean 
                 .withSourceControllerId(entry.getControllerId());
 
         List<Permanent> toPhaseOut = new ArrayList<>();
-        if (e.controllerOnly()) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-            if (battlefield != null) {
-                collectMatching(battlefield, e, filterContext, toPhaseOut);
+        switch (e.scope()) {
+            case CONTROLLER -> {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+                if (battlefield != null) {
+                    collectMatching(battlefield, e, filterContext, toPhaseOut);
+                }
             }
-        } else {
-            gameData.forEachBattlefield((playerId, battlefield) ->
+            case TARGET_PLAYER -> {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getTargetId());
+                if (battlefield != null) {
+                    collectMatching(battlefield, e, filterContext, toPhaseOut);
+                }
+            }
+            case ALL -> gameData.forEachBattlefield((playerId, battlefield) ->
                     collectMatching(battlefield, e, filterContext, toPhaseOut));
         }
 

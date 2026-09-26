@@ -1,65 +1,64 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
-import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.ExileCast;
-import com.github.laxika.magicalvibes.model.DisturbCast;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.ForetellCast;
-import com.github.laxika.magicalvibes.model.GraveyardCast;
-import com.github.laxika.magicalvibes.model.Retrace;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DisturbCast;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileCast;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.VirtualManaPool;
-import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
-import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /**
  * Pure player-specific projection of authoritative game state into immutable networking views.
@@ -73,7 +72,6 @@ public class GameViewProjectionFactory {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseViewService planarViews;
-
 
     private final CardViewFactory cardViewFactory;
     private final GameLogViewFactory gameLogViewFactory;
@@ -391,6 +389,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PubliclyRevealedHandEffect reveal) {
                         if (!reveal.controllerOnly()) {
@@ -411,6 +410,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf != null) {
                 for (Permanent perm : bf) {
+                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof RevealOpponentHandsEffect) {
                             fullHandRevealed = true;
@@ -582,7 +582,6 @@ public class GameViewProjectionFactory {
         return speeds;
     }
 
-
     List<CardView> getPlayableExileCards(GameData gameData, UUID playerId) {
         List<CardView> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
@@ -742,7 +741,7 @@ public class GameViewProjectionFactory {
                             gameData, playerId, card.getId())
                             && gameData.getLife(playerId) >= card.getManaValue()
                             && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                            && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                            && gameQueryService.canPayLifeForCosts(gameData);
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 boolean canPayManaValueLifeAlternative = !foretellPermission
@@ -750,7 +749,7 @@ public class GameViewProjectionFactory {
                         gameData, playerId, card.getId())
                         && gameData.getLife(playerId) >= card.getManaValue()
                         && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                        && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                        && gameQueryService.canPayLifeForCosts(gameData);
                 if (canPayManaValueLifeAlternative) {
                     playable.add(exileCardView(gameData, playerId, card));
                     continue;
@@ -896,7 +895,8 @@ public class GameViewProjectionFactory {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId))
+            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandFromTopOfLibrary(
+                    gameData, playerId, topCard))
                     && isActivePlayer
                     && isMainPhase
                     && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
@@ -951,7 +951,7 @@ public class GameViewProjectionFactory {
                 .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, topCard)
                 && gameData.getLife(playerId) >= topCard.getManaValue()
                 && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                && gameQueryService.canPayLifeForCosts(gameData);
         boolean alternativeZeroCost = castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY);
         CardView topCardView = cardViewFactory.create(topCard);

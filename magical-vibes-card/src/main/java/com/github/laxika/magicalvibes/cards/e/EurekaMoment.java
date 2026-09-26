@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "STX", collectorNumber = "184")
+@CardRegistration(set = "SOC", collectorNumber = "308")
 public class EurekaMoment extends Card {
 
     public EurekaMoment() {

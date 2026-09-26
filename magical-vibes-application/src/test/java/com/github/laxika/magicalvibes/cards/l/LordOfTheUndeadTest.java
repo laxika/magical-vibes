@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.d.DeepwoodGhoul;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
-import com.github.laxika.magicalvibes.cards.g.GravebornMuse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LordOfTheUndead.class, Gravedigger.class, GravebornMuse.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({LordOfTheUndead.class, Gravedigger.class, DeepwoodGhoul.class, GrizzlyBears.class})
 class LordOfTheUndeadTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -27,24 +26,18 @@ class LordOfTheUndeadTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new LordOfTheUndead()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LordOfTheUndead(), "{1}{B}{B}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Lord of the Undead");
+        assertThat(entry.getCard()).isInstanceOf(LordOfTheUndead.class);
     }
 
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new LordOfTheUndead()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LordOfTheUndead(), "{1}{B}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -54,10 +47,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
     @Test
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new LordOfTheUndead()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LordOfTheUndead(), "{1}{B}{B}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Lord of the Undead");
@@ -168,14 +158,12 @@ class LordOfTheUndeadTest extends BaseCardTest {
     @DisplayName("Bonus applies when Lord resolves onto battlefield")
     void bonusAppliesOnResolve() {
         harness.addToBattlefield(player1, new Gravedigger());
-        harness.setHand(player1, List.of(new LordOfTheUndead()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castFromHand(player1, new LordOfTheUndead(), "{1}{B}{B}");
 
         Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(2);
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
@@ -272,15 +260,15 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setHand(player1, List.of());
         Gravedigger gravedigger = new Gravedigger();
-        GravebornMuse target = new GravebornMuse();
+        DeepwoodGhoul target = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(gravedigger, target));
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Graveborn Muse");
+        harness.assertInHand(player1, "Deepwood Ghoul");
         harness.assertInGraveyard(player1, "Gravedigger");
-        harness.assertNotInGraveyard(player1, "Graveborn Muse");
+        harness.assertNotInGraveyard(player1, "Deepwood Ghoul");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -352,11 +340,11 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void nonZombieCardsNotSelectable() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        HolyDay holyDay = new HolyDay();
-        harness.setGraveyard(player1, List.of(holyDay));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
 
         assertThatThrownBy(() ->
-                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(holyDay.getId())))
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -395,10 +383,8 @@ class LordOfTheUndeadTest extends BaseCardTest {
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
         // Add Lord with summoning sickness (creature with tap ability)
-        LordOfTheUndead card = new LordOfTheUndead();
-        Permanent lord = new Permanent(card);
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfTheUndead());
         lord.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(lord);
         harness.addMana(player1, ManaColor.BLACK, 2);
         Gravedigger target = new Gravedigger();
         harness.setGraveyard(player1, List.of(target));
@@ -415,7 +401,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         Gravedigger target = new Gravedigger();
-        GravebornMuse otherZombie = new GravebornMuse();
+        DeepwoodGhoul otherZombie = new DeepwoodGhoul();
         harness.setGraveyard(player1, List.of(target, otherZombie));
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
@@ -423,7 +409,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Gravedigger");
-        harness.assertInGraveyard(player1, "Graveborn Muse");
+        harness.assertInGraveyard(player1, "Deepwood Ghoul");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

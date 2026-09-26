@@ -12,10 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1863")
 @CardRegistration(set = "AA3", collectorNumber = "4")
+@CardRegistration(set = "SOC", collectorNumber = "111")
 public class StaffOfTheStoryteller extends Card {
 
     public StaffOfTheStoryteller() {

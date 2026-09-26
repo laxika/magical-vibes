@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "OTJ", collectorNumber = "8")
+@CardRegistration(set = "SOC", collectorNumber = "140")
 public class ClaimJumper extends Card {
 
     public ClaimJumper() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "139")
+@CardRegistration(set = "SLD", collectorNumber = "2411")
 public class ConspicuousSnoop extends Card {
 
     public ConspicuousSnoop() {

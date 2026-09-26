@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "149")
+@CardRegistration(set = "ECC", collectorNumber = "159")
 public class PrimalBeyond extends Card {
 
     public PrimalBeyond() {

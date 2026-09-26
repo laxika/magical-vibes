@@ -3,14 +3,12 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
-import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.SouthernElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blaze.class, ChandraHopesBeacon.class, ChandraNalaar.class, DisciplesOfTheInferno.class, ForestBear.class, GiantSpider.class, GrizzlyBears.class, HowlingMine.class, InvasionOfRegatha.class, Mountain.class, Plains.class, SouthernElephant.class})
+@CardUsed(Blaze.class)
 class BlazeTest extends BaseCardTest {
 
     @Test
@@ -44,6 +42,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("Casting Blaze targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -119,6 +118,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreatureDestroysIt() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -134,6 +134,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GiantSpider.class)
     @DisplayName("Does not destroy creature with toughness greater than X")
     void doesNotDestroyCreatureWithHigherToughness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
@@ -177,6 +178,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Plains.class)
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
@@ -229,6 +231,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Mountain.class)
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());

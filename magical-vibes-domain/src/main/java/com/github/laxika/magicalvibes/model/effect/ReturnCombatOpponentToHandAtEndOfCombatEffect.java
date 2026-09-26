@@ -19,6 +19,6 @@ public record ReturnCombatOpponentToHandAtEndOfCombatEffect()
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.permanent());
+        return TargetSpec.NONE;
     }
 }

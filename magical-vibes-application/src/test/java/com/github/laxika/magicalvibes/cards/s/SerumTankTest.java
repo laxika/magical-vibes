@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AuriokSteelshaper;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SerumTank.class, Ornithopter.class, AuriokSteelshaper.class})
 class SerumTankTest extends BaseCardTest {
 
     @Test
@@ -34,6 +37,16 @@ class SerumTankTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(tankPermanent.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotPutChargeCounterOnItselfForNonArtifactEntering() {
+        Permanent tank = harness.addToBattlefieldAndReturn(player1, new SerumTank());
+
+        harness.enterBattlefieldAndReturn(player2, new AuriokSteelshaper());
+        resolveAllTriggers();
+
+        assertThat(tank.getCounterCount(CounterType.CHARGE)).isZero();
     }
 
     @Test

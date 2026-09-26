@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "116")
+@CardRegistration(set = "CMM", collectorNumber = "210")
 public class ChampionOfTheFlame extends Card {
 
     public ChampionOfTheFlame() {

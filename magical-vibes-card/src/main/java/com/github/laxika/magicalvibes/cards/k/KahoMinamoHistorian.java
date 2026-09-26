@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "41")
+@CardRegistration(set = "CMM", collectorNumber = "101")
 public class KahoMinamoHistorian extends Card {
 
     public KahoMinamoHistorian() {

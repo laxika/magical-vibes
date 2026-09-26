@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed(Sizzle.class)
+
+@CardUsed({Sizzle.class})
 class SizzleTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sizzle deals 3 damage to the opponent and none to its controller")
     void dealsThreeToOpponent() {
-        castAndResolveSizzle();
+        castSizzle();
+        harness.passBothPriorities(); // resolve the sorcery
 
         harness.assertLife(player2, 17);
         harness.assertLife(player1, 20);
@@ -23,10 +25,15 @@ class SizzleTest extends BaseCardTest {
         harness.setLife(player1, 10);
         harness.setLife(player2, 15);
 
-        castAndResolveSizzle();
+        castSizzle();
+        harness.passBothPriorities(); // resolve the sorcery
 
         harness.assertLife(player2, 12);
         harness.assertLife(player1, 10);
+    }
+
+    private void castSizzle() {
+        harness.castFromHand(player1, new Sizzle(), "{2}{R}");
     }
 
     private void castAndResolveSizzle() {

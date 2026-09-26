@@ -99,4 +99,46 @@ class GenesisTest extends BaseCardTest {
         harness.assertInHand(player1, "Genesis");
         harness.assertInGraveyard(player1, "Giant Warthog");
     }
+
+    @Test
+    @DisplayName("Paying {2}{G} returns the chosen creature card from the graveyard to hand")
+    void payingUpkeepCostReturnsTargetCreatureToHandJudReview() {
+        Genesis genesis = new Genesis();
+        GiantWarthog warthog = new GiantWarthog();
+        RiftstonePortal portal = new RiftstonePortal();
+        harness.setGraveyard(player1, List.of(genesis, warthog, portal));
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(genesis.getId(), warthog.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(warthog.getId()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Giant Warthog");
+        harness.assertInGraveyard(player1, "Genesis");
+    }
+
+    @Test
+    @DisplayName("The ability does nothing if Genesis leaves the graveyard before resolution")
+    void abilityDoesNothingIfGenesisLeavesGraveyardBeforeResolution() {
+        Genesis genesis = new Genesis();
+        GiantWarthog warthog = new GiantWarthog();
+        harness.setGraveyard(player1, List.of(genesis, warthog));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(warthog.getId()));
+        harness.setGraveyard(player1, List.of(warthog));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Giant Warthog");
+    }
 }

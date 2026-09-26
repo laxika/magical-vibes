@@ -24,6 +24,7 @@ public class KamiOfEmptyGraves extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

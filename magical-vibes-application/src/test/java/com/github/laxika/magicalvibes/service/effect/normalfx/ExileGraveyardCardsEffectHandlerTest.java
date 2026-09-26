@@ -125,7 +125,7 @@ class ExileGraveyardCardsEffectHandlerTest {
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("exiled") && logEntry.plainText().contains("2 cards")));
             // Two cards leaving the graveyard in one event fires a single leave-graveyard trigger
-            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
+            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(eq(gd), eq(player2Id), any());
         }
 
         @Test
@@ -142,7 +142,7 @@ class ExileGraveyardCardsEffectHandlerTest {
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("already empty")));
             // No cards left the graveyard, so no trigger fires
-            verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any());
+            verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any(), any());
         }
     }
 
@@ -169,7 +169,7 @@ class ExileGraveyardCardsEffectHandlerTest {
                     argThat(card -> card.getName().equals("Grizzly Bears")));
             verify(exileService).exileCard(eq(gd), eq(player2Id),
                     argThat(card -> card.getName().equals("Shock")));
-            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
+            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(eq(gd), eq(player2Id), any());
         }
     }
 

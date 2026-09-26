@@ -203,9 +203,12 @@ public class CardViewFactory {
                         : revealHandCost.map(RevealCardsFromHandCastingCost::label).orElse(null));
         boolean alternateCostDiscardsHandCard = !discardHandCosts.isEmpty();
         boolean alternateCostRevealsHandCard = revealHandCost.isPresent();
-        boolean graveyardCastRequiresDiscard = card.getCastingOption(GraveyardCast.class)
-                .flatMap(castingOption -> castingOption.getCost(DiscardCardCastingCost.class))
-                .isPresent();
+        int graveyardCastDiscardCount = card.getCastingOption(GraveyardCast.class)
+                .map(castingOption -> castingOption.getCosts(DiscardCardCastingCost.class).stream()
+                        .mapToInt(DiscardCardCastingCost::count)
+                        .sum())
+                .orElse(0);
+        boolean graveyardCastRequiresDiscard = graveyardCastDiscardCount > 0;
         var graveyardCastExileCost = card.getCastingOption(GraveyardCast.class)
                 .flatMap(castingOption -> castingOption.getCost(ExileNCardsFromGraveyardCastingCost.class));
         int graveyardCastExileCount = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::count).orElse(0);
@@ -278,6 +281,7 @@ public class CardViewFactory {
                 alternateCostDiscardsHandCard,
                 alternateCostRevealsHandCard,
                 graveyardCastRequiresDiscard,
+                graveyardCastDiscardCount,
                 graveyardCastExileCount,
                 graveyardCastExileLabel,
                 graveyardAbilityViews,
@@ -331,6 +335,7 @@ public class CardViewFactory {
                     .handActivatedAbilities(List.of())
                     .exileActivatedAbilities(List.of())
                     .graveyardCastRequiresDiscard(false)
+                    .graveyardCastDiscardCount(0)
                     .build();
         }
         if (base.needsTarget() || !disturbBackFaceNeedsTarget(card)) {

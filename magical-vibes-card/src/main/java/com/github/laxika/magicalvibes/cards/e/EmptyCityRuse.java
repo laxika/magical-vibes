@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "3")
+@CardRegistration(set = "TLE", collectorNumber = "3")
 public class EmptyCityRuse extends Card {
 
     public EmptyCityRuse() {

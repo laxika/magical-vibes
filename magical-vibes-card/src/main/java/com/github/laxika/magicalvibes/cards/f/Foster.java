@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateToHan
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MMQ", collectorNumber = "247")
+@CardRegistration(set = "C13", collectorNumber = "146")
 public class Foster extends Card {
 
     public Foster() {

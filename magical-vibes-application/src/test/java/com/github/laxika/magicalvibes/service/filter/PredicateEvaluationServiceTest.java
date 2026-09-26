@@ -46,10 +46,10 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -74,6 +75,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredi
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -82,6 +84,7 @@ import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
@@ -98,6 +101,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMoreLifeThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSameTargetAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
@@ -126,10 +131,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
@@ -432,6 +437,24 @@ class PredicateEvaluationServiceTest {
 
             addPermanent(player1Id, createLand("Swamp"));
             assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardManaValueAtMostControlledTappedCreaturesPredicate counts tapped creatures")
+        void cardManaValueAtMostControlledTappedCreaturesPredicateMatches() {
+            addPermanent(player1Id, createCreature("Tapped One", 2, 2, CardColor.GREEN)).tap();
+            addPermanent(player1Id, createCreature("Tapped Two", 2, 2, CardColor.GREEN)).tap();
+            addPermanent(player1Id, createCreature("Untapped", 2, 2, CardColor.GREEN));
+
+            Card twoMana = createCreature("Two Mana", 2, 2, CardColor.GREEN);
+            twoMana.setManaCost("{2}");
+            Card threeMana = createCreature("Three Mana", 3, 3, CardColor.GREEN);
+            threeMana.setManaCost("{3}");
+            CardManaValueAtMostControlledTappedCreaturesPredicate predicate =
+                    new CardManaValueAtMostControlledTappedCreaturesPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(threeMana, predicate, null, gd, player1Id)).isFalse();
         }
 
         @Test
@@ -896,6 +919,24 @@ class PredicateEvaluationServiceTest {
     @Nested
     @DisplayName("matchesPermanentPredicate")
     class MatchesPermanentPredicate {
+
+        @Test
+        @DisplayName("PermanentControlledByMonarchPredicate follows the permanent's current controller")
+        void controlledByMonarchPredicateMatchesCurrentMonarch() {
+            Permanent permanent = addPermanent(player2Id,
+                    createCreature("Monarch's Creature", 2, 2, CardColor.GREEN));
+            Permanent otherPermanent = addPermanent(player1Id,
+                    createCreature("Other Creature", 2, 2, CardColor.GREEN));
+            PermanentControlledByMonarchPredicate predicate = new PermanentControlledByMonarchPredicate();
+
+            gd.monarchPlayerId = player2Id;
+            assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isFalse();
+
+            gd.monarchPlayerId = player1Id;
+            assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isTrue();
+        }
 
         @Test
         @DisplayName("PermanentIsCreaturePredicate matches creature")
@@ -1403,6 +1444,49 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentAttacksPlayerWithMoreLifeThanControllerPredicate compares direct player life")
+        void attacksPlayerWithMoreLifeThanControllerMatches() {
+            Permanent perm = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            perm.setAttacking(true);
+            perm.setAttackTarget(player2Id);
+            gd.playerLifeTotals.put(player1Id, 10);
+            gd.playerLifeTotals.put(player2Id, 20);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentAttacksPlayerWithMoreLifeThanControllerPredicate())).isTrue();
+
+            gd.playerLifeTotals.put(player2Id, 10);
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentAttacksPlayerWithMoreLifeThanControllerPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsAttackingSameTargetAsSourcePredicate matches the source attack target")
+        void attackingSameTargetAsSourceMatches() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", 2, 2, CardColor.GREEN));
+            source.setAttacking(true);
+            source.setAttackTarget(player2Id);
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player2Id);
+
+            FilterContext context = FilterContext.of(gd).withSourcePermanentId(source.getId());
+            assertThat(evaluator.matchesPermanentPredicate(attacker,
+                    new PermanentIsAttackingSameTargetAsSourcePredicate(), context)).isTrue();
+
+            Permanent sourceSnapshot = new Permanent(source);
+            source.setAttacking(false);
+            source.setAttackTarget(null);
+            context = context.withSourcePermanentSnapshot(sourceSnapshot);
+            assertThat(evaluator.matchesPermanentPredicate(attacker,
+                    new PermanentIsAttackingSameTargetAsSourcePredicate(), context)).isTrue();
+
+            attacker.setAttackTarget(player1Id);
+            assertThat(evaluator.matchesPermanentPredicate(attacker,
+                    new PermanentIsAttackingSameTargetAsSourcePredicate(), context)).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsUnblockedAttackingPredicate matches after blockers are declared")
         void unblockedAttackingMatchesAfterBlockers() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
@@ -1525,6 +1609,18 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentPowerToughnessTotalAtMostPredicate uses effective power and toughness")
+        void powerToughnessTotalAtMostPredicateUsesEffectiveStats() {
+            Permanent perm = addPermanent(player1Id, createCreature("Test Creature", 3, 2, CardColor.GREEN));
+            perm.setPowerModifier(1);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtMostPredicate(5))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtMostPredicate(6))).isTrue();
+        }
+
+        @Test
         @DisplayName("Power and toughness total predicates use effective characteristics")
         void powerToughnessTotalPredicatesUseEffectiveCharacteristics() {
             Permanent perm = addPermanent(player1Id,
@@ -1572,6 +1668,21 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(gd, greaterToughness, predicate)).isTrue();
             assertThat(evaluator.matchesPermanentPredicate(gd, equalPowerToughness, predicate)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(gd, greaterPower, predicate)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentBasePowerEqualsPredicate ignores counters and matches the current base power")
+        void basePowerEqualsPredicateIgnoresPowerModifiers() {
+            Permanent zeroBasePower = addPermanent(player1Id,
+                    createCreature("Zero Base Power", 0, 2, CardColor.GREEN));
+            zeroBasePower.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            Permanent nonzeroBasePower = addPermanent(player1Id,
+                    createCreature("Nonzero Base Power", 2, 2, CardColor.GREEN));
+            nonzeroBasePower.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+            PermanentBasePowerEqualsPredicate predicate = new PermanentBasePowerEqualsPredicate(0);
+            assertThat(evaluator.matchesPermanentPredicate(gd, zeroBasePower, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, nonzeroBasePower, predicate)).isFalse();
         }
 
         @Test
@@ -2877,5 +2988,29 @@ class PredicateEvaluationServiceTest {
 
         assertThat(evaluator.matchesStaticFilter(matching, filter, context)).isTrue();
         assertThat(evaluator.matchesStaticFilter(other, filter, context)).isFalse();
+    }
+
+    @Test
+    void attachedPermanentPredicateMatchesLegendaryEquipment() {
+        Permanent creature = addPermanent(player1Id,
+                createCreature("Equipped Creature", 2, 2, CardColor.GREEN));
+        Card equipmentCard = createArtifact("Legendary Equipment");
+        equipmentCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+        equipmentCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        Permanent equipment = addPermanent(player1Id, equipmentCard);
+        equipment.setAttachedTo(creature.getId());
+
+        PermanentHasAttachedPermanentPredicate predicate = new PermanentHasAttachedPermanentPredicate(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
+                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))));
+
+        assertThat(evaluator.matchesPermanentPredicate(gd, creature, predicate)).isTrue();
+        assertThat(evaluator.matchesStaticFilter(creature, predicate, FilterContext.of(gd))).isTrue();
+
+        Card nonLegendaryEquipment = equipmentCard.createRuntimeCopy();
+        nonLegendaryEquipment.setSupertypes(Set.of());
+        equipment.setCard(nonLegendaryEquipment);
+        assertThat(evaluator.matchesPermanentPredicate(gd, creature, predicate)).isFalse();
     }
 }

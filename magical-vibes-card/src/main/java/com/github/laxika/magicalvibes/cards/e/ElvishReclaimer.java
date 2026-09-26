@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "169")
+@CardRegistration(set = "SLD", collectorNumber = "2015")
 public class ElvishReclaimer extends Card {
 
     public ElvishReclaimer() {

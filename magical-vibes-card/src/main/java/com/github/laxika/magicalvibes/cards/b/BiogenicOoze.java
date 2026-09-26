@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "122")
+@CardRegistration(set = "TMC", collectorNumber = "49")
 public class BiogenicOoze extends Card {
 
     public BiogenicOoze() {

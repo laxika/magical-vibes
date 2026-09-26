@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChargingTroll.class, RagingKavu.class})
 class ChargingTrollTest extends BaseCardTest {
 
     @Test
@@ -27,6 +28,20 @@ class ChargingTrollTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration can be activated while Charging Troll is tapped")
+    void regenerationDoesNotRequireTapping() {
+        Permanent troll = addChargingTrollReady(player1);
+        troll.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Charging Troll from lethal combat damage")
     void regenerationSavesFromLethalCombat() {
         Permanent troll = addChargingTrollReady(player1);
@@ -37,11 +52,7 @@ class ChargingTrollTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, 5, 5);
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Charging Troll");
         assertThat(troll.isTapped()).isTrue();
@@ -58,30 +69,20 @@ class ChargingTrollTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, 5, 5);
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Charging Troll");
         harness.assertInGraveyard(player1, "Charging Troll");
     }
 
     private Permanent addChargingTrollReady(Player player) {
-        Permanent perm = new Permanent(new ChargingTroll());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ChargingTroll());
     }
 
     private Permanent addCreatureReady(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
+        RagingKavu card = new RagingKavu();
         card.setPower(power);
         card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 }

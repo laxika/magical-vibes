@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "CHR", collectorNumber = "31")
 @CardRegistration(set = "ATH", collectorNumber = "21")
 @CardRegistration(set = "ME1", collectorNumber = "65")
+@CardRegistration(set = "ARN", collectorNumber = "23")
 public class CuombajjWitches extends Card {
 
     public CuombajjWitches() {

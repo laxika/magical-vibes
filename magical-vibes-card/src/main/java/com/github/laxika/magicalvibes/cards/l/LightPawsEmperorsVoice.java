@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "25")
+@CardRegistration(set = "SLD", collectorNumber = "1677")
+@CardRegistration(set = "SLD", collectorNumber = "1877")
 public class LightPawsEmperorsVoice extends Card {
 
     public LightPawsEmperorsVoice() {

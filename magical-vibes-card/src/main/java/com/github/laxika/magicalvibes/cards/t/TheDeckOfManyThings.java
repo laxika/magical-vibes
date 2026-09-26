@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "241")
+@CardRegistration(set = "SLD", collectorNumber = "2460")
 public class TheDeckOfManyThings extends Card {
 
     public TheDeckOfManyThings() {

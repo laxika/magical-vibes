@@ -1,0 +1,55 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToSelfEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class TargetCreatureDealsDamageToSelfEffectHandler implements NormalEffectHandlerBean {
+
+    private final DamageSupport damageSupport;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
+    private final GameLogService gameLogService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return TargetCreatureDealsDamageToSelfEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var selfDamageEffect = (TargetCreatureDealsDamageToSelfEffect) effect;
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.isPreventedFromDealingDamage(gameData, target)) {
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
+            return;
+        }
+
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.hasProtectionFromSource(gameData, target, target)) {
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
+            return;
+        }
+
+        int damage = amountEvaluationService.evaluate(gameData, selfDamageEffect.damage(),
+                AmountContext.forStackEntry(entry, target));
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, target);
+    }
+}

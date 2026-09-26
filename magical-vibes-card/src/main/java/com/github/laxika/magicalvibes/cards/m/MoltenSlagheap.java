@@ -14,6 +14,8 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "276")
 @CardRegistration(set = "TSR", collectorNumber = "282")
+@CardRegistration(set = "C13", collectorNumber = "306")
+@CardRegistration(set = "CMD", collectorNumber = "282")
 public class MoltenSlagheap extends Card {
 
     public MoltenSlagheap() {

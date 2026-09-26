@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExchangeTargetAnteCardWithTop
 
 @CardRegistration(set = "SUM", collectorNumber = "100")
 @CardRegistration(set = "3ED", collectorNumber = "100")
+@CardRegistration(set = "2ED", collectorNumber = "100")
 public class Darkpact extends Card {
 
     public Darkpact() {

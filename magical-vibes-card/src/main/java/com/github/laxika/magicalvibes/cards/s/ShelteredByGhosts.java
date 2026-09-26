@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DSK", collectorNumber = "30")
+@CardRegistration(set = "SOC", collectorNumber = "171")
 public class ShelteredByGhosts extends Card {
 
     public ShelteredByGhosts() {

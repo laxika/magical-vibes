@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SUM", collectorNumber = "147")
 @CardRegistration(set = "3ED", collectorNumber = "147")
+@CardRegistration(set = "2ED", collectorNumber = "146")
 public class Earthbind extends Card {
 
     public Earthbind() {

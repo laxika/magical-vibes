@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "104")
 @CardRegistration(set = "SLC", collectorNumber = "73")
+@CardRegistration(set = "SLD", collectorNumber = "2349")
 public class BirthingPod extends Card {
 
     public BirthingPod() {

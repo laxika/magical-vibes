@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BrittleEffigy;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
-
-@CardUsed({GiverOfRunes.class, GrizzlyBears.class})
+@CardUsed({GiverOfRunes.class, GrizzlyBears.class, BrittleEffigy.class})
 class GiverOfRunesTest extends BaseCardTest {
 
     @Test
@@ -81,7 +82,6 @@ class GiverOfRunesTest extends BaseCardTest {
     }
 }
 
-@CardUsed(GiverOfRunes.class)
 class Mh1GiverOfRunesTest extends BaseCardTest {
 
     @Test

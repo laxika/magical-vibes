@@ -22,6 +22,8 @@ import java.util.Set;
 @CardRegistration(set = "MPS", collectorNumber = "28")
 @CardRegistration(set = "2XM", collectorNumber = "296")
 @CardRegistration(set = "AA1", collectorNumber = "13")
+@CardRegistration(set = "ACR", collectorNumber = "99")
+@CardRegistration(set = "ACR", collectorNumber = "124")
 public class SwordOfFeastAndFamine extends Card {
 
     public SwordOfFeastAndFamine() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.CallousDeceiver;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WaxmaneBaku.class, CallousDeceiver.class, ReachThroughMists.class,
+        GrizzlyBears.class, Forest.class})
 class WaxmaneBakuTest extends BaseCardTest {
 
     @Test
@@ -101,11 +105,24 @@ class WaxmaneBakuTest extends BaseCardTest {
     void rejectsNonCreatureTarget() {
         Permanent baku = addBaku();
         baku.setCounterCount(CounterType.KI, 1);
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.f.Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
                 player1, 0, 0, 1, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires exactly X creature targets")
+    void rejectsFewerTargetsThanKiCountersRemoved() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 2, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BileUrchin.class)
 class BileUrchinTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
 
     private void addReadyBileUrchin() {
-        var permanent = harness.addToBattlefieldAndReturn(player1, new BileUrchin());
-        permanent.setSummoningSick(false);
+        addCreatureReady(player1, new BileUrchin());
     }
 
     @Test
@@ -23,8 +24,8 @@ class BileUrchinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
+        harness.assertLife(player2, STARTING_LIFE - 1);
+        harness.assertLife(player1, STARTING_LIFE);
         harness.assertInGraveyard(player1, "Bile Urchin");
     }
 
@@ -36,8 +37,8 @@ class BileUrchinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE - 1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
+        harness.assertLife(player1, STARTING_LIFE - 1);
+        harness.assertLife(player2, STARTING_LIFE);
     }
 
     @Test
@@ -49,7 +50,7 @@ class BileUrchinTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Bile Urchin");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
+        harness.assertLife(player2, STARTING_LIFE);
     }
 
     @Test
@@ -60,6 +61,6 @@ class BileUrchinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 1);
+        harness.assertLife(player2, STARTING_LIFE - 1);
     }
 }

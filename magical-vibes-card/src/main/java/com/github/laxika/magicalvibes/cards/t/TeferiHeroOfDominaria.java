@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "207")
+@CardRegistration(set = "SLD", collectorNumber = "248")
 public class TeferiHeroOfDominaria extends Card {
 
     public TeferiHeroOfDominaria() {

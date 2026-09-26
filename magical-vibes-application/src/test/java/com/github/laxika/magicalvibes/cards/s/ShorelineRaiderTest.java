@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BloodfireKavu;
+import com.github.laxika.magicalvibes.cards.h.HuntingKavu;
+import com.github.laxika.magicalvibes.cards.k.KavuClimber;
+import com.github.laxika.magicalvibes.cards.m.MetathranZombie;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,75 +17,34 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShorelineRaider.class, BloodfireKavu.class, KavuClimber.class, MetathranZombie.class,
+        HuntingKavu.class})
 class ShorelineRaiderTest extends BaseCardTest {
 
-    private static Card createCreatureWithSubtype(String name, int power, int toughness,
-                                                  CardColor color, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtype));
-        return card;
-    }
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
     @Test
-    @DisplayName("Shoreline Raider takes no combat damage from a Kavu creature")
+    @DisplayName("Shoreline Raider takes no damage from Bloodfire Kavu")
     void takesNoDamageFromKavu() {
-        Permanent attacker = new Permanent(createCreatureWithSubtype(
-                "Kavu Climber", 2, 2, CardColor.GREEN, CardSubtype.KAVU));
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player1, new BloodfireKavu());
+        Permanent raider = addCreatureReady(player2, new ShorelineRaider());
 
-        Permanent blocker = new Permanent(new ShorelineRaider());
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(raider.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Shoreline Raider takes normal combat damage from a non-Kavu creature")
     void takesNormalDamageFromNonKavu() {
-        Permanent attacker = new Permanent(createCreature("Benalish Hero", 1, 1, CardColor.WHITE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new MetathranZombie());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new ShorelineRaider());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new ShorelineRaider());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
     }
@@ -92,20 +52,12 @@ class ShorelineRaiderTest extends BaseCardTest {
     @Test
     @DisplayName("Kavu creature cannot block Shoreline Raider")
     void kavuCannotBlock() {
-        Permanent attacker = new Permanent(new ShorelineRaider());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ShorelineRaider());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreatureWithSubtype(
-                "Kavu Climber", 2, 2, CardColor.GREEN, CardSubtype.KAVU));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new KavuClimber());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -115,22 +67,33 @@ class ShorelineRaiderTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Kavu creature can block Shoreline Raider")
     void nonKavuCanBlock() {
-        Permanent attacker = new Permanent(new ShorelineRaider());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ShorelineRaider());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Hill Giant", 3, 3, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new MetathranZombie());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shoreline Raider cannot be targeted by a Kavu ability")
+    void kavuAbilityCannotTargetShorelineRaider() {
+        Permanent kavu = addCreatureReady(player1, new HuntingKavu());
+        Permanent attacker = addCreatureReady(player2, new ShorelineRaider());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(kavu.isTapped()).isFalse();
     }
 }

@@ -21,8 +21,8 @@ public class ZoZuThePunisher extends Card {
 
     public ZoZuThePunisher() {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
+                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
-                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

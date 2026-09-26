@@ -2,11 +2,16 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 
@@ -14,6 +19,10 @@ import java.util.List;
 public class PatronOfTheMoon extends Card {
 
     public PatronOfTheMoon() {
+        addCastingOption(AlternateHandCast.offering(List.of(
+                new ManaCastingCost("{5}{U}{U}"),
+                new SacrificePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.MOONFOLK))
+        )));
         // {1}: Put up to two land cards from your hand onto the battlefield tapped.
         // "Up to two" is modelled as two independently declinable puts.
         CardTypePredicate land = new CardTypePredicate(CardType.LAND);

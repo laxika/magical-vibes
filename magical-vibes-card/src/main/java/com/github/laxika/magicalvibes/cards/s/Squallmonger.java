@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "276")
+@CardRegistration(set = "CMD", collectorNumber = "173")
 public class Squallmonger extends Card {
 
     public Squallmonger() {

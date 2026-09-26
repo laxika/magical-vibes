@@ -8,8 +8,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Returns a dying creature card from its owner's graveyard to the battlefield under its owner's
- * control, applying persistent subtype, keyword, and counter riders as it enters.
+ * Returns a dying creature card from its owner's graveyard to the battlefield, applying persistent
+ * subtype, keyword, and counter riders as it enters. The default return is under the owner's
+ * control; {@code returnUnderController} supports effects that say "under your control".
  */
 public record ReturnDyingCreatureToOwnerBattlefieldEffect(
         UUID dyingCardId,
@@ -17,18 +18,19 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
         int enterWithCounterCount,
         CardSubtype grantSubtype,
         Set<Keyword> grantKeywords,
-        boolean enterTapped
+        boolean enterTapped,
+        boolean returnUnderController
 ) implements CardEffect, DyingCreatureCardAwareEffect {
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect() {
-        this(null, null, 0, null, Set.of(), false);
+        this(null, null, 0, null, Set.of(), false, false);
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
                                                        int enterWithCounterCount,
                                                        CardSubtype grantSubtype,
                                                        Set<Keyword> grantKeywords) {
-        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, false);
+        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, false, false);
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
@@ -36,7 +38,17 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
                                                        CardSubtype grantSubtype,
                                                        Set<Keyword> grantKeywords,
                                                        boolean enterTapped) {
-        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, enterTapped);
+        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, enterTapped, false);
+    }
+
+    public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
+                                                       int enterWithCounterCount,
+                                                       CardSubtype grantSubtype,
+                                                       Set<Keyword> grantKeywords,
+                                                       boolean enterTapped,
+                                                       boolean returnUnderController) {
+        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
+                enterTapped, returnUnderController);
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect {
@@ -46,6 +58,7 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
     @Override
     public CardEffect boundToDyingCard(UUID dyingCardId) {
         return new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, enterTapped);
+                dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
+                enterTapped, returnUnderController);
     }
 }

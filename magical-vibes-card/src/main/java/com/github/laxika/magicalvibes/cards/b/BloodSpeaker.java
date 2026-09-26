@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -21,8 +20,7 @@ public class BloodSpeaker extends Card {
         // At the beginning of your upkeep, you may sacrifice this creature. If you do, search your
         // library for a Demon card, reveal that card, put it into your hand, then shuffle.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new MayEffect(SequenceEffect.of(
-                        new SacrificeSelfEffect(),
+                new MayEffect(new SacrificeSelfThenEffect(
                         new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DEMON))),
                         "Sacrifice Blood Speaker to search your library for a Demon card?"));
 

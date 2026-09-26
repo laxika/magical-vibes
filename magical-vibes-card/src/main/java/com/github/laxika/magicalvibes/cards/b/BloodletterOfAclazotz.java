@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleOpponentLifeLossEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "92")
 @CardRegistration(set = "LCI", collectorNumber = "336")
+@CardRegistration(set = "SLD", collectorNumber = "2502")
 public class BloodletterOfAclazotz extends Card {
 
     public BloodletterOfAclazotz() {

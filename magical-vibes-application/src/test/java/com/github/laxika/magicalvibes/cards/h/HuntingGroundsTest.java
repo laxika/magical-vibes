@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HuntingGrounds.class, GiantWarthog.class, MentalNote.class})
+@CardUsed({GiantWarthog.class, HuntingGrounds.class, MentalNote.class})
 class HuntingGroundsTest extends BaseCardTest {
 
     @Test
@@ -116,5 +116,56 @@ class HuntingGroundsTest extends BaseCardTest {
         return java.util.stream.IntStream.range(0, count)
                 .mapToObj(ignored -> (Card) new GiantWarthog())
                 .toList();
+    }
+
+    @Test
+    void onlyCreatureCardsAreEligibleFromHand() {
+        addHuntingGroundsForJudReview(7);
+        harness.setHand(player1, List.of(new MentalNote()));
+        castOpponentCreatureSpellForJudReview();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Mental Note");
+        harness.assertInHand(player1, "Mental Note");
+    }
+
+    @Test
+    void controllerCastingSpellDoesNotTriggerAbility() {
+        addHuntingGroundsForJudReview(7);
+        harness.castFromHand(player1, new GiantWarthog(), "{5}{G}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void triggeredAbilityStillResolvesAfterThresholdIsLost() {
+        addHuntingGroundsForJudReview(7);
+        harness.setHand(player1, List.of(new GiantWarthog()));
+        castOpponentCreatureSpellForJudReview();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Giant Warthog");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    private void addHuntingGroundsForJudReview(int graveyardSize) {
+        harness.setGraveyard(player1, graveyardWithCards(graveyardSize));
+        harness.addToBattlefield(player1, new HuntingGrounds());
+    }
+
+    private void castOpponentCreatureSpellForJudReview() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new GiantWarthog(), "{5}{G}");
     }
 }

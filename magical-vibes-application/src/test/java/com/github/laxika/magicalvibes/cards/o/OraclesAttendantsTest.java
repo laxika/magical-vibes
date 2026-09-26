@@ -71,6 +71,28 @@ class OraclesAttendantsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("All damage from the chosen source this turn is redirected")
+    void redirectsMultipleDamageEventsFromChosenSource() {
+        Permanent attendants = addCreatureReady(player1, new OraclesAttendants());
+        Permanent hydra = addReadyHydra(player1);
+        hydra.setCounterCount(CounterType.FADE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent protectedCreature = addCreatureReady(player2, new FlintGolem());
+
+        harness.activateAbility(player1, indexOf(player1, attendants), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hydra.getId());
+
+        harness.activateAbility(player1, indexOf(player1, hydra), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, hydra), null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(0);
+        assertThat(attendants.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("A spell on the stack is offered as a source choice")
     void offersSpellOnStackAsSource() {
         Permanent attendants = addCreatureReady(player1, new OraclesAttendants());
@@ -89,6 +111,29 @@ class OraclesAttendantsTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(rupture.getId());
+    }
+
+    @Test
+    @DisplayName("Damage from a chosen spell on the stack is redirected")
+    void redirectsDamageFromChosenSpell() {
+        Permanent attendants = addCreatureReady(player1, new OraclesAttendants());
+        Permanent sacrificedCreature = addCreatureReady(player1, new SpinelessThug());
+        Permanent protectedCreature = addCreatureReady(player2, new FlintGolem());
+        Rupture rupture = new Rupture();
+
+        harness.setHand(player1, List.of(rupture));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0);
+
+        harness.activateAbility(player1, indexOf(player1, attendants), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, rupture.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, sacrificedCreature.getId());
+
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(0);
+        assertThat(attendants.getMarkedDamage()).isEqualTo(4);
     }
 
     @Test
@@ -121,11 +166,8 @@ class OraclesAttendantsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, attacker.getId());
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(player1, blocker), 0)));
         harness.passBothPriorities();
 

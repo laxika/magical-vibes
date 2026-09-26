@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrustedAdvisor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,14 +14,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CowedByWisdom.class, TrustedAdvisor.class})
 class CowedByWisdomTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureCanAttackWhenItsControllerPaysForAuraControllersHand() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new TrustedAdvisor());
         enchant(creature, player2);
         harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
@@ -31,28 +32,23 @@ class CowedByWisdomTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureCannotAttackWithoutEnoughMana() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new TrustedAdvisor());
         enchant(creature, player2);
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(
+        assertThatThrownBy(() -> declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(creature))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void enchantedCreatureCanBlockWhenItsControllerPaysForAuraControllersHand() {
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new TrustedAdvisor());
         attacker.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new TrustedAdvisor());
         enchant(blocker, player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
         prepareDeclareBlockers(player1);
@@ -64,16 +60,26 @@ class CowedByWisdomTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
-    private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    void enchantedCreatureCannotBlockWithoutEnoughMana() {
+        Permanent attacker = addCreatureReady(player1, new TrustedAdvisor());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new TrustedAdvisor());
+        enchant(blocker, player1);
+        harness.setHand(player1, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
     }
 
     private void enchant(Permanent creature, Player auraController) {
-        Permanent aura = new Permanent(new CowedByWisdom());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new CowedByWisdom());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
     }
 }

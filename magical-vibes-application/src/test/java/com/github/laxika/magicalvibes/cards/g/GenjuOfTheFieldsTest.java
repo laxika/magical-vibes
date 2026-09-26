@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,13 +20,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GenjuOfTheFields.class, Plains.class, Forest.class, StoneRain.class})
 class GenjuOfTheFieldsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Genju of the Fields cannot enchant a non-Plains land")
     void cannotEnchantNonPlains() {
         harness.addToBattlefield(player1, new Plains()); // legal target so the spell is castable
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.Forest());
+        harness.addToBattlefield(player1, new Forest());
         UUID forestId = harness.getPermanentId(player1, "Forest");
         harness.setHand(player1, List.of(new GenjuOfTheFields()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -43,11 +46,11 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         activateGenju();
 
         assertThat(gqs.isCreature(gd, plains)).isTrue();
-        assertThat(plains.getEffectivePower()).isEqualTo(2);
-        assertThat(plains.getEffectiveToughness()).isEqualTo(5);
-        assertThat(plains.getTransientSubtypes()).contains(CardSubtype.SPIRIT);
-        assertThat(plains.getAnimatedColor()).isEqualTo(CardColor.WHITE);
-        assertThat(plains.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.getEffectivePower(gd, plains)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, plains)).isEqualTo(5);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, plains)).containsExactly(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveColors(gd, plains)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.isLand(gd, plains)).isTrue();
     }
 
     @Test
@@ -65,8 +68,32 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         declareAttackers(player1, List.of(attackerIndex));
         resolveAllTriggers(); // resolve the granted "whenever this creature deals damage" trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        harness.assertLife(player2, opponentLifeBefore - 2);
+        harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Each activation grants a separate life-gain ability until end of turn")
+    void repeatedActivationsGrantSeparateAbilities() {
+        Permanent plains = addPlainsWithGenju();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        int genjuIndex = gd.playerBattlefields.get(player1.getId()).indexOf(
+                findPermanent(player1, "Genju of the Fields"));
+        harness.activateAbility(player1, genjuIndex, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, genjuIndex, null, null);
+        harness.passBothPriorities();
+        plains.setSummoningSick(false);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(plains);
+        declareAttackers(player1, List.of(attackerIndex));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, opponentLifeBefore - 2);
+        harness.assertLife(player1, lifeBefore + 4);
     }
 
     @Test
@@ -81,8 +108,9 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, plains)).isFalse();
-        assertThat(plains.getTemporaryTriggeredEffects(
-                com.github.laxika.magicalvibes.model.EffectSlot.ON_SELF_DEALS_DAMAGE)).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, plains)).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, plains)).isEmpty();
+        assertThat(plains.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE)).isEmpty();
     }
 
     @Test
@@ -94,10 +122,8 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the "may return" trigger
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Genju of the Fields"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Genju of the Fields"));
+        harness.assertInHand(player1, "Genju of the Fields");
+        harness.assertNotInGraveyard(player1, "Genju of the Fields");
     }
 
     @Test
@@ -109,8 +135,7 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Genju of the Fields"));
+        harness.assertInGraveyard(player1, "Genju of the Fields");
     }
 
     private Permanent addPlainsWithGenju() {

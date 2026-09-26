@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "123")
+@CardRegistration(set = "C13", collectorNumber = "209")
 public class ScarlandThrinax extends Card {
 
     public ScarlandThrinax() {

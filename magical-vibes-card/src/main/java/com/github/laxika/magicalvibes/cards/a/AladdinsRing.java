@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "286")
+@CardRegistration(set = "ARN", collectorNumber = "57")
 @CardRegistration(set = "SUM", collectorNumber = "232")
 @CardRegistration(set = "6ED", collectorNumber = "271")
 @CardRegistration(set = "8ED", collectorNumber = "291")

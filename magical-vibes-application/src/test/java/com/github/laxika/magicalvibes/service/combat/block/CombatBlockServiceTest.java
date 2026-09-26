@@ -73,7 +73,7 @@ class CombatBlockServiceTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Okk.class)
+    @CardUsed({GrizzlyBears.class, Okk.class})
     void greaterPowerRestrictionEndsWithPrintedAbilities() {
         Permanent attacker = attacking(player1, new GrizzlyBears());
         Permanent okk = addCreatureReady(player2, new Okk());

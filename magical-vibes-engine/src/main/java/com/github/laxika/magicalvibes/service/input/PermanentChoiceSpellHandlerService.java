@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -35,6 +36,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -134,8 +136,13 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} retargeted to {}", gameData.id, spellName, targetName);
 
-            // Check becomes-target-of-spell triggers for the new target (e.g. Livewire Lash)
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+            // Check becomes-target triggers for the new target (e.g. Livewire Lash).
+            if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                    || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetSpell);
+            } else {
+                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+            }
             if (gameData.interaction.isAwaitingInput()) return;
         }
 
@@ -284,11 +291,14 @@ public class PermanentChoiceSpellHandlerService {
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
         boolean isSpellTarget = isValidSpellTarget(gameData, ect.cardToCast(), ect.spellEffects(), permanentId,
                 ect.controllerId(), 0);
+        boolean isLegalPlayerTarget = isPlayerTarget
+                && targetLegalityService.checkSpellTargeting(
+                gameData, ect.cardToCast(), permanentId, null, ect.controllerId()).isEmpty();
         // A cipher copy of a graveyard-targeting spell (Midnight Recovery) targets a card in a
         // graveyard, which is neither a permanent nor a player.
         boolean isGraveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
 
-        if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
+        if (target != null || isLegalPlayerTarget || isGraveyardTarget || isSpellTarget) {
             if (ect.resolutionCast() || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 try {
                     spellCastingService.playCardFromExileAsResolutionCast(gameData,
@@ -363,6 +373,7 @@ public class PermanentChoiceSpellHandlerService {
             );
             entry.setCopy(ect.copy());
             entry.setSourceZone(Zone.EXILE);
+            entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
                 entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
             }
@@ -526,6 +537,7 @@ public class PermanentChoiceSpellHandlerService {
         );
         entry.setCopy(ect.copy());
         entry.setSourceZone(Zone.EXILE);
+        entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(card.getId()));
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
             entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
@@ -609,6 +621,9 @@ public class PermanentChoiceSpellHandlerService {
                 }
             }
 
+            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, gct.cardToCast(), gct.controllerId(),
+                    gct.sourcePermanentId(), gct.afterSuccessfulCastEffect());
+
             Card castCharacteristics = gct.castWithAdventure()
                     ? gct.cardToCast().createRuntimeCopyWithFace(spellCard) : gct.cardToCast();
             if (gct.castWithAdventure()) {
@@ -647,6 +662,14 @@ public class PermanentChoiceSpellHandlerService {
     }
 
     public void handleHandCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.HandCastSpellTarget hct) {
+        if (gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(hct.cardToCast().getId())
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(hct.controllerId())) {
+            handleWordOfCommandSpellTarget(gameData, permanentId, hct);
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         Card graveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
@@ -693,9 +716,13 @@ public class PermanentChoiceSpellHandlerService {
             );
             entry.setMadness(hct.castForMadnessCost());
             entry.setExileInsteadOfGraveyard(hct.exileInsteadOfGraveyard());
+            entry.setSourceZone(hct.sourceZone());
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(hct.controllerId(), hct.cardToCast());
+            if (hct.sourceZone() == Zone.COMMAND) {
+                gameData.commanderTaxByCardId.merge(hct.cardToCast().getId(), 2, Integer::sum);
+            }
             gameData.priorityPassedBy.clear();
 
             String targetName = isPlayerTarget
@@ -705,25 +732,73 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
-                    hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
+            if (hct.sourceZone() == Zone.COMMAND) {
+                triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
+                        Zone.COMMAND);
+            } else {
+                triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
+                        hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
+            }
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
-            UUID ownerId = hct.cardToCast().getOwnerId() != null
-                    ? hct.cardToCast().getOwnerId() : hct.controllerId();
-            if (hct.exileInsteadOfGraveyard()) {
-                gameData.addToExile(ownerId, hct.cardToCast());
+            if (hct.sourceZone() == Zone.COMMAND) {
+                gameData.playerCommandZones.computeIfAbsent(hct.controllerId(), ignored -> new ArrayList<>())
+                        .add(hct.cardToCast());
             } else {
-                graveyardService.addCardToGraveyard(gameData, ownerId, hct.cardToCast());
+                UUID ownerId = hct.cardToCast().getOwnerId() != null
+                        ? hct.cardToCast().getOwnerId() : hct.controllerId();
+                if (hct.exileInsteadOfGraveyard()) {
+                    gameData.addToExile(ownerId, hct.cardToCast());
+                } else {
+                    graveyardService.addCardToGraveyard(gameData, ownerId, hct.cardToCast());
+                }
             }
-            String destination = hct.exileInsteadOfGraveyard()
+            String destination = hct.sourceZone() == Zone.COMMAND
+                    ? "'s target is no longer valid. It remains in the command zone."
+                    : hct.exileInsteadOfGraveyard()
                     ? "'s target is no longer valid. It is exiled."
                     : "'s target is no longer valid. It is put into the graveyard.";
             gameLogService.append(gameData, GameLog.cardThen(hct.cardToCast(), destination));
-            log.info("Game {} - {} cast-from-hand target no longer exists", gameData.id, hct.cardToCast().getName());
+            log.info("Game {} - {} cast-from-{} target no longer exists", gameData.id, hct.cardToCast().getName(),
+                    hct.sourceZone() == Zone.COMMAND ? "command-zone" : "hand");
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleWordOfCommandSpellTarget(GameData gameData, UUID targetId,
+                                                  PermanentChoiceContext.HandCastSpellTarget context) {
+        List<Card> hand = gameData.playerHands.get(context.controllerId());
+        int cardIndex = -1;
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getId().equals(context.cardToCast().getId())) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+        }
+        if (cardIndex < 0) {
+            gameLogService.append(gameData, GameLog.cardThen(context.cardToCast(), " is no longer in hand."));
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        if (!context.controllerId().equals(gameData.activePlayerId)) {
+            gameData.priorityPassedBy.add(gameData.activePlayerId);
+        }
+        try {
+            spellCastingService.playCard(gameData,
+                    new Player(context.controllerId(), gameData.playerIdToName.get(context.controllerId())),
+                    cardIndex, context.xValue(), targetId, Map.of(), List.of(), List.of(), false, null);
+        } catch (IllegalArgumentException | IllegalStateException failure) {
+            log.info("Game {} - Word of Command could not play {}: {}", gameData.id,
+                    context.cardToCast().getName(), failure.getMessage());
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleOpponentChosenSpellTarget(GameData gameData, UUID chosenId,
@@ -758,6 +833,79 @@ public class PermanentChoiceSpellHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    public void handleOpponentChosenSpellTargets(GameData gameData, UUID chosenId,
+                                                  PermanentChoiceContext.OpponentChosenSpellTargets context) {
+        Card card = context.cardToCast();
+        int targetPosition = card.getOpponentChosenSpellTargetIndices().get(context.nextTargetIndex());
+        int groupIndex = targetGroupIndexForPosition(card, targetPosition);
+        int xValue = context.xValue() != null ? context.xValue() : 0;
+
+        if (context.chosenOpponentId() == null) {
+            List<UUID> validTargets = targetLegalityService.computeValidOpponentChosenTargetGroupPermanents(
+                    gameData, card, context.caster().getId(), chosenId, groupIndex, xValue, false);
+            if (validTargets.isEmpty()) {
+                throw new IllegalStateException("No legal target remains");
+            }
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
+                    context.caster(), card, context.cardIndex(), context.xValue(), context.buyback(),
+                    context.selectedTargets(), context.nextTargetIndex(), chosenId));
+            playerInputService.beginPermanentChoice(gameData, chosenId, validTargets,
+                    "Choose a target for " + card.getName() + ".");
+            return;
+        }
+
+        List<UUID> validTargets = targetLegalityService.computeValidOpponentChosenTargetGroupPermanents(
+                gameData, card, context.caster().getId(), context.chosenOpponentId(), groupIndex, xValue, false);
+        if (!validTargets.contains(chosenId)) {
+            throw new IllegalStateException("Invalid target");
+        }
+
+        Map<Integer, UUID> selectedTargets = new HashMap<>(context.selectedTargets());
+        selectedTargets.put(targetPosition, chosenId);
+        int nextTargetIndex = context.nextTargetIndex() + 1;
+        if (nextTargetIndex < card.getOpponentChosenSpellTargetIndices().size()) {
+            int nextTargetPosition = card.getOpponentChosenSpellTargetIndices().get(nextTargetIndex);
+            int nextGroupIndex = targetGroupIndexForPosition(card, nextTargetPosition);
+            List<UUID> validOpponentIds = targetLegalityService.computeValidOpponentChosenTargetGroupPlayers(
+                    gameData, card, context.caster().getId(), nextGroupIndex, xValue, false);
+            if (validOpponentIds.isEmpty()) {
+                throw new IllegalStateException("No legal opponent can choose a target");
+            }
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
+                    context.caster(), card, context.cardIndex(), context.xValue(), context.buyback(),
+                    selectedTargets, nextTargetIndex, null));
+            playerInputService.beginPermanentChoice(gameData, context.caster().getId(), validOpponentIds,
+                    "Choose an opponent to choose a target for " + card.getName() + ".");
+            return;
+        }
+
+        List<UUID> targetIds = new ArrayList<>();
+        for (int positionIndex = 0; positionIndex < card.getMultiTargetFilters().size(); positionIndex++) {
+            UUID targetId = selectedTargets.get(positionIndex);
+            if (targetId == null) {
+                throw new IllegalStateException("Missing spell target");
+            }
+            targetIds.add(targetId);
+        }
+        spellCastingService.playCardAfterOpponentChosenTargets(
+                gameData, context.caster(), context.cardIndex(), context.xValue(), targetIds, context.buyback());
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private int targetGroupIndexForPosition(Card card, int positionIndex) {
+        int positionOffset = 0;
+        for (SpellTarget target : card.getSpellTargets()) {
+            int targetCount = target.getMaxTargets();
+            if (positionIndex < positionOffset + targetCount) {
+                return target.getIndex();
+            }
+            positionOffset += targetCount;
+        }
+        throw new IllegalArgumentException("Unknown spell target position");
     }
 
     private boolean isValidSpellTarget(GameData gameData, Card card, List<CardEffect> spellEffects,

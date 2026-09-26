@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "135")
 @CardRegistration(set = "TSR", collectorNumber = "144")
+@CardRegistration(set = "C13", collectorNumber = "94")
+@CardRegistration(set = "C14", collectorNumber = "164")
 public class SuddenSpoiling extends Card {
 
     public SuddenSpoiling() {

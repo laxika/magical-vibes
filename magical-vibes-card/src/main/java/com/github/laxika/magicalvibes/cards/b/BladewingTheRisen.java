@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SCG", collectorNumber = "136")
 @CardRegistration(set = "MB1", collectorNumber = "193")
 @CardRegistration(set = "IMA", collectorNumber = "193")
+@CardRegistration(set = "CMD", collectorNumber = "185")
 public class BladewingTheRisen extends Card {
 
     public BladewingTheRisen() {

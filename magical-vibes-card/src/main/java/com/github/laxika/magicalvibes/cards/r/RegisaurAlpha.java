@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "227")
+@CardRegistration(set = "SLD", collectorNumber = "1393")
 public class RegisaurAlpha extends Card {
 
     public RegisaurAlpha() {

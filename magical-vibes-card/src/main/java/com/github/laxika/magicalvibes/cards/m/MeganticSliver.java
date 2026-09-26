@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "185")
+@CardRegistration(set = "SLD", collectorNumber = "651")
 public class MeganticSliver extends Card {
 
     public MeganticSliver() {

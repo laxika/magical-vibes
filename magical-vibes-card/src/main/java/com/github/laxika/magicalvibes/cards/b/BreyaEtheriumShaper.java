@@ -21,10 +21,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "454")
 @CardRegistration(set = "2XM", collectorNumber = "192")
 public class BreyaEtheriumShaper extends Card {
 

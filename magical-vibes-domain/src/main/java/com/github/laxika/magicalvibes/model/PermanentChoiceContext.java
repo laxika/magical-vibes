@@ -1,24 +1,25 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDrawAndMayPutPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDrawAndMayPutPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
-
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +85,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    record AttachOneOfEquipmentToCreature(List<UUID> equipmentPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachOneOfEquipmentToCreature {
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
     /** Reckless Crew: choose at most one distinct Equipment for each created token. */
     record CreateTokensAndAttachEquipment(Card sourceCard, UUID controllerId, List<UUID> tokenIds,
                                           int tokenIndex, List<UUID> chosenEquipmentIds)
@@ -127,10 +135,35 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** A chosen permanent is returned to hand, then a reflexive follow-up resolves. */
     record BouncePermanentThen(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                CardEffect thenEffect) implements PermanentChoiceContext {}
+    /** Vodalian Tide Mage: choose one of the creatures from the triggering combat-damage event. */
+    record ConjureDuplicateOfCombatDamageDealerChoice(UUID controllerId, Card sourceCard,
+                                                       List<UUID> combatDamageDealerIds)
+            implements PermanentChoiceContext {}
     /** Return a chosen permanent, then put a +1/+1 counter on the source permanent. */
     record ReturnPermanentAndPutCounterOnSource(UUID controllerId, Card sourceCard,
                                                 UUID sourcePermanentId) implements PermanentChoiceContext {}
     record ChoosePlayerThenReturnCreatureToHand(String sourceCardName) implements PermanentChoiceContext {}
+    /** Intellectual Offering: choose an opponent for one of its two independent modes. */
+    record ChooseOpponentDrawAndUntap(UUID controllerId, boolean untapChoice, String sourceCardName)
+            implements PermanentChoiceContext {}
+    /** Sylvan Offering: choose the opponent who creates tokens alongside the controller. */
+    record ChooseOpponentEachCreatesTokens(UUID controllerId,
+                                           com.github.laxika.magicalvibes.model.effect.CreateTokenEffect token,
+                                           String sourceCardName) implements PermanentChoiceContext {}
+    /** Infernal Offering: choose the opponent affected by the selected mode. */
+    record InfernalOfferingOpponentChoice(UUID controllerId, boolean sacrificeMode, String sourceCardName)
+            implements PermanentChoiceContext {}
+    /** Infernal Offering: choose one creature before both selected sacrifices happen simultaneously. */
+    record InfernalOfferingCreatureChoice(UUID controllerId, UUID opponentId, UUID choosingPlayerId,
+                                          List<UUID> remainingChooserIds, List<UUID> chosenCreatureIds,
+                                          List<UUID> chosenPlayerIds, String sourceCardName)
+            implements PermanentChoiceContext {
+        public InfernalOfferingCreatureChoice {
+            remainingChooserIds = List.copyOf(remainingChooserIds);
+            chosenCreatureIds = List.copyOf(chosenCreatureIds);
+            chosenPlayerIds = List.copyOf(chosenPlayerIds);
+        }
+    }
     record MayReturnPermanentToHandAndEnterWithCounters(
             Card sourceCard,
             UUID controllerId,
@@ -173,6 +206,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SacrificeOtherCreatureThenRevealUntilLowerManaValue(
             UUID controllerId, Card sourceCard, com.github.laxika.magicalvibes.model.filter.CardPredicate predicate)
             implements PermanentChoiceContext {}
+
+    /** Descendants' Fury: choose one of the creatures that dealt combat damage to sacrifice. */
+    record SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
+            UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Descendants' Fury: choose a creature from the triggering combat-damage event. */
+    record SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
+            UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
     /** Eddie Brock: choose another creature to sacrifice before drawing and putting a permanent. */
     record SacrificeAnotherCreatureDrawAndMayPutPermanent(
@@ -251,6 +294,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
                                       PermanentPredicate filter) implements PermanentChoiceContext {}
 
+    /** Fear of Change: choose another creature to exile before conjuring a random creature. */
+    record ExileAnotherCreatureAndConjureRandomCreature(
+            Card sourceCard, UUID sourcePermanentId, UUID controllerId)
+            implements PermanentChoiceContext {}
+
     /** Godsend: choose one creature blocking or blocked by the equipped creature to exile. */
     record ExileCombatOpponent(UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {}
 
@@ -274,6 +322,28 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> accumulatedChosenIds
     ) implements PermanentChoiceContext {}
 
+    /** Order of Succession: each player chooses a creature controlled by the next player. */
+    record OrderOfSuccessionCreatureChoice(UUID permanentId, UUID gainingPlayerId) {}
+
+    /**
+     * Order of Succession: stores the fixed table order and choices made before the next prompt.
+     */
+    record OrderOfSuccession(
+            UUID choosingPlayerId,
+            UUID chosenFromPlayerId,
+            String sourceCardName,
+            List<UUID> orderedPlayerIds,
+            GainControlOfNextPlayerNonlandPermanentsEffect.Direction direction,
+            List<UUID> remainingChooserIds,
+            List<OrderOfSuccessionCreatureChoice> accumulatedChoices
+    ) implements PermanentChoiceContext {
+        public OrderOfSuccession {
+            orderedPlayerIds = List.copyOf(orderedPlayerIds);
+            remainingChooserIds = List.copyOf(remainingChooserIds);
+            accumulatedChoices = List.copyOf(accumulatedChoices);
+        }
+    }
+
     /** Sothera: each opponent chooses a creature they control to exile with the source. */
     record EachOpponentChoosesCreatureToExileWithSource(
             Card sourceCard,
@@ -287,8 +357,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Gilded Ambusher: an opponent chooses a nonland, nontoken permanent to exile. */
+    record GildedAmbusherChoice(
+            StackEntry resolvingEntry,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            PermanentPredicate permanentFilter
+    ) implements PermanentChoiceContext {
+        public GildedAmbusherChoice {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+        }
+    }
+
     /** Goblin Festival: the ability controller chooses which opponent gains control of the source. */
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
+            implements PermanentChoiceContext {}
+
+    /** Demonstrate: the controller chooses the opponent who gets the second spell copy. */
+    record DemonstrateOpponentChoice(StackEntry spellSnapshot, UUID controllerId)
             implements PermanentChoiceContext {}
 
     /** Risky Move: its controller chooses the creature to risk after gaining control of the enchantment. */
@@ -395,6 +481,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChosenPermanentCopyChoice(UUID controllerId, Card sourceCard, PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
+    /** The controller chooses one matching permanent for a permanent animation. */
+    record AnimateChosenOwnPermanent(AnimatePermanentsEffect animation, UUID controllerId)
+            implements PermanentChoiceContext {}
+
     /** Mister Hyde: choose a creature you control from which to remove a counter, then draw a card. */
     record RemoveCounterFromControlledCreatureThenDraw(StackEntry resolvingEntry)
             implements PermanentChoiceContext {}
@@ -487,6 +577,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AnyOpponentSacrificeCreatureForTapAndCounter(
             UUID sacrificingPlayerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Gitrog, Horror of Zhava: the accepting opponent is picking which nontoken creature to sacrifice. */
+    record AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect effect)
             implements PermanentChoiceContext {}
 
     /** Innocent Traveler: the accepting opponent is picking which creature to sacrifice. */
@@ -690,6 +786,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
     record ResolvingModalTarget(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
+
+    /** Resolution-time choice of the randomly selected opponent or one of their planeswalkers. */
+    record RandomOpponentDamageChoice(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
 
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, Permanent sourcePermanentSnapshot,
@@ -895,10 +994,27 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Remembers the attack target for each copy entering tapped and attacking. */
     record CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                      UUID targetPermanentId,
-                                      com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
-                                      int tokenCount, List<UUID> chosenAttackTargets)
+                                       UUID targetPermanentId,
+                                       com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                       int tokenCount, List<UUID> chosenAttackTargets)
             implements PermanentChoiceContext {}
+
+    /** Redoubled Stormsinger: choose an attack target for each temporary token copy. */
+    record CreateTokenCopiesOfEnteredThisTurnAttacking(
+            UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+            List<UUID> sourceTokenIds, int tokenCount, List<UUID> chosenAttackTargets)
+            implements PermanentChoiceContext {
+        public CreateTokenCopiesOfEnteredThisTurnAttacking {
+            sourceTokenIds = List.copyOf(sourceTokenIds);
+            chosenAttackTargets = List.copyOf(chosenAttackTargets);
+        }
+    }
+    /** Altaïr: remembers independent attack-target choices for copies of exiled creature cards. */
+    record CreateMemoryCounterTokenCopiesAttacking(UUID controllerId, Card sourceCard,
+                                                   UUID sourcePermanentId, List<Card> sourceCards,
+                                                   int cardIndex, List<UUID> chosenAttackTargets)
+            implements PermanentChoiceContext {}
+
     /** Raph & Mikey: choose the player, planeswalker, or battle the revealed creature attacks. */
     record RevealUntilCardPredicateAttackTarget(Card sourceCard, UUID controllerId, Card foundCard,
                                                 List<Card> remainingRevealedCards)
@@ -910,6 +1026,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
     /** Winota: choose the player or planeswalker for the selected Human to attack. */
     record ChosenPermanentAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
+
+    /** Misleading Signpost: choose a new player or permanent for the attacking creature to attack. */
+    record ReselectAttackingCreatureTarget(UUID permanentId) implements PermanentChoiceContext {}
+    /** Portal Mage: choose a new player or permanent for an attacking creature to attack. */
+    record ReselectAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
 
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
@@ -1030,6 +1151,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Gutmorn: the player who discarded the triggering card chooses another player to receive its duplicate. */
+    record GutmornDiscardedCardPlayerChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                             UUID discardingPlayerId, Card discardedCard)
+            implements PermanentChoiceContext {}
+
     record SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        boolean playerTargetOnly, TargetFilter targetFilter,
                                        int spellManaSpentX, UUID sourcePermanentId,
@@ -1094,6 +1220,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            int spellManaSpentX, UUID sourcePermanentId) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
                     spellManaSpentX, sourcePermanentId, null, false, null, null, controllerId, null, null, false);
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           boolean playerTargetOnly, TargetFilter targetFilter,
+                                           int spellManaSpentX, UUID sourcePermanentId,
+                                           Integer triggeringSpellManaValue) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
+                    spellManaSpentX, sourcePermanentId, null, false, null, null, controllerId,
+                    triggeringSpellManaValue, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1244,6 +1379,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record PlayerWithLowestLifeChoice(Card sourceCard) implements PermanentChoiceContext {}
 
+    /** The Black Gate's resolution-time choice of a player tied for most life. */
+    record BlackGateMostLifeChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                   UUID targetCreatureId, List<UUID> eligiblePlayerIds)
+            implements PermanentChoiceContext {
+        public BlackGateMostLifeChoice {
+            eligiblePlayerIds = List.copyOf(eligiblePlayerIds);
+        }
+    }
+
     record LeastToughnessDamageChoice(Card sourceCard, int damage) implements PermanentChoiceContext {}
 
     record UpkeepMultiPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
@@ -1289,6 +1433,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, null);
         }
     }
+
+    /** Cyclopean Tomb's resolution-time choice of a tracked land to clean up. */
+    record CyclopeanTombUpkeepLandChoice(UUID delayedActionId, PermanentPredicate permanentFilter)
+            implements PermanentChoiceContext {}
 
     /** "Whenever this permanent phases in, target …" — queued from {@code ON_SELF_PHASES_IN} during
      *  the untap-step phasing action; drained at the start of upkeep when the trigger is put on the
@@ -1465,27 +1613,29 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                     boolean restrictAdditionalSpellsThisTurn,
                                     boolean anyManaType,
                                     int copyCount,
-                                    boolean castWithAdventure) implements PermanentChoiceContext {
+                                    boolean castWithAdventure,
+                                    CardEffect afterSuccessfulCastEffect,
+                                    UUID sourcePermanentId) implements PermanentChoiceContext {
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                         boolean withoutPayingManaCost) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, null, false, false, 0, false);
+                    withoutPayingManaCost, null, false, false, 0, false, null, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                         boolean withoutPayingManaCost, UUID ownerId) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, ownerId, false, false, 0, false);
+                    withoutPayingManaCost, ownerId, false, false, 0, false, null, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                         boolean withoutPayingManaCost, UUID ownerId, int copyCount) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, ownerId, false, false, copyCount, false);
+                    withoutPayingManaCost, ownerId, false, false, copyCount, false, null, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
@@ -1493,7 +1643,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                         boolean withoutPayingManaCost, UUID ownerId,
                                         boolean restrictAdditionalSpellsThisTurn) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, false, 0, false);
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, false, 0, false, null, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
@@ -1501,7 +1651,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                         boolean withoutPayingManaCost, UUID ownerId,
                                         boolean restrictAdditionalSpellsThisTurn, boolean anyManaType) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, anyManaType, 0, false);
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, anyManaType, 0, false, null, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
@@ -1511,11 +1661,32 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                         int copyCount) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
                     withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, anyManaType,
-                    copyCount, false);
+                    copyCount, false, null, null);
+        }
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                        boolean withoutPayingManaCost, UUID ownerId,
+                                        boolean restrictAdditionalSpellsThisTurn, boolean anyManaType,
+                                        int copyCount, CardEffect afterSuccessfulCastEffect,
+                                        UUID sourcePermanentId) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, anyManaType,
+                    copyCount, false, afterSuccessfulCastEffect, sourcePermanentId);
+        }
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                        boolean withoutPayingManaCost, UUID ownerId,
+                                        boolean restrictAdditionalSpellsThisTurn, boolean anyManaType,
+                                        int copyCount, boolean castWithAdventure) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, anyManaType,
+                    copyCount, castWithAdventure, null, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, true, null, false, false, 0, false);
+            this(cardToCast, controllerId, spellEffects, spellType, false, true, null, false, false, 0, false, null, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
@@ -1532,26 +1703,33 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                StackEntryType spellType, int xValue, boolean castForMadnessCost,
-                               boolean exileInsteadOfGraveyard)
+                               boolean exileInsteadOfGraveyard, Zone sourceZone)
             implements PermanentChoiceContext {
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, 0, false, false);
+            this(cardToCast, controllerId, spellEffects, spellType, 0, false, false, Zone.HAND);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue) {
-            this(cardToCast, controllerId, spellEffects, spellType, xValue, false, false);
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, false, false, Zone.HAND);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue, boolean castForMadnessCost) {
-            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost, false);
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost, false, Zone.HAND);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue, boolean castForMadnessCost,
                                    boolean exileInsteadOfGraveyard) {
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost,
+                    exileInsteadOfGraveyard, Zone.HAND);
+        }
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                   StackEntryType spellType, int xValue, boolean castForMadnessCost,
+                                   boolean exileInsteadOfGraveyard, Zone sourceZone) {
             this.cardToCast = cardToCast;
             this.controllerId = controllerId;
             this.spellEffects = spellEffects;
@@ -1559,6 +1737,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this.xValue = xValue;
             this.castForMadnessCost = castForMadnessCost;
             this.exileInsteadOfGraveyard = exileInsteadOfGraveyard;
+            this.sourceZone = sourceZone;
         }
     }
 
@@ -1567,14 +1746,47 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                      boolean buyback, UUID chosenOpponentId)
             implements PermanentChoiceContext {}
 
+    /** A spell whose controller chooses the first targets, then opponents choose the marked targets. */
+    record OpponentChosenSpellTargets(Player caster, Card cardToCast, int cardIndex, Integer xValue,
+                                      boolean buyback, Map<Integer, UUID> selectedTargets,
+                                      int nextTargetIndex, UUID chosenOpponentId)
+            implements PermanentChoiceContext {
+        public OpponentChosenSpellTargets {
+            selectedTargets = Map.copyOf(selectedTargets);
+        }
+    }
+
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
+
+    record ChooseOpponentPermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                                           boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                           List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                           List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChooseOpponentPermanentAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
 
     record ChoosePlayerAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
                                List<UUID> targetIds, List<String> repeatedAdditionalCosts,
                                List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
         public ChoosePlayerAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
+
+    record ChooseTwoPlayersAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                                   boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                   List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                   List<UUID> convokeCreatureIds, UUID firstChosenPlayerId)
+            implements PermanentChoiceContext {
+        public ChooseTwoPlayersAsEnter {
             targetIds = List.copyOf(targetIds);
             repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
             convokeCreatureIds = List.copyOf(convokeCreatureIds);
@@ -1977,14 +2189,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                        Integer sourcePowerAtTrigger,
                                        boolean sourceAlternateCostAtTrigger,
-                                       UUID triggeringPermanentId)
+                                       UUID triggeringPermanentId,
+                                       UUID sourcePermanentId)
     implements PermanentChoiceContext {
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger,
+                                           boolean sourceAlternateCostAtTrigger,
+                                           UUID triggeringPermanentId) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, null);
+        }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                            Integer sourcePowerAtTrigger) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
-                    sourcePowerAtTrigger, false, null);
+                    sourcePowerAtTrigger, false, null, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -2062,6 +2284,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Blight N. If you do, [effect]." */
     record BlightCreatureChoice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                 com.github.laxika.magicalvibes.model.effect.BlightEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Ward—Blight N: choose a creature to blight to prevent the targeted spell from being countered. */
+    record CounterUnlessBlightsCreatureChoice(UUID payingPlayerId, UUID sourceControllerId,
+                                              Card sourceCard, UUID targetCardId, int count)
             implements PermanentChoiceContext {}
 
     /** Each opponent chooses a creature they control for a mandatory blight action. */
@@ -2150,6 +2377,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record OpponentChoosesCardFromGraveyardToHand() implements PermanentChoiceContext {}
 
+    /** Dawnbreak Reclaimer: choose which opponent makes the second graveyard choice. */
+    record DawnbreakReclaimerOpponentChoice() implements PermanentChoiceContext {}
+
     /** Curator of Destinies: the controller chooses which opponent chooses between the two piles. */
     record CuratorOpponentChoice() implements PermanentChoiceContext {}
 
@@ -2170,6 +2400,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                              UUID controllerPermanentId) implements PermanentChoiceContext {}
 
     record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
+
+    /** The controller is choosing the creature that will be their Ring-bearer. */
+    record RingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
+
+    /** Ring-bearer choice for TemptTheRingEffect and its separate RingState model. */
+    record TemptTheRingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
 
     /** Chooses a controlled permanent from which a counter will be removed. */
     record RemoveCounterFromChosenOwnPermanent(PermanentPredicate permanentFilter)

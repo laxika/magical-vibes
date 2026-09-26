@@ -1,33 +1,31 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.m.Murder;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.r.RendFlesh;
+import com.github.laxika.magicalvibes.cards.r.RendSpirit;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AshenSkinZubera.class, IsamaruHoundOfKonda.class, RendFlesh.class, RendSpirit.class})
 class AshenSkinZuberaTest extends BaseCardTest {
 
     // "When this creature dies, target opponent discards a card for each Zubera that died this turn."
 
-    private void startMainPhase(int murders) {
+    private void startMainPhase(Card... spells) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        List<com.github.laxika.magicalvibes.model.Card> hand = new ArrayList<>();
-        for (int i = 0; i < murders; i++) {
-            hand.add(new Murder());
-        }
-        harness.setHand(player1, hand);
+        harness.setHand(player1, List.of(spells));
         harness.addMana(player1, ManaColor.BLACK, 6);
     }
 
@@ -35,11 +33,10 @@ class AshenSkinZuberaTest extends BaseCardTest {
     @DisplayName("Dies alone: target opponent discards one card")
     void diesAloneDiscardsOne() {
         Permanent zubera = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
-        startMainPhase(1);
+        harness.setHand(player2, List.of(new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda()));
+        startMainPhase(new RendSpirit());
 
-        harness.castInstant(player1, 0, zubera.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, zubera.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -54,18 +51,17 @@ class AshenSkinZuberaTest extends BaseCardTest {
     void countsAllZuberaDeathsThisTurn() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Peek())));
-        startMainPhase(2);
+        harness.setHand(player2, List.of(
+                new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda()));
+        startMainPhase(new RendSpirit(), new RendSpirit());
 
-        harness.castInstant(player1, 0, first.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, first.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
 
-        harness.castInstant(player1, 0, second.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, second.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
@@ -76,20 +72,41 @@ class AshenSkinZuberaTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Zubera deaths do not increase the discard count")
     void nonZuberaDeathsDoNotCount() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonZubera = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
         Permanent zubera = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
-        startMainPhase(2);
+        harness.setHand(player2, List.of(new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda()));
+        startMainPhase(new RendFlesh(), new RendSpirit());
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, nonZubera.getId());
 
-        harness.castInstant(player1, 0, zubera.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, zubera.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Counts Zuberas that died under either player's control")
+    void countsZuberaDeathsAcrossPlayers() {
+        Permanent ownZubera = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
+        Permanent opposingZubera = harness.addToBattlefieldAndReturn(player2, new AshenSkinZubera());
+        harness.setHand(player2, List.of(new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda()));
+        startMainPhase(new RendSpirit(), new RendSpirit(), new RendSpirit());
+
+        harness.castAndResolveInstant(player1, 0, opposingZubera.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.castAndResolveInstant(player1, 0, ownZubera.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,13 +18,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, Pariah.class,
-        PlatinumAngel.class})
+        PlatinumAngel.class, IvoryMask.class})
 class UnderworldDreamsTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
-        harness.forceStep(TurnStep.UPKEEP);
+        advanceToUpkeep(activePlayer);
         harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
@@ -105,12 +105,24 @@ class UnderworldDreamsTest extends BaseCardTest {
 
         Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariah.setAttachedTo(enchantedCreature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariah);
 
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
         harness.assertLife(player2, 20);
         assertThat(gameLogContains("redirected Underworld Dreams damage")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent shroud does not stop Underworld Dreams damage")
+    void damagesOpponentWithShroud() {
+        harness.addToBattlefield(player1, new UnderworldDreams());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player2);
+        harness.passBothPriorities(); // resolve Underworld Dreams trigger
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }

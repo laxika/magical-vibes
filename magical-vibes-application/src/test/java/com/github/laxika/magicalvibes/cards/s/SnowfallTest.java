@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Piracy;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverFountain;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -104,10 +105,11 @@ class SnowfallTest extends BaseCardTest {
         harness.addToBattlefield(player1, new QuicksilverFountain());
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
         mountain.setCounterCount(CounterType.FLOOD, 1);
+        mountain.getGrantedSubtypes().add(CardSubtype.ISLAND);
 
         harness.tapPermanent(player2, 0);
 
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE))
                 .isEqualTo(1);
     }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1579")
 @CardRegistration(set = "SLZ", collectorNumber = "92")
 @CardRegistration(set = "SLZ", collectorNumber = "213")
 @CardRegistration(set = "SLZ", collectorNumber = "334")

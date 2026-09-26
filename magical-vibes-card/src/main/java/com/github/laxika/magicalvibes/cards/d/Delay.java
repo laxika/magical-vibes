@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileWithSuspendCountersEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "35")
+@CardRegistration(set = "SLD", collectorNumber = "1788")
 @CardRegistration(set = "TSR", collectorNumber = "61")
 public class Delay extends Card {
 

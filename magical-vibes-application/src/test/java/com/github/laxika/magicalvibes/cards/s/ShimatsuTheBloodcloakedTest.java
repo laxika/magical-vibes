@@ -1,55 +1,73 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShimatsuTheBloodcloaked.class, DevotedRetainer.class, Forest.class})
 class ShimatsuTheBloodcloakedTest extends BaseCardTest {
 
     private void castShimatsu() {
-        harness.setHand(player1, new ArrayList<>(List.of(new ShimatsuTheBloodcloaked())));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
-    }
-
-    private long shimatsuCount() {
-        return countPermanents(player1, "Shimatsu the Bloodcloaked");
+        harness.castFromHand(player1, new ShimatsuTheBloodcloaked(), "{3}{R}");
     }
 
     @Test
     @DisplayName("Sacrificing two permanents of any type gives two +1/+1 counters")
     void sacrificingTwoPermanentsAddsTwoCounters() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent retainer = harness.addToBattlefieldAndReturn(player1, new DevotedRetainer());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         castShimatsu();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), mountain.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(retainer.getId(), forest.getId()));
 
         assertThat(findPermanent(player1, "Shimatsu the Bloodcloaked")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(countPermanents(player1, "Grizzly Bears")).isZero();
-        assertThat(countPermanents(player1, "Mountain")).isZero();
+        assertThat(countPermanents(player1, "Devoted Retainer")).isZero();
+        assertThat(countPermanents(player1, "Forest")).isZero();
+    }
+
+    @Test
+    @DisplayName("Only its controller's permanents are offered for sacrifice")
+    void onlyControllerPermanentsAreSacrificeable() {
+        Permanent retainer = harness.addToBattlefieldAndReturn(player1, new DevotedRetainer());
+        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        castShimatsu();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(retainer.getId(), ownForest.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(retainer.getId()));
+
+        assertThat(findPermanent(player1, "Shimatsu the Bloodcloaked")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Devoted Retainer")).isZero();
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test
     @DisplayName("Sacrificing nothing leaves it a 0/0 that dies to state-based actions")
     void sacrificingNothingLetsItDie() {
-        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new DevotedRetainer());
 
         castShimatsu();
         harness.passBothPriorities();
@@ -57,8 +75,8 @@ class ShimatsuTheBloodcloakedTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(shimatsuCount()).isZero();
-        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Shimatsu the Bloodcloaked")).isZero();
+        assertThat(countPermanents(player1, "Devoted Retainer")).isEqualTo(1);
     }
 
     @Test
@@ -68,6 +86,6 @@ class ShimatsuTheBloodcloakedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(shimatsuCount()).isZero();
+        assertThat(countPermanents(player1, "Shimatsu the Bloodcloaked")).isZero();
     }
 }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "76")
 @CardRegistration(set = "MM2", collectorNumber = "111")
+@CardRegistration(set = "CMD", collectorNumber = "117")
+@CardRegistration(set = "C15", collectorNumber = "146")
 public class CometStorm extends Card {
 
     public CometStorm() {

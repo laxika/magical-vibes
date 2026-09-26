@@ -26,11 +26,10 @@ class FungusaurTest extends BaseCardTest {
         addCreatureReady(player2, new Fungusaur());
         addCreatureReady(player1, new FugitiveWizard());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        resolveCombat(player1);
+        resolveCombat();
         resolveAllTriggers();
 
         // Fungusaur survives (2 toughness, 1 damage) and has a +1/+1 counter
@@ -51,11 +50,9 @@ class FungusaurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID fungusaurId = fungusaur.getId();
-        harness.castInstant(player1, 0, fungusaurId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, fungusaurId);
 
-        harness.castInstant(player1, 0, fungusaurId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, fungusaurId);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(fungusaur);
@@ -73,16 +70,14 @@ class FungusaurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID fungusaurId = fungusaur.getId();
-        harness.castInstant(player1, 0, fungusaurId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, fungusaurId);
         assertThat(gqs.getEffectiveToughness(gd, fungusaur)).isEqualTo(5);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
-        resolveCombat(player1);
+        resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 firstWizard.getId(), 1,
                 secondWizard.getId(), 4));
@@ -100,8 +95,7 @@ class FungusaurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID fungusaurId = harness.getPermanentId(player2, "Fungusaur");
-        harness.castInstant(player1, 0, fungusaurId);
-        harness.passBothPriorities(); // Resolve Shock — 2 damage, lethal for a 2/2
+        harness.castAndResolveInstant(player1, 0, fungusaurId); // Resolve Shock — 2 damage, lethal for a 2/2
 
         // The trigger is on the stack, but state-based actions already destroyed Fungusaur
         harness.assertInGraveyard(player2, "Fungusaur");
@@ -109,5 +103,23 @@ class FungusaurTest extends BaseCardTest {
         // Resolving the trigger does nothing (source is gone)
         resolveAllTriggers();
         harness.assertInGraveyard(player2, "Fungusaur");
+    }
+
+    @Test
+    @DisplayName("Each separate damage event puts another +1/+1 counter on Fungusaur")
+    void separateDamageEventsEachAddCounter() {
+        Permanent fungusaur = addCreatureReady(player2, new Fungusaur());
+        harness.setHand(player1, List.of(new GiantGrowth(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID fungusaurId = fungusaur.getId();
+        harness.castAndResolveInstant(player1, 0, fungusaurId);
+        harness.castAndResolveInstant(player1, 0, fungusaurId);
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, fungusaurId);
+        resolveAllTriggers();
+
+        assertThat(fungusaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

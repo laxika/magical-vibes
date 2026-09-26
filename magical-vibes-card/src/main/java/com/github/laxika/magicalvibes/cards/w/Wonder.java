@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "54")
 @CardRegistration(set = "EMA", collectorNumber = "77")
+@CardRegistration(set = "C13", collectorNumber = "67")
+@CardRegistration(set = "CMD", collectorNumber = "71")
+@CardRegistration(set = "MH2", collectorNumber = "271")
 public class Wonder extends Card {
 
     public Wonder() {

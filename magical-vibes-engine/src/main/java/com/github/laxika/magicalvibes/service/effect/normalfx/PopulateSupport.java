@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -49,7 +50,7 @@ public class PopulateSupport {
     }
 
     /** Creates a token copy of {@code sourceToken} for {@code controllerId}, once per token multiplier. */
-    public void createCopy(GameData gameData, UUID controllerId, Permanent sourceToken) {
+    public void createCopy(GameData gameData, UUID controllerId, Permanent sourceToken, StackEntry entry) {
         Card sourceCard = sourceToken.getCard();
         int tokenMultiplier = gameQueryService.getTokenCreationAmount(
                 gameData, controllerId, 1, sourceCard.getSubtypes(), sourceCard.hasType(CardType.CREATURE));
@@ -61,6 +62,9 @@ public class PopulateSupport {
                     gameData, controllerId, tokenCard);
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
+            if (entry != null) {
+                entry.getCreatedPermanentIds().add(tokenPermanent.getId());
+            }
 
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
             log.info("Game {} - Populate creates a token copy of {}", gameData.id, sourceCard.getName());

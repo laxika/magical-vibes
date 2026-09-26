@@ -1,35 +1,34 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * Shared permanent-control/token helpers used by every "normal" Permanent Control effect handler
@@ -117,30 +116,80 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalMapTokenCount(
                         gameData, controllerId, token, amount)
                 : 0;
+        int additionalMutagenTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalMutagenTokenCount(gameData, controllerId, amount)
+                : 0;
         CreateTokenEffect additionalFrog = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
+        CreateTokenEffect additionalSquirrel = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalSquirrelTokenIfApplicable(
+                        gameData, controllerId, token)
+                : null;
+        int additionalSoldierTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
+                        gameData, controllerId, token)
+                : 0;
+        CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
+                        gameData, controllerId, token)
+                : null;
+        int additionalTreasureTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalTreasureTokenCount(
+                        gameData, controllerId, token, totalAmount)
+                : 0;
+        List<CreateTokenEffect> academyManufactorTokenBlueprints = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                        gameData, controllerId, token, totalAmount)
+                : List.of();
         boolean addClueToken = applyAdditionalReplacements
                 && totalAmount > 0
                 && hasSolvedClueReplacement(gameData, controllerId);
+        CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
         int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
+        int additionalSquirrelTokenCount = additionalSquirrel != null && totalAmount > 0
+                ? totalAmount
+                : 0;
+        if (totalAmount <= 0) {
+            additionalSoldierTokenCount = 0;
+        }
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
-                totalAmount + additionalMapTokenCount + additionalFrogTokenCount);
-        CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
-        for (int i = 0; i < totalAmount; i++) {
-            tokenBlueprints.add(evaluatedToken);
+                (academyManufactorTokenBlueprints.isEmpty() ? totalAmount : academyManufactorTokenBlueprints.size())
+                        + additionalMapTokenCount + additionalFrogTokenCount + additionalSquirrelTokenCount
+                        + additionalMutagenTokenCount + additionalTreasureTokenCount + additionalSoldierTokenCount);
+        if (academyManufactorTokenBlueprints.isEmpty()) {
+            for (int i = 0; i < totalAmount; i++) {
+                tokenBlueprints.add(evaluatedToken);
+            }
+        } else {
+            tokenBlueprints.addAll(academyManufactorTokenBlueprints);
+        }
+        CreateTokenEffect additionalTreasureToken = additionalTreasureTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalTreasureToken(token)
+                : null;
+        for (int i = 0; i < additionalTreasureTokenCount; i++) {
+            tokenBlueprints.add(additionalTreasureToken);
         }
         for (int i = 0; i < additionalMapTokenCount; i++) {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));
         }
         if (additionalFrogTokenCount > 0) {
             tokenBlueprints.add(additionalFrog);
+        }
+        for (int i = 0; i < additionalSquirrelTokenCount; i++) {
+            tokenBlueprints.add(additionalSquirrel);
+        }
+        for (int i = 0; i < additionalSoldierTokenCount; i++) {
+            tokenBlueprints.add(additionalSoldier);
+        }
+        for (int i = 0; i < additionalMutagenTokenCount; i++) {
+            tokenBlueprints.add(TokenCreationReplacementSupport.additionalMutagenToken(token));
         }
 
         for (CreateTokenEffect tokenBlueprint : tokenBlueprints) {

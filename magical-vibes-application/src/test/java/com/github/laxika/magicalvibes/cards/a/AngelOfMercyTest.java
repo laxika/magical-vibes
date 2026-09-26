@@ -15,7 +15,6 @@ class AngelOfMercyTest extends BaseCardTest {
         harness.setLife(player2, 17);
 
         harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertLife(player1, 11);

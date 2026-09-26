@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
+import com.github.laxika.magicalvibes.cards.g.GhostLitRedeemer;
+import com.github.laxika.magicalvibes.cards.k.KitsuneBonesetter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,14 +17,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IdeasUnbound.class, ArabaMothrider.class, GhostLitRedeemer.class, KitsuneBonesetter.class})
 class IdeasUnboundTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws three cards immediately and discards three at the next end step")
     void drawsThenDiscardsAtNextEndStep() {
         harness.setHand(player1, new ArrayList<>(List.of(
-                new IdeasUnbound(), new Forest(), new Island(), new Mountain())));
-        harness.setLibrary(player1, new ArrayList<>(List.of(new Forest(), new Island(), new Mountain())));
+                new IdeasUnbound(), new ArabaMothrider(), new GhostLitRedeemer(), new KitsuneBonesetter())));
+        harness.setLibrary(player1, new ArrayList<>(List.of(
+                new ArabaMothrider(), new GhostLitRedeemer(), new KitsuneBonesetter())));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castAndResolveSorcery(player1, 0, 0);
@@ -33,8 +36,7 @@ class IdeasUnboundTest extends BaseCardTest {
                 .containsExactly("Ideas Unbound");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);

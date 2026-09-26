@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "42")
+@CardRegistration(set = "MH2", collectorNumber = "269")
 public class SealOfRemoval extends Card {
 
     public SealOfRemoval() {

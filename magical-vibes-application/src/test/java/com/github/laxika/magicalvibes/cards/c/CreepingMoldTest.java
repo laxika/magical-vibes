@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.Arrest;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GossamerChains;
+import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.l.LeoninDenGuard;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.PatagiaGolem;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
-import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
-import com.github.laxika.magicalvibes.cards.p.Python;
-import com.github.laxika.magicalvibes.cards.q.Quicksand;
-import com.github.laxika.magicalvibes.cards.s.SisaysRing;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.w.Worship;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,10 +24,11 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CreepingMold.class, Forest.class, GloriousAnthem.class, GossamerChains.class, GrizzlyBears.class, PhyrexianHulk.class, PhyrexianWalker.class, Python.class, Quicksand.class, SisaysRing.class})
+@CardUsed({CreepingMold.class, CityOfBrass.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, Millstone.class, PatagiaGolem.class, PhyrexianHulk.class, Worship.class, Arrest.class, GreatFurnace.class, IcyManipulator.class, LeoninDenGuard.class, Ornithopter.class, RuleOfLaw.class})
 class CreepingMoldTest extends BaseCardTest {
 
     @Test
@@ -45,28 +50,27 @@ class CreepingMoldTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target artifact")
     void resolvesDestroyArtifact() {
-        UUID targetId = harness.addToBattlefieldAndReturn(player2, new SisaysRing()).getId();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Millstone()).getId();
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Sisay's Ring");
-        harness.assertInGraveyard(player2, "Sisay's Ring");
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        harness.assertInGraveyard(player2, "Millstone");
     }
 
     @Test
     @DisplayName("Resolving destroys target artifact")
     void resolvesDestroyArtifactUpstreamReview() {
-        harness.addToBattlefield(player2, new SisaysRing());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Millstone()).getId();
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Sisay's Ring");
         harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Sisay's Ring");
-        harness.assertInGraveyard(player2, "Sisay's Ring");
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        harness.assertInGraveyard(player2, "Millstone");
     }
 
     @Test
@@ -85,15 +89,14 @@ class CreepingMoldTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target artifact creature")
     void resolvesDestroyArtifactCreatureUpstreamReview() {
-        harness.addToBattlefield(player2, new PhyrexianWalker());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new PatagiaGolem()).getId();
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Phyrexian Walker");
         harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Phyrexian Walker");
-        harness.assertInGraveyard(player2, "Phyrexian Walker");
+        harness.assertNotOnBattlefield(player2, "Patagia Golem");
+        harness.assertInGraveyard(player2, "Patagia Golem");
     }
 
     @Test
@@ -112,15 +115,14 @@ class CreepingMoldTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target enchantment")
     void resolvesDestroyEnchantmentUpstreamReview() {
-        harness.addToBattlefield(player2, new GossamerChains());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Worship()).getId();
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Gossamer Chains");
         harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Gossamer Chains");
-        harness.assertInGraveyard(player2, "Gossamer Chains");
+        harness.assertNotOnBattlefield(player2, "Worship");
+        harness.assertInGraveyard(player2, "Worship");
     }
 
     @Test
@@ -139,15 +141,14 @@ class CreepingMoldTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target land")
     void resolvesDestroyLandUpstreamReview() {
-        harness.addToBattlefield(player2, new Quicksand());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new CityOfBrass()).getId();
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Quicksand");
         harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Quicksand");
-        harness.assertInGraveyard(player2, "Quicksand");
+        harness.assertNotOnBattlefield(player2, "City of Brass");
+        harness.assertInGraveyard(player2, "City of Brass");
     }
 
     @Test
@@ -166,15 +167,14 @@ class CreepingMoldTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy own permanent")
     void canDestroyOwnPermanentUpstreamReview() {
-        harness.addToBattlefield(player1, new Quicksand());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new CityOfBrass()).getId();
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player1, "Quicksand");
         harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player1, "Quicksand");
-        harness.assertInGraveyard(player1, "Quicksand");
+        harness.assertNotOnBattlefield(player1, "City of Brass");
+        harness.assertInGraveyard(player1, "City of Brass");
     }
 
     @Test
@@ -207,16 +207,26 @@ class CreepingMoldTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration prevents Creeping Mold from destroying the target")
     void regenerationPreventsDestruction() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianWalker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianHulk());
         target.setRegenerationShield(1);
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        harness.assertOnBattlefield(player2, "Phyrexian Walker");
-        harness.assertNotInGraveyard(player2, "Phyrexian Walker");
+        harness.assertOnBattlefield(player2, "Phyrexian Hulk");
+        harness.assertNotInGraveyard(player2, "Phyrexian Hulk");
         assertThat(target.getRegenerationShield()).isZero();
         assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target a player with Creeping Mold")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new CreepingMold()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "290")
+@CardRegistration(set = "ME4", collectorNumber = "221")
 public class PlanarGate extends Card {
 
     public PlanarGate() {

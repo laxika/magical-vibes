@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "AKH", collectorNumber = "2")
 @CardRegistration(set = "AKR", collectorNumber = "2")
+@CardRegistration(set = "SLD", collectorNumber = "1511")
 public class AnointedProcession extends Card {
 
     public AnointedProcession() {

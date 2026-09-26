@@ -55,6 +55,19 @@ class RelicBarrierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tap ability can target an already-tapped artifact creature")
+    void canTargetAlreadyTappedArtifactCreature() {
+        addReadyBarrier(player1);
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new BronzeHorse());
+        artifactCreature.tap();
+
+        harness.activateAbility(player1, 0, null, artifactCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifactCreature.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Tap ability rejects a non-artifact target")
     void rejectsNonArtifactTarget() {
         addReadyBarrier(player1);

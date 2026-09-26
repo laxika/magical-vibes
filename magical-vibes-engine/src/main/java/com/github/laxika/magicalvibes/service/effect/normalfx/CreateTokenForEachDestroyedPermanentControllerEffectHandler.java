@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,10 @@ public class CreateTokenForEachDestroyedPermanentControllerEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var createTokens = (CreateTokenForEachDestroyedPermanentControllerEffect) effect;
         Map<UUID, Integer> tokenCountsByController = new LinkedHashMap<>();
-        for (UUID controllerId : entry.getEventPlayerIds()) {
+        List<UUID> destroyedControllerIds = createTokens.nontokenOnly()
+                ? entry.getEventNontokenPlayerIds()
+                : entry.getEventPlayerIds();
+        for (UUID controllerId : destroyedControllerIds) {
             tokenCountsByController.merge(controllerId, 1, Integer::sum);
         }
 
