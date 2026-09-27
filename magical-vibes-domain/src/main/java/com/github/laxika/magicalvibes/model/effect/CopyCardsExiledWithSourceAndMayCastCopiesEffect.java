@@ -12,6 +12,7 @@ public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, C
     public enum CopyCastCost {
         NORMAL,
         ONE_GENERIC,
+        THREE_GENERIC,
         FREE
     }
 
@@ -27,6 +28,10 @@ public record CopyCardsExiledWithSourceAndMayCastCopiesEffect(boolean copyAll, C
 
     public static CopyCardsExiledWithSourceAndMayCastCopiesEffect oneForOneGeneric() {
         return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(false, CopyCastCost.ONE_GENERIC);
+    }
+
+    public static CopyCardsExiledWithSourceAndMayCastCopiesEffect oneForThreeGeneric() {
+        return new CopyCardsExiledWithSourceAndMayCastCopiesEffect(false, CopyCastCost.THREE_GENERIC);
     }
 
     public static CopyCardsExiledWithSourceAndMayCastCopiesEffect allForFree() {

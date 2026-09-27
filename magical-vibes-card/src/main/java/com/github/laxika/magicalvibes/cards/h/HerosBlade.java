@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "160")
 @CardRegistration(set = "CMM", collectorNumber = "391")
+@CardRegistration(set = "FIC", collectorNumber = "345")
 public class HerosBlade extends Card {
 
     public HerosBlade() {

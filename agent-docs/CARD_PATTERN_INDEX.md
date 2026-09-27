@@ -1,4 +1,6 @@
 # CARD_PATTERN_INDEX
+| ETB compares the entering creature's power with the source's power at resolution and counters the lower-power creature, with equality favoring the source | `s/ShelindaYevonAcolyte.java` + `EnteringCreatureSourcePowerBranchEffect` |
+| Attack Mug trigger: each player mills one, land rider creates Treasure, and one exact milled spell may be cast from any graveyard this turn | `l/LockeTreasureHunter.java` + `MugEffect` |
 | ETB draft from a spellbook, then perpetually grant the card a Food artifact type and sacrifice-for-life ability | `h/HinterlandChef.java` + `PerpetuallyGrantCardCharacteristicsEffect` |
 | ETB draft that gives the chosen card perpetual any-color casting and a self-cast bounce trigger | `o/OminousTraveler.java` + `DraftCardFromSpellbookEffect(..., chosenCardEffects)` + `PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect` |
 | upkeep draft from a spellbook, exile the choice, and grant end-of-turn play permission | `a/ArmsScavenger.java` + `DraftCardFromSpellbookEffect(..., true)` + `ReduceEquipCostEffect(1)` |
@@ -47,6 +49,7 @@
 | landfall perpetually grants a random library land a tap-draw trigger | `a/AmbassadorOfEvendo.java` | `ON_ALLY_LAND_ENTERS_BATTLEFIELD PerpetuallyGrantTapDrawToRandomLandInLibraryEffect()` |
 | conjure a named card into the top N cards of a library with a perpetual casting option | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
 | choose an opponent, then you and that player each create tokens | `ChooseOpponentEachCreatesTokensEffect` |
+| each opponent draws a card, then the controller draws for each opponent who drew | `EachOpponentDrawsThenControllerDrawsEffect()` |
 | upkeep creates tokens for each opponent meeting a hand-size threshold | `CreateTokenEffect(new PlayersWithCardsInHandAtLeast(CountScope.OPPONENTS, threshold), ...)` |
 
 - Lich (2ED 114): `LoseLifeEqualToLifeTotalAsEntersEffect` on `ON_ENTER_BATTLEFIELD`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `ON_DEATH`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
@@ -75,17 +78,20 @@ This index has been split into smaller files for faster lookup. Each file is und
 |----------------|------|
 | d20, roll a d20, graveyard target ETB | CARD_PATTERNS_CREATURES_ETB.md |
 | whammy deck, reveal until Island, choose to stop | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
+| reveal until creature to hand, bottom the rest randomly, and put +1/+1 counters on a target creature equal to the found creature's mana value | `y/YunasWhistle.java` + `SequenceEffect.of(RevealUntilCardPredicateRestOnBottomRandomEffect.toHandRecordingManaValue(...), PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, EventValue()))` |
 | land, basic, pain, check, fast, manland | CARD_PATTERNS_LANDS_SPELLS.md |
 | burn, damage, shock, bolt, X burn | CARD_PATTERNS_LANDS_SPELLS.md |
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
 | destroy, terror, wrath, board wipe, total power and toughness target restriction | CARD_PATTERNS_LANDS_SPELLS.md |
 | each player sacrifices artifacts, enchantments, and nonbasic lands, then searches for basics | WaveOfVitriolEffect |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
+| each player may discard and draw, then damage accepting opponents | `s/Snort.java` + `EachPlayerMayDiscardHandThenDrawEffect` + `DealDamageToPlayersEffect.selectedOpponents` |
 | spellbook, draft from a spellbook, digital card offer | `DraftCardFromSpellbookEffect` + shared `LibraryRevealChoice` + `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` (`y/SupportSkyforge.java`, YDFT 26) |
 | seek a card and discard that exact card later | `SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect` + `DiscardSpecificCardEffect` |
 | opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | exile top cards, play this turn, unplayed exiled cards to graveyard and tokens | `g/GlimpseTheImpossible.java` |
+| target opponent's library until instant/sorcery/creature, free-cast with creature haste and end-step sacrifice | `s/StragoAndRelm.java` + `RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect(CardPredicate, true, true)` |
 | double any effect that doubles, quadruple | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
 | remove any number of counters from among permanents | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -93,6 +99,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | target player's graveyard to bottom in random order | CARD_PATTERNS_CREATURES_ETB.md |
 | modal, choose one, fight, bite | CARD_PATTERNS_LANDS_SPELLS.md |
+| beginning-of-combat modal with a commander-enabled second mode and up-to-two non-targeting counter recipients | `s/SOLDIERMilitaryProgram.java` | commander-gated `ChooseOneEffect` / `ChooseOneEffect.oneOrMore` plus `PutCounterOnChosenPermanentsEffect` |
 | Case, solve, solved | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | steal, threaten, extra turn | CARD_PATTERNS_LANDS_SPELLS.md |
 | directional multiplayer creature-choice control spell | CARD_PATTERNS_LANDS_SPELLS.md and EFFECTS_QUICK_REFERENCE.md |
@@ -119,6 +126,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | combat damage → untap creatures + additional combat + repeat-player attack restriction | `p/PortRazer.java` |
 | combat damage modal, goad damaged player's creature, exile top card and cast with any-color mana | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| ally permanent death trigger snapshots total counters and optionally places +1/+1 counters on a creature | `y/YunaGrandSummoner.java` + `PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect` |
 | counters placed on a creature you don't control | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | beginning-of-combat random counter trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | beginning-of-combat random-opponent attack trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
@@ -184,10 +192,13 @@ When implementing a card, use these as the **best** test file to read for each c
 | Draw spell | `CounselOfTheSoratamiTest.java` | Covers draw count + graveyard |
 | Destroy spell | `TerrorTest.java` | Covers destroy + filter + fizzle |
 | Equipment | `LeoninScimitarTest.java` | Covers equip + boost + unequip |
+| Equipment with per-player life-loss counter trigger | `r/ReapersScythe.java` | `CONTROLLER_END_STEP_TRIGGERED` puts one soul counter per distinct player who lost life; `AttachedBoostEffect` scales the equipped creature and `GrantSubtypeEffect` adds Assassin |
 | Lord/anthem | `GloriousAnthemTest.java` | Covers static boost + removal |
 | Vanilla creature | (no test needed) | Empty body, no engine logic |
 | Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `ON_ENTER_BATTLEFIELD`, and put the dynamic mana rider in `ON_SELF_TAPPED_FOR_MANA` |
 | ETB creates an Equipment token and attaches it to the source | `u/USAgentJohnWalker.java` | Use `CreateTokenAndAttachToSourceEffect(CreateTokenEffect.ofArtifactToken(...).withTokenEffects(Map.of(STATIC, new StaticBoostEffect(...))))`; put the token's `EquipActivatedAbility` in its token ability list |
+
+| activated ability tracks cards exiled as a cost for an opponent's choice | `c/CoinOfFate.java` / `c/CoinOfFateTest.java` | Mark the graveyard-exile cost as tracked, resolve the choice through a pending interaction, and resume the parked ability through `InputCompletionService` |
 
 ### Subgames
 

@@ -569,6 +569,10 @@ public class ChoiceHandlerService {
             handleMoveCountersAmountChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.MoveAnyNumberOfCountersAmountChoice ctx) {
+            handleMoveAnyNumberOfCountersAmountChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice ctx) {
             handleMoveCountersFromControlledPermanentsAmountChoice(gameData, player, colorName, ctx);
             return;
@@ -4649,6 +4653,60 @@ public class ChoiceHandlerService {
                 log.info("Game {} - {} moves {} {} counters from {} to {} ({})", gameData.id, player.getUsername(),
                         moved, ctx.counterType(), from.getCard().getName(), to.getCard().getName(), ctx.sourceCardName());
             }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleMoveAnyNumberOfCountersAmountChoice(
+            GameData gameData, Player player, String numberName,
+            ChoiceContext.MoveAnyNumberOfCountersAmountChoice ctx) {
+        int chosen = Integer.parseInt(numberName);
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent from = gameQueryService.findPermanentById(gameData, ctx.fromPermanentId());
+        Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
+        CounterType counterType = ctx.counterTypes().get(ctx.index());
+        if (from != null && to != null && from != to && chosen > 0
+                && !gameQueryService.cantHaveCounters(gameData, to)) {
+            int available = Math.min(chosen, from.getCounterCount(counterType));
+            if (available > 0) {
+                StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+                int placed;
+                if (sourceEntry != null) {
+                    placed = permanentCounterSupport.placeCounterOnPermanent(
+                            gameData, sourceEntry, to, counterType, available);
+                } else {
+                    int accepted = gameQueryService.replaceCounters(gameData, to, counterType, available);
+                    to.setCounterCount(counterType, to.getCounterCount(counterType) + accepted);
+                    placed = accepted;
+                }
+                if (placed > 0) {
+                    from.setCounterCount(counterType, from.getCounterCount(counterType) - placed);
+                    if (counterType == CounterType.OIL) {
+                        gameData.recordOilCounterRemoved(from, placed);
+                    }
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " moves " + placed + " counter"
+                                    + (placed == 1 ? "" : "s") + " from ")
+                            .card(from.getCard()).text(" onto ").card(to.getCard()).text(".").build());
+                }
+            }
+        }
+
+        int nextIndex = ctx.index() + 1;
+        if (from != null && to != null) {
+            while (nextIndex < ctx.counterTypes().size()
+                    && from.getCounterCount(ctx.counterTypes().get(nextIndex)) <= 0) {
+                nextIndex++;
+            }
+        }
+        if (from != null && to != null && nextIndex < ctx.counterTypes().size()) {
+            CounterType nextType = ctx.counterTypes().get(nextIndex);
+            playerInputService.beginMoveAnyNumberOfCountersAmountChoice(
+                    gameData, player.getId(), from.getId(), to.getId(), ctx.counterTypes(), nextIndex,
+                    ctx.sourceCardName(), from.getCounterCount(nextType));
+            return;
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

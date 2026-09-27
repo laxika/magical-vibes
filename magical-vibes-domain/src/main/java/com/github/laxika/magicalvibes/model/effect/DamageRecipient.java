@@ -6,6 +6,8 @@ public enum DamageRecipient {
     TARGET_PLAYER,
     /** Every opponent of the effect's controller. */
     EACH_OPPONENT,
+    /** The opponents in the effect's resolution-time player-id selection. */
+    SELECTED_OPPONENTS,
     /** Every player (including the controller). */
     EACH_PLAYER,
     /** The player remembered by the source permanent's as-enters choice. */

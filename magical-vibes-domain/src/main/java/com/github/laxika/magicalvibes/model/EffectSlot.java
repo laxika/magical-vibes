@@ -771,6 +771,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_LOSES_LIFE,
     /** Triggers when this controller places counters on a creature they do not control. */
     ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
+    /** Triggers when this controller places one or more counters on any creature. */
+    ON_YOU_PUT_COUNTERS_ON_CREATURE,
     /** Triggers whenever this permanent's controller pays life. */
     ON_CONTROLLER_PAYS_LIFE,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
@@ -1049,6 +1051,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  spell or ability. Fires on all permanents with this slot on that player's battlefield. The
      *  targeted creature is stored as the triggered entry's non-targeting {@code targetId}. */
     ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+    /** Triggers once when one or more creatures controlled by this permanent's controller become
+     *  the target of an activated ability. Checked in
+     *  {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
+    ON_ALLY_CREATURE_BECOMES_TARGET_OF_ACTIVATED_ABILITY,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      * controlled by an opponent. Activated and triggered abilities do not trigger this slot. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL,

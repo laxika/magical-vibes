@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPred
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "17")
+@CardRegistration(set = "FIC", collectorNumber = "240")
 public class DestroyEvil extends Card {
 
     public DestroyEvil() {

@@ -257,6 +257,7 @@ public enum CardSubtype {
     PENTAVITE("Pentavite"),
     TRISKELAVITE("Triskelavite"),
     PINCHER("Pincher"),
+    PERFORMER("Performer"),
     PEST("Pest"),
     PILOT("Pilot"),
     PIRATE("Pirate"),

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -349,6 +350,23 @@ class DrawServiceTest {
 
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
                 .isNotNull();
+    }
+
+    @Test
+    void opponentDrawTriggerHonorsOncePerTurnWrapper() {
+        Card card = createCard("Tataru Taru", CardType.CREATURE);
+        card.addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+                new OncePerTurnTriggerEffect(new BoostSelfEffect(1, 1)));
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .containsExactly(new BoostSelfEffect(1, 1));
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn).contains(source.getId());
     }
 
     @Test

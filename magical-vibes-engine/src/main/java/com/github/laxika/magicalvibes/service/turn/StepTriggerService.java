@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveScreamCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
@@ -3548,6 +3549,19 @@ public class StepTriggerService {
             List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
             if (chapterEffects.isEmpty()) continue;
 
+            Set<TargetFilter> chapterTargetFilters = new LinkedHashSet<>(
+                    card.getSagaChapterTargetFilters(chapterSlot));
+            if (chapterEffects.size() == 1
+                    && chapterEffects.getFirst() instanceof ChooseOneAtRandomEffect randomChoice) {
+                ChooseOneEffect.ChooseOneOption selectedOption = chooseRandomOptionAtTriggerTime(
+                        gameData, activePlayerId, saga, randomChoice);
+                if (selectedOption == null) continue;
+                chapterEffects = selectedOption.effectsForSelection();
+                if (selectedOption.targetFilter() != null) {
+                    chapterTargetFilters.add(selectedOption.targetFilter());
+                }
+            }
+
             String chapterName = switch (newLoreCount) {
                 case 1 -> "I";
                 case 2 -> "II";
@@ -3570,7 +3584,7 @@ public class StepTriggerService {
 
             boolean needsPlayerTarget = chapterEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                    || card.getSagaChapterTargetFilters(chapterSlot).stream()
+                    || chapterTargetFilters.stream()
                     .anyMatch(com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter.class::isInstance);
             boolean hasSagaTargetGroups = !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
             boolean needsPermanentTarget = chapterEffects.stream()
@@ -3583,7 +3597,7 @@ public class StepTriggerService {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName,
-                                card.getSagaChapterTargetFilters(chapterSlot),
+                                chapterTargetFilters,
                                 card.getSagaChapterTargetGroups(chapterSlot), List.of(), 0));
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
@@ -3601,7 +3615,7 @@ public class StepTriggerService {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterPlayerTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName,
-                                card.getSagaChapterTargetFilters(chapterSlot)));
+                                chapterTargetFilters));
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
                 log.info("Game {} - {} chapter {} triggers (awaiting player target selection)",
@@ -3610,7 +3624,7 @@ public class StepTriggerService {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName,
-                                card.getSagaChapterTargetFilters(chapterSlot),
+                                chapterTargetFilters,
                                 card.getSagaChapterTargetGroups(chapterSlot), List.of(), 0));
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
@@ -6325,6 +6339,11 @@ public class StepTriggerService {
         List<ChooseOneEffect> modalEffects = new ArrayList<>();
         List<CardEffect> mandatoryEffects = new ArrayList<>();
         for (CardEffect effect : combatEffects) {
+            if (effect instanceof ChooseOneAtRandomEffect randomChoice) {
+                mandatoryEffects.addAll(chooseRandomEffectsAtTriggerTime(
+                        gameData, controllerId, perm, randomChoice));
+                continue;
+            }
             if (effect instanceof ChooseModeNotYetChosenEffect chooseMode) {
                 consumedModalEffects.add(chooseMode);
                 continue;
@@ -6466,6 +6485,42 @@ public class StepTriggerService {
         } finally {
             gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
+    }
+
+    private List<CardEffect> chooseRandomEffectsAtTriggerTime(GameData gameData, UUID controllerId,
+                                                               Permanent sourcePermanent,
+                                                               ChooseOneAtRandomEffect randomChoice) {
+        ChooseOneEffect.ChooseOneOption selectedOption = chooseRandomOptionAtTriggerTime(
+                gameData, controllerId, sourcePermanent, randomChoice);
+        return selectedOption == null ? List.of() : selectedOption.effectsForSelection();
+    }
+
+    private ChooseOneEffect.ChooseOneOption chooseRandomOptionAtTriggerTime(
+            GameData gameData, UUID controllerId, Permanent sourcePermanent,
+            ChooseOneAtRandomEffect randomChoice) {
+        List<ChooseOneEffect.ChooseOneOption> eligibleOptions = new ArrayList<>();
+        for (ChooseOneEffect.ChooseOneOption option : randomChoice.options()) {
+            List<CardEffect> optionEffects = option.effectsForSelection();
+            boolean requiresTarget = optionEffects.stream()
+                    .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+            if (!requiresTarget) {
+                eligibleOptions.add(option);
+                continue;
+            }
+
+            TargetFilter targetFilter = option.targetFilter() != null
+                    ? option.targetFilter() : sourcePermanent.getCard().getTargetFilter();
+            TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
+                    gameData, optionEffects, targetFilter, controllerId, sourcePermanent.getCard(),
+                    TriggerTargetCollector.Options.END_STEP, sourcePermanent);
+            if (!targets.validTargets().isEmpty() || option.minTargets() == 0) {
+                eligibleOptions.add(option);
+            }
+        }
+        if (eligibleOptions.isEmpty()) {
+            return null;
+        }
+        return eligibleOptions.get(ThreadLocalRandom.current().nextInt(eligibleOptions.size()));
     }
 
     /**

@@ -1444,6 +1444,27 @@ public class PlayerInputService {
                 gameData.id, playerName, counterType, max);
     }
 
+    /** Prompts for how many counters of the current kind to move between two permanents. */
+    public void beginMoveAnyNumberOfCountersAmountChoice(
+            GameData gameData, UUID playerId, UUID fromPermanentId, UUID toPermanentId,
+            List<CounterType> counterTypes, int index, String sourceCardName, int max) {
+        ChoiceContext.MoveAnyNumberOfCountersAmountChoice choiceContext =
+                new ChoiceContext.MoveAnyNumberOfCountersAmountChoice(
+                        fromPermanentId, toPermanentId, counterTypes, index, sourceCardName);
+        List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
+                .mapToObj(Integer::toString)
+                .toList();
+        CounterType counterType = counterTypes.get(index);
+        String counterName = switch (counterType) {
+            case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            default -> counterType.name().toLowerCase().replace('_', ' ');
+        };
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                sourceCardName + " — move how many " + counterName + " counters (0-" + Math.max(0, max) + ")?"));
+    }
+
     /**
      * Aetherborn Marauder: prompt for the amount to move from one of the controller's eligible
      * permanents, then continue with the next permanent in the sequence.

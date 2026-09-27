@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
+
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -45,7 +48,7 @@ import java.util.UUID;
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
-        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect,
+        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect, DyingCreatureCountersAwareEffect,
         CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
@@ -105,6 +108,18 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         List<CardEffect> boundSteps = steps.stream()
                 .map(step -> step instanceof DyingCreatureCardAwareEffect aware
                         ? aware.boundToDyingCard(dyingCardId) : step)
+                .toList();
+        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed);
+    }
+
+    @Override
+    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
+        if (steps.stream().noneMatch(DyingCreatureCountersAwareEffect.class::isInstance)) {
+            return this;
+        }
+        List<CardEffect> boundSteps = steps.stream()
+                .map(step -> step instanceof DyingCreatureCountersAwareEffect aware
+                        ? aware.boundToDyingCreatureCounters(counters) : step)
                 .toList();
         return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed);
     }

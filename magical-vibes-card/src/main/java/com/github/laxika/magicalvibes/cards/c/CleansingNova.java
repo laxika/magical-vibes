@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "9")
+@CardRegistration(set = "FIC", collectorNumber = "235")
 @CardRegistration(set = "SLD", collectorNumber = "730")
 @CardRegistration(set = "SLD", collectorNumber = "1251")
 public class CleansingNova extends Card {

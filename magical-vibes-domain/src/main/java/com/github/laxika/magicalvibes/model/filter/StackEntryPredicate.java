@@ -9,6 +9,7 @@ package com.github.laxika.magicalvibes.model.filter;
 public sealed interface StackEntryPredicate permits
         StackEntryAllOfPredicate,
         StackEntryAnyOfPredicate,
+        StackEntryCardIdPredicate,
         StackEntryCardTypeInPredicate,
         StackEntryCastFromZonePredicate,
         StackEntryCastWithWarpCostPredicate,

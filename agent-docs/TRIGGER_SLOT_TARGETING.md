@@ -359,6 +359,8 @@ the slot whenever a creature is exiled from the battlefield, checked after the c
 counters before the trigger is queued.
 `ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
 use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
+Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving permanent's concrete
+counters before queuing; targeted effects are routed through the trigger-target interaction flow.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
@@ -388,6 +390,9 @@ counters placed as the trigger event value),
 each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
+`ON_YOU_PUT_COUNTERS_ON_CREATURE` (Rikku, Resourceful Guardian; fires once per placement event for
+one or more counters of any type put on any creature by the controller, carrying the affected creature
+as a non-targeting event subject),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
 the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
 is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same

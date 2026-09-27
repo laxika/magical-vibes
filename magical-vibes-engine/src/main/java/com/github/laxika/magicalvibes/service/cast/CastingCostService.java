@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCos
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1162,7 +1163,8 @@ public class CastingCostService {
                         gameData, effect, permanent, activatingPlayerId);
                 if (reducer != null
                         && !reducer.appliesSymmetrically()
-                        && reducer.appliesTo(ability, permanent.getId(), targetId, targetIds)
+                        && appliesToActivatedAbilityCostReduction(gameData, reducer, activatingPlayerId,
+                        permanent, sourcePermanent, ability, targetId, targetIds)
                         && predicateEvaluationService.matchesPermanentPredicate(
                         sourcePermanent, reducer.affectedPermanents(),
                         FilterContext.of(gameData)
@@ -1289,7 +1291,8 @@ public class CastingCostService {
                             && reducingEffect.appliesSymmetrically()
                             && (ability == null
                             ? !(reducingEffect instanceof TargetedCostReducingEffect)
-                            : reducingEffect.appliesTo(ability, perm.getId(), targetId, targetIds))
+                            : appliesToActivatedAbilityCostReduction(gameData, reducingEffect, pid,
+                            perm, sourcePermanent, ability, targetId, targetIds))
                             && predicateEvaluationService.matchesPermanentPredicate(
                                 sourcePermanent, reducingEffect.affectedPermanents(),
                                 FilterContext.of(gameData)
@@ -1306,6 +1309,62 @@ public class CastingCostService {
         return preventsReductionBelowOneMana
                 ? Math.min(reduction, maximumReductionForMinimumOneMana)
                 : reduction;
+    }
+
+    /** Records a successful activation for once-each-turn controller-scoped reducers. */
+    public void recordActivatedAbilityCostReductionUse(GameData gameData, UUID activatingPlayerId,
+                                                        Permanent sourcePermanent, ActivatedAbility ability,
+                                                        UUID targetId, List<UUID> targetIds) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent reducingPermanent : battlefield) {
+            for (CardEffect effect : reducingPermanent.getCard().getEffects(EffectSlot.STATIC)) {
+                ActivatedAbilityCostReducingEffect reducer = activeActivatedAbilityCostReducer(
+                        gameData, effect, reducingPermanent, activatingPlayerId);
+                if (!(reducer instanceof FirstActivatedAbilityCostReducingEffect first)
+                        || first.isUsedThisTurn(gameData, reducingPermanent.getId())
+                        || !appliesToActivatedAbilityCostReduction(gameData, reducer, activatingPlayerId,
+                        reducingPermanent, sourcePermanent, ability, targetId, targetIds)) {
+                    continue;
+                }
+                first.markUsedThisTurn(gameData, reducingPermanent.getId());
+            }
+        }
+    }
+
+    private boolean appliesToActivatedAbilityCostReduction(
+            GameData gameData, ActivatedAbilityCostReducingEffect reducer, UUID activatingPlayerId,
+            Permanent reducingPermanent, Permanent sourcePermanent, ActivatedAbility ability,
+            UUID targetId, List<UUID> targetIds) {
+        if (!reducer.appliesTo(ability, reducingPermanent.getId(), targetId, targetIds)) {
+            return false;
+        }
+        if (reducer instanceof FirstActivatedAbilityCostReducingEffect first) {
+            if (!activatingPlayerId.equals(gameData.activePlayerId)
+                    || first.isUsedThisTurn(gameData, reducingPermanent.getId())
+                    || (first.requiresControlledCreatureTarget()
+                    && !targetsControlledCreature(gameData, activatingPlayerId, targetId, targetIds))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean targetsControlledCreature(GameData gameData, UUID activatingPlayerId,
+                                               UUID targetId, List<UUID> targetIds) {
+        if (targetId != null && isControlledCreature(gameData, activatingPlayerId, targetId)) {
+            return true;
+        }
+        return targetIds != null && targetIds.stream()
+                .anyMatch(id -> isControlledCreature(gameData, activatingPlayerId, id));
+    }
+
+    private boolean isControlledCreature(GameData gameData, UUID playerId, UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        return target != null
+                && gameQueryService.isCreature(gameData, target)
+                && playerId.equals(gameQueryService.findPermanentController(gameData, targetId));
     }
 
     private int evaluateActivatedAbilityCostReduction(
@@ -2369,6 +2428,7 @@ public class CastingCostService {
         synchronized (gameData.floatingEffects) {
             for (var floatingEffect : gameData.floatingEffects) {
                 if (floatingEffect.effect() instanceof GlobalAttackCostEffect tax
+                        && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
                         && (floatingEffect.affectedPlayerId() == null
                         || defenderId.equals(floatingEffect.affectedPlayerId()))) {
                     totalTax += tax.attackCostPerCreature();

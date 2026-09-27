@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "157")
 @CardRegistration(set = "OTP", collectorNumber = "37")
+@CardRegistration(set = "FIC", collectorNumber = "319")
 public class Bedevil extends Card {
 
     public Bedevil() {

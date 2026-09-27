@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 @CardRegistration(set = "SLZ", collectorNumber = "169")
 @CardRegistration(set = "SLZ", collectorNumber = "290")
 @CardRegistration(set = "ECC", collectorNumber = "81")
+@CardRegistration(set = "FIC", collectorNumber = "280")
 public class NightsWhisper extends Card {
 
     public NightsWhisper() {

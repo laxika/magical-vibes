@@ -68,6 +68,9 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
 
         if (deck == null || deck.isEmpty()) {
             if (shuffleLibrary && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            if (typedEffect.recordFoundCardManaValue()) {
+                entry.setEventValue(0);
+            }
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
             return;
@@ -102,6 +105,9 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             revealedCards.remove(foundCard);
             deck.addFirst(foundCard);
             foundCard = null;
+        }
+        if (typedEffect.recordFoundCardManaValue()) {
+            entry.setEventValue(foundCard == null ? 0 : foundCard.getManaValue());
         }
         if (foundCard != null) {
             revealedCards.remove(foundCard);

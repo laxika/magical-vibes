@@ -639,6 +639,12 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put one or more counters on each chosen matching permanent the controller controls. */
+    record OwnPermanentCounterPlacementOnChosenPermanents(
+            CounterType counterType, int count, PermanentPredicate permanentFilter)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Put counters on the chosen permanent and attribute the placement to the choosing player. */
     record OwnPermanentCounterPlacementByPlayer(CounterType counterType, int count, UUID placingPlayerId)
             implements MultiPermanentChoiceContext {
@@ -921,6 +927,14 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chose any number of matching permanents whose counters are removed as this permanent enters. */
+    record RemoveAllCountersAsEntersForCounters(UUID enteringPermanentId,
+                                                com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect effect,
+                                                UUID controllerId, Card card, UUID targetId,
+                                                boolean wasCastFromHand, int etbMode, boolean kicked)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** A permanent entering by sacrificing an exact number of matching permanents, or declining. */
     record SacrificePermanentsToEnter(UUID controllerId, Permanent enteringPermanent, int requiredCount)
             implements MultiPermanentChoiceContext {
@@ -1112,6 +1126,17 @@ public sealed interface MultiPermanentChoiceContext {
             CounterType counterType, String sourceName)
             implements MultiPermanentChoiceContext {
         public EachPlayerChoosesNonlandPermanentAndPutCounterChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
+    /** Each player chose one creature to keep after placing a counter on it. */
+    record EachPlayerChoosesCreatureThenSacrificesRestChoice(
+            java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
+            CounterType counterType, UUID controllerId, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesCreatureThenSacrificesRestChoice {
             playerIds = java.util.List.copyOf(playerIds);
             chosenIds = java.util.List.copyOf(chosenIds);
         }

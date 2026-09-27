@@ -246,6 +246,25 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> chosenPermanentIds
     ) implements PermanentChoiceContext {}
 
+    /** Ultimate Magic: Meteor: the controller chooses an artifact or land for each opponent. */
+    record EachOpponentChoosesPermanentToDestroy(
+            UUID controllerId,
+            Card sourceCard,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds,
+            PermanentPredicate filter
+    ) implements PermanentChoiceContext {}
+
+    /** Summon: Valefor: each opponent chooses among their greatest-mana-value creatures. */
+    record EachOpponentChoosesGreatestManaValueCreatureToReturnToHand(
+            UUID controllerId,
+            Card sourceCard,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
+
     /** A player chooses a matching permanent to exile during a resolving effect. */
     record ExileChosenPermanent(UUID choosingPlayerId, String sourceCardName, String permanentLabel)
             implements PermanentChoiceContext {}

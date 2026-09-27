@@ -826,6 +826,9 @@ public class GameData {
             new EachPlayerMayExileGraveyardCardsState();
     /** Progress state for Creeping Dread's each-player discard comparison. */
     public final CreepingDreadState creepingDread = new CreepingDreadState();
+    /** Progress state for each-player may-discard effects with discard-type riders. */
+    public final EachPlayerMayDiscardOneThenApplyEffectsState eachPlayerMayDiscardOneThenApplyEffects =
+            new EachPlayerMayDiscardOneThenApplyEffectsState();
     /** Progress state for Kroxa's opponent discard and nonland comparison. */
     public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
     /** Progress state for Scythe Specter's opponent discard and mana-value comparison. */
@@ -2032,6 +2035,8 @@ public class GameData {
     public final Map<UUID, Set<CardSubtype>> crewedPermanentSubtypesThisTurn = new ConcurrentHashMap<>();
     public final TargetOpponentsDiscardThenDrawState targetOpponentsDiscardThenDraw =
             new TargetOpponentsDiscardThenDrawState();
+    public final EachOpponentDrawsThenControllerDrawsState eachOpponentDrawsThenControllerDraws =
+            new EachOpponentDrawsThenControllerDrawsState();
     /** Full beginning phases queued after the current combat phase. */
     public int additionalBeginningPhasesAfterCombat;
     /** The normal step to resume after all queued beginning phases are complete. */
@@ -2468,6 +2473,9 @@ public class GameData {
      *  Maps source permanent UUID → set of subtypes the creature had at the time of dealing damage.
      *  Used by end-step triggers that check which subtypes dealt combat damage (e.g. Admiral Beckett Brass). */
     public final Map<UUID, Set<CardSubtype>> combatDamageSourceSubtypesThisTurn = new ConcurrentHashMap<>();
+
+    /** Names of creature sources that dealt combat damage to players this turn. */
+    public final Map<UUID, String> combatDamageSourceNamesThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks which creatures that dealt combat damage to players this turn had the Changeling keyword.
      *  These creatures count as having all creature subtypes for subtype-conditional triggers. */
@@ -5698,6 +5706,22 @@ public class GameData {
         copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
         this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
                 copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
+        copy.eachPlayerMayDiscardOneThenApplyEffects.active =
+                this.eachPlayerMayDiscardOneThenApplyEffects.active;
+        copy.eachPlayerMayDiscardOneThenApplyEffects.controllerId =
+                this.eachPlayerMayDiscardOneThenApplyEffects.controllerId;
+        copy.eachPlayerMayDiscardOneThenApplyEffects.currentPlayerId =
+                this.eachPlayerMayDiscardOneThenApplyEffects.currentPlayerId;
+        copy.eachPlayerMayDiscardOneThenApplyEffects.currentDiscardCountBefore =
+                this.eachPlayerMayDiscardOneThenApplyEffects.currentDiscardCountBefore;
+        copy.eachPlayerMayDiscardOneThenApplyEffects.creatureCardDiscarded =
+                this.eachPlayerMayDiscardOneThenApplyEffects.creatureCardDiscarded;
+        copy.eachPlayerMayDiscardOneThenApplyEffects.nonCreatureCardDiscarded =
+                this.eachPlayerMayDiscardOneThenApplyEffects.nonCreatureCardDiscarded;
+        copy.eachPlayerMayDiscardOneThenApplyEffects.remaining.addAll(
+                this.eachPlayerMayDiscardOneThenApplyEffects.remaining);
+        copy.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded.addAll(
+                this.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded);
         copy.kroxaDiscard.active = this.kroxaDiscard.active;
         copy.kroxaDiscard.controllerId = this.kroxaDiscard.controllerId;
         copy.kroxaDiscard.currentPlayerId = this.kroxaDiscard.currentPlayerId;
@@ -6285,6 +6309,7 @@ public class GameData {
                         permanentId, List.copyOf(effects)));
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
+        copy.combatDamageSourceNamesThisTurn.putAll(this.combatDamageSourceNamesThisTurn);
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
         copy.combatDamageSourcesWithLegendaryThisTurn.addAll(this.combatDamageSourcesWithLegendaryThisTurn);
         this.combatDamageToPlayerControllerSubtypesThisTurn.forEach((k, v) ->
@@ -7108,6 +7133,20 @@ public class GameData {
                 this.targetOpponentsDiscardThenDraw.noDiscardPlayers);
         copy.targetOpponentsDiscardThenDraw.selectedDiscards.addAll(
                 this.targetOpponentsDiscardThenDraw.selectedDiscards);
+        copy.eachOpponentDrawsThenControllerDraws.active =
+                this.eachOpponentDrawsThenControllerDraws.active;
+        copy.eachOpponentDrawsThenControllerDraws.controllerId =
+                this.eachOpponentDrawsThenControllerDraws.controllerId;
+        copy.eachOpponentDrawsThenControllerDraws.remainingOpponentIds.addAll(
+                this.eachOpponentDrawsThenControllerDraws.remainingOpponentIds);
+        copy.eachOpponentDrawsThenControllerDraws.opponentsWhoDrew.addAll(
+                this.eachOpponentDrawsThenControllerDraws.opponentsWhoDrew);
+        copy.eachOpponentDrawsThenControllerDraws.currentOpponentId =
+                this.eachOpponentDrawsThenControllerDraws.currentOpponentId;
+        copy.eachOpponentDrawsThenControllerDraws.cardsDrawnBeforeCurrentOpponent =
+                this.eachOpponentDrawsThenControllerDraws.cardsDrawnBeforeCurrentOpponent;
+        copy.eachOpponentDrawsThenControllerDraws.controllerDrawPending =
+                this.eachOpponentDrawsThenControllerDraws.controllerDrawPending;
         copy.additionalBeginningPhasesAfterCombat = this.additionalBeginningPhasesAfterCombat;
         copy.additionalBeginningPhaseReturnStep = this.additionalBeginningPhaseReturnStep;
         copy.additionalBeginningPhaseUntapInProgress = this.additionalBeginningPhaseUntapInProgress;

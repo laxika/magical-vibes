@@ -13,11 +13,17 @@ public record EachPlayerMayDiscardHandThenDrawEffect(
         int cardsToDraw,
         UUID sourceControllerId,
         List<UUID> remainingPlayerIds,
-        List<UUID> acceptedPlayerIds
+        List<UUID> acceptedPlayerIds,
+        AcceptedPlayersAwareEffect acceptedPlayersFollowUp
 ) implements CardEffect {
 
     public EachPlayerMayDiscardHandThenDrawEffect(int cardsToDraw) {
-        this(cardsToDraw, null, List.of(), List.of());
+        this(cardsToDraw, null, List.of(), List.of(), null);
+    }
+
+    public EachPlayerMayDiscardHandThenDrawEffect(int cardsToDraw,
+                                                   AcceptedPlayersAwareEffect acceptedPlayersFollowUp) {
+        this(cardsToDraw, null, List.of(), List.of(), acceptedPlayersFollowUp);
     }
 
     public EachPlayerMayDiscardHandThenDrawEffect {

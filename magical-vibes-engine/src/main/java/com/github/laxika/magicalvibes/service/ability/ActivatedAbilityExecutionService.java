@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -58,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoC
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
@@ -1343,6 +1345,21 @@ public class ActivatedAbilityExecutionService {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
                 }
+            } else if (effect instanceof EmpowerNextCreatureSpellThisTurnEffect empower) {
+                // Mana abilities resolve inline rather than through the normal effect-handler path.
+                // Grand Summon's mana ability uses this rider to register its one-shot creature
+                // spell empowerment alongside the mana it produces.
+                gameData.addNextCreatureSpellEmpowerment(playerId,
+                        new CreatureSpellEmpowerment(
+                                empower.uncounterable(), empower.additionalPlusOneCounters()));
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(permanent.getCard())
+                        .text(" empowers its controller's next creature spell this turn.")
+                        .build());
+                log.info("Game {} - {} empowers the next creature spell of player {} "
+                                + "(uncounterable={}, +1/+1 counters={})",
+                        gameData.id, permanent.getCard().getName(), playerId,
+                        empower.uncounterable(), empower.additionalPlusOneCounters());
             } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedOfColors) {
                 int picks = amountEvaluationService.evaluate(gameData, restrictedOfColors.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;

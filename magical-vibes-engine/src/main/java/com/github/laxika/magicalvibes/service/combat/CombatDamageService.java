@@ -1579,6 +1579,7 @@ public class CombatDamageService {
 
             // Record creature subtypes at combat damage time for subtype-conditional triggers
             // (e.g. Admiral Beckett Brass checks if 3+ Pirates dealt damage to a player)
+            gameData.combatDamageSourceNamesThisTurn.putIfAbsent(creature.getId(), creature.getCard().getName());
             if (!gameData.combatDamageSourceSubtypesThisTurn.containsKey(creature.getId())) {
                 Set<CardSubtype> effectiveSubtypes = ConcurrentHashMap.newKeySet();
                 effectiveSubtypes.addAll(creature.getCard().getSubtypes());

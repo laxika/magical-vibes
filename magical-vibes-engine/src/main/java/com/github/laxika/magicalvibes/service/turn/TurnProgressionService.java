@@ -963,6 +963,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
         gameData.clearDelayedActions(DelayedBeginningOfCombatTrigger.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
+        gameData.combatDamageSourceNamesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageSourcesWithLegendaryThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();

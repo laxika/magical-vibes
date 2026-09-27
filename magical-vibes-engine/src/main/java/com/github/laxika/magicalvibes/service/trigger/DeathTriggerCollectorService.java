@@ -58,6 +58,8 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreatu
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachAuraAttachedToDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
@@ -681,16 +683,7 @@ public class DeathTriggerCollectorService {
         }
         // Intervening-if: only fires if it had one or more counters on it. Snapshot every concrete
         // counter type (ANY and SILVER are wildcard categories, not stored on a permanent).
-        Map<CounterType, Integer> snapshot = new EnumMap<>(CounterType.class);
-        for (CounterType type : CounterType.values()) {
-            if (type == CounterType.ANY || type == CounterType.SILVER) {
-                continue;
-            }
-            int count = dyingPermanent.getCounterCount(type);
-            if (count > 0) {
-                snapshot.put(type, count);
-            }
-        }
+        Map<CounterType, Integer> snapshot = snapshotConcreteCounters(dyingPermanent);
         if (snapshot.isEmpty() && effect.requiresCounters()) {
             return false;
         }
@@ -942,6 +935,10 @@ public class DeathTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         CardEffect triggerEffect = snapshotDynamicMaxManaValue(match, effect, sd);
+        if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware
+                && sd.dyingPermanent() != null) {
+            triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(sd.dyingPermanent()));
+        }
         // Graveyard-targeting death triggers (e.g. Ruin Rat: "exile target card from an opponent's
         // graveyard") also queue as a DeathTriggerTarget; processNextDeathTriggerTarget routes them
         // to a graveyard card choice made as the trigger goes on the stack.
@@ -1073,6 +1070,33 @@ public class DeathTriggerCollectorService {
         }
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
                 new MayEffect(wrapped, may.prompt()), null, match.permanent().getId());
+        return true;
+    }
+
+    @CollectsTrigger(value = MayEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAnyPermanentGraveyardMay(TriggerMatchContext match,
+            MayEffect may, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
+        if (!match.controllerId().equals(death.dyingControllerId())) {
+            return false;
+        }
+        Permanent dyingPermanent = death.dyingPermanent() != null
+                ? death.dyingPermanent() : new Permanent(death.dyingCard());
+
+        CardEffect wrapped = bindDyingPermanentCounterCount(may.wrapped(), dyingPermanent);
+        CardEffect elseEffect = bindDyingPermanentCounterCount(may.elseEffect(), dyingPermanent);
+        MayEffect resolvedMay = new MayEffect(wrapped, may.prompt(), elseEffect, may.choicePlayer());
+
+        if (resolvedMay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || resolvedMay.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || graveyardTargetingSupport.findTarget(List.of(resolvedMay)) != null) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolvedMay))));
+        } else {
+            match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), resolvedMay,
+                    null, match.permanent().getId());
+        }
         return true;
     }
 
@@ -2308,6 +2332,23 @@ public class DeathTriggerCollectorService {
         log.info("Game {} - {} triggers (permanent put into controller's graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
+    }
+
+    private CardEffect bindDyingPermanentCounterCount(CardEffect effect, Permanent dyingPermanent) {
+        if (effect instanceof DyingCreatureCounterAwareEffect aware) {
+            return aware.boundToDyingCreatureCounterCount(countCountersOnPermanent(dyingPermanent));
+        }
+        return effect;
+    }
+
+    private int countCountersOnPermanent(Permanent permanent) {
+        int count = 0;
+        for (CounterType counterType : CounterType.values()) {
+            if (counterType != CounterType.ANY && counterType != CounterType.SILVER) {
+                count += permanent.getCounterCount(counterType);
+            }
+        }
+        return count;
     }
 
     /**
@@ -3931,6 +3972,20 @@ public class DeathTriggerCollectorService {
             }
         }
         return count;
+    }
+
+    private Map<CounterType, Integer> snapshotConcreteCounters(Permanent permanent) {
+        Map<CounterType, Integer> snapshot = new EnumMap<>(CounterType.class);
+        for (CounterType type : CounterType.values()) {
+            if (type == CounterType.ANY || type == CounterType.SILVER) {
+                continue;
+            }
+            int count = permanent.getCounterCount(type);
+            if (count > 0) {
+                snapshot.put(type, count);
+            }
+        }
+        return snapshot;
     }
 
     // ── ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ──

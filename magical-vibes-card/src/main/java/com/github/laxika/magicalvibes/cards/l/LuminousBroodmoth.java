@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "21")
+@CardRegistration(set = "FIC", collectorNumber = "246")
 public class LuminousBroodmoth extends Card {
 
     public LuminousBroodmoth() {

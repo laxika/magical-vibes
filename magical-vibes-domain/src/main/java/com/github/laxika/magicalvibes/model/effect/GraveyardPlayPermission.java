@@ -12,4 +12,9 @@ public interface GraveyardPlayPermission extends CardEffect {
     default GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant() {
         return null;
     }
+
+    /** True when a permanent cast through this permission enters the battlefield tapped. */
+    default boolean entersTapped() {
+        return false;
+    }
 }

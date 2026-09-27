@@ -2118,7 +2118,8 @@ public class DrawService {
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect authoredEffect : drawEffects) {
-                    CardEffect effect = authoredEffect;
+                    CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
+                    if (effect == null) continue;
                     if (effect instanceof ExceptFirstDrawStepTriggerEffect
                             && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
                         continue;
@@ -2172,6 +2173,7 @@ public class DrawService {
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                     }
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 }
             }
         });

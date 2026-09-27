@@ -83,7 +83,46 @@ public class PermanentCounterSupport {
         if (triggerCollectionService != null) {
             triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
         }
+        fireYouPutCountersOnCreatureTriggers(gameData, target, amount, placingPlayerId);
         fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
+    }
+
+    /** Fires controller-scoped "whenever you put one or more counters on a creature" watchers. */
+    private void fireYouPutCountersOnCreatureTriggers(
+            GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
+        if (count <= 0 || creature == null || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+
+        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            Card card = source.getCard();
+            List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    placingPlayerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    creature.getId(),
+                    source.getId()
+            );
+            trigger.setEventValue(count);
+            trigger.setTriggeringPermanentId(creature.getId());
+            trigger.setTriggeringPermanentControllerId(creatureControllerId);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} creature counter trigger fires", gameData.id, card.getName());
+        }
     }
 
     /** Fires "whenever you put one or more counters on a creature you don't control" watchers. */
@@ -137,6 +176,7 @@ public class PermanentCounterSupport {
                 }
             }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+            fireYouPutCountersOnCreatureTriggers(gameData, target, amount, placingPlayerId);
             fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
         }
     }

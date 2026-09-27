@@ -8601,6 +8601,9 @@ public class SpellCastingService {
             }
             if (isGrantedCyclingGraveyardCast && filteredGraveyardPermission.isPresent()) {
                 var permission = filteredGraveyardPermission.get().permission();
+                if (permission.entersTapped()) {
+                    stackEntry.setEntersTapped(true);
+                }
                 if (permission.alternateManaCost() != null) {
                     stackEntry.setAlternateCost(true);
                     if (permission.sneak()) {

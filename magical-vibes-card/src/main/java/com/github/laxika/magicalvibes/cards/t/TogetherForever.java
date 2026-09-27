@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMC", collectorNumber = "44")
+@CardRegistration(set = "FIC", collectorNumber = "257")
 public class TogetherForever extends Card {
 
     public TogetherForever() {

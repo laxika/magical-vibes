@@ -97,6 +97,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectAssimilationAegisCopyChoice);
         register(PendingInteraction.ExiledCreatureCopyChoice.class,
                 this::projectExiledCreatureCopyChoice);
+        register(PendingInteraction.EspersToMagiciteCreatureChoice.class,
+                this::projectEspersToMagiciteCreatureChoice);
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
@@ -178,6 +180,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
+        register(PendingInteraction.ActivatedExiledCardOpponentChoice.class,
+                this::projectActivatedExiledCardOpponentChoice);
+        register(PendingInteraction.ActivatedExiledCardChoice.class,
+                this::projectActivatedExiledCardChoice);
         register(PendingInteraction.CommanderReplacementChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
                 "Put " + choice.move().card().getName() + " into the command zone instead of your " + choice.move().destination().name().toLowerCase() + "?", true, null));
         register(PendingInteraction.CommanderReturnChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
@@ -521,6 +527,15 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
                 "Choose a creature card exiled with " + interaction.sourceName() + " to copy.");
+    }
+
+    private InteractionPromptMessage projectEspersToMagiciteCreatureChoice(
+            GameData gameData, PendingInteraction.EspersToMagiciteCreatureChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose up to one creature card exiled this way to copy.");
     }
 
     private InteractionPromptMessage projectTargetHandSpellCopyChoice(
@@ -1141,6 +1156,23 @@ public class InteractionPromptProjectionRegistry {
                         + "\" to return to the battlefield.");
     }
 
+    private InteractionPromptMessage projectActivatedExiledCardOpponentChoice(
+            GameData gameData, PendingInteraction.ActivatedExiledCardOpponentChoice interaction) {
+        return InteractionPromptMessage.multiPermanentPick(
+                List.of(), new ArrayList<>(interaction.opponentIds()), 1,
+                "Choose an opponent to choose one of the exiled cards with "
+                        + interaction.sourceName() + ".");
+    }
+
+    private InteractionPromptMessage projectActivatedExiledCardChoice(
+            GameData gameData, PendingInteraction.ActivatedExiledCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()), 1,
+                "Choose one of the exiled cards with " + interaction.sourceName()
+                        + " to put on the bottom of its owner's library.");
+    }
+
     private InteractionPromptMessage projectCommandZoneCardChoice(
             GameData gameData, PendingInteraction.CommandZoneCardChoice interaction) {
         List<Card> commandZone = gameData.playerCommandZones
@@ -1361,8 +1393,10 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData,
             PendingInteraction.LibrarySearchDestinationChoice interaction) {
         return InteractionPromptMessage.listPick(
-                PendingInteraction.LibrarySearchDestinationChoice.OPTIONS,
-                "Put " + interaction.card().getName() + " into your hand or graveyard?",
+                interaction.options(),
+                interaction.allowBattlefieldTapped()
+                        ? "Put " + interaction.card().getName() + " into your hand or onto the battlefield tapped?"
+                        : "Put " + interaction.card().getName() + " into your hand or graveyard?",
                 false);
     }
 

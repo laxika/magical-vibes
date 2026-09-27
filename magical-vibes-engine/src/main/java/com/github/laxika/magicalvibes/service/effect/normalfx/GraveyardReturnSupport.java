@@ -2452,14 +2452,17 @@ public class GraveyardReturnSupport {
                     new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter(),
                             next.destination(), next.skipRemainingOnDecline(), next.mandatory(),
                             next.fromBattlefieldThisTurn(), next.distinctManaValues(),
-                            next.distinctNames(), next.excludedManaValues(), next.excludedCardIds()));
+                            next.distinctNames(), next.excludedManaValues(), next.excludedCardIds(),
+                            next.choosingPlayerId()));
         }
 
         GraveyardChoiceDestination destination = next.destination();
         String filterLabel = CardPredicateUtils.describeFilter(next.filter());
         String destText = destination == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield";
         PendingGraveyardReturnBatch batch = gameData.pendingGraveyardReturnBatch;
-        UUID choosingPlayerId = batch == null || batch.eachPlayerChooses() ? next.playerId() : batch.controllerId();
+        UUID choosingPlayerId = next.choosingPlayerId() != null
+                ? next.choosingPlayerId()
+                : batch == null || batch.eachPlayerChooses() ? next.playerId() : batch.controllerId();
         List<Card> matchingCards = matchingIndices.stream().map(graveyard::get).toList();
         List<Integer> choiceIndices = batch == null
                 ? matchingIndices

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "123")
 @CardRegistration(set = "GK2", collectorNumber = "112")
+@CardRegistration(set = "FIC", collectorNumber = "306")
 public class GyreSage extends Card {
 
     public GyreSage() {

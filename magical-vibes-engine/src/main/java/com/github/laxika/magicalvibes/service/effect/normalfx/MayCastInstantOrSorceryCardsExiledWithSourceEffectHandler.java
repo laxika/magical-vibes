@@ -51,7 +51,10 @@ public class MayCastInstantOrSorceryCardsExiledWithSourceEffectHandler implement
         for (Card card : exiled) {
             CardEffect offer = castEffect.withoutPayingManaCost()
                     ? new MayPlayExiledCardWithoutPayingManaCostEffect(true)
-                    : new MayCastExiledCardWithNormalCostEffect(offerGroupId);
+                    : new MayCastExiledCardWithNormalCostEffect(
+                            offerGroupId,
+                            castEffect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(),
+                            castEffect.anyManaType());
             gameData.pendingMayAbilities.add(new PendingMayAbility(
                     card,
                     entry.getControllerId(),

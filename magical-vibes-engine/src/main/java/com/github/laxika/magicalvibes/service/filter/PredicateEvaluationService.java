@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredi
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
@@ -88,6 +89,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyard
 import com.github.laxika.magicalvibes.model.filter.CardNameStartsWithPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostSourcePowerPredicate;
@@ -299,6 +301,7 @@ import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
@@ -558,6 +561,7 @@ public class PredicateEvaluationService {
             }
             case CardHasExactlyTwoColorsPredicate ignored ->
                     card.getColors().size() == 2;
+            case CardIdSetPredicate p -> p.cardIds().contains(card.getId());
             case CardHasExactlyNColorsPredicate p ->
                     (gameData != null
                             ? gameQueryService.getEffectiveCardColors(gameData, card).size()
@@ -799,6 +803,12 @@ public class PredicateEvaluationService {
                     p.cardName().equals(card.getName());
             case CardNameStartsWithPredicate p ->
                     card.getName() != null && card.getName().startsWith(p.prefix());
+            case CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate ignored ->
+                    gameData != null && cardOwnerId != null && card != null
+                            && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                            .getOrDefault(cardOwnerId, Set.of()).contains(card.getId())
+                            && !gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                            .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
             case CardNameInControllerGraveyardPredicate ignored ->
                     gameData != null && cardOwnerId != null
                             && gameData.playerGraveyards.getOrDefault(cardOwnerId, List.of()).stream()
@@ -3768,6 +3778,8 @@ public class PredicateEvaluationService {
                     !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
+            case StackEntryCardIdPredicate cardId ->
+                    entry.getCard() != null && cardId.cardId().equals(entry.getCard().getId());
             case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
             case StackEntryIsCopyPredicate ignored -> entry.isCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();

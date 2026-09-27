@@ -208,6 +208,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler eachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesPermanentToDestroyEffectHandler eachOpponentChoosesPermanentToDestroyEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHandler eachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHandler;
     private final EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler eachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
@@ -870,6 +872,24 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleEachOpponentChoosesGreatestPowerCreatureToDestroy(GameData gameData, UUID permanentId,
             PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy context) {
         eachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler.completeChoice(gameData, permanentId, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    public void handleEachOpponentChoosesPermanentToDestroy(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy context) {
+        eachOpponentChoosesPermanentToDestroyEffectHandler.completeChoice(gameData, permanentId, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    public void handleEachOpponentChoosesGreatestManaValueCreatureToReturnToHand(GameData gameData,
+            UUID permanentId,
+            PermanentChoiceContext.EachOpponentChoosesGreatestManaValueCreatureToReturnToHand context) {
+        eachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHandler.completeChoice(
+                gameData, permanentId, context);
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }

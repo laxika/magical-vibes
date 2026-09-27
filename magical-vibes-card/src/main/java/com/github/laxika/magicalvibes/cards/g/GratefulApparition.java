@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "17")
+@CardRegistration(set = "FIC", collectorNumber = "244")
 public class GratefulApparition extends Card {
 
     public GratefulApparition() {

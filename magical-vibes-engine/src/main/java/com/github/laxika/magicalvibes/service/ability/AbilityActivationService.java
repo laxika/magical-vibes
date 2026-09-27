@@ -4475,12 +4475,23 @@ public class AbilityActivationService {
                 .map(ExileNCardsFromGraveyardCost.class::cast)
                 .findFirst()
                 .orElse(null);
+        List<UUID> activatedAbilityExiledCardIds = List.of();
         if (exileNGraveyardCostToPay != null) {
             if (exileAnyGraveyardCardIds == null) {
-                payGraveyardExileNCost(gameData, player, exileNGraveyardCostToPay, null);
+                if (exileNGraveyardCostToPay.tracksExiledCards()) {
+                    activatedAbilityExiledCardIds = payGraveyardExileNCost(
+                            gameData, player, exileNGraveyardCostToPay, null);
+                } else {
+                    payGraveyardExileNCost(gameData, player, exileNGraveyardCostToPay, null);
+                }
             } else {
-                payChosenGraveyardExileNCost(
-                        gameData, player, exileNGraveyardCostToPay, exileAnyGraveyardCardIds, null);
+                if (exileNGraveyardCostToPay.tracksExiledCards()) {
+                    activatedAbilityExiledCardIds = payChosenGraveyardExileNCost(
+                            gameData, player, exileNGraveyardCostToPay, exileAnyGraveyardCardIds, null);
+                } else {
+                    payChosenGraveyardExileNCost(
+                            gameData, player, exileNGraveyardCostToPay, exileAnyGraveyardCardIds, null);
+                }
             }
         }
 
@@ -4500,7 +4511,6 @@ public class AbilityActivationService {
             }
         }
 
-        List<UUID> activatedAbilityExiledCardIds = List.of();
         CollectEvidenceCost collectEvidenceCostToPay = abilityEffects.stream()
                 .filter(CollectEvidenceCost.class::isInstance)
                 .map(CollectEvidenceCost.class::cast)
@@ -6625,6 +6635,8 @@ public class AbilityActivationService {
                                               Map<UUID, Integer> damageAssignments,
                                               List<UUID> sacrificedCardIds) {
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -6655,6 +6667,8 @@ public class AbilityActivationService {
                                               Card discardedCardSnapshot,
                                               Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -6689,6 +6703,8 @@ public class AbilityActivationService {
                                               Map<UUID, Integer> damageAssignments, Card discardedCardSnapshot,
                                               List<UUID> activatedAbilityExiledCardIds) {
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -6705,6 +6721,8 @@ public class AbilityActivationService {
                                               Map<UUID, Integer> damageAssignments, Card discardedCardSnapshot,
                                               Card exiledCostCardSnapshot) {
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -8496,7 +8514,8 @@ public class AbilityActivationService {
         }
     }
 
-    private void payGraveyardExileNCost(GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, Card sourceCard) {
+    private List<UUID> payGraveyardExileNCost(
+            GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, Card sourceCard) {
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost, sourceCard);
@@ -8504,10 +8523,10 @@ public class AbilityActivationService {
             throw new IllegalStateException("Not enough cards in graveyard to exile");
         }
         List<Card> toExile = new ArrayList<>(candidates.subList(0, cost.count()));
-        exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
+        return exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
     }
 
-    private void payChosenGraveyardExileNCost(
+    private List<UUID> payChosenGraveyardExileNCost(
             GameData gameData, Player player, ExileNCardsFromGraveyardCost cost,
             List<UUID> cardIds, Card sourceCard) {
         UUID playerId = player.getId();
@@ -8520,7 +8539,7 @@ public class AbilityActivationService {
                         .orElseThrow(() -> new IllegalStateException(
                                 "Selected graveyard card is no longer available")))
                 .toList();
-        exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
+        return exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
     }
 
     private void validateControllerGraveyardExileSelection(
@@ -8539,7 +8558,7 @@ public class AbilityActivationService {
         }
     }
 
-    private void exileGraveyardCardsAsActivationCost(
+    private List<UUID> exileGraveyardCardsAsActivationCost(
             GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, List<Card> toExile) {
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -8554,6 +8573,7 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} {}cards from graveyard as activation cost",
                 gameData.id, player.getUsername(), toExile.size(), typeName);
+        return toExile.stream().map(Card::getId).toList();
     }
 
     private void payGraveyardExileXCost(GameData gameData, Player player, ExileXCardsFromGraveyardCost cost,

@@ -1085,6 +1085,15 @@ public sealed interface ChoiceContext {
     record MoveCountersAmountChoice(UUID fromPermanentId, UUID toPermanentId, CounterType counterType,
                                     String sourceCardName) implements ChoiceContext {}
 
+    /** Chooses how many counters of one successive kind to move between two permanents. */
+    record MoveAnyNumberOfCountersAmountChoice(UUID fromPermanentId, UUID toPermanentId,
+                                               List<CounterType> counterTypes, int index,
+                                               String sourceCardName) implements ChoiceContext {
+        public MoveAnyNumberOfCountersAmountChoice {
+            counterTypes = List.copyOf(counterTypes);
+        }
+    }
+
     /**
      * Aetherborn Marauder: the controller chooses how many counters to move from each selected
      * eligible permanent onto the source. The sequence advances to the next permanent after every

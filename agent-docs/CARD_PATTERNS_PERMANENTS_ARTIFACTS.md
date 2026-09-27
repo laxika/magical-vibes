@@ -3,6 +3,7 @@
 
 Conditional boost, indestructible, and all-damage prevention Equipment: `c/CaduceusStaffOfHermes.java` uses lifelink on the equipped creature plus two `ConditionalEffect(new ControllerLifeAtLeast(30), ...)` static effects for `StaticBoostEffect(5, 5, INDESTRUCTIBLE, EQUIPPED_CREATURE)` and `PreventAllDamageToAttachedCreatureEffect`, followed by `EquipActivatedAbility("{W}{W}")`.
 - Buster Sword: `STATIC StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE)` + `ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect(1)` + `MayCastAnySpellFromHandWithoutPayingManaCostEffect(new EventValue())` + `EquipActivatedAbility("{2}")`; the dynamic cap uses damage dealt to the player and excludes lands.
+- Reaper's Scythe: `CONTROLLER_END_STEP_TRIGGERED PutCountersOnSelfEffect(SOUL, new PlayersWhoLostLifeThisTurn())` + `STATIC AttachedBoostEffect(CountersOnSource(SOUL), CountersOnSource(SOUL), EQUIPPED_CREATURE)` + `GrantSubtypeEffect(ASSASSIN, EQUIPPED_CREATURE)` + `EquipActivatedAbility("{2}")`.
 
 All paths relative to `cards/`.
 

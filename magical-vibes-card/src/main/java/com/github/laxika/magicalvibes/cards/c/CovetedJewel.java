@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "799")
+@CardRegistration(set = "FIC", collectorNumber = "341")
 public class CovetedJewel extends Card {
 
     public CovetedJewel() {

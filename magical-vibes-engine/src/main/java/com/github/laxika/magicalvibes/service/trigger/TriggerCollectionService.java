@@ -4130,6 +4130,8 @@ public class TriggerCollectionService {
             targetIds.addAll(abilityEntry.getTargetIds());
         }
 
+        collectAllyCreatureBecomesTargetOfActivatedAbilityTriggers(gameData, abilityEntry, targetIds);
+
         Set<UUID> targetedPlayers = new HashSet<>();
         Set<UUID> targetsWithAllyTrigger = new HashSet<>();
 
@@ -4215,6 +4217,54 @@ public class TriggerCollectionService {
                             collectBecomesTargetOfOpponentCounterTriggers(gameData, attached, playerId, abilityEntry);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Collects the batched trigger for "one or more creatures you control become the target of an
+     * activated ability". A multi-target ability creates one trigger per watching permanent.
+     */
+    private void collectAllyCreatureBecomesTargetOfActivatedAbilityTriggers(
+            GameData gameData, StackEntry abilityEntry, List<UUID> targetIds) {
+        if (abilityEntry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                || abilityEntry.isCopy()) {
+            return;
+        }
+
+        Set<UUID> targetedCreatureControllers = new HashSet<>();
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null || !gameQueryService.isCreature(gameData, target)) continue;
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (controllerId != null) {
+                targetedCreatureControllers.add(controllerId);
+            }
+        }
+
+        for (UUID controllerId : targetedCreatureControllers) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent source : List.copyOf(battlefield)) {
+                if (source.isCloaked() || source.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                for (CardEffect authoredEffect : source.getCard().getEffects(
+                        EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_ACTIVATED_ABILITY)) {
+                    CardEffect resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(
+                            gameData, source, authoredEffect);
+                    if (resolvedEffect == null) continue;
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source.getCard(),
+                            controllerId,
+                            source.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(resolvedEffect)),
+                            null,
+                            source.getId()));
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, source, authoredEffect);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+                    log.info("Game {} - {} triggers when an ally creature becomes the target of an activated ability",
+                            gameData.id, source.getCard().getName());
                 }
             }
         }
@@ -10544,15 +10594,37 @@ public class TriggerCollectionService {
                 CardEffect resolved = resolveTriggeringPermanentConditional(
                         gameData, perm, controllerId, leavingPermanent, effect);
                 if (resolved == null) continue;
+                CardEffect dispatchEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
+                if (dispatchEffect == null) continue;
+                if (dispatchEffect instanceof LeavingPermanentCountersAwareEffect aware) {
+                    dispatchEffect = aware.boundToLeavingPermanentCounters(snapshotCountersOnPermanent(leavingPermanent));
+                    if (dispatchEffect == null) continue;
+                }
+                if (dispatchEffect instanceof ConditionalEffect conditional
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStaticEffect(perm, controllerId))) {
+                    continue;
+                }
+                if (dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            perm.getCard(), controllerId, new ArrayList<>(List.of(dispatchEffect)), false,
+                            perm.getCard().getTargetFilter(), 0, perm.getId()));
+                    gameLogService.append(gameData, GameLog.text(
+                            perm.getCard().getName() + "'s ability triggers — choose a target."));
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, resolved);
+                    continue;
+                }
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         controllerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        new ArrayList<>(List.of(dispatchEffect)),
                         null,
                         perm.getId()
                 ));
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, resolved);
                 gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers on another permanent you control leaving the battlefield ({})",
                         gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
