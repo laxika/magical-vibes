@@ -3911,9 +3911,6 @@ public class ChoiceHandlerService {
 
         int[] matches = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.getCard().hasType(CardType.LAND)) {
-                return;
-            }
             if (gameQueryService.getEffectiveColors(gameData, permanent).contains(color)) {
                 matches[0]++;
             }
@@ -6132,7 +6129,7 @@ public class ChoiceHandlerService {
         if (matchingCards.isEmpty()) {
             // No matching cards — just shuffle library and resolve
             if (library != null) {
-                Collections.shuffle(library);
+                LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             }
 
             String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
@@ -6242,7 +6239,7 @@ public class ChoiceHandlerService {
             library.removeAll(toExile);
             toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
             exiledCount += toExile.size();
-            Collections.shuffle(library);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
         }
 
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
@@ -6341,6 +6338,9 @@ public class ChoiceHandlerService {
      */
     private void handleRevealLibraryNameGuessChoice(GameData gameData, String cardName,
             ChoiceContext.RevealLibraryNameGuessChoice ctx) {
+        if (playerInputService.isNameExcludedByType(gameData, cardName, ctx.excludedTypes())) {
+            throw new IllegalArgumentException("Choose a nonland card name");
+        }
         gameData.interaction.clearAwaitingInput();
 
         String controllerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -6358,9 +6358,11 @@ public class ChoiceHandlerService {
      */
     private void handleRevealLibraryNumberGuessChoice(GameData gameData, String numberText,
             ChoiceContext.RevealLibraryNumberGuessChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
         int chosenNumber = Integer.parseInt(numberText);
+        if (chosenNumber <= 0) {
+            throw new IllegalArgumentException("Choose a number greater than 0");
+        }
+        gameData.interaction.clearAwaitingInput();
         UUID targetPlayerId = ctx.targetPlayerId();
         String controllerName = gameData.playerIdToName.get(ctx.controllerId());
         String targetName = gameData.playerIdToName.get(targetPlayerId);

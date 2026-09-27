@@ -589,7 +589,8 @@ public class ConditionEvaluationService {
             case Coven ignored ->
                     isCovenMet(gameData, ctx);
             case FullParty ignored ->
-                    AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
+                    partyIsAlwaysFull(gameData, ctx.controllerId())
+                            || AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
             case AnotherCreatureDiedThisTurn ignored ->
                     gameData.creatureDeathCountThisTurn.values().stream()
                             .mapToInt(Integer::intValue)

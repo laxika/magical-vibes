@@ -544,6 +544,7 @@ public class CombatDamageService {
         // stack for normal priority rather than being folded into the engine's auto-resolved
         // combat-damage trigger batch below.
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        updateMonarchFromCombatDamage(gameData, state, defenderId);
         queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);

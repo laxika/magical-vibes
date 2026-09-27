@@ -47,7 +47,7 @@ class DizzyingGazeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("creature with flying");
     }
 
     @Test

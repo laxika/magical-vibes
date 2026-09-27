@@ -52,9 +52,9 @@ class RiseOfTheEldraziTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
-                List.of(player2.getId(), player2.getId())))
+                List.of(player1.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("permanent");
+                .hasMessageContaining("cannot target players");
     }
 
     @Test

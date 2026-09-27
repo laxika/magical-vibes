@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.z.Zombie;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheGhoulGunslinger.class, Zombie.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TheGhoulGunslinger.class, WalkingCorpse.class, GrizzlyBears.class, Forest.class})
 class TheGhoulGunslingerTest extends BaseCardTest {
 
     @Test
     @DisplayName("A nontoken Zombie death gives two rad counters and creates a Treasure when you are targeted")
     void qualifyingDeathGivesRadAndTreasureWhenTargetingController() {
         addCreatureReady(player1, new TheGhoulGunslinger());
-        Permanent zombie = addCreatureReady(player1, new Zombie());
+        Permanent zombie = addCreatureReady(player1, new WalkingCorpse());
 
         destroyAndResolve(zombie, player1);
 
@@ -33,7 +33,7 @@ class TheGhoulGunslingerTest extends BaseCardTest {
     @DisplayName("The Treasure clause does not apply when an opponent is targeted")
     void opponentTargetGetsRadButNoTreasure() {
         addCreatureReady(player1, new TheGhoulGunslinger());
-        Permanent zombie = addCreatureReady(player1, new Zombie());
+        Permanent zombie = addCreatureReady(player1, new WalkingCorpse());
 
         destroyAndResolve(zombie, player2);
 

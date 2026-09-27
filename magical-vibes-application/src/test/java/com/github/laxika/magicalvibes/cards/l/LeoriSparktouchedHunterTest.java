@@ -24,8 +24,9 @@ class LeoriSparktouchedHunterTest extends BaseCardTest {
         Permanent leori = addCreatureReady(player1, new LeoriSparktouchedHunter());
         leori.setAttackTarget(player2.getId());
 
-        declareAttackers(List.of(0));
-        resolveCombat();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                () -> gs.declareBlockers(gd, player2, List.of()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -47,7 +48,7 @@ class LeoriSparktouchedHunterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 2);
-        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(9);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
     }
 
     @Test

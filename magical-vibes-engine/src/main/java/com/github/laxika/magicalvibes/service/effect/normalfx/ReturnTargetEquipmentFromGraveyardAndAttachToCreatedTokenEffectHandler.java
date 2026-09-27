@@ -51,7 +51,9 @@ public class ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffectHand
             return;
         }
 
-        Permanent token = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        UUID tokenId = entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
+        Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
         if (token == null || !equipSupport.canAttachEquipment(gameData, equipment, token)) {
             return;
         }

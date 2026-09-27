@@ -22,8 +22,7 @@ class LanternKamiTest extends BaseCardTest {
         addCreatureReady(player1, new LanternKami());
         addCreatureReady(player2, new IsamaruHoundOfKonda());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(
                 gd, player2, List.of(new BlockerAssignment(0, 0))))

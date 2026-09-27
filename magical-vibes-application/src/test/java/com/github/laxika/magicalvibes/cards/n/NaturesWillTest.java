@@ -98,9 +98,13 @@ class NaturesWillTest extends BaseCardTest {
         addAttackingBears();
         addAttackingBears();
 
-        resolveCombat();
+        prepareDeclareBlockers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                () -> gs.declareBlockers(gd, player2, java.util.List.of()));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.gameLog.stream()
+                .filter(log -> log.plainText().contains("Nature's Will's triggered ability goes on the stack")))
+                .hasSize(1);
     }
 }

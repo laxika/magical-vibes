@@ -21,6 +21,7 @@ class TheSpearOfBashengaTest extends BaseCardTest {
     @DisplayName("Enters and makes its controller the monarch when there is no monarch")
     void entersAndMakesControllerMonarchWhenThereIsNoMonarch() {
         harness.enterBattlefieldAndReturn(player1, new TheSpearOfBashenga());
+        harness.passBothPriorities();
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }

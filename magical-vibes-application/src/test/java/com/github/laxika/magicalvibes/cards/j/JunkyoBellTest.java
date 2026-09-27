@@ -100,8 +100,7 @@ class JunkyoBellTest extends BaseCardTest {
 
         passToEndStep();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+        assertThat(gqs.findPermanentById(gd, target.getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getName().equals("Wandering Ones"));
     }

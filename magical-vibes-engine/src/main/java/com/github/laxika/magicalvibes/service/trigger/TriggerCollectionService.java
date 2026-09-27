@@ -10125,9 +10125,12 @@ public class TriggerCollectionService {
     }
 
     public void checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
-            GameData gameData, Card dyingCard, UUID graveyardOwnerId, UUID dyingControllerId) {
+            GameData gameData, Permanent dyingPermanent, UUID graveyardOwnerId,
+            UUID dyingControllerId, int dyingPower, int dyingToughness) {
+        Card dyingCard = dyingPermanent.getOriginalCard();
         var ctx = new TriggerContext.AnyPermanentGraveyard(
-                dyingCard, dyingControllerId, graveyardOwnerId);
+                dyingCard, dyingControllerId, graveyardOwnerId,
+                dyingPermanent, dyingPower, dyingToughness);
         List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
@@ -14271,8 +14274,15 @@ public class TriggerCollectionService {
         if ((slot == EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD
                 || slot == EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
                 && ctx instanceof TriggerContext.AnyPermanentGraveyard graveyard) {
-            conditionedEffect = unwrapCreatureDeathConditional(effect, graveyard.dyingCard(),
-                    graveyard.dyingPermanent(), gameData, controllerId, perm);
+            if (slot == EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD
+                    && effect instanceof TriggeringPermanentConditionalEffect conditional
+                    && conditional.predicate() instanceof com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate power) {
+                conditionedEffect = graveyard.dyingPower() <= power.maxPower()
+                        ? conditional.wrapped() : null;
+            } else {
+                conditionedEffect = unwrapCreatureDeathConditional(effect, graveyard.dyingCard(),
+                        graveyard.dyingPermanent(), gameData, controllerId, perm);
+            }
             if (conditionedEffect == null
                     || !passesInterveningIf(gameData, perm, controllerId, conditionedEffect)) {
                 return false;

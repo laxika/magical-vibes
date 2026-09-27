@@ -47,10 +47,12 @@ class LivingLaserTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(findPermanents(player1, "Living Laser")).hasSize(3);
 
+        gs.declareBlockers(gd, player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Living Laser")).containsExactly(livingLaser);
     }

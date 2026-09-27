@@ -209,7 +209,13 @@ class RewindTest extends BaseCardTest {
         addTappedIslands(player2, 4);
 
         GrizzlyBears bears = new GrizzlyBears();
-        castRewindCounteringBears(bears);
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Rewind()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
         gd.stack.removeIf(stackEntry -> stackEntry.getCard().getId().equals(bears.getId()));
 
         harness.passBothPriorities();

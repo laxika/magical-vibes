@@ -60,7 +60,7 @@ class PsychicPuppetryTest extends BaseCardTest {
         harness.setHand(player1, List.of(arcaneRay, puppetry));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castWithSplice(player1, 0, konda.getId(), List.of(1));
         harness.passBothPriorities();

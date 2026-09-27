@@ -53,6 +53,7 @@ class OverabundanceTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
+        harness.handleListChoice(player1, "BLUE");
         var manaPool = gd.playerManaPools.get(player1.getId());
         assertThat(manaPool.get(ManaColor.BLUE) + manaPool.get(ManaColor.BLACK)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
@@ -66,6 +67,7 @@ class OverabundanceTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
 
         var manaPool = gd.playerManaPools.get(player1.getId());
         assertThat(manaPool.get(ManaColor.WHITE) + manaPool.get(ManaColor.BLACK)).isEqualTo(3);

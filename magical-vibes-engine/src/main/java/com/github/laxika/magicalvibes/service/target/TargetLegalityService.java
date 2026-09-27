@@ -131,6 +131,7 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -1292,6 +1293,8 @@ public class TargetLegalityService {
                                                  boolean teamworkCostPaid) {
         TargetFilter effectiveTargetFilter = targetFilterForCast(
                 card.getTargetFilter(kicked), kicked, giftPromised, teamworkCostPaid);
+        effectiveTargetFilter = TextChangeTransformer.transformTargetFilter(
+                effectiveTargetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
         if (effectiveTargetFilter instanceof StackEntryPredicateTargetFilter) {
             return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
                     controllerId, null, xValue, kicked);
@@ -3295,6 +3298,8 @@ public class TargetLegalityService {
                         effectiveTargetFilter = targetFilterForCast(
                                 effectiveTargetFilter, entry.isKicked(), entry.isGiftPromised(),
                                 entry.isTeamworkCostPaid());
+                        effectiveTargetFilter = TextChangeTransformer.transformTargetFilter(
+                                effectiveTargetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
                         if (effectiveTargetFilter != null) {
                             try {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
@@ -3566,6 +3571,8 @@ public class TargetLegalityService {
                                                           TargetFilter targetFilter) {
         targetFilter = targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised(),
                 entry.isTeamworkCostPaid());
+        targetFilter = TextChangeTransformer.transformTargetFilter(
+                targetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             if (!gameData.playerIds.contains(targetId)) {

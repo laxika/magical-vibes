@@ -69,7 +69,7 @@ class ShidakoBroodmistressTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, shidako.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Shidako, Broodmistress");
+        harness.assertInGraveyard(player1, "Orochi Eggwatcher");
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }

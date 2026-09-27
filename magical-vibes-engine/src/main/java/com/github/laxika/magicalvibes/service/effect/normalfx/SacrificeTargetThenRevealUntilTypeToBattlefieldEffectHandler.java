@@ -61,7 +61,7 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
 
         // Reweave mode: an empty type set means "shares a card type with the sacrificed permanent"
         Set<CardType> matchTypes = e.cardTypes().isEmpty()
-                ? permanentTypesOf(target.getCard())
+                ? effectivePermanentTypesOf(gameData, target)
                 : e.cardTypes();
         boolean permanentCardsOnly = e.cardTypes().isEmpty();
 
@@ -151,6 +151,13 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
             types.add(card.getType());
         }
         types.addAll(card.getAdditionalTypes());
+        types.removeIf(type -> !type.isPermanentType() || type == CardType.KINDRED);
+        return types;
+    }
+
+    private Set<CardType> effectivePermanentTypesOf(GameData gameData, Permanent permanent) {
+        Set<CardType> types = EnumSet.noneOf(CardType.class);
+        types.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
         types.removeIf(type -> !type.isPermanentType() || type == CardType.KINDRED);
         return types;
     }

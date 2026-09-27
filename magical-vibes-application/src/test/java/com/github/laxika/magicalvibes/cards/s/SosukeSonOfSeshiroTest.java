@@ -64,7 +64,7 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        resolveCombat(); // combat damage — Sosuke deals 3 to Kami of Old Stone
+        harness.resolveCombatDamage(); // Sosuke deals 3 to Kami of Old Stone.
         harness.assertOnBattlefield(player2, "Kami of Old Stone");
         harness.passBothPriorities(); // resolve the trigger
         harness.passBothPriorities(); // advance through end of combat

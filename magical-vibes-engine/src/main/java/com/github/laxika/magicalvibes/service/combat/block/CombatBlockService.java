@@ -689,6 +689,8 @@ public class CombatBlockService {
                 );
                 // Block triggers reference "that creature" but don't target — they can't fizzle
                 blockTrigger.setTriggeringPermanentId(attacker.getId());
+                blockTrigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attacker));
+                blockTrigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, attacker));
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
@@ -1080,6 +1082,8 @@ public class CombatBlockService {
                         blocker.getId(),
                         attacker.getId());
                 trigger.setNonTargeting(true);
+                trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
+                trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
                 gameData.stack.add(trigger);
             }
         }
@@ -2017,6 +2021,8 @@ public class CombatBlockService {
                     );
                     // "That creature" wording references a blocker without targeting it.
                     trigger.setNonTargeting(true);
+                    trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
+                    trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s becomes-blocked ability triggers."));

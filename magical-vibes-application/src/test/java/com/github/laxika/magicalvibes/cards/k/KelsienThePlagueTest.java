@@ -70,6 +70,6 @@ class KelsienThePlagueTest extends BaseCardTest {
         UUID targetId = findPermanent(player1, "Grizzly Bears").getId();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("creature an opponent controls");
     }
 }

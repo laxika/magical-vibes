@@ -764,8 +764,10 @@ public class GameQueryService {
         }
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         return controllerId != null
-                && gameData.ringLevels.getOrDefault(controllerId, 0) > 0
-                && permanent.getId().equals(gameData.ringBearerIds.get(controllerId));
+                && ((gameData.ringLevels.getOrDefault(controllerId, 0) > 0
+                    && permanent.getId().equals(gameData.ringBearerIds.get(controllerId)))
+                    || (gameData.ringStates.get(controllerId) != null
+                        && permanent.getId().equals(gameData.ringStates.get(controllerId).bearerId())));
     }
 
     /** Returns whether a permanent has a subtype after continuous effects are applied. */
@@ -3112,6 +3114,9 @@ public class GameQueryService {
         }
         Set<CardType> cardTypes = baseCardTypes(permanent);
         cardTypes.addAll(bonus.grantedCardTypes());
+        if (isCreatureWithBonus(gameData, permanent, bonus)) {
+            cardTypes.add(CardType.CREATURE);
+        }
         return cardTypes;
     }
 
@@ -5020,11 +5025,14 @@ public class GameQueryService {
             if (!sourceAbilitiesGone && !source.isAttached()) {
                 applyFloatingStaticGrantsFromSource(gameData, sourceSlot, target, accumulator, globalWordChange);
             }
-            if (source == target) continue;
             StaticEffectContext context = new StaticEffectContext(
                     source, target, sourceSlot.controllerId(), sourceSlot.sameBattlefieldAsTarget(), gameData);
             AccumulatorSnapshot beforeSource = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (source == target && !(effect instanceof GrantActivatedAbilityEffect grant
+                        && grant.scope() == GrantScope.OWN_PERMANENTS)) {
+                    continue;
+                }
                 if (sourceSlot.fromGraveyard() != (effect instanceof GraveyardStaticEffect)) {
                     continue;
                 }
@@ -10195,7 +10203,8 @@ public class GameQueryService {
                 && !getCardSubtypes(sourceCard, gameData, sourceCard.getOwnerId()).contains(CardSubtype.HUMAN)) {
             return true;
         }
-        return isDamageFromSourcePrevented(gameData, sourceCard.getColor());
+        return getEffectiveCardColors(gameData, sourceCard).stream()
+                .anyMatch(color -> isDamageFromSourcePrevented(gameData, color));
     }
 
     /** Returns whether damage from the source represented by the stack entry is prevented. */

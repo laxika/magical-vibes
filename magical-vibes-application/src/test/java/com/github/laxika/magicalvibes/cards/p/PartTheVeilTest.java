@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -56,9 +55,11 @@ class PartTheVeilTest extends BaseCardTest {
     @Test
     @DisplayName("Returns a creature to its owner's hand even when another player controls it")
     void returnsControlledCreatureToItsOwnersHand() {
-        Permanent stolenCreature = harness.addToBattlefieldAndReturn(player1, new HumbleBudoka());
-        gd.stolenCreatures.put(stolenCreature.getId(), player2.getId());
+        HumbleBudoka ownedByOpponent = new HumbleBudoka();
+        ownedByOpponent.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, ownedByOpponent);
         harness.addToBattlefield(player1, new KamiOfOldStone());
+        harness.setHand(player2, java.util.List.of());
 
         harness.castFromHand(player1, new PartTheVeil(), "{3}{U}");
         harness.passBothPriorities();
