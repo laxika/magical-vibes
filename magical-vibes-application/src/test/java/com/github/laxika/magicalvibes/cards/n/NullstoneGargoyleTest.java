@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NullstoneGargoyle.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({NullstoneGargoyle.class, BorosSignet.class, ElvesOfDeepShadow.class})
 class NullstoneGargoyleTest extends BaseCardTest {
 
     @Test
@@ -22,48 +22,59 @@ class NullstoneGargoyleTest extends BaseCardTest {
     void countersFirstNoncreatureSpellGlobally() {
         harness.addToBattlefield(player1, new NullstoneGargoyle());
 
-        castMindStone(player2);
-        harness.assertInGraveyard(player2, "Mind Stone");
+        castBorosSignet(player2);
+        harness.assertInGraveyard(player2, "Boros Signet");
 
-        castMindStone(player1);
-        harness.assertOnBattlefield(player1, "Mind Stone");
+        castBorosSignet(player1);
+        harness.assertOnBattlefield(player1, "Boros Signet");
     }
 
     @Test
     @DisplayName("Creature spells do not count as the first noncreature spell")
     void ignoresCreatureSpells() {
         harness.addToBattlefield(player1, new NullstoneGargoyle());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new MindStone()));
+        harness.setHand(player2, List.of(new ElvesOfDeepShadow(), new BorosSignet()));
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         prepareCast(player2);
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Elves of Deep Shadow");
 
         harness.castArtifact(player2, 0);
         harness.passBothPriorities();
-        harness.assertInGraveyard(player2, "Mind Stone");
+        harness.assertInGraveyard(player2, "Boros Signet");
     }
 
     @Test
     @DisplayName("A spell cast before Nullstone Gargoyle enters still counts")
     void spellsBeforeEntryCount() {
-        castMindStone(player2);
-        harness.assertOnBattlefield(player2, "Mind Stone");
+        castBorosSignet(player2);
+        harness.assertOnBattlefield(player2, "Boros Signet");
 
         harness.addToBattlefield(player1, new NullstoneGargoyle());
-        castMindStone(player2);
+        castBorosSignet(player2);
 
-        assertThat(findPermanents(player2, "Mind Stone")).hasSize(2);
+        assertThat(findPermanents(player2, "Boros Signet")).hasSize(2);
     }
 
-    private void castMindStone(Player player) {
-        harness.setHand(player, List.of(new MindStone()));
-        harness.addMana(player, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Counters the first noncreature spell of each turn")
+    void resetsForNextTurn() {
+        harness.addToBattlefield(player1, new NullstoneGargoyle());
+
+        castBorosSignet(player1);
+        harness.assertInGraveyard(player1, "Boros Signet");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        castBorosSignet(player2);
+        harness.assertInGraveyard(player2, "Boros Signet");
+    }
+
+    private void castBorosSignet(Player player) {
         prepareCast(player);
-        harness.castArtifact(player, 0);
+        harness.castFromHand(player, new BorosSignet(), "{2}");
         harness.passBothPriorities();
     }
 

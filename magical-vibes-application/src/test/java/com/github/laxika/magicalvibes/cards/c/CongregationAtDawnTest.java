@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,17 +16,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CongregationAtDawn.class, GrizzlyBears.class, Forest.class})
+@CardUsed({CongregationAtDawn.class, BorosRecruit.class, Forest.class})
 class CongregationAtDawnTest extends BaseCardTest {
 
     @Test
     @DisplayName("Offers only creature cards and at most three choices")
     void offersAtMostThreeCreatureCards() {
-        Card creatureA = new GrizzlyBears();
-        Card creatureB = new GrizzlyBears();
-        Card creatureC = new GrizzlyBears();
-        Card creatureD = new GrizzlyBears();
-        setLibrary(List.of(creatureA, new Forest(), creatureB, creatureC, creatureD));
+        Card creatureA = new BorosRecruit();
+        Card creatureB = new BorosRecruit();
+        Card creatureC = new BorosRecruit();
+        Card creatureD = new BorosRecruit();
+        harness.setLibrary(player1, List.of(creatureA, new Forest(), creatureB, creatureC, creatureD));
 
         cast();
 
@@ -42,12 +41,12 @@ class CongregationAtDawnTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects a fourth creature and puts three chosen creatures on top in order")
     void limitsSelectionAndOrdersChosenCreatures() {
-        Card creatureA = new GrizzlyBears();
-        Card creatureB = new GrizzlyBears();
-        Card creatureC = new GrizzlyBears();
-        Card creatureD = new GrizzlyBears();
+        Card creatureA = new BorosRecruit();
+        Card creatureB = new BorosRecruit();
+        Card creatureC = new BorosRecruit();
+        Card creatureD = new BorosRecruit();
         Card forest = new Forest();
-        setLibrary(List.of(creatureA, creatureB, creatureC, creatureD, forest));
+        harness.setLibrary(player1, List.of(creatureA, creatureB, creatureC, creatureD, forest));
 
         cast();
 
@@ -63,14 +62,15 @@ class CongregationAtDawnTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).subList(0, 3))
                 .containsExactly(creatureC, creatureA, creatureB);
         assertThat(gd.playerDecks.get(player1.getId())).contains(forest, creatureD).hasSize(5);
+        assertThat(gameLogContains("reveals")).isTrue();
     }
 
     @Test
     @DisplayName("Allows choosing zero creature cards")
     void allowsChoosingZeroCards() {
-        Card creature = new GrizzlyBears();
+        Card creature = new BorosRecruit();
         Card forest = new Forest();
-        setLibrary(List.of(creature, forest));
+        harness.setLibrary(player1, List.of(creature, forest));
 
         cast();
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -79,16 +79,34 @@ class CongregationAtDawnTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(creature, forest);
     }
 
-    private void cast() {
-        harness.setHand(player1, List.of(new CongregationAtDawn()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Allows choosing one creature card and puts it directly on top")
+    void allowsChoosingOneCard() {
+        Card creature = new BorosRecruit();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest, creature));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, forest);
     }
 
-    private void setLibrary(List<Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
+    @Test
+    @DisplayName("Finishes without a choice when the library has no creature cards")
+    void finishesWhenNoCreatureCardsAreFound() {
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    private void cast() {
+        harness.castFromHand(player1, new CongregationAtDawn(), "{G}{G}{W}");
+        harness.passBothPriorities();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SistersOfStoneDeath.class, GrizzlyBears.class})
+@CardUsed({SistersOfStoneDeath.class, Watchwolf.class, Forest.class})
 class SistersOfStoneDeathTest extends BaseCardTest {
 
     @Test
     @DisplayName("The green ability forces a target creature to block Sisters of Stone Death")
     void greenAbilityForcesTargetCreatureToBlock() {
         Permanent sisters = addCreatureReady(player1, new SistersOfStoneDeath());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new Watchwolf());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
@@ -38,13 +39,24 @@ class SistersOfStoneDeathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The green ability cannot target a noncreature permanent")
+    void greenAbilityRejectsNoncreaturePermanent() {
+        addCreatureReady(player1, new SistersOfStoneDeath());
+        Permanent land = new Permanent(new Forest());
+        gd.playerBattlefields.get(player2.getId()).add(land);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("The black-green ability exiles a creature blocking or blocked by Sisters of Stone Death")
     void blackGreenAbilityExilesCombatCreature() {
         Permanent sisters = addCreatureReady(player1, new SistersOfStoneDeath());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new Watchwolf());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -58,14 +70,32 @@ class SistersOfStoneDeathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The black-green ability exiles a creature blocking Sisters of Stone Death")
+    void blackGreenAbilityExilesCreatureWhenSistersBlocks() {
+        Permanent sisters = addCreatureReady(player1, new SistersOfStoneDeath());
+        Permanent attacker = addCreatureReady(player2, new Watchwolf());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(sisters.getId()))
+                .containsExactly(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+    }
+
+    @Test
     @DisplayName("The exile ability cannot target a creature outside combat with Sisters of Stone Death")
     void blackGreenAbilityRejectsCreatureOutsideCombat() {
         Permanent sisters = addCreatureReady(player1, new SistersOfStoneDeath());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new Watchwolf());
+        Permanent bystander = addCreatureReady(player2, new Watchwolf());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -80,7 +110,7 @@ class SistersOfStoneDeathTest extends BaseCardTest {
     @DisplayName("The black ability returns a creature card exiled with Sisters of Stone Death under your control")
     void blackAbilityReturnsExiledCreature() {
         Permanent sisters = addCreatureReady(player1, new SistersOfStoneDeath());
-        Card exiledCreature = new GrizzlyBears();
+        Card exiledCreature = new Watchwolf();
         gd.addToExile(player2.getId(), exiledCreature, sisters.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -91,5 +121,23 @@ class SistersOfStoneDeathTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(exiledCreature.getId()));
         assertThat(gd.getCardsExiledByPermanent(sisters.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The black ability does not return a noncreature card exiled with Sisters of Stone Death")
+    void blackAbilityDoesNotReturnNoncreatureCard() {
+        Permanent sisters = addCreatureReady(player1, new SistersOfStoneDeath());
+        Card exiledLand = new Forest();
+        gd.addToExile(player2.getId(), exiledLand, sisters.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(exiledLand.getId()));
+        assertThat(gd.getCardsExiledByPermanent(sisters.getId()))
+                .containsExactly(exiledLand);
     }
 }

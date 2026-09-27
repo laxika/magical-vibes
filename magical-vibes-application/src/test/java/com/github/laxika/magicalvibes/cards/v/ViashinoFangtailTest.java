@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +13,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ViashinoFangtail.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({ViashinoFangtail.class, BorosRecruit.class})
 class ViashinoFangtailTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to target player")
     void deals1DamageToPlayer() {
         harness.setLife(player2, 20);
-        Permanent fangtail = addReadyFangtail(player1);
+        Permanent fangtail = addCreatureReady(player1, new ViashinoFangtail());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -36,15 +34,43 @@ class ViashinoFangtailTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target creature")
     void deals1DamageToCreature() {
-        addReadyFangtail(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        addCreatureReady(player1, new ViashinoFangtail());
+        harness.addToBattlefield(player2, new BorosRecruit());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Boros Recruit");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Boros Recruit");
+        harness.assertInGraveyard(player2, "Boros Recruit");
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to a 3/3 creature without destroying it")
+    void deals1DamageToCreatureThatSurvives() {
+        addCreatureReady(player1, new ViashinoFangtail());
+        Permanent target = addCreatureReady(player2, new ViashinoFangtail());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Viashino Fangtail");
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if the target creature leaves before resolution")
+    void fizzlesIfTargetCreatureLeavesBeforeResolution() {
+        addCreatureReady(player1, new ViashinoFangtail());
+        Permanent target = addCreatureReady(player2, new BorosRecruit());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("fizzles"));
     }
 
     @Test
@@ -60,7 +86,7 @@ class ViashinoFangtailTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent fangtail = addReadyFangtail(player1);
+        Permanent fangtail = addCreatureReady(player1, new ViashinoFangtail());
         fangtail.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -68,10 +94,4 @@ class ViashinoFangtailTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    private Permanent addReadyFangtail(Player player) {
-        Permanent perm = new Permanent(new ViashinoFangtail());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

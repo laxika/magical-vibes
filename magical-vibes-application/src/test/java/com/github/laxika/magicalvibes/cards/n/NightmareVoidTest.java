@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,29 +14,59 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NightmareVoid.class, Forest.class, GrizzlyBears.class})
+@CardUsed({NightmareVoid.class, Forest.class})
 class NightmareVoidTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target player reveals their hand and discards the chosen card")
     void choosesCardToDiscard() {
-        Card discarded = new GrizzlyBears();
-        Card remaining = new Forest();
+        Card discarded = new Forest();
+        Card remaining = new NightmareVoid();
         harness.setHand(player2, List.of(discarded, remaining));
         castNightmareVoid(player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
+                .containsExactly(0, 1);
         harness.handleCardChosen(player1, 0);
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        NightmareVoid spell = new NightmareVoid();
+        Card discarded = new Forest();
+        Card remaining = new Forest();
+        harness.setHand(player1, List.of(spell, discarded, remaining));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    @DisplayName("Does nothing when the target player's hand is empty")
+    void emptyTargetHandDoesNotCreateChoice() {
+        harness.setHand(player2, List.of());
+        castNightmareVoid(player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("May dredge Nightmare Void instead of drawing")
     void dredgesInsteadOfDrawing() {
         NightmareVoid nightmareVoid = new NightmareVoid();
-        List<Card> milled = List.of(new Forest(), new GrizzlyBears());
+        List<Card> milled = List.of(new Forest(), new Forest());
         harness.setGraveyard(player1, List.of(nightmareVoid));
         harness.setLibrary(player1, milled);
 
@@ -58,7 +87,7 @@ class NightmareVoidTest extends BaseCardTest {
         NightmareVoid nightmareVoid = new NightmareVoid();
         Card topCard = new Forest();
         harness.setGraveyard(player1, List.of(nightmareVoid));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(topCard, new Forest()));
 
         resolveDraw();
         harness.handleGraveyardCardChosen(player1, -1);
@@ -86,7 +115,7 @@ class NightmareVoidTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        var permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var permanent = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new NightmareVoid()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
@@ -97,8 +126,7 @@ class NightmareVoidTest extends BaseCardTest {
     private void castNightmareVoid(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new NightmareVoid()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 
     private void resolveDraw() {
