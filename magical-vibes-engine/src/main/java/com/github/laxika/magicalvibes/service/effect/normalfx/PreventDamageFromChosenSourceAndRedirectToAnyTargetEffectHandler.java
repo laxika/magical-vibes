@@ -36,10 +36,10 @@ public class PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler im
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, null));
         if (amount <= 0) return;
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
 
         if (validIds.isEmpty()) {
-            preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
+            preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;
         }
 

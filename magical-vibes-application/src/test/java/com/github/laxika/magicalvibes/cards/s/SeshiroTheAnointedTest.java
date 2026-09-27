@@ -126,9 +126,8 @@ class SeshiroTheAnointedTest extends BaseCardTest {
 
         runCombatDamage();
         harness.handleMayAbilityChosen(player1, true);
-        if (gd.interaction.isAwaitingInput()) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(handSize(player1)).isEqualTo(before + 2);
     }

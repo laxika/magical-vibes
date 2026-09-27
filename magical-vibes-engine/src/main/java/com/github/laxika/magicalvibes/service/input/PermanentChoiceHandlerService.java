@@ -324,6 +324,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleHandAbilityCostChoice(gameData, player, permanentId, handCostChoice);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
+        } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {
+            gameData.pendingEffectResolutionEntry.setTargetId(permanentId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand choosePlayer) {
             battlefieldHandler.handleChoosePlayerThenReturnCreatureToHand(gameData, permanentId, choosePlayer);
         } else if (context instanceof PermanentChoiceContext.ZndrsplatsJudgmentCreatureChoice judgmentChoice) {

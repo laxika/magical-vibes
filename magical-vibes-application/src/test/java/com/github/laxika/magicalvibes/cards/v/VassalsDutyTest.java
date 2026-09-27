@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.k.KondaLordOfEiganjo;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.cards.y.YamabushisFlame;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VassalsDuty.class, KondaLordOfEiganjo.class, LanternKami.class, YamabushisFlame.class})
+@CardUsed({VassalsDuty.class, KondaLordOfEiganjo.class, IsamaruHoundOfKonda.class, LanternKami.class, YamabushisFlame.class})
 class VassalsDutyTest extends BaseCardTest {
 
     @Test
@@ -49,9 +50,9 @@ class VassalsDutyTest extends BaseCardTest {
     @DisplayName("Redirects the next combat damage to a legendary creature to its controller")
     void redirectsNextCombatDamageToController() {
         harness.addToBattlefield(player1, new VassalsDuty());
-        harness.addToBattlefield(player1, new KondaLordOfEiganjo());
-        addCreatureReady(player2, new KondaLordOfEiganjo());
-        UUID targetId = harness.getPermanentId(player1, "Konda, Lord of Eiganjo");
+        harness.addToBattlefield(player1, new IsamaruHoundOfKonda());
+        addCreatureReady(player2, new IsamaruHoundOfKonda());
+        UUID targetId = harness.getPermanentId(player1, "Isamaru, Hound of Konda");
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, targetId);
@@ -63,7 +64,7 @@ class VassalsDutyTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
-        assertThat(findPermanent(player1, "Konda, Lord of Eiganjo").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Isamaru, Hound of Konda").getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

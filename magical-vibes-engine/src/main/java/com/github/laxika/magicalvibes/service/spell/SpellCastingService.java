@@ -7159,7 +7159,15 @@ public class SpellCastingService {
         int power = gameQueryService.getEffectivePower(gameData, toSacrifice);
         int toughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         Permanent permanentSnapshot = new Permanent(toSacrifice);
-        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice)) {
+        UUID previousCauseControllerId = gameData.currentlyResolvingControllerId;
+        boolean sacrificed;
+        try {
+            gameData.currentlyResolvingControllerId = player.getId();
+            sacrificed = permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
+        } finally {
+            gameData.currentlyResolvingControllerId = previousCauseControllerId;
+        }
+        if (sacrificed) {
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " sacrifices ")
                     .card(toSacrifice.getCard())

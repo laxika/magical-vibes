@@ -27,6 +27,8 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    record BackdraftPlayerChoice() implements PermanentChoiceContext {}
+
     record AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready)
             implements PermanentChoiceContext {
         public AuraEntryBatchChoice {

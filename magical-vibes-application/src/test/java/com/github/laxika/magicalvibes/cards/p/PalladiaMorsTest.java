@@ -53,6 +53,6 @@ class PalladiaMorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(countPermanents(player1, "Palladia-Mors")).isZero();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

@@ -30,7 +30,8 @@ public class GrantKeywordEffectHandler implements StaticEffectHandlerBean {
                     && support.matchesStaticFilter(context, context.target(), grant.filter());
             case OWN_LANDS, OPPONENT_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF ->
                     support.matchesLandScope(context, grant.scope(), grant.filter());
-            case SELF -> context.target().getId().equals(context.sourceId());
+            case SELF -> context.target().getId().equals(context.sourceId())
+                    && support.matchesStaticFilter(context, context.target(), grant.filter());
             case SELF_AND_PAIRED -> {
                 UUID targetId = context.target().getId();
                 UUID sourceId = context.sourceId();

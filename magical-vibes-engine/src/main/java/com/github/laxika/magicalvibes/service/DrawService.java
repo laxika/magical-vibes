@@ -286,6 +286,17 @@ public class DrawService {
 
     private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw,
                                         Card cycledCard) {
+        resolveCurrentDrawCard(gameData, playerId, originalFirstDrawStepDraw, cycledCard, false);
+    }
+
+    /** Continues the pending draw through the remaining replacement effects after dredge is declined. */
+    public void continueDrawAfterDecliningDredge(GameData gameData, UUID playerId) {
+        resolveCurrentDrawCard(gameData, playerId, gameData.pendingDrawFirstDrawStepFlags.get(playerId),
+                pendingCyclingCard(gameData, playerId), true);
+    }
+
+    private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw,
+                                        Card cycledCard, boolean skipDredge) {
         if (preventDrawIfNeeded(gameData, playerId)) {
             gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
@@ -326,7 +337,8 @@ public class DrawService {
             return;
         }
 
-        List<Integer> dredgeIndices = dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
+        List<Integer> dredgeIndices = skipDredge ? List.of()
+                : dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
         if (!dredgeIndices.isEmpty()) {
             interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                     .builder(playerId, dredgeIndices, GraveyardChoiceDestination.DREDGE,
@@ -1084,6 +1096,7 @@ public class DrawService {
         Card exiled = deck.removeFirst();
         exileService.exileCard(gameData, playerId, exiled, source.getId());
         gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+        gameData.exilePlayPermissionSourcePermanents.put(exiled.getId(), source.getId());
         gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
 
         gameLogService.append(gameData, GameLog.builder()

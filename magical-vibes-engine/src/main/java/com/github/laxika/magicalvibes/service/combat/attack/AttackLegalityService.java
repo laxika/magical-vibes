@@ -322,7 +322,9 @@ public class AttackLegalityService {
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         if (targetIsPlayer
                 && !gameData.playersWhoActedDuringTheirLastTurn.contains(targetId)
-                && gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                && gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
+                && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance))) {
             return false;
         }

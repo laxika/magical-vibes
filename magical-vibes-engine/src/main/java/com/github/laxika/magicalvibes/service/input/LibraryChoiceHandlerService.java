@@ -133,6 +133,8 @@ public class LibraryChoiceHandlerService {
     @Autowired @Lazy
     private TargetLegalityService targetLegalityService;
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport landEquilibriumSupport;
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
 
 
@@ -366,12 +368,15 @@ public class LibraryChoiceHandlerService {
                     graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
                 } else if (toBattlefield && !placeBattlefieldCardsSimultaneously) {
                     Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
+                    var landEquilibriumPlan = playerId.equals(battlefieldControllerId) ? null
+                            : landEquilibriumSupport.findPlan(gameData, playerId, perm);
                     if (grantHaste) {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
                     initializeBattleDefenseCounters(perm);
+                    landEquilibriumSupport.applyPlan(gameData, playerId, perm, landEquilibriumPlan, null);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
                     if (gameData.pendingEffectResolutionEntry != null) {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
