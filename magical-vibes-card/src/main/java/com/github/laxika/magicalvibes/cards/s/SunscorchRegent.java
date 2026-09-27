@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "41")
+@CardRegistration(set = "MOC", collectorNumber = "209")
 public class SunscorchRegent extends Card {
 
     public SunscorchRegent() {

@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -160,6 +161,9 @@ public class ChoiceHandlerService {
             graceOrCondemnationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
             coercivePortalEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.WillOfThePlaneswalkersEffectHandler
+            willOfThePlaneswalkersEffectHandler;
+    private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
 
     @Autowired @Lazy
@@ -839,6 +843,28 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.WillOfThePlaneswalkersChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Will of the Planeswalkers vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            willOfThePlaneswalkersEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesTokenChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid token choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            eachPlayerChoosesTokenEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.LibraryCastModeChoice ctx) {
             libraryChoiceHandlerService.handleLibraryCastModeChoice(gameData, player, colorName, ctx);
             return;
@@ -940,12 +966,15 @@ public class ChoiceHandlerService {
         PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
         gameData.pendingRevertableManaActivation = null;
 
-        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        int amount = source == null
+        Permanent source = ctx.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        int amount = source == null && !ctx.sourcePlanar()
                 ? 0
                 : amountEvaluationService.evaluate(gameData,
                         new ColorManaSymbolsAmongControlledPermanents(manaColor),
-                        AmountContext.forManaAbility(source, ctx.playerId())) * ctx.manaMultiplier();
+                        source == null
+                                ? AmountContext.forCasting(ctx.playerId())
+                                : AmountContext.forManaAbility(source, ctx.playerId())) * ctx.manaMultiplier();
         if (amount > 0) {
             ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
             manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), manaColor);

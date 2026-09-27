@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KTK", collectorNumber = "210")
+@CardRegistration(set = "MOC", collectorNumber = "341")
 public class UtterEnd extends Card {
 
     public UtterEnd() {

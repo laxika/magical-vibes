@@ -1931,6 +1931,16 @@ public class CastingCostService {
                                 getAlternateHandCastCostModifier(gameData, playerId, card)))
                         .orElse(false);
             }
+            var grantedBlitz = gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card);
+            if (grantedBlitz.isPresent()) {
+                AlternateHandCast altCast = grantedBlitz.get();
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
             var adventureCast = card.getCastingOption(AdventureCast.class);
             if (adventureCast.isPresent()) {
                 Card adventureFace = card.getBackFaceCard() != null ? card.getBackFaceCard() : card;

@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
  * so this card needs no additional logic.
  */
 @CardRegistration(set = "GRN", collectorNumber = "11")
+@CardRegistration(set = "MOC", collectorNumber = "186")
 public class FlightOfEquenauts extends Card {
 }

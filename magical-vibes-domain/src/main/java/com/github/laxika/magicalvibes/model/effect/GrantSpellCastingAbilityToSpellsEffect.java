@@ -45,7 +45,8 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
     }
 
     public GrantSpellCastingAbilityToSpellsEffect {
-        if (grantedAbility != Keyword.CONSPIRE
+        if (grantedAbility != Keyword.DEMONSTRATE
+                && grantedAbility != Keyword.CONSPIRE
                 && grantedAbility != Keyword.CONVOKE
                 && grantedAbility != Keyword.IMPROVISE
                 && grantedAbility != Keyword.REBOUND
@@ -56,7 +57,7 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
                 && grantedAbility != Keyword.RETRACE) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
-                            + "; only CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, CASUALTY, REPLICATE, and RETRACE do");
+                            + "; only DEMONSTRATE, CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, CASUALTY, REPLICATE, and RETRACE do");
         }
     }
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, int abilityValue, CardPredicate filter) {

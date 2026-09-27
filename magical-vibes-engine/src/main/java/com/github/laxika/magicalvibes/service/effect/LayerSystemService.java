@@ -2168,9 +2168,10 @@ public class LayerSystemService {
             }
             case ALL_PERMANENTS -> {
                 for (PermanentSlot slot : slots) {
-                    if (slot.permanent() != source.permanent()
+                    if ((source == null || slot.permanent() != source.permanent())
                             && matchesL4Filter(slot, filter, board, gameData,
-                            source.permanent(), source.controllerId())) {
+                            source == null ? null : source.permanent(),
+                            source == null ? null : source.controllerId())) {
                         targets.add(slot);
                     }
                 }

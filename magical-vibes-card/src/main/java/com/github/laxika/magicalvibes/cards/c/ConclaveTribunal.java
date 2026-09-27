@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "6")
+@CardRegistration(set = "MOC", collectorNumber = "178")
 public class ConclaveTribunal extends Card {
 
     public ConclaveTribunal() {

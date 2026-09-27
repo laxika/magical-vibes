@@ -6142,6 +6142,9 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleBeginningOfCombatTriggers(GameData gameData) {
+        if (gameData.planechase != null) {
+            planechaseService.step(gameData, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED);
+        }
         queueDelayedBeginningOfCombatTriggers(gameData);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.BEGINNING_OF_COMBAT);
 

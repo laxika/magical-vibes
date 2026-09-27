@@ -73,6 +73,7 @@ public enum Keyword {
     HORSEMANSHIP,
     SHADOW,
     FLANKING,
+    DEMONSTRATE,
     CONSPIRE,
     CASUALTY,
     REPLICATE,

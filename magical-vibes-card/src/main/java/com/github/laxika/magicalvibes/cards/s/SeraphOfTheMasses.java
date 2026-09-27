@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "32")
+@CardRegistration(set = "MOC", collectorNumber = "205")
 public class SeraphOfTheMasses extends Card {
 
     public SeraphOfTheMasses() {

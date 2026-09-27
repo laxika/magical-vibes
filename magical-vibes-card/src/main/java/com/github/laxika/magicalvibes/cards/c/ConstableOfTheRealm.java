@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "10")
+@CardRegistration(set = "MOC", collectorNumber = "179")
 public class ConstableOfTheRealm extends Card {
 
     public ConstableOfTheRealm() {

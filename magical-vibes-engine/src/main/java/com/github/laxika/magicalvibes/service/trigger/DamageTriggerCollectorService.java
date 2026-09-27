@@ -168,6 +168,39 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER)
+    private boolean handleCreatureDealsDamageToEnchantedPlaneswalker(TriggerMatchContext match,
+            CardEffect trigger, TriggerContext ctx) {
+        TriggerContext.CreatureDealsDamageToPlaneswalker damageContext =
+                (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx;
+        Permanent watcher = match.permanent();
+        if (watcher == null || damageContext.damageSource() == null || damageContext.damage() <= 0
+                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                damageContext.damageSource().getId(),
+                watcher.getId());
+        entry.setTriggeringPermanentId(damageContext.damageSource().getId());
+        entry.setNonTargeting(true);
+        if (damageContext.deferredTriggers() == null) {
+            match.gameData().enqueueTrigger(entry);
+        } else {
+            damageContext.deferredTriggers().add(entry);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers after a creature dealt damage to an enchanted planeswalker",
+                match.gameData().id, watcher.getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleAllyCreatureDealsCombatDamageToCreatureMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {

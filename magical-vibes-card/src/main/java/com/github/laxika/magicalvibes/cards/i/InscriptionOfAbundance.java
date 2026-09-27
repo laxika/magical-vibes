@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "186")
+@CardRegistration(set = "MOC", collectorNumber = "303")
 public class InscriptionOfAbundance extends Card {
 
     public InscriptionOfAbundance() {

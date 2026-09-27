@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Phasing (CR 702.26), the first turn-based action of the untap step (CR 502.1): before the active
@@ -152,6 +153,45 @@ public class PhasingService {
         String names = names(phasingOut);
         gameLogService.append(gameData, GameLog.text(names + " phases out."));
         log.info("Game {} - {} phases out", gameData.id, names);
+    }
+
+    /** Phases out the given permanents and holds them out until the next planeswalk. */
+    public void phaseOutUntilPlaneswalk(GameData gameData, Collection<Permanent> permanents) {
+        List<Permanent> directPermanents = permanents.stream()
+                .filter(permanent -> controllerOf(gameData, permanent) != null)
+                .filter(PhasingService::canPhaseOut)
+                .toList();
+        phaseOut(gameData, directPermanents);
+        Set<UUID> directIds = directPermanents.stream().map(Permanent::getId).collect(Collectors.toSet());
+        gameData.phasedOutUntilPlaneswalk.addAll(collectSpecificPhasingIn(gameData, directIds).keySet().stream()
+                .map(Permanent::getId)
+                .toList());
+    }
+
+    /** Phases in permanents held by a planar effect when any player planeswalks. */
+    public void phaseInUntilPlaneswalk(GameData gameData) {
+        Set<UUID> targetIds = new LinkedHashSet<>(gameData.phasedOutUntilPlaneswalk);
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
+        Map<Permanent, UUID> phasingIn = collectSpecificPhasingIn(gameData, targetIds);
+        phasingIn.forEach((permanent, controllerId) -> {
+            phasedOutList(gameData, controllerId).remove(permanent);
+            permanent.setPhasedOutIndirectly(false);
+            gameData.playerBattlefields
+                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
+                    .add(permanent);
+            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
+        });
+
+        gameData.phasedOutUntilPlaneswalk.removeAll(targetIds);
+        clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
+        if (!phasingIn.isEmpty()) {
+            String names = names(phasingIn.keySet());
+            gameLogService.append(gameData, GameLog.text(names + " phases in."));
+            log.info("Game {} - {} phases in after planeswalking", gameData.id, names);
+        }
     }
 
     /** Phases a creature out and prevents its normal untap-step phase-in until the source leaves. */
@@ -289,6 +329,9 @@ public class PhasingService {
     }
 
     private boolean isHeldUntilSourceLeaves(GameData gameData, Permanent permanent) {
+        if (gameData.phasedOutUntilPlaneswalk.contains(permanent.getId())) {
+            return true;
+        }
         if (gameData.phasedOutUntilSourceLeaves.values().stream()
                 .anyMatch(targetIds -> targetIds.contains(permanent.getId()))) {
             return true;

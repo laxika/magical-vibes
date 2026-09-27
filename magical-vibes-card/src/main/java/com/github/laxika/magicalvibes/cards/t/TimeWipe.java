@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "223")
+@CardRegistration(set = "MOC", collectorNumber = "340")
 public class TimeWipe extends Card {
 
     public TimeWipe() {

@@ -191,6 +191,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
 
+    /** The Wilds: a targeted player sacrifices a creature, then the planar controller creates tokens
+     * based on the sacrificed creature's toughness. */
+    record TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeast(
+            UUID sacrificingPlayerId, UUID tokenControllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+            int toughnessThreshold, int normalAmount, int increasedAmount)
+            implements PermanentChoiceContext {}
+
     /** Wasitora: the damaged player chooses a creature to sacrifice, or the source controller
      * creates the fallback token when no legal sacrifice is possible. */
     record TargetPlayerSacrificesCreatureOrCreatesToken(

@@ -37,6 +37,7 @@ public final class AiInteractionStrategies {
         register(new TargetPlayerHandOrderChoiceAiStrategy());
         register(new SpatialMergingCardOrderAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
+        register(new PlanarDieChoiceAiStrategy());
         register(new InvokeCalamityCastChoiceAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());

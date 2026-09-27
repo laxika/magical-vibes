@@ -44,6 +44,7 @@ public sealed interface Condition permits
         AnyOf,
         AttachedPermanentControllerControlsNoOther,
         AttackedOpponentHasMoreLifeThanAnotherOpponent,
+        AttackingPlayerIsOpponent,
         AttacksEnchantedPlayer,
         AttackedTargetMatches,
         AttackedTargetIsOpponent,
@@ -159,6 +160,7 @@ public sealed interface Condition permits
         ControllerSacrificedPermanentsAtLeastThisTurn,
         ControllerTurn,
         ControllerUnspentManaAtLeast,
+        ControllerWasMonarchAtTurnStart,
         ColorsAmongControlledPermanentsAtLeast,
         ControlsAnotherPermanent,
         ControlsDistinctPermanentNamesCount,
@@ -194,6 +196,7 @@ public sealed interface Condition permits
         CreatureCardsPutIntoGraveyardThisTurnAtLeast,
         CreatureDeathsThisTurnAtLeast,
         CreatureWithDifferentNameDiedThisTurn,
+        CreatureSubtypeDiedUnderYourControlThisTurn,
         CreatureLeftBattlefieldUnderYourControlThisTurn,
         CreatureDiedUnderYourControlThisTurn,
         ModifiedCreatureDiedUnderYourControlThisTurn,
@@ -385,6 +388,7 @@ public sealed interface Condition permits
         TargetPlayerHasMoreCardsInHandThanController,
         TargetPlayerHandEmpty,
         TargetPlayerControlsPermanent,
+        TargetPlayerControlsMoreCreaturesThanController,
         TargetPlayerControlsMoreLandsThanController,
         TargetPlayerTurn,
         TargetPlayerIsActivePlayer,
@@ -412,7 +416,8 @@ public sealed interface Condition permits
         AnyPlayerDealtCombatDamageAtLeastThisTurn,
         CreatureDiedUnderOpponentControlThisTurn,
         OpponentDealtCombatDamageByLegendaryCreatureThisTurn,
-        SourceAttackedThisTurn {
+        SourceAttackedThisTurn,
+        PlaneswalkedToPlaneThisTurn {
 
     /** Human-readable condition name for log messages (e.g. "metalcraft", "equipped"). */
     String conditionName();

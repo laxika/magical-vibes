@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "147")
+@CardRegistration(set = "MOC", collectorNumber = "280")
 public class FlameshadowConjuring extends Card {
 
     public FlameshadowConjuring() {

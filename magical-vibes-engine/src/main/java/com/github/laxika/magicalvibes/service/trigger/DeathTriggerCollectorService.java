@@ -1910,6 +1910,29 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
+            slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleOpponentArtifactGraveyardDamage(TriggerMatchContext match,
+            DealDamageToPlayersEffect effect, TriggerContext ctx) {
+        if (effect.recipient() != DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER) {
+            return handleOpponentArtifactGraveyardDefault(match, effect, ctx);
+        }
+
+        TriggerContext.ArtifactGraveyard artifactGraveyard = (TriggerContext.ArtifactGraveyard) ctx;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                artifactGraveyard.artifactControllerId(),
+                match.permanent().getId()
+        );
+        match.gameData().stack.add(entry);
+        logOpponentArtifactGraveyard(match);
+        return true;
+    }
+
     private void logOpponentArtifactGraveyard(TriggerMatchContext match) {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (opponent artifact put into graveyard from battlefield)", match.gameData().id, match.permanent().getCard().getName());

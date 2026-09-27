@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "197")
+@CardRegistration(set = "MOC", collectorNumber = "229")
 public class PerplexingTest extends Card {
 
     public PerplexingTest() {
