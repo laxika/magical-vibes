@@ -1,9 +1,11 @@
 # CARD_PATTERN_INDEX
+| targeted ally-creature ETB opponent life loss equal to entering creature's absolute power/toughness difference | `j/JawsOfDefeat.java` + `TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect` |
 | ETB draft from a spellbook, then perpetually grant the card a Food artifact type and sacrifice-for-life ability | `h/HinterlandChef.java` + `PerpetuallyGrantCardCharacteristicsEffect` |
 | ETB draft that gives the chosen card perpetual any-color casting and a self-cast bounce trigger | `o/OminousTraveler.java` + `DraftCardFromSpellbookEffect(..., chosenCardEffects)` + `PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect` |
 | upkeep draft from a spellbook, exile the choice, and grant end-of-turn play permission | `a/ArmsScavenger.java` + `DraftCardFromSpellbookEffect(..., true)` + `ReduceEquipCostEffect(1)` |
 | planeswalker with a perpetual hand-card choice, spellbook battlefield draft, and mass trample pump | `g/GarrukWrathOfTheWilds.java` + `ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect` + `DraftCardFromSpellbookEffect(..., false, true)` |
 | random opponent gains control of source permanent | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
+| council's dilemma vote for wild or free, revealing creatures and putting permanents from hand onto the battlefield | `s/SelvalasStampede.java` + `SelvalasStampedeEffect` |
 | perpetually grant a triggered ability to a card that later leaves the graveyard | `o/OglorDevotedAssistant.java` and EFFECTS_QUICK_REFERENCE.md |
 | ETB perpetually grants a death trigger to current creatures you control | `a/AntiqueCollector.java` and EFFECTS_QUICK_REFERENCE.md |
 | perpetually grant a graveyard-activated ability to a targeted creature card | `a/AssembleFromParts.java` and EFFECTS_QUICK_REFERENCE.md |
@@ -160,6 +162,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | combat damage → random own-graveyard instant/sorcery, free cast at next upkeep | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
 | demonstrate a spell copy for you and one chosen opponent | `MayEffect(new DemonstrateEffect(), "Copy [spell name]?")` in `ON_SELF_CAST` + the spell's normal effects |
+| demonstrate + destroy an opposing artifact/creature + its controller's immediate free cast from an exile-until-nonland dig | `MayEffect(new DemonstrateEffect())` + `DestroyTargetPermanentThenEffect(..., ThenEffectRecipient.TARGET_CONTROLLER, requiresDestruction=true)` + `ExileTopUntilNonlandMayCastWithoutPayingManaCostEffect` |
 | chosen creature type, reveal until matching creature count, put matches onto battlefield | `RevealUntilChosenCreatureTypeCountToBattlefieldEffect` |
 | encore, graveyard self-exile and attacking token copies for each opponent | `ExileSelfFromGraveyardCost` + `CreateTokenCopiesOfSourceAttackingOpponentsEffect` in a sorcery-speed graveyard ability |
 | destroy target creature, then create two half-sized token copies | `DestroyTargetCreatureAndCreateTokenCopiesEffect` |

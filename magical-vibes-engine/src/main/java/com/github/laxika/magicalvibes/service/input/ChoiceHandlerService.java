@@ -148,6 +148,8 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SelvalasStampedeEffectHandler
+            selvalasStampedeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesMasterOfCeremoniesEffectHandler
             eachOpponentChoosesMasterOfCeremoniesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
@@ -775,6 +777,17 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SelvalasStampedeChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Selvala's Stampede vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            selvalasStampedeEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -2248,7 +2261,7 @@ public class ChoiceHandlerService {
         if (!selectionComplete) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
                     ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), ctx.consumeModes(),
-                    chosenModes, ctx.triggeringCardId());
+                    chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
             return;
         }
         if (ctx.consumeModes() || ctx.modesResetEachTurn()) {
@@ -2266,7 +2279,7 @@ public class ChoiceHandlerService {
                         + chosenModes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList()
                         + " for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
+                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);

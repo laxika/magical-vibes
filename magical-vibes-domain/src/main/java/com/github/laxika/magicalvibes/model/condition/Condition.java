@@ -51,6 +51,7 @@ public sealed interface Condition permits
         TargetPermanentAttackedTargetMatches,
         AttackedWithCreaturesThisTurn,
         AttackedWithCreaturesOfSubtypeThisTurn,
+        AttackedWithCommanderThisTurn,
         AttacksAlone,
         AttacksPlayerAlone,
         AttackingCreaturesTotalPowerAtLeast,

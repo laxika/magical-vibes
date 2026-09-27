@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "206")
+@CardRegistration(set = "TDC", collectorNumber = "270")
 public class ShigekiJukaiVisionary extends Card {
 
     public ShigekiJukaiVisionary() {

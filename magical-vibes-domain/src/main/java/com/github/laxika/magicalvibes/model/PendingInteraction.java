@@ -45,6 +45,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
         PendingInteraction.PlanarCardChoice, PendingInteraction.SpellbookDraftChoice,
         PendingInteraction.RevealedMatchingHandCardChoice, PendingInteraction.CommanderChoice,
+        PendingInteraction.CommanderBattlefieldChoice,
         PendingInteraction.StingingStudyCommanderChoice,
         PendingInteraction.SpatialMergingCardOrder, PendingInteraction.ApplejackToyChoice,
         PendingInteraction.LibraryReorder,
@@ -662,6 +663,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public CommanderChoice {
+            commanders = java.util.List.copyOf(commanders);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return commanders.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** Chooses one commander to put onto the battlefield from the command zone. */
+    record CommanderBattlefieldChoice(UUID playerId, java.util.List<Card> commanders)
+            implements PendingInteraction {
+
+        public CommanderBattlefieldChoice {
             commanders = java.util.List.copyOf(commanders);
         }
 

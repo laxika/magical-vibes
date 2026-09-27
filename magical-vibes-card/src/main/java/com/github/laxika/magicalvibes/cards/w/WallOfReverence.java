@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "CON", collectorNumber = "20")
 @CardRegistration(set = "UMA", collectorNumber = "41")
 @CardRegistration(set = "C13", collectorNumber = "26")
+@CardRegistration(set = "TDC", collectorNumber = "139")
 public class WallOfReverence extends Card {
 
     public WallOfReverence() {

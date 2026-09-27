@@ -140,8 +140,48 @@ public class AttackLegalityService {
      * those wrapped in a {@link ConditionalEffect} (e.g. metalcraft).
      */
     private boolean canAttackDespiteDefender(GameData gameData, Permanent creature) {
+        if (hasUnconditionalNoDefenderPermission(gameData, creature)) {
+            return true;
+        }
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
+        return gameData.playerIds.stream()
+                .filter(targetId -> !targetId.equals(controllerId))
+                .anyMatch(targetId -> canAttackDespiteDefender(gameData, creature, targetId));
+    }
+
+    /**
+     * Returns whether the creature's defender permission applies to this particular attack target.
+     * The defender-specific permission on Weathered Sentinels is deliberately checked here rather
+     * than as a general creature characteristic: a different player may still be an illegal target.
+     */
+    private boolean canAttackDespiteDefender(GameData gameData, Permanent creature, UUID targetId) {
+        if (hasUnconditionalNoDefenderPermission(gameData, creature)) {
+            return true;
+        }
+        if (!gameData.playerIds.contains(targetId)) {
+            return false;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        Set<UUID> attackingPlayers = gameData.playersWhoAttackedPlayersLastTurn
+                .getOrDefault(controllerId, Set.of());
+        if (!attackingPlayers.contains(targetId)) {
+            return false;
+        }
+        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(NoDefenderAttackPermissionEffect.class::isInstance)
+                .map(NoDefenderAttackPermissionEffect.class::cast)
+                .anyMatch(NoDefenderAttackPermissionEffect::
+                        grantsCarrierAttackAsThoughNoDefenderAgainstDefenderWhoAttackedControllerLastTurn);
+    }
+
+    private boolean hasUnconditionalNoDefenderPermission(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof NoDefenderAttackPermissionEffect permission
                     && permission.grantsCarrierAttackAsThoughNoDefender()) {
@@ -238,6 +278,10 @@ public class AttackLegalityService {
      */
     public boolean canAttackDefender(GameData gameData, Permanent attacker, UUID targetId) {
         if (!canAttackInChosenDirection(gameData, attacker, targetId)) {
+            return false;
+        }
+        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.DEFENDER)
+                && !canAttackDespiteDefender(gameData, attacker, targetId)) {
             return false;
         }
         if (isRestrictedFromAttackingPreviouslyAttackedPlayer(gameData, attacker, targetId)) {

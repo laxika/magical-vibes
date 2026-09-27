@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "GTC", collectorNumber = "137")
 @CardRegistration(set = "RNA", collectorNumber = "147")
+@CardRegistration(set = "TDC", collectorNumber = "275")
 public class TowerDefense extends Card {
 
     public TowerDefense() {

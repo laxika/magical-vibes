@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardsAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
@@ -58,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -83,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditional
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -117,6 +121,7 @@ public class MiscTriggerCollectorService {
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final ETBTokenTargetService etbTokenTargetService;
     // @Lazy to break indirect circular dependency:
     // MiscTriggerCollectorService → PermanentControlSupport → TriggerCollectionService → MiscTriggerCollectorService
     private PermanentControlSupport permanentControlSupport;
@@ -164,6 +169,7 @@ public class MiscTriggerCollectorService {
                                        @Lazy DrawService drawService,
                                        AmountEvaluationService amountEvaluationService,
                                        ConditionEvaluationService conditionEvaluationService,
+                                       @Lazy ETBTokenTargetService etbTokenTargetService,
                                        @Lazy PermanentControlSupport permanentControlSupport,
                                        @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameLogService = gameLogService;
@@ -174,6 +180,7 @@ public class MiscTriggerCollectorService {
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.etbTokenTargetService = etbTokenTargetService;
         this.permanentControlSupport = permanentControlSupport;
         this.permanentRemovalService = permanentRemovalService;
     }
@@ -363,6 +370,9 @@ public class MiscTriggerCollectorService {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, sm.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
                         List.of(), 0, 0, List.of(), sm.xValue()));
+                if (!match.gameData().interaction.isAwaitingInput()) {
+                    etbTokenTargetService.processNextETBTokenMultiTargetTrigger(match.gameData());
+                }
             } else {
                 match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                         card, sm.controllerId(), new ArrayList<>(triggeredEffects),
@@ -1653,6 +1663,38 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers for lands put into the graveyard from the library",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnCardFromGraveyardEffect.class,
+            slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    private boolean handleEventCardsGraveyardReturn(TriggerMatchContext match,
+            ReturnCardFromGraveyardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)
+                || cardsPut.cards().isEmpty()) {
+            return false;
+        }
+        if (effect.filter() != null && cardsPut.cards().stream().noneMatch(card ->
+                predicateEvaluationService.matchesCardPredicate(
+                        card, effect.filter(), null, match.gameData(), cardsPut.graveyardOwnerId()))) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setEventCardIds(cardsPut.cards().stream().map(Card::getId).toList());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers for a card put into the graveyard from the library",
                 match.gameData().id, sourceCard.getName());
         return true;
     }
@@ -3125,6 +3167,24 @@ public class MiscTriggerCollectorService {
     }
 
     // ── ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD ────────────────────────────
+
+    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    boolean handleTurnScopedModalOnCardsLeaveGraveyard(TriggerMatchContext match,
+            ChooseModeNotYetChosenThisTurnEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard)) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                sourceCard, match.controllerId(), new ChooseOneEffect(effect.options()),
+                match.permanent().getId(), true));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cards leaving graveyard (turn-scoped modal)",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,

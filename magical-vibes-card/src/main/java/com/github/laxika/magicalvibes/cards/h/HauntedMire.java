@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "248")
 @CardRegistration(set = "SOC", collectorNumber = "379")
+@CardRegistration(set = "TDC", collectorNumber = "369")
 public class HauntedMire extends Card {
 
     public HauntedMire() {

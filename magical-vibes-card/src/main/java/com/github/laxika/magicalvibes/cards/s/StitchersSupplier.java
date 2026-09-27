@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 @CardRegistration(set = "M19", collectorNumber = "121")
 @CardRegistration(set = "SLD", collectorNumber = "853")
 @CardRegistration(set = "SLD", collectorNumber = "1098")
+@CardRegistration(set = "TDC", collectorNumber = "196")
 public class StitchersSupplier extends Card {
 
     public StitchersSupplier() {

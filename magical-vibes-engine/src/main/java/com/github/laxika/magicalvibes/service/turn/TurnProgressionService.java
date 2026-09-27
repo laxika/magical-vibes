@@ -854,6 +854,7 @@ public class TurnProgressionService {
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
+        gameData.playersWhoAttackedWithCommanderThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
         gameData.permanentsWithCountersPutByPlayerThisTurn.clear();
         gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.clear();
@@ -865,6 +866,7 @@ public class TurnProgressionService {
         gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoCreatedTokensThisTurn.clear();
+        gameData.tokensCreatedThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.playersWhoSacrificedArtifactsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
@@ -893,6 +895,7 @@ public class TurnProgressionService {
         gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromLibraryThisTurn.clear();
+        gameData.cardsPutIntoGraveyardFromHandThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.playersWhoDescendedThisTurn.clear();
         gameData.descentsThisTurn.clear();

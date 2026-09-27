@@ -26,6 +26,7 @@ import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "214")
 @CardRegistration(set = "SOC", collectorNumber = "323")
+@CardRegistration(set = "TDC", collectorNumber = "299")
 public class PrismariCommand extends Card {
 
     public PrismariCommand() {

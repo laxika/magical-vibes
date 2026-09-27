@@ -11281,6 +11281,13 @@ public class TriggerCollectionService {
                 sourcePermanentId, chosen, triggeringCardId);
     }
 
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosen, UUID triggeringCardId,
+            UUID attackedTargetId) {
+        triggeredAbilityQueueService.queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId,
+                sourcePermanentId, chosen, triggeringCardId, attackedTargetId);
+    }
+
     public void checkControllerCardsExiledDuringTurnTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null) return;

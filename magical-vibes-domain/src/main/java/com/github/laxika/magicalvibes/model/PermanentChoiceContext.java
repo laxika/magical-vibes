@@ -1062,7 +1062,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source. */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
                                UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter,
-                               boolean sourceIsEnteringPermanent) implements PermanentChoiceContext {
+                               boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
+                               Integer enteringToughnessAtTrigger) implements PermanentChoiceContext {
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId,
+                                   UUID targetSourcePermanentId, TargetFilter targetFilter,
+                                   boolean sourceIsEnteringPermanent) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent, null, null);
+        }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
             this(sourceCard, controllerId, effects, sourcePermanentId, null, null, null, false);
@@ -1097,35 +1106,43 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                  UUID sourcePermanentId, boolean modesResetEachTurn,
-                                 boolean consumeModes, UUID triggeringCardId) implements PermanentChoiceContext {
+                                 boolean consumeModes, UUID triggeringCardId,
+                                 UUID attackedTargetId) implements PermanentChoiceContext {
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, null, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, null, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, UUID triggeringCardId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, triggeringCardId);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, triggeringCardId, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      boolean consumeModes) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    consumeModes, null);
+                    consumeModes, null, null);
+        }
+
+        public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                     UUID sourcePermanentId, boolean modesResetEachTurn,
+                                     boolean consumeModes, UUID triggeringCardId) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
+                    consumeModes, triggeringCardId, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      UUID triggeringCardId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    false, triggeringCardId);
+                    false, triggeringCardId, null);
         }
     }
 
@@ -2312,14 +2329,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> remainingOpponentIds
     ) implements PermanentChoiceContext {}
 
-    /** Each targeted player chooses a creature to sacrifice after the life loss has been applied. */
+    /** Each targeted player chooses a matching permanent to sacrifice in APNAP order. */
     record EachTargetPlayerLosesLifeAndSacrificesCreature(
             UUID choosingPlayerId,
             UUID sourceControllerId,
             Card sourceCard,
             UUID sourcePermanentId,
+            List<UUID> targetPlayerIds,
             List<UUID> remainingTargetPlayerIds,
-            List<UUID> chosenCreatureIds
+            List<UUID> chosenCreatureIds,
+            int lifeLoss,
+            PermanentPredicate sacrificeFilter,
+            boolean sacrificeBeforeLifeLoss
     ) implements PermanentChoiceContext {}
 
     /** "Sacrifice a creature. If you do, create X tokens, where X is its toughness." (e.g. Feed the Pack). */

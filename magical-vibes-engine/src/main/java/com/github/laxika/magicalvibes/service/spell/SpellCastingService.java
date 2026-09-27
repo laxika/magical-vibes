@@ -3009,6 +3009,8 @@ public class SpellCastingService {
         }
 
         Card physicalHandCard = handEarly.get(cardIndex);
+        targetLegalityService.validateGraveyardChoicePowerLimit(
+                gameData, physicalHandCard, targetIds, physicalHandCard.getEffects(EffectSlot.SPELL));
         if (casterPool != null && gameQueryService.canSpendManaAsAnyColorToCastCard(
                 gameData, playerId, physicalHandCard)) {
             casterPool.setAllManaSpendableAsAnyColor(true);
@@ -3978,6 +3980,12 @@ public class SpellCastingService {
                 .map(SpellCastingService::unwrapConditional)
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .anyMatch(e -> card.getEffectTargetIndex(e) >= 0);
+        boolean hasGraveyardTargetGroup = card.getSpellTargets().stream()
+                .anyMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
+        if (!targetIds.isEmpty() && hasGraveyardTargetGroup) {
+            targetLegalityService.validateGraveyardChoicePowerLimit(
+                    gameData, card, targetIds, targetingSpellEffects);
+        }
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null && !hasBoundGraveyardTargetGroup;
 
         // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
@@ -5871,7 +5879,9 @@ public class SpellCastingService {
                         assignment.orderedTargetIds(), assignment.orderedTargetIds());
                 entry.setTargetGroupSizes(assignment.groupSizes());
                 gameData.stack.add(entry);
-            } else if (!targetIds.isEmpty() && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) && targetId != null) {
+            } else if (!targetIds.isEmpty()
+                    && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || hasBoundGraveyardTargetGroup)
+                    && targetId != null) {
                 // Combined graveyard + permanent targeting (e.g. Yawgmoth's Vile Offering)
                 List<UUID> graveyardTargetIds = graveyardTargetIds(gameData, targetId, targetIds);
                 gameData.stack.add(new StackEntry(
@@ -5893,7 +5903,7 @@ public class SpellCastingService {
                         firstDeclaredGroupTargetsSpell || allSpellTargetsAlsoAllowPermanents);
                 gameData.stack.add(entry);
             } else if (!targetIds.isEmpty()
-                    && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting)
+                    && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || hasBoundGraveyardTargetGroup)
                     && !additionalCosts.sacrificeAllCreatures()) {
                 List<UUID> graveyardTargetIds = graveyardTargetIds(gameData, null, targetIds);
                 gameData.stack.add(new StackEntry(

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "ZEN", collectorNumber = "47")
 @CardRegistration(set = "SLD", collectorNumber = "1430")
+@CardRegistration(set = "TDC", collectorNumber = "155")
 public class HedronCrab extends Card {
 
     public HedronCrab() {

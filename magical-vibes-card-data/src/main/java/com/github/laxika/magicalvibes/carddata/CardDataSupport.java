@@ -174,6 +174,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Station", Keyword.STATION);
         KEYWORD_MAP.put("Freerunning", Keyword.FREERUNNING);
         KEYWORD_MAP.put("Double team", Keyword.DOUBLE_TEAM);
+        KEYWORD_MAP.put("Flurry", Keyword.FLURRY);
         KEYWORD_MAP.put("Intensity", Keyword.INTENSITY);
     }
 

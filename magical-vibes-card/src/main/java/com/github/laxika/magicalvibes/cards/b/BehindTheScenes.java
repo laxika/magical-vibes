@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "100")
+@CardRegistration(set = "TDC", collectorNumber = "172")
 public class BehindTheScenes extends Card {
 
     public BehindTheScenes() {

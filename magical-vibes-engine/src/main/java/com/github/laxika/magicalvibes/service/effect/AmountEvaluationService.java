@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TokensCreatedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
 import com.github.laxika.magicalvibes.model.amount.TurnsBegunSinceForetell;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
@@ -490,6 +492,9 @@ public class AmountEvaluationService {
                     countCountersOnStackEntryCard(gameData, c, ctx);
             case TimesSourceRegeneratedThisTurn ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTimesRegeneratedThisTurn();
+            case TokensCreatedThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.tokensCreatedThisTurn.getOrDefault(ctx.controllerId(), 0);
             case TimesSourceMutated ignored -> {
                 Permanent source = ctx.sourcePermanent();
                 if (source == null && ctx.stackEntry() != null) {
@@ -662,6 +667,16 @@ public class AmountEvaluationService {
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                                     .getOrDefault(ctx.targetPermanentId(), java.util.Set.of()).size();
+            case CardsPutIntoGraveyardFromHandOrLibraryThisTurn ignored -> {
+                if (ctx.controllerId() == null) {
+                    yield 0;
+                }
+                Set<UUID> cards = new HashSet<>(gameData.cardsPutIntoGraveyardFromHandThisTurn
+                        .getOrDefault(ctx.controllerId(), java.util.Set.of()));
+                cards.addAll(gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                        .getOrDefault(ctx.controllerId(), java.util.Set.of()));
+                yield cards.size();
+            }
             case DescentsThisTurn ignored ->
                     ctx.controllerId() == null ? 0 : gameData.descentsThisTurn.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToControllerThisTurn ignored ->
@@ -1728,6 +1743,10 @@ public class AmountEvaluationService {
             return 0;
         }
         List<UUID> targetIds = new ArrayList<>(spellEntry.getDeclaredTargetIds());
+        if (amount.filter() == null) {
+            return (spellEntry.getTargetId() != null ? 1 : 0)
+                    + targetIds.size() + spellEntry.getTargetCardIds().size();
+        }
         if (spellEntry.getTargetId() != null && spellEntry.getTargetZone() == null
                 && (targetIds.isEmpty() || spellEntry.isPrimaryTargetStoredSeparately())) {
             targetIds.add(spellEntry.getTargetId());

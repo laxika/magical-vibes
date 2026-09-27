@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AttackedWithCommanderThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
@@ -716,6 +717,9 @@ public class ConditionEvaluationService {
                             && gameData.creaturesAttackedCountBySubtypeThisTurn
                             .getOrDefault(ctx.controllerId(), Map.of())
                             .getOrDefault(c.subtype(), 0) >= c.minimum();
+            case AttackedWithCommanderThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoAttackedWithCommanderThisTurn.contains(ctx.controllerId());
             case Equipped ignored ->
                     isSourceEquipped(gameData, ctx);
             case EquippedCreatureDidntDealCombatDamageToCreatureThisTurn ignored ->

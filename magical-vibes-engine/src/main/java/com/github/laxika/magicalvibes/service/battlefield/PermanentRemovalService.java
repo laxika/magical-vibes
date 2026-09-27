@@ -544,6 +544,38 @@ public class PermanentRemovalService {
         return true;
     }
 
+    /** Removes a permanent from the battlefield and puts its card into its owner's command zone. */
+    public boolean removePermanentToCommandZone(GameData gameData, Permanent target) {
+        boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
+        }
+        UUID controllerId = removed.get().controllerId();
+        UUID ownerId = removed.get().ownerId();
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.COMMAND);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
+        triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
+        triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+                gameData, target, wasCreature, controllerId);
+        triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
+        notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(
+                gameData, target, controllerId);
+        triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+        for (Card leaving : target.cardsLeavingBattlefield()) {
+            gameData.playerCommandZones.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).add(leaving);
+        }
+        forgetDamageDealtToDepartedPermanent(gameData, target);
+        handleExileReturnOnLeave(gameData, target);
+        target.setAttachedTo(null);
+        return true;
+    }
+
     /**
      * Removes a permanent from the battlefield without putting its card into another zone.
      * Spellmorph uses this while the card is being cast from the battlefield onto the stack.
@@ -1105,6 +1137,7 @@ public class PermanentRemovalService {
                     }
                 }
                 case RETURN_TO_HAND -> removePermanentToHand(gameData, perm);
+                case RETURN_TO_COMMAND_ZONE -> removePermanentToCommandZone(gameData, perm);
                 case PUT_ON_TOP_OF_LIBRARY -> removePermanentToLibraryTop(gameData, perm);
                 case DESTROY -> {
                     if (!tryDestroyPermanent(gameData, perm, action.cannotBeRegenerated())) {

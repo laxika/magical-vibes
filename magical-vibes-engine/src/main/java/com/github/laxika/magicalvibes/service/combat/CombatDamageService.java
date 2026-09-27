@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
@@ -2272,6 +2273,14 @@ public class CombatDamageService {
                             : damageDealt;
                     if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
                         firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
+                    }
+                    if (firedEffect instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), attackerId, new ChooseOneEffect(modal.options()),
+                                perm.getId(), true, false, null, defenderId));
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        continue;
                     }
                     // Player recipients on this trigger slot normally mean "that player":
                     // bind the damaged player unless the card explicitly declares a target.

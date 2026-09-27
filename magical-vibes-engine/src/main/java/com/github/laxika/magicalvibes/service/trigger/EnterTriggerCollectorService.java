@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffec
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -1325,6 +1326,30 @@ public class EnterTriggerCollectorService {
                 " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                 gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
+        return true;
+    }
+
+    @CollectsTrigger(value = TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handlePowerToughnessDifferenceLifeLoss(TriggerMatchContext match,
+            TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        int power = enteringPermanent == null
+                ? (pe.enteringCard().getPower() == null ? 0 : pe.enteringCard().getPower())
+                : gameQueryService.getEffectivePower(match.gameData(), enteringPermanent);
+        int toughness = enteringPermanent == null
+                ? (pe.enteringCard().getToughness() == null ? 0 : pe.enteringCard().getToughness())
+                : gameQueryService.getEffectiveToughness(match.gameData(), enteringPermanent);
+
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getId(), enteringPermanentId, null, null, false, power, toughness));
+        }
+        logTriggered(match);
         return true;
     }
 

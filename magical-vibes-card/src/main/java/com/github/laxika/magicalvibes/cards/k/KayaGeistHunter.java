@@ -26,6 +26,7 @@ import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "240")
 @CardRegistration(set = "DBL", collectorNumber = "507")
+@CardRegistration(set = "TDC", collectorNumber = "294")
 public class KayaGeistHunter extends Card {
 
     public KayaGeistHunter() {
