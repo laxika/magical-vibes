@@ -9243,18 +9243,32 @@ public class GameQueryService {
     public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
                                                    UUID recipientPlayerId) {
         return getControllerDamageToOpponentBonus(
-                gameData, sourceControllerId, recipientPlayerId, false, false);
+                gameData, sourceControllerId, recipientPlayerId, false, false, null);
     }
 
     public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
                                                    UUID recipientPlayerId, boolean combatDamage) {
         return getControllerDamageToOpponentBonus(
-                gameData, sourceControllerId, recipientPlayerId, combatDamage, false);
+                gameData, sourceControllerId, recipientPlayerId, combatDamage, false, null);
+    }
+
+    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
+                                                   UUID recipientPlayerId, boolean combatDamage,
+                                                   UUID damageSourcePermanentId) {
+        return getControllerDamageToOpponentBonus(gameData, sourceControllerId, recipientPlayerId,
+                combatDamage, false, damageSourcePermanentId);
     }
 
     public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
                                                    UUID recipientPlayerId, boolean combatDamage,
                                                    boolean opponentPermanent) {
+        return getControllerDamageToOpponentBonus(gameData, sourceControllerId, recipientPlayerId,
+                combatDamage, opponentPermanent, null);
+    }
+
+    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
+                                                   UUID recipientPlayerId, boolean combatDamage,
+                                                   boolean opponentPermanent, UUID damageSourcePermanentId) {
         if (sourceControllerId == null || recipientPlayerId == null
                 || sourceControllerId.equals(recipientPlayerId)) {
             return 0;
@@ -9265,7 +9279,8 @@ public class GameQueryService {
             if (!sourceControllerId.equals(controllerId)) return;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 bonus[0] += getControllerDamageToOpponentBonus(
-                        gameData, effect, permanent, controllerId, combatDamage, opponentPermanent);
+                        gameData, effect, permanent, controllerId, combatDamage,
+                        opponentPermanent, damageSourcePermanentId);
             }
         });
         return bonus[0];
@@ -9295,10 +9310,13 @@ public class GameQueryService {
 
     private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
                                                      Permanent source, UUID controllerId,
-                                                     boolean combatDamage, boolean opponentPermanent) {
+                                                     boolean combatDamage, boolean opponentPermanent,
+                                                     UUID damageSourcePermanentId) {
         if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus
                 && (!combatDamage || damageBonus.appliesToCombatDamage())
-                && (!opponentPermanent || damageBonus.appliesToOpponentPermanents())) {
+                && (!opponentPermanent || damageBonus.appliesToOpponentPermanents())
+                && (!damageBonus.excludesSource() || damageSourcePermanentId == null
+                || !source.getId().equals(damageSourcePermanentId))) {
             return amountEvaluationService.evaluate(gameData, damageBonus.amount(),
                     AmountContext.forStaticEffect(source, controllerId));
         }
@@ -9306,7 +9324,8 @@ public class GameQueryService {
                 && conditionEvaluationService.isMet(gameData, conditional.condition(),
                 ConditionContext.forStaticEffect(source, controllerId))) {
             return getControllerDamageToOpponentBonus(
-                    gameData, conditional.wrapped(), source, controllerId, combatDamage, opponentPermanent);
+                    gameData, conditional.wrapped(), source, controllerId, combatDamage,
+                    opponentPermanent, damageSourcePermanentId);
         }
         return 0;
     }
@@ -9918,7 +9937,7 @@ public class GameQueryService {
         }
         if (target != null) {
             bonus += getControllerDamageToOpponentBonus(gameData, controllerId,
-                    findPermanentController(gameData, target.getId()), false, true);
+                    findPermanentController(gameData, target.getId()), true, true, source.getId());
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
         result *= getControllerDamageMultiplier(gameData, controllerId, null, true);

@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCos
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect;
+import com.github.laxika.magicalvibes.model.effect.FreePowerUpEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
@@ -1208,6 +1209,24 @@ public class CastingCostService {
                 .anyMatch(effect -> effect instanceof FreeEquipEffect
                         && (!(effect instanceof FreeEquipWhileEnduringStoryEffect)
                         || gameData.playersWithEnduringStory.contains(activatingPlayerId)));
+    }
+
+    /** Whether the activating player can use a static effect that replaces this Power-up cost with zero. */
+    public boolean hasFreePowerUpAbilityCost(GameData gameData, UUID activatingPlayerId,
+                                             ActivatedAbility ability) {
+        if (!ability.isPowerUpAbility()
+                || gameData.playersWhoActivatedPowerUpAbilityThisTurn.contains(activatingPlayerId)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown()
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent))
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(FreePowerUpEffect.class::isInstance);
     }
 
     /**

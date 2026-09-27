@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEff
 import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -602,6 +603,22 @@ public class DrawService {
                         .text(" makes " + gameData.playerIdToName.get(thiefController) + " draw a card instead.")
                         .build());
                 performDrawCard(gameData, thiefController);
+                return;
+            }
+        }
+
+        if (!firstDrawStepDraw) {
+            FirstNonDrawStepDrawReplacement replacement =
+                    findFirstNonDrawStepDrawReplacement(gameData, playerId);
+            if (replacement != null
+                    && gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.add(replacement.source().getId())) {
+                int drawCount = replacement.effect().replacementDrawCount();
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(playerName + " draws " + drawCount
+                        + " cards instead with " + replacement.source().getCard().getName() + "."));
+                for (int i = 0; i < drawCount; i++) {
+                    performDrawCard(gameData, playerId);
+                }
                 return;
             }
         }
@@ -1308,6 +1325,31 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private FirstNonDrawStepDrawReplacement findFirstNonDrawStepDrawReplacement(
+            GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            if (gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.contains(permanent.getId())) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FirstNonDrawStepDrawReplacementEffect replacement) {
+                    return new FirstNonDrawStepDrawReplacement(permanent, replacement);
+                }
+            }
+        }
+        return null;
+    }
+
+    private record FirstNonDrawStepDrawReplacement(
+            Permanent source,
+            FirstNonDrawStepDrawReplacementEffect effect) {
     }
 
     private Card findReturnFromGraveyardInsteadOfDrawSourceCard(GameData gameData, UUID playerId) {

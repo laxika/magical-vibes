@@ -184,7 +184,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     e.returnAtOwnerNextEndStep() || e.returnAtControllerNextStep(), false, false, false,
                     e.returnAtControllerNextStep() ? entry.getControllerId() : null, null, false,
                     e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
-                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(), e.countersOnReturn()));
+                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                    e.countersOnReturn(), e.returnLandsTapped()));
         }
     }
 
@@ -321,7 +322,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
                     false, e.grantHaste(), false, false, null, null, false,
                     e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
-                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(), e.countersOnReturn()));
+                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                    e.countersOnReturn(), e.returnLandsTapped()));
         }
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
@@ -354,7 +356,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     e.returnAtControllerNextStep(), e.grantHaste(), false, false,
                     e.returnAtControllerNextStep() ? controllerId : null, null, false,
                     e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
-                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(), e.countersOnReturn()));
+                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                    e.countersOnReturn(), e.returnLandsTapped()));
         }
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());

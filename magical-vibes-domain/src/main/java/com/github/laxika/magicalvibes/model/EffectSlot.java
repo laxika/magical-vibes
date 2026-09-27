@@ -362,6 +362,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_CARDS_PUT_INTO_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever an artifact card is put into the controller's graveyard from a zone other than the battlefield. */
+    ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
     /** Triggers whenever a nonblack card is put into any player's graveyard from anywhere. */
     ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
@@ -925,6 +927,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  opponent or a battle, while this card is in the controller's graveyard. Checked from the
      *  batched non-combat damage flush in {@code DamageSupport}. Used by Bloodfeather Phoenix. */
     GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
+    /** Triggers whenever a source the controller controls deals noncombat damage to an opponent,
+     *  while this card is in the controller's graveyard. */
+    GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever one or more +1/+1 counters are put on this permanent.
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
@@ -1409,6 +1414,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
      *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
     ON_CONTROLLER_DEALT_DAMAGE,
+    /** Triggers whenever a source controlled by this permanent's controller deals damage to that
+     *  controller. The damage amount is snapshotted onto the triggered ability's event value. */
+    ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE,
     /** Triggers whenever damage that would be dealt to this permanent's controller is prevented. */
     ON_CONTROLLER_DAMAGE_PREVENTED,
     /** Triggers whenever an opponent of this permanent's controller is dealt damage. The damage

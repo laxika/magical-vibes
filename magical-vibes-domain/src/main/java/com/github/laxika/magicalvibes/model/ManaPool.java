@@ -43,6 +43,10 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> abilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Ability-only mana temporarily promoted into the regular pool during ability payment. */
     private final EnumMap<ManaColor, Integer> promotedAbilityOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Mana that may only be spent to activate Power-up abilities. */
+    private final EnumMap<ManaColor, Integer> powerUpAbilityOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Power-up-only mana temporarily promoted during Power-up ability payment. */
+    private final EnumMap<ManaColor, Integer> promotedPowerUpAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Mana that may only be spent to activate abilities of land sources (e.g. Sunken Citadel). */
     private final EnumMap<ManaColor, Integer> landAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Land-ability-only mana temporarily promoted during a land-source ability payment. */
@@ -271,6 +275,8 @@ public class ManaPool {
             commanderOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
             promotedAbilityOnlyMana.put(color, 0);
+            powerUpAbilityOnlyMana.put(color, 0);
+            promotedPowerUpAbilityOnlyMana.put(color, 0);
             landAbilityOnlyMana.put(color, 0);
             promotedLandAbilityOnlyMana.put(color, 0);
             artifactSpellOrAbilityOnlyMana.put(color, 0);
@@ -335,6 +341,8 @@ public class ManaPool {
         commanderOnlyMana.putAll(source.commanderOnlyMana);
         abilityOnlyMana.putAll(source.abilityOnlyMana);
         promotedAbilityOnlyMana.putAll(source.promotedAbilityOnlyMana);
+        powerUpAbilityOnlyMana.putAll(source.powerUpAbilityOnlyMana);
+        promotedPowerUpAbilityOnlyMana.putAll(source.promotedPowerUpAbilityOnlyMana);
         landAbilityOnlyMana.putAll(source.landAbilityOnlyMana);
         promotedLandAbilityOnlyMana.putAll(source.promotedLandAbilityOnlyMana);
         artifactSpellOrAbilityOnlyMana.putAll(source.artifactSpellOrAbilityOnlyMana);
@@ -840,6 +848,8 @@ public class ManaPool {
             commanderOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
             promotedAbilityOnlyMana.put(color, 0);
+            powerUpAbilityOnlyMana.put(color, 0);
+            promotedPowerUpAbilityOnlyMana.put(color, 0);
             landAbilityOnlyMana.put(color, 0);
             promotedLandAbilityOnlyMana.put(color, 0);
             artifactSpellOrAbilityOnlyMana.put(color, 0);
@@ -1002,6 +1012,7 @@ public class ManaPool {
         int total = getTotal();
         total += getCommanderOnlyManaTotal();
         total += getAbilityOnlyManaTotal();
+        total += getPowerUpAbilityOnlyManaTotal();
         total += getLandAbilityOnlyManaTotal();
         total += getArtifactSpellOrAbilityOnlyManaTotal();
         total += artifactOnlyColorless;
@@ -1304,17 +1315,22 @@ public class ManaPool {
             if (promotedAbilityOnly > 0) {
                 promotedAbilityOnlyMana.put(color, promotedAbilityOnly - 1);
             } else {
-                int promotedGraveyardOnly = promotedGraveyardOnlyMana.getOrDefault(color, 0);
-                if (promotedGraveyardOnly > 0) {
-                    promotedGraveyardOnlyMana.put(color, promotedGraveyardOnly - 1);
+                int promotedPowerUpAbilityOnly = promotedPowerUpAbilityOnlyMana.getOrDefault(color, 0);
+                if (promotedPowerUpAbilityOnly > 0) {
+                    promotedPowerUpAbilityOnlyMana.put(color, promotedPowerUpAbilityOnly - 1);
                 } else {
-                    int promotedNonHandSpellOnly = promotedNonHandSpellOnlyMana.getOrDefault(color, 0);
-                    if (promotedNonHandSpellOnly > 0) {
-                        promotedNonHandSpellOnlyMana.put(color, promotedNonHandSpellOnly - 1);
+                    int promotedGraveyardOnly = promotedGraveyardOnlyMana.getOrDefault(color, 0);
+                    if (promotedGraveyardOnly > 0) {
+                        promotedGraveyardOnlyMana.put(color, promotedGraveyardOnly - 1);
                     } else {
-                        int promotedArtifactSpellOrAbilityOnly = promotedArtifactSpellOrAbilityOnlyMana.getOrDefault(color, 0);
-                        if (promotedArtifactSpellOrAbilityOnly > 0) {
-                            promotedArtifactSpellOrAbilityOnlyMana.put(color, promotedArtifactSpellOrAbilityOnly - 1);
+                        int promotedNonHandSpellOnly = promotedNonHandSpellOnlyMana.getOrDefault(color, 0);
+                        if (promotedNonHandSpellOnly > 0) {
+                            promotedNonHandSpellOnlyMana.put(color, promotedNonHandSpellOnly - 1);
+                        } else {
+                            int promotedArtifactSpellOrAbilityOnly = promotedArtifactSpellOrAbilityOnlyMana.getOrDefault(color, 0);
+                            if (promotedArtifactSpellOrAbilityOnly > 0) {
+                                promotedArtifactSpellOrAbilityOnlyMana.put(color, promotedArtifactSpellOrAbilityOnly - 1);
+                            }
                         }
                     }
                 }
@@ -1754,6 +1770,56 @@ public class ManaPool {
                 artifactSpellOrAbilityOnlyMana.merge(color, returned, Integer::sum);
             }
             promotedArtifactSpellOrAbilityOnlyMana.put(color, 0);
+        }
+    }
+
+    public int getPowerUpAbilityOnlyMana(ManaColor color) {
+        return powerUpAbilityOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getPowerUpAbilityOnlyManaTotal() {
+        int total = 0;
+        for (int value : powerUpAbilityOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Adds mana that can only be spent to activate a Power-up ability. */
+    public void addPowerUpAbilityOnlyMana(ManaColor color, int amount) {
+        powerUpAbilityOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public void removePowerUpAbilityOnlyMana(ManaColor color, int amount) {
+        int current = powerUpAbilityOnlyMana.getOrDefault(color, 0);
+        powerUpAbilityOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
+    /** Temporarily makes Power-up-only mana visible to the ordinary payment code. */
+    public int promotePowerUpAbilityOnlyMana() {
+        int promoted = 0;
+        for (ManaColor color : ManaColor.values()) {
+            int amount = powerUpAbilityOnlyMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                powerUpAbilityOnlyMana.put(color, 0);
+                promotedPowerUpAbilityOnlyMana.merge(color, amount, Integer::sum);
+                promoted += amount;
+            }
+        }
+        return promoted;
+    }
+
+    /** Returns unused promoted Power-up-only mana to its restricted bucket. */
+    public void restorePromotedPowerUpAbilityOnlyMana() {
+        for (ManaColor color : ManaColor.values()) {
+            int amount = promotedPowerUpAbilityOnlyMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                int returned = Math.min(amount, pool.getOrDefault(color, 0));
+                pool.merge(color, -returned, Integer::sum);
+                powerUpAbilityOnlyMana.merge(color, returned, Integer::sum);
+            }
+            promotedPowerUpAbilityOnlyMana.put(color, 0);
         }
     }
 
@@ -3978,6 +4044,8 @@ public class ManaPool {
             moveTaggedManaToColorless(creatureMana, color, amount);
             moveTaggedManaToColorless(spellOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedAbilityOnlyMana, color, amount);
+            moveTaggedManaToColorless(powerUpAbilityOnlyMana, color, amount);
+            moveTaggedManaToColorless(promotedPowerUpAbilityOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedGraveyardOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedNonHandSpellOnlyMana, color, amount);
             moveTaggedManaToColorless(hasteGrantingMana, color, amount);
@@ -4072,6 +4140,8 @@ public class ManaPool {
             moveTaggedMana(creatureMana, color, replacementColor, amount);
             moveTaggedMana(spellOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedAbilityOnlyMana, color, replacementColor, amount);
+            moveTaggedMana(powerUpAbilityOnlyMana, color, replacementColor, amount);
+            moveTaggedMana(promotedPowerUpAbilityOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedGraveyardOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedNonHandSpellOnlyMana, color, replacementColor, amount);
             moveTaggedMana(hasteGrantingMana, color, replacementColor, amount);
@@ -4343,6 +4413,8 @@ public class ManaPool {
         drainColorMap(spellCastTriggerMana, protectedColors);
         drainColorBucket(abilityOnlyMana, protectedColors);
         drainColorBucket(promotedAbilityOnlyMana, protectedColors);
+        drainColorBucket(powerUpAbilityOnlyMana, protectedColors);
+        drainColorBucket(promotedPowerUpAbilityOnlyMana, protectedColors);
         drainColorBucket(landAbilityOnlyMana, protectedColors);
         drainColorBucket(promotedLandAbilityOnlyMana, protectedColors);
         drainColorBucket(kickedOrInstantSorceryOnlyColored, protectedColors);
@@ -4514,6 +4586,7 @@ public class ManaPool {
             amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += nonHandSpellOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);
+            amount += powerUpAbilityOnlyMana.getOrDefault(color, 0);
             amount += landAbilityOnlyMana.getOrDefault(color, 0);
             amount += commanderOnlyMana.getOrDefault(color, 0);
             amount += legendarySpellOnlyMana.getOrDefault(color, 0);
@@ -4581,6 +4654,7 @@ public class ManaPool {
             amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += nonHandSpellOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);
+            amount += powerUpAbilityOnlyMana.getOrDefault(color, 0);
             amount += landAbilityOnlyMana.getOrDefault(color, 0);
             amount += commanderOnlyMana.getOrDefault(color, 0);
             if (color == ManaColor.RED) {

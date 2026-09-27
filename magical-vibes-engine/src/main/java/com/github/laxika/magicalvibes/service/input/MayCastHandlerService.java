@@ -1023,7 +1023,7 @@ public class MayCastHandlerService {
                                               PendingMayAbility ability,
                                               PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
         handlePlayFromGraveyardChoice(gameData, player, accepted, ability, effect.filter(),
-                player.getId(), false, true);
+                player.getId(), effect.exileInsteadOfGraveyard(), true);
     }
 
     public void handleCastFromNoncreatureGraveyardChoice(

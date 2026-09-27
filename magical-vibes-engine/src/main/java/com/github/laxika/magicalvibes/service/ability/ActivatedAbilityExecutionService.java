@@ -1685,7 +1685,7 @@ public class ActivatedAbilityExecutionService {
                 for (UUID opponentId : gameData.orderedPlayerIds) {
                     if (opponentId.equals(playerId)) continue;
                     int opponentDamage = damage + gameQueryService.getControllerDamageToOpponentBonus(
-                            gameData, playerId, opponentId);
+                            gameData, playerId, opponentId, false, permanent.getId());
                     dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, opponentDamage);
                 }
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {

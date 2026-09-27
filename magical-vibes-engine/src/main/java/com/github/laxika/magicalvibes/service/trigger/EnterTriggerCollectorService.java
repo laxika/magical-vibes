@@ -585,6 +585,8 @@ public class EnterTriggerCollectorService {
 
     @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
+            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEnterTurnScopedModal(TriggerMatchContext match,
                                                    ChooseModeNotYetChosenThisTurnEffect effect,
                                                    TriggerContext ctx) {

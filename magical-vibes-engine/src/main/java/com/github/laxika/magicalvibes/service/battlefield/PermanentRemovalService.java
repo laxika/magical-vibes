@@ -670,6 +670,9 @@ public class PermanentRemovalService {
         List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        int exiledPowerAtTrigger = wasCreature
+                ? Math.max(0, gameQueryService.getEffectivePower(gameData, target))
+                : 0;
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
@@ -719,7 +722,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
-                gameData, target, wasCreature, controllerId);
+                gameData, target, wasCreature, controllerId, exiledPowerAtTrigger);
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -1816,7 +1819,7 @@ public class PermanentRemovalService {
             triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
             triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
+                    gameData, target, wasCreature, controllerId, Math.max(0, dyingPowerAtDeath));
         }
         if (wentToGraveyard) {
             triggerCollectionService.checkHauntedCreatureDeathTriggers(gameData, target);

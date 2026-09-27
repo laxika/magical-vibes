@@ -297,6 +297,9 @@ whenever a non-token creature card enters any graveyard from a non-battlefield z
 `ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Quest for Ancient Secrets; fires on every permanent the
 graveyard owner controls whenever a non-token card enters their graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`),
+`ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD` (Ultron the Annihilator; fires on every
+permanent the graveyard owner controls whenever a non-token artifact card enters their graveyard from a
+non-battlefield zone),
 `ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` (Compost; fires on every permanent controlled by
 an opponent of the graveyard owner whenever a black card enters that graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`), `ON_ENCHANTED_PERMANENT_TAPPED`,
@@ -778,3 +781,4 @@ the planar trigger path uses that group's filter directly rather than walking un
 belonging to the plane's other abilities.
 
 `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER` fires only when the equipped creature deals combat damage to a player. It uses the Equipment controller and the same targeting pipeline as `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, which also fires for damage to permanents.
+| `ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE` | `TriggerCollectionService.checkControllerDealtDamageTriggers` when the damage source controller matches the damaged player + `DamageTriggerCollectorService` | The source-control gate is checked at the damage event; the damage amount is carried in `eventValue`, and player-targeting effects use `SpellTargetTriggerAnyTarget` |

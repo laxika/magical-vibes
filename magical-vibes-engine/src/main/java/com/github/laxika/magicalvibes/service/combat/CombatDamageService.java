@@ -3166,13 +3166,16 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
                     continue;
-                } else if (effect instanceof DealDamageToAnyTargetEffect) {
+                } else if (effect instanceof DealDamageToAnyTargetEffect damageEffect) {
                     // "It deals that much damage to any target" (Spitemare): the damage amount
-                    // snapshots into xValue, and the controller chooses any target when serviced.
+                    // snapshots into the trigger event value, and the controller chooses any target
+                    // when serviced.
                     if (data.damageDealt() > 0) {
+                        Permanent source = gameQueryService.findPermanentById(gameData, data.permanentId());
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                                 data.card(), data.controllerId(), new ArrayList<>(List.of(effect)),
-                                false, null, data.damageDealt()));
+                                false, damageEffect.triggeredTargetFilter(), data.damageDealt(), data.permanentId(),
+                                source == null ? null : new Permanent(source)));
                     }
                     gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
@@ -3955,7 +3958,7 @@ public class CombatDamageService {
                 damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                         gameData, sourceControllerId, atk.getCard(), atk, pwControllerId);
                 damage += gameQueryService.getControllerDamageToOpponentBonus(
-                        gameData, sourceControllerId, pwControllerId, true, true);
+                        gameData, sourceControllerId, pwControllerId, true, true, atk.getId());
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
@@ -3988,7 +3991,7 @@ public class CombatDamageService {
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(
                     gameData, pwControllerId, damage, true);
-            damage -= damagePreventionService.applyAllButOneDamagePrevention(
+            damage -= damagePreventionService.applyAllButOneDamageToPlaneswalkerPrevention(
                     gameData, pwControllerId, damage, true);
             if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
                 damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage);
@@ -4086,7 +4089,7 @@ public class CombatDamageService {
                 damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                         gameData, sourceControllerId, atk.getCard(), atk, defenderId);
                 damage += gameQueryService.getControllerDamageToOpponentBonus(
-                        gameData, sourceControllerId, defenderId, true);
+                        gameData, sourceControllerId, defenderId, true, atk.getId());
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(

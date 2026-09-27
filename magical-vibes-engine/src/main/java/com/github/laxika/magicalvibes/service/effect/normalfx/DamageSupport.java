@@ -249,6 +249,9 @@ public class DamageSupport {
         Card sourceCardForBonus = sourcePermanentForBonus == null
                 ? entry == null ? null : entry.getEffectiveDamageSourceCard()
                 : sourcePermanentForBonus.getCard();
+        UUID sourcePermanentIdForBonus = sourcePermanentForBonus == null
+                ? entry == null ? null : entry.getSourcePermanentId()
+                : sourcePermanentForBonus.getId();
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getNoncreatureSourceDamageBonus(
                     gameData, entry, null, target);
@@ -257,7 +260,8 @@ public class DamageSupport {
             rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
-                    gameData, bonusSourceControllerId, targetControllerId, false, true);
+                    gameData, bonusSourceControllerId, targetControllerId, false, true,
+                    sourcePermanentIdForBonus);
             rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
                     gameData, entry, targetControllerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
@@ -484,7 +488,8 @@ public class DamageSupport {
         // reduced amount; the loyalty branch below then removes the reduced amount.
         if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, targetControllerId, damage);
-            damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, targetControllerId, damage);
+            damage -= damagePreventionService.applyAllButOneDamageToPlaneswalkerPrevention(
+                    gameData, targetControllerId, damage, false);
         }
         damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
@@ -1126,7 +1131,8 @@ public class DamageSupport {
                     return 0;
                 }
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
-                loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
+                loyaltyDamage -= damagePreventionService.applyAllButOneDamageToPlaneswalkerPrevention(
+                        gameData, pwControllerId, loyaltyDamage, false);
                 int damageDealt = loyaltyDamage;
                 int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
                         gameData, targetPermanent, damageDealt);
@@ -1361,7 +1367,8 @@ public class DamageSupport {
             rawDamage += gameQueryService.getPlayersAndBattlesDamageBonus(
                     gameData, true, null);
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
-                    gameData, sourceControllerId, playerId);
+                    gameData, sourceControllerId, playerId, false,
+                    sourcePermanent == null ? entry.getSourcePermanentId() : sourcePermanent.getId());
             rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
                     gameData, entry, playerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(

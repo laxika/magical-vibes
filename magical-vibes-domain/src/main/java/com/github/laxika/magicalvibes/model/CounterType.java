@@ -158,6 +158,7 @@ public enum CounterType {
     PLUS_ZERO_PLUS_ONE,
     PLUS_TWO_PLUS_ZERO,
     PLUS_ZERO_PLUS_TWO,
+    SAURIAN,
     SCREAM,
     SCROLL,
     SHADOW,

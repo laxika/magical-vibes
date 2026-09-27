@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -52,7 +53,8 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         CardEffect beforeCopyEffect,
         com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
         String sacrificeDescription,
-        boolean permanentSpellToken) implements CardEffect {
+        boolean permanentSpellToken,
+        Set<CardSupertype> removedSupertypes) implements CardEffect {
     public CopyControllerCastSpellOnSpellCastEffect(
         CardPredicate spellFilter,
         TapMultiplePermanentsCost tapCost,
@@ -74,7 +76,7 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords,
                 intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets,
                 grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters,
-                beforeCopyEffect, null, null, false);
+                beforeCopyEffect, null, null, false, Set.of());
     }
 
 
@@ -82,6 +84,7 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
         additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
         firstSpellFilters = firstSpellFilters == null ? List.of() : List.copyOf(firstSpellFilters);
+        removedSupertypes = removedSupertypes == null ? Set.of() : Set.copyOf(removedSupertypes);
     }
 
     public CopyControllerCastSpellOnSpellCastEffect(
@@ -93,7 +96,7 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition,
                 grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy,
                 mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition,
-                List.of(), null, null, null, false);
+                List.of(), null, null, null, false, Set.of());
     }
 
     public CopyControllerCastSpellOnSpellCastEffect(
@@ -178,10 +181,16 @@ public record CopyControllerCastSpellOnSpellCastEffect(
 
     /** Free optional copy trigger whose permanent spell copies become tokens. */
     public static CopyControllerCastSpellOnSpellCastEffect permanentSpellToken(CardPredicate spellFilter) {
+        return permanentSpellToken(spellFilter, Set.of());
+    }
+
+    /** Free optional copy trigger whose permanent spell copies become tokens with supertypes removed. */
+    public static CopyControllerCastSpellOnSpellCastEffect permanentSpellToken(
+            CardPredicate spellFilter, Set<CardSupertype> removedSupertypes) {
         return new CopyControllerCastSpellOnSpellCastEffect(
                 spellFilter, null, null, null, null, Set.of(), null,
                 false, Set.of(), false, true, false, false, null,
-                List.of(), null, null, null, true);
+                List.of(), null, null, null, true, removedSupertypes);
     }
 
     public CopyControllerCastSpellOnSpellCastEffect(
@@ -232,6 +241,6 @@ public record CopyControllerCastSpellOnSpellCastEffect(
             String sacrificeDescription) {
         return new CopyControllerCastSpellOnSpellCastEffect(spellFilter, null, null, null, null,
                 Set.of(), null, false, Set.of(), false, true, false, false, null, List.of(), null,
-                sacrificeFilter, sacrificeDescription, false);
+                sacrificeFilter, sacrificeDescription, false, Set.of());
     }
 }

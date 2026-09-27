@@ -33,6 +33,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryManaValueGreaterThanControllerExperienceCountersPredicate,
         StackEntryManaValueEqualsSourcePowerPredicate,
         StackEntryManaValueAtMostSourcePowerPredicate,
+        StackEntryManaValuePowerOrToughnessEqualsPredicate,
         StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate,
         StackEntryManaValueParityMatchesSourceChosenParityPredicate,
         StackEntryManaValueAtMostControlledCountPredicate,

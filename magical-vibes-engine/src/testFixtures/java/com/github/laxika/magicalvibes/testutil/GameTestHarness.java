@@ -1171,6 +1171,14 @@ public class GameTestHarness {
                 null, null, beholdPermanentIds, beholdHandCardIndices, null);
     }
 
+    public void castSorceryWithBehold(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                                      List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, targetIds, List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, beholdPermanentIds, beholdHandCardIndices, null);
+    }
+
     public void castInstantWithChosenAdditionalCostObject(Player player, int cardIndex, UUID targetId,
                                                           UUID chosenObjectId) {
         ensurePriority(player);

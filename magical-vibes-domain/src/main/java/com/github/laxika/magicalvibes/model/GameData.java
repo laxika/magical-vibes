@@ -939,6 +939,8 @@ public class GameData {
      *  Notion Thief-style replacements that exempt "the first card they draw in each of their draw
      *  steps". Cleared at end-of-turn cleanup. */
     public final Set<UUID> drawStepFirstDrawTaken = ConcurrentHashMap.newKeySet();
+    /** Source permanents whose first eligible non-draw-step draw replacement has been used this turn. */
+    public final Set<UUID> firstNonDrawStepDrawReplacementsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Aladdin's Lamp — one queued, turn-scoped delayed replacement per activation. Each entry is
      *  the activation's X value and is consumed by {@code DrawService.resolveDrawCard}. */
     public final Map<UUID, List<Integer>> pendingNextDrawLookAtTop = new ConcurrentHashMap<>();
@@ -977,6 +979,8 @@ public class GameData {
     public final Set<UUID> playersWhoActivatedExhaustAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated an equip ability this turn. */
     public final Set<UUID> playersWhoActivatedEquipAbilityThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who have activated a Power-up ability this turn. */
+    public final Set<UUID> playersWhoActivatedPowerUpAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a loyalty ability of a planeswalker this turn, backing the
      *  {@code DidntActivateLoyaltyAbilityThisTurn} intervening-if (The Chain Veil). Recorded when the
      *  loyalty cost is paid, so an activation whose ability is countered still counts. */
@@ -6242,6 +6246,7 @@ public class GameData {
         copy.playersDealtCombatDamageLastTurn.addAll(this.playersDealtCombatDamageLastTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
+        copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
         copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
@@ -6511,6 +6516,8 @@ public class GameData {
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.chainsDrawReplacementsApplied.putAll(this.chainsDrawReplacementsApplied);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
+        copy.firstNonDrawStepDrawReplacementsUsedThisTurn
+                .addAll(this.firstNonDrawStepDrawReplacementsUsedThisTurn);
         this.pendingNextDrawLookAtTop.forEach((playerId, xValues) ->
                 copy.pendingNextDrawLookAtTop.put(playerId,
                         Collections.synchronizedList(new ArrayList<>(xValues))));
