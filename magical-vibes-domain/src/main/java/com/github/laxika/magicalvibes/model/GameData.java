@@ -402,6 +402,8 @@ public class GameData {
     public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
     /** Directly phased-out permanent ids that remain phased out until their source leaves. */
     public final Map<UUID, Set<UUID>> phasedOutUntilSourceLeaves = new ConcurrentHashMap<>();
+    /** Directly phased-out permanent ids that remain phased out until a player planeswalks. */
+    public final Set<UUID> phasedOutUntilPlaneswalk = ConcurrentHashMap.newKeySet();
     /** Directly phased-out permanent ids that remain phased out while their source stays controlled. */
     public final Map<UUID, Map<UUID, Integer>> phasedOutWhileSourceControlled = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
@@ -1416,6 +1418,9 @@ public class GameData {
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
 
+    /** Per-player: this player has protection from these players until end of turn. */
+    public final Map<UUID, Set<UUID>> playerProtectionFromPlayerIdsUntilEndOfTurn = new ConcurrentHashMap<>();
+
     /** Per-player: this player has a temporary targeting keyword until end of turn. */
     public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
     /** Per-player: this player has a temporary targeting keyword until the beginning of their next turn. */
@@ -1556,6 +1561,9 @@ public class GameData {
      *  The embalm cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedEmbalmUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Card IDs and costs that have been granted unearth until end of turn. Cleared at end of turn. */
+    public final Map<UUID, String> cardsGrantedUnearthUntilEndOfTurn = new ConcurrentHashMap<>();
+
     /** Player IDs that may cast spells as though they had flash until end of turn (Alchemist's
      *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
     public final Set<UUID> playersWithFlashUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -1577,7 +1585,11 @@ public class GameData {
     public final Map<UUID, List<CardType>> nextSpellFlashGrantsThisTurn = new ConcurrentHashMap<>();
     /** Pending flash grants for the next spell of a chosen creature subtype, keyed by player. */
     public final Map<UUID, List<CardSubtype>> nextSpellChosenSubtypeFlashGrantsThisTurn = new ConcurrentHashMap<>();
+    /** Pending one-shot convoke grants for the next spell each player casts this turn. */
+    public final Map<UUID, Integer> nextSpellConvokeGrantsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<NextSpellCostReduction>> nextSpellCostReductionsThisTurn = new ConcurrentHashMap<>();
+    /** Pending life alternatives for the next spell, keyed by controller. */
+    public final Map<UUID, Integer> nextSpellPayLifeEqualToManaValueThisTurn = new ConcurrentHashMap<>();
     /** Pending one-shot free-cast permissions for the next matching spell this turn. */
     public final Map<UUID, List<CardPredicate>> nextSpellFreeCastPermissionsThisTurn = new ConcurrentHashMap<>();
 
@@ -1586,6 +1598,8 @@ public class GameData {
      *  {@link #recordSpellCast}. Cleared at end of turn. */
     public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowermentsThisTurn = new ConcurrentHashMap<>();
 
+    /** Pending one-shot grants that give the next creature spell cascade, keyed by player. */
+    public final Map<UUID, Integer> nextCreatureSpellCascadeThisTurn = new ConcurrentHashMap<>();
     /** Persistent one-time creature-spell boons, keyed by player and consumed by {@link #recordSpellCast}. */
     public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowerments = new ConcurrentHashMap<>();
 
@@ -1788,6 +1802,9 @@ public class GameData {
     public final Map<UUID, Integer> pendingNextSpellCopyThisTurnCount = new ConcurrentHashMap<>();
     /** Pending one-shot filtered spell-copy triggers for the current turn. */
     public final Map<UUID, List<CopyNextSpellCastThisTurnEffect>> pendingNextFilteredSpellCopiesThisTurn =
+            new ConcurrentHashMap<>();
+    /** Pending one-shot copies for the next activated ability with X in its activation cost. */
+    public final Map<UUID, Integer> pendingNextXActivatedAbilityCopyThisTurnCount =
             new ConcurrentHashMap<>();
 
     /** Pending one-shot grants that make the next spell cast this turn uncounterable. */
@@ -1993,6 +2010,8 @@ public class GameData {
     public final Map<UUID, Integer> graveyardLeaveNotificationPendingCreatureCardCounts = new ConcurrentHashMap<>();
     /** Owners whose graveyards had artifact or creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingArtifactOrCreatureOwners = ConcurrentHashMap.newKeySet();
+    /** Owners whose graveyards had artifact cards leave during a suppressed batch. */
+    public final Set<UUID> graveyardLeaveNotificationPendingArtifactOwners = ConcurrentHashMap.newKeySet();
     /** Artifact and creature cards captured for the corresponding suppressed leave batch. */
     public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingArtifactOrCreatureCards =
             new ConcurrentHashMap<>();
@@ -2858,6 +2877,13 @@ public class GameData {
         GameData snapshot = simulationFrameCopy();
         snapshot.turnStartSnapshot = null;
         turnStartSnapshot = snapshot;
+    }
+
+    /** Returns whether the given player was the monarch when the current turn began. */
+    public boolean wasMonarchAtTurnStart(UUID playerId) {
+        return playerId != null
+                && turnStartSnapshot != null
+                && playerId.equals(turnStartSnapshot.monarchPlayerId);
     }
 
     /**
@@ -3845,7 +3871,9 @@ public class GameData {
         consumePendingAnyManaTypePermission(playerId, card);
         consumeNextSpellFlashGrant(playerId, card);
         consumeNextSpellChosenSubtypeFlashGrant(playerId, card);
+        consumeNextSpellConvokeGrant(playerId);
         consumeNextSpellCostReductions(playerId, card);
+        consumeNextSpellPayLifeEqualToManaValue(playerId);
         consumeNextCreatureSpellEmpowerments(playerId, card);
         consumePersistentNextCreatureSpellEmpowerments(playerId, card);
         consumeNextSpellUncounterableGrant(playerId, card);
@@ -4029,6 +4057,18 @@ public class GameData {
                 .add(empowerment);
     }
 
+    /** Adds one pending cascade grant for the next creature spell this turn. */
+    public void addNextCreatureSpellCascade(UUID playerId) {
+        nextCreatureSpellCascadeThisTurn.merge(playerId, 1, Integer::sum);
+    }
+
+    /** Consumes every pending cascade grant when the next creature spell is cast. */
+    public int consumeNextCreatureSpellCascade(UUID playerId, Card card) {
+        if (card == null || !card.hasType(CardType.CREATURE)) return 0;
+        Integer grants = nextCreatureSpellCascadeThisTurn.remove(playerId);
+        return grants == null ? 0 : grants;
+    }
+
     /** Adds a persistent one-time boon for the player's next creature spell. */
     public void addPersistentNextCreatureSpellEmpowerment(UUID playerId, CreatureSpellEmpowerment empowerment) {
         nextCreatureSpellEmpowerments
@@ -4121,10 +4161,26 @@ public class GameData {
                 .add(subtype);
     }
 
+    public void addNextSpellConvokeGrant(UUID playerId) {
+        nextSpellConvokeGrantsThisTurn.merge(playerId, 1, Integer::sum);
+    }
+
+    public boolean hasNextSpellConvokeGrant(UUID playerId) {
+        return nextSpellConvokeGrantsThisTurn.getOrDefault(playerId, 0) > 0;
+    }
+
     public void addNextSpellCostReduction(UUID playerId, NextSpellCostReduction reduction) {
         nextSpellCostReductionsThisTurn
                 .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
                 .add(reduction);
+    }
+
+    public void addNextSpellPayLifeEqualToManaValue(UUID playerId) {
+        nextSpellPayLifeEqualToManaValueThisTurn.merge(playerId, 1, Integer::sum);
+    }
+
+    public boolean hasNextSpellPayLifeEqualToManaValue(UUID playerId) {
+        return nextSpellPayLifeEqualToManaValueThisTurn.getOrDefault(playerId, 0) > 0;
     }
 
     public void addNextSpellFreeCastPermission(UUID playerId, CardPredicate predicate) {
@@ -4139,6 +4195,10 @@ public class GameData {
         synchronized (reductions) {
             reductions.removeIf(reduction -> reduction.cardTypes().stream().anyMatch(card::hasType));
         }
+    }
+
+    private void consumeNextSpellPayLifeEqualToManaValue(UUID playerId) {
+        nextSpellPayLifeEqualToManaValueThisTurn.remove(playerId);
     }
 
     /** Adds an unlimited flash permission for spells of the given type until end of turn. */
@@ -4217,6 +4277,10 @@ public class GameData {
             grants.removeIf(subtype -> card.getSubtypes().contains(subtype)
                     || card.hasKeyword(Keyword.CHANGELING));
         }
+    }
+
+    private void consumeNextSpellConvokeGrant(UUID playerId) {
+        nextSpellConvokeGrantsThisTurn.remove(playerId);
     }
 
     /**
@@ -6329,6 +6393,8 @@ public class GameData {
         copy.pendingNextSpellCopyThisTurnCount.putAll(this.pendingNextSpellCopyThisTurnCount);
         this.pendingNextFilteredSpellCopiesThisTurn.forEach((playerId, effects) ->
                 copy.pendingNextFilteredSpellCopiesThisTurn.put(playerId, new ArrayList<>(effects)));
+        copy.pendingNextXActivatedAbilityCopyThisTurnCount
+                .putAll(this.pendingNextXActivatedAbilityCopyThisTurnCount);
         this.notedMana.forEach((cardId, mana) -> copy.notedMana.put(cardId, new EnumMap<>(mana)));
         this.abilityActivationManaSpent.forEach((cardId, mana) ->
                 copy.abilityActivationManaSpent.put(cardId, new EnumMap<>(mana)));
@@ -6654,6 +6720,7 @@ public class GameData {
             targetIds.addAll(v);
             copy.phasedOutUntilSourceLeaves.put(k, targetIds);
         });
+        copy.phasedOutUntilPlaneswalk.addAll(this.phasedOutUntilPlaneswalk);
         this.phasedOutWhileSourceControlled.forEach((sourceId, targetSequences) -> {
             Map<UUID, Integer> targetSequenceCopy = new ConcurrentHashMap<>();
             targetSequenceCopy.putAll(targetSequences);
@@ -7076,6 +7143,8 @@ public class GameData {
                 copy.spellColorOverridesUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
+        this.playerProtectionFromPlayerIdsUntilEndOfTurn.forEach((k, v) ->
+                copy.playerProtectionFromPlayerIdsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilNextTurn.forEach((k, v) ->
@@ -7147,6 +7216,8 @@ public class GameData {
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
+        copy.pendingNextXActivatedAbilityCopyThisTurnCount
+                .putAll(this.pendingNextXActivatedAbilityCopyThisTurnCount);
         copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
         copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
@@ -7200,6 +7271,7 @@ public class GameData {
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
         copy.graveyardLeaveNotificationPendingCreatureCardCounts.putAll(this.graveyardLeaveNotificationPendingCreatureCardCounts);
         copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
+        copy.graveyardLeaveNotificationPendingArtifactOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOwners);
         this.graveyardLeaveNotificationPendingArtifactOrCreatureCards.forEach((playerId, cards) ->
                 copy.graveyardLeaveNotificationPendingArtifactOrCreatureCards.put(playerId, new ArrayList<>(cards)));
         copy.graveyardExileNotificationPendingCounts.putAll(this.graveyardExileNotificationPendingCounts);
@@ -7335,6 +7407,7 @@ public class GameData {
         copy.cardsGrantedWarpUntilEndOfTurn.addAll(this.cardsGrantedWarpUntilEndOfTurn);
         copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
+        copy.cardsGrantedUnearthUntilEndOfTurn.putAll(this.cardsGrantedUnearthUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
         copy.playersWithFreeHandCastUntilEndOfTurn.addAll(this.playersWithFreeHandCastUntilEndOfTurn);
         copy.playersWhoMayLookAtFaceDownCreaturesThisTurn
@@ -7352,12 +7425,15 @@ public class GameData {
         this.nextSpellChosenSubtypeFlashGrantsThisTurn.forEach((k, v) ->
                 copy.nextSpellChosenSubtypeFlashGrantsThisTurn.put(k,
                         Collections.synchronizedList(new ArrayList<>(v))));
+        copy.nextSpellConvokeGrantsThisTurn.putAll(this.nextSpellConvokeGrantsThisTurn);
         this.nextSpellCostReductionsThisTurn.forEach((k, v) ->
                 copy.nextSpellCostReductionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.nextSpellPayLifeEqualToManaValueThisTurn.putAll(this.nextSpellPayLifeEqualToManaValueThisTurn);
         this.nextSpellFreeCastPermissionsThisTurn.forEach((k, v) ->
                 copy.nextSpellFreeCastPermissionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.nextCreatureSpellCascadeThisTurn.putAll(this.nextCreatureSpellCascadeThisTurn);
         this.nextCreatureSpellEmpowerments.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowerments.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);
@@ -7429,20 +7505,16 @@ public class GameData {
                 this.targetOpponentsDiscardThenDraw.noDiscardPlayers);
         copy.targetOpponentsDiscardThenDraw.selectedDiscards.addAll(
                 this.targetOpponentsDiscardThenDraw.selectedDiscards);
-        copy.eachOpponentDrawsThenControllerDraws.active =
-                this.eachOpponentDrawsThenControllerDraws.active;
-        copy.eachOpponentDrawsThenControllerDraws.controllerId =
-                this.eachOpponentDrawsThenControllerDraws.controllerId;
+        copy.eachOpponentDrawsThenControllerDraws.active = this.eachOpponentDrawsThenControllerDraws.active;
+        copy.eachOpponentDrawsThenControllerDraws.controllerId = this.eachOpponentDrawsThenControllerDraws.controllerId;
         copy.eachOpponentDrawsThenControllerDraws.remainingOpponentIds.addAll(
                 this.eachOpponentDrawsThenControllerDraws.remainingOpponentIds);
-        copy.eachOpponentDrawsThenControllerDraws.opponentsWhoDrew.addAll(
-                this.eachOpponentDrawsThenControllerDraws.opponentsWhoDrew);
-        copy.eachOpponentDrawsThenControllerDraws.currentOpponentId =
-                this.eachOpponentDrawsThenControllerDraws.currentOpponentId;
-        copy.eachOpponentDrawsThenControllerDraws.cardsDrawnBeforeCurrentOpponent =
-                this.eachOpponentDrawsThenControllerDraws.cardsDrawnBeforeCurrentOpponent;
-        copy.eachOpponentDrawsThenControllerDraws.controllerDrawPending =
-                this.eachOpponentDrawsThenControllerDraws.controllerDrawPending;
+        copy.eachOpponentDrawsThenControllerDraws.pendingOpponentId =
+                this.eachOpponentDrawsThenControllerDraws.pendingOpponentId;
+        copy.eachOpponentDrawsThenControllerDraws.pendingDrawCount =
+                this.eachOpponentDrawsThenControllerDraws.pendingDrawCount;
+        copy.eachOpponentDrawsThenControllerDraws.successfulDrawCount =
+                this.eachOpponentDrawsThenControllerDraws.successfulDrawCount;
         copy.additionalBeginningPhasesAfterCombat = this.additionalBeginningPhasesAfterCombat;
         copy.additionalBeginningPhaseReturnStep = this.additionalBeginningPhaseReturnStep;
         copy.additionalBeginningPhaseUntapInProgress = this.additionalBeginningPhaseUntapInProgress;

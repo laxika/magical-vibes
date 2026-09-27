@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "34")
+@CardRegistration(set = "C21", collectorNumber = "101")
 public class Rout extends Card {
 
     public Rout() {

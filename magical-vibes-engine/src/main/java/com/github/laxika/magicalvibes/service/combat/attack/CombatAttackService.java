@@ -148,6 +148,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
@@ -245,6 +246,9 @@ public class CombatAttackService {
                                              List<CombatAttackTarget> availableTargets,
                                              int taxPerCreature,
                                              boolean mustAttackWithAtLeastOne) {
+    }
+
+    private record AttackTriggerSource(Permanent permanent, EffectSlot effectSlot) {
     }
 
     /**
@@ -1488,11 +1492,26 @@ public class CombatAttackService {
         // These fire once per combat (not per creature) when at least one creature attacks.
         // The attacker count is locked at trigger time via xValue (per MTG rules: creatures
         // removed before resolution still count, tokens entering attacking after don't).
+        List<AttackTriggerSource> attackTriggerSources = new ArrayList<>();
         for (Permanent perm : battlefield) {
+            attackTriggerSources.add(new AttackTriggerSource(perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
+        }
+        List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+        if (commandZone != null) {
+            for (Card card : new ArrayList<>(commandZone)) {
+                attackTriggerSources.add(new AttackTriggerSource(
+                        new Permanent(card), EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK));
+            }
+        }
+        for (AttackTriggerSource triggerSource : attackTriggerSources) {
+            Permanent perm = triggerSource.permanent();
+            EffectSlot effectSlot = triggerSource.effectSlot();
             List<CardEffect> allyAttackEffects = new ArrayList<>(
-                    perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK));
-            allyAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
+                    perm.getCard().getEffects(effectSlot));
+            if (effectSlot == EffectSlot.ON_ALLY_CREATURES_ATTACK) {
+                allyAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, effectSlot));
+            }
             if (allyAttackEffects.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
@@ -1912,6 +1931,8 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             triggerCollectionService.checkPlanarAllyCreatureAttackTriggers(gameData, battlefield.get(idx));
         }
+        triggerCollectionService.checkPlanarAllyCreaturesAttackTriggers(
+                gameData, playerId, attackerIndices.size());
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers
         // (GRAVEYARD_ON_ALLY_CREATURES_ATTACK). These fire from the controller's graveyard.
@@ -3074,7 +3095,7 @@ public class CombatAttackService {
 
     /**
      * Returns true if an opponent controls a permanent with
-     * {@link OpponentsMustAttackControllerEffect}, forcing this player to attack
+     * {@link OpponentsMustAttackRequirementEffect}, forcing this player to attack
      * with at least one creature each combat if able. Respects attack tax exemption
      * (CR 508.1d — the player is not required to pay optional attack costs).
      */
@@ -3091,7 +3112,7 @@ public class CombatAttackService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof OpponentsMustAttackControllerEffect) {
+                    if (effect instanceof OpponentsMustAttackRequirementEffect) {
                         return true;
                     }
                 }

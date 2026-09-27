@@ -14,30 +14,39 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                controller chooses a legal attack destination
  * @param recordFoundCardManaValue if true, the found card's mana value is recorded as the stack
  *                                 entry's event value, or zero when no matching card is found
+ * @param recordRevealedCount if true, stores the number of revealed cards in the stack entry's
+ *                            event value for a following effect to use
  */
 public record RevealUntilCardPredicateRestOnBottomRandomEffect(
         CardPredicate predicate,
         LibrarySearchDestination destination,
         boolean enterTappedAndAttacking,
+        boolean recordRevealedCount,
         boolean recordFoundCardManaValue
 ) implements CardEffect {
 
     public RevealUntilCardPredicateRestOnBottomRandomEffect(
             CardPredicate predicate, LibrarySearchDestination destination) {
-        this(predicate, destination, false, false);
+        this(predicate, destination, false, false, false);
     }
 
     public RevealUntilCardPredicateRestOnBottomRandomEffect(
             CardPredicate predicate, LibrarySearchDestination destination,
             boolean enterTappedAndAttacking) {
-        this(predicate, destination, enterTappedAndAttacking, false);
+        this(predicate, destination, enterTappedAndAttacking, false, false);
+    }
+
+    public RevealUntilCardPredicateRestOnBottomRandomEffect(
+            CardPredicate predicate, LibrarySearchDestination destination,
+            boolean enterTappedAndAttacking, boolean recordRevealedCount) {
+        this(predicate, destination, enterTappedAndAttacking, recordRevealedCount, false);
     }
 
     /** Records the found card's mana value for a following {@link EventValue} amount. */
     public static RevealUntilCardPredicateRestOnBottomRandomEffect toHandRecordingManaValue(
             CardPredicate predicate) {
         return new RevealUntilCardPredicateRestOnBottomRandomEffect(
-                predicate, LibrarySearchDestination.HAND, false, true);
+                predicate, LibrarySearchDestination.HAND, false, false, true);
     }
 
     public static RevealUntilCardPredicateRestOnBottomRandomEffect tappedAndAttacking(

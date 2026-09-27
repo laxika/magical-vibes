@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCreatureEffect;
 
+@CardRegistration(set = "C21", collectorNumber = "99")
 @CardRegistration(set = "NCC", collectorNumber = "207")
 public class OrzhovAdvokist extends Card {
 

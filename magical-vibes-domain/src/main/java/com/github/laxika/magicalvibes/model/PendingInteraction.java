@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,11 +45,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TurnFaceUpXValueChoice,
         PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
-        PendingInteraction.PlanarCardChoice, PendingInteraction.SpellbookDraftChoice,
+        PendingInteraction.PlanarCardChoice, PendingInteraction.PlanarDieChoice,
+        PendingInteraction.SpellbookDraftChoice,
         PendingInteraction.RevealedMatchingHandCardChoice, PendingInteraction.CommanderChoice,
         PendingInteraction.CommanderBattlefieldChoice,
         PendingInteraction.StingingStudyCommanderChoice,
-        PendingInteraction.SpatialMergingCardOrder, PendingInteraction.ApplejackToyChoice,
+        PendingInteraction.SpatialMergingCardOrder, PendingInteraction.PlanarDeckPlaneswalkCardOrder,
+        PendingInteraction.ApplejackToyChoice,
         PendingInteraction.LibraryReorder,
         PendingInteraction.TargetPlayerHandOrderChoice,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
@@ -620,6 +623,35 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Choose one of the rolled planar die results to ignore. */
+    record PlanarDieChoice(UUID playerId, java.util.List<PlanarDieResult> rolls,
+                           int ignoredRollsRemaining) implements PendingInteraction {
+
+        public PlanarDieChoice {
+            rolls = java.util.List.copyOf(rolls);
+            if (rolls.size() < 2 || ignoredRollsRemaining < 1
+                    || ignoredRollsRemaining >= rolls.size()) {
+                throw new IllegalArgumentException("A planar die choice must retain one roll");
+            }
+        }
+
+        public java.util.List<String> options() {
+            return java.util.stream.IntStream.range(0, rolls.size())
+                    .mapToObj(index -> (index + 1) + ": " + rolls.get(index).name())
+                    .toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.ListPick(options());
+        }
+    }
+
     /** The controller chooses one of the three cards offered from a spellbook. */
     record SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
                                 String sourceCardName, boolean revealChosenCard,
@@ -763,6 +795,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public SpatialMergingCardOrder {
             planes = java.util.List.copyOf(planes);
+            cardsToBottom = java.util.List.copyOf(cardsToBottom);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
+    }
+
+    /** Orders the non-plane cards revealed before a plane that is added without leaving existing planes. */
+    record PlanarDeckPlaneswalkCardOrder(UUID playerId, Card arrivingPlane,
+                                         java.util.List<Card> cardsToBottom, String prompt)
+            implements PendingInteraction {
+
+        public PlanarDeckPlaneswalkCardOrder {
             cardsToBottom = java.util.List.copyOf(cardsToBottom);
         }
 
@@ -3062,6 +3114,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             // forced, as is anything explicitly marked mandatory.
                     boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    && destination != GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     && destination != GraveyardChoiceDestination.COPY_ON_ENTER
                     && destination != GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     && !mandatory;
@@ -3479,7 +3532,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           int artifactCounterCount, boolean returnToHandAtEndStep,
                           boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
                           CardPredicate enterTappedAndAttackingIf,
-                          UUID blockingAttackerId, UUID untapSourcePermanentId, java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype)
+                          UUID blockingAttackerId, UUID untapSourcePermanentId,
+                          java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                          CounterType entryCounterType, int entryCounterCount,
+                          CardPredicate entryCounterCondition)
             implements PendingInteraction, HandChoice {
     public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
@@ -3493,7 +3549,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
                           CardPredicate enterTappedAndAttackingIf,
                           UUID blockingAttackerId) {
-        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount, returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId, null, java.util.Set.of());
+        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount, returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId, null, java.util.Set.of(), null, 0, null);
     }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,

@@ -8,6 +8,7 @@ public record PendingTokenCreationReplacement(
         int amount,
         int power,
         int toughness,
-        boolean copyEnchantedPermanent
+        boolean copyEnchantedPermanent,
+        boolean copyChosenCreature
 ) {
 }

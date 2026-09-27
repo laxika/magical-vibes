@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerExilesR
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GhyrsonStarnKelermorphEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEffect;
@@ -56,6 +57,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OtherChosenPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardForColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -165,6 +168,39 @@ public class DamageTriggerCollectorService {
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
         log.info("Game {} - {} triggers after creature damage to a planeswalker",
+                match.gameData().id, watcher.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER)
+    private boolean handleCreatureDealsDamageToEnchantedPlaneswalker(TriggerMatchContext match,
+            CardEffect trigger, TriggerContext ctx) {
+        TriggerContext.CreatureDealsDamageToPlaneswalker damageContext =
+                (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx;
+        Permanent watcher = match.permanent();
+        if (watcher == null || damageContext.damageSource() == null || damageContext.damage() <= 0
+                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                damageContext.damageSource().getId(),
+                watcher.getId());
+        entry.setTriggeringPermanentId(damageContext.damageSource().getId());
+        entry.setNonTargeting(true);
+        if (damageContext.deferredTriggers() == null) {
+            match.gameData().enqueueTrigger(entry);
+        } else {
+            damageContext.deferredTriggers().add(entry);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers after a creature dealt damage to an enchanted planeswalker",
                 match.gameData().id, watcher.getCard().getName());
         return true;
     }
@@ -1146,6 +1182,30 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DAMAGE_PREVENTED)
+    private boolean handleControllerDamagePreventedDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                perm.getId());
+        entry.setEventValue(dc.amount());
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} ON_CONTROLLER_DAMAGE_PREVENTED trigger fires ({} damage prevented)",
+                gameData.id, perm.getCard().getName(), dc.amount());
+        return true;
+    }
+
     @CollectsTrigger(value = SacrificePermanentsOrLoseGameEffect.class,
             slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageSacrificeOrLose(TriggerMatchContext match,
@@ -1786,6 +1846,76 @@ public class DamageTriggerCollectorService {
         log.info("Game {} - {} triggers for {} damage from a noncreature source",
                 match.gameData().id, watcher.getCard().getName(), sd.totalDamage());
         return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSourceCardForColorSourceDamageEffect.class,
+            slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    private boolean handleColorSourceDamagePutCountersOnSourceCard(TriggerMatchContext match,
+            PutCountersOnSourceCardForColorSourceDamageEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
+        if (match.permanent() == null || damage.totalDamage() <= 0
+                || !match.controllerId().equals(damage.sourceControllerId())
+                || !sourceHasColor(match.gameData(), damage, effect.color())) {
+            return false;
+        }
+
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new PutCountersOnSourceCardEffect(
+                        effect.counterType(), effect.count()))),
+                null,
+                watcher.getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers after a controlled {} source dealt damage",
+                match.gameData().id, watcher.getCard().getName(), effect.color());
+        return true;
+    }
+
+    @CollectsTrigger(value = GhyrsonStarnKelermorphEffect.class,
+            slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    private boolean handleGhyrsonStarnKelermorph(TriggerMatchContext match,
+            GhyrsonStarnKelermorphEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
+        Permanent watcher = match.permanent();
+        if (watcher == null || !match.controllerId().equals(damage.sourceControllerId())
+                || watcher.getId().equals(damage.sourcePermanentId())) {
+            return false;
+        }
+
+        boolean triggered = false;
+        for (Map.Entry<UUID, Integer> damageEntry : damage.damageToPlayers().entrySet()) {
+            if (damageEntry.getValue() == 1) {
+                queueGhyrsonTrigger(match, watcher, damageEntry.getKey());
+                triggered = true;
+            }
+        }
+        for (Map.Entry<UUID, Integer> damageEntry : damage.damageToPermanents().entrySet()) {
+            if (damageEntry.getValue() == 1) {
+                queueGhyrsonTrigger(match, watcher, damageEntry.getKey());
+                triggered = true;
+            }
+        }
+        return triggered;
+    }
+
+    private void queueGhyrsonTrigger(TriggerMatchContext match, Permanent watcher, UUID recipientId) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DealDamageToAnyTargetEffect(2))),
+                recipientId,
+                watcher.getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
     }
 
     // ── ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT (Mangara's Equity) ──

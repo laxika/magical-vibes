@@ -70,6 +70,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
+        register(PendingInteraction.PlanarDieChoice.class, this::projectPlanarDieChoice);
         register(PendingInteraction.SpellbookDraftChoice.class, this::projectSpellbookDraftChoice);
         register(PendingInteraction.RevealedMatchingHandCardChoice.class,
                 this::projectRevealedMatchingHandCardChoice);
@@ -79,6 +80,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.StingingStudyCommanderChoice.class,
                 this::projectStingingStudyCommanderChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
+        register(PendingInteraction.PlanarDeckPlaneswalkCardOrder.class,
+                this::projectPlanarDeckPlaneswalkCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.TargetPlayerHandOrderChoice.class,
                 this::projectTargetPlayerHandOrderChoice);
@@ -418,6 +421,12 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validPlaneCardIds()), cardViews, 1, interaction.prompt());
     }
 
+    private InteractionPromptMessage projectPlanarDieChoice(
+            GameData gameData, PendingInteraction.PlanarDieChoice interaction) {
+        return InteractionPromptMessage.listPick(
+                interaction.options(), "Choose one planar die roll to ignore.", false);
+    }
+
     private InteractionPromptMessage projectSpellbookDraftChoice(
             GameData gameData, PendingInteraction.SpellbookDraftChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
@@ -454,6 +463,12 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(
             GameData gameData, PendingInteraction.SpatialMergingCardOrder interaction) {
+        return InteractionPromptMessage.cardOrder(
+                cardViews(interaction.cardsToBottom()), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectPlanarDeckPlaneswalkCardOrder(
+            GameData gameData, PendingInteraction.PlanarDeckPlaneswalkCardOrder interaction) {
         return InteractionPromptMessage.cardOrder(
                 cardViews(interaction.cardsToBottom()), interaction.prompt());
     }
@@ -601,6 +616,7 @@ public class InteractionPromptProjectionRegistry {
             case END_OF_TURN -> "until the end of this turn";
             case NEXT_END_STEP -> "until your next end step";
             case NEXT_TURN -> "until the end of your next turn";
+            case WHILE_EXILED -> "for as long as it remains exiled";
         };
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),

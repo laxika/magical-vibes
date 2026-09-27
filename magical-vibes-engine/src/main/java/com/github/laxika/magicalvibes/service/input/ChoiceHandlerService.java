@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -176,6 +177,9 @@ public class ChoiceHandlerService {
             graceOrCondemnationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
             coercivePortalEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.WillOfThePlaneswalkersEffectHandler
+            willOfThePlaneswalkersEffectHandler;
+    private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GaladrielElvenQueenEffectHandler
             galadrielElvenQueenEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
@@ -354,6 +358,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.NonHumanCreatureCounterManaColorChoice ctx) {
             handleNonHumanCreatureCounterManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CreatureCounterManaColorChoice ctx) {
+            handleCreatureCounterManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
             return;
         }
 
@@ -971,12 +979,34 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.WillOfThePlaneswalkersChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Will of the Planeswalkers vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            willOfThePlaneswalkersEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.GaladrielElvenQueenChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Galadriel, Elven-Queen vote: " + colorName);
             }
             gameData.interaction.clearAwaitingInput();
             galadrielElvenQueenEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesTokenChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid token choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            eachPlayerChoosesTokenEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -1137,12 +1167,15 @@ public class ChoiceHandlerService {
         PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
         gameData.pendingRevertableManaActivation = null;
 
-        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        int amount = source == null
+        Permanent source = ctx.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        int amount = source == null && !ctx.sourcePlanar()
                 ? 0
                 : amountEvaluationService.evaluate(gameData,
                         new ColorManaSymbolsAmongControlledPermanents(manaColor),
-                        AmountContext.forManaAbility(source, ctx.playerId())) * ctx.manaMultiplier();
+                        source == null
+                                ? AmountContext.forCasting(ctx.playerId())
+                                : AmountContext.forManaAbility(source, ctx.playerId())) * ctx.manaMultiplier();
         if (amount > 0) {
             ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
             manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), manaColor);
@@ -1786,6 +1819,36 @@ public class ChoiceHandlerService {
         String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
                 + colorName.toLowerCase() + " mana (gives a non-Human creature spell an additional +1/+1 counter)."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCreatureCounterManaColorChosen(
+            GameData gameData, Player player, String colorName,
+            ChoiceContext.CreatureCounterManaColorChoice ctx, List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, ctx.amount());
+        manaPool.addCreatureAdditionalCounterGrantingMana(manaColor, ctx.amount());
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, ctx.amount());
+        }
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana (gives a creature spell an additional +1/+1 counter)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

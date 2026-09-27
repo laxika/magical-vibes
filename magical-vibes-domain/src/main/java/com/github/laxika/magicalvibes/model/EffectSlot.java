@@ -18,6 +18,8 @@ public enum EffectSlot {
     ON_ENTER_BATTLEFIELD,
     /** Triggers when this permanent changes control to another player. */
     ON_SELF_BECOMES_CONTROLLED,
+    /** Triggers when this permanent changes control away from its current controller. */
+    ON_SELF_LOSES_CONTROL,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
@@ -277,6 +279,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_CREATURE_DIES,
     ON_ANY_NONTOKEN_CREATURE_DIES,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever an artifact is put into exile from the battlefield. */
+    ON_ANY_ARTIFACT_EXILED_FROM_BATTLEFIELD,
     /** Triggers whenever an enchantment (any player's) is put into a graveyard from the battlefield.
      *  Fires for destroy, sacrifice, etc. Checked in {@code PermanentRemovalService} via
      *  {@code TriggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers}.
@@ -629,6 +633,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GAINS_LIFE,
     /** Triggers whenever this permanent's controller becomes the monarch. */
     ON_CONTROLLER_BECOMES_MONARCH,
+    /** Triggers whenever an opponent of this permanent's controller becomes the monarch. */
+    ON_OPPONENT_BECOMES_MONARCH,
     /** Triggers whenever this permanent's controller is tempted by the Ring. */
     ON_RING_TEMPTS_YOU,
     /** Triggers whenever an opponent of this permanent's controller gains life. */
@@ -676,6 +682,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
+    /** Command-zone mirror of {@link #ON_ALLY_CREATURES_ATTACK} for Eminence abilities. */
+    COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
     /** Triggers once for each player directly attacked by one or more creatures the controller
      *  controls. Attacking a planeswalker does not count. Checked in
      *  {@code CombatAttackService.declareAttackers}. */
@@ -719,6 +727,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,
+    /** Triggers at the beginning of the owner's precombat main phase while the source card is in
+     *  its owner's graveyard. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
+    GRAVEYARD_PRECOMBAT_MAIN_TRIGGERED,
     /** Triggers at the beginning of each player's first main phase (any player's turn), not only
      *  the controller's. Checked in {@code StepTriggerService.handlePrecombatMainTriggers} by
      *  scanning all battlefields; the trigger is controlled by the source's controller while the
@@ -950,6 +961,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once per counter-placement event whenever the controller puts one or more counters
      *  of any kind on another creature, regardless of that creature's controller. */
     ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE,
+    /** Triggers whenever an opponent puts one or more counters on a creature they control. */
+    ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL,
     /** Triggers once for each lore counter put on a Saga the controller controls. */
     ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
     /** Triggers once for each counter put on a creature the controller controls. */
@@ -1033,6 +1046,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more artifact and/or creature cards leave the controller's graveyard. */
     ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever one or more artifact cards leave the controller's graveyard. */
+    ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
@@ -1205,6 +1220,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
      *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
     GRANT_CASCADE_TO_SLIVER_SPELL,
+    /** Marker slot: during your turn, hand-cast spells with mana value at most the life lost by
+     *  your opponents this turn have cascade. Holds a {@code CascadeEffect}; detected by presence
+     *  on the casting player's battlefield when a qualifying spell is cast. */
+    GRANT_CASCADE_TO_HAND_SPELLS_WITH_MANA_VALUE_AT_MOST_OPPONENTS_LIFE_LOST,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
@@ -1378,6 +1397,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE,
     /** Triggers whenever a creature the controller controls deals damage to a planeswalker. */
     ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,
+    /** Triggers whenever any creature deals damage to this permanent when it is an enchanted planeswalker. */
+    ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat, from any
      *  source — creatures, spells, abilities). Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}
      *  (which reacts to the damage <em>source</em> and only fires for permanent sources), this fires
@@ -1388,6 +1409,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
      *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
     ON_CONTROLLER_DEALT_DAMAGE,
+    /** Triggers whenever damage that would be dealt to this permanent's controller is prevented. */
+    ON_CONTROLLER_DAMAGE_PREVENTED,
     /** Triggers whenever an opponent of this permanent's controller is dealt damage. The damage
      *  amount is snapshotted onto the triggered ability's event value. */
     ON_OPPONENT_DEALT_DAMAGE,

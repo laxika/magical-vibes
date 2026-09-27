@@ -3081,6 +3081,7 @@ public class StepTriggerService {
         handleSagaLoreCounters(gameData);
 
         handlePrecombatMainBattlefieldTriggers(gameData);
+        handlePrecombatMainGraveyardTriggers(gameData);
 
         handleEachPrecombatMainTriggers(gameData);
 
@@ -3322,6 +3323,47 @@ public class StepTriggerService {
                     gameData.id, perm.getCard().getName());
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        }
+    }
+
+    /** Fires precombat-main triggers from cards in the active player's graveyard. */
+    private void handlePrecombatMainGraveyardTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
+        if (graveyard == null) {
+            return;
+        }
+
+        for (Card card : new ArrayList<>(graveyard)) {
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_PRECOMBAT_MAIN_TRIGGERED);
+            if (effects == null || effects.isEmpty()) {
+                continue;
+            }
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forCard(card, activePlayerId))) {
+                    continue;
+                }
+
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, activePlayerId, may);
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            activePlayerId,
+                            card.getName() + "'s precombat main ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, "'s precombat main ability triggers."));
+                }
+                log.info("Game {} - {} graveyard precombat-main trigger queued",
+                        gameData.id, card.getName());
             }
         }
     }
@@ -6252,6 +6294,9 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleBeginningOfCombatTriggers(GameData gameData) {
+        if (gameData.planechase != null) {
+            planechaseService.step(gameData, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED);
+        }
         queueDelayedBeginningOfCombatTriggers(gameData);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.BEGINNING_OF_COMBAT);
 

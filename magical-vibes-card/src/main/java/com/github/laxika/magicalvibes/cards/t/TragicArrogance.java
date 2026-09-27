@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseKeptPermanentOfEachType
 @CardRegistration(set = "SOC", collectorNumber = "182")
 @CardRegistration(set = "MSC", collectorNumber = "144")
 @CardRegistration(set = "MSC", collectorNumber = "323")
+@CardRegistration(set = "C21", collectorNumber = "109")
 public class TragicArrogance extends Card {
 
     public TragicArrogance() {

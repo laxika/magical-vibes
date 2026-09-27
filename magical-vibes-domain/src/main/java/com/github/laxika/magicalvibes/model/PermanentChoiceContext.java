@@ -164,10 +164,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Intellectual Offering: choose an opponent for one of its two independent modes. */
     record ChooseOpponentDrawAndUntap(UUID controllerId, boolean untapChoice, String sourceCardName)
             implements PermanentChoiceContext {}
+    /** Triarch Stalker: choose the opponent remembered by its targeting relay. */
+    record ChooseOpponentForTargetingRelay(UUID controllerId, UUID sourcePermanentId, String sourceCardName)
+            implements PermanentChoiceContext {}
     /** Sylvan Offering: choose the opponent who creates tokens alongside the controller. */
     record ChooseOpponentEachCreatesTokens(UUID controllerId,
                                            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect token,
                                            String sourceCardName) implements PermanentChoiceContext {}
+    /** Boreas Charger: choose an opponent before searching for the land-count difference. */
+    record ChooseOpponentThenSearchLandDifference(UUID controllerId, CardSubtype subtype,
+                                                   String sourceCardName) implements PermanentChoiceContext {}
     /** Infernal Offering: choose the opponent affected by the selected mode. */
     record InfernalOfferingOpponentChoice(UUID controllerId, boolean sacrificeMode, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -208,6 +214,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
+
+    /** The Wilds: a targeted player sacrifices a creature, then the planar controller creates tokens
+     * based on the sacrificed creature's toughness. */
+    record TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeast(
+            UUID sacrificingPlayerId, UUID tokenControllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+            int toughnessThreshold, int normalAmount, int increasedAmount)
+            implements PermanentChoiceContext {}
+
+    /** Entrapment Maneuver: the target player chooses an attacking creature to sacrifice, then
+     *  the spell's controller creates tokens equal to that creature's toughness. */
+    record TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness(
+            UUID sacrificingPlayerId, StackEntry resolvingEntry, CreateTokenEffect tokenTemplate)
+            implements PermanentChoiceContext {}
 
     /** Wasitora: the damaged player chooses a creature to sacrifice, or the source controller
      * creates the fallback token when no legal sacrifice is possible. */
@@ -287,6 +307,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Summon: Valefor: each opponent chooses among their greatest-mana-value creatures. */
     record EachOpponentChoosesGreatestManaValueCreatureToReturnToHand(
+            UUID controllerId,
+            Card sourceCard,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
+
+    /** The Horus Heresy: starting with the Saga's controller, each player chooses a creature to destroy. */
+    record EachPlayerChoosesCreatureToDestroy(
+            UUID controllerId,
+            Card sourceCard,
+            UUID choosingPlayerId,
+            List<UUID> remainingChooserIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
+
+    /** Chaos Defiler: the controller chooses one nonland permanent for an opponent. */
+    record ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom(
             UUID controllerId,
             Card sourceCard,
             UUID opponentId,
@@ -1381,6 +1419,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Pattern Matcher: choose another controlled creature whose name bounds the library search. */
     record PatternMatcherCreatureChoice(UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
+    /** Canoptek Wraith: choose a land before searching for same-name basic lands. */
+    record SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand(UUID controllerId)
+            implements PermanentChoiceContext {}
+
     /** Deepfathom Echo: choose another creature the source controller controls to copy until end of turn. */
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
             implements PermanentChoiceContext {}
@@ -1398,6 +1440,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
     record Populate(UUID controllerId) implements PermanentChoiceContext {}
+
+    /** Esix: choose the creature whose copiable characteristics the replacement creates. */
+    record EsixCreatureChoice(UUID controllerId, Card sourceCard, StackEntry resolvingEntry,
+                              int amount, UUID excludedPermanentId) implements PermanentChoiceContext {}
 
     /** Soulbond self-enter: choose another unpaired creature you control to pair with the source. */
     record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
@@ -2271,6 +2317,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                    com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost costEffect,
                                    int remaining,
                                    PendingMayAbility mayAbility) implements PermanentChoiceContext {}
+
+    /** Orzhov Advokist: the accepting player chooses which creature receives the counters. */
+    record OrzhovAdvokistCreatureChoice(PendingMayAbility ability,
+                                        com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect effect)
+            implements PermanentChoiceContext {}
 
     /**
      * Spell-cast trigger that needs to target a card in a graveyard (e.g. Teshar, Ancestor's Apostle).

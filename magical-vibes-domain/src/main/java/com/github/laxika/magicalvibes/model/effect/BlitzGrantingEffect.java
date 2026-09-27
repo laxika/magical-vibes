@@ -8,5 +8,9 @@ public interface BlitzGrantingEffect extends CardEffect {
 
     CardPredicate blitzGrantFilter();
 
+    /** Fixed blitz cost, or null when the card's mana cost is used. */
+    String blitzCost();
+
+    /** Reduction to the granted blitz cost, or null when no reduction applies. */
     DynamicAmount blitzCostReduction();
 }

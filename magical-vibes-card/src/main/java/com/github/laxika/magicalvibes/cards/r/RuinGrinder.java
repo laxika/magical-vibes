@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "297")
+@CardRegistration(set = "C21", collectorNumber = "57")
 public class RuinGrinder extends Card {
 
     public RuinGrinder() {

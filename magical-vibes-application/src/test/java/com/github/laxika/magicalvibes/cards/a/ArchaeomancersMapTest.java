@@ -45,6 +45,7 @@ class ArchaeomancersMapTest extends BaseCardTest {
     @DisplayName("Offers the optional land put only when the opponent has more lands")
     void opponentLandOffersLandFromHand() {
         harness.addToBattlefield(player1, new ArchaeomancersMap());
+        harness.passBothPriorities();
         harness.addToBattlefield(player1, new Plains());
         harness.enterBattlefieldAndReturn(player2, new Forest());
         Forest landInHand = new Forest();
@@ -67,6 +68,7 @@ class ArchaeomancersMapTest extends BaseCardTest {
     @DisplayName("Does not trigger when the opponent has no land-count advantage")
     void noTriggerWithoutLandCountAdvantage() {
         harness.addToBattlefield(player1, new ArchaeomancersMap());
+        harness.passBothPriorities();
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player2, new Forest());
@@ -80,6 +82,7 @@ class ArchaeomancersMapTest extends BaseCardTest {
     @DisplayName("Checks the land-count condition again when the trigger resolves")
     void doesNothingIfLandCountsEqualizeBeforeResolution() {
         harness.addToBattlefield(player1, new ArchaeomancersMap());
+        harness.passBothPriorities();
         harness.addToBattlefield(player1, new Plains());
         harness.enterBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new Forest()));

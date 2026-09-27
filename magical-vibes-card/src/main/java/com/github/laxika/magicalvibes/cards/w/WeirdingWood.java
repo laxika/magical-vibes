@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "240")
 @CardRegistration(set = "SIR", collectorNumber = "226")
+@CardRegistration(set = "MOC", collectorNumber = "315")
 public class WeirdingWood extends Card {
 
     public WeirdingWood() {

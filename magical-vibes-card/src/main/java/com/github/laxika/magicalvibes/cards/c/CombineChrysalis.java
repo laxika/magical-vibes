@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "191")
+@CardRegistration(set = "MOC", collectorNumber = "319")
 public class CombineChrysalis extends Card {
 
     public CombineChrysalis() {

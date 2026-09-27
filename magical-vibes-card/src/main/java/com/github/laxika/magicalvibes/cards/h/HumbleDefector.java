@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "A25", collectorNumber = "135")
 @CardRegistration(set = "PIO", collectorNumber = "141")
 @CardRegistration(set = "TLE", collectorNumber = "30")
+@CardRegistration(set = "C21", collectorNumber = "174")
 @CardRegistration(set = "LTC", collectorNumber = "222")
 public class HumbleDefector extends Card {
 

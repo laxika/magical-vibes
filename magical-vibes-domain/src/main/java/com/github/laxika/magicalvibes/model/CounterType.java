@@ -106,6 +106,7 @@ public enum CounterType {
     MANABOND,
     MINE,
     MIRE,
+    NECRODERMIS,
     NIGHT,
     DEFENSE,
     DEPLETION,

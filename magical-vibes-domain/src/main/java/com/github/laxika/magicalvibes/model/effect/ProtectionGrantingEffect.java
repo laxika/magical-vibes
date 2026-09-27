@@ -22,6 +22,7 @@ import java.util.Set;
  * <p>Scope note: this covers the printed, statically-known protection shapes
  * ({@code ProtectionFromColorsEffect}, {@code ProtectionFromCardTypesEffect},
  * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect},
+ * {@code ProtectionFromManaValueAtMostEffect},
  * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromMonocoloredEffect},
  * {@code ProtectionFromEnemyColoredMulticoloredEffect},
  * {@code ProtectionFromAllOtherManaValuesEffect}).
@@ -103,6 +104,14 @@ public interface ProtectionGrantingEffect extends CardEffect {
      * "protection from mana value N or greater" (e.g. Mistmeadow Skulk); empty otherwise.
      */
     default OptionalInt protectionFromManaValueAtLeast() {
+        return OptionalInt.empty();
+    }
+
+    /**
+     * The inclusive upper bound of protected source mana values, when this effect grants
+     * "protection from mana value N or less".
+     */
+    default OptionalInt protectionFromManaValueAtMost() {
         return OptionalInt.empty();
     }
 

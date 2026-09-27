@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtyp
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "FIC", collectorNumber = "228")
+@CardRegistration(set = "40K", collectorNumber = "241")
 @CardRegistration(set = "LTC", collectorNumber = "280")
 @CardRegistration(set = "MSC", collectorNumber = "287")
+@CardRegistration(set = "MOC", collectorNumber = "360")
 public class HeraldsHorn extends Card {
 
     public HeraldsHorn() {

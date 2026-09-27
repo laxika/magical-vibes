@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "61")
 @CardRegistration(set = "UMA", collectorNumber = "62")
+@CardRegistration(set = "C21", collectorNumber = "121")
 public class LivingLore extends Card {
 
     public LivingLore() {

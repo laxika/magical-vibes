@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 
 @CardRegistration(set = "DGM", collectorNumber = "59")
 @CardRegistration(set = "FIC", collectorNumber = "321")
+@CardRegistration(set = "40K", collectorNumber = "222")
 public class BredForTheHunt extends Card {
 
     public BredForTheHunt() {

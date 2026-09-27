@@ -544,7 +544,9 @@ public class GameActionAvailabilityService {
                 .toList();
         boolean allEffectTargetsOptional = !declaredTargetEffects.isEmpty()
                 && declaredTargetEffects.stream()
-                .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        || effect instanceof IndependentlyTargetedGraveyardCardsEffect
+                        && effect.hasOptionalTarget()
                         || effect instanceof ReturnCardFromGraveyardEffect returnEffect
                         && returnEffect.upTo()
                         || effect instanceof DealDividedDamageEffect dividedDamage
@@ -1115,6 +1117,13 @@ public class GameActionAvailabilityService {
             if (cost.canPay(paymentPool, additionalCost - maxReduction)) {
                 return true;
             }
+        }
+
+        int counterCostReduction = additionalSpellCostService.maximumRemoveCountersForCostReduction(
+                gameData, playerId, card);
+        if (counterCostReduction > 0
+                && cost.canPay(paymentPool, additionalCost - counterCostReduction)) {
+            return true;
         }
 
         // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)

@@ -169,6 +169,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThi
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithLifeAtMost;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithLessLifeThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCreaturesThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreLandsThanController;
@@ -217,6 +218,7 @@ import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTur
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfDestroyedPermanents;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfOtherSpellsCastThisTurn;
@@ -588,6 +590,8 @@ public class AmountEvaluationService {
                     opponentsWithCreaturePowerAtLeast(gameData, thresholdAmount, ctx);
             case OpponentsWithMoreCreaturesThanController ignored ->
                     opponentsWithMoreCreaturesThanController(gameData, ctx);
+            case OpponentsWithLessLifeThanController ignored ->
+                    opponentsWithLessLifeThanController(gameData, ctx);
             case OpponentsWithMoreLandsThanController ignored ->
                     opponentsWithMoreLandsThanController(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
@@ -740,6 +744,8 @@ public class AmountEvaluationService {
                     damageDealtToSourcePermanentBySourceNameThisTurn(gameData, ctx, sourceDamage.sourceName());
             case TotalManaValueOfCardsExiledWithSource ignored ->
                     totalManaValueOfCardsExiledWithSource(gameData, ctx);
+            case TotalManaValueOfCardsInGraveyard a ->
+                    totalManaValueOfCardsInGraveyard(gameData, a, ctx);
             case TotalManaValueOfCardsOwnedInExile ignored ->
                     totalManaValueOfCardsOwnedInExile(gameData, ctx);
             case TotalManaValueOfOtherSpellsCastThisTurn ignored ->
@@ -2654,6 +2660,18 @@ public class AmountEvaluationService {
         return count;
     }
 
+    private int opponentsWithLessLifeThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerLife = gameData.getLife(ctx.controllerId());
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId()) && gameData.getLife(playerId) < controllerLife) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private int opponentsWithMoreLandsThanController(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
         int controllerLandCount = countLandsControlledBy(gameData, ctx.controllerId());
@@ -2814,6 +2832,24 @@ public class AmountEvaluationService {
                 .filter(card -> !card.isToken())
                 .mapToInt(Card::getManaValue)
                 .sum();
+    }
+
+    private int totalManaValueOfCardsInGraveyard(GameData gameData,
+                                                  TotalManaValueOfCardsInGraveyard amount,
+                                                  AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (!card.isToken() && predicateEvaluationService.matchesCardPredicate(
+                        card, amount.filter(), null, gameData, playerId)) {
+                    total += card.getManaValue();
+                }
+            }
+        }
+        return total;
     }
 
     private int colorsAmongCardsExiledWithSource(GameData gameData, AmountContext ctx) {

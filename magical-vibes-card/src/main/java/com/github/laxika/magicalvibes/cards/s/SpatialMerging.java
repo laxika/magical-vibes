@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealPlanarCardsUntilTwoPlan
 
 @CardRegistration(set = "OPC2", collectorNumber = "7")
 @CardRegistration(set = "OPCA", collectorNumber = "7")
+@CardRegistration(set = "MOC", collectorNumber = "158")
 public class SpatialMerging extends Card {
 
     public SpatialMerging() {

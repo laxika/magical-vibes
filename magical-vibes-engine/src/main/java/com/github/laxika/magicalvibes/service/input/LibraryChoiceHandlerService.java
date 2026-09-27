@@ -371,6 +371,7 @@ public class LibraryChoiceHandlerService {
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+                    initializeBattleDefenseCounters(perm);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
                     if (gameData.pendingEffectResolutionEntry != null) {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
@@ -1005,6 +1006,7 @@ public class LibraryChoiceHandlerService {
                 Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+                initializeBattleDefenseCounters(perm);
                 if (chosenCard.hasType(CardType.CREATURE)) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                 }
@@ -1436,6 +1438,7 @@ public class LibraryChoiceHandlerService {
             Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+            initializeBattleDefenseCounters(perm);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPlayerId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPlayerId());
@@ -1447,6 +1450,7 @@ public class LibraryChoiceHandlerService {
             Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+            initializeBattleDefenseCounters(perm);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
@@ -2188,6 +2192,7 @@ public class LibraryChoiceHandlerService {
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch,
                     enterWithCounters);
+            initializeBattleDefenseCounters(perm);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
             if (tapped) {
@@ -2262,6 +2267,13 @@ public class LibraryChoiceHandlerService {
         if (counterType != null) {
             permanentCounterSupport.placeCounterOnPermanent(
                     gameData, gameData.pendingEffectResolutionEntry, permanent, counterType, 1);
+        }
+    }
+
+    private void initializeBattleDefenseCounters(Permanent permanent) {
+        Integer defense = permanent.getCard().getDefense();
+        if (permanent.getCard().hasType(CardType.BATTLE) && defense != null) {
+            permanent.setCounterCount(CounterType.DEFENSE, defense);
         }
     }
 

@@ -267,17 +267,25 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public record BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
                                       List<PendingForcedSacrifice> sacrifices,
                                       boolean shuffleAfterQueue,
-                                      List<UUID> searchedPlayerIds) {
+                                      List<UUID> searchedPlayerIds,
+                                      boolean destinationToHand) {
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
                                     List<PendingForcedSacrifice> sacrifices) {
-            this(remainingPicks, sacrifices, false, List.of());
+            this(remainingPicks, sacrifices, false, List.of(), false);
         }
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
                                     List<PendingForcedSacrifice> sacrifices,
                                     boolean shuffleAfterQueue) {
-            this(remainingPicks, sacrifices, shuffleAfterQueue, List.of());
+            this(remainingPicks, sacrifices, shuffleAfterQueue, List.of(), false);
+        }
+
+        public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
+                                    List<PendingForcedSacrifice> sacrifices,
+                                    boolean shuffleAfterQueue,
+                                    List<UUID> searchedPlayerIds) {
+            this(remainingPicks, sacrifices, shuffleAfterQueue, searchedPlayerIds, false);
         }
 
         public BasicLandSearchQueue {
@@ -287,7 +295,8 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         }
 
         public BasicLandSearchQueue withRemainingPicks(List<BasicLandsPick> remaining) {
-            return new BasicLandSearchQueue(remaining, sacrifices, shuffleAfterQueue, searchedPlayerIds);
+            return new BasicLandSearchQueue(remaining, sacrifices, shuffleAfterQueue, searchedPlayerIds,
+                    destinationToHand);
         }
 
         public BasicLandSearchQueue withSearchedPlayer(UUID playerId) {
@@ -296,7 +305,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             }
             List<UUID> updated = new java.util.ArrayList<>(searchedPlayerIds);
             updated.add(playerId);
-            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, updated);
+            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, updated,
+                    destinationToHand);
+        }
+
+        public BasicLandSearchQueue toHand() {
+            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
+                    searchedPlayerIds, true);
         }
     }
 
@@ -638,6 +653,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                                         boolean shuffleAfterQueue) {
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
                 null, List.of(), null, new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue), null);
+    }
+
+    /** A basic-land search queue that puts the selected cards into hand instead. */
+    public static LibrarySearchFollowUp basicLandSearchesToHand(List<BasicLandsPick> remainingPicks) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
+                null, List.of(), null, new BasicLandSearchQueue(remainingPicks, List.of()).toHand(), null);
     }
 
     /** Completion data for a reveal-only search followed by Grim Reminder's life-loss clause. */

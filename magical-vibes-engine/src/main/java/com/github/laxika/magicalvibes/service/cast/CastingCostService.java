@@ -1492,7 +1492,16 @@ public class CastingCostService {
         int reduction = 0;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
+                CardEffect activeEffect = effect;
+                while (activeEffect instanceof ConditionalEffect conditional) {
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(perm, activatingPlayerId))) {
+                        activeEffect = null;
+                        break;
+                    }
+                    activeEffect = conditional.wrapped();
+                }
+                if (activeEffect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
                         && predicateEvaluationService.matchesCardPredicate(
                                 graveyardCard, reducer.affectedGraveyardCards(), null)) {
                     reduction += reducer.genericCostReduction();
@@ -1829,6 +1838,14 @@ public class CastingCostService {
                                                                             Card card, ManaPool pool,
                                                                             int additionalCost, Zone sourceZone) {
         if (sourceZone == null) sourceZone = Zone.HAND;
+        if (gameData.hasNextSpellPayLifeEqualToManaValue(playerId)
+                && gameData.getLife(playerId) >= card.getManaValue()
+                && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && canPayAdditionalManaCost(pool, additionalCost)) {
+            return new AlternativeCostSelection(null, false,
+                    new PayLifeEqualToSpellManaValueCost(), null, false);
+        }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent perm : bf) {

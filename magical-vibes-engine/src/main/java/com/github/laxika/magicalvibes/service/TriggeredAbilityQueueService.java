@@ -80,6 +80,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -239,6 +240,28 @@ public class TriggeredAbilityQueueService {
                         "'s death trigger has no valid targets."));
                 log.info("Game {} - {} death trigger skipped (no valid creature targets)",
                         gameData.id, pending.dyingCard().getName());
+                continue;
+            }
+
+            if (pending.effects().stream().anyMatch(CardEffect::targetChosenAtRandom)) {
+                UUID targetId = result.validTargets().get(
+                        ThreadLocalRandom.current().nextInt(result.validTargets().size()));
+                gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.dyingCard(),
+                        pending.controllerId(),
+                        pending.dyingCard().getName() + "'s ability",
+                        new ArrayList<>(pending.effects()),
+                        targetId,
+                        pending.sourcePermanentSnapshot() == null
+                                ? null : pending.sourcePermanentSnapshot().getId()
+                );
+                entry.setEventValue(pending.eventValue() == null ? 0 : pending.eventValue());
+                entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
+                        "'s death trigger randomly targets " + gameData.playerIdToName.get(targetId) + "."));
                 continue;
             }
 
@@ -1339,14 +1362,23 @@ public class TriggeredAbilityQueueService {
             if (pending.planarSource() != null) {
                 var targets = triggerTargetCollector.collect(gameData, pending.effects(), pending.targetFilter(),
                         pending.controllerId(), pending.sourceCard(), TriggerTargetCollector.Options.END_STEP);
+                boolean optionalTarget = pending.optionalTarget()
+                        || hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
                 gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-                if (targets.validTargets().isEmpty()) continue;
+                if (targets.validTargets().isEmpty()) {
+                    if (optionalTarget) {
+                        pushSpellTargetTriggerWithoutTarget(gameData, pending);
+                    }
+                    continue;
+                }
                 gameData.interaction.setPermanentChoiceContext(pending);
                 UUID choosingPlayerId = pending.choosingPlayerId() != null
                         ? pending.choosingPlayerId() : pending.controllerId();
                 playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
                         targets.validTargets().stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
-                        targets.validTargets().stream().filter(gameData.playerIds::contains).toList(),
+                        optionalTarget
+                                ? List.of(pending.controllerId())
+                                : targets.validTargets().stream().filter(gameData.playerIds::contains).toList(),
                         pending.sourceCard().getName() + "'s ability: choose a target.");
                 return;
             }
@@ -1503,6 +1535,7 @@ public class TriggeredAbilityQueueService {
                             new ArrayList<>(pending.effects()));
         }
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+        entry.setSourcePlanarObject(pending.planarSource());
         gameData.stack.add(entry);
     }
 

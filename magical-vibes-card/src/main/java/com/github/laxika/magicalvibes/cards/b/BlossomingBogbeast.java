@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SOC", collectorNumber = "264")
+@CardRegistration(set = "C21", collectorNumber = "59")
 public class BlossomingBogbeast extends Card {
 
     public BlossomingBogbeast() {

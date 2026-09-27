@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSameNameCardFromGraveyardOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -1042,7 +1045,8 @@ public class SpellCastTriggerCollectorService {
     @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId(),
+                sc.exiledSourcePermanentId());
     }
 
     @CollectsTrigger(value = GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect.class,
@@ -2621,6 +2625,12 @@ public class SpellCastTriggerCollectorService {
 
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId) {
+        return handleGenericSpellCastTrigger(match, trigger, spellCard, castingPlayerId, null);
+    }
+
+    private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
+                                                    Card spellCard, UUID castingPlayerId,
+                                                    UUID exiledSourcePermanentId) {
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
         UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
         UUID sourceOriginalCardId = match.permanent() == null
@@ -2713,8 +2723,8 @@ public class SpellCastTriggerCollectorService {
             if (spellEntry == null) return false;
             // Evaluated from the trigger source's controller, so "you"/"you control" in the predicate
             // means the ability's controller — not the caster (Reparations, an opponent-cast trigger).
-            if (!targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
-                    trigger.castSpellTargetCondition(), match.controllerId(), match.permanent())) return false;
+            if (!matchesCastSpellPredicate(match, spellEntry, trigger.castSpellTargetCondition(),
+                    exiledSourcePermanentId)) return false;
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
@@ -2893,6 +2903,20 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean matchesCastSpellPredicate(TriggerMatchContext match, StackEntry spellEntry,
+                                               StackEntryPredicate predicate, UUID exiledSourcePermanentId) {
+        if (predicate instanceof StackEntryIsCardExiledWithSourcePredicate) {
+            return match.permanent() != null && exiledSourcePermanentId != null
+                    && match.permanent().getId().equals(exiledSourcePermanentId);
+        }
+        if (predicate instanceof StackEntryAllOfPredicate allOf) {
+            return allOf.predicates().stream().allMatch(nested ->
+                    matchesCastSpellPredicate(match, spellEntry, nested, exiledSourcePermanentId));
+        }
+        return targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
+                predicate, match.controllerId(), match.permanent());
     }
 
     private boolean containsChosenPlayerMill(List<CardEffect> effects) {

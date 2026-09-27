@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "C15", collectorNumber = "6")
+@CardRegistration(set = "C21", collectorNumber = "98")
 public class OreskosExplorer extends Card {
 
     public OreskosExplorer() {

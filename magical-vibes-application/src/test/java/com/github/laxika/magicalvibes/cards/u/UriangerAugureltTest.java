@@ -70,6 +70,11 @@ class UriangerAugureltTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castFromExile(player1, land.getId());
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromExile(player1, spell.getId());
         while (!gd.stack.isEmpty()) {

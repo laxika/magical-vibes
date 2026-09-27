@@ -94,6 +94,7 @@ class CostEffectClassificationTest {
             "ReturnCardFromGraveyardToHandCost",
             "ReturnSelfToHandCost",
             "RevealHandCost",
+            "RevealChosenPlayerCost",
             "RevealTwoCardsSharingColorCost",
             "RevealXCardsFromHandCost",
             "SacrificeAllMatchingPermanentsCost",

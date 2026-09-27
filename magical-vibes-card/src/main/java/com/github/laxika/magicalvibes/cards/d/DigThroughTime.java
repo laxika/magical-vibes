@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.LookDestination;
 @CardRegistration(set = "SLZ", collectorNumber = "137")
 @CardRegistration(set = "SLZ", collectorNumber = "258")
 @CardRegistration(set = "FIC", collectorNumber = "263")
+@CardRegistration(set = "C21", collectorNumber = "119")
 @CardRegistration(set = "NCC", collectorNumber = "219")
 @CardRegistration(set = "DSC", collectorNumber = "115")
 public class DigThroughTime extends Card {

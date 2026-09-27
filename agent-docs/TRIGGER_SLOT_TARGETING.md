@@ -179,6 +179,7 @@ combat damage step is processed.
 | `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkCreatureExiledFromBattlefieldTriggers`; global watcher for any creature exiled from the battlefield, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
+| `ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
 | `ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
 | `ON_SELF_BECOMES_MONSTROUS` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
@@ -188,6 +189,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_DISCARDS` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
 | `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
+| `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
@@ -403,6 +405,10 @@ as a non-targeting event subject),
 event when the controller puts one or more counters of any kind on another creature, regardless of
 that creature's controller; non-targeting and captures the counter kind, amount, and creature for
 resolution),
+`ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL` (Bold Plagiarist; fires once per placement
+event when an opponent puts one or more counters on a creature they control; the trigger remains
+controlled by Bold Plagiarist's controller and captures the opponent who placed the counters so the
+same number and kind are placed by that opponent),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
 the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
 is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same

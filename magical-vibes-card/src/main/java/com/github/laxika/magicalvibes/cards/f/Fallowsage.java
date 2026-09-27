@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "63")
+@CardRegistration(set = "MOC", collectorNumber = "223")
 public class Fallowsage extends Card {
 
     public Fallowsage() {

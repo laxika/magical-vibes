@@ -161,6 +161,8 @@ public sealed interface ChoiceContext {
                                         boolean fromCaveSource) implements ChoiceContext {}
     record NonHumanCreatureCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
+    record CreatureCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount)
+            implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
@@ -781,7 +783,11 @@ public sealed interface ChoiceContext {
 
     /** A mana ability that adds mana equal to the chosen color's devotion. */
     record DevotionManaColorChoice(UUID playerId, UUID sourcePermanentId, boolean fromCreature,
-                                   int manaMultiplier) implements ChoiceContext {
+                                   int manaMultiplier, boolean sourcePlanar) implements ChoiceContext {
+        public DevotionManaColorChoice(UUID playerId, UUID sourcePermanentId, boolean fromCreature,
+                                       int manaMultiplier) {
+            this(playerId, sourcePermanentId, fromCreature, manaMultiplier, false);
+        }
     }
 
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ChoiceContext {}
@@ -2081,6 +2087,20 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Path of the Ghosthunter: the current player voted for planeswalk or chaos. */
+    record WillOfThePlaneswalkersChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                        Map<String, Integer> votes, String sourceName)
+            implements ChoiceContext {
+        public static final String PLANESWALK = "Planeswalk";
+        public static final String CHAOS = "Chaos";
+        public static final List<String> OPTIONS = List.of(PLANESWALK, CHAOS);
+
+        public WillOfThePlaneswalkersChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
     /** Galadriel, Elven-Queen: the current player voted for dominion or guidance. */
     record GaladrielElvenQueenChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                                      Map<String, Integer> votes, String sourceName) implements ChoiceContext {
@@ -2091,6 +2111,16 @@ public sealed interface ChoiceContext {
         public GaladrielElvenQueenChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Each player chooses one token option from a resolving effect. */
+    record EachPlayerChoosesTokenChoice(
+            com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesTokenEffect effect,
+            List<UUID> remainingPlayerIds, String sourceName) implements ChoiceContext {
+
+        public EachPlayerChoosesTokenChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
         }
     }
 

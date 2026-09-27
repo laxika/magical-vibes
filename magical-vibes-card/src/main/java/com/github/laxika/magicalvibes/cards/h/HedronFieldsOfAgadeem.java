@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "OPC2", collectorNumber = "19")
 @CardRegistration(set = "OPCA", collectorNumber = "35")
+@CardRegistration(set = "MOC", collectorNumber = "146")
 public class HedronFieldsOfAgadeem extends Card {
 
     public HedronFieldsOfAgadeem() {
