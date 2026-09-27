@@ -44,4 +44,24 @@ class TorpidMolochTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void sacrificesOnlyThreeLandsControlledByActivatingPlayer() {
+        Permanent moloch = addCreatureReady(player1, new TorpidMoloch());
+        Permanent otherMoloch = addCreatureReady(player1, new TorpidMoloch());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(otherMoloch.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(moloch, otherMoloch);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
 }

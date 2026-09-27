@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SelesnyaGuildmage.class, GrizzlyBears.class})
+@CardUsed(SelesnyaGuildmage.class)
 class SelesnyaGuildmageTest extends BaseCardTest {
 
     @Test
@@ -32,6 +33,9 @@ class SelesnyaGuildmageTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(tokens.getFirst().getCard().getColors()).containsExactly(CardColor.GREEN);
+        assertThat(tokens.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
         assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
         assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
     }
@@ -40,34 +44,37 @@ class SelesnyaGuildmageTest extends BaseCardTest {
     @DisplayName("Second ability boosts creatures you control until end of turn")
     void secondAbilityBoostsOwnCreaturesUntilEndOfTurn() {
         addReadyGuildmage(player1);
-        Permanent ownBears = addReady(player1, new GrizzlyBears());
-        Permanent opposingBears = addReady(player2, new GrizzlyBears());
+        Permanent ownGuildmage = addReadyGuildmage(player1);
+        Permanent opposingGuildmage = addReadyGuildmage(player2);
         addMana(ManaColor.COLORLESS, 3);
         addMana(ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownGuildmage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownGuildmage)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingGuildmage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingGuildmage)).isEqualTo(2);
+
+        Permanent laterGuildmage = addReadyGuildmage(player1);
+        assertThat(gqs.getEffectivePower(gd, laterGuildmage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterGuildmage)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownGuildmage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownGuildmage)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingGuildmage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingGuildmage)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterGuildmage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterGuildmage)).isEqualTo(2);
     }
 
     private Permanent addReadyGuildmage(Player player) {
-        return addReady(player, new SelesnyaGuildmage());
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new SelesnyaGuildmage());
     }
 
     private void addMana(ManaColor color, int amount) {

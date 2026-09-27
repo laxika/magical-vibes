@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
@@ -174,6 +175,9 @@ public class StackResolutionService {
         // opponent's spell or ability. Cleared once resolution finishes.
         gameData.currentlyResolvingControllerId = entry.getControllerId();
         try {
+            if (beginDirectTriggeredModal(gameData, entry)) {
+                return;
+            }
             switch (entry.getEntryType()) {
                 case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
                 case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
@@ -435,6 +439,19 @@ public class StackResolutionService {
         }
     }
 
+    private boolean beginDirectTriggeredModal(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                || entry.getEffectsToResolve().size() != 1
+                || !(entry.getEffectsToResolve().getFirst() instanceof TriggeredModalEffect modal)) {
+            return false;
+        }
+
+        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                entry.getCard(), entry.getControllerId(), modal.choice(), entry.getSourcePermanentId()));
+        triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+        return true;
+    }
+
     private void queueWarpExileIfPresent(GameData gameData, StackEntry entry, Permanent permanent) {
         if (entry.isCastWithWarp()
                 && gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
@@ -622,6 +639,10 @@ public class StackResolutionService {
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
+        }
+        if (entry.isCastWithEscape()) {
+            entry.getEscapeExiledCardIds().forEach(cardId ->
+                    gameData.associateExiledCardWithSource(cardId, perm.getId()));
         }
         applySneakAttackState(perm, entry);
         if (entry.isCastWithWarp()) {
@@ -864,11 +885,13 @@ public class StackResolutionService {
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
-                boolean hasControlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
-                if (hasControlEffect) {
+                CardEffect controlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElse(null);
+                if (controlEffect != null) {
                     creatureControlService.applyControlEffect(gameData, controllerId, target,
-                            new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                            controlEffect, EffectDuration.WHILE_ATTACHED,
                             perm.getId(), characteristics.getName());
                 }
 
@@ -1552,6 +1575,8 @@ public class StackResolutionService {
         if (placed <= 0) return;
         target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + placed);
         triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
+        permanentCounterSupport.fireYouPutCountersOnAnotherCreatureTriggers(
+                gameData, target, CounterType.PHYLACTERY, placed, controllerId);
         gameLogService.append(gameData,
                 GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());

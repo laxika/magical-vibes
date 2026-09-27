@@ -1,96 +1,135 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
+import com.github.laxika.magicalvibes.cards.o.OneWithNothing;
+import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
+import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IntoTheFray.class, ArabaMothrider.class, SpiritualVisit.class, OneWithNothing.class,
+        OboroPalaceInTheClouds.class})
 class IntoTheFrayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature must attack this turn if able")
     void targetMustAttackThisTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
         harness.setHand(player1, List.of(new IntoTheFray()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.isMustAttackThisTurn()).isTrue();
-        assertThat(bears.getMustAttackTargetId()).isNull();
+        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(target.getMustAttackTargetId()).isNull();
     }
 
     @Test
     @DisplayName("The attack requirement wears off at end of turn")
     void attackRequirementWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
         harness.setHand(player1, List.of(new IntoTheFray()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Grizzly Bears").isMustAttackThisTurn()).isFalse();
+        assertThat(target.isMustAttackThisTurn()).isFalse();
     }
 
     @Test
     @DisplayName("Splices onto an Arcane spell and leaves the card in hand")
     void splicesOntoArcaneSpell() {
-        Card arcaneShock = new Shock().createRuntimeCopy();
-        arcaneShock.setSubtypes(List.of(CardSubtype.ARCANE));
-        harness.addToBattlefield(player2, new HillGiant());
-        harness.setHand(player1, List.of(arcaneShock, new IntoTheFray()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        SpiritualVisit spiritualVisit = new SpiritualVisit();
+        IntoTheFray intoTheFray = new IntoTheFray();
+        harness.setHand(player1, List.of(spiritualVisit, intoTheFray));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castWithSplice(player1, 0, targetId, List.of(1));
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
         harness.passBothPriorities();
 
-        Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getMarkedDamage()).isEqualTo(2);
-        assertThat(giant.isMustAttackThisTurn()).isTrue();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(Card::getName)
-                .containsExactly("Into the Fray");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(intoTheFray);
     }
 
     @Test
     @DisplayName("Cannot target a noncreature")
     void cannotTargetNonCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
         harness.setHand(player1, List.of(new IntoTheFray()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     @Test
     @DisplayName("Cannot splice onto a non-Arcane spell")
     void cannotSpliceOntoNonArcaneSpell() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Shock(), new IntoTheFray()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        harness.setHand(player1, List.of(new OneWithNothing(), new IntoTheFray()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, targetId, List.of(1)))
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, target.getId(), List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot be spliced");
+    }
+
+    @Test
+    @DisplayName("Requires the target to be declared as an attacker when it can attack")
+    void requiresAttackWhenAble() {
+        Permanent target = addCreatureReady(player2, new ArabaMothrider());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new IntoTheFray()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("Does not require a creature unable to attack to attack")
+    void doesNotRequireAttackWhenUnable() {
+        Permanent target = addCreatureReady(player2, new ArabaMothrider());
+        target.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new IntoTheFray()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
+
+        assertThat(target.isAttacking()).isFalse();
     }
 }

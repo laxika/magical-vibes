@@ -1,64 +1,70 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(MoonwingMoth.class)
 class MoonwingMothTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Boosts a target creature +0/+1 until end of turn")
-    void boostsTargetCreature() {
-        Permanent target = addMoonwingMothAndTarget();
+    @DisplayName("Boosts itself +0/+1 until end of turn")
+    void boostsSelf() {
+        Permanent moth = addCreatureReady(player1, new MoonwingMoth());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(moth.getPowerModifier()).isZero();
+        assertThat(moth.getToughnessModifier()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Taps Moonwing Moth when its ability is activated")
-    void tapsOnActivation() {
-        Permanent target = addMoonwingMothAndTarget();
+    @DisplayName("Does not tap Moonwing Moth when its ability is activated")
+    void doesNotTapOnActivation() {
+        Permanent moth = addCreatureReady(player1, new MoonwingMoth());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, null);
 
-        assertThat(findPermanent(player1, "Moonwing Moth").isTapped()).isTrue();
+        assertThat(moth.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Boost wears off at cleanup")
     void boostWearsOff() {
-        Permanent target = addMoonwingMothAndTarget();
+        Permanent moth = addCreatureReady(player1, new MoonwingMoth());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(moth.getPowerModifier()).isZero();
+        assertThat(moth.getToughnessModifier()).isZero();
     }
 
-    private Permanent addMoonwingMothAndTarget() {
-        harness.addToBattlefield(player1, new MoonwingMoth());
-        findPermanent(player1, "Moonwing Moth").setSummoningSick(false);
+    @Test
+    @DisplayName("Can activate the ability multiple times if mana allows")
+    void canActivateMultipleTimes() {
+        Permanent moth = addCreatureReady(player1, new MoonwingMoth());
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent target = new Permanent(new GrizzlyBears());
-        target.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(target);
-        return target;
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(moth.getPowerModifier()).isZero();
+        assertThat(moth.getToughnessModifier()).isEqualTo(2);
     }
 }

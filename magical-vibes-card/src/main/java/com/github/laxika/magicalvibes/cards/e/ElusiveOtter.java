@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "225")
+@CardRegistration(set = "SOC", collectorNumber = "306")
 public class ElusiveOtter extends Card {
 
     public ElusiveOtter() {

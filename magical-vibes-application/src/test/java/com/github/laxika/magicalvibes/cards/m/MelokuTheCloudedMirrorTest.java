@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MelokuTheCloudedMirror.class, Island.class, Plains.class})
 class MelokuTheCloudedMirrorTest extends BaseCardTest {
 
     @Test
@@ -41,6 +46,9 @@ class MelokuTheCloudedMirrorTest extends BaseCardTest {
         Permanent token = tokens.getFirst();
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ILLUSION);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
     }
 
@@ -56,14 +64,41 @@ class MelokuTheCloudedMirrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate without enough mana")
+    void cannotActivateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new MelokuTheCloudedMirror());
+        harness.addToBattlefield(player1, new Island());
+
+        int melokuIndex = battlefieldIndex(player1, "Meloku the Clouded Mirror");
+        assertThatThrownBy(() -> harness.activateAbility(player1, melokuIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot return an opponent's land as the cost")
+    void cannotReturnOpponentsLand() {
+        harness.addToBattlefield(player1, new MelokuTheCloudedMirror());
+        harness.addToBattlefield(player2, new Island());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        int melokuIndex = battlefieldIndex(player1, "Meloku the Clouded Mirror");
+        assertThatThrownBy(() -> harness.activateAbility(player1, melokuIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Chooses which land to return when several are available")
     void choosesLandWhenSeveralAvailable() {
         harness.addToBattlefield(player1, new MelokuTheCloudedMirror());
         harness.addToBattlefield(player1, new Island());
-        harness.addToBattlefield(player1, new Plains());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.addMana(player1, ManaColor.BLUE, 1);
-
-        Permanent plains = findPermanent(player1, "Plains");
 
         int melokuIndex = battlefieldIndex(player1, "Meloku the Clouded Mirror");
         harness.activateAbility(player1, melokuIndex, null, null);

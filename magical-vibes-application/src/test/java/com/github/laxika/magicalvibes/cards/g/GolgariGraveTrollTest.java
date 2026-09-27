@@ -27,10 +27,8 @@ class GolgariGraveTrollTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with a +1/+1 counter for each creature card in its controller's graveyard")
     void entersWithCountersPerCreatureCard() {
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player1.getId()).add(new GiantSpider());
-        gd.playerGraveyards.get(player1.getId()).add(new Shock());
-        gd.playerGraveyards.get(player2.getId()).add(new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GiantSpider(), new Shock()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
 
         castTroll();
 
@@ -86,6 +84,44 @@ class GolgariGraveTrollTest extends BaseCardTest {
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
     }
 
+    @Test
+    @DisplayName("May decline dredge and draw normally")
+    void mayDeclineDredgeAndDrawNormally() {
+        GolgariGraveTroll troll = new GolgariGraveTroll();
+        List<Card> library = List.of(
+                new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest());
+        harness.setGraveyard(player1, List.of(troll));
+        harness.setLibrary(player1, library);
+
+        resolveDraw();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(library.getFirst());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(troll);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library.subList(1, library.size()));
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not offer dredge when the library has fewer than six cards")
+    void doesNotOfferDredgeWithInsufficientLibrary() {
+        GolgariGraveTroll troll = new GolgariGraveTroll();
+        List<Card> library = List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest());
+        harness.setGraveyard(player1, List.of(troll));
+        harness.setLibrary(player1, library);
+
+        resolveDraw();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(library.getFirst());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(troll);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library.subList(1, library.size()));
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
     private void castTroll() {
         harness.setHand(player1, List.of(new GolgariGraveTroll()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -96,10 +132,8 @@ class GolgariGraveTrollTest extends BaseCardTest {
     }
 
     private Permanent addReadyTroll(Player player, int counters) {
-        Permanent troll = new Permanent(new GolgariGraveTroll());
-        troll.setSummoningSick(false);
+        Permanent troll = addCreatureReady(player, new GolgariGraveTroll());
         troll.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
-        gd.playerBattlefields.get(player.getId()).add(troll);
         return troll;
     }
 

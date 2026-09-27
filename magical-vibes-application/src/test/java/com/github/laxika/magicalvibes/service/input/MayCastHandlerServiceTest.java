@@ -82,6 +82,7 @@ class MayCastHandlerServiceTest {
     @Mock private SpellCastingService spellCastingService;
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private ValidTargetService validTargetService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport exileCastTargetSupport;
 
     @InjectMocks
     private MayCastHandlerService svc;

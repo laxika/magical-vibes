@@ -31,4 +31,21 @@ class InfectiousHostTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
     }
+
+    @Test
+    void whenItDiesItsControllerCanBeChosenAsTargetPlayer() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new InfectiousHost());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        host.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
 }

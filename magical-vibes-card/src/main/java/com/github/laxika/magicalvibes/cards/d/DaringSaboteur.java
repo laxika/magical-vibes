@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "49")
+@CardRegistration(set = "NCC", collectorNumber = "217")
 public class DaringSaboteur extends Card {
 
     public DaringSaboteur() {

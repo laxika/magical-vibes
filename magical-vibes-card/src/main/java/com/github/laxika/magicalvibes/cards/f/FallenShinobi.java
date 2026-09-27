@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLi
 
 @CardRegistration(set = "MH1", collectorNumber = "199")
 @CardRegistration(set = "AA3", collectorNumber = "19")
+@CardRegistration(set = "NCC", collectorNumber = "338")
 public class FallenShinobi extends Card {
 
     public FallenShinobi() {

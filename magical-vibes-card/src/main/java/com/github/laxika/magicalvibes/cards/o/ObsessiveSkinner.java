@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "220")
 @CardRegistration(set = "SIR", collectorNumber = "207")
+@CardRegistration(set = "DSC", collectorNumber = "191")
 public class ObsessiveSkinner extends Card {
 
     public ObsessiveSkinner() {

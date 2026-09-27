@@ -56,7 +56,7 @@ public class PlayedCardNameTriggerCollectorService {
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return sc.castZone() == Zone.EXILE
-                && collectTransform(match, sc.exiledSourcePermanentId(), sc.spellCard());
+                && collectFollowUp(match, sc.exiledSourcePermanentId(), sc.spellCard(), trigger.followUpEffect());
     }
 
     @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
@@ -65,7 +65,7 @@ public class PlayedCardNameTriggerCollectorService {
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return lp.fromExile()
-                && collectTransform(match, lp.exiledSourcePermanentId(), lp.landCard());
+                && collectFollowUp(match, lp.exiledSourcePermanentId(), lp.landCard(), trigger.followUpEffect());
     }
 
     @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
@@ -245,8 +245,8 @@ public class PlayedCardNameTriggerCollectorService {
         return true;
     }
 
-    private boolean collectTransform(TriggerMatchContext match, UUID exiledSourcePermanentId,
-                                     Card playedCard) {
+    private boolean collectFollowUp(TriggerMatchContext match, UUID exiledSourcePermanentId,
+                                    Card playedCard, CardEffect followUpEffect) {
         if (!match.permanent().getId().equals(exiledSourcePermanentId)) {
             return false;
         }
@@ -257,7 +257,7 @@ public class PlayedCardNameTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new TransformSelfEffect())),
+                new ArrayList<>(List.of(followUpEffect)),
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 @CardRegistration(set = "THS", collectorNumber = "180")
 @CardRegistration(set = "PIO", collectorNumber = "196")
+@CardRegistration(set = "TDC", collectorNumber = "272")
 public class SylvanCaryatid extends Card {
 
     public SylvanCaryatid() {

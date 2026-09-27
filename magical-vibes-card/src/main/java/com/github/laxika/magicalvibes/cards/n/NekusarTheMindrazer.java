@@ -21,6 +21,6 @@ public class NekusarTheMindrazer extends Card {
 
         // Whenever an opponent draws a card, Nekusar deals 1 damage to that player.
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

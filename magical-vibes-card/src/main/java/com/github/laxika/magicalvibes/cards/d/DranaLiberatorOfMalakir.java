@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "109")
+@CardRegistration(set = "NCC", collectorNumber = "248")
 public class DranaLiberatorOfMalakir extends Card {
 
     public DranaLiberatorOfMalakir() {

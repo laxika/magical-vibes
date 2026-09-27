@@ -30,6 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CostEffectClassificationTest {
 
+    /** Paid through AlternativeCostForSpellsEffect by the casting services, not as an additional cost. */
+    private static final Set<String> ALTERNATIVE_ONLY_COST_TYPES = Set.of(
+            "PayLifeEqualToSpellManaValueCost");
+
     /**
      * Cost types only ever used as activation costs (activated/triggered abilities, crew, etc.).
      * If one of these starts appearing in a SPELL slot, move it to
@@ -63,6 +67,7 @@ class CostEffectClassificationTest {
             "PayEchoCost",
             "PayEnergyCost",
             "PayLifeForEachCardInHandCost",
+            "PayLifeForEachCommanderColorCost",
             "PayManaCost",
             "PayMulticoloredSourceManaCost",
             "PutCounterOnSourceCost",
@@ -117,7 +122,6 @@ class CostEffectClassificationTest {
             "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
-            "PayLifeEqualToSpellManaValueCost",
             "PayLifeOrPayManaCost",
             "ChooseXValueCost",
             "ChooseCreatureTypeCost",
@@ -165,10 +169,12 @@ class CostEffectClassificationTest {
         for (String typeName : costEffectTypeNames()) {
             boolean isHandled = handled.contains(typeName);
             boolean isAbilityOnly = ABILITY_ONLY_COST_TYPES.contains(typeName);
-            if (!isHandled && !isAbilityOnly) {
+            boolean isAlternativeOnly = ALTERNATIVE_ONLY_COST_TYPES.contains(typeName);
+            if (!isHandled && !isAbilityOnly && !isAlternativeOnly) {
                 unclassified.add(typeName);
             }
-            if (isHandled && isAbilityOnly) {
+            if ((isHandled ? 1 : 0) + (isAbilityOnly ? 1 : 0)
+                    + (isAlternativeOnly ? 1 : 0) > 1) {
                 doublyClassified.add(typeName);
             }
         }

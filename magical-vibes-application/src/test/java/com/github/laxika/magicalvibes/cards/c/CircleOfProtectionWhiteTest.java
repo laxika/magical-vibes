@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.j.Justice;
+import com.github.laxika.magicalvibes.cards.l.Lifelace;
 import com.github.laxika.magicalvibes.cards.p.PearledUnicorn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CircleOfProtectionWhite.class, DAvenantArcher.class, GrizzlyBears.class,
-        HealingSalve.class, Incinerate.class, Justice.class, PearledUnicorn.class})
+        HealingSalve.class, Incinerate.class, Justice.class, Lifelace.class, PearledUnicorn.class})
 class CircleOfProtectionWhiteTest extends BaseCardTest {
 
     @Test
@@ -175,6 +176,30 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.sourceId().equals(white.getId()));
+    }
+
+    @Test
+    @DisplayName("A chosen source remains protected after changing color")
+    void chosenSourceRemainsProtectedAfterChangingColor() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new CircleOfProtectionWhite());
+        Permanent source = addCreatureReady(player2, new PearledUnicorn());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.setHand(player1, List.of(new Lifelace()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
     @Test

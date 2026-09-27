@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "57")
+@CardRegistration(set = "SLD", collectorNumber = "2317")
+@CardRegistration(set = "SLD", collectorNumber = "2332")
 public class Miscast extends Card {
 
     public Miscast() {

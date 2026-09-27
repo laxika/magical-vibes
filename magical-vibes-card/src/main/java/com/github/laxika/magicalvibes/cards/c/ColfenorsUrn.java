@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "254")
+@CardRegistration(set = "TDC", collectorNumber = "315")
 public class ColfenorsUrn extends Card {
 
     public ColfenorsUrn() {

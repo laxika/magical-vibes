@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "431")
+@CardRegistration(set = "SOC", collectorNumber = "333")
 public class TomikWielderOfLaw extends Card {
 
     public TomikWielderOfLaw() {

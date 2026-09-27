@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "2X2", collectorNumber = "318")
 @CardRegistration(set = "C13", collectorNumber = "274")
 @CardRegistration(set = "CMD", collectorNumber = "265")
+@CardRegistration(set = "DSC", collectorNumber = "261")
 public class AzoriusChancery extends Card {
 
     public AzoriusChancery() {

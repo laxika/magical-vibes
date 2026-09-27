@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.Rancor;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.c.ChainLightning;
+import com.github.laxika.magicalvibes.cards.g.GiantStrength;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BartelRuneaxe.class, Rancor.class, GrizzlyBears.class, Shock.class})
+@CardUsed({BartelRuneaxe.class, GiantStrength.class, BarbaryApes.class, ChainLightning.class})
 class BartelRuneaxeTest extends BaseCardTest {
 
     @Test
@@ -24,8 +24,8 @@ class BartelRuneaxeTest extends BaseCardTest {
     void auraSpellsCannotTargetBartelRuneaxe() {
         Permanent bartel = harness.addToBattlefieldAndReturn(player2, new BartelRuneaxe());
 
-        harness.setHand(player1, List.of(new Rancor()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new GiantStrength()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bartel.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -37,26 +37,26 @@ class BartelRuneaxeTest extends BaseCardTest {
     void nonAuraSpellsCanTargetBartelRuneaxe() {
         Permanent bartel = harness.addToBattlefieldAndReturn(player2, new BartelRuneaxe());
 
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new ChainLightning()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bartel.getId());
+        harness.castSorcery(player1, 0, bartel.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Shock"));
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Chain Lightning"));
     }
 
     @Test
     @DisplayName("Aura spells can target other creatures")
     void auraSpellsCanTargetOtherCreatures() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ape = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
 
-        harness.setHand(player1, List.of(new Rancor()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new GiantStrength()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castEnchantment(player1, 0, bear.getId());
+        harness.castEnchantment(player1, 0, ape.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ape)).isEqualTo(4);
     }
 }

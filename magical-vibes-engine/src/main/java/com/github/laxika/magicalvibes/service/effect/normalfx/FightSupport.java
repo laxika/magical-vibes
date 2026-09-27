@@ -44,6 +44,8 @@ public class FightSupport {
         }
         UUID firstControllerId = gameQueryService.findPermanentController(gameData, first.getId());
         UUID secondControllerId = gameQueryService.findPermanentController(gameData, second.getId());
+        gameData.permanentsThatFoughtThisTurn.add(first.getId());
+        gameData.permanentsThatFoughtThisTurn.add(second.getId());
         dealMutualDamage(gameData, entry, first, second, true);
         dealMutualDamage(gameData, entry, second, first, true);
         triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, first, firstControllerId);

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KamahlPitFighter;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.k.KodamaOfTheNorthTree;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UntaidakeTheCloudKeeper.class, KamahlPitFighter.class, GrizzlyBears.class})
+@CardUsed({UntaidakeTheCloudKeeper.class, KodamaOfTheNorthTree.class, HumbleBudoka.class})
 class UntaidakeTheCloudKeeperTest extends BaseCardTest {
 
     private void activateManaAbility() {
@@ -40,12 +40,12 @@ class UntaidakeTheCloudKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Activating taps Untaidake, pays 2 life and adds two legendary-only colorless")
     void activatingAddsRestrictedManaAndPaysLife() {
-        harness.addToBattlefield(player1, new UntaidakeTheCloudKeeper());
+        Permanent untaidake = harness.addToBattlefieldAndReturn(player1, new UntaidakeTheCloudKeeper());
         harness.setLife(player1, 20);
 
         activateManaAbility();
 
-        assertThat(findPermanent(player1, "Untaidake, the Cloud Keeper").isTapped()).isTrue();
+        assertThat(untaidake.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.stack).isEmpty();
         assertThat(pool().get(ManaColor.COLORLESS)).isZero();
@@ -60,15 +60,13 @@ class UntaidakeTheCloudKeeperTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.setHand(player1, List.of(new KamahlPitFighter()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.setHand(player1, List.of(new KodamaOfTheNorthTree()));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent kamahl = findPermanent(player1, "Kamahl, Pit Fighter");
-        assertThat(kamahl).isNotNull();
+        harness.assertOnBattlefield(player1, "Kodama of the North Tree");
         assertThat(pool().getLegendarySpellOnlyColorless()).isZero();
     }
 
@@ -81,11 +79,25 @@ class UntaidakeTheCloudKeeperTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new HumbleBudoka()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(pool().getLegendarySpellOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Untaidake cannot be activated without 2 life")
+    void cannotActivateWithoutTwoLife() {
+        Permanent untaidake = harness.addToBattlefieldAndReturn(player1, new UntaidakeTheCloudKeeper());
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> activateManaAbility())
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(untaidake.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
+        assertThat(pool().getLegendarySpellOnlyColorless()).isZero();
     }
 }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "260")
+@CardRegistration(set = "SOC", collectorNumber = "399")
 public class RestlessSpire extends Card {
 
     public RestlessSpire() {

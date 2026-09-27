@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "OMB", collectorNumber = "34")
 @CardRegistration(set = "CMM", collectorNumber = "295")
 @CardRegistration(set = "CMM", collectorNumber = "563")
+@CardRegistration(set = "LTC", collectorNumber = "249")
 public class HeroicIntervention extends Card {
 
     public HeroicIntervention() {

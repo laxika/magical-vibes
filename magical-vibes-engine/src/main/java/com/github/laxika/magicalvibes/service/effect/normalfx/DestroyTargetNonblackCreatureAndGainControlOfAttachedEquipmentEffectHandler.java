@@ -50,12 +50,9 @@ public class DestroyTargetNonblackCreatureAndGainControlOfAttachedEquipmentEffec
 
         GainControlOfTargetEffect gainControl = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (Permanent equipment : attachedEquipment) {
-            UUID equipmentController = gameQueryService.findPermanentController(gameData, equipment.getId());
-            if (equipmentController != null && !equipmentController.equals(entry.getControllerId())) {
-                creatureControlService.applyControlEffect(gameData, entry.getControllerId(), equipment,
-                        gainControl, ControlDuration.PERMANENT.toEffectDuration(), null,
-                        entry.getCard().getName());
-            }
+            creatureControlService.applyControlEffect(gameData, entry.getControllerId(), equipment,
+                    gainControl, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    entry.getCard().getName());
         }
     }
 }

@@ -61,10 +61,30 @@ class ChantOfVituGhaziTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
-    private void castChantOfVituGhazi() {
+    @Test
+    @DisplayName("Convoke taps a creature and pays part of the cost")
+    void castsWithConvoke() {
+        harness.setLife(player1, 20);
+        Permanent convokeCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attacker.setSummoningSick(false);
         harness.setHand(player1, List.of(new ChantOfVituGhazi()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castAndResolveInstant(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convokeCreature.getId()));
+
+        assertThat(convokeCreature.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    private void castChantOfVituGhazi() {
+        harness.castFromHand(player1, new ChantOfVituGhazi(), "{6}{W}{W}");
+        harness.passBothPriorities();
     }
 }

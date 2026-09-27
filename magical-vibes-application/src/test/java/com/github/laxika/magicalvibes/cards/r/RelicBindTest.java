@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.ShalaiVoiceOfPlenty;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -19,7 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RelicBind.class, GrizzlyBears.class, JaceBeleren.class, Ornithopter.class})
+@CardUsed({RelicBind.class, GrizzlyBears.class, JaceBeleren.class, Ornithopter.class,
+        ShalaiVoiceOfPlenty.class})
 class RelicBindTest extends BaseCardTest {
 
     // "Enchant artifact an opponent controls. Whenever enchanted artifact becomes tapped, choose
@@ -121,6 +124,24 @@ class RelicBindTest extends BaseCardTest {
         tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.DAMAGE, jace.getId());
 
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage mode does not offer an opponent with hexproof as a target")
+    void damageModeCannotTargetHexproofOpponent() {
+        Permanent artifact = attachAuraToOpponentArtifact();
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+
+        artifact.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+        harness.passPriority(player1);
+        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.DAMAGE);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).doesNotContain(player2.getId());
     }
 
     @Test

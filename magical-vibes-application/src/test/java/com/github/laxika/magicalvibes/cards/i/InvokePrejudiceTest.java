@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InvokePrejudice.class, GrizzlyBears.class, LlanowarElves.class, SuntailHawk.class})
+@CardUsed({InvokePrejudice.class, GrizzlyBears.class, LlanowarElves.class, SuntailHawk.class, Spellbook.class})
 class InvokePrejudiceTest extends BaseCardTest {
 
     @Test
@@ -22,11 +23,9 @@ class InvokePrejudiceTest extends BaseCardTest {
     void countersCreatureSpellWithNoSharedColorWhenCasterCannotPay() {
         harness.addToBattlefield(player1, new InvokePrejudice());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new SuntailHawk(), "{W}");
 
-        harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Suntail Hawk");
@@ -37,11 +36,9 @@ class InvokePrejudiceTest extends BaseCardTest {
     void doesNotTriggerForCreatureSpellSharingColor() {
         harness.addToBattlefield(player1, new InvokePrejudice());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player2, List.of(new LlanowarElves()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new LlanowarElves(), "{G}");
 
-        harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Llanowar Elves");
@@ -66,5 +63,51 @@ class InvokePrejudiceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when the controller casts a creature spell")
+    void doesNotTriggerForControllerCast() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Does not trigger for a noncreature spell")
+    void doesNotTriggerForNoncreatureSpell() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Spellbook(), "{0}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("Uses the triggering creature spell's mana value for the payment")
+    void usesTriggeringCreatureSpellManaValueForPayment() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

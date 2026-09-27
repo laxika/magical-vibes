@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -18,6 +19,7 @@ import java.util.Set;
 public class InfestedRoothold extends Card {
 
     public InfestedRoothold() {
+        addEffect(EffectSlot.STATIC, new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.ARTIFACT),

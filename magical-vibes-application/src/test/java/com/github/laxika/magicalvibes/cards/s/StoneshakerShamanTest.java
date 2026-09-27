@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StoneshakerShaman.class, Forest.class, Mountain.class, Plains.class})
+@CardUsed({StoneshakerShaman.class, BorosSwiftblade.class, Forest.class, Mountain.class, Plains.class})
 class StoneshakerShamanTest extends BaseCardTest {
 
     @Test
@@ -56,6 +57,42 @@ class StoneshakerShamanTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(tapped);
+    }
+
+    @Test
+    @DisplayName("The controller also sacrifices an untapped land during their own end step")
+    void controllerSacrificesUntappedLandDuringOwnEndStep() {
+        harness.addToBattlefield(player1, new StoneshakerShaman());
+        Permanent kept = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        resolveEndStep(player1);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(kept.getId(), sacrificed.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(kept)
+                .doesNotContain(sacrificed);
+    }
+
+    @Test
+    @DisplayName("A nonland permanent is not eligible for the sacrifice")
+    void nonlandPermanentIsNotEligible() {
+        harness.addToBattlefield(player1, new StoneshakerShaman());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorosSwiftblade());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveEndStep(player2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(creature)
+                .doesNotContain(land);
     }
 
     private void resolveEndStep(Player activePlayer) {

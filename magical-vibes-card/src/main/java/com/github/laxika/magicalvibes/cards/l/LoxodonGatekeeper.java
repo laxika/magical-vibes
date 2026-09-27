@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "25")
+@CardRegistration(set = "SLD", collectorNumber = "2354")
+@CardRegistration(set = "SLD", collectorNumber = "2358")
 public class LoxodonGatekeeper extends Card {
 
     public LoxodonGatekeeper() {

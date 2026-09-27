@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "189")
+@CardRegistration(set = "SOC", collectorNumber = "311")
 public class GalazethPrismari extends Card {
 
     public GalazethPrismari() {

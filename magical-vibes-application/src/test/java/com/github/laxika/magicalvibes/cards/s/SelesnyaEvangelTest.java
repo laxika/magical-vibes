@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,14 +12,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SelesnyaEvangel.class, GrizzlyBears.class})
+@CardUsed({SelesnyaEvangel.class, Watchwolf.class, SelesnyaSignet.class})
 class SelesnyaEvangelTest extends BaseCardTest {
 
     @Test
     void tapsSourceAndAnotherCreatureToCreateSaproling() {
-        Permanent evangel = harness.addToBattlefieldAndReturn(player1, new SelesnyaEvangel());
-        evangel.setSummoningSick(false);
-        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
+        Permanent otherCreature = addCreatureReady(player1, new Watchwolf());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -37,11 +36,34 @@ class SelesnyaEvangelTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutAnotherUntappedCreature() {
-        Permanent evangel = harness.addToBattlefieldAndReturn(player1, new SelesnyaEvangel());
-        evangel.setSummoningSick(false);
+        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotUseTappedOrNonCreaturePermanentsToPayTheCreatureTapCost() {
+        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
+        Permanent tappedCreature = addCreatureReady(player1, new Watchwolf());
+        tappedCreature.tap();
+        harness.addToBattlefieldAndReturn(player1, new SelesnyaSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(evangel.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotUseCreatureControlledByOpponentToPayTheCost() {
+        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
+        addCreatureReady(player2, new Watchwolf());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(evangel.isTapped()).isFalse();
     }
 }

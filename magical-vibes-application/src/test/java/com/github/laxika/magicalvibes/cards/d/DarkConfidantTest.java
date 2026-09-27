@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarkConfidant.class, GrizzlyBears.class, Forest.class})
+@CardUsed({DarkConfidant.class, DimirSignet.class, Forest.class})
 class DarkConfidantTest extends BaseCardTest {
 
     @Test
@@ -20,7 +19,7 @@ class DarkConfidantTest extends BaseCardTest {
     void revealsTopCardAndLosesLifeEqualToManaValue() {
         harness.addToBattlefield(player1, new DarkConfidant());
         harness.setHand(player1, List.of());
-        Card topCard = new GrizzlyBears();
+        Card topCard = new DimirSignet();
         harness.setLibrary(player1, List.of(topCard));
         harness.setLife(player1, 20);
 
@@ -53,7 +52,7 @@ class DarkConfidantTest extends BaseCardTest {
     void doesNotTriggerDuringOpponentsUpkeep() {
         harness.addToBattlefield(player1, new DarkConfidant());
         harness.setHand(player1, List.of());
-        Card topCard = new GrizzlyBears();
+        Card topCard = new DimirSignet();
         harness.setLibrary(player1, List.of(topCard));
         harness.setLife(player1, 20);
 
@@ -70,7 +69,7 @@ class DarkConfidantTest extends BaseCardTest {
     void doesNothingWhenLibraryIsEmpty() {
         harness.addToBattlefield(player1, new DarkConfidant());
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);

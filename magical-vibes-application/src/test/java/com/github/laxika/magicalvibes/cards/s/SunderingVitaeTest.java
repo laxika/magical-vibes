@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.g.GlassGolem;
+import com.github.laxika.magicalvibes.cards.g.GolgariGermination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,68 +17,75 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SunderingVitae.class, FountainOfYouth.class, AngelicChorus.class, GrizzlyBears.class})
+@CardUsed({SunderingVitae.class, BorosSignet.class, GolgariGermination.class,
+        BorosRecruit.class, GlassGolem.class})
 class SunderingVitaeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a target artifact")
     void destroysArtifact() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        castAt(harness.getPermanentId(player2, "Fountain of Youth"));
+        harness.addToBattlefield(player2, new BorosSignet());
+        castAndResolveAt(harness.getPermanentId(player2, "Boros Signet"));
 
-        harness.passBothPriorities();
-
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Boros Signet");
+        harness.assertInGraveyard(player2, "Boros Signet");
     }
 
     @Test
     @DisplayName("Destroys a target enchantment")
     void destroysEnchantment() {
-        harness.addToBattlefield(player2, new AngelicChorus());
-        castAt(harness.getPermanentId(player2, "Angelic Chorus"));
+        harness.addToBattlefield(player2, new GolgariGermination());
+        castAndResolveAt(harness.getPermanentId(player2, "Golgari Germination"));
 
-        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Golgari Germination");
+        harness.assertInGraveyard(player2, "Golgari Germination");
+    }
 
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+    @Test
+    @DisplayName("Destroys a target artifact creature")
+    void destroysArtifactCreature() {
+        harness.addToBattlefield(player2, new GlassGolem());
+        castAndResolveAt(harness.getPermanentId(player2, "Glass Golem"));
+
+        harness.assertNotOnBattlefield(player2, "Glass Golem");
+        harness.assertInGraveyard(player2, "Glass Golem");
     }
 
     @Test
     @DisplayName("Convoke taps creatures to help pay the generic cost")
     void convokePaysForTheSpell() {
-        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.addToBattlefield(player2, new BorosSignet());
         harness.setHand(player1, List.of(new SunderingVitae()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        gs.playCard(gd, player1, 0, null, targetId, null, List.of(),
+        UUID targetId = harness.getPermanentId(player2, "Boros Signet");
+        harness.castInstantWithConvoke(player1, 0, List.of(targetId),
                 List.of(firstCreature.getId(), secondCreature.getId()));
 
         assertThat(firstCreature.isTapped()).isTrue();
         assertThat(secondCreature.isTapped()).isTrue();
 
         harness.passBothPriorities();
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Boros Signet");
     }
 
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BorosRecruit());
         harness.setHand(player1, List.of(new SunderingVitae()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Boros Recruit");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castAt(UUID targetId) {
+    private void castAndResolveAt(UUID targetId) {
         harness.setHand(player1, List.of(new SunderingVitae()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "176")
 @CardRegistration(set = "TSR", collectorNumber = "362")
+@CardRegistration(set = "NCC", collectorNumber = "288")
 public class EvolutionaryLeap extends Card {
 
     public EvolutionaryLeap() {

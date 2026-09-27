@@ -386,7 +386,8 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.builder().card(ect.cardToCast()).text(" targets " + targetName + " (Knowledge Pool).").build());
             log.info("Game {} - {} cast-from-exile targets {}", gameData.id, ect.cardToCast().getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), Zone.EXILE);
+            triggerCollectionService.checkSpellCastTriggers(
+                    gameData, ect.cardToCast(), ect.controllerId(), Zone.EXILE, ect.sourcePermanentId());
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
             if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(
                     gameData, ect.cardToCast().getId())) {
@@ -551,7 +552,8 @@ public class PermanentChoiceSpellHandlerService {
         gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + String.join(", ", targetNames) + ".").build());
         log.info("Game {} - {} multi-target cast-from-exile targets {}", gameData.id, card.getName(), targetNames);
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, ect.controllerId(), Zone.EXILE);
+        triggerCollectionService.checkSpellCastTriggers(
+                gameData, card, ect.controllerId(), Zone.EXILE, ect.sourcePermanentId());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, card.getId())) {
             return;
@@ -620,6 +622,9 @@ public class PermanentChoiceSpellHandlerService {
                             copyCard.getId()));
                 }
             }
+
+            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, gct.cardToCast(), gct.controllerId(),
+                    gct.sourcePermanentId(), gct.afterSuccessfulCastEffect());
 
             Card castCharacteristics = gct.castWithAdventure()
                     ? gct.cardToCast().createRuntimeCopyWithFace(spellCard) : gct.cardToCast();
@@ -737,6 +742,8 @@ public class PermanentChoiceSpellHandlerService {
                         hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
             }
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, hct.cardToCast(), hct.controllerId(),
+                    hct.sourcePermanentId(), hct.afterSuccessfulCastEffect());
         } else {
             if (hct.sourceZone() == Zone.COMMAND) {
                 gameData.playerCommandZones.computeIfAbsent(hct.controllerId(), ignored -> new ArrayList<>())

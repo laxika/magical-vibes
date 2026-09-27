@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.d.DimirCutpurse;
+import com.github.laxika.magicalvibes.cards.d.DimirSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -17,19 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DimirInfiltrator.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DimirInfiltrator.class, BorosRecruit.class, DimirSignet.class, DimirCutpurse.class})
 class DimirInfiltratorTest extends BaseCardTest {
 
     @Test
     void cannotBeBlocked() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new BorosRecruit());
 
-        Permanent infiltrator = new Permanent(new DimirInfiltrator());
-        infiltrator.setSummoningSick(false);
+        Permanent infiltrator = addCreatureReady(player1, new DimirInfiltrator());
         infiltrator.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(infiltrator);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -44,8 +40,8 @@ class DimirInfiltratorTest extends BaseCardTest {
     @Test
     void transmuteSearchesForTheSameManaValue() {
         DimirInfiltrator infiltrator = new DimirInfiltrator();
-        GrizzlyBears matchingCard = new GrizzlyBears();
-        HillGiant differentManaValue = new HillGiant();
+        DimirSignet matchingCard = new DimirSignet();
+        DimirCutpurse differentManaValue = new DimirCutpurse();
         harness.setHand(player1, List.of(infiltrator));
         harness.setLibrary(player1, List.of(matchingCard, differentManaValue));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -58,10 +54,47 @@ class DimirInfiltratorTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(matchingCard);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Dimir Infiltrator");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmuteShufflesWithoutFindingAMatchingCard() {
+        DimirInfiltrator infiltrator = new DimirInfiltrator();
+        BorosRecruit nonMatchingCard = new BorosRecruit();
+        harness.setHand(player1, List.of(infiltrator));
+        harness.setLibrary(player1, List.of(nonMatchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Dimir Infiltrator");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonMatchingCard);
+    }
+
+    @Test
+    void transmuteCanOnlyBeActivatedAtSorcerySpeed() {
+        DimirInfiltrator infiltrator = new DimirInfiltrator();
+        harness.setHand(player1, List.of(infiltrator));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(infiltrator);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }

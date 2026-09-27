@@ -55,6 +55,6 @@ public class TheRuinousWreckingCrew extends Card {
                                 "Each player sacrifices a creature of their choice.",
                                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                                         SacrificeRecipient.EACH_PLAYER))
-                )), new XValue()));
+                ), false, 0, 4), new XValue()));
     }
 }

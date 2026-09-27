@@ -26,6 +26,20 @@ class HornedTrollTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate the regeneration ability while tapped")
+    void canActivateWhenTapped() {
+        Permanent troll = addCreatureReady(player1, new HornedTroll());
+        troll.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Horned Troll from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent troll = addCreatureReady(player1, new HornedTroll());

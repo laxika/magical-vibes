@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,9 +19,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({WallOfDust.class, GrizzlyBears.class})
 class WallOfDustTest extends BaseCardTest {
 
-    private void advanceTurn() {
+    private void advanceTurn(Player nextActivePlayer) {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
     }
 
     @Test
@@ -52,6 +55,25 @@ class WallOfDustTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each creature blocked by Wall of Dust is restricted independently")
+    void eachBlockedCreatureIsRestrictedIndependently() {
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new WallOfDust());
+        addCreatureReady(player2, new WallOfDust());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1)));
+
+        resolveAllTriggers();
+
+        assertThat(firstAttacker.isCantAttackNextTurn()).isTrue();
+        assertThat(secondAttacker.isCantAttackNextTurn()).isTrue();
+    }
+
+    @Test
     @DisplayName("The restriction arms only on the creature's controller's next turn, not the intervening opponent turn")
     void restrictionArmsOnControllersNextTurn() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
@@ -59,13 +81,13 @@ class WallOfDustTest extends BaseCardTest {
 
         // The intervening opponent turn must not arm the restriction.
         harness.forceActivePlayer(player1);
-        advanceTurn();
+        advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(bear.isCantAttackThisTurn()).isFalse();
         assertThat(bear.isCantAttackNextTurn()).isTrue();
 
         // The controller's next turn arms it and it can't be declared as an attacker.
-        advanceTurn();
+        advanceTurn(player1);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(bear.isCantAttackThisTurn()).isTrue();
 
@@ -82,8 +104,8 @@ class WallOfDustTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         // player1 -> player2 -> player1: the following controller turn clears the restriction.
-        advanceTurn();
-        advanceTurn();
+        advanceTurn(player2);
+        advanceTurn(player1);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(bear.isCantAttackThisTurn()).isFalse();
 

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 @CardRegistration(set = "BRR", collectorNumber = "9")
 @CardRegistration(set = "C14", collectorNumber = "233")
 @CardRegistration(set = "40K", collectorNumber = "231")
+@CardRegistration(set = "SLD", collectorNumber = "2461")
 public class CagedSun extends Card {
 
     public CagedSun() {

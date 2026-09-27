@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "83")
+@CardRegistration(set = "DSC", collectorNumber = "153")
 public class ProfessorOnyx extends Card {
 
     public ProfessorOnyx() {

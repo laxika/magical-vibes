@@ -33,4 +33,16 @@ class PrincessLucreziaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
+
+    @Test
+    @DisplayName("Princess Lucrezia cannot tap for mana when already tapped")
+    void alreadyTappedCannotActivate() {
+        Permanent princess = addCreatureReady(player1, new PrincessLucrezia());
+        princess.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
 }

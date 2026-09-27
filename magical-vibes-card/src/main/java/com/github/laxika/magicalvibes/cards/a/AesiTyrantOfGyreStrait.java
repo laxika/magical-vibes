@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 
 @CardRegistration(set = "SLD", collectorNumber = "1442")
 @CardRegistration(set = "SLD", collectorNumber = "1873")
+@CardRegistration(set = "DSC", collectorNumber = "210")
 public class AesiTyrantOfGyreStrait extends Card {
 
     public AesiTyrantOfGyreStrait() {

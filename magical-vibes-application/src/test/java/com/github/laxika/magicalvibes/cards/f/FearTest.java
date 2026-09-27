@@ -31,7 +31,7 @@ class FearTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -45,7 +45,7 @@ class FearTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -192,7 +192,7 @@ class FearTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         // Remove target before resolution
         gd.playerBattlefields.get(player1.getId()).remove(bearsPerm);

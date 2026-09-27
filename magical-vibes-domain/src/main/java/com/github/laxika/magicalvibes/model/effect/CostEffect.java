@@ -138,6 +138,11 @@ public interface CostEffect extends CardEffect {
         return false;
     }
 
+    /** True when the exact permanent exiled to pay this cost is retained for a later effect. */
+    default boolean tracksExiledCard() {
+        return false;
+    }
+
     /**
      * True when the permanents chosen to pay this cost must be retained on the ability's stack
      * entry for a later effect in that ability.
@@ -160,6 +165,11 @@ public interface CostEffect extends CardEffect {
      */
     default int lifePaid(int currentLife) {
         return 0;
+    }
+
+    /** True when this cost pays one life for each color in the payer's commander color identity. */
+    default boolean paysLifeForEachCommanderColorIdentity() {
+        return false;
     }
 
     /**

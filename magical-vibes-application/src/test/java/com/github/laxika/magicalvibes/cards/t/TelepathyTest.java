@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirElemental.class, CoralMerfolk.class, GorillaWarrior.class, GrizzlyBears.class, Telepathy.class})
+@CardUsed({CoralMerfolk.class, GorillaWarrior.class, GrizzlyBears.class, Telepathy.class})
 class TelepathyTest extends BaseCardTest {
 
     @Test
@@ -52,8 +51,8 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Player1 (Telepathy controller) should see opponent's hand cards in the broadcast
-        List<String> p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        assertThat(harness.getConn1().getMessagesContaining("\"opponentHand\""))
+                .anyMatch(m -> m.contains("Coral Merfolk"));
     }
 
     @Test
@@ -67,10 +66,10 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Player2 should have an empty opponentHand
-        List<String> p2Messages = harness.getConn2().getSentMessages();
+        List<String> p2Messages = harness.getConn2().getMessagesContaining("\"opponentHand\"");
         assertThat(p2Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
         // Player2 should not see Gorilla Warrior in opponentHand
-        assertThat(p2Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Gorilla Warrior"));
+        assertThat(p2Messages).noneMatch(m -> m.contains("Gorilla Warrior"));
     }
 
     @Test
@@ -82,9 +81,9 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Player1 should have an empty opponentHand
-        List<String> p1Messages = harness.getConn1().getSentMessages();
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
         assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
-        assertThat(p1Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        assertThat(p1Messages).noneMatch(m -> m.contains("Coral Merfolk"));
     }
 
     @Test
@@ -97,9 +96,8 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Player1 should see both cards
-        List<String> p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"")
-                && m.contains("Coral Merfolk") && m.contains("Gorilla Warrior"));
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
+        assertThat(p1Messages).anyMatch(m -> m.contains("Coral Merfolk") && m.contains("Gorilla Warrior"));
 
         // Change opponent's hand
         harness.setHand(player2, List.of(new GorillaWarrior()));
@@ -108,9 +106,9 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Player1 should now see only Gorilla Warrior
-        p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Gorilla Warrior"));
-        assertThat(p1Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
+        assertThat(p1Messages).anyMatch(m -> m.contains("Gorilla Warrior"));
+        assertThat(p1Messages).noneMatch(m -> m.contains("Coral Merfolk"));
     }
 
     @Test
@@ -122,7 +120,7 @@ class TelepathyTest extends BaseCardTest {
 
         harness.publishState();
 
-        List<String> p1Messages = harness.getConn1().getSentMessages();
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
         assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
     }
 
@@ -138,12 +136,12 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Player1 sees Coral Merfolk
-        List<String> p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
+        assertThat(p1Messages).anyMatch(m -> m.contains("Coral Merfolk"));
 
         // Player2 sees Gorilla Warrior
-        List<String> p2Messages = harness.getConn2().getSentMessages();
-        assertThat(p2Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Gorilla Warrior"));
+        List<String> p2Messages = harness.getConn2().getMessagesContaining("\"opponentHand\"");
+        assertThat(p2Messages).anyMatch(m -> m.contains("Gorilla Warrior"));
     }
 
     @Test
@@ -156,8 +154,8 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Verify hand is revealed
-        List<String> p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
+        assertThat(p1Messages).anyMatch(m -> m.contains("Coral Merfolk"));
 
         // Remove Telepathy from battlefield
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
@@ -166,9 +164,9 @@ class TelepathyTest extends BaseCardTest {
         harness.publishState();
 
         // Hand should no longer be revealed
-        p1Messages = harness.getConn1().getSentMessages();
+        p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
         assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
-        assertThat(p1Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        assertThat(p1Messages).noneMatch(m -> m.contains("Coral Merfolk"));
     }
 
     @Test
@@ -180,8 +178,8 @@ class TelepathyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // After resolving, the game state should include the revealed hand
-        List<String> p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Grizzly Bears"));
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
+        assertThat(p1Messages).anyMatch(m -> m.contains("Grizzly Bears"));
     }
 
     @Test
@@ -196,8 +194,8 @@ class TelepathyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // After resolving, the game state should include the revealed hand
-        List<String> p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
+        assertThat(p1Messages).anyMatch(m -> m.contains("Coral Merfolk"));
     }
 
     @Test
@@ -211,8 +209,8 @@ class TelepathyTest extends BaseCardTest {
         harness.clearMessages();
         harness.publishState();
 
-        List<String> p1Messages = harness.getConn1().getSentMessages();
+        List<String> p1Messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
         assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
-        assertThat(p1Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+        assertThat(p1Messages).noneMatch(m -> m.contains("Coral Merfolk"));
     }
 }

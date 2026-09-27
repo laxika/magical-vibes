@@ -26,6 +26,7 @@ public class KamiOfLunacy extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(5))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

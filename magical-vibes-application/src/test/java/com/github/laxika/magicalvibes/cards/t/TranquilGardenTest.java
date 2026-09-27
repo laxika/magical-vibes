@@ -2,15 +2,14 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(TranquilGarden.class)
 class TranquilGardenTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class TranquilGardenTest extends BaseCardTest {
         assertThat(mana(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(garden.isTapped()).isTrue();
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
 
         assertThat(garden.isTapped()).isFalse();
     }
@@ -37,7 +36,7 @@ class TranquilGardenTest extends BaseCardTest {
 
         assertThat(mana(ManaColor.GREEN)).isEqualTo(1);
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
 
         assertThat(garden.isTapped()).isTrue();
     }
@@ -51,24 +50,25 @@ class TranquilGardenTest extends BaseCardTest {
 
         assertThat(mana(ManaColor.WHITE)).isEqualTo(1);
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
         assertThat(garden.isTapped()).isTrue();
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
         assertThat(garden.isTapped()).isFalse();
     }
 
-    /**
-     * Ends player2's turn so play cascades into player1's untap step and then their upkeep.
-     */
-    private void advanceToPlayerOneUpkeep() {
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("A colored activation keeps only the activated land tapped")
+    void coloredActivationOnlySkipsTheActivatedLand() {
+        Permanent activatedGarden = addGarden();
+        Permanent otherGarden = addGarden();
+        otherGarden.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        advanceToUpkeep(player1);
+
+        assertThat(activatedGarden.isTapped()).isTrue();
+        assertThat(otherGarden.isTapped()).isFalse();
     }
 
     private Permanent addGarden() {

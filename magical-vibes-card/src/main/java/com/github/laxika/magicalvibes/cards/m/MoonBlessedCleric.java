@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "AFR", collectorNumber = "26")
+@CardRegistration(set = "DSC", collectorNumber = "69")
 public class MoonBlessedCleric extends Card {
 
     public MoonBlessedCleric() {

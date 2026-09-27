@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
+import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,17 +17,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MyojinOfNightsReach.class, DevotedRetainer.class, LanternKami.class})
 class MyojinOfNightsReachTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cast from hand enters with a divinity counter and indestructible")
     void castFromHandEntersWithDivinityCounter() {
-        harness.setHand(player1, List.of(new MyojinOfNightsReach()));
-        harness.addMana(player1, ManaColor.BLACK, 10);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MyojinOfNightsReach(), "{5}{B}{B}{B}");
         harness.passBothPriorities();
 
         Permanent myojin = findPermanent(player1, "Myojin of Night's Reach");
@@ -38,7 +37,7 @@ class MyojinOfNightsReachTest extends BaseCardTest {
     @Test
     @DisplayName("Entering without being cast from hand does not get a divinity counter")
     void enteringWithoutCastingDoesNotGetDivinityCounter() {
-        Permanent myojin = harness.addToBattlefieldAndReturn(player1, new MyojinOfNightsReach());
+        Permanent myojin = harness.enterBattlefieldAndReturn(player1, new MyojinOfNightsReach());
 
         assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
         assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -48,8 +47,8 @@ class MyojinOfNightsReachTest extends BaseCardTest {
     @DisplayName("Removing the divinity counter makes each opponent discard their hand")
     void removingDivinityCounterEmptiesOpponentHand() {
         Permanent myojin = addReadyMyojin(player1);
-        harness.setHand(player2, List.of(new GrizzlyBears(), new LightningBolt()));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new DevotedRetainer(), new LanternKami()));
+        harness.setHand(player1, List.of(new DevotedRetainer()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -77,8 +76,7 @@ class MyojinOfNightsReachTest extends BaseCardTest {
     }
 
     private Permanent addReadyMyojin(Player player) {
-        Permanent myojin = harness.addToBattlefieldAndReturn(player, new MyojinOfNightsReach());
-        myojin.setSummoningSick(false);
+        Permanent myojin = addCreatureReady(player, new MyojinOfNightsReach());
         myojin.setCounterCount(CounterType.DIVINITY, 1);
         return myojin;
     }

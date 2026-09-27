@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.cards.c.CrookshankKobolds;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.w.WallOfDust;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,85 +12,98 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
-@CardUsed({InfernalMedusa.class, AvatarOfMight.class, GiantSpider.class, WallOfWood.class})
+@CardUsed({InfernalMedusa.class, DurkwoodBoars.class, CrookshankKobolds.class, WallOfDust.class})
 class InfernalMedusaTest extends BaseCardTest {
 
     @Test
     @DisplayName("A non-Wall blocker is destroyed at end of combat")
     void nonWallBlockerDestroyedAtEndOfCombat() {
-        Permanent medusa = addReadyMedusa(player1);
-        medusa.setAttacking(true);
-        addReadyAvatar(player2);
+        addCreatureReady(player1, new InfernalMedusa());
+        addCreatureReady(player2, new DurkwoodBoars());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Durkwood Boars");
+        resolveCombat();
 
-        harness.assertNotOnBattlefield(player2, "Avatar of Might");
-        harness.assertInGraveyard(player2, "Avatar of Might");
+        harness.assertNotOnBattlefield(player2, "Durkwood Boars");
+        harness.assertInGraveyard(player2, "Durkwood Boars");
     }
 
     @Test
     @DisplayName("A Wall blocker is not destroyed")
     void wallBlockerSurvives() {
-        Permanent medusa = addReadyMedusa(player1);
-        medusa.setAttacking(true);
-        addReadyWall(player2);
+        addCreatureReady(player1, new InfernalMedusa());
+        addCreatureReady(player2, new WallOfDust());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
-        harness.assertOnBattlefield(player2, "Wall of Wood");
+        harness.assertOnBattlefield(player2, "Wall of Dust");
+        harness.assertNotInGraveyard(player2, "Wall of Dust");
     }
 
     @Test
     @DisplayName("A non-Wall attacker blocked by Infernal Medusa is destroyed at end of combat")
     void blockedNonWallAttackerDestroyedAtEndOfCombat() {
-        Permanent attacker = addReadySpider(player1);
-        attacker.setAttacking(true);
-        addReadyMedusa(player2);
+        addCreatureReady(player1, new CrookshankKobolds());
+        addCreatureReady(player2, new InfernalMedusa());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Crookshank Kobolds");
+        harness.assertInGraveyard(player1, "Crookshank Kobolds");
+    }
+
+    @Test
+    @DisplayName("A Wall is destroyed when Infernal Medusa blocks it")
+    void wallBlockedByMedusaIsDestroyedAtEndOfCombat() {
+        Permanent wall = addCreatureReady(player1, new WallOfDust());
+        wall.setAttacking(true);
+        addCreatureReady(player2, new InfernalMedusa());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Wall of Dust");
+        resolveCombat();
 
-        harness.assertNotOnBattlefield(player1, "Giant Spider");
-        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertNotOnBattlefield(player1, "Wall of Dust");
+        harness.assertInGraveyard(player1, "Wall of Dust");
     }
 
-    private Permanent addReadyMedusa(Player player) {
-        Permanent perm = new Permanent(new InfernalMedusa());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @DisplayName("Each non-Wall blocker is destroyed when Infernal Medusa becomes blocked")
+    void eachNonWallBlockerIsDestroyedAtEndOfCombat() {
+        addCreatureReady(player1, new InfernalMedusa());
+        Permanent firstBlocker = addCreatureReady(player2, new DurkwoodBoars());
+        Permanent secondBlocker = addCreatureReady(player2, new DurkwoodBoars());
 
-    private Permanent addReadyAvatar(Player player) {
-        Permanent perm = new Permanent(new AvatarOfMight());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
 
-    private Permanent addReadySpider(Player player) {
-        Permanent perm = new Permanent(new GiantSpider());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+        resolveAllTriggers();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1,
+                secondBlocker.getId(), 1));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-    private Permanent addReadyWall(Player player) {
-        Permanent perm = new Permanent(new WallOfWood());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.assertNotOnBattlefield(player2, "Durkwood Boars");
+        harness.assertInGraveyard(player2, "Durkwood Boars");
     }
 }

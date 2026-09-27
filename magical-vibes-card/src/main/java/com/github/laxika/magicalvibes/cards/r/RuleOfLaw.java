@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "37")
 @CardRegistration(set = "MRD", collectorNumber = "19")
 @CardRegistration(set = "M20", collectorNumber = "35")
+@CardRegistration(set = "SLD", collectorNumber = "2478")
 public class RuleOfLaw extends Card {
 
     public RuleOfLaw() {

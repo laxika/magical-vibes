@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -43,7 +41,9 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
                     target.getId(), entry.getControllerId(), entry.getCard()));
         } else {
             gameData.queueDelayedAction(new DelayedPermanentAction(
-                    target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                    target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                    false, null, null,
+                    e.onlyIfAbilityControllerControls() ? entry.getControllerId() : null));
         }
 
         String timingText = e.flipBeforeSacrificing()

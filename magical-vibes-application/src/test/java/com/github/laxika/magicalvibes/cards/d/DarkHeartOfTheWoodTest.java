@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.TempleGarden;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarkHeartOfTheWood.class, Forest.class, Island.class})
+@CardUsed({DarkHeartOfTheWood.class, Forest.class, Island.class, TempleGarden.class})
 class DarkHeartOfTheWoodTest extends BaseCardTest {
 
     @Test
@@ -29,6 +30,24 @@ class DarkHeartOfTheWoodTest extends BaseCardTest {
 
         harness.assertLife(player1, 23);
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a nonbasic land with the Forest subtype")
+    void sacrificeNonbasicForestGainsThreeLife() {
+        harness.addToBattlefield(player1, new DarkHeartOfTheWood());
+        harness.addToBattlefield(player1, new TempleGarden());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertInGraveyard(player1, "Temple Garden");
     }
 
     @Test

@@ -81,8 +81,10 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
         KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
+        KEYWORD_MAP.put("Melee", Keyword.MELEE);
         KEYWORD_MAP.put("Enlist", Keyword.ENLIST);
         KEYWORD_MAP.put("Dethrone", Keyword.DETHRONE);
+        KEYWORD_MAP.put("Melee", Keyword.MELEE);
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
         KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
@@ -173,6 +175,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Station", Keyword.STATION);
         KEYWORD_MAP.put("Freerunning", Keyword.FREERUNNING);
         KEYWORD_MAP.put("Double team", Keyword.DOUBLE_TEAM);
+        KEYWORD_MAP.put("Flurry", Keyword.FLURRY);
         KEYWORD_MAP.put("Intensity", Keyword.INTENSITY);
     }
 

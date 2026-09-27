@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "157")
+@CardRegistration(set = "TDC", collectorNumber = "236")
 public class StormsWrath extends Card {
 
     public StormsWrath() {

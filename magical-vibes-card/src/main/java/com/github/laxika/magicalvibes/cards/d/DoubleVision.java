@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "142")
+@CardRegistration(set = "NCC", collectorNumber = "267")
 public class DoubleVision extends Card {
 
     public DoubleVision() {

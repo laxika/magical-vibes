@@ -27,6 +27,7 @@ public class NaturesWill extends Card {
                         new PermanentIsCreaturePredicate(),
                         SequenceEffect.of(
                                 new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsLandPredicate()),
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()))));
+                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate())),
+                        false, true));
     }
 }

@@ -1,49 +1,64 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Uproot.class, GodsEyeGateToTheReikai.class, GnarledMass.class})
 class UprootTest extends BaseCardTest {
 
     @Test
     void resolvingPutsTargetLandOnTopOfOwnersLibrary() {
-        harness.addToBattlefield(player2, new Forest());
-        UUID landId = harness.getPermanentId(player2, "Forest");
-        int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new GodsEyeGateToTheReikai());
+        Card oldTop = new GnarledMass();
+        harness.setLibrary(player2, List.of(oldTop));
 
-        harness.setHand(player1, List.of(new Uproot()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, landId);
-        harness.passBothPriorities();
+        prepareUproot();
+        harness.castAndResolveSorcery(player1, 0, land.getId());
 
-        GameData gameData = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Forest");
-        harness.assertNotInGraveyard(player2, "Forest");
-        List<Card> deck = gameData.playerDecks.get(player2.getId());
-        assertThat(deck).hasSize(deckSizeBefore + 1);
-        assertThat(deck.getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(land.getCard(), oldTop);
+    }
+
+    @Test
+    void putsStolenLandOnItsOwnersLibrary() {
+        Card landCard = new GodsEyeGateToTheReikai();
+        landCard.setOwnerId(player2.getId());
+        Permanent stolenLand = harness.addToBattlefieldAndReturn(player1, landCard);
+        Card oldTop = new GnarledMass();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(oldTop));
+
+        prepareUproot();
+        harness.castAndResolveSorcery(player1, 0, stolenLand.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(stolenLand);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(landCard, oldTop);
     }
 
     @Test
     void cannotTargetNonlandPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        prepareUproot();
 
-        harness.setHand(player1, List.of(new Uproot()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void prepareUproot() {
+        harness.setHand(player1, List.of(new Uproot()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 }

@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.d.DromadPurebred;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,23 +14,24 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScreechingGriffin.class, GrizzlyBears.class, WindDrake.class})
+@CardUsed({ScreechingGriffin.class, DromadPurebred.class, CourierHawk.class, Plains.class})
 class ScreechingGriffinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Targeted creature can't block Screeching Griffin after the ability resolves")
     void targetedCreatureCannotBlockScreechingGriffin() {
         Permanent griffin = addCreatureReady(player1, new ScreechingGriffin());
-        Permanent blocker = addCreatureReady(player2, new WindDrake());
+        Permanent blocker = addCreatureReady(player2, new CourierHawk());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
         griffin.setAttacking(true);
-        enterDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -39,23 +41,59 @@ class ScreechingGriffinTest extends BaseCardTest {
     @DisplayName("Targeted creature can still block another creature")
     void targetedCreatureCanBlockAnotherCreature() {
         addCreatureReady(player1, new ScreechingGriffin());
-        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = addCreatureReady(player2, new WindDrake());
+        Permanent otherAttacker = addCreatureReady(player1, new DromadPurebred());
+        Permanent blocker = addCreatureReady(player2, new CourierHawk());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
         otherAttacker.setAttacking(true);
-        enterDeclareBlockers();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private void enterDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+    @Test
+    @DisplayName("The ability requires a creature target")
+    void rejectsNonCreatureTarget() {
+        addCreatureReady(player1, new ScreechingGriffin());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("The restriction expires at the end of the turn")
+    void restrictionExpiresAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setLibrary(player2, List.of(new Plains()));
+
+        addCreatureReady(player1, new ScreechingGriffin());
+        Permanent blocker = addCreatureReady(player2, new CourierHawk());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player2, List.of());
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player1, List.of(0));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

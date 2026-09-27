@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "257")
+@CardRegistration(set = "SOC", collectorNumber = "409")
 public class SunlitMarsh extends Card {
 
     public SunlitMarsh() {

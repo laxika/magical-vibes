@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "SOM", collectorNumber = "228")
 @CardRegistration(set = "ONE", collectorNumber = "257")
 @CardRegistration(set = "ZNE", collectorNumber = "15")
+@CardRegistration(set = "MSC", collectorNumber = "259")
+@CardRegistration(set = "MSC", collectorNumber = "487")
 public class RazorvergeThicket extends Card {
 
     public RazorvergeThicket() {

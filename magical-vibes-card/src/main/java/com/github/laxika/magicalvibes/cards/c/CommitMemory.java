@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentInto
 @CardRegistration(set = "AKH", collectorNumber = "211")
 @CardRegistration(set = "AKR", collectorNumber = "54")
 @CardRegistration(set = "MB1", collectorNumber = "211")
+@CardRegistration(set = "NCC", collectorNumber = "216")
 public class CommitMemory extends Card {
 
     public CommitMemory() {

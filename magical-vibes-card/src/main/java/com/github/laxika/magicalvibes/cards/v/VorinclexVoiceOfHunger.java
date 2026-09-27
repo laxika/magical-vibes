@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntap
 @CardRegistration(set = "MUL", collectorNumber = "29")
 @CardRegistration(set = "MUL", collectorNumber = "94")
 @CardRegistration(set = "MUL", collectorNumber = "159")
+@CardRegistration(set = "SLD", collectorNumber = "2439")
 public class VorinclexVoiceOfHunger extends Card {
 
     public VorinclexVoiceOfHunger() {

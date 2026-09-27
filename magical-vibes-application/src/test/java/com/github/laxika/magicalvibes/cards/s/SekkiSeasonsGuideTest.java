@@ -1,28 +1,28 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.l.LanternSpirit;
+import com.github.laxika.magicalvibes.cards.g.GhostLitRaider;
+import com.github.laxika.magicalvibes.cards.g.GhostLitRedeemer;
+import com.github.laxika.magicalvibes.cards.h.HandOfHonor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SekkiSeasonsGuide.class, GhostLitRaider.class, GhostLitRedeemer.class, HandOfHonor.class})
 class SekkiSeasonsGuideTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with eight +1/+1 counters")
     void entersWithEightCounters() {
-        harness.setHand(player1, List.of(new SekkiSeasonsGuide()));
-        harness.addMana(player1, ManaColor.GREEN, 8);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SekkiSeasonsGuide(), "{5}{G}{G}{G}");
         harness.passBothPriorities();
 
         Permanent sekki = findPermanent(player1, "Sekki, Seasons' Guide");
@@ -35,14 +35,18 @@ class SekkiSeasonsGuideTest extends BaseCardTest {
         Permanent sekki = harness.addToBattlefieldAndReturn(player2, new SekkiSeasonsGuide());
         sekki.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 8);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, sekki.getId());
-        harness.passBothPriorities();
+        dealTwoDamageTo(sekki);
 
         Permanent survivingSekki = findPermanent(player2, "Sekki, Seasons' Guide");
         assertThat(survivingSekki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
-        assertThat(countSpiritTokens(player2)).isEqualTo(2);
+        assertThat(spiritTokens(player2)).hasSize(2)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.getCard().getColors()).isEmpty();
+                    assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
+                    assertThat(token.getEffectivePower()).isEqualTo(1);
+                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                });
         assertThat(survivingSekki.getMarkedDamage()).isZero();
     }
 
@@ -52,13 +56,10 @@ class SekkiSeasonsGuideTest extends BaseCardTest {
         Permanent sekki = harness.addToBattlefieldAndReturn(player2, new SekkiSeasonsGuide());
         sekki.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, sekki.getId());
-        harness.passBothPriorities();
+        dealTwoDamageTo(sekki);
 
         harness.assertNotOnBattlefield(player2, "Sekki, Seasons' Guide");
-        assertThat(countSpiritTokens(player2)).isEqualTo(2);
+        assertThat(spiritTokens(player2)).hasSize(2);
         harness.assertInGraveyard(player2, "Sekki, Seasons' Guide");
     }
 
@@ -68,32 +69,53 @@ class SekkiSeasonsGuideTest extends BaseCardTest {
         SekkiSeasonsGuide sekki = new SekkiSeasonsGuide();
         harness.setGraveyard(player1, List.of(sekki));
 
-        List<UUID> spiritIds = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
-            spiritIds.add(harness.addToBattlefieldAndReturn(player1, new LanternSpirit()).getId());
+            harness.addToBattlefield(player1, new GhostLitRedeemer());
         }
 
         harness.activateGraveyardAbility(player1, 0);
-        for (UUID spiritId : spiritIds) {
-            if (!gd.interaction.isAwaitingInput()) {
-                break;
-            }
-            harness.handlePermanentChosen(player1, spiritId);
-        }
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(sekki.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Lantern Spirit"));
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Ghost-Lit Redeemer"));
         Permanent returnedSekki = findPermanent(player1, "Sekki, Seasons' Guide");
         assertThat(returnedSekki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
     }
 
-    private long countSpiritTokens(com.github.laxika.magicalvibes.model.Player player) {
+    @Test
+    @DisplayName("Sacrificing eight Spirits leaves non-Spirit permanents untouched")
+    void sacrificeAbilityOnlySacrificesSpirits() {
+        SekkiSeasonsGuide sekki = new SekkiSeasonsGuide();
+        harness.setGraveyard(player1, List.of(sekki));
+
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new GhostLitRedeemer());
+        }
+        harness.addToBattlefield(player1, new HandOfHonor());
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sekki, Seasons' Guide");
+        harness.assertOnBattlefield(player1, "Hand of Honor");
+        harness.assertNotOnBattlefield(player1, "Ghost-Lit Redeemer");
+    }
+
+    private void dealTwoDamageTo(Permanent target) {
+        Permanent raider = addCreatureReady(player1, new GhostLitRaider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(raider);
+        harness.activateAbility(player1, sourceIndex, null, target.getId());
+        harness.passBothPriorities();
+    }
+
+    private List<Permanent> spiritTokens(com.github.laxika.magicalvibes.model.Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .filter(permanent -> permanent.getCard().getName().equals("Spirit"))
-                .count();
+                .toList();
     }
 }

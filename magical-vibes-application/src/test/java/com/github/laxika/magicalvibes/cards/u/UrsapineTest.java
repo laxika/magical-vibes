@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,39 +13,69 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Ursapine.class, GrizzlyBears.class})
+@CardUsed({Ursapine.class, Watchwolf.class})
 class UrsapineTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating Ursapine gives a target creature +1/+1 until end of turn")
     void activatesToBoostTargetCreature() {
         addUrsapineReady(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wolf = addCreatureReady(player1, new Watchwolf());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Ursapine's boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         addUrsapineReady(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wolf = addCreatureReady(player1, new Watchwolf());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, wolf.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Ursapine can target an opponent's creature")
+    void activatesOnOpponentsCreature() {
+        addUrsapineReady(player1);
+        Permanent wolf = addCreatureReady(player2, new Watchwolf());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, wolf.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Ursapine can be activated repeatedly without tapping")
+    void canBeActivatedRepeatedlyWithoutTapping() {
+        Permanent ursapine = addUrsapineReady(player1);
+        Permanent wolf = addCreatureReady(player1, new Watchwolf());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, wolf.getId());
+        assertThat(ursapine.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, wolf.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(5);
     }
 
     @Test

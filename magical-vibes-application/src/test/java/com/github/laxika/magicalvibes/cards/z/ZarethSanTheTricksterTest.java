@@ -35,7 +35,7 @@ class ZarethSanTheTricksterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, rogue.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
         harness.assertInHand(player1, "Zulaport Duelist");
         Permanent zareth = findPermanent(player1, "Zareth San, the Trickster");

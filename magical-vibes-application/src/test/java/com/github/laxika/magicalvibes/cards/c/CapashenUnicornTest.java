@@ -1,20 +1,23 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlabasterLeech;
+import com.github.laxika.magicalvibes.cards.d.DrakeSkullCameo;
+import com.github.laxika.magicalvibes.cards.f.FiresOfYavimaya;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CapashenUnicorn.class, DrakeSkullCameo.class, FiresOfYavimaya.class,
+        AlabasterLeech.class, Island.class})
 class CapashenUnicornTest extends BaseCardTest {
 
     @Test
@@ -29,8 +32,8 @@ class CapashenUnicornTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Capashen Unicorn");
         harness.assertInGraveyard(player1, "Capashen Unicorn");
-        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player2, "Drake-Skull Cameo");
+        harness.assertInGraveyard(player2, "Drake-Skull Cameo");
     }
 
     @Test
@@ -43,8 +46,8 @@ class CapashenUnicornTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Fires of Yavimaya");
+        harness.assertInGraveyard(player2, "Fires of Yavimaya");
     }
 
     @Test
@@ -73,7 +76,7 @@ class CapashenUnicornTest extends BaseCardTest {
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addReadyUnicorn(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new AlabasterLeech());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -101,7 +104,7 @@ class CapashenUnicornTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Leonin Scimitar"));
+                .removeIf(p -> p.getCard().getName().equals("Drake-Skull Cameo"));
 
         harness.passBothPriorities();
 
@@ -110,28 +113,18 @@ class CapashenUnicornTest extends BaseCardTest {
     }
 
     private Permanent addReadyUnicorn(Player player) {
-        Permanent perm = new Permanent(new CapashenUnicorn());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CapashenUnicorn());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        Permanent perm = new Permanent(new LeoninScimitar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new DrakeSkullCameo());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Permanent perm = new Permanent(new GloriousAnthem());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new FiresOfYavimaya());
     }
 
     private Permanent addReadyLand(Player player) {
-        Permanent perm = new Permanent(new Island());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Island());
     }
 }

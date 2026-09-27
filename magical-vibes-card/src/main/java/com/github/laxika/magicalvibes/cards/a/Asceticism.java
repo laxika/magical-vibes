@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "110")
+@CardRegistration(set = "LTC", collectorNumber = "233")
 public class Asceticism extends Card {
 
     public Asceticism() {
