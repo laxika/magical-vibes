@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThis
 import com.github.laxika.magicalvibes.model.amount.DescentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.amount.DistinctColorPairsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.DistinctCounterKindsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.DistinctKeywordAbilitiesAmongControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongCardsInGraveyard;
@@ -142,6 +143,8 @@ import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponen
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastCardsDrawnThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
@@ -199,6 +202,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatur
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.TreasuresCreatedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
@@ -345,6 +349,8 @@ public class AmountEvaluationService {
                     gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of()).size();
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case TreasuresCreatedThisTurn ignored ->
+                    gameData.getTreasureTokensCreatedThisTurn(ctx.controllerId());
             case PileGroupingOrGuessCountThisTurn ignored ->
                     gameData.pileGroupingOrGuessCountThisTurn;
             case UnlockedRoomDoorsCount c ->
@@ -389,6 +395,8 @@ public class AmountEvaluationService {
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
+            case OpponentsWithAtLeastCardsDrawnThisTurn c ->
+                    opponentsWithAtLeastCardsDrawnThisTurn(gameData, c, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
                     countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctPermanentNamesAmongControlled c ->
@@ -397,6 +405,8 @@ public class AmountEvaluationService {
                     countDistinctManaValuesAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctColorPairsAmongControlledPermanents ignored ->
                     countDistinctColorPairsAmongControlledPermanents(gameData, ctx);
+            case DistinctCounterKindsAmongControlledPermanents ignored ->
+                    countDistinctCounterKindsAmongControlledPermanents(gameData, ctx);
             case DistinctManaValuesAmongControlledPermanents ignored ->
                     countDistinctManaValuesAmongControlledPermanents(gameData, ctx);
             case DistinctManaValuesAmongStudyCounterCardsInExile ignored ->
@@ -425,6 +435,8 @@ public class AmountEvaluationService {
                             .getOrDefault(ctx.controllerId(), List.of()).stream()
                             .filter(card -> card.hasType(CardType.LAND))
                             .count();
+            case OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn c ->
+                    opponentsWithAtLeastLandsEnteredBattlefieldThisTurn(gameData, c, ctx);
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
             case CardsExiledWithSource c ->
@@ -1361,6 +1373,23 @@ public class AmountEvaluationService {
                 .mapToInt(permanent -> permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue())
                 .distinct()
                 .count();
+    }
+
+    private int countDistinctCounterKindsAmongControlledPermanents(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+
+        Set<CounterType> found = EnumSet.noneOf(CounterType.class);
+        for (Permanent permanent : battlefield) {
+            for (CounterType counterType : CounterType.values()) {
+                if (counterType != CounterType.ANY && counterType != CounterType.SILVER
+                        && permanent.getCounterCount(counterType) > 0) {
+                    found.add(counterType);
+                }
+            }
+        }
+        return found.size();
     }
 
     private int countDistinctKeywordAbilitiesAmongControlledCreatures(
@@ -2350,6 +2379,37 @@ public class AmountEvaluationService {
             total += gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
         }
         return total;
+    }
+
+    private int opponentsWithAtLeastCardsDrawnThisTurn(
+            GameData gameData, OpponentsWithAtLeastCardsDrawnThisTurn count, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0) >= count.minimum()) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
+    }
+
+    private int opponentsWithAtLeastLandsEnteredBattlefieldThisTurn(
+            GameData gameData, OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn count,
+            AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            long landsEntered = gameData.permanentsEnteredBattlefieldThisTurn
+                    .getOrDefault(playerId, List.of()).stream()
+                    .filter(card -> card.hasType(CardType.LAND))
+                    .count();
+            if (landsEntered >= count.minimum()) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
     }
 
     /**

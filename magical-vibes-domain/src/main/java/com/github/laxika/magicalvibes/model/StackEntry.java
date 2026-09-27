@@ -101,6 +101,8 @@ public class StackEntry {
     @Setter private boolean castWithFlashback;
     /** Whether this spell was cast using an escape permission. */
     @Setter private boolean castWithEscape;
+    /** Cards exiled from the graveyard to pay an escape cost, linked when the permanent enters. */
+    @Setter private List<UUID> escapeExiledCardIds = List.of();
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
     @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
@@ -332,6 +334,8 @@ public class StackEntry {
     private List<UUID> convokeCreatureIds = List.of();
     /** Remaining convoke creatures for a resolving effect that makes them connive one at a time. */
     private List<UUID> convokeConniveCreatureIdsToProcess;
+    /** Remaining target creatures for a resolving effect that makes them connive one at a time. */
+    private List<UUID> targetConniveCreatureIdsToProcess;
     /** Permanents chosen to pay a cost and retained for a later effect in the same ability. */
     private List<UUID> chosenCostPermanentIds = List.of();
     /** Last-known snapshots of permanents chosen to pay a tracked cost. */
@@ -697,6 +701,8 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.castWithEscape = source.castWithEscape;
+        this.escapeExiledCardIds = source.escapeExiledCardIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.escapeExiledCardIds);
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
@@ -802,6 +808,8 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.convokeConniveCreatureIdsToProcess = source.convokeConniveCreatureIdsToProcess == null
                 ? null : new ArrayList<>(source.convokeConniveCreatureIdsToProcess);
+        this.targetConniveCreatureIdsToProcess = source.targetConniveCreatureIdsToProcess == null
+                ? null : new ArrayList<>(source.targetConniveCreatureIdsToProcess);
         this.chosenCostPermanentIds = source.chosenCostPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.chosenCostPermanentIds);
         this.chosenCostPermanentSnapshots = source.chosenCostPermanentSnapshots.isEmpty()
@@ -1100,6 +1108,10 @@ public class StackEntry {
 
     public void setConvokeConniveCreatureIdsToProcess(List<UUID> creatureIds) {
         this.convokeConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
+    }
+
+    public void setTargetConniveCreatureIdsToProcess(List<UUID> creatureIds) {
+        this.targetConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
     }
 
     public void setChosenCostPermanentIds(List<UUID> chosenCostPermanentIds) {

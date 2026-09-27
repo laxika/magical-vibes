@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimer
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler;
@@ -30,6 +32,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffec
 import com.github.laxika.magicalvibes.service.effect.normalfx.InfernalOfferingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCardFromGraveyardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TemptTheRingEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +62,10 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler
             gildedAmbusherEffectHandler;
     private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
+    private final ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler
+            contractualSafeguardEffectHandler;
+    private final ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler
+            avenCourierEffectHandler;
     private final MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
     private final AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
     private final RiskyMoveEffectHandler riskyMoveEffectHandler;
@@ -77,6 +84,7 @@ public class PermanentChoiceHandlerService {
     private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
+    private final ZndrsplatsJudgmentEffectHandler zndrsplatsJudgmentEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -192,6 +200,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBalduvianWarlordChoosesAttacker(gameData, permanentId, chooseAttacker);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureYouGainControl richesChoice) {
             battlefieldHandler.handleOpponentChoosesCreatureYouGainControl(gameData, permanentId, richesChoice);
+        } else if (context instanceof PermanentChoiceContext.SeizeTheSpotlightCreatureChoice seizeChoice) {
+            battlefieldHandler.handleSeizeTheSpotlightCreatureChoice(gameData, permanentId, seizeChoice);
         } else if (context instanceof PermanentChoiceContext.OrderOfSuccession orderOfSuccession) {
             battlefieldHandler.handleOrderOfSuccessionChoice(gameData, permanentId, orderOfSuccession);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource exileChoice) {
@@ -283,12 +293,20 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand choosePlayer) {
             battlefieldHandler.handleChoosePlayerThenReturnCreatureToHand(gameData, permanentId, choosePlayer);
+        } else if (context instanceof PermanentChoiceContext.ZndrsplatsJudgmentCreatureChoice judgmentChoice) {
+            zndrsplatsJudgmentEffectHandler.completeCreatureChoice(gameData, permanentId, judgmentChoice);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
         } else if (context instanceof PermanentChoiceContext.BouncePermanentThen bounceThen) {
             battlefieldHandler.handleBouncePermanentThen(gameData, permanentId, bounceThen);
         } else if (context instanceof PermanentChoiceContext.ReturnPermanentAndPutCounterOnSource returnAndCounter) {
             battlefieldHandler.handleReturnPermanentAndPutCounterOnSource(gameData, permanentId, returnAndCounter);
+        } else if (context instanceof PermanentChoiceContext.ReturnCreatureToHandAndPutCountersOnSourceEqualToPower returnAndCounter) {
+            battlefieldHandler.handleReturnCreatureToHandAndPutCountersOnSourceEqualToPower(
+                    gameData, permanentId, returnAndCounter);
         } else if (context instanceof PermanentChoiceContext.MayReturnPermanentToHandAndEnterWithCounters returnChoice) {
             battlefieldHandler.handleMayReturnPermanentToHandAndEnterWithCounters(gameData, permanentId, returnChoice);
         } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf) {
@@ -592,6 +610,10 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.SuspectChosenOtherCreature) {
             suspectChosenOtherCreatureEffectHandler.completeChoice(gameData, permanentId);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.ContractualSafeguardReference) {
+            contractualSafeguardEffectHandler.completeReferenceChoice(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.ChooseCounterTypeOnControlledPermanentReference) {
+            avenCourierEffectHandler.completeReferenceChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.RemoveCounterFromChosenOwnPermanent removeCounter) {
             removeCounterFromChosenOwnPermanentEffectHandler.completeChoice(gameData, permanentId, removeCounter);
         } else if (context instanceof PermanentChoiceContext.TurnOwnCreatureFaceUp) {

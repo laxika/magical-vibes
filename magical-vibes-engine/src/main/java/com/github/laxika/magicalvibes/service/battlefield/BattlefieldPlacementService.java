@@ -314,6 +314,9 @@ public class BattlefieldPlacementService {
         gameData.playerBattlefields.get(controllerId).add(permanent);
         if (permanent.getCard().isToken()) {
             gameData.playersWhoCreatedTokensThisTurn.add(puttingPlayerId);
+            if (permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)) {
+                gameData.recordTreasureTokenCreated(puttingPlayerId);
+            }
         }
         if (permanent.getCard().isAura() && permanent.getAttachedTo() != null) {
             triggerCollectionService.checkAuraAttachedTriggers(gameData, permanent, permanent.getAttachedTo());

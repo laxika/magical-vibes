@@ -954,7 +954,10 @@ public class TriggeredAbilityQueueService {
                     TriggerTargetCollector.Options.ATTACK,
                     pending.targetSourcePermanentId() == null
                             ? null
-                            : gameQueryService.findPermanentById(gameData, pending.targetSourcePermanentId()));
+                            : gameQueryService.findPermanentById(gameData, pending.targetSourcePermanentId()),
+                    null,
+                    null,
+                    pending.enteringPermanentId());
             boolean optionalTarget = hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
 
             if (result.validTargets().isEmpty()) {

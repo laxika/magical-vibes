@@ -1637,6 +1637,10 @@ public class DamageSupport {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
+            } else if (effectiveDamage > 0 && gameQueryService.damageDoesNotCauseLifeLoss(gameData, playerId)) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        playerName + " takes " + effectiveDamage + " damage from ", source, "."));
             } else {
                 int currentLife = gameData.getLife(playerId);
                 int lifeAfterDamage = currentLife - effectiveDamage;

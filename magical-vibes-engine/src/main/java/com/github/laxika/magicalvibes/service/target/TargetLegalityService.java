@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsIn
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerIsActiveOpponentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -3301,6 +3302,7 @@ public class TargetLegalityService {
                                                 entry.getControllerId(), defendingPlayerId(gameData, entry))
                                                 .withXValue(entry.getXValue())
                                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                                                .withTriggeringPermanentId(entry.getTriggeringPermanentId())
                                                 .withMadness(entry.isMadness()));
                             } catch (IllegalStateException e) {
                                 targetFizzled = true;
@@ -3311,8 +3313,9 @@ public class TargetLegalityService {
                                 entry.getEffectsToResolve(),
                                 new TargetValidationContext(gameData, entry.getTargetId(), entry.getTargetZone(),
                                         entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                                        entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)), entry.isTeamworkCostPaid()).isPresent()) {
+                                        entry.getSourcePermanentSnapshot(), false, entry.getSourcePermanentId(),
+                                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry),
+                                        entry.getTriggeringPermanentId()), entry.isTeamworkCostPaid()).isPresent()) {
                             targetFizzled = true;
                         }
                     }
@@ -5024,6 +5027,10 @@ public class TargetLegalityService {
                 case SELF -> controllerId != null && controllerId.equals(targetPlayerId);
                 case OPPONENT -> controllerId != null && !controllerId.equals(targetPlayerId);
             };
+            case PlayerIsActiveOpponentPredicate ignored ->
+                    controllerId != null && targetPlayerId != null
+                            && !controllerId.equals(targetPlayerId)
+                            && targetPlayerId.equals(gameData.activePlayerId);
             case PlayerAttackedThisTurnPredicate ignored ->
                     gameData.playersDeclaredAttackersThisTurn.contains(targetPlayerId);
             case PlayerDealtDamageThisTurnPredicate ignored ->

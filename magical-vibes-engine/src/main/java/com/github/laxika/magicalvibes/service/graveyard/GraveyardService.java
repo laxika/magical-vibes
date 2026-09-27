@@ -2008,6 +2008,9 @@ public class GraveyardService {
     }
 
     private void notifyCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId, int count) {
+        if (count > 0) {
+            gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn.add(ownerId);
+        }
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingCreatureOwners.add(ownerId);
             gameData.graveyardLeaveNotificationPendingCreatureCardCounts.merge(ownerId, count, Integer::sum);

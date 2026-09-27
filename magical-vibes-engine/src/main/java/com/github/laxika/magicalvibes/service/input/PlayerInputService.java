@@ -1487,6 +1487,32 @@ public class PlayerInputService {
     }
 
     /**
+     * Slippery Bogbonder: prompt for the amount of one concrete counter kind from one controlled
+     * creature, then continue through the remaining creature/counter-kind pairs.
+     */
+    public void beginMoveAnyCountersFromControlledCreaturesAmountChoice(
+            GameData gameData, UUID playerId, List<ChoiceContext.CounterSource> sources, int index,
+            UUID toPermanentId, String sourceCardName, int max) {
+        ChoiceContext.CounterSource source = sources.get(index);
+        ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice choiceContext =
+                new ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice(
+                        sources, index, toPermanentId, sourceCardName);
+
+        List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
+                .mapToObj(Integer::toString)
+                .toList();
+        String counterName = switch (source.counterType()) {
+            case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            default -> source.counterType().name().toLowerCase().replace('_', ' ');
+        };
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                sourceCardName + " — choose how many " + counterName + " counters to move from "
+                        + source.cardName() + " (0-" + Math.max(0, max) + ")."));
+    }
+
+    /**
      * Quarry Hauler: prompt {@code playerId} to add or remove one counter of the FIRST kind in
      * {@code remainingKinds} on {@code targetId}. {@link ChoiceHandlerService} applies the answer and
      * re-invokes this with the remaining kinds until every kind has been resolved.
@@ -1551,13 +1577,43 @@ public class PlayerInputService {
     public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
                                                   String sourceCardName, List<CounterType> counterTypes,
                                                   boolean poisonCounters) {
+        beginAddAnotherCounterTypeChoice(gameData, playerId, targetId, sourceCardName, counterTypes,
+                poisonCounters, false);
+    }
+
+    public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                  String sourceCardName, List<CounterType> counterTypes,
+                                                  boolean poisonCounters,
+                                                  boolean distributeToOtherControlledCreatures) {
+        beginAddAnotherCounterTypeChoice(gameData, playerId, targetId, sourceCardName, counterTypes,
+                poisonCounters, distributeToOtherControlledCreatures, null);
+    }
+
+    public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                  String sourceCardName, List<CounterType> counterTypes,
+                                                  boolean poisonCounters,
+                                                  boolean distributeToOtherControlledCreatures,
+                                                  UUID placementTargetId) {
         ChoiceContext.AddAnotherCounterTypeChoice context = new ChoiceContext.AddAnotherCounterTypeChoice(
-                targetId, playerId, sourceCardName, new ArrayList<>(counterTypes), poisonCounters);
+                targetId, playerId, sourceCardName, new ArrayList<>(counterTypes), poisonCounters,
+                distributeToOtherControlledCreatures, placementTargetId);
         List<String> options = context.options();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options,
                 sourceCardName + " — Choose a counter to add another of."));
         log.info("Game {} - Awaiting {} to choose a counter kind for {}", gameData.id, playerId, targetId);
+    }
+
+    /** Bribe Taker: choose whether to put a +1/+1 counter or the current kind on the source. */
+    public void beginChooseCounterForEachControlledCounterKindChoice(
+            GameData gameData, UUID playerId, UUID sourcePermanentId, String sourceCardName,
+            List<CounterType> remainingKinds) {
+        ChoiceContext.ChooseCounterForEachControlledCounterKindChoice context =
+                new ChoiceContext.ChooseCounterForEachControlledCounterKindChoice(
+                        sourcePermanentId, playerId, sourceCardName, remainingKinds);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, context.options(),
+                sourceCardName + " — Choose a counter to put on it, or decline."));
     }
 
     /** Invoke the Ancients: choose a keyword counter for one created token. */
@@ -1619,6 +1675,18 @@ public class PlayerInputService {
                 playerId, null, null, context, context.options(),
                 sourceCardName + " — Choose a counter to remove."));
         log.info("Game {} - Awaiting {} to choose one counter to remove from {}", gameData.id, playerId, targetId);
+    }
+
+    public void beginMoveOneCounterChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                           UUID targetId, String sourceCardName,
+                                           List<CounterType> counterTypes) {
+        ChoiceContext.MoveOneCounterChoice context = new ChoiceContext.MoveOneCounterChoice(
+                sourcePermanentId, targetId, playerId, sourceCardName, counterTypes);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, context.options(),
+                sourceCardName + " — Choose a counter to move."));
+        log.info("Game {} - Awaiting {} to choose one counter to move from {} to {}",
+                gameData.id, playerId, sourcePermanentId, targetId);
     }
 
     /** Dismantle: choose whether the copied counter count becomes +1/+1 or charge counters. */

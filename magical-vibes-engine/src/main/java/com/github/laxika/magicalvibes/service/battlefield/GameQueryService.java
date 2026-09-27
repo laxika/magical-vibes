@@ -90,6 +90,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellsAndAbilitiesCantBeCount
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDoesNotCauseLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
@@ -164,6 +165,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EvokeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.FreerunningGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.BlitzGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
@@ -1419,6 +1421,30 @@ public class GameQueryService {
         return Optional.empty();
     }
 
+    /** Returns the blitz alternate cast granted to a matching creature spell. */
+    public Optional<AlternateHandCast> findGrantedBlitzAlternateCast(
+            GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || card == null || card.isToken() || card.getManaCost() == null) {
+            return Optional.empty();
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                        gameData, permanent, playerId, effect);
+                if (activeEffect instanceof BlitzGrantingEffect grant
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, grant.blitzGrantFilter(), null, gameData, playerId)) {
+                    return Optional.of(AlternateHandCast.blitz(card.getManaCost()));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     /**
      * Returns the miracle cost granted to {@code card} by a permanent the drawing player controls,
      * or empty if no grant applies. Native miracle is intentionally not consulted here.
@@ -2359,6 +2385,16 @@ public class GameQueryService {
         return life <= 0;
     }
 
+    /** Returns whether damage dealt to the player does not cause them to lose life. */
+    public boolean damageDoesNotCauseLifeLoss(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        return battlefield != null && battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn())
+                .flatMap(permanent -> getActiveStaticEffects(gameData, permanent).stream())
+                .anyMatch(DamageDoesNotCauseLifeLossEffect.class::isInstance);
+    }
+
     /**
      * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
      * or {@code 0} when no battlefield, emblem, or turn-scoped life-floor effect currently applies.
@@ -2411,6 +2447,9 @@ public class GameQueryService {
     /** Returns the player's life total after applying damage replacement floors. */
     public int lifeAfterDamage(GameData gameData, UUID playerId, int damage) {
         int currentLife = gameData.getLife(playerId);
+        if (damageDoesNotCauseLifeLoss(gameData, playerId)) {
+            return currentLife;
+        }
         int newLife = currentLife - damage;
         int lifeFloor = damageLifeFloor(gameData, playerId, currentLife);
         return lifeFloor > 0 ? Math.max(newLife, lifeFloor) : newLife;
@@ -2808,6 +2847,69 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    public List<Integer> getSpellCastingAbilityGrantValues(GameData gameData, UUID playerId,
+                                                            Card card, Keyword ability) {
+        return getSpellCastingAbilityGrantValues(gameData, playerId, card, ability, Zone.HAND);
+    }
+
+    public List<Integer> getSpellCastingAbilityGrantValues(GameData gameData, UUID playerId,
+                                                            Card card, Keyword ability,
+                                                            Zone sourceZone) {
+        List<Integer> values = new ArrayList<>();
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                            gameData, permanent, sourceControllerId, effect);
+                    if (activeEffect instanceof SpellCastingAbilityGrantingEffect grant
+                            && (grant.appliesToAllPlayers() || Objects.equals(sourceControllerId, playerId))
+                            && !hasLostAllAbilities(gameData, permanent)
+                            && grant.grantedAbility() == ability
+                            && grant.appliesToSourceZone(sourceZone)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)
+                            && (!grant.appliesOnlyToFirstMatchingSpellEachTurn()
+                            || gameData.getSpellsCastThisTurn(playerId).stream().noneMatch(previousSpell ->
+                            predicateEvaluationService.matchesCardPredicate(
+                                    previousSpell, grant.filter(), permanent.getCard().getId(), gameData, playerId)))) {
+                        values.add(grant.abilityValue());
+                    }
+                }
+            }
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (!Objects.equals(emblem.controllerId(), playerId)) {
+                continue;
+            }
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                        && grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    values.add(grant.abilityValue());
+                }
+            }
+        }
+        if (gameData.planechase != null) {
+            UUID planarControllerId = gameData.planechase.controllerId;
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                            && (grant.appliesToAllPlayers() || Objects.equals(planarControllerId, playerId))
+                            && grant.grantedAbility() == ability
+                            && grant.appliesToSourceZone(sourceZone)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                        values.add(grant.abilityValue());
+                    }
+                }
+            }
+        }
+        return values;
     }
 
     /**

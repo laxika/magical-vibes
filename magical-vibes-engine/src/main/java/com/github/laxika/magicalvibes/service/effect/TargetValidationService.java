@@ -323,6 +323,9 @@ public class TargetValidationService {
         if (ctx.defendingPlayerId() != null) {
             filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
+        if (ctx.triggeringPermanentId() != null) {
+            filterContext = filterContext.withTriggeringPermanentId(ctx.triggeringPermanentId());
+        }
         filterContext = filterContext.withXValue(ctx.xValue());
         return filterContext;
     }

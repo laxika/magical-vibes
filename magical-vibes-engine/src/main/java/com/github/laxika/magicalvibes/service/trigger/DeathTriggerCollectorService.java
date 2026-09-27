@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -61,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureManaValueAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
@@ -132,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwn
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
@@ -1274,6 +1277,25 @@ public class DeathTriggerCollectorService {
                 ? new ReturnEnchantedCreatureAndReattachAuraOnDeathEffect(epd.dyingCreatureCardId())
                 : effect;
         addEnchantedPermanentDeathEntry(match, effectForStack);
+        return true;
+    }
+
+    @CollectsTrigger(value = PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handlePutLesserManaValueCreatureAndReturnAura(TriggerMatchContext match,
+            PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        if (!epd.wasCreature()) {
+            return false;
+        }
+        CardEffect boundEffect = epd.dyingCreatureCardId() != null
+                ? ((DyingCreatureManaValueAwareEffect) effect)
+                .snapshotDyingCreatureManaValue(epd.dyingCreatureManaValue())
+                : effect;
+        MayEffect may = new MayEffect(boundEffect,
+                "put a creature card with lesser mana value from your hand or command zone onto the battlefield?");
+        addEnchantedPermanentDeathEntry(match, may);
         return true;
     }
 
@@ -3804,6 +3826,28 @@ public class DeathTriggerCollectorService {
         return handleSelfLeavesDefault(match, frozen, ctx);
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleConditionalSelfLeavesTrigger(TriggerMatchContext match,
+            ConditionalEffect effect, TriggerContext ctx) {
+        if (!(effect.wrapped() instanceof LeavingPermanentCountersAwareEffect aware)) {
+            return handleSelfLeavesDefault(match, effect, ctx);
+        }
+
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        if (effect.interveningIf()
+                && !conditionEvaluationService.isInterveningIfMet(
+                match.gameData(), effect, match.permanent(), sl.controllerId())) {
+            return false;
+        }
+
+        CardEffect bound = aware.boundToLeavingPermanentCounters(snapshotConcreteCounters(match.permanent()));
+        if (bound == null) {
+            return false;
+        }
+        return handleSelfLeavesDefault(match,
+                new ConditionalEffect(effect.condition(), bound, effect.interveningIf()), ctx);
+    }
+
     @CollectsTrigger(value = PutCounterOnTargetForEachLeavingSourceCounterEffect.class,
             slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
     boolean handlePutCounterOnTargetForEachLeavingSourceCounter(TriggerMatchContext match,
@@ -3831,6 +3875,20 @@ public class DeathTriggerCollectorService {
         CardEffect baked = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
                 counters, effect.targetPredicate());
         return handleSelfLeavesDefault(match, baked, ctx);
+    }
+
+    private Map<CounterType, Integer> snapshotConcreteCounters(Permanent permanent) {
+        Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+        for (CounterType counterType : CounterType.values()) {
+            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+                continue;
+            }
+            int count = permanent.getCounterCount(counterType);
+            if (count > 0) {
+                counters.put(counterType, count);
+            }
+        }
+        return Map.copyOf(counters);
     }
 
     @CollectsTrigger(value = GainLifeEqualToLifeLostWhenEnteredEffect.class,

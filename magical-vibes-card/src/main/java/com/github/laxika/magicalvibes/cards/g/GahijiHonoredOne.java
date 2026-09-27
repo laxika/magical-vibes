@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate;
 
 @CardRegistration(set = "C13", collectorNumber = "191")
+@CardRegistration(set = "NCC", collectorNumber = "340")
 public class GahijiHonoredOne extends Card {
 
     public GahijiHonoredOne() {

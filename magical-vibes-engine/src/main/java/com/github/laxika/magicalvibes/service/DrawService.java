@@ -2051,6 +2051,43 @@ public class DrawService {
         }
     }
 
+    private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        if (cardsDrawnThisTurn != 2) return;
+
+        for (UUID graveyardOwnerId : gameData.playerGraveyards.keySet()) {
+            if (graveyardOwnerId.equals(drawingPlayerId)) continue;
+
+            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            if (graveyard == null) continue;
+
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect authoredEffect : effects) {
+                    CardEffect effect = authoredEffect;
+                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                        if (effect == null) continue;
+                    }
+
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            graveyardOwnerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard ability triggers on opponent's second card draw",
+                            gameData.id, card.getName());
+                }
+            }
+        }
+    }
+
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
         checkControllerDrawTriggers(gameData, drawingPlayerId, null);
     }
@@ -2175,6 +2212,7 @@ public class DrawService {
                 }
             }
         });
+        checkGraveyardOpponentDrawTriggerSlot(gameData, drawingPlayerId);
     }
 
     private void checkPlanarDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {

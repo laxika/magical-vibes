@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                                      caused an enter-the-battlefield trigger
  */
 public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent, boolean useEnteringPermanentReference)
-        implements CardDrawingEffect, CombatDamageTriggerContextEffect {
+        implements CardDrawingEffect, CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     public DrawDiscardAndConniveEffect(DynamicAmount amount) {
         this(amount, false);
@@ -37,6 +37,11 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
 
     @Override
     public DynamicAmount drawnCardAmount() {
+        return amount;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
         return amount;
     }
 

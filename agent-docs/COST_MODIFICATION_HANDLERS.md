@@ -195,6 +195,9 @@ another player's dash costs.
 - `cast/costmod/ReduceDashCostEffectHandler.java` — battlefield handler for
   `ReduceDashCostEffect(int)`; contributes only through `modifyAlternateCost` when the spell is
   cast using dash by the source controller.
+- `cast/costmod/GrantBlitzToSpellsEffectHandler.java` — battlefield handler for
+  `GrantBlitzToSpellsEffect`; contributes through `modifyAlternateCost` only for the synthesized
+  blitz alternate cast, reducing its generic component by the effect's dynamic amount.
 - `cast/costmod/ForetellCostReductionEffectHandler.java` — battlefield handler for
   `ForetellCostReductionEffect(int, boolean)`; contributes through the foretell action-cost and
   any-player-turn channels for the source controller.

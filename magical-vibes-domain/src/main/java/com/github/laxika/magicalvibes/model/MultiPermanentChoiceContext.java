@@ -772,6 +772,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseTwoCreaturesByPowerDifference() implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses another attacking creature with lesser power. */
+    record ChooseAnotherAttackingCreatureWithLesserPower() implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Tap each chosen untapped creature the controller controls, then the controller creates one
      * {@code tokenTemplate} token per creature tapped this way (Devout Invocation). The template's
@@ -1115,6 +1119,22 @@ public sealed interface MultiPermanentChoiceContext {
             playerIds = java.util.List.copyOf(playerIds);
             chosenIds = java.util.List.copyOf(chosenIds);
         }
+    }
+
+    /** The effect controller chooses a land controlled by each player to receive a counter. */
+    record EachPlayerChoosesLandAndPutCounterChoice(
+            java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
+            CounterType counterType, String sourceName, UUID chooserId)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesLandAndPutCounterChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
+    /** The controller of a creature chooses a contested land to gain control of. */
+    record TurfWarLandChoice(UUID creatureControllerId, UUID damagedPlayerId, String sourceName)
+            implements MultiPermanentChoiceContext {
     }
 
     /** Will of the Council: the current player voted for a nonland permanent. */

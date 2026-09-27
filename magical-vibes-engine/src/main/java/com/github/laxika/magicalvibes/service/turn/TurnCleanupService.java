@@ -496,6 +496,7 @@ public class TurnCleanupService {
         gameData.kayaExileNotificationPendingCreatureCards.clear();
         gameData.kayaExileNotificationPendingCounts.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
+        gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn.clear();
         gameData.cardsLeftGraveyardCountThisTurn.clear();
         gameData.creatureExileCountThisTurn.clear();
 

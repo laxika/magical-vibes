@@ -188,6 +188,14 @@ public class TriggerTargetCollector {
     public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
                           UUID controllerId, Card sourceCard, Options options,
                           Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options,
+                sourcePermanentSnapshot, defendingPlayerId, xValue, null);
+    }
+
+    public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
+                          UUID controllerId, Card sourceCard, Options options,
+                          Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
+                          UUID triggeringPermanentId) {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -241,6 +249,7 @@ public class TriggerTargetCollector {
                     .withSourcePermanentId(sourcePermanentSnapshot == null
                             ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
+                    .withTriggeringPermanentId(triggeringPermanentId)
                     : null;
 
             PermanentPredicate effectPredicate = null;
@@ -266,7 +275,8 @@ public class TriggerTargetCollector {
                             sourcePermanentSnapshot)
                             .withSourcePermanentId(sourcePermanentSnapshot == null
                                     ? null : sourcePermanentSnapshot.getId())
-                            .withDefendingPlayerId(defendingPlayerId);
+                            .withDefendingPlayerId(defendingPlayerId)
+                            .withTriggeringPermanentId(triggeringPermanentId);
                 }
             }
 
@@ -354,8 +364,11 @@ public class TriggerTargetCollector {
                                     new TargetValidationContext(gameData, p.getId(), Zone.BATTLEFIELD,
                                             sourceCard, xValue == null ? 0 : xValue, controllerId,
                                             sourcePermanentSnapshot,
+                                            false,
                                             sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
-                                            null)).isPresent()) {
+                                            null,
+                                            null,
+                                            triggeringPermanentId)).isPresent()) {
                         continue;
                     }
 

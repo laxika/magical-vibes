@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
@@ -162,6 +164,36 @@ public class DiscardTriggerCollectorService {
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on discard (may ability)", match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CastDiscardedCardFromGraveyardEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleCastDiscardedCard(TriggerMatchContext match,
+            CastDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.Discard discard)
+                || discard.discardedCard() == null
+                || discard.discardedCard().hasType(CardType.LAND)) {
+            return false;
+        }
+
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(discard.discardedCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                gameData.graveyardEntryVersion(discard.discardedCard().getId()));
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers to cast discarded card {}",
+                gameData.id, sourceCard.getName(), discard.discardedCard().getName());
         return true;
     }
 

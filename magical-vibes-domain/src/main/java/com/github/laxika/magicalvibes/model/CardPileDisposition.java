@@ -46,5 +46,7 @@ public enum CardPileDisposition {
     /** Stand or Fall: the chosen pile contains the only creatures that can block this turn. */
     BLOCKERS,
     /** Do or Die: target player chooses the pile whose creatures are destroyed without regeneration. */
-    DESTROY
+    DESTROY,
+    /** Make an Example: the spell controller chooses the pile each opponent sacrifices. */
+    MAKE_AN_EXAMPLE
 }

@@ -623,6 +623,10 @@ public class StackResolutionService {
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
         }
+        if (entry.isCastWithEscape()) {
+            entry.getEscapeExiledCardIds().forEach(cardId ->
+                    gameData.associateExiledCardWithSource(cardId, perm.getId()));
+        }
         applySneakAttackState(perm, entry);
         if (entry.isCastWithWarp()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(

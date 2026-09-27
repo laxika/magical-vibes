@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TLE", collectorNumber = "153")
+@CardRegistration(set = "NCC", collectorNumber = "197")
 public class DuelistsHeritage extends Card {
 
     public DuelistsHeritage() {

@@ -109,6 +109,7 @@ public sealed interface DelayedAction permits
         DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost,
         DelayedCoinFlipSacrificeTargetPermanentAtEndStep,
         AddManaAtNextMainPhase,
+        DrawCardsAtNextMainPhase,
         EchoAtNextUpkeep,
         LoseLifeAtNextDrawStepUnlessPays,
         DamageAtNextUpkeepUnlessPays,

@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPer
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerAndEnchantedPlayerAttackEachOther;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedAtLeastThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
@@ -200,6 +201,7 @@ import com.github.laxika.magicalvibes.model.condition.CoolnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardPutIntoYourGraveyardThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardsPutIntoGraveyardThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
@@ -409,6 +411,7 @@ import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThis
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
+import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -614,6 +617,10 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && !gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn
                             .getOrDefault(ctx.controllerId(), Set.of()).isEmpty();
+            case CreatureCardLeftGraveyardThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn
+                            .contains(ctx.controllerId());
             case CreatureCardsPutIntoGraveyardThisTurnAtLeast c ->
                     gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.values().stream()
                             .mapToInt(Set::size)
@@ -978,6 +985,8 @@ public class ConditionEvaluationService {
                         ? ctx.sourcePermanent().isCast()
                         : ctx.sourceZone() != null;
             }
+            case SourceWasCastWithEscape ignored ->
+                    ctx.sourcePermanent() != null && ctx.sourcePermanent().isEscaped();
             case DidntAttack ignored ->
                     sourceDidntAttackThisTurn(gameData, ctx);
             case EnchantedCreatureDidntAttack ignored ->
@@ -1000,6 +1009,8 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
             case AttacksEnchantedPlayer ignored -> attacksEnchantedPlayer(gameData, ctx);
+            case ControllerAndEnchantedPlayerAttackEachOther ignored ->
+                    controllerAndEnchantedPlayerAttackEachOther(gameData, ctx);
             case TargetPermanentAttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 Permanent attackedTarget = target == null || target.getAttackTarget() == null
@@ -3341,6 +3352,35 @@ public class ConditionEvaluationService {
                 .filter(Permanent::isAttacking)
                 .filter(attacker -> isCreatureForCondition(gameData, attacker))
                 .anyMatch(attacker -> enchantedPlayerId.equals(attacker.getAttackTarget()));
+    }
+
+    private boolean controllerAndEnchantedPlayerAttackEachOther(GameData gameData, ConditionContext ctx) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (source == null || source.getAttachedTo() == null || controllerId == null
+                || attackingPlayerId == null || controllerId.equals(source.getAttachedTo())
+                || (!controllerId.equals(attackingPlayerId) && !source.getAttachedTo().equals(attackingPlayerId))) {
+            return false;
+        }
+
+        UUID defendingPlayerId = controllerId.equals(attackingPlayerId)
+                ? source.getAttachedTo() : controllerId;
+        List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
+        if (attackers == null) return false;
+
+        Set<UUID> defendingPlaneswalkers = gameData.playerBattlefields
+                .getOrDefault(defendingPlayerId, List.of())
+                .stream()
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        return attackers.stream()
+                .filter(Permanent::isAttacking)
+                .map(Permanent::getAttackTarget)
+                .anyMatch(targetId -> defendingPlayerId.equals(targetId)
+                        || defendingPlaneswalkers.contains(targetId));
     }
 
     private boolean opponentAttacksPlaneswalker(GameData gameData, ConditionContext ctx) {

@@ -439,8 +439,13 @@ public class CastingCostService {
 
     /** Returns the generic adjustment supplied by effects that explicitly modify alternate costs. */
     public int getAlternateHandCastCostModifier(GameData gameData, UUID playerId, Card card) {
+        return getAlternateHandCastCostModifier(gameData, playerId, card, false);
+    }
+
+    public int getAlternateHandCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                                boolean blitzCost) {
         CostModificationContext context = new CostModificationContext(
-                gameData, playerId, card, false, 0, false, Zone.HAND, false, false, false);
+                gameData, playerId, card, false, 0, false, Zone.HAND, false, false, false, null, blitzCost);
         return buildCostModifierSnapshot(gameData, playerId).modifiers().stream()
                 .mapToInt(modifier -> modifier.handler().modifyAlternateCost(
                         context, modifier.effect(), modifier.source()))
@@ -1865,6 +1870,16 @@ public class CastingCostService {
         }
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
+            var grantedBlitz = gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card);
+            if (grantedBlitz.isPresent()) {
+                AlternateHandCast altCast = grantedBlitz.get();
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz())))
+                        .orElse(false);
+            }
             var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
             if (grantedEvoke.isPresent()) {
                 AlternateHandCast altCast = grantedEvoke.get();
@@ -1872,7 +1887,7 @@ public class CastingCostService {
                         .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
                                 new ManaCost(cost.manaCost())).canPay(
                                 gameData.playerManaPools.get(playerId),
-                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                                getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz())))
                         .orElse(false);
             }
             var grantedProwl = gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card);
@@ -1885,7 +1900,7 @@ public class CastingCostService {
                         .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
                                 new ManaCost(cost.manaCost())).canPay(
                                 gameData.playerManaPools.get(playerId),
-                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                                getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz())))
                         .orElse(false);
             }
             var grantedFreerunning = gameQueryService.findGrantedFreerunningAlternateCast(gameData, playerId, card);
@@ -1900,7 +1915,7 @@ public class CastingCostService {
                         .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
                                 new ManaCost(cost.manaCost())).canPay(
                                 gameData.playerManaPools.get(playerId),
-                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                                getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz())))
                         .orElse(false);
             }
             var adventureCast = card.getCastingOption(AdventureCast.class);
@@ -2055,7 +2070,8 @@ public class CastingCostService {
                     ? getCastCostModifierForFaceDownSpell(gameData, playerId, card)
                     : card.getKeywords().contains(Keyword.PLOT)
                     ? getPlotCostModifier(gameData, playerId, card)
-                    : -emergeReduction + getAlternateHandCastCostModifier(gameData, playerId, card);
+                    : -emergeReduction + getAlternateHandCastCostModifier(
+                            gameData, playerId, card, altCast.blitz());
             if (!(manaCost.get().treasureManaOnly()
                     ? pool.canPayWithTreasureMana(cost, additionalCost)
                     : cost.canPay(pool, additionalCost))) return false;

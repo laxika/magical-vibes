@@ -33,7 +33,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
-        PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingRagingRiver, PendingBendOrBreak,
+        PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingMakeAnExample,
+        PendingRagingRiver, PendingBendOrBreak,
         PendingPsychoticEpisodeChoice,
         PendingTruthOrTaleCardChoice,
         PendingWhimsOfTheFates,
@@ -97,6 +98,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MagesContestBidChoice,
         PendingInteraction.PainsRewardBidChoice,
         PendingInteraction.ExiledCardChoice,
+        PendingInteraction.HitCounterExiledCardChoice,
         PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
@@ -2180,6 +2182,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** Chooses one matching face-up card from exile to return to the battlefield. */
     record ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Chooses one of a damaged player's exiled cards with a hit counter to remove. */
+    record HitCounterExiledCardChoice(UUID playerId, UUID ownerId,
+                                      java.util.List<UUID> validCardIds,
+                                      CardEffect followUpEffect) implements PendingInteraction {
+
+        public HitCounterExiledCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -5011,18 +5033,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                String label, String cardName,
                                                CounterType enterWithCounter, int enterWithCounterCount,
                                                boolean grantHaste,
-                                               boolean returnToHandAtEndStep)
+                                               boolean returnToHandAtEndStep,
+                                               boolean includeGraveyard,
+                                               boolean includeCommandZone,
+                                               UUID delayedAuraCardId,
+                                               UUID delayedAuraOwnerId,
+                                               boolean handleCreatureEtbAndLegendRule)
             implements PendingInteraction {
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                  String label, String cardName) {
-            this(playerId, validCardIds, label, cardName, null, 0, false, false);
+            this(playerId, validCardIds, label, cardName, null, 0, false, false,
+                    true, false, null, null, false);
         }
 
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                  String label, String cardName,
                                                  CounterType enterWithCounter) {
             this(playerId, validCardIds, label, cardName, enterWithCounter,
-                    enterWithCounter == null ? 0 : 1, false, false);
+                    enterWithCounter == null ? 0 : 1, false, false,
+                    true, false, null, null, false);
+        }
+
+        public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                 String label, String cardName,
+                                                 CounterType enterWithCounter, int enterWithCounterCount,
+                                                 boolean grantHaste, boolean returnToHandAtEndStep) {
+            this(playerId, validCardIds, label, cardName, enterWithCounter, enterWithCounterCount,
+                    grantHaste, returnToHandAtEndStep, true, false, null, null, false);
         }
 
         public PutCardFromHandOrGraveyardChoice {

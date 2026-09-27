@@ -396,6 +396,7 @@ public class CombatDamageService {
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
 
         applyPlayerDamage(gameData, state, defenderId);
+        updateMonarchFromCombatDamage(gameData, state, defenderId);
         state.combatDamageDealtToPlayer.forEach((source, damage) -> {
             if (damage > 0 && gameData.isCommander(source.getOriginalCard().getId())) {
                 gameData.commanderDamageReceived.computeIfAbsent(defenderId, id -> new java.util.HashMap<>())
@@ -3405,7 +3406,8 @@ public class CombatDamageService {
             state.damageToDefendingPlayer = 0;
         }
         if (state.damageToDefendingPlayer > 0) {
-            if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
+            if (gameQueryService.canPlayerLifeChange(gameData, defenderId)
+                    && !gameQueryService.damageDoesNotCauseLifeLoss(gameData, defenderId)) {
                 int currentLife = gameData.getLife(defenderId);
                 int lifeAfterDamage = currentLife - state.damageToDefendingPlayer;
                 // Worship / Elderscale Wurm: combat damage can't reduce the player's life total past an
@@ -3426,7 +3428,11 @@ public class CombatDamageService {
                     triggerCollectionService.checkLifeLossTriggers(gameData, defenderId, lifeLost);
                 }
             } else {
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(defenderId) + "'s life total can't change."));
+                String playerName = gameData.playerIdToName.get(defenderId);
+                String message = gameQueryService.damageDoesNotCauseLifeLoss(gameData, defenderId)
+                        ? playerName + " takes " + state.damageToDefendingPlayer + " combat damage."
+                        : playerName + "'s life total can't change.";
+                gameLogService.append(gameData, GameLog.text(message));
             }
         }
 

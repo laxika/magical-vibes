@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MM3", collectorNumber = "84")
 @CardRegistration(set = "SIS", collectorNumber = "33")
 @CardRegistration(set = "C15", collectorNumber = "136")
+@CardRegistration(set = "NCC", collectorNumber = "259")
 public class SeverTheBloodline extends Card {
 
     public SeverTheBloodline() {

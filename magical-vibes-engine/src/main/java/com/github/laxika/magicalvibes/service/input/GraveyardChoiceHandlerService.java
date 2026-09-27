@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardTypeAssignedGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
@@ -705,6 +706,8 @@ public class GraveyardChoiceHandlerService {
                 throw new IllegalStateException("Invalid card: " + cardId);
             }
         }
+
+        validateCardTypeAssignedSelection(gameData, cardIds);
 
         if (gameData.cloneOperation.mimeoplasmGraveyardChoicePending) {
             List<Card> selectedCards = cardIds.stream()
@@ -1886,6 +1889,55 @@ public class GraveyardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void validateCardTypeAssignedSelection(GameData gameData, List<UUID> cardIds) {
+        if (gameData.graveyardTargetOperation.effects == null) {
+            return;
+        }
+        CardTypeAssignedGraveyardCardChoosingEffect effect = gameData.graveyardTargetOperation.effects.stream()
+                .filter(CardTypeAssignedGraveyardCardChoosingEffect.class::isInstance)
+                .map(CardTypeAssignedGraveyardCardChoosingEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (effect == null) {
+            return;
+        }
+
+        List<Card> selectedCards = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card == null) {
+                throw new IllegalStateException("Selected card is no longer in a graveyard");
+            }
+            selectedCards.add(card);
+        }
+
+        Map<CardType, Card> assignedCards = new java.util.EnumMap<>(CardType.class);
+        for (Card card : selectedCards) {
+            if (!assignCardToTypeSlot(card, effect.graveyardChoiceCardTypeSlots(), assignedCards, new HashSet<>())) {
+                throw new IllegalStateException("Selected cards must have different card types");
+            }
+        }
+    }
+
+    private boolean assignCardToTypeSlot(Card card, Set<CardType> slots,
+            Map<CardType, Card> assignedCards, Set<UUID> visitedCards) {
+        if (!visitedCards.add(card.getId())) {
+            return false;
+        }
+        for (CardType type : slots) {
+            if (!card.hasType(type)) {
+                continue;
+            }
+            Card assignedCard = assignedCards.get(type);
+            if (assignedCard == null
+                    || assignCardToTypeSlot(assignedCard, slots, assignedCards, visitedCards)) {
+                assignedCards.put(type, card);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateMixedZoneSelection(GameData gameData, List<UUID> cardIds,

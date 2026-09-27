@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1086,6 +1087,20 @@ public sealed interface ChoiceContext {
                                     String sourceCardName) implements ChoiceContext {}
 
     /**
+     * Slippery Bogbonder: the controller chooses how many counters of each concrete kind to move
+     * from each controlled creature onto the target creature.
+     */
+    record MoveAnyCountersFromControlledCreaturesAmountChoice(List<CounterSource> sources, int index,
+                                                               UUID toPermanentId, String sourceCardName)
+            implements ChoiceContext {
+        public MoveAnyCountersFromControlledCreaturesAmountChoice {
+            sources = List.copyOf(sources);
+        }
+    }
+
+    record CounterSource(UUID permanentId, CounterType counterType, String cardName) {}
+
+    /**
      * Aetherborn Marauder: the controller chooses how many counters to move from each selected
      * eligible permanent onto the source. The sequence advances to the next permanent after every
      * answer, so zero is a valid choice for each one.
@@ -1597,10 +1612,24 @@ public sealed interface ChoiceContext {
         public static final List<String> OPTIONS = List.of(ADD, REMOVE);
     }
 
-    /** Animation Module's choice of a counter kind to add to the target. */
+    /** Choice of a counter kind to add to the target. */
     record AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                       List<CounterType> counterTypes, boolean poisonCounters)
+                                       List<CounterType> counterTypes, boolean poisonCounters,
+                                       boolean distributeToOtherControlledCreatures,
+                                       UUID placementTargetId)
             implements ChoiceContext {
+
+        public AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                           List<CounterType> counterTypes, boolean poisonCounters) {
+            this(targetId, controllerId, sourceCardName, counterTypes, poisonCounters, false, null);
+        }
+
+        public AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                           List<CounterType> counterTypes, boolean poisonCounters,
+                                           boolean distributeToOtherControlledCreatures) {
+            this(targetId, controllerId, sourceCardName, counterTypes, poisonCounters,
+                    distributeToOtherControlledCreatures, null);
+        }
 
         public static final String POISON = "poison counters";
 
@@ -1609,6 +1638,40 @@ public sealed interface ChoiceContext {
                 return List.of(POISON);
             }
             return counterTypes.stream().map(AddAnotherCounterTypeChoice::counterLabel).toList();
+        }
+
+        public static String counterLabel(CounterType counterType) {
+            return switch (counterType) {
+                case PLUS_ONE_PLUS_ONE -> "+1/+1 counters";
+                case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
+                default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
+            };
+        }
+    }
+
+    /** Bribe Taker's optional counter choice for the next controlled counter kind. */
+    record ChooseCounterForEachControlledCounterKindChoice(
+            UUID sourcePermanentId, UUID controllerId, String sourceCardName,
+            List<CounterType> remainingKinds) implements ChoiceContext {
+
+        public static final String SKIP = "Don't put a counter";
+
+        public ChooseCounterForEachControlledCounterKindChoice {
+            remainingKinds = List.copyOf(remainingKinds);
+        }
+
+        public CounterType currentKind() {
+            return remainingKinds.getFirst();
+        }
+
+        public List<String> options() {
+            List<String> options = new ArrayList<>();
+            options.add(SKIP);
+            options.add(counterLabel(CounterType.PLUS_ONE_PLUS_ONE));
+            if (currentKind() != CounterType.PLUS_ONE_PLUS_ONE) {
+                options.add(counterLabel(currentKind()));
+            }
+            return options;
         }
 
         public static String counterLabel(CounterType counterType) {
@@ -1719,6 +1782,22 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Agent's Toolkit's choice of which counter to move onto an entering creature. */
+    record MoveOneCounterChoice(UUID sourcePermanentId, UUID targetId, UUID controllerId,
+                                String sourceCardName, List<CounterType> counterTypes)
+            implements ChoiceContext {
+
+        public MoveOneCounterChoice {
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream()
+                    .map(RemoveChosenCountersChoice::counterLabel)
+                    .toList();
+        }
+    }
+
     /** Dismantle's choice of counter type for the destroyed artifact's counters. */
     record DismantleCounterTypeChoice(int counterCount, String sourceCardName) implements ChoiceContext {
 
@@ -1793,6 +1872,83 @@ public sealed interface ChoiceContext {
         public ExpropriateChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             moneyVoterIds = List.copyOf(moneyVoterIds);
+        }
+    }
+
+    /** Tivit: the current player voted for evidence or bribery. */
+    record CouncilDilemmaChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                int evidenceVotes, int briberyVotes, String sourceName,
+                                boolean offerAdditionalVote)
+            implements ChoiceContext {
+        public static final String EVIDENCE = "Evidence";
+        public static final String BRIBERY = "Bribery";
+        public static final List<String> OPTIONS = List.of(EVIDENCE, BRIBERY);
+
+        public CouncilDilemmaChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
+    }
+
+    /** Tivit: the controller chooses whether to cast the additional vote. */
+    record CouncilDilemmaAdditionalVoteChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                               int evidenceVotes, int briberyVotes, String sourceName)
+            implements ChoiceContext {
+        public static final String VOTE_AGAIN = "Vote again";
+        public static final String CONTINUE = "Continue voting";
+        public static final List<String> OPTIONS = List.of(VOTE_AGAIN, CONTINUE);
+
+        public CouncilDilemmaAdditionalVoteChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
+    }
+
+    /** Master of Ceremonies: the current opponent chooses money, friends, or secrets. */
+    record MasterOfCeremoniesChoice(UUID effectControllerId, UUID choosingPlayerId,
+                                    List<UUID> remainingPlayerIds, List<UUID> moneyPlayerIds,
+                                    List<UUID> friendsPlayerIds, List<UUID> secretsPlayerIds,
+                                    String sourceName) implements ChoiceContext {
+        public static final String MONEY = "Money";
+        public static final String FRIENDS = "Friends";
+        public static final String SECRETS = "Secrets";
+        public static final List<String> OPTIONS = List.of(MONEY, FRIENDS, SECRETS);
+
+        public MasterOfCeremoniesChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            moneyPlayerIds = List.copyOf(moneyPlayerIds);
+            friendsPlayerIds = List.copyOf(friendsPlayerIds);
+            secretsPlayerIds = List.copyOf(secretsPlayerIds);
+        }
+    }
+
+    /** Zndrsplt's Judgment: the current player chooses friend or foe. */
+    record ZndrsplatsJudgmentChoice(UUID choosingPlayerId, List<UUID> remainingPlayerIds,
+                                    List<UUID> chosenPlayerIds, List<UUID> friendPlayerIds,
+                                    List<UUID> foePlayerIds,
+                                    String sourceName) implements ChoiceContext {
+        public static final String FRIEND = "Friend";
+        public static final String FOE = "Foe";
+        public static final List<String> OPTIONS = List.of(FRIEND, FOE);
+
+        public ZndrsplatsJudgmentChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenPlayerIds = List.copyOf(chosenPlayerIds);
+            friendPlayerIds = List.copyOf(friendPlayerIds);
+            foePlayerIds = List.copyOf(foePlayerIds);
+        }
+    }
+
+    /** Seize the Spotlight: the current opponent chooses fame or fortune. */
+    record SeizeTheSpotlightChoice(UUID effectControllerId, UUID choosingPlayerId,
+                                   List<UUID> remainingPlayerIds, List<UUID> famePlayerIds,
+                                   List<UUID> fortunePlayerIds, String sourceName) implements ChoiceContext {
+        public static final String FAME = "Fame";
+        public static final String FORTUNE = "Fortune";
+        public static final List<String> OPTIONS = List.of(FAME, FORTUNE);
+
+        public SeizeTheSpotlightChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            famePlayerIds = List.copyOf(famePlayerIds);
+            fortunePlayerIds = List.copyOf(fortunePlayerIds);
         }
     }
 
@@ -1997,6 +2153,19 @@ public sealed interface ChoiceContext {
 
         public static final String SACRIFICE = "Sacrifice a permanent";
         public static final String DISCARD = "Discard a card";
+    }
+
+    /** Each-player choice between sacrificing a matching permanent and losing life. */
+    record EachPlayerSacrificeOrLoseLifeChoice(UUID affectedPlayerId, String sourceCardName)
+            implements ChoiceContext {
+
+        public static String sacrifice(String description) {
+            return "Sacrifice " + description;
+        }
+
+        public static String loseLife(int amount) {
+            return "Lose " + amount + " life";
+        }
     }
 
     /** Dr. Eggman's villainous choice between discarding and letting its controller put a card in. */

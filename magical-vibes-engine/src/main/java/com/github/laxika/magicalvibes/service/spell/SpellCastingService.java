@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
@@ -70,8 +71,11 @@ import com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToKickedSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -141,6 +145,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect;
@@ -290,7 +295,11 @@ public class SpellCastingService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
-                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)
+                        && (!grant.appliesOnlyToFirstMatchingSpellEachTurn()
+                        || gameData.getSpellsCastThisTurn(playerId).stream().noneMatch(previousSpell ->
+                        predicateEvaluationService.matchesCardPredicate(
+                                previousSpell, grant.filter(), permanent.getCard().getId(), gameData, playerId)))) {
                     values.add(grant.abilityValue());
                 }
             }
@@ -2949,12 +2958,17 @@ public class SpellCastingService {
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
                 && gameQueryService.findGrantedProwlAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex)).isPresent();
-        boolean usingGrantedEvoke = !fromGraveyard && forceAlternateCost && !usingGrantedProwl
+        boolean usingGrantedBlitz = !fromGraveyard && forceAlternateCost && !usingGrantedProwl
+                && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
+                && gameQueryService.findGrantedBlitzAlternateCast(
+                gameData, playerId, handEarly.get(cardIndex)).isPresent();
+        boolean usingGrantedEvoke = !fromGraveyard && forceAlternateCost
+                && !usingGrantedProwl && !usingGrantedBlitz
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
                 && gameQueryService.findGrantedEvokeAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex)).isPresent();
         boolean usingGrantedFreerunning = !fromGraveyard && forceAlternateCost
-                && !usingGrantedProwl && !usingGrantedEvoke
+                && !usingGrantedProwl && !usingGrantedBlitz && !usingGrantedEvoke
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
                 && gameQueryService.findGrantedFreerunningAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex)).isPresent();
@@ -2975,6 +2989,7 @@ public class SpellCastingService {
                 : null;
         boolean usingAlternateCost = usingBestowCost || forceAlternateCost
                 || usingGrantedProwl
+                || usingGrantedBlitz
                 || usingGrantedEvoke
                 || usingGrantedFreerunning
                 || hasGraveyardExileAlternateCost
@@ -3121,6 +3136,7 @@ public class SpellCastingService {
             } else if (usingAlternateCost && (usingCollectEvidenceAlternativeCost
                     || cardCheck.getCastingOption(AlternateHandCast.class).isPresent()
                     || usingGrantedProwl
+                    || usingGrantedBlitz
                     || usingGrantedEvoke
                     || usingGrantedFreerunning
                     || cardCheck.getCastingOption(BestowCast.class).isPresent()
@@ -3203,6 +3219,17 @@ public class SpellCastingService {
             preparedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());
             hand.set(cardIndex, preparedCard);
         }
+        if (usingGrantedBlitz) {
+            preparedCard = preparedCard.createRuntimeCopy();
+            preparedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                    new CastForAlternateCost(), new GrantKeywordEffect(
+                    Keyword.HASTE, GrantScope.SELF)));
+            preparedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                    new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
+            preparedCard.addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+                    new CastForAlternateCost(), new DrawCardEffect(1)));
+            hand.set(cardIndex, preparedCard);
+        }
         if (!spliceHandCardIndices.isEmpty()) {
             preparedCard = preparedCard.createRuntimeCopy();
             preparedCard.setAllowSharedTargets(true);
@@ -3219,6 +3246,9 @@ public class SpellCastingService {
                 : usingGrantedEvoke
                 ? gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card).orElseThrow(
                 () -> new IllegalStateException("Card does not have a granted evoke cost"))
+                : usingGrantedBlitz
+                ? gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card).orElseThrow(
+                () -> new IllegalStateException("Card does not have a granted blitz cost"))
                 : usingGrantedProwl
                 ? gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card).orElseThrow(
                 () -> new IllegalStateException("Card does not have a granted prowl cost"))
@@ -3715,7 +3745,7 @@ public class SpellCastingService {
                 int faceDownCostReduction = card.getMorphCost() != null
                         ? castingCostService.getCastCostModifierForFaceDownSpell(gameData, playerId, card) : 0;
                 int alternateCostModifier = castingCostService.getAlternateHandCastCostModifier(
-                        gameData, playerId, card);
+                        gameData, playerId, card, altCast.blitz());
                 ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana = card.getMorphCost() != null
                         ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : null;
                 boolean canPay;
@@ -4684,6 +4714,7 @@ public class SpellCastingService {
             // "when it enters, sacrifice it" ETB trigger fires. Harmless for non-evoke alternate
             // casts (e.g. Demon of Death's Gate), which have no evoke sacrifice ETB effect.
             if (usingAlternateCost && !usingWebSlingingCost && !usingBestowCost
+                    && !usingGrantedBlitz
                     && !usingCollectEvidenceAlternativeCost && card.getMorphCost() == null) {
                 entry.setEvoked(true);
                 // Prowl (CR 702.75): flag the entry so a creature's "if its prowl cost was paid" ETB
@@ -8423,9 +8454,11 @@ public class SpellCastingService {
                 flashbackOpt, effectiveXValue, exileGraveyardCardIndices);
         payDelveCost(gameData, player, card, additionalCosts.delveCost(), exileGraveyardCardIndices,
                 graveyard == gameData.playerGraveyards.get(playerId) ? graveyardCardIndex : -1);
+        List<UUID> escapeExiledCardIds = List.of();
         if (isGraveyardCast) {
-            payGraveyardCastAdditionalCosts(gameData, player, card, graveyardCastOpt.orElseThrow(),
-                    retraceDiscardHandCardIndex, discardHandCardIndices, exileGraveyardCardIndices);
+            escapeExiledCardIds = payGraveyardCastAdditionalCosts(gameData, player, card,
+                    graveyardCastOpt.orElseThrow(), retraceDiscardHandCardIndex,
+                    discardHandCardIndices, exileGraveyardCardIndices);
         }
         if (isGrantedCyclingGraveyardCast) {
             payGraveyardCastAdditionalCosts(gameData, player, card, filteredGraveyardAdditionalCosts,
@@ -8570,6 +8603,7 @@ public class SpellCastingService {
                             && filteredGraveyardPermission.orElseThrow().permission().escape())) {
                 stackEntry.setCastWithEscape(true);
             }
+            stackEntry.setEscapeExiledCardIds(escapeExiledCardIds);
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().exileAfterResolution()) {
                 stackEntry.setExileInsteadOfGraveyard(true);
             }
@@ -8671,6 +8705,7 @@ public class SpellCastingService {
                             && filteredGraveyardPermission.orElseThrow().permission().escape())) {
                 stackEntry.setCastWithEscape(true);
             }
+            stackEntry.setEscapeExiledCardIds(escapeExiledCardIds);
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().alternateManaCost() != null) {
                 stackEntry.setAlternateCost(true);
             }
@@ -12350,7 +12385,7 @@ public class SpellCastingService {
         return selectedIndices;
     }
 
-    private void payGraveyardCastAdditionalCosts(GameData gameData, Player player, Card card,
+    private List<UUID> payGraveyardCastAdditionalCosts(GameData gameData, Player player, Card card,
                                                   GraveyardCast graveyardCast,
                                                   Integer discardHandCardIndex,
                                                   List<Integer> discardHandCardIndices,
@@ -12392,7 +12427,9 @@ public class SpellCastingService {
                         .text(" from the graveyard.")
                         .build());
             }
+            return exiledCards.stream().map(Card::getId).toList();
         }
+        return List.of();
     }
 
     private void payGraveyardCastAdditionalCosts(GameData gameData, Player player, Card card,
@@ -13114,7 +13151,7 @@ public class SpellCastingService {
         }
         UUID playerId = player.getId();
         int alternateCostModifier = castingCostService.getAlternateHandCastCostModifier(
-                gameData, playerId, card);
+                gameData, playerId, card, altCast.blitz());
         int faceDownCostModifier = card.getMorphCost() == null ? 0
                 : castingCostService.getCastCostModifier(gameData, playerId, card, xValue, true);
 

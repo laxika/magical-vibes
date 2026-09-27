@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2187")
+@CardRegistration(set = "NCC", collectorNumber = "36")
+@CardRegistration(set = "NCC", collectorNumber = "137")
 public class LethalScheme extends Card {
 
     public LethalScheme() {

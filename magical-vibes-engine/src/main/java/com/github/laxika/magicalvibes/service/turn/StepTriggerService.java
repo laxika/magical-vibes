@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
+import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldSelfReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldTransformedReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
@@ -144,6 +145,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMo
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -3091,6 +3093,7 @@ public class StepTriggerService {
         }
 
         drainAddManaAtNextMainPhase(gameData, true);
+        drainDrawCardsAtNextMainPhase(gameData);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
@@ -3139,6 +3142,35 @@ public class StepTriggerService {
             log.info("Game {} - {}'s delayed mana reward fires for {}",
                     gameData.id, reward.sourceCard().getName(),
                     gameData.playerIdToName.get(mainPhasePlayerId));
+        }
+    }
+
+    /** Fires delayed draws that are due at the active player's next main phase. */
+    public void drainDrawCardsAtNextMainPhase(GameData gameData) {
+        UUID mainPhasePlayerId = gameData.activePlayerId;
+        List<DrawCardsAtNextMainPhase> pendingDraws = gameData.drainDelayedActions(
+                DrawCardsAtNextMainPhase.class,
+                action -> action.controllerId().equals(mainPhasePlayerId));
+        int damagedPlayers = (int) gameData.combatDamageDealtToPlayersThisTurn.keySet().stream()
+                .filter(gameData.playerIds::contains)
+                .count();
+        if (damagedPlayers <= 0) {
+            return;
+        }
+        for (DrawCardsAtNextMainPhase pending : pendingDraws) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    pending.sourceCard(),
+                    pending.controllerId(),
+                    pending.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(new DrawCardEffect(damagedPlayers)))
+            );
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                    "'s delayed ability triggers — draw " + damagedPlayers + " card(s)."));
+            log.info("Game {} - {} delayed main-phase draw trigger pushed onto the stack for {} card(s)",
+                    gameData.id, pending.sourceCard().getName(), damagedPlayers);
         }
     }
 
@@ -5770,11 +5802,18 @@ public class StepTriggerService {
                     } else if (effect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof CreatureDiedUnderOpponentControlThisTurn
                                 || conditional.condition() instanceof CreatureDiedUnderYourControlThisTurn
-                                || conditional.condition() instanceof CardsLeftGraveyardThisTurn)) {
+                                || conditional.condition() instanceof CardsLeftGraveyardThisTurn
+                                || conditional.condition() instanceof CreatureCardLeftGraveyardThisTurn)) {
                         CardEffect wrapped = conditional.wrapped();
                         if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
-                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
+                            if (perm.getCard().getSpellTargets().size() > 1) {
+                                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                        perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)),
+                                        perm.getId(), List.of(), 0, 0));
+                            } else {
+                                gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                        perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
+                            }
                         } else {
                             gameData.stack.add(new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,

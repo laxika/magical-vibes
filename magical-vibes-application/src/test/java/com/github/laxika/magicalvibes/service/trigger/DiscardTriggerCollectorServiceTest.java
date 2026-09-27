@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -213,6 +214,46 @@ class DiscardTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — CastDiscardedCardFromGraveyardEffect")
+    class ControllerDiscardCast {
+
+        @Test
+        @DisplayName("queues the exact discarded nonland card")
+        void queuesExactDiscardedNonlandCard() {
+            Permanent source = createPermanent("Oskar, Rubbish Reclaimer");
+            var effect = new CastDiscardedCardFromGraveyardEffect();
+            Card discarded = createCard("Grizzly Bears");
+            gd.playerGraveyards.computeIfAbsent(player1Id, k -> new ArrayList<>()).add(discarded);
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getTriggeringCardId()).isEqualTo(discarded.getId());
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            });
+        }
+
+        @Test
+        @DisplayName("does not trigger for a discarded land")
+        void ignoresDiscardedLand() {
+            Permanent source = createPermanent("Oskar, Rubbish Reclaimer");
+            var effect = new CastDiscardedCardFromGraveyardEffect();
+            Card discarded = createCard("Forest");
+            discarded.setType(CardType.LAND);
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     @Nested

@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffec
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopiedSpellReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -952,8 +953,12 @@ public class SpellCastTriggerCollectorService {
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTriggers({
+            @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    })
     private boolean handleControllerSpellCastFromHandTrigger(TriggerMatchContext match,
             SpellCastFromHandTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2348,7 +2353,12 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
-        List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        StackEntry copiedSpellSnapshot = new StackEntry(spellCopy.copiedSpell());
+        List<CardEffect> resolved = trigger.resolvedEffects().stream()
+                .map(effect -> effect instanceof CopiedSpellReferencingEffect referencing
+                        ? referencing.snapshotCopiedSpell(copiedSpellSnapshot)
+                        : effect)
+                .toList();
         if (trigger.targetFilter() == null
                 && resolved.size() == 1
                 && resolved.getFirst() instanceof LoseLifeEffect loseLife
@@ -2374,7 +2384,7 @@ public class SpellCastTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), resolved,
                     needsPlayerTarget && !needsPermanentTarget, trigger.targetFilter(), 0,
-                    match.permanent().getId()));
+                    match.permanent().getId(), trigger.optionalTarget()));
             gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
             return true;

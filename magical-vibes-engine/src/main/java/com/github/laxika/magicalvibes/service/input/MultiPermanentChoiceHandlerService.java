@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherAttackingCreatureWithLesserPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -110,6 +111,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopiesOfSaddledCreatureEffectHandler
             createTokenCopiesOfSaddledCreatureEffectHandler;
     private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
+    private final ChooseAnotherAttackingCreatureWithLesserPowerEffectHandler
+            chooseAnotherAttackingCreatureWithLesserPowerEffectHandler;
     private final RemoveCounterFromTwoCreaturesThenEffectHandler removeCounterFromTwoCreaturesThenEffectHandler;
     private final ReturnNControlledPermanentsToHandEffectHandler returnNControlledPermanentsToHandEffectHandler;
     private final ReturnUpToNControlledPermanentsToHandEffectHandler returnUpToNControlledPermanentsToHandEffectHandler;
@@ -190,6 +193,10 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerChoosesNonlandPermanentAndPutCounterEffectHandler
             eachPlayerChoosesNonlandPermanentAndPutCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesLandAndPutCounterEffectHandler eachPlayerChoosesLandAndPutCounterHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .TurfWarCombatDamageEffectHandler turfWarCombatDamageHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
@@ -212,6 +219,7 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .RaidingPartyEffectHandler raidingPartyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WhimsOfTheFatesEffectHandler
             whimsOfTheFatesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -298,6 +306,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentThenReturnRestChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentAndPutCounterChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice
+                || context instanceof MultiPermanentChoiceContext.TurfWarLandChoice
                 || context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice
                 || context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice)
@@ -423,6 +433,10 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.RemoveCounterFromTwoCreatures)
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two creatures must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ChooseAnotherAttackingCreatureWithLesserPower
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one attacking creature must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.ReturnNControlledPermanentsToHand returnContext
                 && permanentIds.size() != returnContext.effect().count()) {
@@ -957,6 +971,10 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesNonlandPermanentThenReturnRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentAndPutCounterChoice ctx) {
             handleEachPlayerChoosesNonlandPermanentAndPutCounter(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice ctx) {
+            handleEachPlayerChoosesLandAndPutCounter(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TurfWarLandChoice ctx) {
+            handleTurfWarLandChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice ctx) {
             handleChooseLandOfEachBasicTypeThenDestroyChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice ctx) {
@@ -969,6 +987,8 @@ public class MultiPermanentChoiceHandlerService {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference) {
             handleChooseTwoCreaturesByPowerDifference(gameData, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.ChooseAnotherAttackingCreatureWithLesserPower) {
+            handleChooseAnotherAttackingCreatureWithLesserPower(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfChosenDistinctControlledTokens) {
             handleCreateTokenCopiesOfChosenDistinctControlledTokens(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAnyNumberUntilSourceLeaves ctx) {
@@ -1008,6 +1028,17 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("No pending effect resolution entry");
         }
         chooseTwoCreaturesByPowerDifferenceEffectHandler.completeChoice(gameData, permanentIds, entry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleChooseAnotherAttackingCreatureWithLesserPower(GameData gameData,
+                                                                      List<UUID> permanentIds) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No pending effect resolution entry");
+        }
+        chooseAnotherAttackingCreatureWithLesserPowerEffectHandler.completeChoice(
+                gameData, permanentIds, entry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
@@ -3210,6 +3241,25 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleEachPlayerChoosesLandAndPutCounter(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice context) {
+        eachPlayerChoosesLandAndPutCounterHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTurfWarLandChoice(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.TurfWarLandChoice context) {
+        turfWarCombatDamageHandler.completeChoice(gameData, permanentIds, context);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handleChooseLandOfEachBasicTypeThenDestroyChoice(
             GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice context) {
@@ -3380,7 +3430,9 @@ public class MultiPermanentChoiceHandlerService {
 
     private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {
         PendingPileSeparation state = gameData.peekPendingInteraction(PendingPileSeparation.class);
-        if (state.disposition() == CardPileDisposition.ATTACKERS) {
+        if (state.disposition() == CardPileDisposition.MAKE_AN_EXAMPLE) {
+            makeAnExampleEffectHandler.completePileSeparationStep1(gameData, permanentIds);
+        } else if (state.disposition() == CardPileDisposition.ATTACKERS) {
             fightOrFlightSupport.completePileSeparationStep1(gameData, permanentIds);
         } else if (state.disposition() == CardPileDisposition.BLOCKERS) {
             standOrFallSupport.completePileSeparationStep1(gameData, permanentIds);

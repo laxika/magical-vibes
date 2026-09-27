@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZNR", collectorNumber = "24")
+@CardRegistration(set = "NCC", collectorNumber = "205")
 public class LuminarchAspirant extends Card {
 
     public LuminarchAspirant() {

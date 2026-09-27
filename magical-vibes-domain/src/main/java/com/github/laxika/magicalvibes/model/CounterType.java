@@ -25,6 +25,7 @@ public enum CounterType {
     CARRION,
     CHARGE,
     CONQUEROR,
+    CONTESTED,
     CORRUPTION,
     CHORUS,
     CORPSE,

@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -108,6 +109,7 @@ class MayAbilityHandlerServiceTest {
                 mock(BendOrBreakEffectHandler.class),
                 mock(FightOrFlightSupport.class),
                 mock(StandOrFallSupport.class),
+                mock(MakeAnExampleEffectHandler.class),
                 mock(GraveyardReturnSupport.class),
                 mock(BrilliantUltimatumSupport.class),
                 mock(MayAbilityTapCostService.class),

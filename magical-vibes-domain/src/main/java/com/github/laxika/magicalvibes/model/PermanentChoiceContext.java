@@ -131,7 +131,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Return a chosen permanent, then put a +1/+1 counter on the source permanent. */
     record ReturnPermanentAndPutCounterOnSource(UUID controllerId, Card sourceCard,
                                                 UUID sourcePermanentId) implements PermanentChoiceContext {}
+    /** Return a chosen creature, then put +1/+1 counters on the source equal to its power. */
+    record ReturnCreatureToHandAndPutCountersOnSourceEqualToPower(UUID controllerId, Card sourceCard,
+                                                                   UUID sourcePermanentId)
+            implements PermanentChoiceContext {}
     record ChoosePlayerThenReturnCreatureToHand(String sourceCardName) implements PermanentChoiceContext {}
+    record ZndrsplatsJudgmentCreatureChoice(
+            List<ZndrsplatsJudgmentSelection> remainingSelections,
+            List<ZndrsplatsJudgmentSelection> chosenSelections,
+            String sourceCardName) implements PermanentChoiceContext {
+        public ZndrsplatsJudgmentCreatureChoice {
+            remainingSelections = List.copyOf(remainingSelections);
+            chosenSelections = List.copyOf(chosenSelections);
+        }
+    }
+
+    record ZndrsplatsJudgmentSelection(UUID playerId, boolean friend, UUID creatureId) {}
     /** Intellectual Offering: choose an opponent for one of its two independent modes. */
     record ChooseOpponentDrawAndUntap(UUID controllerId, boolean untapChoice, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -310,6 +325,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> remainingOpponentIds,
             List<UUID> accumulatedChosenIds
     ) implements PermanentChoiceContext {}
+
+    /** Seize the Spotlight: the controller chooses one creature for each opponent who chose fame. */
+    record SeizeTheSpotlightCreatureChoice(
+            UUID controllerId,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds,
+            List<UUID> fortunePlayerIds,
+            String sourceCardName
+    ) implements PermanentChoiceContext {
+        public SeizeTheSpotlightCreatureChoice {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
+            fortunePlayerIds = List.copyOf(fortunePlayerIds);
+        }
+    }
 
     /** Order of Succession: each player chooses a creature controlled by the next player. */
     record OrderOfSuccessionCreatureChoice(UUID permanentId, UUID gainingPlayerId) {}
@@ -2333,6 +2364,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     record SuspectChosenOtherCreature() implements PermanentChoiceContext {}
+
+    /** Contractual Safeguard: choose the creature whose counter kind is copied. */
+    record ContractualSafeguardReference() implements PermanentChoiceContext {}
+    record ChooseCounterTypeOnControlledPermanentReference() implements PermanentChoiceContext {}
 
     record TurnOwnCreatureFaceUp() implements PermanentChoiceContext {}
 

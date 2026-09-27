@@ -174,6 +174,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this card's owner draws their second card of the turn while this card is in
      *  their graveyard. Checked in {@code DrawService}. */
     GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
+    /** Triggers when an opponent of this card's owner draws their second card of the turn while
+     *  this card is in the owner's graveyard. Checked in {@code DrawService}. */
+    GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
     ON_OPPONENT_DRAWS,
     /** Triggers whenever the player enchanted by this Aura draws a card. */
     ON_ENCHANTED_PLAYER_DRAWS,
@@ -1160,6 +1163,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  a triggered ability keyed to the just-cast spell (so the cascade threshold is the spell's mana
      *  value, not this permanent's). Used by Maelstrom Nexus. */
     GRANT_CASCADE_TO_FIRST_SPELL,
+    /** Marker slot: "The first spell you cast each turn that mana from a Treasure was spent to cast
+     *  has cascade." Holds a {@code CascadeEffect}; detected by presence on the casting player's
+     *  battlefield when the first Treasure-mana-funded spell of the turn is cast. */
+    GRANT_CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA,
     /** Marker slot: "Instant and sorcery spells you cast from your hand have cascade." Holds a
      *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
      *  instant or sorcery is cast from hand. */

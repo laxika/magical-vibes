@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
+import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
@@ -404,6 +405,7 @@ public class TurnProgressionService {
                 // Conduit of Storms / Emrakul: "add mana at the beginning of your next main phase this turn"
                 // after attacking — the next main is postcombat.
                 stepTriggerService.drainAddManaAtNextMainPhase(gameData, false);
+                stepTriggerService.drainDrawCardsAtNextMainPhase(gameData);
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
@@ -658,6 +660,7 @@ public class TurnProgressionService {
                              boolean offerTimeVaultChoice, UUID excludedTimeVaultId) {
         if (snapshotEndingPlayer) {
             gameData.snapshotPlayerActionsForLastTurn(gameData.activePlayerId);
+            gameData.snapshotPlayerAttacksForLastTurn(gameData.activePlayerId);
         }
         // Clear any active mind control from the ending turn
         gameData.mindControlledPlayerId = null;
@@ -864,6 +867,8 @@ public class TurnProgressionService {
         gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoCreatedTokensThisTurn.clear();
+        gameData.treasureTokensCreatedThisTurn.clear();
+        gameData.permanentsThatFoughtThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.playersWhoSacrificedArtifactsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
@@ -943,6 +948,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
+        gameData.clearDelayedActions(DrawCardsAtNextMainPhase.class);
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerKeywordGrant.class);

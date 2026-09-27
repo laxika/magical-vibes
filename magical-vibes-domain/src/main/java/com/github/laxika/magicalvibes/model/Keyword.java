@@ -50,6 +50,7 @@ public enum Keyword {
     ENLIST,
     AGGRESSIVE,
     DETHRONE,
+    MELEE,
     LIVING_WEAPON,
     DEATHTOUCH,
     SCRY,

@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
+import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -1354,13 +1355,16 @@ public class TriggerCollectionService {
         // Revenge's graveyard return) is queued as a plain triggered ability under the caster.
         List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
         List<CardEffect> selfCastEffects = new ArrayList<>();
-        if (spellCard.getManaCost() != null
-                && gameQueryService.hasSpellCastingAbilityGrant(
-                        gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone)
-                && spellCard.getEffects(EffectSlot.ON_SELF_CAST).stream()
-                .noneMatch(effect -> effect instanceof ReplicateEffect replicate
-                        && spellCard.getManaCost().equals(replicate.manaCost()))) {
-            selfCastEffects.add(new ReplicateEffect(spellCard.getManaCost()));
+        if (spellCard.getManaCost() != null) {
+            gameQueryService.getSpellCastingAbilityGrantValues(
+                            gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone).stream()
+                    .map(value -> value > 0 ? "{" + value + "}" : spellCard.getManaCost())
+                    .distinct()
+                    .filter(replicateCost -> spellCard.getEffects(EffectSlot.ON_SELF_CAST).stream()
+                            .noneMatch(effect -> effect instanceof ReplicateEffect replicate
+                                    && replicateCost.equals(replicate.manaCost())))
+                    .map(ReplicateEffect::new)
+                    .forEach(selfCastEffects::add);
         }
         selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
         StackEntry selfCastSpellEntry = gameData.stack.stream()
@@ -1666,6 +1670,32 @@ public class TriggerCollectionService {
                     ));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} grants cascade to first spell {} for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
+        // "The first spell you cast each turn that mana from a Treasure was spent to cast has
+        // cascade" (Rain of Riches). Unlike the ordinary first-spell marker above, a spell cast
+        // without Treasure mana does not consume this grant.
+        if (gameData.spellCastUsedTreasureMana(spellCard.getId())
+                && gameData.getSpellsCastUsingTreasureManaThisTurnCount(castingPlayerId) == 1) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    List<CardEffect> grantEffects = perm.getCard().getEffects(
+                            EffectSlot.GRANT_CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA);
+                    if (grantEffects.isEmpty()) continue;
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects)
+                    ));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to first Treasure-mana-funded spell {} for {}",
                             gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
                 }
             }
@@ -6879,20 +6909,39 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, permanent) -> {
             if (!ownerId.equals(controllerId)) return;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_CONTROLLER_BECOMES_MONARCH)) {
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        permanent.getCard(),
-                        controllerId,
-                        permanent.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        permanent.getId()
-                ));
+                List<CardEffect> effects = new ArrayList<>(List.of(effect));
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    int targetGroupIndex = permanent.getCard().getEffectTargetIndex(effect);
+                    TargetFilter targetFilter = targetGroupIndex >= 0
+                            && targetGroupIndex < permanent.getCard().getSpellTargets().size()
+                            ? permanent.getCard().getSpellTargets().get(targetGroupIndex).getFilter()
+                            : permanent.getCard().getTargetFilter();
+                    boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            permanent.getCard(), controllerId, effects, playerTargetOnly, targetFilter,
+                            0, permanent.getId()));
+                } else {
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            permanent.getCard(),
+                            controllerId,
+                            permanent.getCard().getName() + "'s ability",
+                            effects,
+                            null,
+                            permanent.getId()
+                    ));
+                }
                 gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
                 log.info("Game {} - {} triggers when its controller becomes monarch", gameData.id,
                         permanent.getCard().getName());
             }
         });
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            processNextSpellTargetTrigger(gameData);
+        }
     }
 
     /** Fires abilities that trigger whenever the controller solves a Case. */
@@ -7016,8 +7065,21 @@ public class TriggerCollectionService {
                 CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
                         gameData, perm, authoredEffect);
                 if (resolved == null) continue;
+                resolved = resolveTreasureManaActivationConditional(gameData, activatedPermanent, resolved);
+                if (resolved == null) continue;
                 resolved = resolveTriggeringPermanentConditional(gameData, perm, ownerId, activatedPermanent, resolved);
                 if (resolved == null) continue;
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && !resolved.targetSpec().declares(TargetPredicates.anyTarget())) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)),
+                            "ability activation", perm.getId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} queues a permanent-target ability-activation trigger ({})",
+                            gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                    continue;
+                }
                 if (resolved.targetSpec().declares(TargetPredicates.anyTarget())) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), false, null, 0, perm.getId()));
@@ -7576,8 +7638,20 @@ public class TriggerCollectionService {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) continue;
                 CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
+                resolved = resolveTreasureManaActivationConditional(gameData, activatedPermanent, resolved);
+                if (resolved == null) continue;
                 resolved = resolveTriggeringPermanentConditional(gameData, perm, ownerId, activatedPermanent, resolved);
                 if (resolved == null) continue;
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && !resolved.targetSpec().declares(TargetPredicates.anyTarget())) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)),
+                            "ability activation", perm.getId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} queues a permanent-target opponent ability-activation trigger ({})",
+                            gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
+                    continue;
+                }
                 if (resolved.targetSpec().declares(TargetPredicates.anyTarget())) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), false, null, 0, perm.getId()));
@@ -7615,6 +7689,20 @@ public class TriggerCollectionService {
             return activatedPermanentControllerId;
         }
         return defaultTargetId;
+    }
+
+    /** Resolves Vazi-style intervening-if conditions before an ability-activation trigger is queued. */
+    private CardEffect resolveTreasureManaActivationConditional(GameData gameData,
+                                                                Permanent activatedPermanent,
+                                                                CardEffect effect) {
+        if (!(effect instanceof ConditionalEffect conditional)
+                || !conditional.interveningIf()
+                || !(conditional.condition() instanceof TreasureManaSpentToActivate)) {
+            return effect;
+        }
+        return gameData.abilityActivationUsedTreasureMana
+                .getOrDefault(activatedPermanent.getCard().getId(), false)
+                ? conditional.wrapped() : null;
     }
 
     private boolean isPreCollectedActivationEffect(CardEffect effect, List<CardEffect> preCollectedEffects) {
@@ -9227,8 +9315,18 @@ public class TriggerCollectionService {
                                                       UUID dyingPermanentControllerId, UUID dyingCreatureCardId,
                                                       int dyingCreaturePower, int dyingCreatureToughness,
                                                       boolean wasCreature, List<UUID> dyingPermanentCardIds) {
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId,
+                dyingCreatureCardId, dyingCreaturePower, dyingCreatureToughness, 0, wasCreature,
+                dyingPermanentCardIds);
+    }
+
+    public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,
+                                                      UUID dyingPermanentControllerId, UUID dyingCreatureCardId,
+                                                      int dyingCreaturePower, int dyingCreatureToughness,
+                                                      int dyingCreatureManaValue, boolean wasCreature,
+                                                      List<UUID> dyingPermanentCardIds) {
         var ctx = new TriggerContext.EnchantedPermanentDeath(dyingPermanentId, dyingPermanentControllerId,
-                dyingCreatureCardId, dyingCreaturePower, dyingCreatureToughness, wasCreature,
+                dyingCreatureCardId, dyingCreaturePower, dyingCreatureToughness, dyingCreatureManaValue, wasCreature,
                 List.copyOf(dyingPermanentCardIds));
 
         gameData.forEachPermanent((playerId, perm) -> {
@@ -10490,12 +10588,27 @@ public class TriggerCollectionService {
                 CardEffect resolved = resolveTriggeringPermanentConditional(
                         gameData, perm, controllerId, leavingPermanent, effect);
                 if (resolved == null) continue;
+                CardEffect dispatchEffect = resolved;
+                if (dispatchEffect instanceof LeavingPermanentCountersAwareEffect aware) {
+                    dispatchEffect = aware.boundToLeavingPermanentCounters(
+                            snapshotCountersOnPermanent(leavingPermanent));
+                    if (dispatchEffect == null) continue;
+                }
+                if (dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            perm.getCard(), controllerId, new ArrayList<>(List.of(dispatchEffect)), false,
+                            perm.getCard().getTargetFilter(), 0, perm.getId()));
+                    gameLogService.append(gameData, GameLog.text(
+                            perm.getCard().getName() + "'s ability triggers — choose a target."));
+                    continue;
+                }
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         controllerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        new ArrayList<>(List.of(dispatchEffect)),
                         null,
                         perm.getId()
                 ));

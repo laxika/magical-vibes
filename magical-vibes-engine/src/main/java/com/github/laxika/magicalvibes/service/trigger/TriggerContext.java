@@ -547,14 +547,24 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness, boolean wasCreature,
+                                   int dyingCreatureToughness, int dyingCreatureManaValue,
+                                   boolean wasCreature,
                                    List<UUID> dyingPermanentCardIds) implements TriggerContext {
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness) {
             this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
-                    dyingCreaturePower, dyingCreatureToughness, true,
+                    dyingCreaturePower, dyingCreatureToughness, 0, true,
                     dyingCreatureCardId == null ? List.of() : List.of(dyingCreatureCardId));
+        }
+
+        public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                       UUID dyingCreatureCardId, int dyingCreaturePower,
+                                       int dyingCreatureToughness, boolean wasCreature,
+                                       List<UUID> dyingPermanentCardIds) {
+            this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
+                    dyingCreaturePower, dyingCreatureToughness, 0, wasCreature,
+                    dyingPermanentCardIds);
         }
 
         @Override

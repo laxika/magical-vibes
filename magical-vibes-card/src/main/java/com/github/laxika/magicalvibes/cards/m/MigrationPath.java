@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "IKO", collectorNumber = "164")
+@CardRegistration(set = "NCC", collectorNumber = "301")
 public class MigrationPath extends Card {
 
     public MigrationPath() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "M15", collectorNumber = "183")
+@CardRegistration(set = "NCC", collectorNumber = "300")
 public class LifesLegacy extends Card {
 
     public LifesLegacy() {

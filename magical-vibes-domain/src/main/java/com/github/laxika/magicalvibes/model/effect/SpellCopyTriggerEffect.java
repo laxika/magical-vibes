@@ -14,26 +14,39 @@ import java.util.List;
  * @param targetFilter   optional filter for the target chosen as the trigger is put on the stack
  * @param copiedSpellCondition optional condition on the copied spell's stack entry
  * @param allSpellTypes  whether copies of permanent spells also trigger this effect
+ * @param optionalTarget whether the target may be declined ("up to one target ...")
  */
 public record SpellCopyTriggerEffect(
         CardPredicate spellFilter,
         List<CardEffect> resolvedEffects,
         TargetFilter targetFilter,
         StackEntryPredicate copiedSpellCondition,
-        boolean allSpellTypes
+        boolean allSpellTypes,
+        boolean optionalTarget
 ) implements CardEffect {
 
+    public SpellCopyTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
+                                  TargetFilter targetFilter, StackEntryPredicate copiedSpellCondition,
+                                  boolean allSpellTypes) {
+        this(spellFilter, resolvedEffects, targetFilter, copiedSpellCondition, allSpellTypes, false);
+    }
+
     public SpellCopyTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        this(spellFilter, resolvedEffects, null, null, false);
+        this(spellFilter, resolvedEffects, null, null, false, false);
     }
 
     public SpellCopyTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   TargetFilter targetFilter) {
-        this(spellFilter, resolvedEffects, targetFilter, null, false);
+        this(spellFilter, resolvedEffects, targetFilter, null, false, false);
+    }
+
+    public SpellCopyTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
+                                  TargetFilter targetFilter, boolean optionalTarget) {
+        this(spellFilter, resolvedEffects, targetFilter, null, false, optionalTarget);
     }
 
     public SpellCopyTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   StackEntryPredicate copiedSpellCondition, boolean allSpellTypes) {
-        this(spellFilter, resolvedEffects, null, copiedSpellCondition, allSpellTypes);
+        this(spellFilter, resolvedEffects, null, copiedSpellCondition, allSpellTypes, false);
     }
 }

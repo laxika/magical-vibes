@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AA2", collectorNumber = "19")
+@CardRegistration(set = "NCC", collectorNumber = "81")
+@CardRegistration(set = "NCC", collectorNumber = "181")
 public class CurrencyConverter extends Card {
 
     public CurrencyConverter() {
