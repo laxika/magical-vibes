@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "133")
 @CardRegistration(set = "SLD", collectorNumber = "1614")
+@CardRegistration(set = "DSC", collectorNumber = "161")
 public class BrashTaunter extends Card {
 
     public BrashTaunter() {

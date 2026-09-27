@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsThenControllerDrawsEffect;
 
 @CardRegistration(set = "FIC", collectorNumber = "238")
+@CardRegistration(set = "MSC", collectorNumber = "127")
 public class CutADeal extends Card {
 
     public CutADeal() {

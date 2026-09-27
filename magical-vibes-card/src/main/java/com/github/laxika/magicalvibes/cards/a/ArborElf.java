@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "WWK", collectorNumber = "95")
 @CardRegistration(set = "A25", collectorNumber = "160")
 @CardRegistration(set = "SLD", collectorNumber = "1317")
+@CardRegistration(set = "LTC", collectorNumber = "232")
 public class ArborElf extends Card {
 
     public ArborElf() {

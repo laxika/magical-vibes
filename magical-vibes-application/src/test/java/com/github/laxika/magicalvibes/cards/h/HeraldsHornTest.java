@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,8 +16,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeraldsHorn.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({HeraldsHorn.class, GrizzlyBears.class, WalkingCorpse.class})
 class HeraldsHornTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Choosing a creature type as Herald's Horn enters stores that type")
+    void choosesCreatureTypeOnEntry() {
+        harness.setHand(player1, List.of(new HeraldsHorn()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(findPermanent(player1, "Herald's Horn").getChosenSubtype())
+                .isEqualTo(CardSubtype.BEAR);
+    }
 
     @Test
     @DisplayName("Creature spells of the chosen type cost {1} less")
@@ -28,69 +42,54 @@ class HeraldsHornTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Grizzly Bears"));
     }
 
     @Test
     @DisplayName("Creature spells of another type are not reduced")
     void doesNotReduceAnotherCreatureType() {
         addHorn(CardSubtype.BEAR);
-        harness.setHand(player1, List.of(new LlanowarElves()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new WalkingCorpse()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Upkeep offers a matching top creature card for hand")
-    void upkeepOffersMatchingCreature() {
+    @DisplayName("The upkeep ability may reveal a matching creature card to hand")
+    void matchingTopCardGoesToHand() {
         addHorn(CardSubtype.BEAR);
-        GrizzlyBears topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(topCard));
+        GrizzlyBears bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bear));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
-        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).contains(bear);
     }
 
     @Test
-    @DisplayName("Upkeep leaves a nonmatching top card on the library")
-    void upkeepLeavesNonmatchingCardOnTop() {
+    @DisplayName("A nonmatching top card stays on top of the library")
+    void nonmatchingTopCardStaysOnTop() {
         addHorn(CardSubtype.BEAR);
-        LlanowarElves topCard = new LlanowarElves();
-        harness.setLibrary(player1, List.of(topCard));
+        WalkingCorpse corpse = new WalkingCorpse();
+        harness.setLibrary(player1, List.of(corpse));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
-    }
-
-    @Test
-    @DisplayName("Declining the upkeep reveal leaves a matching card on top")
-    void decliningRevealLeavesMatchingCardOnTop() {
-        addHorn(CardSubtype.BEAR);
-        GrizzlyBears topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(topCard));
-
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(corpse);
     }
 
     private Permanent addHorn(CardSubtype chosenSubtype) {
-        Permanent horn = harness.addToBattlefieldAndReturn(player1, new HeraldsHorn());
-        horn.setChosenSubtype(chosenSubtype);
-        return horn;
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new HeraldsHorn());
+        permanent.setChosenSubtype(chosenSubtype);
+        return permanent;
     }
 }

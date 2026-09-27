@@ -73,7 +73,14 @@ class BlossomingCalmTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
-        advanceToUpkeep(player1);
+        harness.setHand(player2, List.of());
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
+        harness.passUntil(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

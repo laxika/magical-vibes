@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,11 +19,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathPitsOfRath.class, GrizzlyBears.class, HillGiant.class, Shock.class})
+@CardUsed({DeathPitsOfRath.class, GrizzlyBears.class, HillGiant.class, Pyrotechnics.class, Shock.class})
 class DeathPitsOfRathTest extends BaseCardTest {
 
     @Test
@@ -41,6 +45,26 @@ class DeathPitsOfRathTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve the trigger
 
         harness.assertNotOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Each creature dealt damage by the same spell gets its own trigger")
+    void eachCreatureDealtDamageInOneEventTriggersIndependently() {
+        harness.addToBattlefield(player1, new DeathPitsOfRath());
+        Permanent firstGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent secondGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, Map.of(firstGiant.getId(), 2, secondGiant.getId(), 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        assertThat(findPermanents(player2, "Hill Giant")).isEmpty();
     }
 
     @Test
@@ -97,15 +121,10 @@ class DeathPitsOfRathTest extends BaseCardTest {
     @DisplayName("A creature dealt non-lethal combat damage is destroyed by Death Pits")
     void combatDamageDestroysSurvivingBlocker() {
         harness.addToBattlefield(player1, new DeathPitsOfRath());
-        harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2 attacker
-        harness.addToBattlefield(player2, new HillGiant());    // 3/3 blocker, survives combat
-
-        Permanent attacker = findPermanent(player1, "Grizzly Bears");
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears()); // 2/2 attacker
         attacker.setAttacking(true);
 
-        Permanent blocker = findPermanent(player2, "Hill Giant");
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new HillGiant()); // 3/3 blocker, survives combat
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1); // Grizzly Bears is index 1 on player1's battlefield
 
@@ -168,5 +187,24 @@ class DeathPitsOfRathTest extends BaseCardTest {
             harness.assertOnBattlefield(player2, "Invasion of Innistrad");
             assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
         }
+    }
+
+    @Test
+    @CardUsed({Humility.class, Opalescence.class})
+    @DisplayName("Death Pits stops triggering after it loses all abilities")
+    void losingAllAbilitiesStopsDeathPitsTriggers() {
+        harness.addToBattlefield(player1, new DeathPitsOfRath());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new Humility());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        giant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(giant.getMarkedDamage()).isEqualTo(2);
     }
 }

@@ -1,19 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DrakeFamiliar.class, RuleOfLaw.class})
+@CardUsed({DrakeFamiliar.class, DoublingSeason.class})
 class DrakeFamiliarTest extends BaseCardTest {
 
     @Test
@@ -29,27 +26,30 @@ class DrakeFamiliarTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's enchantment can be returned to its owner's hand")
     void opponentEnchantmentCanBeReturned() {
-        harness.addToBattlefield(player2, new RuleOfLaw());
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new DrakeFamiliar()).getId();
+        harness.addToBattlefield(player2, new DoublingSeason());
 
         castDrakeFamiliar();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        UUID enchantmentId = findPermanent(player2, "Rule of Law").getId();
+        UUID enchantmentId = findPermanent(player2, "Doubling Season").getId();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
-                .contains(enchantmentId);
+                .contains(enchantmentId)
+                .doesNotContain(creatureId);
         harness.handlePermanentChosen(player1, enchantmentId);
 
         harness.assertOnBattlefield(player1, "Drake Familiar");
-        harness.assertNotOnBattlefield(player2, "Rule of Law");
-        harness.assertInHand(player2, "Rule of Law");
+        harness.assertNotOnBattlefield(player2, "Doubling Season");
+        harness.assertInHand(player2, "Doubling Season");
+        harness.assertOnBattlefield(player2, "Drake Familiar");
     }
 
     @Test
     @DisplayName("Returning a controlled enchantment keeps Drake Familiar")
     void returningEnchantmentKeepsDrakeFamiliar() {
-        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player1, new DoublingSeason());
 
         castDrakeFamiliar();
 
@@ -57,18 +57,18 @@ class DrakeFamiliarTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        UUID enchantmentId = findPermanent(player1, "Rule of Law").getId();
+        UUID enchantmentId = findPermanent(player1, "Doubling Season").getId();
         harness.handlePermanentChosen(player1, enchantmentId);
 
         harness.assertOnBattlefield(player1, "Drake Familiar");
-        harness.assertNotOnBattlefield(player1, "Rule of Law");
-        harness.assertInHand(player1, "Rule of Law");
+        harness.assertNotOnBattlefield(player1, "Doubling Season");
+        harness.assertInHand(player1, "Doubling Season");
     }
 
     @Test
     @DisplayName("Declining to return an enchantment sacrifices Drake Familiar")
     void decliningReturnSacrificesDrakeFamiliar() {
-        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player1, new DoublingSeason());
 
         castDrakeFamiliar();
 
@@ -76,15 +76,11 @@ class DrakeFamiliarTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Drake Familiar");
         harness.assertInGraveyard(player1, "Drake Familiar");
-        harness.assertOnBattlefield(player1, "Rule of Law");
+        harness.assertOnBattlefield(player1, "Doubling Season");
     }
 
     private void castDrakeFamiliar() {
-        harness.setHand(player1, List.of(new DrakeFamiliar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DrakeFamiliar(), "{1}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

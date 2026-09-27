@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTP", collectorNumber = "30")
+@CardRegistration(set = "SOC", collectorNumber = "282")
 public class PestInfestation extends Card {
 
     public PestInfestation() {

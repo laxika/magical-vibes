@@ -128,6 +128,20 @@ public class ExileFreeCastQueueSupport {
         }
     }
 
+    /** Moves every still-exiled tracked card into its owner's hand, then clears the list. */
+    public void putRemainderIntoOwnersHands(GameData gameData) {
+        List<UUID> remainder = new ArrayList<>(gameData.pendingExileFreeCastRemainderToHand);
+        gameData.pendingExileFreeCastRemainderToHand.clear();
+        for (UUID cardId : remainder) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry == null || !gameData.removeFromExile(cardId)) {
+                continue;
+            }
+            gameData.playerHands.computeIfAbsent(entry.ownerId(), ignored -> new ArrayList<>()).add(entry.card());
+            gameLogService.append(gameData, GameLog.cardThen(entry.card(), " is put into its owner's hand."));
+        }
+    }
+
     public void queueRemainderToLibraryBottom(GameData gameData, List<UUID> cardIds) {
         gameData.pendingExileFreeCastRemainderToLibraryBottom.clear();
         gameData.pendingExileFreeCastRemainderToLibraryBottom.addAll(cardIds);
@@ -373,9 +387,12 @@ public class ExileFreeCastQueueSupport {
                         .contains(physicalCard.getId());
                 boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToLibraryBottom
                         .contains(physicalCard.getId());
+                boolean willGoToHand = gameData.pendingExileFreeCastRemainderToHand
+                        .contains(physicalCard.getId());
                 gameLogService.append(gameData, GameLog.cardThen(physicalCard, willGoToGraveyard
                         ? " has no valid targets and will be put into the graveyard."
                         : willGoToBottom ? " has no valid targets and will be put on the bottom of its owner's library."
+                        : willGoToHand ? " has no valid targets and will be put into its owner's hand."
                         : asCopy ? " has no valid targets."
                         : " has no valid targets and stays exiled."));
                 castNextFromQueue(gameData, playerId);
@@ -430,9 +447,11 @@ public class ExileFreeCastQueueSupport {
             gameData.removeFromExile(card.getId());
         }
         boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToLibraryBottom.contains(card.getId());
+        boolean willGoToHand = gameData.pendingExileFreeCastRemainderToHand.contains(card.getId());
         gameLogService.append(gameData, GameLog.cardThen(card, asCopy
                 ? " has an additional cast cost that can't be paid and ceases to exist."
                 : willGoToBottom ? " has an additional cast cost that can't be paid and will be put on the bottom of its owner's library."
+                : willGoToHand ? " has an additional cast cost that can't be paid and will be put into its owner's hand."
                 : " has an additional cast cost that can't be paid and stays exiled."));
         castNextFromQueue(gameData, playerId);
     }
@@ -442,9 +461,11 @@ public class ExileFreeCastQueueSupport {
             gameData.removeFromExile(card.getId());
         }
         boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToLibraryBottom.contains(card.getId());
+        boolean willGoToHand = gameData.pendingExileFreeCastRemainderToHand.contains(card.getId());
         gameLogService.append(gameData, GameLog.cardThen(card, asCopy
                 ? " has no legal mode and ceases to exist."
                 : willGoToBottom ? " has no legal mode and will be put on the bottom of its owner's library."
+                : willGoToHand ? " has no legal mode and will be put into its owner's hand."
                 : " has no legal mode and stays exiled."));
         castNextFromQueue(gameData, playerId);
     }
@@ -464,6 +485,7 @@ public class ExileFreeCastQueueSupport {
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         putRemainderIntoLibraryBottom(gameData);
+        putRemainderIntoOwnersHands(gameData);
         if (gameData.effectResolutionDepth > 0 && gameData.pendingEffectResolutionEntry != null) {
             return;
         }

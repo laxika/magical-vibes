@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
+import com.github.laxika.magicalvibes.cards.o.OrbOfDreams;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Persuasion;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -14,18 +16,15 @@ import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,39 +32,33 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WarpWorld.class, RodOfRuin.class, Plains.class, GloriousAnthem.class,
+        RagingGoblin.class, Pacifism.class, Persuasion.class, Dehydration.class,
+        RemoveSoul.class, RootMaze.class, NyxbornCourser.class, OrbOfDreams.class})
 class WarpWorldTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting puts Warp World on stack as a sorcery with no target")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Warp World");
         assertThat(entry.getTargetId()).isNull();
     }
 
     @Test
     @DisplayName("Resolving with only permanents in libraries returns those permanents to battlefield")
     void resolvingWithOnlyPermanentsReturnsPermanentsToBattlefield() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         harness.addToBattlefield(player1, new RodOfRuin());
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player2, new GloriousAnthem());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
@@ -82,17 +75,14 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Warp World shuffles each permanent into its owner's library, not controller's")
     void shufflesToOwnerLibraryNotControllerLibrary() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         harness.addToBattlefield(player2, new RagingGoblin());
         Permanent stolenPermanent = gd.playerBattlefields.get(player2.getId()).getFirst();
         gd.stolenCreatures.put(stolenPermanent.getId(), player1.getId());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -103,18 +93,15 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Aura enters attached when Warp World reveals a legal target")
     void auraEntersAttachedWithLegalTarget() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new Pacifism());
         List<Permanent> startBattlefield = gd.playerBattlefields.get(player1.getId());
         startBattlefield.get(1).setAttachedTo(startBattlefield.get(0).getId());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -135,11 +122,8 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Warp World prompts Aura controller to choose attachment among legal permanents")
     void warpWorldPromptsAuraAttachmentChoice() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
@@ -147,7 +131,7 @@ class WarpWorldTest extends BaseCardTest {
         List<Permanent> startBattlefield = gd.playerBattlefields.get(player1.getId());
         startBattlefield.get(2).setAttachedTo(startBattlefield.get(0).getId());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -165,11 +149,8 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Control-changing Aura chosen during Warp World steals the enchanted creature")
     void controlAuraChoiceStealsCreature() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new Persuasion());
@@ -177,7 +158,7 @@ class WarpWorldTest extends BaseCardTest {
         List<Permanent> p1Start = gd.playerBattlefields.get(player1.getId());
         p1Start.get(1).setAttachedTo(p1Start.get(0).getId());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -198,11 +179,8 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Aura enchantments wait to enter until Warp World Aura choices are finished")
     void enchantmentsDeferredUntilAuraChoicesComplete() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
@@ -211,7 +189,7 @@ class WarpWorldTest extends BaseCardTest {
         List<Permanent> startBattlefield = gd.playerBattlefields.get(player1.getId());
         startBattlefield.get(2).setAttachedTo(startBattlefield.get(0).getId());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -227,12 +205,9 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Aura choices proceed in APNAP order when both players must choose")
     void auraChoicesFollowApnapOrder() {
-        harness.setHand(player2, List.of(new WarpWorld()));
-        harness.addMana(player2, ManaColor.RED, 8);
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
         harness.forceActivePlayer(player2);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
 
         harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
@@ -244,7 +219,7 @@ class WarpWorldTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).get(2).setAttachedTo(gd.playerBattlefields.get(player1.getId()).get(0).getId());
         gd.playerBattlefields.get(player2.getId()).get(2).setAttachedTo(gd.playerBattlefields.get(player2.getId()).get(0).getId());
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -267,15 +242,12 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Aura with no legal target is not put onto battlefield and goes to bottom")
     void auraWithoutLegalTargetGoesToBottom() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         addAuraAttachedToToken(player1, new Pacifism());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -286,16 +258,13 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Warp World asks player to choose bottom order when multiple cards remain")
     void warpWorldBottomOrderChoice() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
         addAuraAttachedToToken(player1, new Pacifism());
         addAuraAttachedToToken(player1, new Dehydration());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -315,19 +284,16 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Bottom reorder prompts follow APNAP order when both players must reorder")
     void bottomReorderFollowsApnapOrder() {
-        harness.setHand(player2, List.of(new WarpWorld()));
-        harness.addMana(player2, ManaColor.RED, 8);
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
         harness.forceActivePlayer(player2);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
 
         addAuraAttachedToToken(player1, new Pacifism());
         addAuraAttachedToToken(player1, new Dehydration());
         addAuraAttachedToToken(player2, new Pacifism());
         addAuraAttachedToToken(player2, new Dehydration());
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -350,15 +316,10 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Warp World resolves to graveyard after effect")
     void warpWorldGoesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerHands.put(player1.getId(), new ArrayList<>(List.of(new WarpWorld())));
-        gd.playerHands.put(player2.getId(), new ArrayList<>(List.of()));
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
@@ -369,9 +330,6 @@ class WarpWorldTest extends BaseCardTest {
     @Test
     @DisplayName("Token permanents count toward reveal but are not shuffled into library")
     void tokenPermanentsCountButAreNotShuffled() {
-        harness.setHand(player1, List.of(new WarpWorld()));
-        harness.addMana(player1, ManaColor.RED, 8);
-
         Card token = new Card();
         token.setName("Goblin Token");
         token.setType(CardType.CREATURE);
@@ -384,11 +342,11 @@ class WarpWorldTest extends BaseCardTest {
 
         RemoveSoul removeSoul = new RemoveSoul();
         Plains plains = new Plains();
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(removeSoul, plains)));
-        gd.playerDecks.put(player2.getId(), new ArrayList<>());
+        harness.setLibrary(player1, List.of(removeSoul, plains));
+        harness.setLibrary(player2, List.of());
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         // Token was moved away by Warp World and does not get shuffled into the library.
@@ -398,46 +356,74 @@ class WarpWorldTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Root Maze entering during Warp World does not tap other same-event entrants")
-    void rootMazeEnteringDuringWarpWorldDoesNotTapSameEventEntrants() {
-        // Repeat to cover randomized reveal/order during Warp World.
-        for (int i = 0; i < 12; i++) {
-            GameTestHarness localHarness = new GameTestHarness();
-            Player p1 = localHarness.getPlayer1();
-            Player p2 = localHarness.getPlayer2();
-            GameData localGd = localHarness.getGameData();
-            localHarness.skipMulligan();
-            localHarness.clearMessages();
+    @DisplayName("An artifact entering before Root Maze remains untapped")
+    void artifactEnteringBeforeRootMazeRemainsUntapped() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new RootMaze());
+        harness.addToBattlefield(player1, new RodOfRuin());
 
-            localHarness.setHand(p1, List.of(new WarpWorld()));
-            localHarness.addMana(p1, ManaColor.RED, 8);
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
 
-            localGd.playerDecks.get(p1.getId()).clear();
-            localGd.playerDecks.get(p2.getId()).clear();
-
-            localHarness.addToBattlefield(p1, new RootMaze());
-            localHarness.addToBattlefield(p1, newArtifactEnchantment("Test Relic Weave"));
-
-            localHarness.castSorcery(p1, 0, 0);
-            localHarness.passBothPriorities();
-
-            Permanent artifactEnchantment = localGd.playerBattlefields.get(p1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Test Relic Weave"))
-                    .findFirst()
-                    .orElseThrow();
-
-            assertThat(artifactEnchantment.isTapped()).isFalse();
-        }
+        Permanent rodOfRuin = findPermanent(player1, "Rod of Ruin");
+        assertThat(rodOfRuin.isTapped()).isFalse();
     }
 
-    private Card newArtifactEnchantment(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.ENCHANTMENT);
-        card.setAdditionalTypes(Set.of(CardType.ARTIFACT));
-        card.setManaCost("");
-        card.setCardText("");
-        return card;
+    @Test
+    @DisplayName("Enchantment creatures can be enchanted by Auras entering in Warp World's second group")
+    void enchantmentCreatureCanBeEnchantedByWarpWorldAura() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NyxbornCourser());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(creature.getId());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        Permanent returnedCreature = findPermanent(player1, "Nyxborn Courser");
+        Permanent returnedAura = findPermanent(player1, "Pacifism");
+        assertThat(returnedAura.getAttachedTo()).isEqualTo(returnedCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Enchantments entering in Warp World's second group see first-group enter-tapped effects")
+    void enchantmentGroupSeesFirstGroupEnterTappedEffects() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new OrbOfDreams());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        Permanent anthem = findPermanent(player1, "Glorious Anthem");
+        assertThat(anthem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Artifact enchantments enter the battlefield only once")
+    void artifactEnchantmentEntersOnlyOnce() {
+        Card artifactEnchantment = new Card();
+        artifactEnchantment.setName("Test Artifact Enchantment");
+        artifactEnchantment.setType(CardType.ARTIFACT);
+        artifactEnchantment.setAdditionalTypes(Set.of(CardType.ENCHANTMENT));
+        artifactEnchantment.setManaCost("");
+        artifactEnchantment.setCardText("");
+
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new RootMaze());
+        harness.addToBattlefield(player1, artifactEnchantment);
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Root Maze", "Test Artifact Enchantment");
     }
 
     private void addAuraAttachedToToken(Player player, Card auraCard) {

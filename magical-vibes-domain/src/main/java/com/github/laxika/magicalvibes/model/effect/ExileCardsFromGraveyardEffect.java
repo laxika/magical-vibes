@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -156,11 +155,10 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
 
     @Override
     public TargetSpec targetSpec() {
-        if (!exactTargets || !singleGraveyard) return TargetSpec.NONE;
-        GraveyardSearchScope scope = ownGraveyardOnly
-                ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD : GraveyardSearchScope.ALL_GRAVEYARDS;
-        return TargetSpec.benign(filter == null ? TargetPredicates.graveyardCard(scope)
-                : TargetPredicates.graveyardCards(filter, scope));
+        // Spell casting gathers these targets through a MultiGraveyardChoice before the
+        // spell is put on the stack. The ordinary single-target validator runs before that
+        // choice and would incorrectly require a graveyard card ID in the initial cast call.
+        return TargetSpec.NONE;
     }
 
     @Override

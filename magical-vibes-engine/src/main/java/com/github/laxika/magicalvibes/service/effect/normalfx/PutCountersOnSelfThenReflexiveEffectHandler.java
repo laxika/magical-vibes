@@ -57,8 +57,16 @@ public class PutCountersOnSelfThenReflexiveEffectHandler implements NormalEffect
                 : new ConditionalEffect(counterThen.condition(), counterThen.reflexiveEffect());
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);
         if (effectIndex < 0) {
-            throw new IllegalStateException(
-                    "PutCountersOnSelfThenReflexiveEffect is not part of the resolving entry");
+            for (int i = 0; i < entry.getEffectsToResolve().size(); i++) {
+                if (entry.getEffectsToResolve().get(i) instanceof ConditionalEffect conditional
+                        && conditional.wrapped().equals(effect)) {
+                    effectIndex = i;
+                    break;
+                }
+            }
+        }
+        if (effectIndex < 0) {
+            throw new IllegalStateException("PutCountersOnSelfThenReflexiveEffect is not part of the resolving entry");
         }
         entry.insertEffectsToResolve(effectIndex + 1,
                 List.of(new QueueReflexiveAbilityEffect(reflexiveEffect)));

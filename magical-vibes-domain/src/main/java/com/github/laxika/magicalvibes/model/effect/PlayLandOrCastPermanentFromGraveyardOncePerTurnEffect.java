@@ -22,4 +22,10 @@ public record PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
     public boolean oncePerControllerTurn() {
         return true;
     }
+
+    @Override
+    public boolean permitsLandPlayFromGraveyard() {
+        return true;
+    }
+
 }

@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MatsuTribeBirdstalker;
+import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +14,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChargeAcrossTheAraba.class, MatsuTribeBirdstalker.class,
+        OboroPalaceInTheClouds.class, Plains.class})
 class ChargeAcrossTheArabaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns the chosen Plains and boosts your creatures by their number")
     void returnsChosenPlainsAndBoostsOwnCreatures() {
-        Permanent firstCreature = addCreature(player1);
-        Permanent secondCreature = addCreature(player1);
-        Permanent opposingCreature = addCreature(player2);
+        Permanent firstCreature = addCreatureReady(player1, new MatsuTribeBirdstalker());
+        Permanent secondCreature = addCreatureReady(player1, new MatsuTribeBirdstalker());
+        Permanent opposingCreature = addCreatureReady(player2, new MatsuTribeBirdstalker());
         Permanent firstPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
         Permanent secondPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingPlains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent nonPlainsLand = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
 
-        castCard(player1);
+        harness.castFromHand(player1, new ChargeAcrossTheAraba(), "{4}{W}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -37,8 +39,11 @@ class ChargeAcrossTheArabaTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(firstPlains.getId(), secondPlains.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest)
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonPlainsLand)
                 .doesNotContain(firstPlains, secondPlains);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingPlains);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(firstPlains.getCard(), secondPlains.getCard());
         assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(4);
@@ -50,10 +55,10 @@ class ChargeAcrossTheArabaTest extends BaseCardTest {
     @Test
     @DisplayName("Returning no Plains gives no boost and is legal")
     void returningNoPlainsGivesNoBoost() {
-        Permanent creature = addCreature(player1);
+        Permanent creature = addCreatureReady(player1, new MatsuTribeBirdstalker());
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
 
-        castCard(player1);
+        harness.castFromHand(player1, new ChargeAcrossTheAraba(), "{4}{W}");
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
@@ -62,16 +67,19 @@ class ChargeAcrossTheArabaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
-    private void castCard(Player player) {
-        harness.setHand(player, List.of(new ChargeAcrossTheAraba()));
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 4);
-        harness.castInstant(player, 0);
-    }
+    @Test
+    @DisplayName("Returns a controlled Plains to its owner's hand")
+    void returnsControlledPlainsToItsOwnersHand() {
+        harness.setHand(player2, List.of());
+        Plains plainsCard = new Plains();
+        plainsCard.setOwnerId(player2.getId());
+        Permanent controlledPlains = harness.addToBattlefieldAndReturn(player1, plainsCard);
 
-    private Permanent addCreature(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+        harness.castFromHand(player1, new ChargeAcrossTheAraba(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(controlledPlains.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(controlledPlains);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(plainsCard);
     }
 }

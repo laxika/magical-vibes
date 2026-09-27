@@ -8,6 +8,8 @@ public enum DamageRecipient {
     EACH_OPPONENT,
     /** The opponents in the effect's resolution-time player-id selection. */
     SELECTED_OPPONENTS,
+    /** Every opponent of the effect's controller except the player recorded on the stack entry. */
+    EACH_OTHER_OPPONENT,
     /** Every player (including the controller). */
     EACH_PLAYER,
     /** The player remembered by the source permanent's as-enters choice. */

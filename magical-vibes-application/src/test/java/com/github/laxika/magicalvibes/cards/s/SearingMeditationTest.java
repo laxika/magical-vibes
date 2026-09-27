@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.l.LoxodonHierarch;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,62 +14,96 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Searing Meditation")
-@CardUsed({SearingMeditation.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({SearingMeditation.class, LoxodonHierarch.class, BorosRecruit.class})
 class SearingMeditationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Pays {2} to deal 2 damage to any target")
     void paysAndDealsDamageToAnyTarget() {
         harness.addToBattlefield(player1, new SearingMeditation());
-        harness.addToBattlefield(player1, new FountainOfYouth());
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castFromHand(player1, new LoxodonHierarch(), "{2}{G}{W}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.activateAbility(player1, 1, null, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertLife(player2, lifeBefore - 2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Can deal the damage to a creature")
     void dealsDamageToCreature() {
         harness.addToBattlefield(player1, new SearingMeditation());
-        harness.addToBattlefield(player1, new FountainOfYouth());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        Permanent target = addCreatureReady(player2, new BorosRecruit());
+        harness.castFromHand(player1, new LoxodonHierarch(), "{2}{G}{W}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, null, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Boros Recruit");
+        harness.assertInGraveyard(player2, "Boros Recruit");
     }
 
     @Test
     @DisplayName("Declining the payment deals no damage")
     void decliningDoesNothing() {
         harness.addToBattlefield(player1, new SearingMeditation());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.castFromHand(player1, new LoxodonHierarch(), "{2}{G}{W}");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.activateAbility(player1, 1, null, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertLife(player2, lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gaining life from another player does not trigger it")
+    void doesNotTriggerForOpponentLifeGain() {
+        harness.addToBattlefield(player1, new SearingMeditation());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new LoxodonHierarch(), "{2}{G}{W}");
+        resolveAllTriggers();
+
+        harness.assertLife(player2, lifeBefore + 4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting without enough mana deals no damage")
+    void acceptingWithoutEnoughManaDoesNothing() {
+        harness.addToBattlefield(player1, new SearingMeditation());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player1, new LoxodonHierarch(), "{2}{G}{W}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, lifeBefore);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -44,11 +44,15 @@ public class Permanent {
     @Setter private Integer amplifyRevealedCards;
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
-    @Setter private UUID attackTarget;
+    private UUID attackTarget;
     private boolean attackedThisTurn;
     /** Number of times this permanent has been declared as an attacker this turn. */
     @Setter private int attacksThisTurn;
     private boolean attackedThisCombat;
+    /** Player or permanent IDs this creature attacked during the current combat. */
+    private final Set<UUID> playersAttackedThisCombat = new HashSet<>();
+    /** Player or permanent IDs this creature attacked during its immediately preceding combat. */
+    private final Set<UUID> playersAttackedLastCombat = new HashSet<>();
     /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
     private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
     /** Set when this creature is declared as an attacker; unlike {@link #attackedThisTurn} it survives
@@ -733,6 +737,8 @@ public class Permanent {
         this.attackedThisTurn = source.attackedThisTurn;
         this.attacksThisTurn = source.attacksThisTurn;
         this.attackedThisCombat = source.attackedThisCombat;
+        this.playersAttackedThisCombat.addAll(source.playersAttackedThisCombat);
+        this.playersAttackedLastCombat.addAll(source.playersAttackedLastCombat);
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
         this.attackedDuringControllersLastTurn = source.attackedDuringControllersLastTurn;
@@ -1118,6 +1124,16 @@ public class Permanent {
             this.attacksThisTurn++;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
+            if (attackTarget != null) {
+                playersAttackedThisCombat.add(attackTarget);
+            }
+        }
+    }
+
+    public void setAttackTarget(UUID attackTarget) {
+        this.attackTarget = attackTarget;
+        if (attacking && attackTarget != null) {
+            playersAttackedThisCombat.add(attackTarget);
         }
     }
 
@@ -1180,6 +1196,13 @@ public class Permanent {
         this.cantBlockThisCombat = false;
         this.mustAttackThisCombat = false;
         clearUntilEndOfCombatAnimation();
+    }
+
+    /** Finalizes the set of players or permanents this creature attacked during the combat. */
+    public void rollOverCombatAttackRecord() {
+        playersAttackedLastCombat.clear();
+        playersAttackedLastCombat.addAll(playersAttackedThisCombat);
+        playersAttackedThisCombat.clear();
     }
 
     /**

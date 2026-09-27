@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "82")
+@CardRegistration(set = "TDC", collectorNumber = "174")
 public class BlightPile extends Card {
 
     public BlightPile() {

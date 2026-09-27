@@ -27,7 +27,9 @@ class WorshipTest extends BaseCardTest {
 
         shockPlayer1();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
+        harness.assertLife(player1, 1);
+        assertThat(gd.damageDealtToPlayersThisTurn.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.noncombatDamageDealtToPlayersThisTurn.get(player1.getId())).isEqualTo(2);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
@@ -39,7 +41,7 @@ class WorshipTest extends BaseCardTest {
 
         shockPlayer1();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
@@ -52,7 +54,7 @@ class WorshipTest extends BaseCardTest {
 
         shockPlayer1();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
@@ -69,7 +71,9 @@ class WorshipTest extends BaseCardTest {
 
         resolveCombat(player2);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
+        harness.assertLife(player1, 1);
+        assertThat(gd.damageDealtToPlayersThisTurn.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.combatDamageDealtToPlayersThisTurn.get(player1.getId())).isEqualTo(3);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
@@ -83,7 +87,7 @@ class WorshipTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(
                 gd, player1.getId(), 1, "test"));
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
     }
 
     private void shockPlayer1() {
@@ -107,7 +111,7 @@ class WorshipTest extends BaseCardTest {
                 .applyLifeLoss(gd, player1.getId(), 2, "test"));
         harness.runStateBasedActions();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
@@ -123,7 +127,7 @@ class WorshipTest extends BaseCardTest {
                 .applyLifeLoss(gd, player1.getId(), 1, "test"));
         shockPlayer1();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(-2);
+        harness.assertLife(player1, -2);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }

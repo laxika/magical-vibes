@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.Karakas;
 import com.github.laxika.magicalvibes.cards.v.VampireBats;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SylvanParadise.class, VampireBats.class, Forest.class})
+@CardUsed({SylvanParadise.class, VampireBats.class, Karakas.class})
 class SylvanParadiseTest extends BaseCardTest {
 
     @Test
@@ -29,6 +29,18 @@ class SylvanParadiseTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveColors(gd, ownCreature)).containsExactly(CardColor.GREEN);
         assertThat(gqs.getEffectiveColors(gd, opposingCreature)).containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Leaves untargeted creatures unchanged")
+    void leavesUntargetedCreaturesUnchanged() {
+        Permanent targetedCreature = harness.addToBattlefieldAndReturn(player1, new VampireBats());
+        Permanent untargetedCreature = harness.addToBattlefieldAndReturn(player2, new VampireBats());
+
+        cast(List.of(targetedCreature.getId()));
+
+        assertThat(gqs.getEffectiveColors(gd, targetedCreature)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.getEffectiveColors(gd, untargetedCreature)).containsExactly(CardColor.BLACK);
     }
 
     @Test
@@ -48,13 +60,23 @@ class SylvanParadiseTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a noncreature permanent")
-    void cannotTargetNoncreaturePermanent() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+    @DisplayName("Requires at least one target creature")
+    void cannotCastWithoutTarget() {
         harness.setHand(player1, List.of(new SylvanParadise()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(forest.getId())))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent karakas = harness.addToBattlefieldAndReturn(player2, new Karakas());
+        harness.setHand(player1, List.of(new SylvanParadise()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(karakas.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

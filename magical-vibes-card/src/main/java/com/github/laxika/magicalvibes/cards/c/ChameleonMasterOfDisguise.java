@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "27")
 @CardRegistration(set = "OM1", collectorNumber = "46")
+@CardRegistration(set = "MSC", collectorNumber = "148")
 public class ChameleonMasterOfDisguise extends Card {
 
     public ChameleonMasterOfDisguise() {

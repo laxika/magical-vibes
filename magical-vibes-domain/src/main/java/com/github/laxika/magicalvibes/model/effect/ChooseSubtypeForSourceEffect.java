@@ -8,7 +8,12 @@ import java.util.List;
 public record ChooseSubtypeForSourceEffect(List<CardSubtype> allowedSubtypes,
                                            boolean untilEndOfTurn,
                                            String choicePrompt)
-        implements SubtypeChoiceOnEnterEffect {
+        implements SubtypeChoiceOnEnterEffect, CombatDamageTriggerContextEffect {
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.SOURCE_SELF;
+    }
 
     public ChooseSubtypeForSourceEffect() {
         this(List.of(), false, "Choose a creature type.");

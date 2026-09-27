@@ -79,6 +79,9 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             reflexiveEntry.setEventValue(entry.getEventValue());
         }
         reflexiveEntry.setAttackedTargetId(entry.getAttackedTargetId());
+        if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
+            reflexiveEntry.setTriggeringPermanentId(entry.getTargetId());
+        }
         reflexiveEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         gameData.stack.add(reflexiveEntry);
     }

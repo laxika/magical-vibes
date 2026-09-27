@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WoodElemental.class, Forest.class})
+@CardUsed({WoodElemental.class, Forest.class, DurkwoodBoars.class})
 class WoodElementalTest extends BaseCardTest {
 
     private void castWoodElemental() {
@@ -48,6 +49,46 @@ class WoodElementalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(card -> card.getName())
                 .containsExactlyInAnyOrder("Forest", "Forest");
+    }
+
+    @Test
+    @DisplayName("Only its controller's untapped Forests can be sacrificed")
+    void onlyControllerForestsCanBeSacrificed() {
+        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        castWoodElemental();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactly(ownForest.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownForest.getId()));
+
+        Permanent woodElemental = findPermanent(player1, "Wood Elemental");
+        assertThat(gqs.getEffectivePower(gd, woodElemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, woodElemental)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentForest);
+    }
+
+    @Test
+    @DisplayName("Untapped non-Forest permanents cannot be sacrificed")
+    void untappedNonForestPermanentsCannotBeSacrificed() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent nonForest = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+
+        castWoodElemental();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(forest.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonForest);
     }
 
     @Test

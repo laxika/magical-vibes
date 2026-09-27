@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,65 +23,72 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PromiseOfLoyaltyTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Each player keeps one creature, which gets a vow counter, and sacrifices the rest")
-    void keepsOneCreaturePerPlayerAndSacrificesTheRest() {
-        Permanent ownKept = addCreature(player1);
-        Permanent ownSacrificed = addCreature(player1);
-        Permanent opposingKept = addCreature(player2);
-        Permanent opposingSacrificed = addCreature(player2);
+    @DisplayName("Each player keeps one creature, puts a vow counter on it, and sacrifices the rest")
+    void keepsOneCreaturePerPlayer() {
+        Permanent ownKept = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownSacrificed = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingKept = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opposingSacrificed = addCreatureReady(player2, new GrizzlyBears());
 
-        castPromise();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class))
-                .isNotNull();
+        cast();
         harness.handleMultiplePermanentsChosen(player1, List.of(ownKept.getId()));
         harness.handleMultiplePermanentsChosen(player2, List.of(opposingKept.getId()));
 
-        assertThat(isOnBattlefield(player1, ownKept)).isTrue();
-        assertThat(isOnBattlefield(player2, opposingKept)).isTrue();
-        assertThat(isOnBattlefield(player1, ownSacrificed)).isFalse();
-        assertThat(isOnBattlefield(player2, opposingSacrificed)).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ownKept);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opposingKept);
         assertThat(ownKept.getCounterCount(CounterType.VOW)).isEqualTo(1);
         assertThat(opposingKept.getCounterCount(CounterType.VOW)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownSacrificed.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingSacrificed.getCard());
     }
 
     @Test
-    @DisplayName("A chosen creature with a vow counter cannot attack the spell's controller")
-    void chosenCreatureCannotAttackSpellController() {
-        Permanent ownChoice = addCreature(player1);
-        addCreature(player1);
-        Permanent chosen = addCreature(player2);
-        addCreature(player2);
-        castPromise();
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownChoice.getId()));
-        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+    @DisplayName("A kept creature cannot attack the spell's controller")
+    void keptCreatureCannotAttackController() {
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        cast();
+
+        assertThat(opposingCreature.getCounterCount(CounterType.VOW)).isEqualTo(1);
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A kept creature cannot attack the controller's planeswalker")
+    void keptCreatureCannotAttackControllerPlaneswalker() {
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent planeswalker = addPlaneswalker(player1);
+
+        cast();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(chosen);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2,
-                List.of(attackerIndex), Map.of(attackerIndex, player1.getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid attacker index");
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0),
+                Map.of(0, planeswalker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opposingCreature.getCounterCount(CounterType.VOW)).isEqualTo(1);
     }
 
-    private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
-    }
-
-    private void castPromise() {
+    private void cast() {
         harness.setHand(player1, List.of(new PromiseOfLoyalty()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
     }
 
-    private boolean isOnBattlefield(com.github.laxika.magicalvibes.model.Player player, Permanent permanent) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .anyMatch(candidate -> candidate.getId().equals(permanent.getId()));
+    private Permanent addPlaneswalker(Player player) {
+        Card card = new Card();
+        card.setName("Test Planeswalker");
+        card.setType(CardType.PLANESWALKER);
+        card.setLoyalty(4);
+        Permanent permanent = new Permanent(card);
+        permanent.setCounterCount(CounterType.LOYALTY, 4);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        return permanent;
     }
 }

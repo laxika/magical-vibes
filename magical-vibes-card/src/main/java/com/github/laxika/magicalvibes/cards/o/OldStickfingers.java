@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "234")
 @CardRegistration(set = "DBL", collectorNumber = "234")
+@CardRegistration(set = "DSC", collectorNumber = "227")
 public class OldStickfingers extends Card {
 
     public OldStickfingers() {

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "11")
 @CardRegistration(set = "MH2", collectorNumber = "245")
+@CardRegistration(set = "DSC", collectorNumber = "269")
 public class DarkmossBridge extends Card {
 
     public DarkmossBridge() {

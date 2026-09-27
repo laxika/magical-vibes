@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -28,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -213,6 +215,46 @@ class DiscardTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — CastDiscardedCardFromGraveyardEffect")
+    class ControllerDiscardCast {
+
+        @Test
+        @DisplayName("queues the exact discarded nonland card")
+        void queuesExactDiscardedNonlandCard() {
+            Permanent source = createPermanent("Oskar, Rubbish Reclaimer");
+            var effect = new CastDiscardedCardFromGraveyardEffect();
+            Card discarded = createCard("Grizzly Bears");
+            gd.playerGraveyards.computeIfAbsent(player1Id, k -> new ArrayList<>()).add(discarded);
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getTriggeringCardId()).isEqualTo(discarded.getId());
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            });
+        }
+
+        @Test
+        @DisplayName("does not trigger for a discarded land")
+        void ignoresDiscardedLand() {
+            Permanent source = createPermanent("Oskar, Rubbish Reclaimer");
+            var effect = new CastDiscardedCardFromGraveyardEffect();
+            Card discarded = createCard("Forest");
+            discarded.setType(CardType.LAND);
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     @Nested
@@ -855,6 +897,35 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(artillerist.getId());
             assertThat(entry.getEventValue()).isEqualTo(3);
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — LoseLifeEffect")
+    class ControllerDiscardEventLifeLossToEachOpponent {
+
+        @Test
+        @DisplayName("queues life loss using the discard event")
+        void queuesLifeLossTrigger() {
+            Permanent doom = createPermanent("Doctor Doom, King of Latveria");
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            Card land = createCard("Forest");
+            land.setType(CardType.LAND);
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 2,
+                    List.of(land, createCard("Grizzly Bears")));
+
+            boolean result = registry.dispatch(
+                    match(doom, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(doom.getId());
+                assertThat(entry.getEventValue()).isEqualTo(2);
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            });
         }
     }
 

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
-import com.github.laxika.magicalvibes.cards.d.DwarvenRuins;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CityOfBrass.class, DwarvenRuins.class, Forest.class, Island.class, Mountain.class, Plains.class, UntamedWilds.class})
+@CardUsed({CityOfBrass.class, Forest.class, Island.class, Mountain.class, Plains.class, UntamedWilds.class})
 class UntamedWildsTest extends BaseCardTest {
 
     @Test

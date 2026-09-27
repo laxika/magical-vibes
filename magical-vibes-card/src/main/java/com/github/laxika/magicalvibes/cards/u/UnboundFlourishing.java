@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1331")
 @CardRegistration(set = "MH1", collectorNumber = "189")
+@CardRegistration(set = "SOC", collectorNumber = "126")
 public class UnboundFlourishing extends Card {
 
     public UnboundFlourishing() {

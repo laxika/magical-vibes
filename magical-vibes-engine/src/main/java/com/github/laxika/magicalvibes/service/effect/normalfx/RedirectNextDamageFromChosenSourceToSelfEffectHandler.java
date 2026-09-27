@@ -31,7 +31,12 @@ public class RedirectNextDamageFromChosenSourceToSelfEffectHandler implements No
             return;
         }
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = new java.util.ArrayList<>(preventionSupport.collectAllBattlefieldPermanentIds(gameData));
+        gameData.stack.stream()
+                .filter(stackEntry -> stackEntry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.INSTANT_SPELL
+                        || stackEntry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.SORCERY_SPELL)
+                .map(stackEntry -> stackEntry.getCard().getId())
+                .forEach(validIds::add);
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
             return;

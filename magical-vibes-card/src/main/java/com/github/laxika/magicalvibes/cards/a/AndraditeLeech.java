@@ -17,7 +17,7 @@ public class AndraditeLeech extends Card {
 
     public AndraditeLeech() {
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
-                new CardColorPredicate(CardColor.BLACK), 1, CostModificationScope.SELF));
+                new CardColorPredicate(CardColor.BLACK), "{B}", CostModificationScope.SELF));
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new BoostSelfEffect(1, 1)),
                 "{B}: This creature gets +1/+1 until end of turn."));
     }

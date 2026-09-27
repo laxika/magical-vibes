@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HourOfReckoning.class, GrizzlyBears.class})
+@CardUsed({HourOfReckoning.class, GrizzlyBears.class, Forest.class})
 class HourOfReckoningTest extends BaseCardTest {
 
     @Test
@@ -22,10 +23,7 @@ class HourOfReckoningTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent token = addTokenCreature(player1);
 
-        harness.setHand(player1, List.of(new HourOfReckoning()));
-        harness.addMana(player1, ManaColor.WHITE, 7);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new HourOfReckoning(), "{4}{W}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
@@ -35,6 +33,22 @@ class HourOfReckoningTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Leaves noncreature permanents untouched")
+    void leavesNoncreaturePermanentsUntouched() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new HourOfReckoning(), "{4}{W}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof GrizzlyBears)
+                .isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

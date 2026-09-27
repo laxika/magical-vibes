@@ -25,9 +25,7 @@ class AmrouKithkinTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new HillGiant());
 
         Permanent atkPerm = addCreatureReady(player1, new AmrouKithkin());
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -42,9 +40,7 @@ class AmrouKithkinTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new AmrouKithkin());
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -60,9 +56,7 @@ class AmrouKithkinTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new SavannahLions());
 
         Permanent atkPerm = addCreatureReady(player1, new AmrouKithkin());
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

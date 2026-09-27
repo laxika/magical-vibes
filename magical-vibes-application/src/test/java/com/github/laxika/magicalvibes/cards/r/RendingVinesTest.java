@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RendingVines.class, FountainOfYouth.class, Forest.class, GhostlyPrison.class,
+        GrizzlyBears.class, IcyManipulator.class})
 class RendingVinesTest extends BaseCardTest {
 
     @Test
@@ -27,8 +30,7 @@ class RendingVinesTest extends BaseCardTest {
         addMana();
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -44,8 +46,7 @@ class RendingVinesTest extends BaseCardTest {
         addMana();
 
         UUID targetId = harness.getPermanentId(player2, "Icy Manipulator");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Icy Manipulator");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -60,10 +61,25 @@ class RendingVinesTest extends BaseCardTest {
         addMana();
 
         UUID targetId = harness.getPermanentId(player2, "Ghostly Prison");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Ghostly Prison");
+    }
+
+    @Test
+    @DisplayName("Rechecks hand size on resolution before destroying an enchantment")
+    void rechecksHandSizeOnResolution() {
+        harness.addToBattlefield(player2, new GhostlyPrison());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.setHand(player1, List.of(new RendingVines(), new Forest(), new Forest()));
+        addMana();
+
+        UUID targetId = harness.getPermanentId(player2, "Ghostly Prison");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertOnBattlefield(player2, "Ghostly Prison");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
     }
 
     @Test

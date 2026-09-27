@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "EMA", collectorNumber = "119")
 @CardRegistration(set = "PCA", collectorNumber = "40")
 @CardRegistration(set = "C14", collectorNumber = "171")
+@CardRegistration(set = "TDC", collectorNumber = "205")
 public class BeetlebackChief extends Card {
 
     public BeetlebackChief() {

@@ -35,6 +35,22 @@ class GolgariBrownscaleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Dredge is not offered when the library has fewer than two cards")
+    void cannotDredgeWithTooFewLibraryCards() {
+        GolgariBrownscale brownscale = new GolgariBrownscale();
+        Card topCard = new Forest();
+        harness.setGraveyard(player1, List.of(brownscale));
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(brownscale);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Declining dredge does not gain life")
     void decliningDredgeDoesNotGainLife() {
         GolgariBrownscale brownscale = new GolgariBrownscale();

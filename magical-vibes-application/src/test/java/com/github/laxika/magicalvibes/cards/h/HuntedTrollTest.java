@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -26,8 +27,7 @@ class HuntedTrollTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> faeries = findPermanents(player2, "Faerie");
         assertThat(faeries).hasSize(4);
@@ -42,6 +42,23 @@ class HuntedTrollTest extends BaseCardTest {
             assertThat(faerie.getCard().getSubtypes()).containsExactly(CardSubtype.FAERIE);
             assertThat(gqs.hasKeyword(gd, faerie, Keyword.FLYING)).isTrue();
         }
+    }
+
+    @Test
+    @DisplayName("ETB chooses an opponent when Hunted Troll enters without being cast")
+    void etbChoosesOpponentWhenEnteringWithoutBeingCast() {
+        harness.enterBattlefieldAndReturn(player1, new HuntedTroll());
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(player2.getId());
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Faerie")).hasSize(4);
+        assertThat(findPermanents(player1, "Faerie")).isEmpty();
     }
 
     @Test

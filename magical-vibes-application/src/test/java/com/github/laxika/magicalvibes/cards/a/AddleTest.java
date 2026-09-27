@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Addle.class, Peek.class, Opt.class, GrizzlyBears.class, Forest.class})
 class AddleTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class AddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Addle()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
@@ -39,8 +40,7 @@ class AddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Addle()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "BLUE");
 
         PendingInteraction.RevealedHandChoice choice =
@@ -56,14 +56,65 @@ class AddleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target hand is publicly revealed before the matching card is chosen")
+    void revealsTargetHandBeforeChoosingCard() {
+        harness.setHand(player2, new ArrayList<>(List.of(new Peek(), new Forest())));
+        harness.setHand(player1, List.of(new Addle()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+        assertThat(gameLogContains("Peek")).isTrue();
+
+        harness.handleCardChosen(player1, 0);
+    }
+
+    @Test
+    @DisplayName("A colorless basic land is not treated as a card of the color it produces")
+    void colorlessLandIsNotAColorMatch() {
+        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new GrizzlyBears())));
+        harness.setHand(player1, List.of(new Addle()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "GREEN");
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(1);
+
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(c -> c.getName())
+                .containsExactly("Forest");
+    }
+
+    @Test
+    @DisplayName("The caster may target their own hand")
+    void canTargetOwnHand() {
+        harness.setHand(player1, new ArrayList<>(List.of(new Addle(), new Peek())));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Peek");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("A color with no matching card leaves the target hand unchanged")
     void noMatchingColorDoesNothing() {
         harness.setHand(player2, new ArrayList<>(List.of(new Peek(), new GrizzlyBears(), new Forest())));
         harness.setHand(player1, List.of(new Addle()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.interaction.activeInteraction()).isNull();

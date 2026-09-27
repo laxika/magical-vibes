@@ -1,19 +1,38 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(VampireBats.class)
+@CardUsed({VampireBats.class, TundraWolves.class})
 class VampireBatsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Flying prevents a ground creature from blocking")
+    void flyingPreventsGroundCreatureFromBlocking() {
+        Permanent bats = addReadyVampireBats(player1);
+        Permanent wolves = addCreatureReady(player2, new TundraWolves());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(wolves),
+                gd.playerBattlefields.get(player1.getId()).indexOf(bats)))))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     @Test
     @DisplayName("Ability can be activated twice in one turn")

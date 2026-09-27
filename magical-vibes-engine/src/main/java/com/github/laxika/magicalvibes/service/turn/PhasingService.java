@@ -227,6 +227,9 @@ public class PhasingService {
                 return;
             }
             triggerCollectionService.checkPhasesOutTriggers(gameData, permanent, controllerId);
+            if (gameData.currentStep != null && gameData.currentStep.isCombatPhase()) {
+                permanent.rollOverCombatAttackRecord();
+            }
             permanent.clearCombatState();
             gameData.playerBattlefields.get(controllerId).remove(permanent);
             phasedOutList(gameData, controllerId).add(permanent);

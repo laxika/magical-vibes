@@ -1,21 +1,18 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.r.RimeDryad;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Hammerheim.class, Forest.class, GrizzlyBears.class, RimeDryad.class})
+@CardUsed({Hammerheim.class, SnowCoveredForest.class, BalduvianBears.class, RimeDryad.class})
 class HammerheimTest extends BaseCardTest {
 
     @Test
@@ -45,7 +42,7 @@ class HammerheimTest extends BaseCardTest {
     @DisplayName("Removes every basic landwalk ability until end of turn")
     void removesAllLandwalkAbilitiesUntilEndOfTurn() {
         Permanent hammerheim = harness.addToBattlefieldAndReturn(player1, new Hammerheim());
-        Permanent target = readyCreature(player2, allLandwalkCreature());
+        Permanent target = addCreatureReady(player2, allLandwalkCreature());
 
         for (Keyword landwalk : Keyword.LANDWALK_MAP.keySet()) {
             assertThat(gqs.hasKeyword(gd, target, landwalk)).isTrue();
@@ -68,12 +65,11 @@ class HammerheimTest extends BaseCardTest {
     @DisplayName("Allows a target with snow landwalk to be blocked until end of turn")
     void allowsSnowLandwalkCreatureToBeBlocked() {
         Permanent hammerheim = harness.addToBattlefieldAndReturn(player1, new Hammerheim());
-        Permanent dryad = readyCreature(player1, new RimeDryad());
+        Permanent dryad = addCreatureReady(player1, new RimeDryad());
         dryad.setAttacking(true);
-        Permanent snowForest = new Permanent(new Forest());
-        TestCards.mutableCard(snowForest).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
+        Permanent snowForest = new Permanent(new SnowCoveredForest());
         gd.playerBattlefields.get(player2.getId()).add(snowForest);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
         activateRemoval(hammerheim, dryad);
 
@@ -112,10 +108,4 @@ class HammerheimTest extends BaseCardTest {
         return card;
     }
 
-    private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

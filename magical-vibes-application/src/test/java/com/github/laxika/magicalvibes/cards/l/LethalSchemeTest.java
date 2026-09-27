@@ -32,6 +32,8 @@ class LethalSchemeTest extends BaseCardTest {
 
         harness.castInstantWithConvoke(player1, 0, List.of(target.getId()),
                 List.of(firstConvoker.getId(), secondConvoker.getId()));
+        assertThat(gd.stack.getLast().getConvokeCreatureIds())
+                .containsExactly(firstConvoker.getId(), secondConvoker.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);

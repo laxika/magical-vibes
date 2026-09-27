@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,14 +32,11 @@ class LivingTerrainTest extends BaseCardTest {
         enchant(forest);
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(6);
-
-        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
-        assertThat(bonus.animatedCreature()).isTrue();
-        assertThat(bonus.grantedColors()).contains(CardColor.GREEN);
-        assertThat(bonus.grantedSubtypes()).contains(CardSubtype.TREEFOLK);
-        assertThat(bonus.grantedCardTypes()).contains(CardType.CREATURE);
+        assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, forest)).contains(CardSubtype.TREEFOLK);
     }
 
     @Test
@@ -58,6 +53,19 @@ class LivingTerrainTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         // Still a creature while tapped for mana.
         assertThat(gqs.isCreature(gd, forest)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly controlled enchanted land has summoning sickness as a creature")
+    void enchantedLandHasSummoningSickness() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        enchant(forest);
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThatThrownBy(() -> gs.tapPermanent(gd, player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     @Test
@@ -94,7 +102,7 @@ class LivingTerrainTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(gqs.computeStaticBonus(gd, forest).animatedCreature()).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, forest)).doesNotContain(CardSubtype.TREEFOLK);
     }
 
     @Test
@@ -112,7 +120,7 @@ class LivingTerrainTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(6);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Living Terrain")
+                .anyMatch(permanent -> permanent.getCard() instanceof LivingTerrain
                         && forest.getId().equals(permanent.getAttachedTo()));
     }
 

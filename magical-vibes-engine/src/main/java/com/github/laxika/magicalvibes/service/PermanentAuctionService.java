@@ -66,10 +66,13 @@ public class PermanentAuctionService {
 
         List<Card> pool = new ArrayList<>();
         for (Permanent perm : toExile) {
-            Card card = perm.getOriginalCard();
-            permanentRemovalService.removePermanentToExile(gameData, perm);
-            pool.add(card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
+            List<Card> cards = perm.cardsLeavingBattlefield();
+            if (permanentRemovalService.removePermanentToExile(gameData, perm)) {
+                for (Card card : cards) {
+                    pool.add(card);
+                    gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
+                }
+            }
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 

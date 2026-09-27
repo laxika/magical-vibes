@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlabasterLeech;
+import com.github.laxika.magicalvibes.cards.a.AngelicShield;
+import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,41 +16,42 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DismantlingBlow.class, ChromaticSphere.class, AngelicShield.class,
+        AlabasterLeech.class, Island.class})
 class DismantlingBlowTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a target artifact without kicker")
     void destroysArtifactWithoutKicker() {
-        harness.addToBattlefield(player2, new Spellbook());
-        UUID targetId = harness.getPermanentId(player2, "Spellbook");
+        harness.addToBattlefield(player2, new ChromaticSphere());
+        UUID targetId = harness.getPermanentId(player2, "Chromatic Sphere");
         harness.setHand(player1, List.of(new DismantlingBlow()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertInGraveyard(player2, "Spellbook");
+        harness.assertInGraveyard(player2, "Chromatic Sphere");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Destroys a target enchantment and draws two cards when kicked")
     void destroysEnchantmentAndDrawsTwoCardsWhenKicked() {
-        harness.addToBattlefield(player2, new AngelicChorus());
-        UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.addToBattlefield(player2, new AngelicShield());
+        UUID targetId = harness.getPermanentId(player2, "Angelic Shield");
         harness.setHand(player1, List.of(new DismantlingBlow()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AlabasterLeech(), new AlabasterLeech()));
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castKickedInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Shield");
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> card.getName())
-                .containsExactly("Grizzly Bears", "Grizzly Bears");
+                .containsExactly("Alabaster Leech", "Alabaster Leech");
     }
 
     @Test

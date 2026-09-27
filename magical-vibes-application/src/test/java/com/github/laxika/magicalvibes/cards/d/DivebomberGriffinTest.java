@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,13 +10,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DivebomberGriffin.class, FugitiveWizard.class})
+@CardUsed(DivebomberGriffin.class)
 class DivebomberGriffinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrifices itself and deals 3 damage to an attacking creature")
     void sacrificesItselfAndDamagesAttacker() {
-        addReadyGriffin(player1);
+        addCreatureReady(player1, new DivebomberGriffin());
         Permanent attacker = addCombatCreature(player2, true, false);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -31,7 +30,7 @@ class DivebomberGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a blocking creature")
     void damagesBlocker() {
-        addReadyGriffin(player1);
+        addCreatureReady(player1, new DivebomberGriffin());
         Permanent blocker = addCombatCreature(player2, false, true);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
@@ -43,7 +42,7 @@ class DivebomberGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is neither attacking nor blocking")
     void cannotTargetIdleCreature() {
-        addReadyGriffin(player1);
+        addCreatureReady(player1, new DivebomberGriffin());
         Permanent idle = addCombatCreature(player2, false, false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, idle.getId()))
@@ -62,19 +61,23 @@ class DivebomberGriffinTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
-    private Permanent addReadyGriffin(Player player) {
-        Permanent griffin = new Permanent(new DivebomberGriffin());
-        griffin.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(griffin);
-        return griffin;
+    @Test
+    @DisplayName("Does not damage a target that stops attacking before resolution")
+    void doesNotDamageTargetThatStopsAttackingBeforeResolution() {
+        addCreatureReady(player1, new DivebomberGriffin());
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 
     private Permanent addCombatCreature(Player player, boolean attacking, boolean blocking) {
-        Permanent creature = new Permanent(new FugitiveWizard());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player, new DivebomberGriffin());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 }

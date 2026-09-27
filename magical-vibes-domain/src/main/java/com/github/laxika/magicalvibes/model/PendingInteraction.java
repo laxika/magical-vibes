@@ -33,7 +33,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
-        PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingRagingRiver, PendingBendOrBreak,
+        PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingMakeAnExample,
+        PendingRagingRiver, PendingBendOrBreak,
         PendingPsychoticEpisodeChoice,
         PendingTruthOrTaleCardChoice,
         PendingWhimsOfTheFates,
@@ -45,6 +46,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
         PendingInteraction.PlanarCardChoice, PendingInteraction.SpellbookDraftChoice,
         PendingInteraction.RevealedMatchingHandCardChoice, PendingInteraction.CommanderChoice,
+        PendingInteraction.CommanderBattlefieldChoice,
+        PendingInteraction.StingingStudyCommanderChoice,
         PendingInteraction.SpatialMergingCardOrder, PendingInteraction.ApplejackToyChoice,
         PendingInteraction.LibraryReorder,
         PendingInteraction.TargetPlayerHandOrderChoice,
@@ -100,6 +103,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ExiledCardChoice,
         PendingInteraction.ActivatedExiledCardOpponentChoice,
         PendingInteraction.ActivatedExiledCardChoice,
+        PendingInteraction.HitCounterExiledCardChoice,
         PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
@@ -120,6 +124,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PerpetualCreatureCardChoice,
         PendingInteraction.PerpetualTargetCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
+        PendingInteraction.PerpetualEnterExileHandCardChoice,
+        PendingInteraction.PerpetualCastCostHandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
@@ -150,6 +156,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AssimilationAegisCopyChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
         PendingInteraction.EspersToMagiciteCreatureChoice,
+        PendingInteraction.ProteanWarEngineSpellbookDraftChoice,
+        PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice,
         PendingInteraction.FaceUpExiledCardChoice,
         PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice,
         PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice,
@@ -660,6 +668,52 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public CommanderChoice {
+            commanders = java.util.List.copyOf(commanders);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return commanders.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** Chooses one commander to put onto the battlefield from the command zone. */
+    record CommanderBattlefieldChoice(UUID playerId, java.util.List<Card> commanders)
+            implements PendingInteraction {
+
+        public CommanderBattlefieldChoice {
+            commanders = java.util.List.copyOf(commanders);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return commanders.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** Chooses which owned commander determines Stinging Study's draw and life-loss amount. */
+    record StingingStudyCommanderChoice(UUID playerId, java.util.List<Card> commanders)
+            implements PendingInteraction {
+
+        public StingingStudyCommanderChoice {
             commanders = java.util.List.copyOf(commanders);
         }
 
@@ -2308,6 +2362,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Chooses one of a damaged player's exiled cards with a hit counter to remove. */
+    record HitCounterExiledCardChoice(UUID playerId, UUID ownerId,
+                                      java.util.List<UUID> validCardIds,
+                                      CardEffect followUpEffect) implements PendingInteraction {
+
+        public HitCounterExiledCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
     record CommanderReplacementChoice(CommanderZoneMove move) implements PendingInteraction {
         @Override public UUID decidingPlayerId() { return move.ownerId(); }
         @Override public InteractionOptions legalOptions() { return new InteractionOptions.AcceptDecline(); }
@@ -2986,9 +3060,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public InteractionOptions legalOptions() {
             // Mirrors the answer handler's decline rule: exile and may-ability targeting are
             // forced, as is anything explicitly marked mandatory.
-            boolean declinable = destination != GraveyardChoiceDestination.EXILE
+                    boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     && destination != GraveyardChoiceDestination.COPY_ON_ENTER
+                    && destination != GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     && !mandatory;
             return new InteractionOptions.GraveyardIndexPick(validIndices, declinable);
         }
@@ -3550,6 +3625,45 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, !cloaked);
+        }
+    }
+
+    /** Pull of the Mist Moon: choose a nonland permanent card from hand for a perpetual ETB ability. */
+    record PerpetualEnterExileHandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualEnterExileHandCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /** Bloodsprout Talisman: choose a nonland card from hand for a perpetual cast-cost reduction. */
+    record PerpetualCastCostHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                           int amount, String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualCastCostHandCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 
@@ -5211,18 +5325,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                String label, String cardName,
                                                CounterType enterWithCounter, int enterWithCounterCount,
                                                boolean grantHaste,
-                                               boolean returnToHandAtEndStep)
+                                               boolean returnToHandAtEndStep,
+                                               boolean includeGraveyard,
+                                               boolean includeCommandZone,
+                                               UUID delayedAuraCardId,
+                                               UUID delayedAuraOwnerId,
+                                               boolean handleCreatureEtbAndLegendRule)
             implements PendingInteraction {
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                  String label, String cardName) {
-            this(playerId, validCardIds, label, cardName, null, 0, false, false);
+            this(playerId, validCardIds, label, cardName, null, 0, false, false,
+                    true, false, null, null, false);
         }
 
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                  String label, String cardName,
                                                  CounterType enterWithCounter) {
             this(playerId, validCardIds, label, cardName, enterWithCounter,
-                    enterWithCounter == null ? 0 : 1, false, false);
+                    enterWithCounter == null ? 0 : 1, false, false,
+                    true, false, null, null, false);
+        }
+
+        public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                 String label, String cardName,
+                                                 CounterType enterWithCounter, int enterWithCounterCount,
+                                                 boolean grantHaste, boolean returnToHandAtEndStep) {
+            this(playerId, validCardIds, label, cardName, enterWithCounter, enterWithCounterCount,
+                    grantHaste, returnToHandAtEndStep, true, false, null, null, false);
         }
 
         public PutCardFromHandOrGraveyardChoice {
@@ -5295,6 +5424,52 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    /** Chooses one of the three cards drafted from Protean War Engine's spellbook. */
+    record ProteanWarEngineSpellbookDraftChoice(UUID playerId, UUID sourcePermanentId,
+                                                 java.util.List<Card> cards)
+            implements PendingInteraction {
+        public ProteanWarEngineSpellbookDraftChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** Chooses one of the three cards drafted from Slimefoot, Thallid Transplant's spellbook. */
+    record SlimefootThallidTransplantSpellbookDraftChoice(UUID playerId, UUID sourcePermanentId,
+                                                           java.util.List<Card> cards)
+            implements PendingInteraction {
+        public SlimefootThallidTransplantSpellbookDraftChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

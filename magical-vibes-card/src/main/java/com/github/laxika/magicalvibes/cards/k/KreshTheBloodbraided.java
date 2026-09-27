@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyi
 
 @CardRegistration(set = "ALA", collectorNumber = "178")
 @CardRegistration(set = "V11", collectorNumber = "5")
+@CardRegistration(set = "NCC", collectorNumber = "345")
 public class KreshTheBloodbraided extends Card {
 
     public KreshTheBloodbraided() {

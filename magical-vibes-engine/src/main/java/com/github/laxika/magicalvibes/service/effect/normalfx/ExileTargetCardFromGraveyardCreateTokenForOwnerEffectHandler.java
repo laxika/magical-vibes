@@ -38,7 +38,8 @@ public class ExileTargetCardFromGraveyardCreateTokenForOwnerEffectHandler
         }
         Card targetCard = targetCardId == null
                 ? null : gameQueryService.findCardInGraveyardById(gameData, targetCardId);
-        if (targetCard == null) {
+        if (targetCard == null || (entry.getTargetGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(targetCardId) != entry.getTargetGraveyardEntryVersion())) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;

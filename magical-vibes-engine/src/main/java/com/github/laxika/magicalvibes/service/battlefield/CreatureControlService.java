@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
@@ -402,9 +403,13 @@ public class CreatureControlService {
                             && aura.getId().equals(fe.sourcePermanentId()));
             if (!present) {
                 UUID auraController = gameData.findControllerOf(aura);
+                CardEffect controlEffect = aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElseThrow();
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), aura.getCard().getName(), aura.getId(), auraController,
-                        new ControlEnchantedCreatureEffect(), enchanted.getId(), null, null,
+                        controlEffect, enchanted.getId(), null, null,
                         EffectDuration.WHILE_ATTACHED, 0));
             }
         }
@@ -468,7 +473,12 @@ public class CreatureControlService {
                         gameData, source.getCard().getId(), fe.controllerId(), null, source, source.getId());
                 stale = affected == null || source == null || predicateEvaluationService == null
                         || !predicateEvaluationService.matchesPermanentPredicate(
-                                affected, control.targetPredicate(), context);
+                        affected, control.targetPredicate(), context);
+            }
+            if (!stale && fe.effect() instanceof CounterConditionedControlEffect counterConditioned) {
+                Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
+                stale = affected == null
+                        || affected.getCounterCount(counterConditioned.counterType()) <= 0;
             }
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());

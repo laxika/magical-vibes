@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "218")
+@CardRegistration(set = "TDC", collectorNumber = "282")
 public class BaralAndKariZev extends Card {
 
     private static final CreateTokenEffect RAGAVAN_TOKEN = new CreateTokenEffect(

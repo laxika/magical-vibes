@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VituGhaziTheCityTree;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,20 +13,20 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Helldozer.class, Forest.class, GhostQuarter.class, GrizzlyBears.class})
+@CardUsed({Helldozer.class, Forest.class, VituGhaziTheCityTree.class, BorosSignet.class})
 class HelldozerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a nonbasic land and untaps itself")
     void destroysNonbasicLandAndUntapsItself() {
         Permanent helldozer = addReadyHelldozer();
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new GhostQuarter());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new VituGhaziTheCityTree());
 
         activateAgainst(helldozer, land);
 
         assertThat(helldozer.isTapped()).isFalse();
-        harness.assertNotOnBattlefield(player2, "Ghost Quarter");
-        harness.assertInGraveyard(player2, "Ghost Quarter");
+        harness.assertNotOnBattlefield(player2, "Vitu-Ghazi, the City-Tree");
+        harness.assertInGraveyard(player2, "Vitu-Ghazi, the City-Tree");
     }
 
     @Test
@@ -43,20 +43,31 @@ class HelldozerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy a land controlled by its controller")
+    void canDestroyLandControlledByItsController() {
+        Permanent helldozer = addReadyHelldozer();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VituGhaziTheCityTree());
+
+        activateAgainst(helldozer, land);
+
+        assertThat(helldozer.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Vitu-Ghazi, the City-Tree");
+        harness.assertInGraveyard(player1, "Vitu-Ghazi, the City-Tree");
+    }
+
+    @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
         Permanent helldozer = addReadyHelldozer();
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent nonland = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
 
         assertThatThrownBy(() -> harness.activateAbility(
-                player1, indexOf(helldozer), null, creature.getId()))
+                player1, indexOf(helldozer), null, nonland.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyHelldozer() {
-        Permanent helldozer = harness.addToBattlefieldAndReturn(player1, new Helldozer());
-        helldozer.setSummoningSick(false);
-        return helldozer;
+        return addCreatureReady(player1, new Helldozer());
     }
 
     private void activateAgainst(Permanent helldozer, Permanent land) {

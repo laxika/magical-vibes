@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "230")
+@CardRegistration(set = "SOC", collectorNumber = "136")
 public class ArchaeomancersMap extends Card {
 
     public ArchaeomancersMap() {

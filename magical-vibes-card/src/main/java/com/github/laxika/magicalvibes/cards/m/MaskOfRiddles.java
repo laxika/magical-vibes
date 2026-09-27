@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "25")
+@CardRegistration(set = "NCC", collectorNumber = "347")
 public class MaskOfRiddles extends Card {
 
     public MaskOfRiddles() {

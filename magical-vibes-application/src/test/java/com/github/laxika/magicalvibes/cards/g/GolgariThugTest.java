@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.p.Putrefy;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GolgariThug.class, Forest.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({GolgariThug.class, Forest.class, GolgariBrownscale.class, Putrefy.class})
 class GolgariThugTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it dies, it targets a creature card from its controller's graveyard and puts it on top of the library")
     void deathTriggerPutsTargetCreatureOnTopOfLibrary() {
         GolgariThug thug = new GolgariThug();
-        Card creature = new GrizzlyBears();
+        Card creature = new GolgariBrownscale();
         Card nonCreature = new Forest();
         Card libraryCard = new Forest();
         harness.addToBattlefield(player1, thug);
@@ -40,7 +39,7 @@ class GolgariThugTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(creature.getId(), libraryCard.getId());
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Golgari Brownscale");
         harness.assertInGraveyard(player1, "Golgari Thug");
     }
 
@@ -65,10 +64,33 @@ class GolgariThugTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its death trigger cannot target a creature card in an opponent's graveyard")
+    void deathTriggerCannotTargetOpponentGraveyard() {
+        GolgariThug thug = new GolgariThug();
+        Card opponentCreature = new GolgariBrownscale();
+        Card libraryCard = new Forest();
+        harness.addToBattlefield(player1, thug);
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        destroyThug();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(thug.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(thug.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(thug.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
+    }
+
+    @Test
     @DisplayName("May dredge Golgari Thug instead of drawing")
     void dredgesInsteadOfDrawing() {
         GolgariThug thug = new GolgariThug();
-        List<Card> milled = List.of(new Forest(), new GrizzlyBears(), new Forest(), new Forest());
+        List<Card> milled = List.of(new Forest(), new GolgariBrownscale(), new Forest(), new Forest());
         harness.setGraveyard(player1, List.of(thug));
         harness.setLibrary(player1, milled);
 
@@ -89,7 +111,7 @@ class GolgariThugTest extends BaseCardTest {
         GolgariThug thug = new GolgariThug();
         Card topCard = new Forest();
         harness.setGraveyard(player1, List.of(thug));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(topCard, new GolgariBrownscale(), new Forest(), new Forest()));
 
         resolveDraw();
         harness.handleGraveyardCardChosen(player1, -1);
@@ -105,7 +127,7 @@ class GolgariThugTest extends BaseCardTest {
         GolgariThug thug = new GolgariThug();
         Card topCard = new Forest();
         harness.setGraveyard(player1, List.of(thug));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(topCard, new GolgariBrownscale(), new Forest()));
 
         resolveDraw();
 
@@ -115,10 +137,11 @@ class GolgariThugTest extends BaseCardTest {
     }
 
     private void destroyThug() {
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Putrefy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Golgari Thug"));
     }
 
     private void resolveDraw() {

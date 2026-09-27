@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,8 +21,8 @@ class GiantTurtleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         turtle.setAttacking(true);
         turtle.clearCombatState();
-        advanceTurn();
-        advanceTurn();
+        advanceToNextUpkeep(player2);
+        advanceToNextUpkeep(player1);
 
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).doesNotContain(0);
@@ -33,8 +34,8 @@ class GiantTurtleTest extends BaseCardTest {
         addCreatureReady(player1, new GiantTurtle());
 
         harness.forceActivePlayer(player1);
-        advanceTurn();
-        advanceTurn();
+        advanceToNextUpkeep(player2);
+        advanceToNextUpkeep(player1);
 
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
@@ -49,13 +50,29 @@ class GiantTurtleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         attacker.setAttacking(true);
         attacker.clearCombatState();
-        advanceTurn();
-        advanceTurn();
+        advanceToNextUpkeep(player2);
+        advanceToNextUpkeep(player1);
 
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId()))
                 .contains(1)
                 .doesNotContain(0);
+    }
+
+    @Test
+    @DisplayName("An opponent's attack does not count as this Turtle's controller's last-turn attack")
+    void opponentAttackDoesNotCreateRestriction() {
+        addCreatureReady(player1, new GiantTurtle());
+        Permanent opponentTurtle = addCreatureReady(player2, new GiantTurtle());
+
+        harness.forceActivePlayer(player1);
+        advanceToNextUpkeep(player2);
+        opponentTurtle.setAttacking(true);
+        opponentTurtle.clearCombatState();
+        advanceToNextUpkeep(player1);
+
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
     }
 
     @Test
@@ -66,20 +83,20 @@ class GiantTurtleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         turtle.setAttacking(true);
         turtle.clearCombatState();
-        advanceTurn();
-        advanceTurn();
+        advanceToNextUpkeep(player2);
+        advanceToNextUpkeep(player1);
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).doesNotContain(0);
 
-        advanceTurn();
-        advanceTurn();
+        advanceToNextUpkeep(player2);
+        advanceToNextUpkeep(player1);
 
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
     }
 
-    private void advanceTurn() {
+    private void advanceToNextUpkeep(Player activePlayer) {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.UPKEEP);
     }
 }

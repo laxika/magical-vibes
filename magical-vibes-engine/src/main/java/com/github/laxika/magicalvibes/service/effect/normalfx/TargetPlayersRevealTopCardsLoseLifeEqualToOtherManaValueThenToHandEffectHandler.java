@@ -49,6 +49,7 @@ public class TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandE
                 && entry.getTargetId() != null;
 
         String sourceName = entry.getCard().getName();
+        List<UUID> playerIds = targets;
         Card[] revealed = new Card[2];
         for (int i = 0; i < targets.size(); i++) {
             boolean targetLegal = revealEffect.controllerAndTarget()
@@ -58,7 +59,7 @@ public class TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandE
                 continue;
             }
 
-            UUID playerId = targets.get(i);
+            UUID playerId = playerIds.get(i);
             List<Card> deck = gameData.playerDecks.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
             if (deck == null || deck.isEmpty()) {
@@ -86,7 +87,7 @@ public class TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandE
             }
             int manaValue = revealed[1 - i].getManaValue();
             if (manaValue > 0) {
-                lifeSupport.applyLifeLoss(gameData, targets.get(i), manaValue, sourceName);
+                lifeSupport.applyLifeLoss(gameData, playerIds.get(i), manaValue, sourceName);
             }
         }
 

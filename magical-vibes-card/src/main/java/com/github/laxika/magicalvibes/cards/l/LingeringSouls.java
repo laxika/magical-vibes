@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "TSR", collectorNumber = "296")
 @CardRegistration(set = "SIS", collectorNumber = "9")
 @CardRegistration(set = "FIC", collectorNumber = "245")
+@CardRegistration(set = "TDC", collectorNumber = "123")
 public class LingeringSouls extends Card {
 
     public LingeringSouls() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 @CardRegistration(set = "CMM", collectorNumber = "265")
 @CardRegistration(set = "CMM", collectorNumber = "552")
 @CardRegistration(set = "CMM", collectorNumber = "645")
+@CardRegistration(set = "LTC", collectorNumber = "230")
 public class TreasureNabber extends Card {
 
     public TreasureNabber() {

@@ -30,6 +30,7 @@ import java.util.Set;
  * @param requiredCastWithAdventure whether the spell must have been cast as an Adventure spell
  * @param additionalTypes  types added to the copied card, such as artifact for Tawnos, the Toymaker
  * @param tokenCopy        whether the copied creature spell becomes a token as it resolves
+ * @param permanentSpellToken whether copies of permanent spells become tokens as they resolve
  * @param triggerCondition optional source condition checked only when the spell is cast
  */
 public record CopyControllerCastSpellOnSpellCastEffect(
@@ -48,8 +49,10 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         boolean excludeHandCast,
         Condition triggerCondition,
         List<CardPredicate> firstSpellFilters,
-        CardEffect beforeCopyEffect
-, com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter, String sacrificeDescription) implements CardEffect {
+        CardEffect beforeCopyEffect,
+        com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+        String sacrificeDescription,
+        boolean permanentSpellToken) implements CardEffect {
     public CopyControllerCastSpellOnSpellCastEffect(
         CardPredicate spellFilter,
         TapMultiplePermanentsCost tapCost,
@@ -68,7 +71,10 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         List<CardPredicate> firstSpellFilters,
         CardEffect beforeCopyEffect
 ) {
-        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters, beforeCopyEffect, null, null);
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords,
+                intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets,
+                grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters,
+                beforeCopyEffect, null, null, false);
     }
 
 
@@ -87,7 +93,7 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition,
                 grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy,
                 mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition,
-                List.of(), null);
+                List.of(), null, null, null, false);
     }
 
     public CopyControllerCastSpellOnSpellCastEffect(
@@ -170,6 +176,14 @@ public record CopyControllerCastSpellOnSpellCastEffect(
                 false, Set.of(CardType.ARTIFACT), true, true, false, false, null);
     }
 
+    /** Free optional copy trigger whose permanent spell copies become tokens. */
+    public static CopyControllerCastSpellOnSpellCastEffect permanentSpellToken(CardPredicate spellFilter) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                spellFilter, null, null, null, null, Set.of(), null,
+                false, Set.of(), false, true, false, false, null,
+                List.of(), null, null, null, true);
+    }
+
     public CopyControllerCastSpellOnSpellCastEffect(
             CardPredicate spellFilter, TapMultiplePermanentsCost tapCost, String manaCost,
             Zone requiredCastZone, StackEntryPredicate castSpellTargetCondition,
@@ -218,6 +232,6 @@ public record CopyControllerCastSpellOnSpellCastEffect(
             String sacrificeDescription) {
         return new CopyControllerCastSpellOnSpellCastEffect(spellFilter, null, null, null, null,
                 Set.of(), null, false, Set.of(), false, true, false, false, null, List.of(), null,
-                sacrificeFilter, sacrificeDescription);
+                sacrificeFilter, sacrificeDescription, false);
     }
 }

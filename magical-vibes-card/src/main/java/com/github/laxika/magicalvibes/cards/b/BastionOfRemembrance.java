@@ -17,6 +17,8 @@ import java.util.Set;
 @CardRegistration(set = "TLE", collectorNumber = "160")
 @CardRegistration(set = "CMM", collectorNumber = "138")
 @CardRegistration(set = "FIC", collectorNumber = "274")
+@CardRegistration(set = "DSC", collectorNumber = "131")
+@CardRegistration(set = "TDC", collectorNumber = "171")
 public class BastionOfRemembrance extends Card {
 
     public BastionOfRemembrance() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "178")
+@CardRegistration(set = "NCC", collectorNumber = "299")
 public class LeafkinDruid extends Card {
 
     public LeafkinDruid() {

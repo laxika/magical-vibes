@@ -177,8 +177,10 @@ public class CombatService {
      * Resets all combat-related state on permanents and game data.
      */
     public void clearCombatState(GameData gameData) {
-        gameData.forEachBattlefield((playerId, battlefield) ->
-                battlefield.forEach(Permanent::clearCombatState));
+        gameData.forEachBattlefield((playerId, battlefield) -> battlefield.forEach(permanent -> {
+            permanent.rollOverCombatAttackRecord();
+            permanent.clearCombatState();
+        }));
         gameData.declaredAttackerIdsThisCombat.clear();
         gameData.ragingRiverBlockRestrictionsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();

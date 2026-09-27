@@ -164,6 +164,20 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                 additionalCreatureOnlyCharacteristics, true, Set.of(), false, false, null, false);
     }
 
+    /** Clone with additional copy characteristics that last only until end of turn. */
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
+                                      Set<CardSupertype> additionalSupertypesOverride,
+                                      Set<Keyword> additionalKeywordsOverride,
+                                      DynamicAmount additionalPlusOnePlusOneCounters,
+                                      boolean additionalCreatureOnlyCharacteristics,
+                                      boolean copyUntilEndOfTurn) {
+        this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false,
+                additionalPlusOnePlusOneCounters, Set.of(), Map.of(), false, false, null,
+                additionalSupertypesOverride, additionalKeywordsOverride,
+                additionalCreatureOnlyCharacteristics, true, Set.of(), false, false, null,
+                copyUntilEndOfTurn);
+    }
+
     /** Clone that removes a supertype and adds the appropriate creature or planeswalker counter. */
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       CardSupertype removedSupertype,

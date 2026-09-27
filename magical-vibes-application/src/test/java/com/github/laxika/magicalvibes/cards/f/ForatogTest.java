@@ -107,4 +107,21 @@ class ForatogTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Island");
     }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Forest")
+    void cannotSacrificeOpponentsForest() {
+        addCreatureReady(player1, new Foratog());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: Sacrifice a Forest");
+
+        harness.assertOnBattlefield(player2, "Forest");
+    }
 }

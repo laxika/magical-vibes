@@ -155,7 +155,7 @@ class GraveyardTargetingServiceTest {
         service.handleGraveyardExileETBTargeting(gd, player1Id, card, List.of(exile), exile);
 
         assertThat(gd.graveyardTargetOperation.singleGraveyard).isTrue();
-        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), any(), eq(2), anyString());
+        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), any(), eq(2), eq(0), anyString());
     }
 
     @Test

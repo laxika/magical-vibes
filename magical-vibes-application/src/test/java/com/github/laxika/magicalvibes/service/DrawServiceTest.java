@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAn
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
@@ -311,6 +312,25 @@ class DrawServiceTest {
         assertThat(gd.stack.getFirst().getCard()).isEqualTo(wolfbat);
         assertThat(gd.stack.getFirst().getEffectsToResolve())
                 .singleElement().isInstanceOf(MayPayManaEffect.class);
+    }
+
+    @Test
+    @DisplayName("pushes a graveyard opponent second-draw may trigger onto the stack")
+    void graveyardOpponentSecondDrawTriggerPushesMayAbility() {
+        Card detective = createCard("Dogged Detective", CardType.CREATURE);
+        detective.addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
+                new MayEffect(new BoostSelfEffect(1, 1), "Do it?"));
+        gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(detective)));
+        gd.cardsDrawnThisTurn.put(player2Id, 2);
+
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard()).isEqualTo(detective);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .singleElement().isInstanceOf(MayEffect.class);
     }
 
     @Test

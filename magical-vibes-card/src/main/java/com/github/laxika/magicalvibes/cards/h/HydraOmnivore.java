@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOtherOpponentEffect;
 
 @CardRegistration(set = "CMD", collectorNumber = "161")
+@CardRegistration(set = "DSC", collectorNumber = "185")
 public class HydraOmnivore extends Card {
 
     public HydraOmnivore() {

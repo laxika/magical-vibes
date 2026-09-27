@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Resolves {@link BecomePreparedEffect}: the source permanent becomes prepared.
  */
@@ -26,10 +28,17 @@ public class BecomePreparedEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getSourcePermanentId() == null) {
+        BecomePreparedEffect preparedEffect = (BecomePreparedEffect) effect;
+        var preparedPermanentId = preparedEffect.grantingPermanentId() != null
+                ? preparedEffect.grantingPermanentId()
+                : entry.getSourcePermanentId();
+        if (preparedPermanentId == null) {
             return;
         }
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        preparedSupport.preparePermanent(gameData, source, entry.getControllerId());
+        Permanent source = gameQueryService.findPermanentById(gameData, preparedPermanentId);
+        UUID controllerId = preparedEffect.grantingPermanentId() != null
+                ? gameQueryService.findPermanentController(gameData, preparedPermanentId)
+                : entry.getControllerId();
+        preparedSupport.preparePermanent(gameData, source, controllerId);
     }
 }

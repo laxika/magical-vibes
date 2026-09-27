@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "121")
+@CardRegistration(set = "TDC", collectorNumber = "200")
 public class WallOfLimbs extends Card {
 
     public WallOfLimbs() {

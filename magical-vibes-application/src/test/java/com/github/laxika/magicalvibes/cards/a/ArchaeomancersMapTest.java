@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,71 +13,84 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArchaeomancersMap.class, Forest.class, GrizzlyBears.class, Plains.class, VolrathsStronghold.class})
+@CardUsed({ArchaeomancersMap.class, Forest.class, GrizzlyBears.class, Plains.class})
 class ArchaeomancersMapTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Entering searches for up to two basic Plains cards")
-    void enteringSearchesForBasicPlains() {
-        Plains first = new Plains();
-        Plains second = new Plains();
-        harness.setLibrary(player1, List.of(first, new Forest(), second, new GrizzlyBears()));
-        castMap();
+    @DisplayName("Enters and searches for up to two basic Plains cards")
+    void entersAndSearchesForBasicPlains() {
+        Plains firstPlains = new Plains();
+        Plains secondPlains = new Plains();
+        Forest forest = new Forest();
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstPlains, forest, secondPlains, creature));
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search).isNotNull();
+        harness.enterBattlefieldAndReturn(player1, new ArchaeomancersMap());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(firstPlains, secondPlains);
         assertThat(search.params().remainingCount()).isEqualTo(2);
-        assertThat(search.params().cards()).containsExactly(first, second);
+        assertThat(search.params().reveals()).isTrue();
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
-        assertThat(gd.playerDecks.get(player1.getId()))
-                .extracting(Card::getName)
-                .containsExactly("Forest", "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstPlains, secondPlains);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, creature);
     }
 
     @Test
-    @DisplayName("When the entering opponent controls more lands, you may put a land from hand onto the battlefield")
-    void putsLandFromHandAfterOpponentLandEnters() {
+    @DisplayName("Offers the optional land put only when the opponent has more lands")
+    void opponentLandOffersLandFromHand() {
         harness.addToBattlefield(player1, new ArchaeomancersMap());
-        harness.addToBattlefield(player2, new Forest());
-        VolrathsStronghold land = new VolrathsStronghold();
-        harness.setHand(player1, List.of(land));
+        harness.addToBattlefield(player1, new Plains());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        Forest landInHand = new Forest();
+        harness.setHand(player1, List.of(landInHand));
 
         harness.enterBattlefieldAndReturn(player2, new Forest());
-        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
 
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
-        harness.assertOnBattlefield(player1, "Volrath's Stronghold");
-        harness.assertNotInHand(player1, "Volrath's Stronghold");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == landInHand);
     }
 
     @Test
-    @DisplayName("Does not offer the land drop when the entering opponent does not have more lands")
-    void doesNotOfferLandDropWhenOpponentDoesNotHaveMoreLands() {
+    @DisplayName("Does not trigger when the opponent has no land-count advantage")
+    void noTriggerWithoutLandCountAdvantage() {
         harness.addToBattlefield(player1, new ArchaeomancersMap());
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Forest());
-        harness.setHand(player1, List.of(new VolrathsStronghold()));
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Forest());
 
         harness.enterBattlefieldAndReturn(player2, new Forest());
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        harness.assertInHand(player1, "Volrath's Stronghold");
-        harness.assertNotOnBattlefield(player1, "Volrath's Stronghold");
+        assertThat(gd.stack).isEmpty();
     }
 
-    private void castMap() {
-        harness.castFromHand(player1, new ArchaeomancersMap(), "{2}{W}");
+    @Test
+    @DisplayName("Checks the land-count condition again when the trigger resolves")
+    void doesNothingIfLandCountsEqualizeBeforeResolution() {
+        harness.addToBattlefield(player1, new ArchaeomancersMap());
+        harness.addToBattlefield(player1, new Plains());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Plains());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

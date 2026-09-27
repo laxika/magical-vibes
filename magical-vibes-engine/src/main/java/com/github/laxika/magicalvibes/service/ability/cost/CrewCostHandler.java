@@ -120,6 +120,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         }
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         triggerCollectionService.checkCrewsVehicleTriggers(gameData, chosen, sourcePermanent);
+        triggerCollectionService.checkAllyCreatureCrewsVehicleTriggers(gameData, chosen, sourcePermanent);
         triggerCollectionService.checkSelfSaddlesOrCrewsDuringMainPhaseTriggers(
                 gameData, player.getId(), chosen, sourcePermanentId);
 

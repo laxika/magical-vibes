@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureThenManife
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FRF", collectorNumber = "46")
+@CardRegistration(set = "SOC", collectorNumber = "199")
 @CardRegistration(set = "SLD", collectorNumber = "1781")
 @CardRegistration(set = "ECC", collectorNumber = "68")
 @CardRegistration(set = "CMM", collectorNumber = "113")
 @CardRegistration(set = "CMM", collectorNumber = "634")
+@CardRegistration(set = "DSC", collectorNumber = "125")
+@CardRegistration(set = "TDC", collectorNumber = "163")
 public class RealityShift extends Card {
 
     public RealityShift() {

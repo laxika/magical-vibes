@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(OboroPalaceInTheClouds.class)
 class OboroPalaceInTheCloudsTest extends BaseCardTest {
 
     @Test
@@ -31,5 +34,19 @@ class OboroPalaceInTheCloudsTest extends BaseCardTest {
         harness.assertInHand(player1, "Oboro, Palace in the Clouds");
         harness.assertNotOnBattlefield(player1, "Oboro, Palace in the Clouds");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The return ability can be activated while Oboro is tapped")
+    void returnAbilityCanBeActivatedWhileTapped() {
+        Permanent oboro = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
+        oboro.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Oboro, Palace in the Clouds");
+        harness.assertNotOnBattlefield(player1, "Oboro, Palace in the Clouds");
     }
 }

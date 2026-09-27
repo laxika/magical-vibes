@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShamblingShell.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ShamblingShell.class, Forest.class, Watchwolf.class})
 class ShamblingShellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing Shambling Shell puts a +1/+1 counter on target creature")
     void sacrificeAbilityCountersTargetCreature() {
         harness.addToBattlefield(player1, new ShamblingShell());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -49,7 +49,7 @@ class ShamblingShellTest extends BaseCardTest {
     @DisplayName("May dredge Shambling Shell instead of drawing")
     void dredgesInsteadOfDrawing() {
         ShamblingShell shell = new ShamblingShell();
-        List<Card> milled = List.of(new Forest(), new GrizzlyBears(), new Forest());
+        List<Card> milled = List.of(new Forest(), new Watchwolf(), new Forest());
         harness.setGraveyard(player1, List.of(shell));
         harness.setLibrary(player1, milled);
 
@@ -62,6 +62,45 @@ class ShamblingShellTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can decline dredge and draw normally")
+    void declinesDredge() {
+        ShamblingShell shell = new ShamblingShell();
+        Card topCard = new Forest();
+        Card secondCard = new Watchwolf();
+        Card thirdCard = new Forest();
+        Card fourthCard = new Forest();
+        harness.setGraveyard(player1, List.of(shell));
+        harness.setLibrary(player1, List.of(topCard, secondCard, thirdCard, fourthCard));
+
+        resolveDraw();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shell);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, thirdCard, fourthCard);
+        assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not offer dredge when the library has fewer than three cards")
+    void cannotDredgeWithTooFewLibraryCards() {
+        ShamblingShell shell = new ShamblingShell();
+        Card topCard = new Forest();
+        Card remainingCard = new Watchwolf();
+        harness.setGraveyard(player1, List.of(shell));
+        harness.setLibrary(player1, List.of(topCard, remainingCard));
+
+        resolveDraw();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shell);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(1);
     }
 
     private void resolveDraw() {

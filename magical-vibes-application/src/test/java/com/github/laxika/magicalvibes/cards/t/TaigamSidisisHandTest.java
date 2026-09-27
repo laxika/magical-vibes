@@ -86,9 +86,7 @@ class TaigamSidisisHandTest extends BaseCardTest {
     }
 
     private void advanceTaigamToUpkeep(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(activePlayer);
     }
 
     private void forceMainPhase() {

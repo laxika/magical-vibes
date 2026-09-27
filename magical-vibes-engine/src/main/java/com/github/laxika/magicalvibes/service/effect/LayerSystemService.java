@@ -651,6 +651,16 @@ public class LayerSystemService {
         h = mix(h, gameData.cardIntensities.hashCode());
         h = mix(h, gameData.cardIntensities.size());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> commanders = gameData.playerCommanders.get(playerId);
+            h = mix(h, playerId.hashCode());
+            h = mix(h, commanders == null ? 0 : commanders.size());
+            if (commanders != null) {
+                for (Card commander : commanders) {
+                    h = mix(h, commander.getId().hashCode());
+                }
+            }
+        }
         if (gameData.planechase != null) {
             h = mix(h, java.util.Objects.hashCode(gameData.planechase.controllerId));
             for (var planar : gameData.planechase.faceUp) {
@@ -670,6 +680,7 @@ public class LayerSystemService {
             }
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
             h = mix(h, gameData.turnsTakenByPlayer.getOrDefault(playerId, 0));
+            h = mix(h, gameData.commanderCastsFromCommandZoneThisGame.getOrDefault(playerId, 0));
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
@@ -3076,7 +3087,9 @@ public class LayerSystemService {
         }
         if (handler != null) {
             for (PermanentSlot target : slots) {
-                if (target.permanent() == source.permanent()) continue;
+                if (target.permanent() == source.permanent()
+                        && !(instance.effect() instanceof GrantActivatedAbilityEffect grant
+                        && grant.scope() == GrantScope.OWN_PERMANENTS)) continue;
                 StaticBonusAccumulator harvested = new StaticBonusAccumulator();
                 handler.apply(new StaticEffectContext(source.permanent(), target.permanent(), source.controllerId(),
                         source.controllerId().equals(target.controllerId()), gameData),

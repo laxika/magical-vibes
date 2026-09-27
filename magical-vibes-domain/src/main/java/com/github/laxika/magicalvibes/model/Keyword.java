@@ -47,6 +47,7 @@ public enum Keyword {
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
+    MELEE,
     ENLIST,
     AGGRESSIVE,
     DETHRONE,
@@ -143,7 +144,8 @@ public enum Keyword {
     STATION,
     FREERUNNING,
     DOUBLE_TEAM,
-    PRAY;
+PRAY,
+    FLURRY;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

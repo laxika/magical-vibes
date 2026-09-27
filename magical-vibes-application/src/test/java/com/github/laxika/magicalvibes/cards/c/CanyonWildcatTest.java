@@ -25,12 +25,9 @@ class CanyonWildcatTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new CanyonWildcat());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
-
-        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class)
@@ -43,12 +40,9 @@ class CanyonWildcatTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new CanyonWildcat());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
-
-        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
@@ -62,12 +56,9 @@ class CanyonWildcatTest extends BaseCardTest {
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new CanyonWildcat());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
-
-        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 

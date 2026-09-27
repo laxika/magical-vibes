@@ -14,7 +14,7 @@ public class ScourgeOfNumai extends Card {
 
     public ScourgeOfNumai() {
         // At the beginning of your upkeep, you lose 2 life if you don't control an Ogre.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.unless(
                 new ControlsPermanentCountAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.OGRE)),
                 new LoseLifeEffect(2)));
     }

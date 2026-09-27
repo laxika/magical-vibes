@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AmbushViper;
-import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GiftsUngiven.class, Island.class, Forest.class, Mountain.class, Plains.class, Swamp.class})
 class GiftsUngivenTest extends BaseCardTest {
 
     private void castGiftsUngiven(List<Card> library) {
@@ -33,7 +35,7 @@ class GiftsUngivenTest extends BaseCardTest {
         List<String> offered = offeredNames();
         int index = offered.indexOf(name);
         assertThat(index).isGreaterThanOrEqualTo(0);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 
     private List<String> offeredNames() {
@@ -49,15 +51,15 @@ class GiftsUngivenTest extends BaseCardTest {
     @DisplayName("Opponent chooses two of the four revealed cards for the graveyard; the rest go to hand")
     void opponentChoosesTwoForGraveyard() {
         Card island = new Island();
-        Card shock = new Shock();
-        Card divination = new Divination();
-        Card viper = new AmbushViper();
-        castGiftsUngiven(List.of(island, shock, divination, viper));
+        Card mountain = new Mountain();
+        Card forest = new Forest();
+        Card plains = new Plains();
+        castGiftsUngiven(List.of(island, mountain, forest, plains));
 
         pickFromLibrary("Island");
-        pickFromLibrary("Shock");
-        pickFromLibrary("Divination");
-        pickFromLibrary("Ambush Viper");
+        pickFromLibrary("Mountain");
+        pickFromLibrary("Forest");
+        pickFromLibrary("Plains");
 
         PendingInteraction.MultiGraveyardChoice choice = opponentChoice();
         assertThat(choice).isNotNull();
@@ -66,10 +68,10 @@ class GiftsUngivenTest extends BaseCardTest {
         assertThat(choice.minCount()).isEqualTo(2);
         assertThat(choice.maxCount()).isEqualTo(2);
 
-        harness.handleMultipleCardsChosen(player2, List.of(shock.getId(), viper.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(mountain.getId(), plains.getId()));
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock, viper);
-        assertThat(gd.playerHands.get(player1.getId())).contains(island, divination);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mountain, plains);
+        assertThat(gd.playerHands.get(player1.getId())).contains(island, forest);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
         harness.assertInGraveyard(player1, "Gifts Ungiven");
@@ -78,49 +80,49 @@ class GiftsUngivenTest extends BaseCardTest {
     @Test
     @DisplayName("Each pick must have a different name")
     void picksMustHaveDifferentNames() {
-        castGiftsUngiven(List.of(new Island(), new Island(), new Shock()));
+        castGiftsUngiven(List.of(new Island(), new Island(), new Mountain()));
 
         pickFromLibrary("Island");
 
-        assertThat(offeredNames()).containsExactly("Shock");
+        assertThat(offeredNames()).containsExactly("Mountain");
     }
 
     @Test
     @DisplayName("Stopping the search early still hands the smaller pool to the opponent")
     void stoppingEarlyStillOffersTheFoundCards() {
         Card island = new Island();
-        Card shock = new Shock();
-        Card divination = new Divination();
-        castGiftsUngiven(List.of(island, shock, divination));
+        Card mountain = new Mountain();
+        Card forest = new Forest();
+        castGiftsUngiven(List.of(island, mountain, forest));
 
         pickFromLibrary("Island");
-        pickFromLibrary("Shock");
-        pickFromLibrary("Divination");
+        pickFromLibrary("Mountain");
+        pickFromLibrary("Forest");
 
-        harness.handleMultipleCardsChosen(player2, List.of(island.getId(), shock.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(island.getId(), mountain.getId()));
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(island, shock);
-        assertThat(gd.playerHands.get(player1.getId())).contains(divination);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(island, mountain);
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
     }
 
     @Test
     @DisplayName("Declining a later pick hands the cards found so far to the opponent")
     void decliningALaterPickKeepsTheFoundCards() {
         Card island = new Island();
-        Card shock = new Shock();
-        castGiftsUngiven(List.of(island, shock, new Divination(), new AmbushViper()));
+        Card mountain = new Mountain();
+        castGiftsUngiven(List.of(island, mountain, new Forest(), new Plains()));
 
         pickFromLibrary("Island");
-        pickFromLibrary("Shock");
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        pickFromLibrary("Mountain");
+        harness.handleCardChosen(player1, -1);
 
         PendingInteraction.MultiGraveyardChoice choice = opponentChoice();
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(island.getId(), shock.getId());
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(island.getId(), mountain.getId());
 
-        harness.handleMultipleCardsChosen(player2, List.of(island.getId(), shock.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(island.getId(), mountain.getId()));
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(island, shock);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(island, mountain);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
@@ -146,9 +148,9 @@ class GiftsUngivenTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the first pick finds nothing and the spell simply finishes")
     void decliningTheSearchFindsNothing() {
-        castGiftsUngiven(List.of(new Island(), new Shock()));
+        castGiftsUngiven(List.of(new Island(), new Mountain()));
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -159,16 +161,47 @@ class GiftsUngivenTest extends BaseCardTest {
     @DisplayName("The opponent must choose the full two cards")
     void opponentCannotChooseFewerThanTwo() {
         Card island = new Island();
-        castGiftsUngiven(List.of(island, new Shock(), new Divination(), new AmbushViper()));
+        castGiftsUngiven(List.of(island, new Mountain(), new Forest(), new Plains()));
 
         pickFromLibrary("Island");
-        pickFromLibrary("Shock");
-        pickFromLibrary("Divination");
-        pickFromLibrary("Ambush Viper");
+        pickFromLibrary("Mountain");
+        pickFromLibrary("Forest");
+        pickFromLibrary("Plains");
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(island.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(opponentChoice()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The search stops after four cards even when the library has more eligible cards")
+    void searchIsCappedAtFourCards() {
+        Card island = new Island();
+        Card mountain = new Mountain();
+        Card forest = new Forest();
+        Card plains = new Plains();
+        Card swamp = new Swamp();
+        castGiftsUngiven(List.of(island, mountain, forest, plains, swamp));
+
+        pickFromLibrary("Island");
+        pickFromLibrary("Mountain");
+        pickFromLibrary("Forest");
+        pickFromLibrary("Plains");
+
+        PendingInteraction.MultiGraveyardChoice choice = opponentChoice();
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).hasSize(4).doesNotContain(swamp.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(swamp);
+    }
+
+    @Test
+    @DisplayName("An empty library makes the spell finish without opening a choice")
+    void emptyLibraryFinishesWithoutAChoice() {
+        castGiftsUngiven(List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Gifts Ungiven");
     }
 
     @Test
