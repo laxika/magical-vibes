@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "172")
+@CardRegistration(set = "C15", collectorNumber = "42")
 public class ArjunTheShiftingFlame extends Card {
 
     public ArjunTheShiftingFlame() {

@@ -339,9 +339,14 @@ public class ETBTokenTargetService {
             }
 
             TargetFilter groupFilter = group.getFilter();
-            boolean canTargetPlayer = groupEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                    || groupFilter instanceof PlayerPredicateTargetFilter;
+            boolean filterRestrictsTargetKind = groupFilter instanceof PlayerPredicateTargetFilter
+                    || groupFilter instanceof PermanentPredicateTargetFilter
+                    || groupFilter instanceof ControlledPermanentPredicateTargetFilter
+                    || groupFilter instanceof OwnedPermanentPredicateTargetFilter
+                    || groupFilter instanceof GraveyardCardPredicateTargetFilter;
+            boolean canTargetPlayer = groupFilter instanceof PlayerPredicateTargetFilter
+                    || (!filterRestrictsTargetKind && groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
             boolean canTargetPermanent = groupEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     || groupFilter instanceof PermanentPredicateTargetFilter
@@ -349,9 +354,9 @@ public class ETBTokenTargetService {
                     || groupFilter instanceof OwnedPermanentPredicateTargetFilter;
             boolean canTargetExiledCard = groupEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
-            boolean canTargetGraveyardCard = groupEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                    || groupFilter instanceof GraveyardCardPredicateTargetFilter;
+            boolean canTargetGraveyardCard = groupFilter instanceof GraveyardCardPredicateTargetFilter
+                    || (!filterRestrictsTargetKind && groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)));
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {

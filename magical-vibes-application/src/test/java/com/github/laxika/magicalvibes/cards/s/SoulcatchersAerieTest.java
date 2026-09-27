@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BattleScreech;
+import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.t.ToxicStench;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,8 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulcatchersAerie.class, SuntailHawk.class, CabalTrainee.class, LavaDart.class,
-        BattleScreech.class})
+@CardUsed({BattleScreech.class, BenevolentBodyguard.class, CabalTrainee.class, LavaDart.class, SoulcatchersAerie.class, SuntailHawk.class, ToxicStench.class})
 class SoulcatchersAerieTest extends BaseCardTest {
 
     @Test
@@ -135,5 +136,46 @@ class SoulcatchersAerieTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.RED, 1);
         harness.castAndResolveInstant(caster, 0, target.getId());
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("The bonus applies to Birds controlled by either player, but not other creatures")
+    void boostsBirdsOnBothBattlefieldsButNotNonBirds() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        aerie.setCounterCount(CounterType.FEATHER, 2);
+        Permanent opponentBird = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent nonBird = harness.addToBattlefieldAndReturn(player1, new BenevolentBodyguard());
+
+        assertThat(gqs.getEffectivePower(gd, opponentBird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBird)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonBird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonBird)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Puts a feather counter on itself when a Bird token is put into its controller's graveyard")
+    void putsFeatherCounterWhenBirdTokenDiesJudReview() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+
+        harness.castFromHand(player1, new BattleScreech(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        List<Permanent> birds = findPermanents(player1, "Bird");
+        assertThat(birds).hasSize(2);
+
+        killWithToxicStenchForJudReview(player1, birds.get(0));
+
+        assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+    }
+
+    private void killWithToxicStenchForJudReview(Player caster, Permanent target) {
+        harness.forceActivePlayer(caster);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(caster, List.of(new ToxicStench()));
+        harness.addMana(caster, ManaColor.BLACK, 1);
+        harness.addMana(caster, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(caster, 0, target.getId());
+        harness.passBothPriorities();
     }
 }

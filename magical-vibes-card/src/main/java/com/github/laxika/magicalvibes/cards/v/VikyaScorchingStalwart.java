@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenDrawIfExcessDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "429")
 @CardRegistration(set = "SLX", collectorNumber = "11")
 public class VikyaScorchingStalwart extends Card {
 

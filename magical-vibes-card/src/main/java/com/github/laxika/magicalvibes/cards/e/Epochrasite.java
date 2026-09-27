@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardWithSuspendCou
 
 @CardRegistration(set = "FUT", collectorNumber = "162")
 @CardRegistration(set = "MMA", collectorNumber = "205")
+@CardRegistration(set = "C14", collectorNumber = "238")
 public class Epochrasite extends Card {
 
     public Epochrasite() {

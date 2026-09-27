@@ -33,6 +33,15 @@ class KismetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Existing opponent's permanents are not tapped retroactively")
+    void existingOpponentsPermanentsAreNotTappedRetroactively() {
+        Permanent existingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Kismet());
+
+        assertThat(existingBears.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Opponent's artifacts enter tapped")
     void opponentsArtifactsEnterTapped() {
         harness.addToBattlefield(player1, new Kismet());

@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -85,7 +85,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, exiledFromGraveyard);
         }
         if (library != null) {
-            Collections.shuffle(library);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         }
 
         if (exileEffect.drawForHandExiled()) {
@@ -109,7 +109,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (matchingCards.isEmpty()) {
             if (library != null) {
-                Collections.shuffle(library);
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
             String controllerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(entry.getCard().getName() + " exiles 0 cards named "

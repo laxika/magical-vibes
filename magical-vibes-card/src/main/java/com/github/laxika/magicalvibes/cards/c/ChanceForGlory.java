@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterLoseGameAtEndStepEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "159")
+@CardRegistration(set = "SLD", collectorNumber = "2470")
 public class ChanceForGlory extends Card {
 
     public ChanceForGlory() {

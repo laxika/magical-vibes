@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SuddenStrength.class, SuntailHawk.class, RiftstonePortal.class})
+@CardUsed({BorderPatrol.class, RiftstonePortal.class, SuddenStrength.class, SuntailHawk.class})
 class SuddenStrengthTest extends BaseCardTest {
 
     @Test
@@ -107,5 +108,20 @@ class SuddenStrengthTest extends BaseCardTest {
     private void addMana() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorderPatrol());
+        harness.setHand(player1, List.of(new SuddenStrength()));
+        harness.setLibrary(player1, List.of(new BorderPatrol()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
     }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyedPermanentCountScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -373,6 +374,37 @@ class DestroyAllPermanentsEffectHandlerTest {
                 assertThat(entryCaptor.getValue().getEventValue()).isEqualTo(2);
                 assertThat(entryCaptor.getValue().getControllerId()).isEqualTo(player1Id);
                 verify(gameOutcomeService).checkWinCondition(gd);
+            }
+
+            @Test
+            @DisplayName("Rider receives a separate tally for nontoken destroyed permanents")
+            void riderReceivesNontokenDestroyedPermanentControllerTally() {
+                Permanent nontokenCreature = addCreature(player1Id, "Grizzly Bears");
+                Card tokenCard = createCreatureCard("Creature Token");
+                tokenCard.setToken(true);
+                Permanent tokenCreature = addPermanent(player1Id, tokenCard);
+
+                Card wipeCard = createCard("Ceaseless Conflict");
+                StackEntry entry = sorceryEntry(wipeCard, player1Id, null);
+                PermanentPredicate filter = new PermanentIsCreaturePredicate();
+                GainLifeEffect rider = new GainLifeEffect(new EventValue());
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(
+                        filter, false, EachPermanentScope.ALL_PLAYERS, rider, false,
+                        DestroyedPermanentCountScope.CONTROLLER_NONTOKEN);
+
+                when(predicateEvaluationService.matchesPermanentPredicate(any(), eq(filter), any())).thenReturn(true);
+                when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
+                EffectHandler riderHandler = org.mockito.Mockito.mock(EffectHandler.class);
+                when(effectHandlerRegistry.getHandler(rider)).thenReturn(riderHandler);
+
+                destroyAllPermanentsHandler.resolve(gd, entry, effect);
+
+                ArgumentCaptor<StackEntry> entryCaptor = ArgumentCaptor.forClass(StackEntry.class);
+                verify(riderHandler).resolve(eq(gd), entryCaptor.capture(), eq(rider));
+                assertThat(entryCaptor.getValue().getEventValue()).isEqualTo(1);
+                assertThat(entryCaptor.getValue().getEventPlayerIds()).containsExactly(player1Id, player1Id);
+                assertThat(nontokenCreature.getCard().isToken()).isFalse();
+                assertThat(tokenCreature.getCard().isToken()).isTrue();
             }
 
             @Test

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "453")
 @CardRegistration(set = "2XM", collectorNumber = "190")
 @CardRegistration(set = "MUL", collectorNumber = "33")
 @CardRegistration(set = "MUL", collectorNumber = "98")

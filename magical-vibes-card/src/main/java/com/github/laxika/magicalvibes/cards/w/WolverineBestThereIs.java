@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1737")
 @CardRegistration(set = "MAR", collectorNumber = "97")
 public class WolverineBestThereIs extends Card {
 

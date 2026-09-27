@@ -13,7 +13,16 @@ import java.util.UUID;
 public record CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                       boolean flashbackCost, int xValue, boolean plottingFromHand,
                                       Zone sourceZone, boolean castFaceDown,
-                                      boolean collectEvidenceCostPaid, boolean kicked) {
+                                      boolean collectEvidenceCostPaid, boolean kicked,
+                                      UUID turnFaceUpPermanentId) {
+
+    public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
+                                   boolean flashbackCost, int xValue, boolean plottingFromHand,
+                                   Zone sourceZone, boolean castFaceDown,
+                                   boolean collectEvidenceCostPaid, boolean kicked) {
+        this(gameData, castingPlayerId, spell, flashbackCost, xValue, plottingFromHand, sourceZone,
+                castFaceDown, collectEvidenceCostPaid, kicked, null);
+    }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell) {
         this(gameData, castingPlayerId, spell, false, 0, false, null, false, false, false);

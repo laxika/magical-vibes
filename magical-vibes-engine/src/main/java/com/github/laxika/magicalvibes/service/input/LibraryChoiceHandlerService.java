@@ -283,6 +283,12 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (destination == LibrarySearchDestination.CAST_ONE_AND_PUT_REST_INTO_HAND) {
+                handleCastOneAndPutRestIntoHandChoice(
+                        gameData, player, cardIndex, searchCards, sourceCards, deckOwnerId);
+                return;
+            }
+
             if (destination == LibrarySearchDestination.PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM) {
                 handlePutOneIntoHandRestToBottomRandom(
                         gameData, cardIndex, searchCards, sourceCards, deck, deckOwnerId);
@@ -1267,6 +1273,18 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.HEIST) {
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
+            gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+            String targetName = gameData.playerIdToName.get(deckOwnerId);
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " exiles a card face down from "
+                            + targetName + "'s library with Heist."));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
             boolean faceUp = filterPredicate != null
@@ -1544,7 +1562,8 @@ public class LibraryChoiceHandlerService {
                     .filterCardTypes(filterCardTypes)
                     .filterCardName(filterCardName)
                     .filterPredicate(filterPredicate)
-                    .accumulatedCards(accumulatedCards)
+                    .shuffleAfterSelection(shuffleAfterSelection)
+                     .accumulatedCards(accumulatedCards)
                     .battlefieldControllerId(battlefieldControllerId)
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
@@ -1600,7 +1619,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
                         EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, HEIST,
                         EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST,
                         EXILE_FOR_MAY_CAST_WITH_NORMAL_COST -> "into exile";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
@@ -1621,6 +1640,8 @@ public class LibraryChoiceHandlerService {
                 case DISCOVER -> throw new IllegalStateException("DISCOVER should be handled earlier");
                 case CAST_ONE_AND_PUT_OTHER_INTO_HAND -> throw new IllegalStateException(
                         "CAST_ONE_AND_PUT_OTHER_INTO_HAND should be handled earlier");
+                case CAST_ONE_AND_PUT_REST_INTO_HAND -> throw new IllegalStateException(
+                        "CAST_ONE_AND_PUT_REST_INTO_HAND should be handled earlier");
                 case PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException(
                         "PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM should be handled earlier");
                 case EXILE_AND_MAY_CAST_WITHOUT_PAYING -> throw new IllegalStateException(
@@ -1918,6 +1939,7 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        gameData.recordPileGroupingOrGuess();
         Map<UUID, UUID> cardOwners = new HashMap<>();
         for (Card card : pool) {
             cardOwners.put(card.getId(), controllerId);
@@ -3158,6 +3180,7 @@ public class LibraryChoiceHandlerService {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, controllerId, remainingCards, sourceEntry);
             applySelectionLifeLoss(gameData, controllerId, selectedCards.size(),
                     lifeLossPerSelectedCard, sourceEntry);
             applySelectionLifePayment(gameData, controllerId, selectedCards.size(),
@@ -3213,6 +3236,25 @@ public class LibraryChoiceHandlerService {
                 ? sourceEntry.getCard().getName()
                 : "library choice";
         lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, sourceName);
+    }
+
+    private void gainLifeForGreatestPowerOfGraveyardCards(
+            GameData gameData, UUID controllerId, List<Card> cards, StackEntry sourceEntry) {
+        if (sourceEntry == null
+                || !sourceEntry.isGainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) {
+            return;
+        }
+        int greatestPower = cards.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .map(Card::getPower)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(power -> Math.max(0, power))
+                .max()
+                .orElse(0);
+        if (greatestPower > 0) {
+            lifeSupport.applyGainLife(gameData, controllerId, greatestPower,
+                    sourceEntry.getCard().getName(), sourceEntry.getCard(), sourceEntry.getEntryType());
+        }
     }
 
     private void applySelectionLifePayment(GameData gameData, UUID controllerId, int selectedCount,
@@ -3826,6 +3868,42 @@ public class LibraryChoiceHandlerService {
                     " is put into " + player.getUsername() + "'s hand."));
         }
         castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    private void handleCastOneAndPutRestIntoHandChoice(GameData gameData, Player player, int cardIndex,
+                                                        List<Card> searchCards, List<Card> sourceCards,
+                                                        UUID handOwnerId) {
+        if (cardIndex == -1) {
+            putAllExiledCardsIntoHand(gameData, sourceCards, handOwnerId);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        Card chosenCard = searchCards.get(cardIndex);
+        if (!canCastWithoutPaying(gameData, player.getId(), chosenCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                    " has no legal targets, so it can't be cast."));
+            putAllExiledCardsIntoHand(gameData, sourceCards, handOwnerId);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        for (Card card : new ArrayList<>(sourceCards)) {
+            if (card.getId().equals(chosenCard.getId())) {
+                gameData.removeFromExile(card.getId());
+            } else if (gameData.removeFromExile(card.getId())) {
+                gameData.addCardToHand(handOwnerId, card);
+            }
+        }
+        castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    private void putAllExiledCardsIntoHand(GameData gameData, List<Card> cards, UUID handOwnerId) {
+        for (Card card : cards) {
+            if (gameData.removeFromExile(card.getId())) {
+                gameData.addCardToHand(handOwnerId, card);
+            }
+        }
     }
 
     private void handlePutOneIntoHandRestToBottomRandom(GameData gameData, int cardIndex,

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MoonringMirror.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
 class MoonringMirrorTest extends BaseCardTest {
 
     private UUID addMirror() {
@@ -123,5 +125,32 @@ class MoonringMirrorTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.getCardsExiledByPermanent(permId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger returns only cards owned by the controller")
+    void upkeepReturnsOnlyCardsOwnedByController() {
+        UUID permId = addMirror();
+        gd.playerDecks.get(player1.getId()).clear();
+        for (int i = 0; i < 2; i++) gd.playerDecks.get(player1.getId()).add(new Forest());
+        drawAndResolveTrigger(player1);
+        assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);
+        Card opponentOwned = new LlanowarElves();
+        gd.addToExile(player2.getId(), opponentOwned, permId);
+
+        Card handCard = new GrizzlyBears();
+        harness.setHand(player1, new ArrayList<>(List.of(handCard)));
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .singleElement().satisfies(card -> assertThat(card.getId())
+                        .isNotEqualTo(opponentOwned.getId()));
+        assertThat(gd.getCardsExiledByPermanent(permId))
+                .extracting(Card::getId)
+                .contains(opponentOwned.getId(), handCard.getId());
     }
 }

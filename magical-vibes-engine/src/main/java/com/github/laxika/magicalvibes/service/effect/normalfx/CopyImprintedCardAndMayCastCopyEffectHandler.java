@@ -75,20 +75,9 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
             return null;
         }
 
-        String triggeringName = null;
-        if (effect.triggeringCardId() != null) {
-            for (StackEntry stackEntry : gameData.stack) {
-                if (stackEntry.getTargetableId().equals(effect.triggeringCardId())) {
-                    triggeringName = stackEntry.getCard().getName();
-                    break;
-                }
-            }
-        }
-
         Card first = exiledCards.getFirst();
         Card second = exiledCards.get(1);
-        if (triggeringName != null && first.getName().equals(triggeringName)
-                && !second.getName().equals(triggeringName)) {
+        if (first.getId().equals(effect.matchingExiledCardId())) {
             return second;
         }
         return first;

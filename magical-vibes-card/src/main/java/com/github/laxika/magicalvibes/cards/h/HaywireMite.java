@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "199")
+@CardRegistration(set = "SOC", collectorNumber = "349")
 public class HaywireMite extends Card {
 
     public HaywireMite() {

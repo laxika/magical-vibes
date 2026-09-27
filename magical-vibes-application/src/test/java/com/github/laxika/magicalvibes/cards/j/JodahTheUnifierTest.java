@@ -1,27 +1,30 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
+import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
+import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MoxAmber;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JodahTheUnifier.class, AdelizTheCinderWind.class, GrizzlyBears.class,
-        HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class})
+@CardUsed({JodahTheUnifier.class, CaptainSisay.class, EmpressGalina.class, Forest.class, GrizzlyBears.class, MoxAmber.class, AdelizTheCinderWind.class, HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class})
 class JodahTheUnifierTest extends BaseCardTest {
 
     @Test

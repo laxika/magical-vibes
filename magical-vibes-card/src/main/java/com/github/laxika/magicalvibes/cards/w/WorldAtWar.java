@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "172")
+@CardRegistration(set = "SLD", collectorNumber = "2208")
 public class WorldAtWar extends Card {
 
     public WorldAtWar() {

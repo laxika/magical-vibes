@@ -1,43 +1,23 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GlacialRay;
-import com.github.laxika.magicalvibes.cards.m.MausoleumWanderer;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
+import com.github.laxika.magicalvibes.cards.d.DeathknellKami;
+import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BounteousKirin.class, ArabaMothrider.class, DeathknellKami.class, SpiritualVisit.class})
 class BounteousKirinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting an Arcane spell may gain life equal to its mana value")
     void arcaneSpellGainsLifeByManaValue() {
         addBounteousKirin();
-        harness.setHand(player1, List.of(new GlacialRay()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0, player2.getId());
-
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-
-        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
-    }
-
-    @Test
-    @DisplayName("Casting a Spirit spell may gain life equal to its mana value")
-    void spiritSpellGainsLifeByManaValue() {
-        addBounteousKirin();
-        harness.setHand(player1, List.of(new MausoleumWanderer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -46,13 +26,22 @@ class BounteousKirinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting a Spirit spell may gain life equal to its mana value")
+    void spiritSpellGainsLifeByManaValue() {
+        addBounteousKirin();
+        harness.castFromHand(player1, new DeathknellKami(), "{1}{B}");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
     @DisplayName("Declining the trigger gains no life")
     void decliningDoesNothing() {
         addBounteousKirin();
-        harness.setHand(player1, List.of(new MausoleumWanderer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DeathknellKami(), "{1}{B}");
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -62,10 +51,17 @@ class BounteousKirinTest extends BaseCardTest {
     @DisplayName("Casting a non-Spirit non-Arcane spell does not trigger")
     void unrelatedSpellDoesNotTrigger() {
         addBounteousKirin();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new ArabaMothrider(), "{1}{W}");
 
-        harness.castCreature(player1, 0);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("An opponent casting a Spirit or Arcane spell does not trigger")
+    void opponentSpellDoesNotTrigger() {
+        addBounteousKirin();
+        harness.castFromHand(player2, new SpiritualVisit(), "{W}");
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }

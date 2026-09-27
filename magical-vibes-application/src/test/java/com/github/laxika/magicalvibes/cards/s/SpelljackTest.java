@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FirecatBlitz;
 import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
+import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Spelljack.class, SuntailHawk.class, FirecatBlitz.class, HaplessResearcher.class})
+@CardUsed({FirecatBlitz.class, HaplessResearcher.class, MentalNote.class, Spelljack.class, SuntailHawk.class})
 class SpelljackTest extends BaseCardTest {
 
     @Test
@@ -114,5 +115,23 @@ class SpelljackTest extends BaseCardTest {
         assertThat(gd.findExiledCard(firecatBlitz.getId())).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Elemental Cat"));
+    }
+
+    @Test
+    void countersAndExilesNoncreatureSpell() {
+        MentalNote mentalNote = new MentalNote();
+        Spelljack spelljack = new Spelljack();
+        harness.castFromHand(player1, mentalNote, "{U}");
+        harness.setHand(player2, List.of(spelljack));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, mentalNote.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(mentalNote.getId()));
+        assertThat(gd.exilePlayPermissions.get(mentalNote.getId())).isEqualTo(player2.getId());
+        harness.assertNotInGraveyard(player1, "Mental Note");
     }
 }

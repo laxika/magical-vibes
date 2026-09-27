@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "59")
 @CardRegistration(set = "TSB", collectorNumber = "57")
+@CardRegistration(set = "C15", collectorNumber = "148")
 public class DesolationGiant extends Card {
 
     public DesolationGiant() {

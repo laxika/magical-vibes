@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "216")
+@CardRegistration(set = "SLD", collectorNumber = "1807")
 public class KardurDoomscourge extends Card {
 
     public KardurDoomscourge() {

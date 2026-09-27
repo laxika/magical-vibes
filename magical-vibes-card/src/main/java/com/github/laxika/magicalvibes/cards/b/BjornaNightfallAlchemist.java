@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTu
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "344")
 @CardRegistration(set = "SLX", collectorNumber = "2")
 public class BjornaNightfallAlchemist extends Card {
 

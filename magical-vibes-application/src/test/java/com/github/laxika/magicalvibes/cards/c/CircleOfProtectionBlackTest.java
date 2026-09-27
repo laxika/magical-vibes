@@ -1,18 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AdarkarUnicorn;
-import com.github.laxika.magicalvibes.cards.b.BadMoon;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrovikanHorror;
-import com.github.laxika.magicalvibes.cards.m.MoorFiend;
 import com.github.laxika.magicalvibes.cards.o.Oppression;
-import com.github.laxika.magicalvibes.cards.p.Pestilence;
-import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.cards.t.TouchOfDeath;
-import com.github.laxika.magicalvibes.cards.w.WitheringWisps;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AdarkarUnicorn.class, BadMoon.class, BogWraith.class, CircleOfProtectionBlack.class, Corrupt.class, CryptRats.class, GiantGrowth.class, GrizzlyBears.class, KrovikanHorror.class, MoorFiend.class, Oppression.class, Pestilence.class, SnowCoveredSwamp.class, Swamp.class, TouchOfDeath.class, WitheringWisps.class})
+@CardUsed(CircleOfProtectionBlack.class)
 class CircleOfProtectionBlackTest extends BaseCardTest {
 
     private static final String CRYPT_RATS_MANA_COST = "{2}{B}";
@@ -311,6 +304,7 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, KrovikanHorror.class, GrizzlyBears.class})
     @DisplayName("Damage from the chosen source to another player does not consume the shield")
     void damageToAnotherPlayerDoesNotConsumeShield() {
         harness.setLife(player1, 20);

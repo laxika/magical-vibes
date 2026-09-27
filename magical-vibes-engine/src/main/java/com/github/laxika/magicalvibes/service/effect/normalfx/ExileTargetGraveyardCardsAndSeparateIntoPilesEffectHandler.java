@@ -85,6 +85,7 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
                 .orElseThrow();
 
         // Store pile separation state (card-pile mode)
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
                 List.of(), exiledCards, cardOwners, List.of(), List.of()));
 

@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AncientDen;
+import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SolemnSimulacrum.class, Forest.class, Island.class, Plains.class,
+        AncientDen.class, CopperMyr.class, Shatter.class})
 class SolemnSimulacrumTest extends BaseCardTest {
 
     @Nested
@@ -42,7 +44,8 @@ class SolemnSimulacrumTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .hasSize(3)
-                    .allMatch(c -> c.hasType(CardType.LAND));
+                    .allMatch(c -> c.hasType(CardType.LAND)
+                            && c.getSupertypes().contains(CardSupertype.BASIC));
         }
 
         @Test
@@ -54,7 +57,7 @@ class SolemnSimulacrumTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
 
             List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
             assertThat(battlefield).anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
@@ -85,7 +88,7 @@ class SolemnSimulacrumTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+            harness.handleCardChosen(player1, -1);
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .noneMatch(p -> p.getCard().hasType(CardType.LAND));
@@ -96,9 +99,7 @@ class SolemnSimulacrumTest extends BaseCardTest {
         @DisplayName("No search prompt when the library holds no basic lands")
         void noBasicLandsInLibrary() {
             castSolemnSimulacrum();
-            List<Card> deck = gd.playerDecks.get(player1.getId());
-            deck.clear();
-            deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+            harness.setLibrary(player1, List.of(new CopperMyr(), new CopperMyr()));
 
             harness.passBothPriorities();
             harness.passBothPriorities();
@@ -116,13 +117,14 @@ class SolemnSimulacrumTest extends BaseCardTest {
         @DisplayName("Accepting the death may ability draws a card")
         void deathAcceptDraws() {
             harness.addToBattlefield(player1, new SolemnSimulacrum());
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            harness.setHand(player1, List.of(new Shatter()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
 
             int handBefore = gd.playerHands.get(player1.getId()).size();
 
-            gs.playCard(gd, player1, 0, 0, null, null);
-            harness.passBothPriorities(); // Wrath resolves, Solemn dies → death trigger on stack
+            harness.castInstant(player1, 0, harness.getPermanentId(player1, "Solemn Simulacrum"));
+            harness.passBothPriorities(); // Shatter resolves, Solemn dies → death trigger on stack
 
             harness.assertInGraveyard(player1, "Solemn Simulacrum");
 
@@ -136,12 +138,13 @@ class SolemnSimulacrumTest extends BaseCardTest {
         @DisplayName("Declining the death may ability draws nothing")
         void deathDeclineDrawsNothing() {
             harness.addToBattlefield(player1, new SolemnSimulacrum());
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            harness.setHand(player1, List.of(new Shatter()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
 
             int handBefore = gd.playerHands.get(player1.getId()).size();
 
-            gs.playCard(gd, player1, 0, 0, null, null);
+            harness.castInstant(player1, 0, harness.getPermanentId(player1, "Solemn Simulacrum"));
             harness.passBothPriorities();
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
@@ -151,14 +154,10 @@ class SolemnSimulacrumTest extends BaseCardTest {
     }
 
     private void castSolemnSimulacrum() {
-        harness.setHand(player1, List.of(new SolemnSimulacrum()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SolemnSimulacrum(), "{4}");
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new Island(), new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Plains(), new AncientDen()));
     }
 }

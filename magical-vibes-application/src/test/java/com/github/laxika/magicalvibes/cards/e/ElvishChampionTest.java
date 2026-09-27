@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ElvishChampion.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
 class ElvishChampionTest extends BaseCardTest {
 
-    
 
     @Test
     @DisplayName("Casting Elvish Champion puts it on the stack")

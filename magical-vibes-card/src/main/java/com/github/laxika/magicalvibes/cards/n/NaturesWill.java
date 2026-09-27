@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "230")
+@CardRegistration(set = "SLD", collectorNumber = "1282")
 @CardRegistration(set = "WOT", collectorNumber = "57")
 @CardRegistration(set = "WOT", collectorNumber = "82")
 @CardRegistration(set = "WOT", collectorNumber = "102")
@@ -26,6 +27,7 @@ public class NaturesWill extends Card {
                         new PermanentIsCreaturePredicate(),
                         SequenceEffect.of(
                                 new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsLandPredicate()),
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()))));
+                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate())),
+                        false, true));
     }
 }

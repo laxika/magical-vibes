@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 @CardRegistration(set = "MUL", collectorNumber = "10")
 @CardRegistration(set = "MUL", collectorNumber = "75")
 @CardRegistration(set = "MUL", collectorNumber = "140")
+@CardRegistration(set = "CMM", collectorNumber = "100")
 public class IngaRuneEyes extends Card {
 
     public IngaRuneEyes() {

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -18,7 +17,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,9 +52,7 @@ class RemoveEnchantmentsTest extends BaseCardTest {
         Permanent ownAuraOnOpponentNonattacker = addAura(player2, new HolyStrength(), opponentNonattacker);
         markOwnedBy(ownAuraOnOpponentNonattacker, player1);
 
-        harness.setHand(player1, List.of(new RemoveEnchantments()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new RemoveEnchantments(), "{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -72,6 +68,38 @@ class RemoveEnchantmentsTest extends BaseCardTest {
                 .contains(opponentEnchantment, opponentAuraOnOwnCreature.getCard(), opponentAuraOnOpponentAttacker.getCard())
                 .doesNotContain(ownEnchantment, (Card) ownAuraOnOwnCreature.getCard(),
                         (Card) ownAuraOnOpponentAttacker.getCard(), (Card) ownAuraOnOpponentNonattacker.getCard());
+    }
+
+    @Test
+    @DisplayName("Leaves your enchantment alone when an opponent controls it")
+    void leavesOwnedEnchantmentControlledByOpponentAlone() {
+        GloriousAnthem enchantmentCard = new GloriousAnthem();
+        enchantmentCard.setOwnerId(player1.getId());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, enchantmentCard);
+
+        harness.castFromHand(player1, new RemoveEnchantments(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchantment);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(enchantmentCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(enchantmentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(enchantmentCard);
+    }
+
+    @Test
+    @DisplayName("Returns your Aura on your permanent even when an opponent controls the Aura")
+    void returnsOwnedAuraOnControlledPermanentRegardlessOfAuraController() {
+        Permanent ownCreature = addCreature(player1);
+        HolyStrength auraCard = new HolyStrength();
+        auraCard.setOwnerId(player1.getId());
+        Permanent aura = addAura(player2, auraCard, ownCreature);
+
+        harness.castFromHand(player1, new RemoveEnchantments(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature).doesNotContain(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
+        assertThat(gd.playerHands.get(player1.getId())).contains(auraCard);
     }
 
     private Permanent addCreature(Player player) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,6 +52,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     @Mock private CardViewFactory cardViewFactory;
     @Mock private CardRevealService cardRevealService;
     @Mock private AmountEvaluationService amountEvaluationService;
+    @Mock private GameQueryService gameQueryService;
 
     private LookAtTopCardsOfTargetLibraryEffectHandler handler;
     private GameData gd;
@@ -82,7 +85,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
 
         handler = new LookAtTopCardsOfTargetLibraryEffectHandler(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
-                cardRevealService, amountEvaluationService);
+                cardRevealService, amountEvaluationService, gameQueryService);
     }
 
     private static Card createCard(String name) {
@@ -339,6 +342,38 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
             assertThat(search.params().reorderRemainingToBottom()).isFalse();
             assertThat(search.params().canFailToFind()).isFalse();
         }
+    }
+
+    @Test
+    @DisplayName("Filters target-library cards by nonland permanent type and X mana value")
+    void mayPutMatchingPermanentOntoBattlefield() {
+        Card eligible = createCard("Grizzly Bears");
+        eligible.setType(CardType.CREATURE);
+        eligible.setManaCost("{1}");
+        Card tooExpensive = createCard("Hill Giant");
+        tooExpensive.setType(CardType.CREATURE);
+        tooExpensive.setManaCost("{4}");
+        Card land = createCard("Forest");
+        land.setType(CardType.LAND);
+        land.setManaCost("");
+        gd.playerDecks.get(player2Id).addAll(List.of(eligible, tooExpensive, land));
+
+        LookAtTopCardsOfTargetLibraryEffect effect = new LookAtTopCardsOfTargetLibraryEffect(
+                3, TargetLibraryAction.MAY_PUT_NONLAND_PERMANENT_WITH_MANA_VALUE_X_ONTO_BATTLEFIELD);
+        handler.resolve(gd, entryTargeting("Lonis, Cryptozoologist", effect), effect);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(eligible);
+        assertThat(search.params().sourceCards()).containsExactly(eligible, tooExpensive, land);
+        assertThat(search.params().targetPlayerId()).isEqualTo(player2Id);
+        assertThat(search.params().battlefieldControllerId()).isEqualTo(player1Id);
+        assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
+        assertThat(search.params().followUp().secondBoundedPick().randomRest()).isTrue();
+        verify(cardRevealService).revealToAllPlayers(
+                gd, player2Id, GameEventFact.RevealZone.LIBRARY,
+                List.of(eligible, tooExpensive, land));
     }
 
     @Nested

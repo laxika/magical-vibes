@@ -48,7 +48,7 @@ class SolidGroundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent grove = findPermanent(player1, "Afiya Grove");
-        assertThat(grove.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(grove.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
     @Test

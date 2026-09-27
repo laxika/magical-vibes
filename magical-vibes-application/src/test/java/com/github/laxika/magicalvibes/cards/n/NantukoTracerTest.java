@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NantukoTracer.class, KrosanReclamation.class})
+@CardUsed({KrosanReclamation.class, NantukoTracer.class})
 class NantukoTracerTest extends BaseCardTest {
 
     @Test
@@ -85,5 +85,13 @@ class NantukoTracerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.castFromHand(player1, new NantukoTracer(), "{1}{G}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An empty graveyard produces no target choice")
+    void emptyGraveyardProducesNoTargetChoice() {
+        castTracer();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 }

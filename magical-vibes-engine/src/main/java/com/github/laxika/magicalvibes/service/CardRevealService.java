@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -45,6 +46,19 @@ public class CardRevealService {
                 GameLog.text(viewerName + " looks at " + subjectName + "'s hand." + suffix));
         revealToPlayer(
                 gameData, subjectPlayerId, GameEventFact.RevealZone.HAND, hand, viewerId);
+    }
+
+    public void lookAtCreatureCardsInHand(GameData gameData, UUID viewerId, UUID subjectPlayerId) {
+        List<Card> creatureCards = gameData.playerHands.getOrDefault(subjectPlayerId, List.of()).stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .toList();
+        String viewerName = gameData.playerIdToName.get(viewerId);
+        String subjectName = gameData.playerIdToName.get(subjectPlayerId);
+
+        gameLogService.append(gameData,
+                GameLog.text(viewerName + " looks at the creature cards in " + subjectName + "'s hand."));
+        revealToPlayer(
+                gameData, subjectPlayerId, GameEventFact.RevealZone.HAND, creatureCards, viewerId);
     }
 
     public void revealHandToAllPlayers(GameData gameData, UUID subjectPlayerId) {

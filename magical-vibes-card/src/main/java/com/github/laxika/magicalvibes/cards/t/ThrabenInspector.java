@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "TSR", collectorNumber = "305")
 @CardRegistration(set = "HA4", collectorNumber = "3")
 @CardRegistration(set = "SIR", collectorNumber = "51")
+@CardRegistration(set = "CMM", collectorNumber = "66")
 public class ThrabenInspector extends Card {
 
     public ThrabenInspector() {

@@ -117,5 +117,10 @@ class PanopticMirrorTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ExiledSpellCopyChoice.class);
         assertThat(copyChoice).isNotNull();
         assertThat(copyChoice.validCardIds()).containsExactlyInAnyOrder(truthCard.getId(), decayCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(truthCard.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.getCardsExiledByPermanent(findPermanent(player1, "Panoptic Mirror").getId()))
+                .extracting(card -> card.getId()).containsExactly(truthCard.getId(), decayCard.getId());
     }
 }

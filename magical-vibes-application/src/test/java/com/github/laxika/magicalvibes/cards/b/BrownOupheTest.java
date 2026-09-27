@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.l.LiquimetalCoating;
 import com.github.laxika.magicalvibes.cards.o.OrcishCannoneers;
+import com.github.laxika.magicalvibes.cards.t.TalismanOfUnity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BrownOuphe.class, BarbedSextant.class, IcyManipulator.class,
-        Incinerate.class, OrcishCannoneers.class})
+        Incinerate.class, OrcishCannoneers.class, TalismanOfUnity.class})
 class BrownOupheTest extends BaseCardTest {
 
     /** The Ouphe's ability needs {T}, so it must have been under its controller's control since their turn began. */
@@ -70,6 +71,23 @@ class BrownOupheTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a mana ability when its artifact source remains on the battlefield")
+    void cannotCounterManaAbilityFromArtifactThatRemainsOnBattlefield() {
+        addReadyOuphe(player1);
+
+        TalismanOfUnity talisman = new TalismanOfUnity();
+        harness.addToBattlefield(player2, talisman);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, null);
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, talisman.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Cannot target an activated ability from a non-artifact source")
     void cannotCounterNonArtifactAbility() {
         addReadyOuphe(player1);
@@ -88,6 +106,40 @@ class BrownOupheTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, player1LifeBefore - 2);
         harness.assertLife(player2, player2LifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Uses the source's last-known artifact type after it leaves the battlefield")
+    void countersAbilityAfterArtifactSourceLeavesBattlefield() {
+        addReadyOuphe(player1);
+        harness.addToBattlefield(player1, new LiquimetalCoating());
+        Permanent cannoneers = addCreatureReady(player2, new OrcishCannoneers());
+        Incinerate incinerate = new Incinerate();
+        harness.setHand(player1, List.of(incinerate));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        int player1LifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 1, null, cannoneers.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isArtifact(cannoneers)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, cannoneers.getCard().getId());
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, cannoneers.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Orcish Cannoneers");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertLife(player1, player1LifeBefore);
     }
 
     @Test

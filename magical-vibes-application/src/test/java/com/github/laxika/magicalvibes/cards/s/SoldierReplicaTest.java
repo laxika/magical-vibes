@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoldierReplica.class, GrizzlyBears.class, FangrenHunter.class})
 class SoldierReplicaTest extends BaseCardTest {
 
     @Test
@@ -37,6 +41,67 @@ class SoldierReplicaTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Soldier Replica");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Deals exactly 3 damage to an attacking creature")
+    void dealsExactlyThreeDamage() {
+        addReadySoldierReplica(player1);
+        Permanent target = addCreatureReady(player2, new FangrenHunter());
+        target.setAttacking(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Fangren Hunter");
+        harness.assertInGraveyard(player1, "Soldier Replica");
+    }
+
+    @Test
+    @DisplayName("Can target an attacking creature its controller controls")
+    void canTargetOwnAttackingCreature() {
+        addReadySoldierReplica(player1);
+        Permanent target = addCombatCreature(player1, true, false);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Soldier Replica");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid when the ability is activated")
+    void sacrificeIsPaidOnActivation() {
+        addReadySoldierReplica(player1);
+        Permanent target = addCombatCreature(player2, true, false);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Soldier Replica");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttackingBeforeResolution() {
+        addReadySoldierReplica(player1);
+        Permanent target = addCombatCreature(player2, true, false);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Soldier Replica");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RazorBarrier.class, Forest.class, GoldMyr.class})
 class RazorBarrierTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class RazorBarrierTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RazorBarrier()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, land.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, land.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "BLUE");
@@ -38,12 +39,11 @@ class RazorBarrierTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing ARTIFACT grants protection from artifacts")
     void choosingArtifactGrantsProtectionFromArtifacts() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoldMyr());
         harness.setHand(player1, List.of(new RazorBarrier()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleListChoice(player1, "ARTIFACT");
 
         assertThat(creature.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
@@ -52,8 +52,8 @@ class RazorBarrierTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent controlled by an opponent")
     void cannotTargetOpponentsPermanent() {
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GoldMyr());
+        harness.addToBattlefield(player1, new GoldMyr());
         harness.setHand(player1, List.of(new RazorBarrier()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -65,18 +65,18 @@ class RazorBarrierTest extends BaseCardTest {
     @Test
     @DisplayName("Protection is cleared at end of turn")
     void protectionWearsOffAtEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoldMyr());
         harness.setHand(player1, List.of(new RazorBarrier()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        UUID targetId = creature.getId();
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleListChoice(player1, "RED");
 
         assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
 
-        creature.resetModifiers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
     }

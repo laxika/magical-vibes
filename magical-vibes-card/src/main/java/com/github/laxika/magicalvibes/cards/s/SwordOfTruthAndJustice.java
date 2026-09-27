@@ -13,9 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanen
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "1096")
+@CardRegistration(set = "SLD", collectorNumber = "1867")
 @CardRegistration(set = "AA1", collectorNumber = "15")
 @CardRegistration(set = "MH1", collectorNumber = "229")
 public class SwordOfTruthAndJustice extends Card {

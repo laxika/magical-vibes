@@ -1,0 +1,55 @@
+package com.github.laxika.magicalvibes.cards.m;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({MaceOfTheValiant.class, GrizzlyBears.class})
+class MaceOfTheValiantTest extends BaseCardTest {
+
+    @Test
+    void equippedCreatureGetsBoostAndVigilance() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new MaceOfTheValiant());
+        mace.setCounterCount(CounterType.CHARGE, 2);
+        mace.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void creatureEnteringUnderYourControlAddsChargeCounter() {
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new MaceOfTheValiant());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(mace.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void equipAttachesToCreatureYouControl() {
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new MaceOfTheValiant());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(mace.getAttachedTo()).isEqualTo(creature.getId());
+    }
+}

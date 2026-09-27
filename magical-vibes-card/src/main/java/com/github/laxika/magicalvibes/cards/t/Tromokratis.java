@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "BNG", collectorNumber = "55")
+@CardRegistration(set = "CMM", collectorNumber = "129")
 public class Tromokratis extends Card {
 
     public Tromokratis() {

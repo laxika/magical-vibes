@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "117")
 @CardRegistration(set = "CHK", collectorNumber = "97")
 @CardRegistration(set = "FDN", collectorNumber = "166")
+@CardRegistration(set = "SLD", collectorNumber = "1500")
 public class TimeStop extends Card {
 
     public TimeStop() {

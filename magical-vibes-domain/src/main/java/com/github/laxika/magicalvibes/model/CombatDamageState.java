@@ -36,6 +36,7 @@ public class CombatDamageState {
     public final Map<UUID, Integer> damageDealtToPermanentsBeforeStep = new HashMap<>();
     public final Map<UUID, Integer> markedDamageBeforeStep = new HashMap<>();
     public final Map<UUID, Integer> toughnessBeforeStep = new HashMap<>();
+    public final Map<UUID, Integer> lethalDamageThresholdBeforeStep = new HashMap<>();
     public final Map<UUID, Integer> loyaltyBeforeStep = new HashMap<>();
 
     public final Set<Integer> deathtouchDamagedAttackerIndices = new HashSet<>();

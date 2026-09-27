@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "158")
+@CardRegistration(set = "CMM", collectorNumber = "278")
 public class CourageInCrisis extends Card {
 
     public CourageInCrisis() {

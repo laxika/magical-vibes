@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "230")
+@CardRegistration(set = "SLD", collectorNumber = "530")
 public class HuatliTheSunsHeart extends Card {
 
     public HuatliTheSunsHeart() {

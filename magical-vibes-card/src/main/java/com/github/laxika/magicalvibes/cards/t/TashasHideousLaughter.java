@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesTopUntilTotalManaValueEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "78")
+@CardRegistration(set = "SLD", collectorNumber = "1395")
 public class TashasHideousLaughter extends Card {
 
     public TashasHideousLaughter() {

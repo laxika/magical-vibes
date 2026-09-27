@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "191")
+@CardRegistration(set = "SLD", collectorNumber = "521")
 public class DomriAnarchOfBolas extends Card {
 
     public DomriAnarchOfBolas() {

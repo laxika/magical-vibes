@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "277")
+@CardRegistration(set = "C14", collectorNumber = "221")
 public class TitaniasChosen extends Card {
 
     public TitaniasChosen() {

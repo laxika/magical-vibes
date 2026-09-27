@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BattleScreech;
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FuneralPyre.class, BattleScreech.class, BenevolentBodyguard.class})
+@CardUsed({BattleScreech.class, BenevolentBodyguard.class, FuneralPyre.class, SuntailHawk.class})
 class FuneralPyreTest extends BaseCardTest {
 
     @Test
@@ -100,5 +101,40 @@ class FuneralPyreTest extends BaseCardTest {
                         && permanent.getCard().getToughness() == 1
                         && permanent.getCard().getSubtypes().contains(CardSubtype.SPIRIT)
                         && permanent.getCard().getKeywords().contains(Keyword.FLYING));
+    }
+
+    @Test
+    @DisplayName("Creates the Spirit for the exiled card's owner")
+    void createsTokenForCardOwnerJudReview() {
+        Card target = new SuntailHawk();
+        target.setOwnerId(player1.getId());
+        harness.setGraveyard(player2, List.of(target));
+
+        castFuneralPyre(target);
+
+        harness.assertNotInGraveyard(player2, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Suntail Hawk"));
+        assertSpiritToken(player1);
+        harness.assertNotOnBattlefield(player2, "Spirit");
+    }
+
+    @Test
+    @DisplayName("Does not affect a card that leaves and returns to the graveyard")
+    void fizzlesIfTargetLeavesAndReturnsToGraveyard() {
+        Card target = new SuntailHawk();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new FuneralPyre()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerGraveyards.get(player2.getId()).clear();
+        gd.markGraveyardEntry(target);
+        gd.playerGraveyards.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Spirit");
     }
 }

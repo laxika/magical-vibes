@@ -1,19 +1,19 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.s.SeethingSong;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlazingFiresingerSeethingSong.class, SeethingSong.class})
 class BlazingFiresingerSeethingSongTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Entering the battlefield prepares Blazing Firesinger and exiles a castable Seething Song copy")
@@ -62,9 +62,7 @@ class BlazingFiresingerSeethingSongTest extends BaseCardTest {
     }
 
     private Permanent castBlazingFiresinger() {
-        harness.setHand(player1, List.of(new BlazingFiresingerSeethingSong()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BlazingFiresingerSeethingSong(), "{2}{R}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB BecomePrepared trigger
 

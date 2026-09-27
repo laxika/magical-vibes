@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OTP", collectorNumber = "55")
+@CardRegistration(set = "MH2", collectorNumber = "215")
 public class TerminalAgony extends Card {
 
     public TerminalAgony() {

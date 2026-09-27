@@ -9,7 +9,8 @@ import java.util.Set;
 
 /**
  * Reduces cast cost of matching spells by the evaluated amount of generic mana.
- * Applied as a static effect from a permanent on the battlefield.
+ * Applied as a static effect from a permanent on the battlefield, or from a command-zone static
+ * slot for abilities such as Eminence.
  *
  * <p>The {@code predicate} determines which spells are affected (e.g. historic, creature, artifact).
  * The {@code scope} determines whose spells are affected (SELF = controller, OPPONENT = opponents).

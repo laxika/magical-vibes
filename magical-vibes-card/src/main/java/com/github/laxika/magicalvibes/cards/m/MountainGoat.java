@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "195")
 @CardRegistration(set = "5ED", collectorNumber = "252")
 @CardRegistration(set = "ICE", collectorNumber = "203")
+@CardRegistration(set = "SLD", collectorNumber = "737")
 public class MountainGoat extends Card {
 
     public MountainGoat() {

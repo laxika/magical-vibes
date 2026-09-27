@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "152")
+@CardRegistration(set = "SLD", collectorNumber = "398")
 public class AngrathTheFlameChained extends Card {
 
     public AngrathTheFlameChained() {

@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "PCA", collectorNumber = "11")
 @CardRegistration(set = "HA2", collectorNumber = "3")
 @CardRegistration(set = "TSR", collectorNumber = "301")
+@CardRegistration(set = "C15", collectorNumber = "80")
 public class SigilOfTheEmptyThrone extends Card {
 
     public SigilOfTheEmptyThrone() {

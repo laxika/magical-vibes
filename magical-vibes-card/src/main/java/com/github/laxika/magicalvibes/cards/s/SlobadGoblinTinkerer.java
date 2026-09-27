@@ -22,7 +22,7 @@ public class SlobadGoblinTinkerer extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentIsArtifactPredicate(),
-                                "Sacrifice an artifact"
+                                "Sacrifice an artifact", false
                         ),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
                 ),

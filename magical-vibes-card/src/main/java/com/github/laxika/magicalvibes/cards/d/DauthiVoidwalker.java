@@ -4,14 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithVoidCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardExiledWithVoidCounterMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseVoidCounterCardMayPlayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1760")
 @CardRegistration(set = "MAR", collectorNumber = "63")
 @CardRegistration(set = "AA3", collectorNumber = "8")
+@CardRegistration(set = "MH2", collectorNumber = "81")
 public class DauthiVoidwalker extends Card {
 
     public DauthiVoidwalker() {

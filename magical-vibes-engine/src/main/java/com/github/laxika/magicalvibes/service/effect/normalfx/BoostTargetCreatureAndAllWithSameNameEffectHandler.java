@@ -45,12 +45,12 @@ public class BoostTargetCreatureAndAllWithSameNameEffectHandler implements Norma
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(),
                 AmountContext.forStackEntry(entry, source));
 
-        String targetName = target.getCard().getName();
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
         List<Permanent> toBoost = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
-                        && permanent.getCard().getName().equals(targetName)) {
+                        && gameQueryService.getEffectiveName(gameData, permanent).equals(targetName)) {
                     toBoost.add(permanent);
                 }
             }

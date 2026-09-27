@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "133")
+@CardRegistration(set = "SLD", collectorNumber = "1063")
 public class JayasImmolatingInferno extends Card {
 
     public JayasImmolatingInferno() {

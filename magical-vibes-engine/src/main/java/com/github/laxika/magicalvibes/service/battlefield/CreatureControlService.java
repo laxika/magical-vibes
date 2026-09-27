@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -181,6 +182,10 @@ public class CreatureControlService {
         if (derived == null || derived.equals(current)) {
             return;
         }
+        gameData.ringStates.replaceAll((playerId, ringState) ->
+                permanent.getId().equals(ringState.bearerId())
+                        ? new RingState(ringState.level(), null)
+                        : ringState);
         if (triggerCollectionService != null) {
             triggerCollectionService.checkOpponentGainsControlTriggers(
                     gameData, permanent, current, derived);
@@ -397,9 +402,13 @@ public class CreatureControlService {
                             && aura.getId().equals(fe.sourcePermanentId()));
             if (!present) {
                 UUID auraController = gameData.findControllerOf(aura);
+                CardEffect controlEffect = aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElseThrow();
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), aura.getCard().getName(), aura.getId(), auraController,
-                        new ControlEnchantedCreatureEffect(), enchanted.getId(), null, null,
+                        controlEffect, enchanted.getId(), null, null,
                         EffectDuration.WHILE_ATTACHED, 0));
             }
         }

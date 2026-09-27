@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.OmegaMyr;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,35 +15,31 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BarterInBlood.class, OmegaMyr.class, Mountain.class})
 class BarterInBloodTest extends BaseCardTest {
 
     private void castBarter() {
-        harness.setHand(player1, List.of(new BarterInBlood()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new BarterInBlood(), "{2}{B}{B}");
         harness.passBothPriorities();
     }
 
     private List<UUID> creatureIds(com.github.laxika.magicalvibes.model.Player player) {
-        return harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().hasType(CardType.CREATURE))
+        return findPermanents(player, "Omega Myr").stream()
                 .map(Permanent::getId)
                 .toList();
     }
 
     private long creatureCount(com.github.laxika.magicalvibes.model.Player player) {
-        return harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().hasType(CardType.CREATURE))
-                .count();
+        return countPermanents(player, "Omega Myr");
     }
 
     @Test
     @DisplayName("Each player with exactly two creatures loses both without a prompt")
     void bothPlayersWithTwoCreaturesLoseBoth() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new OmegaMyr());
+        harness.addToBattlefield(player1, new OmegaMyr());
+        harness.addToBattlefield(player2, new OmegaMyr());
+        harness.addToBattlefield(player2, new OmegaMyr());
 
         castBarter();
 
@@ -57,8 +51,8 @@ class BarterInBloodTest extends BaseCardTest {
     @Test
     @DisplayName("A player with only one creature sacrifices just that one")
     void playerWithOneCreatureSacrificesIt() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new OmegaMyr());
+        harness.addToBattlefield(player2, new OmegaMyr());
 
         castBarter();
 
@@ -70,7 +64,7 @@ class BarterInBloodTest extends BaseCardTest {
     @DisplayName("Only creatures are sacrificed — lands are untouched")
     void landsAreNotSacrificed() {
         harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new OmegaMyr());
         harness.addToBattlefield(player2, new Mountain());
 
         castBarter();
@@ -83,16 +77,16 @@ class BarterInBloodTest extends BaseCardTest {
     @Test
     @DisplayName("A player with three or more creatures chooses which two to sacrifice")
     void playerWithMoreThanTwoCreaturesChooses() {
-        for (int i = 0; i < 4; i++) {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-        }
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new OmegaMyr());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new OmegaMyr());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new OmegaMyr());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new OmegaMyr());
         // Player2 has exactly two — auto-marked, deferred until player1 has chosen
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new OmegaMyr());
+        harness.addToBattlefield(player2, new OmegaMyr());
 
         castBarter();
 
-        GameData gd = harness.getGameData();
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
@@ -103,9 +97,10 @@ class BarterInBloodTest extends BaseCardTest {
                 .hasSize(2);
         assertThat(creatureCount(player2)).isEqualTo(2);
 
-        harness.handleMultiplePermanentsChosen(player1, creatureIds(player1).stream().limit(2).toList());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), third.getId()));
 
-        assertThat(creatureCount(player1)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Omega Myr").stream().map(Permanent::getId).toList())
+                .containsExactly(second.getId(), fourth.getId());
         assertThat(creatureCount(player2)).isZero();
     }
 
@@ -113,15 +108,14 @@ class BarterInBloodTest extends BaseCardTest {
     @DisplayName("Both players choose in APNAP order and everything is sacrificed simultaneously")
     void bothPlayersChooseSequentially() {
         for (int i = 0; i < 3; i++) {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new OmegaMyr());
         }
         for (int i = 0; i < 4; i++) {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new OmegaMyr());
         }
 
         castBarter();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -141,8 +135,8 @@ class BarterInBloodTest extends BaseCardTest {
     @Test
     @DisplayName("A player with no creatures is unaffected")
     void playerWithNoCreaturesIsUnaffected() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new OmegaMyr());
+        harness.addToBattlefield(player1, new OmegaMyr());
 
         castBarter();
 

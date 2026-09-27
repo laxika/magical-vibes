@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "142")
+@CardRegistration(set = "SLD", collectorNumber = "263")
 public class RekiTheHistoryOfKamigawa extends Card {
 
     public RekiTheHistoryOfKamigawa() {

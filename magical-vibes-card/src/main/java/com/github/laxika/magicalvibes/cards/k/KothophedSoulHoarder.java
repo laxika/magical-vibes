@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "104")
+@CardRegistration(set = "SLD", collectorNumber = "162")
 public class KothophedSoulHoarder extends Card {
 
     public KothophedSoulHoarder() {

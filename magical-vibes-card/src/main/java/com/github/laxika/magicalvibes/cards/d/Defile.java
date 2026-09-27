@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "SLD", collectorNumber = "1793")
 @CardRegistration(set = "MH1", collectorNumber = "86")
 public class Defile extends Card {
 

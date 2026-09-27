@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "341")
 @CardRegistration(set = "SLX", collectorNumber = "7")
 public class SophinaSpearsageDeserter extends Card {
 

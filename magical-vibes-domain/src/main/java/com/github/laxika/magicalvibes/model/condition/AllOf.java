@@ -24,6 +24,7 @@ public record AllOf(List<Condition> conditions) implements Condition {
 
     @Override
     public boolean isEtbTriggerGate() {
-        return !conditions.isEmpty() && conditions.stream().allMatch(Condition::isEtbTriggerGate);
+        return !conditions.isEmpty() && conditions.stream()
+                .allMatch(condition -> condition.isEtbTriggerGate() || condition instanceof WasCast);
     }
 }

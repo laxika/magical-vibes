@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WanderguardSentry.class, YotianSoldier.class})
 class WanderguardSentryTest extends BaseCardTest {
 
     @Test
@@ -32,7 +34,7 @@ class WanderguardSentryTest extends BaseCardTest {
     @Test
     @DisplayName("ETB trigger reveals target opponent's hand to the controller")
     void etbRevealsOpponentHand() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new YotianSoldier()));
         castWanderguardSentry(player2.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -41,11 +43,11 @@ class WanderguardSentryTest extends BaseCardTest {
         // Card identity is private: only the controller is told what is in the hand. The public log
         // records that the look happened without naming anything (see CardRevealService#lookAtHand).
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
-                .anyMatch(message -> message.contains("Grizzly Bears"));
+                .anyMatch(message -> message.contains("Yotian Soldier"));
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("looks at"))
-                .noneMatch(log -> log.contains("Grizzly Bears"));
+                .noneMatch(log -> log.contains("Yotian Soldier"));
     }
 
     @Test
@@ -63,11 +65,7 @@ class WanderguardSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast by targeting yourself")
     void cannotTargetYourself() {
-        harness.setHand(player1, List.of(new WanderguardSentry()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        assertThatThrownBy(() -> castWanderguardSentry(player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }
@@ -76,6 +74,6 @@ class WanderguardSentryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WanderguardSentry()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0, targetPlayerId);
     }
 }

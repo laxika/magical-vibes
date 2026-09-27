@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "62")
+@CardRegistration(set = "SLD", collectorNumber = "155")
 public class RoilElemental extends Card {
 
     public RoilElemental() {

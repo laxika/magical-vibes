@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExi
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "206")
+@CardRegistration(set = "C14", collectorNumber = "274")
 public class StrataScythe extends Card {
 
     public StrataScythe() {

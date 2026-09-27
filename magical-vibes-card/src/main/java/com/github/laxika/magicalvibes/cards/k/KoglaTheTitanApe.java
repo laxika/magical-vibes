@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "162")
+@CardRegistration(set = "SLD", collectorNumber = "1274")
 public class KoglaTheTitanApe extends Card {
 
     public KoglaTheTitanApe() {

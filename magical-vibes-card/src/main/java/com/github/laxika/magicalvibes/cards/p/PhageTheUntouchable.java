@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "166")
 @CardRegistration(set = "LGN", collectorNumber = "78")
+@CardRegistration(set = "SLD", collectorNumber = "1195")
 public class PhageTheUntouchable extends Card {
 
     public PhageTheUntouchable() {

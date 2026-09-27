@@ -37,6 +37,12 @@ public interface CombatDamageTriggerContextEffect extends CardEffect {
         DAMAGED_PLAYER,
 
         /**
+         * Stack entry carries the player remembered by the source permanent's as-enters choice,
+         * while the source permanent is selected separately by the enclosing combat trigger.
+         */
+        CHOSEN_PLAYER,
+
+        /**
          * Stack entry carries the enchanted creature's controller as its non-targeting
          * {@code targetId}; used by Aura combat-damage triggers that affect that controller.
          */

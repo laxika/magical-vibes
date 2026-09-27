@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.a.Arrest;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MyrAdapter.class, LeoninScimitar.class, AlphaMyr.class, Arrest.class})
 class MyrAdapterTest extends BaseCardTest {
 
     @Test
@@ -35,8 +38,7 @@ class MyrAdapterTest extends BaseCardTest {
     @Test
     void equipmentNotAttachedToAdapterDoesNotCount() {
         Permanent adapter = addAdapterReady(player1);
-        Permanent otherCreature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(otherCreature);
+        Permanent otherCreature = addCreatureReady(player1, new AlphaMyr());
         Permanent scimitar = addScimitarReady(player1);
 
         scimitar.setAttachedTo(otherCreature.getId());
@@ -55,17 +57,33 @@ class MyrAdapterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, adapter)).isEqualTo(3);
     }
 
+    @Test
+    void attachedAuraDoesNotCountAsEquipment() {
+        Permanent adapter = addAdapterReady(player1);
+        Permanent arrest = harness.addToBattlefieldAndReturn(player1, new Arrest());
+
+        arrest.setAttachedTo(adapter.getId());
+
+        assertThat(gqs.getEffectivePower(gd, adapter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, adapter)).isEqualTo(1);
+    }
+
+    @Test
+    void unattachedEquipmentDoesNotCount() {
+        Permanent adapter = addAdapterReady(player1);
+        addScimitarReady(player1);
+
+        assertThat(gqs.getEffectivePower(gd, adapter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, adapter)).isEqualTo(1);
+    }
+
     private Permanent addAdapterReady(Player player) {
-        Permanent permanent = new Permanent(new MyrAdapter());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new MyrAdapter());
     }
 
     private Permanent addScimitarReady(Player player) {
-        Permanent permanent = new Permanent(new LeoninScimitar());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

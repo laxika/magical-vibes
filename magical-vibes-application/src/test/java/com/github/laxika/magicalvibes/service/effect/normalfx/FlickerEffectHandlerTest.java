@@ -14,6 +14,8 @@ import static org.mockito.Mockito.when;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -23,12 +25,15 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerScope;
+import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -39,6 +44,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.mockito.ArgumentCaptor;
@@ -71,6 +77,7 @@ class FlickerEffectHandlerTest {
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private GraveyardReturnSupport graveyardReturnSupport;
     @Mock private GrantKeywordEffectHandler grantKeywordEffectHandler;
+    @Mock private CloneService cloneService;
     @InjectMocks
     private ExileSupport exileSupport;
 
@@ -101,7 +108,8 @@ class FlickerEffectHandlerTest {
         handler = new FlickerEffectHandler(exileSupport, gameQueryService, predicateEvaluationService,
                 gameLogService, permanentRemovalService, battlefieldEntryService,
                 drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class));
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class),
+                cloneService);
     }
 
     private Card createCreatureCard(String name) {
@@ -243,6 +251,34 @@ class FlickerEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Prepares a self-flickered copy-on-entry permanent for re-entry")
+        void preparesCopyOnEntryBeforeSelfReturn() {
+            Card targetCard = createCreatureCard("Clone");
+            targetCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                    new CopyPermanentOnEnterEffect(new PermanentIsCreaturePredicate(), "creature"));
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Flicker");
+            FlickerEffect effect = new FlickerEffect(
+                    FlickerScope.SELF, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
+                    false, null, null, 0, false, false);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), null, target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+            when(cloneService.prepareCloneReplacementEffect(
+                    eq(gd), eq(player1Id), eq(targetCard), eq((UUID) null), eq(0))).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(cloneService).prepareCloneReplacementEffect(
+                    eq(gd), eq(player1Id), eq(targetCard), eq((UUID) null), eq(0));
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                    any(), any(), any(Permanent.class));
+        }
+
+        @Test
         @DisplayName("Returns a self-flickered permanent face down and processes face-down ETB triggers")
         void returnsSelfFaceDown() {
             Permanent target = new Permanent(createCreatureCard("Shorecrasher Elemental"));
@@ -351,6 +387,29 @@ class FlickerEffectHandlerTest {
                         assertThat(pending.plusOnePlusOneCountersOnlyOnCreatures()).isTrue();
                         assertThat(pending.loyaltyCountersOnPlaneswalkers()).isEqualTo(1);
                     });
+        }
+
+        @Test
+        @DisplayName("Preserves multiple keyword counters in the pending return")
+        void preservesMultipleKeywordCounters() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Gilraen, Dúnedain Protector");
+            FlickerEffect effect = FlickerEffect.exileTargetReturnAtEndStepWithCounters(
+                    Map.of(CounterType.VIGILANCE, 1, CounterType.LIFELINK, 1));
+            StackEntry entry = new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+                    .singleElement()
+                    .satisfies(pending -> assertThat(pending.countersOnReturn())
+                            .containsExactlyInAnyOrderEntriesOf(
+                                    Map.of(CounterType.VIGILANCE, 1, CounterType.LIFELINK, 1)));
         }
 
         @Test

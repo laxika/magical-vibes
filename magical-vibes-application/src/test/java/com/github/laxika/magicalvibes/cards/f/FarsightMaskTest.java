@@ -1,26 +1,32 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.ShrapnelBlast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AlphaMyr.class, FarsightMask.class, Forest.class, Ornithopter.class, ShrapnelBlast.class})
 class FarsightMaskTest extends BaseCardTest {
 
     @Test
     void opponentDamageMayDraw() {
         harness.addToBattlefield(player1, new FarsightMask());
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.setHand(player2, List.of(new LightningBolt()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player2, List.of(new ShrapnelBlast()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -30,14 +36,30 @@ class FarsightMaskTest extends BaseCardTest {
     }
 
     @Test
+    void opponentCombatDamageMayDraw() {
+        harness.addToBattlefield(player1, new FarsightMask());
+        harness.setLibrary(player1, List.of(new Forest()));
+        addCreatureReady(player2, new AlphaMyr());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     void decliningDoesNotDraw() {
         harness.addToBattlefield(player1, new FarsightMask());
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.setHand(player2, List.of(new LightningBolt()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player2, List.of(new ShrapnelBlast()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -51,11 +73,13 @@ class FarsightMaskTest extends BaseCardTest {
         Permanent mask = harness.addToBattlefieldAndReturn(player1, new FarsightMask());
         mask.tap();
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.setHand(player2, List.of(new LightningBolt()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player2, List.of(new ShrapnelBlast()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -68,10 +92,12 @@ class FarsightMaskTest extends BaseCardTest {
     void ownDamageDoesNotTrigger() {
         harness.addToBattlefield(player1, new FarsightMask());
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.setHand(player1, List.of(new LightningBolt()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new ShrapnelBlast()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
+        harness.castInstantWithSacrifice(player1, 0, player1.getId(), sacrifice.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

@@ -30,7 +30,7 @@ public class ChooseSubtypeForSourceEffectHandler implements NormalEffectHandlerB
         }
 
         ChooseSubtypeForSourceEffect choice = (ChooseSubtypeForSourceEffect) effect;
-        playerInputService.beginSubtypeChoiceForSource(gameData, entry.getControllerId(),
-                source.getId(), choice.allowedSubtypes());
+        playerInputService.beginSubtypeChoiceForSource(gameData, entry.getControllerId(), source.getId(),
+                choice.allowedSubtypes(), choice.untilEndOfTurn(), choice.choicePrompt());
     }
 }

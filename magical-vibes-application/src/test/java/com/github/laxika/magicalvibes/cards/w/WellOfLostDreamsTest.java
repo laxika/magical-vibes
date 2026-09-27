@@ -66,8 +66,8 @@ class WellOfLostDreamsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can pay with mana restricted to artifact abilities")
-    void canPayWithArtifactRestrictedMana() {
+    @DisplayName("Cannot pay a triggered ability with mana restricted to artifact spells and activations")
+    void cannotPayWithArtifactRestrictedMana() {
         harness.addToBattlefield(player1, new WellOfLostDreams());
         addCreatureReady(player1, new VedalkenEngineer());
         harness.setLife(player1, 20);
@@ -79,14 +79,8 @@ class WellOfLostDreamsTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2));
         harness.passBothPriorities();
 
-        PendingInteraction.XValueChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.maxValue()).isEqualTo(2);
-
-        harness.handleXValueChosen(player1, 2);
-
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
-        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(2);
     }
 }

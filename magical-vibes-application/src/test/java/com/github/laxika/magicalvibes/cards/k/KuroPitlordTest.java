@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KuroPitlord.class, KamiOfAncientLaw.class, Forest.class})
 class KuroPitlordTest extends BaseCardTest {
 
     @Test
@@ -68,61 +70,57 @@ class KuroPitlordTest extends BaseCardTest {
     @DisplayName("Pay 1 life: target creature gets -1/-1 until end of turn")
     void payLifeShrinksTargetCreature() {
         harness.addToBattlefield(player1, new KuroPitlord());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfAncientLaw());
         harness.setLife(player1, 20);
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, kami.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Repeated activations stack and kill the target")
     void repeatedActivationsKillTarget() {
         harness.addToBattlefield(player1, new KuroPitlord());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfAncientLaw());
         harness.setLife(player1, 20);
 
         for (int i = 0; i < 2; i++) {
-            harness.activateAbility(player1, 0, null, bears.getId());
+            harness.activateAbility(player1, 0, null, kami.getId());
             harness.passBothPriorities();
         }
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(countPermanents(player2, "Grizzly Bears")).isZero();
+        assertThat(countPermanents(player2, "Kami of Ancient Law")).isZero();
     }
 
     @Test
     @DisplayName("The -1/-1 wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new KuroPitlord());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfAncientLaw());
         harness.setLife(player1, 20);
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, kami.getId());
         harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         harness.addToBattlefield(player1, new KuroPitlord());
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.f.Forest());
-        Permanent land = findPermanent(player2, "Forest");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setLife(player1, 20);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))

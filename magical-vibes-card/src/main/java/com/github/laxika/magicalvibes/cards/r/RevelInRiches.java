@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "117")
+@CardRegistration(set = "SLD", collectorNumber = "1830")
 public class RevelInRiches extends Card {
 
     public RevelInRiches() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "NEM", collectorNumber = "80")
+@CardRegistration(set = "MH2", collectorNumber = "278")
 public class FlameRift extends Card {
 
     public FlameRift() {

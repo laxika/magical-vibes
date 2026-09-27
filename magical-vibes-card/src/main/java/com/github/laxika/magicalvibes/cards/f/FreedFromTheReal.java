@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "38")
 @CardRegistration(set = "A25", collectorNumber = "58")
+@CardRegistration(set = "SLD", collectorNumber = "425")
 public class FreedFromTheReal extends Card {
 
     public FreedFromTheReal() {

@@ -28,6 +28,8 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect copyEffect =
+                (BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
             return;
@@ -38,7 +40,7 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
             entry.setTargetId(null);
             ExiledCardEntry chosen = gameData.findExiledCard(chosenCardId);
             if (isEligible(chosen, sourcePermanentId)) {
-                copyHandler.resolve(gameData, entry, new BecomeCopyOfCardUntilEndOfTurnEffect(chosen.card()));
+                copyHandler.resolve(gameData, entry, copyEffect(chosen.card(), copyEffect));
             }
             return;
         }
@@ -51,15 +53,15 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
             return;
         }
         if (eligible.size() == 1) {
-            copyHandler.resolve(gameData, entry,
-                    new BecomeCopyOfCardUntilEndOfTurnEffect(eligible.getFirst().card()));
+            copyHandler.resolve(gameData, entry, copyEffect(eligible.getFirst().card(), copyEffect));
             return;
         }
 
         gameData.rerunCurrentEffectAfterInteraction = true;
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCreatureCopyChoice(
                 entry.getControllerId(), sourcePermanentId,
-                eligible.stream().map(exiled -> exiled.card().getId()).toList()));
+                eligible.stream().map(exiled -> exiled.card().getId()).toList(),
+                entry.getCard().getName()));
     }
 
     private boolean isEligible(ExiledCardEntry entry) {
@@ -68,5 +70,12 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
 
     private boolean isEligible(ExiledCardEntry entry, UUID sourcePermanentId) {
         return isEligible(entry) && sourcePermanentId.equals(entry.sourcePermanentId());
+    }
+
+    private BecomeCopyOfCardUntilEndOfTurnEffect copyEffect(
+            com.github.laxika.magicalvibes.model.Card card,
+            BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect sourceEffect) {
+        return new BecomeCopyOfCardUntilEndOfTurnEffect(card,
+                sourceEffect.additionalTypesOverride(), sourceEffect.additionalSubtypesOverride());
     }
 }

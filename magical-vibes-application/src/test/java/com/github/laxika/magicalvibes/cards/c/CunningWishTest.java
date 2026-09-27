@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CunningWish.class, Envelop.class, AvenFogbringer.class})
+@CardUsed({AvenFogbringer.class, CunningWish.class, Envelop.class})
 class CunningWishTest extends BaseCardTest {
 
     @Test

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MindStone;
-import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.w.WoodenSphere;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,15 +12,16 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CallOfTheWild.class, GrizzlyBears.class, MindStone.class, RedwoodTreefolk.class})
+@CardUsed({CallOfTheWild.class, GrizzlyBears.class, WoodenSphere.class})
 class CallOfTheWildTest extends BaseCardTest {
 
     @Test
     @DisplayName("Revealed creature card is put onto the battlefield")
     void creatureCardPutOntoBattlefield() {
         harness.addToBattlefield(player1, new CallOfTheWild());
-        Card creature = new RedwoodTreefolk();
+        Card creature = new GrizzlyBears();
         harness.setLibrary(player1, List.of(creature));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -34,13 +34,14 @@ class CallOfTheWildTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(creature.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(creature.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
     @DisplayName("Revealed non-creature card is put into the graveyard")
     void nonCreatureCardPutIntoGraveyard() {
         harness.addToBattlefield(player1, new CallOfTheWild());
-        Card nonCreature = new MindStone();
+        Card nonCreature = new WoodenSphere();
         harness.setLibrary(player1, List.of(nonCreature));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -91,5 +92,24 @@ class CallOfTheWildTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()))
                 .containsExactly(opponentCreature);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the ability without its full mana cost")
+    void cannotActivateWithoutFullManaCost() {
+        Card source = new CallOfTheWild();
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, source);
+        harness.setLibrary(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(p -> p.getCard().getId())
+                .containsExactly(source.getId());
     }
 }

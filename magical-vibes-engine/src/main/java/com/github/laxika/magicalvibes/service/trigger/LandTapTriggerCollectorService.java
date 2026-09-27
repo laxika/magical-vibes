@@ -93,9 +93,7 @@ public class LandTapTriggerCollectorService {
                 || !(sequence.steps().get(1) instanceof DealDamageOnLandTapEffect damage)) {
             return false;
         }
-        if (!handleAddOneOfEachManaType(match, mana, ctx)) {
-            return false;
-        }
+        handleAddOneOfEachManaType(match, mana, ctx);
 
         TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
         StackEntry entry = createLandTapDamageEntry(
@@ -340,9 +338,10 @@ public class LandTapTriggerCollectorService {
         String sourceName = sourceCard != null ? sourceCard.getName() : "Planar ability";
         // Vorinclex fires only for the controller's own lands; Mana Flare is symmetric.
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
+        if (trigger.monarchOnly() && !match.controllerId().equals(match.gameData().monarchPlayerId)) return false;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
-        if (tappedLand == null) return false;
+        if (tappedLand == null && (trigger.landFilter() != null || trigger.matchesImprintedCardName())) return false;
         if (trigger.landFilter() != null
                 && !predicateEvaluationService.matchesPermanentPredicate(
                         match.gameData(), tappedLand, trigger.landFilter())) return false;
@@ -368,7 +367,7 @@ public class LandTapTriggerCollectorService {
         }
 
         Set<ManaColor> producedColors = new java.util.LinkedHashSet<>(lt.producedColors());
-        if (producedColors.isEmpty()) {
+        if (producedColors.isEmpty() && tappedLand != null) {
             tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
                     .filter(AwardManaEffect.class::isInstance)
                     .map(AwardManaEffect.class::cast)
@@ -421,11 +420,27 @@ public class LandTapTriggerCollectorService {
                 .count();
         if (matchingLandCount == 0) return false;
 
-        Set<ManaColor> producedColors = tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
+        if (lt.producedColors().isEmpty()
+                && gameData.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            List<CardEffect> deferredMana = new ArrayList<>();
+            for (long i = 0; i < matchingLandCount; i++) {
+                deferredMana.add(new AddManaOfTypeProducedByTappedPermanentEffect());
+            }
+            StackEntry deferred = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(), lt.tappingPlayerId(),
+                    match.permanent().getCard().getName() + "'s mana ability",
+                    deferredMana, null, match.permanent().getId());
+            deferred.setNonTargeting(true);
+            gameData.pendingManaAbilityTriggers.add(deferred);
+            return true;
+        }
+
+        Set<ManaColor> producedColors = new java.util.LinkedHashSet<>(lt.producedColors());
+        tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
                 .filter(AwardManaEffect.class::isInstance)
                 .map(AwardManaEffect.class::cast)
                 .map(AwardManaEffect::color)
-                .collect(Collectors.toSet());
+                .forEach(producedColors::add);
         if (producedColors.isEmpty()) return false;
 
         ManaPool pool = gameData.playerManaPools.get(lt.tappingPlayerId());
@@ -598,6 +613,10 @@ public class LandTapTriggerCollectorService {
     private boolean handleAddManaWhenLandTapped(TriggerMatchContext match,
             AddManaWhenLandTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (trigger.sourceOnly()
+                && (match.permanent() == null || !match.permanent().getId().equals(lt.tappedLandId()))) {
+            return false;
+        }
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
         var gameData = match.gameData();

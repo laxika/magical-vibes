@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "100")
+@CardRegistration(set = "SLD", collectorNumber = "511")
 public class ObNixilisTheHateTwisted extends Card {
 
     public ObNixilisTheHateTwisted() {

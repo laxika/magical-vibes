@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.FaultRiders;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwordDancer.class, FaultRiders.class})
+@CardUsed({SwordDancer.class, GrizzlyBears.class})
 class SwordDancerTest extends BaseCardTest {
 
     @Test
@@ -37,10 +37,26 @@ class SwordDancerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target itself while attacking")
+    void canTargetItselfWhileAttacking() {
+        Permanent swordDancer = addCreatureReady(player1, new SwordDancer());
+        swordDancer.setAttacking(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, swordDancer.getId());
+        harness.passBothPriorities();
+
+        assertThat(swordDancer.getPowerModifier()).isEqualTo(-1);
+        assertThat(swordDancer.getToughnessModifier()).isZero();
+        assertThat(swordDancer.getEffectivePower()).isZero();
+        assertThat(swordDancer.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addCreatureReady(player1, new SwordDancer());
-        Permanent nonAttacker = addCreatureReady(player2, new FaultRiders());
+        Permanent nonAttacker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonAttacker.getId()))
@@ -116,7 +132,7 @@ class SwordDancerTest extends BaseCardTest {
     }
 
     private Permanent addAttackingCreature(Player player) {
-        Permanent perm = addCreatureReady(player, new FaultRiders());
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.setAttacking(true);
         return perm;
     }

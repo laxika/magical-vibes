@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BalefulStrix;
 import com.github.laxika.magicalvibes.cards.e.EdgarMarkov;
 import com.github.laxika.magicalvibes.cards.e.ExoticOrchard;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CommandTower.class, EdgarMarkov.class, ExoticOrchard.class})
+@CardUsed({CommandTower.class, BalefulStrix.class, EdgarMarkov.class, ExoticOrchard.class})
 class CommandTowerTest extends BaseCardTest {
 
     @Test

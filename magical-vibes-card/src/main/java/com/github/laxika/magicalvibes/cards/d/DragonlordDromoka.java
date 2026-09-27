@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "217")
+@CardRegistration(set = "SLD", collectorNumber = "1971")
 @CardRegistration(set = "2X2", collectorNumber = "202")
 @CardRegistration(set = "PIO", collectorNumber = "217")
 public class DragonlordDromoka extends Card {

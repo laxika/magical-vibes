@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  *
  * @param requirement which requirement to impose; see {@link CombatRequirement}
  * @param scope       whom the requirement lands on; {@link GrantScope#TARGET} targets a creature,
+ *                    {@link GrantScope#TARGETS} applies it to every target in one multi-target group,
  *                    {@link GrantScope#SELF} applies to the source permanent,
  *                    {@link GrantScope#ENCHANTED_CREATURE} applies to the source Aura's attached
  *                    creature, and {@link GrantScope#ALL_OWN_CREATURES} applies to every creature

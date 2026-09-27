@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "101")
+@CardRegistration(set = "CMM", collectorNumber = "163")
 public class Goremand extends Card {
 
     public Goremand() {

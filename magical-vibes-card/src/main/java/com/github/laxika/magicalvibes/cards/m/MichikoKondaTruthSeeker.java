@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "SOK", collectorNumber = "19")
+@CardRegistration(set = "SLD", collectorNumber = "259")
 public class MichikoKondaTruthSeeker extends Card {
 
     public MichikoKondaTruthSeeker() {

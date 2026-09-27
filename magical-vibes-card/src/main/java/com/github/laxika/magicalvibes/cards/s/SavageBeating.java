@@ -20,6 +20,8 @@ import java.util.Set;
 @CardRegistration(set = "DST", collectorNumber = "67")
 @CardRegistration(set = "MAR", collectorNumber = "26")
 @CardRegistration(set = "OMB", collectorNumber = "26")
+@CardRegistration(set = "CMM", collectorNumber = "252")
+@CardRegistration(set = "CMM", collectorNumber = "548")
 public class SavageBeating extends Card {
 
     public SavageBeating() {

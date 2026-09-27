@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "58")
+@CardRegistration(set = "SOC", collectorNumber = "114")
 public class FaerieMastermind extends Card {
 
     public FaerieMastermind() {

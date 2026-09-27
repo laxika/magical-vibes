@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 @CardRegistration(set = "8ED", collectorNumber = "264")
 @CardRegistration(set = "7ED", collectorNumber = "256")
 @CardRegistration(set = "MIR", collectorNumber = "228")
+@CardRegistration(set = "SLD", collectorNumber = "718")
+@CardRegistration(set = "SLD", collectorNumber = "719")
 public class Maro extends Card {
 
     public Maro() {

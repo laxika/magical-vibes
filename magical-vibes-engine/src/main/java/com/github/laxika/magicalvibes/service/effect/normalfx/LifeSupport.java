@@ -242,6 +242,21 @@ public class LifeSupport {
         triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
     }
 
+    public void applyRadCounters(GameData gameData, UUID playerId, int amount, String sourceName,
+                                 UUID placingPlayerId) {
+        if (amount <= 0) return;
+
+        int currentRad = gameData.playerRadCounters.getOrDefault(playerId, 0);
+        gameData.playerRadCounters.put(playerId, currentRad + amount);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " gets " + amount + " rad counter" + (amount > 1 ? "s" : "")
+                + " (" + sourceName + ").";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} gets {} rad counter(s) from {}", gameData.id, playerName, amount, sourceName);
+        triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+    }
+
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         return battlefield != null && battlefield.stream().anyMatch(permanent ->

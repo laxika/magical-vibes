@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "120")
+@CardRegistration(set = "CMM", collectorNumber = "140")
 public class CabalPatriarch extends Card {
 
     public CabalPatriarch() {

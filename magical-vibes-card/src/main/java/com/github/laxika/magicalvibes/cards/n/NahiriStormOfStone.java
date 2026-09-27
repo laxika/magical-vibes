@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "233")
+@CardRegistration(set = "SLD", collectorNumber = "533")
 public class NahiriStormOfStone extends Card {
 
     private static final PermanentPredicate TAPPED_CREATURE = new PermanentAllOfPredicate(List.of(

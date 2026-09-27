@@ -57,17 +57,8 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null && gameQueryService.isCreature(gameData, target)) {
                 target.setCantRegenerateThisTurn(true);
-            }
-        }
-
-        // Mark the target creature for exile-instead-of-die before dealing damage,
-        // so that if lethal damage destroys it immediately, the replacement applies.
-        if (e.exileInsteadOfDie()) {
-            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
-            if (!targetIsPlayer) {
-                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
-                if (targetPermanent != null && gameQueryService.isCreature(gameData, targetPermanent)) {
-                    targetPermanent.setExileInsteadOfDieThisTurn(true);
+                if (e.exileInsteadOfDie()) {
+                    target.setExileInsteadOfDieThisTurn(true);
                 }
             }
         }
@@ -112,7 +103,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         boolean targetIsCreature = false;
         boolean targetIsPlaneswalker = false;
         boolean targetIsBattle = false;
-        int toughnessBefore = 0;
+        int lethalDamageThresholdBefore = 0;
         int markedDamageBefore = 0;
         int loyaltyBefore = 0;
         int defenseBefore = 0;
@@ -123,8 +114,8 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                 targetIsCreature = gameQueryService.isCreature(gameData, excessTarget);
                 targetIsPlaneswalker = excessTarget.getCard().hasType(CardType.PLANESWALKER);
                 targetIsBattle = excessTarget.getCard().hasType(CardType.BATTLE);
-                toughnessBefore = targetIsCreature
-                        ? gameQueryService.getEffectiveToughness(gameData, excessTarget)
+                lethalDamageThresholdBefore = targetIsCreature
+                        ? gameQueryService.getLethalDamageThreshold(gameData, excessTarget)
                         : 0;
                 markedDamageBefore = excessTarget.getMarkedDamage();
                 loyaltyBefore = excessTarget.getCounterCount(CounterType.LOYALTY);
@@ -154,6 +145,12 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         } else {
             damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, e.cantRegenerate());
         }
+        if (e.exileInsteadOfDie() && damageDealt > 0 && !gameData.playerIds.contains(targetId)) {
+            Permanent damagedCreature = gameQueryService.findPermanentById(gameData, targetId);
+            if (damagedCreature != null && gameQueryService.isCreature(gameData, damagedCreature)) {
+                damagedCreature.setExileInsteadOfDieThisTurn(true);
+            }
+        }
         if (e.recordDamageDealt()) {
             entry.setEventValue(gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0) - damageBefore);
         }
@@ -161,7 +158,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             entry.setEventValue(excessTarget == null
                     ? 0
                     : damageSupport.computeExcessDamageToAnyTarget(damageDealt, targetIsCreature,
-                    toughnessBefore, markedDamageBefore, sourceHasDeathtouch,
+                    lethalDamageThresholdBefore, markedDamageBefore, sourceHasDeathtouch,
                     targetIsPlaneswalker, loyaltyBefore, targetIsBattle, defenseBefore));
         }
         gameOutcomeService.checkWinCondition(gameData);

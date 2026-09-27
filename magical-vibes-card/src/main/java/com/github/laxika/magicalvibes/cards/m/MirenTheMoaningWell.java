@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "163")
+@CardRegistration(set = "SLD", collectorNumber = "2265")
 public class MirenTheMoaningWell extends Card {
 
     public MirenTheMoaningWell() {

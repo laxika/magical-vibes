@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "94")
+@CardRegistration(set = "MH2", collectorNumber = "282")
 public class MoggSalvage extends Card {
 
     public MoggSalvage() {

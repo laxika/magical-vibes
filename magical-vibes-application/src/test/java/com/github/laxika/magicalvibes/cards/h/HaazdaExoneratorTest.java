@@ -39,7 +39,7 @@ class HaazdaExoneratorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, anthem.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target does not match the required predicate");
+                .hasMessageContaining("Target must be an Aura");
     }
 
     private void prepareMainPhase() {

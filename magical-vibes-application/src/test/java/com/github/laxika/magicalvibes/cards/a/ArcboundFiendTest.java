@@ -123,8 +123,7 @@ class ArcboundFiendTest extends BaseCardTest {
         fiend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         Permanent goblin = addCreatureReady(player2, new CrazedGoblin());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(goblin),
@@ -139,8 +138,7 @@ class ArcboundFiendTest extends BaseCardTest {
         fiend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         Permanent gargoyle = addCreatureReady(player2, new DarksteelGargoyle());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(gargoyle),
                 gd.playerBattlefields.get(player1.getId()).indexOf(fiend))));

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "MIR", collectorNumber = "312")
 @CardRegistration(set = "7ED", collectorNumber = "309")
 @CardRegistration(set = "6ED", collectorNumber = "301")
+@CardRegistration(set = "C14", collectorNumber = "252")
 public class MossDiamond extends Card {
 
     public MossDiamond() {

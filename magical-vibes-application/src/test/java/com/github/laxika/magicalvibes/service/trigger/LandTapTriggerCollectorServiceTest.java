@@ -958,5 +958,35 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
         }
+
+        @Test
+        @DisplayName("source-only form triggers only when the source land is tapped")
+        void sourceOnlyTriggersForSourceLand() {
+            Permanent sourceLand = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN, false, true);
+
+            boolean result = registry.dispatch(
+                    match(sourceLand, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player1Id, sourceLand.getId()));
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isOne();
+        }
+
+        @Test
+        @DisplayName("source-only form ignores another land")
+        void sourceOnlyIgnoresAnotherLand() {
+            Permanent sourceLand = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN, false, true);
+
+            boolean result = registry.dispatch(
+                    match(sourceLand, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isZero();
+        }
     }
 }

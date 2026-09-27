@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "137")
 @CardRegistration(set = "LCI", collectorNumber = "294")
+@CardRegistration(set = "SLD", collectorNumber = "1551")
 public class BreechesEagerPillager extends Card {
 
     public BreechesEagerPillager() {

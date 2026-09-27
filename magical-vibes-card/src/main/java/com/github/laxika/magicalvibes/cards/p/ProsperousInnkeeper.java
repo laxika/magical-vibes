@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "200")
+@CardRegistration(set = "SLD", collectorNumber = "878")
+@CardRegistration(set = "LTC", collectorNumber = "256")
 public class ProsperousInnkeeper extends Card {
 
     public ProsperousInnkeeper() {

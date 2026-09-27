@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ClockworkCondor.class, Ornithopter.class})
 class ClockworkCondorTest extends BaseCardTest {
 
     @Test
@@ -46,23 +48,38 @@ class ClockworkCondorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Blocking removes a +1/+1 counter at end of combat")
-    void blockingRemovesCounterAtEndOfCombat() {
-        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
-        attacker.setAttacking(true);
-        Permanent condor = addCreatureReady(player2, new ClockworkCondor());
+    @DisplayName("Attacking keeps its counters through combat damage")
+    void attackingKeepsCountersUntilEndOfCombat() {
+        Permanent condor = addCreatureReady(player1, new ClockworkCondor());
         condor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        addCreatureReady(player2, new Ornithopter());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
-        leaveEndOfCombat();
+        harness.passBothPriorities();
+
+        assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Blocking removes a +1/+1 counter at end of combat")
+    void blockingRemovesCounterAtEndOfCombat() {
+        addCreatureReady(player1, new Ornithopter());
+        Permanent condor = addCreatureReady(player2, new ClockworkCondor());
+        condor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+        resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }

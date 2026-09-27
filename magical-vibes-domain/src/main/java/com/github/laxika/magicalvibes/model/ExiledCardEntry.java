@@ -13,23 +13,29 @@ import java.util.UUID;
  *                          Grimoire Thief, Necropotence, ...); hidden from opponents
  */
 public record ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown,
-                              UUID exilerId, int exiledTurnNumber) {
+                              UUID exilerId, int exiledTurnNumber,
+                              int controllerTurnsTakenAtExile) {
 
     public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId) {
-        this(card, ownerId, sourcePermanentId, false, null, -1);
+        this(card, ownerId, sourcePermanentId, false, null, -1, -1);
     }
 
     public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown) {
-        this(card, ownerId, sourcePermanentId, faceDown, null, -1);
+        this(card, ownerId, sourcePermanentId, faceDown, null, -1, -1);
     }
 
     public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown,
                            UUID exilerId) {
-        this(card, ownerId, sourcePermanentId, faceDown, exilerId, -1);
+        this(card, ownerId, sourcePermanentId, faceDown, exilerId, -1, -1);
     }
 
     public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown,
                            int exiledTurnNumber) {
-        this(card, ownerId, sourcePermanentId, faceDown, null, exiledTurnNumber);
+        this(card, ownerId, sourcePermanentId, faceDown, null, exiledTurnNumber, -1);
+    }
+
+    public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown,
+                           UUID exilerId, int exiledTurnNumber) {
+        this(card, ownerId, sourcePermanentId, faceDown, exilerId, exiledTurnNumber, -1);
     }
 }

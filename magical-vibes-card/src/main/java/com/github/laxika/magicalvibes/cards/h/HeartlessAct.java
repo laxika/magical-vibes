@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "103")
 @CardRegistration(set = "IKO", collectorNumber = "91")
+@CardRegistration(set = "CMM", collectorNumber = "166")
 public class HeartlessAct extends Card {
 
     private static final PermanentPredicate CREATURE_WITHOUT_COUNTERS = new PermanentAllOfPredicate(List.of(

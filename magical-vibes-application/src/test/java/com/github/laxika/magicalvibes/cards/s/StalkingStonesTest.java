@@ -18,10 +18,9 @@ class StalkingStonesTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Stalking Stones produces colorless mana")
     void tappingProducesColorlessMana() {
-        Permanent stones = addStones(player1);
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(stones);
+        addStones(player1);
 
-        gs.tapPermanent(gd, player1, index);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
@@ -82,8 +81,7 @@ class StalkingStonesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(stones);
-        gs.tapPermanent(gd, player1, index);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gqs.isLand(gd, stones)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GiftsUngivenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "206")
+@CardRegistration(set = "SLD", collectorNumber = "1895")
 public class RealmsUncharted extends Card {
 
     public RealmsUncharted() {

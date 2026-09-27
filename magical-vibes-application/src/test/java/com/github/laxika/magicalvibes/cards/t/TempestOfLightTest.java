@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -12,13 +12,21 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({
+        TempestOfLight.class,
+        RuleOfLaw.class,
+        AngelicChorus.class,
+        GrizzlyBears.class,
+        HolyStrength.class,
+        LoxodonWarhammer.class,
+        Plains.class
+})
 class TempestOfLightTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -26,16 +34,13 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Tempest of Light");
+        assertThat(entry.getCard()).isInstanceOf(TempestOfLight.class);
     }
 
     // ===== Resolution =====
@@ -44,10 +49,7 @@ class TempestOfLightTest extends BaseCardTest {
     @DisplayName("Destroys a single enchantment")
     void destroysSingleEnchantment() {
         harness.addToBattlefield(player1, new RuleOfLaw());
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Rule of Law");
@@ -59,10 +61,7 @@ class TempestOfLightTest extends BaseCardTest {
     void destroysEnchantmentsFromBothPlayers() {
         harness.addToBattlefield(player1, new RuleOfLaw());
         harness.addToBattlefield(player2, new AngelicChorus());
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Rule of Law");
@@ -74,20 +73,14 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys auras attached to creatures")
     void destroysAurasAttachedToCreatures() {
-        GrizzlyBears bearsCard = new GrizzlyBears();
-        Permanent bears = new Permanent(bearsCard);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(bears);
 
         HolyStrength aura = new HolyStrength();
-        Permanent auraPerm = new Permanent(aura);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, aura);
         auraPerm.setAttachedTo(bears.getId());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(auraPerm);
 
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         // Aura is destroyed
@@ -102,10 +95,7 @@ class TempestOfLightTest extends BaseCardTest {
     void doesNotDestroyCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -113,13 +103,25 @@ class TempestOfLightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not destroy artifacts or lands")
+    void doesNotDestroyArtifactsOrLands() {
+        harness.addToBattlefield(player1, new LoxodonWarhammer());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player1, new RuleOfLaw());
+
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Loxodon Warhammer");
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertNotOnBattlefield(player1, "Rule of Law");
+    }
+
+    @Test
     @DisplayName("Does nothing when no enchantments on battlefield")
     void doesNothingWhenNoEnchantments() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -130,10 +132,7 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Tempest of Light goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Tempest of Light");
@@ -143,10 +142,7 @@ class TempestOfLightTest extends BaseCardTest {
     @DisplayName("Resolving logs destroyed enchantments")
     void resolvingLogsDestroyedEnchantments() {
         harness.addToBattlefield(player1, new RuleOfLaw());
-        harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

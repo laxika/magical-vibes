@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXManaReanimateCreatureWith
  * it anywhere else."</p>
  */
 @CardRegistration(set = "M19", collectorNumber = "104")
+@CardRegistration(set = "CMM", collectorNumber = "168")
 public class IsarethTheAwakener extends Card {
 
     public IsarethTheAwakener() {

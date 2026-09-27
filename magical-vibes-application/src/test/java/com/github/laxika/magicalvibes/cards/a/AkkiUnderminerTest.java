@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CloudcrestLake;
+import com.github.laxika.magicalvibes.cards.j.JukaiMessenger;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,22 +13,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AkkiUnderminer.class, JukaiMessenger.class, CloudcrestLake.class})
 class AkkiUnderminerTest extends BaseCardTest {
-
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     @Test
     @DisplayName("The damaged player chooses one of their own permanents to sacrifice")
     void damagedPlayerChoosesPermanent() {
         Permanent underminer = addCreatureReady(player1, new AkkiUnderminer());
         underminer.setAttacking(true);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent enemyLand = addPermanent(player2, new Mountain());
+        Permanent ownCreature = addCreatureReady(player1, new JukaiMessenger());
+        Permanent enemyCreature = addCreatureReady(player2, new JukaiMessenger());
+        Permanent enemyLand = harness.addToBattlefieldAndReturn(player2, new CloudcrestLake());
 
         resolveCombat();
         harness.passBothPriorities(); // resolve sacrifice trigger
@@ -45,8 +39,8 @@ class AkkiUnderminerTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player2, List.of(enemyLand.getId()));
 
-        harness.assertNotOnBattlefield(player2, "Mountain");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Cloudcrest Lake");
+        harness.assertOnBattlefield(player2, "Jukai Messenger");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -55,17 +49,16 @@ class AkkiUnderminerTest extends BaseCardTest {
     void noSacrificeWhenBlocked() {
         Permanent underminer = addCreatureReady(player1, new AkkiUnderminer());
         underminer.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new JukaiMessenger());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        Permanent enemyLand = addPermanent(player2, new Mountain());
+        harness.addToBattlefield(player2, new CloudcrestLake());
 
         resolveCombat();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertOnBattlefield(player2, "Mountain");
-        assertThat(enemyLand.getId()).isNotNull();
+        harness.assertOnBattlefield(player2, "Cloudcrest Lake");
     }
 
     @Test
@@ -77,6 +70,20 @@ class AkkiUnderminerTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The damaged player's only permanent is sacrificed without a choice")
+    void sacrificesOnlyPermanentWithoutChoice() {
+        Permanent underminer = addCreatureReady(player1, new AkkiUnderminer());
+        underminer.setAttacking(true);
+        harness.addToBattlefield(player2, new CloudcrestLake());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Cloudcrest Lake");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

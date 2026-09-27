@@ -23,7 +23,7 @@ public class WandOfTheElements extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Sacrifice an Island"),
+                                new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Sacrifice an Island", false),
                         new CreateTokenEffect("Elemental", 2, 2, CardColor.BLUE,
                                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.FLYING), Set.of())
                 ),
@@ -36,7 +36,7 @@ public class WandOfTheElements extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), "Sacrifice a Mountain"),
+                                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), "Sacrifice a Mountain", false),
                         new CreateTokenEffect("Elemental", 3, 3, CardColor.RED,
                                 List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of())
                 ),

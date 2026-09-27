@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "162")
+@CardRegistration(set = "C14", collectorNumber = "294")
 public class Everglades extends Card {
 
     private static final PermanentAllOfPredicate UNTAPPED_SWAMP = new PermanentAllOfPredicate(List.of(

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ClockworkBeetle.class, YotianSoldier.class})
 class ClockworkBeetleTest extends BaseCardTest {
 
     @Test
@@ -46,23 +48,38 @@ class ClockworkBeetleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking keeps its counters through combat damage")
+    void attackingKeepsCountersUntilEndOfCombat() {
+        Permanent beetle = addCreatureReady(player1, new ClockworkBeetle());
+        beetle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        addCreatureReady(player2, new YotianSoldier());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Blocking removes a +1/+1 counter at end of combat")
     void blockingRemovesCounterAtEndOfCombat() {
-        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
+        Permanent attacker = addCreatureReady(player1, new YotianSoldier());
         attacker.setAttacking(true);
         Permanent beetle = addCreatureReady(player2, new ClockworkBeetle());
         beetle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
 
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
-        leaveEndOfCombat();
+        resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

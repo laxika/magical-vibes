@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "102")
+@CardRegistration(set = "SLD", collectorNumber = "206")
+@CardRegistration(set = "SLD", collectorNumber = "1798")
 public class ExquisiteBlood extends Card {
 
     public ExquisiteBlood() {

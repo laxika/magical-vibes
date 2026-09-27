@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "2174")
 @CardRegistration(set = "MH1", collectorNumber = "214")
 public class Soulherder extends Card {
 

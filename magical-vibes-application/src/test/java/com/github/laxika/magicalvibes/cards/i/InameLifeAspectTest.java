@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HundredTalonKami;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.r.RendFlesh;
+import com.github.laxika.magicalvibes.cards.r.RendSpirit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,18 +18,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InameLifeAspect.class, RendSpirit.class, RendFlesh.class,
+        LanternKami.class, HundredTalonKami.class})
 class InameLifeAspectTest extends BaseCardTest {
 
-    /** Kills Iname with a Wrath of God cast by player 1 and resolves it. */
+    /** Kills Iname with a Rend Spirit cast by player 1 and resolves it. */
     private Card killIname() {
-        harness.addToBattlefield(player1, new InameLifeAspect());
-        Permanent iname = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Card inameCard = iname.getCard();
+        Permanent inamePermanent = harness.addToBattlefieldAndReturn(player1, new InameLifeAspect());
+        Card inameCard = inamePermanent.getCard();
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, inamePermanent.getId());
         return inameCard;
     }
 
@@ -56,6 +57,56 @@ class InameLifeAspectTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing no Spirit cards still allows Iname to exile itself")
+    void choosingNoTargetsStillExilesIname() {
+        Card inameCard = killIname();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(inameCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(inameCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Targeting Iname itself does not return it after the exile")
+    void targetingInameDoesNotReturnIt() {
+        Card inameCard = killIname();
+
+        harness.handleMultipleCardsChosen(player1, List.of(inameCard.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(inameCard.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(inameCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Moving Iname out of the graveyard before resolution prevents the return")
+    void leavingGraveyardBeforeResolutionPreventsReturn() {
+        Card spirit = new LanternKami();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        Card inameCard = killIname();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.setGraveyard(player1, List.of(spirit));
+        harness.setHand(player1, List.of(inameCard));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .contains(spirit.getId());
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(spirit.getId()));
+    }
+
+    @Test
     @DisplayName("Declining the exile leaves Iname and the targeted Spirit in the graveyard")
     void decliningExileReturnsNothing() {
         Card lanternKami = new LanternKami();
@@ -77,9 +128,11 @@ class InameLifeAspectTest extends BaseCardTest {
     @Test
     @DisplayName("Only Spirit cards in your graveyard are legal targets")
     void nonSpiritCardIsNotALegalTarget() {
-        Card bears = new GrizzlyBears();
+        Card nonSpirit = new RendFlesh();
         Card lanternKami = new LanternKami();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears, lanternKami)));
+        Card opponentSpirit = new HundredTalonKami();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(nonSpirit, lanternKami)));
+        harness.setGraveyard(player2, List.of(opponentSpirit));
 
         Card inameCard = killIname();
 
@@ -88,6 +141,6 @@ class InameLifeAspectTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         // Iname is itself a Spirit card in the graveyard, so it is a legal target too.
         assertThat(choice.validCardIds()).contains(lanternKami.getId(), inameCard.getId());
-        assertThat(choice.validCardIds()).doesNotContain(bears.getId());
+        assertThat(choice.validCardIds()).doesNotContain(nonSpirit.getId(), opponentSpirit.getId());
     }
 }

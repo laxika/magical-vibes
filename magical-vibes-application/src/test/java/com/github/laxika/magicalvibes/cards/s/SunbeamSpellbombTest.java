@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(SunbeamSpellbomb.class)
 class SunbeamSpellbombTest extends BaseCardTest {
 
     @Test
@@ -23,6 +25,20 @@ class SunbeamSpellbombTest extends BaseCardTest {
         harness.assertLife(player1, 15);
         harness.assertNotOnBattlefield(player1, "Sunbeam Spellbomb");
         harness.assertInGraveyard(player1, "Sunbeam Spellbomb");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid when the white ability is activated")
+    void sacrificeIsPaidAsActivationCost() {
+        harness.addToBattlefield(player1, new SunbeamSpellbomb());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Sunbeam Spellbomb");
+        harness.assertInGraveyard(player1, "Sunbeam Spellbomb");
+
+        harness.passBothPriorities();
     }
 
     @Test

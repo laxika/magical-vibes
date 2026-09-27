@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenScorcher;
+import com.github.laxika.magicalvibes.cards.e.EarsplittingRats;
 import com.github.laxika.magicalvibes.cards.k.KrosanWayfarer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TreacherousVampire.class, DwarvenScorcher.class, KrosanWayfarer.class})
+@CardUsed({DwarvenScorcher.class, EarsplittingRats.class, KrosanWayfarer.class, TreacherousVampire.class})
 class TreacherousVampireTest extends BaseCardTest {
 
     @Test
@@ -160,5 +161,66 @@ class TreacherousVampireTest extends BaseCardTest {
             cards.add(new KrosanWayfarer());
         }
         harness.setGraveyard(player, cards);
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself when it blocks and its choice is declined")
+    void sacrificesWhenBlockChoiceIsDeclined() {
+        Permanent attacker = addCreatureReady(player1, new EarsplittingRats());
+        attacker.setAttacking(true);
+        Permanent vampire = addCreatureReady(player2, new TreacherousVampire());
+        Card cardInGraveyard = new EarsplittingRats();
+        harness.setGraveyard(player2, List.of(cardInGraveyard));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(vampire),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(vampire);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(cardInGraveyard, vampire.getCard());
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself when it attacks with no card in its graveyard")
+    void sacrificesWhenAttackingWithEmptyGraveyard() {
+        Permanent vampire = addCreatureReady(player1, new TreacherousVampire());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(vampire);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vampire.getCard());
+    }
+
+    @Test
+    @DisplayName("Loses threshold abilities after exiling its seventh graveyard card")
+    void losesThresholdAbilitiesAfterExilingSeventhGraveyardCard() {
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            graveyard.add(new EarsplittingRats());
+        }
+        harness.setGraveyard(player1, graveyard);
+        Permanent vampire = addCreatureReady(player1, new TreacherousVampire());
+
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(6);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(4);
+
+        vampire.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(vampire);
+        harness.assertLife(player1, 20);
     }
 }

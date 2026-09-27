@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "247")
+@CardRegistration(set = "SLD", collectorNumber = "353")
 public class StensiaBloodhall extends Card {
 
     public StensiaBloodhall() {

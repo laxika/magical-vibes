@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HaplessResearcher.class, BorderPatrol.class, SuntailHawk.class})
+@CardUsed({BorderPatrol.class, HaplessResearcher.class, SuntailHawk.class})
 class HaplessResearcherTest extends BaseCardTest {
 
     @Test

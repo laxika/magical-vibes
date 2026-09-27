@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -19,6 +19,6 @@ public class SeedTheLand extends Card {
                 "Snake", 1, 1, CardColor.GREEN, List.of(CardSubtype.SNAKE), Set.of(), Set.of());
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, snake);
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
-                new CreateTokenForTargetPlayerEffect(snake));
+                new CreateTokenForTriggeringPlayerEffect(snake));
     }
 }

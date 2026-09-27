@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "229")
+@CardRegistration(set = "SLD", collectorNumber = "529")
 public class DovinHandOfControl extends Card {
 
     public DovinHandOfControl() {

@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "61")
 @CardRegistration(set = "UMA", collectorNumber = "49")
 @CardRegistration(set = "2X2", collectorNumber = "45")
+@CardRegistration(set = "CMM", collectorNumber = "87")
 public class DerangedAssistant extends Card {
 
     public DerangedAssistant() {

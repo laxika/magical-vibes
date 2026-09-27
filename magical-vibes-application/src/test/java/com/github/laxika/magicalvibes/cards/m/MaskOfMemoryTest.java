@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MaskOfMemory.class, YotianSoldier.class, Forest.class})
 class MaskOfMemoryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Equipping Mask of Memory attaches it to a creature")
     void equippingAttachesToCreature() {
         Permanent mask = addMaskReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -32,11 +33,11 @@ class MaskOfMemoryTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage with Mask of Memory draws two cards and discards one when accepted")
     void acceptedCombatDamageTriggerLoots() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        setDeck(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -51,7 +52,7 @@ class MaskOfMemoryTest extends BaseCardTest {
     @Test
     @DisplayName("Declining Mask of Memory's trigger does not draw or discard")
     void decliningCombatDamageTriggerDoesNothing() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -68,12 +69,12 @@ class MaskOfMemoryTest extends BaseCardTest {
     @Test
     @DisplayName("Mask of Memory does not trigger when equipped creature deals combat damage only to a creature")
     void combatDamageToCreatureDoesNotTrigger() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new YotianSoldier());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -90,10 +91,5 @@ class MaskOfMemoryTest extends BaseCardTest {
         permanent.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
-    }
-
-    private void setDeck(Player player, List<? extends Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }

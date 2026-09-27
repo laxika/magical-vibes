@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "106")
+@CardRegistration(set = "C14", collectorNumber = "203")
 public class JoragaWarcaller extends Card {
 
     public JoragaWarcaller() {

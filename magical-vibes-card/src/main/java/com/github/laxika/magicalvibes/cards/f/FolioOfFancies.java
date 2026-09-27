@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeE
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "46")
+@CardRegistration(set = "SLD", collectorNumber = "2072")
 public class FolioOfFancies extends Card {
 
     public FolioOfFancies() {

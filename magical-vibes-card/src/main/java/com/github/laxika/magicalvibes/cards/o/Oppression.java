@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "7ED", collectorNumber = "152")
 @CardRegistration(set = "USG", collectorNumber = "143")
+@CardRegistration(set = "SLD", collectorNumber = "1424")
 @CardRegistration(set = "WOT", collectorNumber = "32")
 public class Oppression extends Card {
 

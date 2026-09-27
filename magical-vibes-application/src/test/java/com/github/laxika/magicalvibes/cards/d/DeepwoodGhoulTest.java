@@ -39,6 +39,20 @@ class DeepwoodGhoulTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate its non-tap ability with summoning sickness")
+    void canActivateWithSummoningSickness() {
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new DeepwoodGhoul());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+        assertThat(ghoul.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Deepwood Ghoul from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         // Deepwood Ghoul (2/1) with a regen shield blocks Grizzly Bears (2/2)

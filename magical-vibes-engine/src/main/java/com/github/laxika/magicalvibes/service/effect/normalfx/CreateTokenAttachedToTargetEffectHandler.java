@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     private final AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +46,9 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             case OPPONENT -> targetControllerId != null && !entry.getControllerId().equals(targetControllerId);
             case ANY -> true;
         };
-        if (target == null || !gameQueryService.isCreature(gameData, target) || !targetControllerMatches) {
+        if (target == null || !targetControllerMatches
+                || e.targetFilter() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.targetFilter())) {
             return;
         }
 

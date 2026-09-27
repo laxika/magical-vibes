@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HarvesterDruid.class, Forest.class, Island.class})
+@CardUsed({Forest.class, HarvesterDruid.class, Island.class})
 class HarvesterDruidTest extends BaseCardTest {
 
     @Test
@@ -100,5 +100,17 @@ class HarvesterDruidTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A tapped land still contributes a color it could produce")
+    void tappedLandStillContributesItsColor() {
+        Permanent druid = addCreatureReady(player1, new HarvesterDruid());
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }

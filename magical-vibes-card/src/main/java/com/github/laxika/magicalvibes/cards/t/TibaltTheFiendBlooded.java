@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "161")
 @CardRegistration(set = "DDK", collectorNumber = "41")
+@CardRegistration(set = "SLD", collectorNumber = "537")
 public class TibaltTheFiendBlooded extends Card {
 
     public TibaltTheFiendBlooded() {

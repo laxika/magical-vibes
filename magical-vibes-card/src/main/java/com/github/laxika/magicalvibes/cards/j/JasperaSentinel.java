@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "178")
+@CardRegistration(set = "SLD", collectorNumber = "770")
 public class JasperaSentinel extends Card {
 
     public JasperaSentinel() {

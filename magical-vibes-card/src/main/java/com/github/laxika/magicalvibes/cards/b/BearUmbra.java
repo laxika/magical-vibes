@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "177")
+@CardRegistration(set = "SLD", collectorNumber = "1723")
 public class BearUmbra extends Card {
 
     public BearUmbra() {

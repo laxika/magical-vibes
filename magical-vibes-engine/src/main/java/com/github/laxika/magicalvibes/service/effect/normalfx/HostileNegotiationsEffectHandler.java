@@ -51,6 +51,9 @@ public class HostileNegotiationsEffectHandler implements NormalEffectHandlerBean
             gameData.addToExile(controllerId, card, null, true);
         }
 
+        if (!pile1.isEmpty() || !pile2.isEmpty()) {
+            gameData.recordPileGroupingOrGuess(entry);
+        }
         gameData.queueInteraction(new PendingHostileNegotiations(controllerId, opponentId, pile1, pile2));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " exiles two piles face down with Hostile Negotiations."));

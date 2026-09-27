@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "342")
 @CardRegistration(set = "SLX", collectorNumber = "5")
 public class HargildeKindlyRunechanter extends Card {
 

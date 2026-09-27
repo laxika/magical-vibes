@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "229")
+@CardRegistration(set = "SLD", collectorNumber = "702")
+@CardRegistration(set = "SLD", collectorNumber = "1008")
 public class Bearscape extends Card {
 
     public Bearscape() {

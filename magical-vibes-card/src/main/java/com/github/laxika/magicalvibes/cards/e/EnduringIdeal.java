@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOK", collectorNumber = "9")
+@CardRegistration(set = "SLD", collectorNumber = "887")
 public class EnduringIdeal extends Card {
 
     public EnduringIdeal() {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
+import com.github.laxika.magicalvibes.cards.b.BookBurning;
 import com.github.laxika.magicalvibes.cards.i.IronshellBeetle;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LivingWish.class, IronshellBeetle.class, KrosanVerge.class, MentalNote.class})
+@CardUsed({BattlewiseAven.class, BookBurning.class, IronshellBeetle.class, KrosanVerge.class, LivingWish.class, MentalNote.class})
 class LivingWishTest extends BaseCardTest {
 
     @Test
@@ -105,5 +107,24 @@ class LivingWishTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
         harness.handleCardChosen(player1, index);
+    }
+
+    @Test
+    @DisplayName("Does not offer a matching card owned by an opponent")
+    void searchesOnlyControllerOutsideTheGameCards() {
+        Card ownSorcery = new BookBurning();
+        Card opponentCreature = new BattlewiseAven();
+        setSideboardForJudReview(ownSorcery);
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentCreature)));
+
+        LivingWish wish = castLivingWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
+    private void setSideboardForJudReview(Card... cards) {
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(cards)));
     }
 }

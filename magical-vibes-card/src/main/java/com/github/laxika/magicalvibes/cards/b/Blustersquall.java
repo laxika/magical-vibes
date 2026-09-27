@@ -23,6 +23,7 @@ import java.util.List;
  * chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "30")
+@CardRegistration(set = "C15", collectorNumber = "89")
 public class Blustersquall extends Card {
 
     public Blustersquall() {

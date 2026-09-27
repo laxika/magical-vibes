@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "29")
+@CardRegistration(set = "C15", collectorNumber = "100")
 public class Plaxmanta extends Card {
 
     public Plaxmanta() {

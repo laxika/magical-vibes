@@ -55,7 +55,12 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
 
         if (graveyardOwnerId != null) {
-            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+            UUID sourcePermanentId = e.trackWithSource() ? entry.getSourcePermanentId() : null;
+            if (sourcePermanentId == null) {
+                exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+            } else {
+                exileService.exileCard(gameData, graveyardOwnerId, targetCard, sourcePermanentId);
+            }
         }
 
         UUID controllerId = entry.getControllerId();
@@ -97,7 +102,9 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
             }
         }
 
-        if (!isCreatureCard && e.noncreatureCardsToDraw() > 0) {
+        if (isCreatureCard && e.creatureCardsToDraw() > 0) {
+            insertDrawEffect(entry, effect, e.creatureCardsToDraw());
+        } else if (!isCreatureCard && e.noncreatureCardsToDraw() > 0) {
             insertDrawEffect(entry, effect, e.noncreatureCardsToDraw());
         }
     }

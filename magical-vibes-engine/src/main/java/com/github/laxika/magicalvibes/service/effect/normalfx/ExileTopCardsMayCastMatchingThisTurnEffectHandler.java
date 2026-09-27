@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -33,7 +36,9 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileTopCardsMayCastMatchingThisTurnEffect e = (ExileTopCardsMayCastMatchingThisTurnEffect) effect;
-        if (e.count() <= 0) {
+        int count = amountEvaluationService.evaluate(gameData, e.count(),
+                AmountContext.forStackEntry(entry, null));
+        if (count <= 0) {
             return;
         }
 
@@ -49,13 +54,12 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
 
         List<String> castableNames = new ArrayList<>();
         List<Card> exiled = new ArrayList<>();
-        for (int i = 0; i < e.count() && !deck.isEmpty(); i++) {
+        for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
             exiled.add(topCard);
 
-            if (predicateEvaluationService.matchesCardPredicate(
-                    topCard, e.filter(), null, gameData, controllerId)) {
+            if (predicateEvaluationService.matchesCardPredicate(topCard, e.filter(), null)) {
                 gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
                 gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
                 if (e.withoutPayingManaCost()) {

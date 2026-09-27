@@ -294,7 +294,7 @@ class TargetValidationServiceSpecTest {
                 List.of(new GraveyardCreatureEffect(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
                 new TargetValidationContext(
                         gd, land.getId(), Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
-                .contains("Target card does not match the required predicate");
+                .contains("Target card must be a creature card");
     }
 
     @Test

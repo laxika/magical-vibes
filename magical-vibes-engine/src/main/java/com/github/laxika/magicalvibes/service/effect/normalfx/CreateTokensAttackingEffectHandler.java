@@ -36,10 +36,15 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        UUID controllerId = create.useTriggeringPermanentController()
+                ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
+        if (controllerId == null) {
+            controllerId = entry.getControllerId();
+        }
         int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, entry.getControllerId(), create.amount(), create.tokenEffect().subtypes(), create.tokenEffect().primaryType() == CardType.CREATURE);
+                gameData, controllerId, create.amount(), create.tokenEffect().subtypes(), create.tokenEffect().primaryType() == CardType.CREATURE);
         PermanentChoiceContext.CreateTokensAttacking context = new PermanentChoiceContext.CreateTokensAttacking(
-                entry.getControllerId(), entry.getCard(), create.tokenEffect(), create.amount(), tokenCount,
+                controllerId, entry.getCard(), create.tokenEffect(), create.amount(), tokenCount,
                 create.sacrificeAtEndStep(), List.of());
         beginTargetChoice(gameData, context);
     }
@@ -57,6 +62,7 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
                 context.controllerId(),
                 planeswalkerIds,
                 List.of(opponentId),
-                "Choose the player or planeswalker for the next Soldier token to attack.");
+                "Choose the player or planeswalker for the next " + context.tokenEffect().tokenName()
+                        + " token to attack.");
     }
 }

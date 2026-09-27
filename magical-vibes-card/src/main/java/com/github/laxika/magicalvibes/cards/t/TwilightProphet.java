@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndDrainOpponentsEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "88")
+@CardRegistration(set = "SLD", collectorNumber = "1304")
+@CardRegistration(set = "CMM", collectorNumber = "193")
+@CardRegistration(set = "CMM", collectorNumber = "524")
 public class TwilightProphet extends Card {
 
     public TwilightProphet() {

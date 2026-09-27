@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "244")
+@CardRegistration(set = "C14", collectorNumber = "227")
 public class WrensRunPackmaster extends Card {
 
     public WrensRunPackmaster() {

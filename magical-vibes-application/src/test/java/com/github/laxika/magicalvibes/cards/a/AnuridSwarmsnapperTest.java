@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
 import com.github.laxika.magicalvibes.cards.b.Brawn;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,10 +15,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnuridSwarmsnapper.class, Brawn.class, SuntailHawk.class})
+@CardUsed({AnuridSwarmsnapper.class, BattlewiseAven.class, Brawn.class, SuntailHawk.class})
 class AnuridSwarmsnapperTest extends BaseCardTest {
 
     @Test
@@ -141,5 +143,26 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
             attacker.setAttacking(true);
             attacker.setAttackTarget(player2.getId());
         }
+    }
+
+    @Test
+    @DisplayName("Reach lets Anurid Swarmsnapper block a creature with flying")
+    void blocksFlyingCreatureWithReach() {
+        Permanent swarmsnapper = addSwarmsnapper();
+        addAttackerForJudReview(new BattlewiseAven());
+
+        prepareDeclareBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, 0)));
+
+        assertThat(swarmsnapper.getBlockingTargets()).containsExactly(0);
+    }
+
+    private Permanent addAttackerForJudReview(Card card) {
+        Permanent attacker = addCreatureReady(player1, card);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        return attacker;
     }
 }

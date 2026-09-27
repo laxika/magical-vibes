@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringNinjutsuAbilityCond
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "234")
+@CardRegistration(set = "SLD", collectorNumber = "2283")
 public class SatoruUmezawa extends Card {
 
     public SatoruUmezawa() {

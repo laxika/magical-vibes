@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MMQ", collectorNumber = "87")
 @CardRegistration(set = "DDT", collectorNumber = "15")
+@CardRegistration(set = "SLD", collectorNumber = "1272")
 public class Misdirection extends Card {
 
     public Misdirection() {

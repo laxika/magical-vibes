@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "74")
+@CardRegistration(set = "SLD", collectorNumber = "1502")
 public class SearchForAzcanta extends Card {
 
     public SearchForAzcanta() {

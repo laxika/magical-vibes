@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ANB", collectorNumber = "102")
+@CardRegistration(set = "CMM", collectorNumber = "315")
 public class RampagingBrontodon extends Card {
 
     public RampagingBrontodon() {

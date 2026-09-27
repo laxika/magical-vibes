@@ -15,9 +15,11 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "141")
 @CardRegistration(set = "MM3", collectorNumber = "146")
+@CardRegistration(set = "SLD", collectorNumber = "1438")
 @CardRegistration(set = "GK1", collectorNumber = "57")
 @CardRegistration(set = "TSR", collectorNumber = "370")
 @CardRegistration(set = "OTP", collectorNumber = "34")
+@CardRegistration(set = "SLD", collectorNumber = "2468")
 public class AbruptDecay extends Card {
 
     public AbruptDecay() {

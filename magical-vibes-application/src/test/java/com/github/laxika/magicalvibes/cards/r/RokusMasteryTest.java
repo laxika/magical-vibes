@@ -39,11 +39,12 @@ class RokusMasteryTest extends BaseCardTest {
         harness.castInstant(player1, 0, 4, harness.getPermanentId(player2, "Hill Giant"));
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Hill Giant");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
 
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+
+        harness.assertInGraveyard(player2, "Hill Giant");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

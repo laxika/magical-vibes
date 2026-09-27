@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "78")
+@CardRegistration(set = "SLD", collectorNumber = "729")
+@CardRegistration(set = "SLD", collectorNumber = "1247")
+@CardRegistration(set = "SLD", collectorNumber = "2307")
 public class BraidOfFire extends Card {
 
     public BraidOfFire() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
 
@@ -78,10 +80,12 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(controllerId))
                 .toList();
-        UUID opponentId = e.targetedSeparator()
-                ? entry.getTargetId()
-                : opponentIds.size() == 1 ? opponentIds.getFirst() : null;
-        if (opponentIds.isEmpty() || e.targetedSeparator() && opponentId == null) {
+        UUID opponentId = e.defendingPlayerChoosesPile()
+                ? defendingPlayerId(gameData, entry)
+                : e.targetedSeparator()
+                        ? entry.getTargetId()
+                        : opponentIds.size() == 1 ? opponentIds.getFirst() : null;
+        if (opponentId == null || opponentId.equals(controllerId) || !gameData.playerIds.contains(opponentId)) {
             // No opponent to separate the piles — put the revealed cards into the controller's hand.
             for (Card card : revealedCards) {
                 gameData.addCardToHand(controllerId, card);
@@ -89,11 +93,13 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
                 List.of(), revealedCards, cardOwners, List.of(), List.of(), e.disposition(),
                 !e.controllerSeparates()));
 
-        if (!e.targetedSeparator() && e.controllerSeparates() && e.faceDownPile() && opponentIds.size() > 1) {
+        if (!e.defendingPlayerChoosesPile() && !e.targetedSeparator()
+                && e.controllerSeparates() && e.faceDownPile() && opponentIds.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CuratorOpponentChoice());
             playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponentIds,
                     "Choose an opponent to choose a pile for Curator of Destinies.");
@@ -110,5 +116,15 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
             prompt = "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).";
         }
         playerInputService.beginMultiGraveyardChoice(gameData, separatorId, revealedCards, revealedCards.size(), prompt);
+    }
+
+    private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

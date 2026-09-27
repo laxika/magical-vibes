@@ -8,12 +8,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -42,6 +46,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,7 +72,7 @@ class EtbTriggerServiceTest {
         service = new EtbTriggerService(gameQueryService, gameLogService, playerInputService,
                 triggerCollectionService, graveyardTargetingService, etbTokenTargetService,
                 new EtbEffectResolver(conditionEvaluationService), amountEvaluationService,
-                predicateEvaluationService, new GraveyardTargetingSupport());
+                conditionEvaluationService, predicateEvaluationService, new GraveyardTargetingSupport());
         controllerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", controllerId, "Player");
         gameData.orderedPlayerIds.add(controllerId);
@@ -90,6 +96,23 @@ class EtbTriggerServiceTest {
 
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(3);
+    }
+
+    @Test
+    void preservesWaterbendPaymentOnEtbTrigger() {
+        Card creature = new Card();
+        creature.setName("Waterbend creature");
+        creature.setType(CardType.CREATURE);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
+        Permanent permanent = new Permanent(creature);
+        permanent.setWaterbendCostPaid(true);
+        gameData.playerBattlefields.get(controllerId).add(permanent);
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        assertThat(gameData.stack).singleElement().satisfies(entry ->
+                assertThat(entry.isWaterbendCostPaid()).isTrue());
     }
 
     @Test
@@ -191,5 +214,26 @@ class EtbTriggerServiceTest {
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
 
         assertThat(gameData.stack).isEmpty();
+    }
+
+    @Test
+    void triggeredModalEvaluatesAdditionalModesConditionAtEntry() {
+        Card creature = new Card();
+        creature.setName("Delirium Modal Creature");
+        creature.setType(CardType.CREATURE);
+        ChooseOneEffect modal = ChooseOneEffect.oneOrMoreWhen(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw one", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw another", new DrawCardEffect(1))),
+                new Delirium());
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ChooseOneAtTriggerTimeEffect(modal));
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        PermanentChoiceContext.TriggeredModalTrigger pending =
+                gameData.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(pending.effect().choicesMax()).isEqualTo(2);
     }
 }

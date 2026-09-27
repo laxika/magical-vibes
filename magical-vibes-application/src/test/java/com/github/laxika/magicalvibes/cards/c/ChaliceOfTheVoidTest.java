@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.m.MyrRetriever;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChaliceOfTheVoid.class, MyrRetriever.class, Ornithopter.class})
 class ChaliceOfTheVoidTest extends BaseCardTest {
 
     @Test
@@ -39,17 +41,16 @@ class ChaliceOfTheVoidTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        Card spell = new GrizzlyBears();
+        MyrRetriever spell = new MyrRetriever();
         harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(isOnBattlefield(player2, spell)).isFalse();
-        assertThat(isInGraveyard(player2, spell)).isTrue();
+        harness.assertNotOnBattlefield(player2, "Myr Retriever");
+        harness.assertInGraveyard(player2, "Myr Retriever");
         assertThat(chalice.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
@@ -60,17 +61,16 @@ class ChaliceOfTheVoidTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        Card spell = new GrizzlyBears();
+        MyrRetriever spell = new MyrRetriever();
         harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(isOnBattlefield(player2, spell)).isTrue();
-        assertThat(isInGraveyard(player2, spell)).isFalse();
+        harness.assertOnBattlefield(player2, "Myr Retriever");
+        harness.assertNotInGraveyard(player2, "Myr Retriever");
     }
 
     @Test
@@ -78,10 +78,9 @@ class ChaliceOfTheVoidTest extends BaseCardTest {
     void triggerUsesCounterCountWhenSpellWasCast() {
         Permanent chalice = addChalice(player1, 2);
 
-        Card spell = new GrizzlyBears();
+        MyrRetriever spell = new MyrRetriever();
         harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -91,8 +90,63 @@ class ChaliceOfTheVoidTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(isOnBattlefield(player2, spell)).isFalse();
-        assertThat(isInGraveyard(player2, spell)).isTrue();
+        harness.assertNotOnBattlefield(player2, "Myr Retriever");
+        harness.assertInGraveyard(player2, "Myr Retriever");
+    }
+
+    @Test
+    @DisplayName("Counters a matching spell cast by its controller")
+    void countersMatchingSpellCastByController() {
+        Permanent chalice = addChalice(player1, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        MyrRetriever spell = new MyrRetriever();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Myr Retriever");
+        harness.assertInGraveyard(player1, "Myr Retriever");
+        assertThat(chalice.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counters a zero-mana spell when it has no charge counters")
+    void countersZeroManaSpellWithNoChargeCounters() {
+        addChalice(player1, 0);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Ornithopter()));
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Uses both X symbols when checking a Chalice spell's mana value")
+    void usesBothXSymbolsForManaValue() {
+        addChalice(player1, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new ChaliceOfTheVoid()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player2, 0, 1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Chalice of the Void");
+        harness.assertInGraveyard(player2, "Chalice of the Void");
     }
 
     private Permanent addChalice(Player player, int chargeCounters) {
@@ -101,13 +155,4 @@ class ChaliceOfTheVoidTest extends BaseCardTest {
         return chalice;
     }
 
-    private boolean isOnBattlefield(Player player, Card card) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
-    }
-
-    private boolean isInGraveyard(Player player, Card card) {
-        return gd.playerGraveyards.get(player.getId()).stream()
-                .anyMatch(graveyardCard -> graveyardCard.getId().equals(card.getId()));
-    }
 }

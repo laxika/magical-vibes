@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.c.ChainLightning;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PetraSphinx.class, ChainLightning.class})
 class PetraSphinxTest extends BaseCardTest {
 
     @Test
@@ -34,13 +35,13 @@ class PetraSphinxTest extends BaseCardTest {
     void correctNameGoesToHand() {
         addReadySphinx(player1);
 
-        Card topCard = createNamedCard("Lightning Bolt");
-        gd.playerDecks.get(player2.getId()).addFirst(topCard);
+        ChainLightning topCard = new ChainLightning();
+        harness.setLibrary(player2, List.of(topCard));
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lightning Bolt");
+        harness.handleListChoice(player2, "Chain Lightning");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card.getId().equals(topCard.getId()));
@@ -53,13 +54,13 @@ class PetraSphinxTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addReadySphinx(player1);
 
-        Card topCard = createNamedCard("Grizzly Bears");
-        gd.playerDecks.get(player2.getId()).addFirst(topCard);
+        ChainLightning topCard = new ChainLightning();
+        harness.setLibrary(player2, List.of(topCard));
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lightning Bolt");
+        harness.handleListChoice(player2, "Petra Sphinx");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card.getId().equals(topCard.getId()));
@@ -73,32 +74,39 @@ class PetraSphinxTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addReadySphinx(player1);
 
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lightning Bolt");
+        harness.handleListChoice(player2, "Petra Sphinx");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private Permanent addReadySphinx(Player player) {
-        PetraSphinx card = new PetraSphinx();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("The controller may be the target and name a matching card from their library")
+    void controllerCanBeTargeted() {
+        addReadySphinx(player1);
+
+        ChainLightning topCard = new ChainLightning();
+        harness.setLibrary(player1, List.of(topCard));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(interaction.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, "Chain Lightning");
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(topCard.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).noneMatch(card -> card.getId().equals(topCard.getId()));
     }
 
-    private static Card createNamedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.RED);
-        return card;
+    private void addReadySphinx(Player player) {
+        addCreatureReady(player, new PetraSphinx());
     }
 }

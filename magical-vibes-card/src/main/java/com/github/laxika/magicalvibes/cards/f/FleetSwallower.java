@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "57")
+@CardRegistration(set = "SLD", collectorNumber = "316")
+@CardRegistration(set = "SLD", collectorNumber = "760")
 public class FleetSwallower extends Card {
 
     public FleetSwallower() {

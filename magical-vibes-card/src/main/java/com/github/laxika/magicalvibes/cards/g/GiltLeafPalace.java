@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 
 
 @CardRegistration(set = "LRW", collectorNumber = "268")
+@CardRegistration(set = "SLD", collectorNumber = "1322")
 public class GiltLeafPalace extends Card {
 
     public GiltLeafPalace() {

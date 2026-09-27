@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "168")
 @CardRegistration(set = "V16", collectorNumber = "15")
+@CardRegistration(set = "SLD", collectorNumber = "413")
 public class Unmask extends Card {
 
     public Unmask() {

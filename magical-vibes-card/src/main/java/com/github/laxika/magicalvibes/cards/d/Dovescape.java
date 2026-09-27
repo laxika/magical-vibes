@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "143")
+@CardRegistration(set = "SLD", collectorNumber = "95")
 @CardRegistration(set = "GK2", collectorNumber = "11")
 public class Dovescape extends Card {
 

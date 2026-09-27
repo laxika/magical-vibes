@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "212")
+@CardRegistration(set = "CMM", collectorNumber = "343")
+@CardRegistration(set = "CMM", collectorNumber = "582")
+@CardRegistration(set = "CMM", collectorNumber = "683")
 public class KykarWindsFury extends Card {
 
     public KykarWindsFury() {

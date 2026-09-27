@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "179")
+@CardRegistration(set = "SLD", collectorNumber = "2014")
 public class AshayaSoulOfTheWild extends Card {
 
     public AshayaSoulOfTheWild() {

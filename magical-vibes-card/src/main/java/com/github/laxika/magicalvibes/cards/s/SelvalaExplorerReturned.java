@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ParleyEffect;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "260")
+@CardRegistration(set = "SLD", collectorNumber = "1914")
 public class SelvalaExplorerReturned extends Card {
 
     public SelvalaExplorerReturned() {

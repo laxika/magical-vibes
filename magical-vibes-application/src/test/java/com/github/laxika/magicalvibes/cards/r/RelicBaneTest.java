@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RelicBane.class, Ornithopter.class, Swamp.class})
 class RelicBaneTest extends BaseCardTest {
 
     @Test
@@ -31,12 +33,12 @@ class RelicBaneTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-artifact")
     void cannotTargetNonArtifact() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent nonArtifact = harness.addToBattlefieldAndReturn(player2, new Swamp());
         harness.setHand(player1, List.of(new RelicBane()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonArtifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
     }

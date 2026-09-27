@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "116")
+@CardRegistration(set = "SLD", collectorNumber = "1706")
 public class ProfessionalFaceBreaker extends Card {
 
     public ProfessionalFaceBreaker() {

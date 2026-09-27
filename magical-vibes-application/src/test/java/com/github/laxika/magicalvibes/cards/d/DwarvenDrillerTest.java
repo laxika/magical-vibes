@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DwarvenDriller.class, DwarvenScorcher.class, RiftstonePortal.class})
+@CardUsed({DwarvenDriller.class, DwarvenScorcher.class, KrosanVerge.class, RiftstonePortal.class})
 class DwarvenDrillerTest extends BaseCardTest {
 
     @Test
@@ -70,5 +71,39 @@ class DwarvenDrillerTest extends BaseCardTest {
 
     private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent driller = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new KrosanVerge());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, driller), 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Creature has summoning sickness");
+        assertThat(driller.isTapped()).isFalse();
+    }
+
+    @Test
+    void targetsItsControllersOwnLand() {
+        Permanent driller = addReadyDrillerForJudReview();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, driller), 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Krosan Verge");
+        harness.assertLife(player1, 18);
+        assertThat(driller.isTapped()).isTrue();
+    }
+
+    private Permanent addReadyDrillerForJudReview() {
+        Permanent driller = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
+        driller.setSummoningSick(false);
+        return driller;
     }
 }

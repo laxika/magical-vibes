@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CMD", collectorNumber = "107")
+@CardRegistration(set = "C15", collectorNumber = "140")
 public class VowOfMalice extends Card {
 
     public VowOfMalice() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "141")
+@CardRegistration(set = "SLD", collectorNumber = "308")
 public class TemurSabertooth extends Card {
 
     public TemurSabertooth() {

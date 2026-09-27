@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "PIO", collectorNumber = "65")
 @CardRegistration(set = "SPG", collectorNumber = "151")
 @CardRegistration(set = "RVR", collectorNumber = "51")
+@CardRegistration(set = "CMM", collectorNumber = "107")
 public class MurmuringMystic extends Card {
 
     public MurmuringMystic() {

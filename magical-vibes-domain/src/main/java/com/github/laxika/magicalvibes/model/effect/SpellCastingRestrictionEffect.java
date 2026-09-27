@@ -14,6 +14,12 @@ public interface SpellCastingRestrictionEffect extends CardEffect {
         return preventsCasting(mostRecentSpell, candidateSpell);
     }
 
+    /** Restriction check after a spell's X value has been chosen. */
+    default boolean preventsCasting(Permanent source, Card mostRecentSpell, Card candidateSpell,
+                                    Integer chosenX) {
+        return preventsCasting(source, mostRecentSpell, candidateSpell);
+    }
+
     default boolean preventsCastingFromTopOfLibrary(Card topCard, Card candidateSpell) {
         return false;
     }

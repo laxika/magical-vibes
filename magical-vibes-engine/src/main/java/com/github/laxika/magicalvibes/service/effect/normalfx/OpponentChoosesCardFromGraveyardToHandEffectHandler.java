@@ -147,8 +147,9 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
             return;
         }
 
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-        gameData.addCardToHand(controllerId, card);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, graveyardOwnerId, controllerId, card);
         gameLogService.append(gameData, GameLog.textCardText(
                 sourceName + " returns ", card, " from the graveyard to its owner's hand."));
 

@@ -68,6 +68,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LookAtTopCardsEffect e = (LookAtTopCardsEffect) effect;
+        if (e.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) {
+            entry.setGainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard(true);
+        }
 
         // Source-relative amounts (CountersOnSource for Shrine of Piercing Vision) use the live
         // source permanent when it is still on the battlefield, else the last-known snapshot — the
@@ -788,7 +791,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         if (handChoicePredicate == null) {
             resolveWithoutPredicate(gameData, entry, controllerId, topCards, playerName, count, toHandCount,
-                    e.gainLifeEqualToChosenCardManaValue(), e.exactChooseCount());
+                    e);
             return;
         }
 
@@ -799,6 +802,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             for (Card card : topCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, entry, topCards);
             GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
             appendCardList(restBuilder, topCards);
             restBuilder.text(" into their graveyard.");
@@ -820,6 +824,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, entry, remainingCards);
 
             GameLog.Builder handBuilder = GameLog.builder().text(playerName + " puts ");
             appendCardList(handBuilder, eligibleCards);
@@ -843,8 +848,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         + " into your hand. The rest are put into your graveyard.",
                 e.exactChooseCount()
                         ? Math.min(toHandCount, eligibleCards.size())
-                        : e.gainLifeEqualToChosenCardManaValue() ? 1 : 0,
-                e.gainLifeEqualToChosenCardManaValue()));
+                        : (e.gainLifeEqualToChosenCardManaValue()
+                                || e.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) ? 1 : 0,
+                e.gainLifeEqualToChosenCardManaValue())
+                .withSelectedCardFollowUp(e.selectedCardPredicate(), e.effectIfSelectedCardMatches()));
 
         if (!e.reveal()) {
             gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
@@ -855,14 +862,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
     private void resolveWithoutPredicate(GameData gameData, StackEntry entry, UUID controllerId,
             List<Card> topCards, String playerName, int count, int toHandCount,
-            boolean gainLifeEqualToChosenCardManaValue, boolean exactChooseCount) {
+            LookAtTopCardsEffect effect) {
         if (count <= toHandCount) {
             for (Card card : topCards) {
                 gameData.addCardToHand(controllerId, card);
             }
-            if (gainLifeEqualToChosenCardManaValue && !topCards.isEmpty()) {
+            if (effect.gainLifeEqualToChosenCardManaValue() && !topCards.isEmpty()) {
                 gainLifeForChosenCard(gameData, entry, topCards.getFirst());
             }
+            insertSelectedCardFollowUpIfApplicable(gameData, entry, controllerId, topCards, effect);
             String logMsg = count == 1
                     ? playerName + " looks at the top card of their library and puts it into their hand."
                     : playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count)
@@ -877,10 +885,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 controllerId, topCards, cardIds, true, true, false, false, false, 0, null, toHandCount,
                 "Look at the top " + count + " cards of your library. Put " + handWord
                         + " into your hand. The rest are put into your graveyard.",
-                exactChooseCount
+                effect.exactChooseCount()
                         ? Math.min(toHandCount, topCards.size())
-                        : gainLifeEqualToChosenCardManaValue ? 1 : 0,
-                gainLifeEqualToChosenCardManaValue));
+                        : effect.gainLifeEqualToChosenCardManaValue() ? 1 : 0,
+                effect.gainLifeEqualToChosenCardManaValue())
+                .withSelectedCardFollowUp(effect.selectedCardPredicate(), effect.effectIfSelectedCardMatches()));
 
         gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
@@ -911,6 +920,18 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         throw new IllegalStateException("Look-at-top effect is not present on its stack entry");
     }
 
+    private void insertSelectedCardFollowUpIfApplicable(GameData gameData, StackEntry entry,
+            UUID controllerId, List<Card> selectedCards, LookAtTopCardsEffect effect) {
+        if (selectedCards.isEmpty() || effect.selectedCardPredicate() == null
+                || effect.effectIfSelectedCardMatches() == null) {
+            return;
+        }
+        if (!filterEligibleCards(List.of(selectedCards.getFirst()), effect.selectedCardPredicate(),
+                entry, gameData, controllerId).isEmpty()) {
+            insertEffectAfterCurrent(entry, effect, effect.effectIfSelectedCardMatches());
+        }
+    }
+
     private List<Card> filterEligibleCards(List<Card> topCards, CardPredicate predicate,
             StackEntry entry, GameData gameData, UUID controllerId) {
         List<Card> eligibleCards = new ArrayList<>();
@@ -931,5 +952,23 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), manaValue,
                 entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+    }
+
+    private void gainLifeForGreatestPowerOfGraveyardCards(
+            GameData gameData, StackEntry entry, List<Card> cards) {
+        if (!entry.isGainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) {
+            return;
+        }
+        int greatestPower = cards.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .map(Card::getPower)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(power -> Math.max(0, power))
+                .max()
+                .orElse(0);
+        if (greatestPower > 0) {
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), greatestPower,
+                    entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+        }
     }
 }

@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M19", collectorNumber = "69")
+@CardRegistration(set = "CMM", collectorNumber = "118")
+@CardRegistration(set = "CMM", collectorNumber = "494")
 public class SaiMasterThopterist extends Card {
 
     public SaiMasterThopterist() {

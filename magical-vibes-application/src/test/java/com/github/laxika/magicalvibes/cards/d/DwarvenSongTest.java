@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.p.Pendelhaven;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,25 +16,27 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DwarvenSong.class, GrizzlyBears.class, Forest.class})
+@CardUsed({DwarvenSong.class, BarbaryApes.class, Pendelhaven.class})
 class DwarvenSongTest extends BaseCardTest {
 
     @Test
     @DisplayName("Makes one or more target creatures red until end of turn")
     void makesAllTargetsRed() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        Permanent untargetedCreature = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
 
         cast(List.of(ownCreature.getId(), opposingCreature.getId()));
 
         assertThat(gqs.getEffectiveColors(gd, ownCreature)).containsExactly(CardColor.RED);
         assertThat(gqs.getEffectiveColors(gd, opposingCreature)).containsExactly(CardColor.RED);
+        assertThat(gqs.getEffectiveColors(gd, untargetedCreature)).containsExactly(CardColor.GREEN);
     }
 
     @Test
     @DisplayName("The color change wears off at end of turn")
     void colorChangeWearsOffAtEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
 
         cast(List.of(creature.getId()));
 
@@ -48,13 +50,23 @@ class DwarvenSongTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a noncreature permanent")
-    void cannotTargetNoncreaturePermanent() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+    @DisplayName("Requires at least one target creature")
+    void cannotCastWithoutTarget() {
         harness.setHand(player1, List.of(new DwarvenSong()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(forest.getId())))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent pendelhaven = harness.addToBattlefieldAndReturn(player2, new Pendelhaven());
+        harness.setHand(player1, List.of(new DwarvenSong()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(pendelhaven.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

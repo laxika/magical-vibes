@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "16")
+@CardRegistration(set = "SLD", collectorNumber = "895")
 public class HelpfulHunter extends Card {
 
     public HelpfulHunter() {

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "230")
+@CardRegistration(set = "SOC", collectorNumber = "330")
 public class ShadrixSilverquill extends Card {
 
     public ShadrixSilverquill() {

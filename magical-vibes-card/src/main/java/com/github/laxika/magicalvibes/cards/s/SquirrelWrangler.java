@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PCY", collectorNumber = "127")
+@CardRegistration(set = "SLD", collectorNumber = "198")
 public class SquirrelWrangler extends Card {
 
     public SquirrelWrangler() {

@@ -11,22 +11,28 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenThenMillAndRepeatIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenMillControllerAndRepeatIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfBecomesCreatureOutsideBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "977")
+@CardRegistration(set = "SLD", collectorNumber = "1417")
+@CardRegistration(set = "SLD", collectorNumber = "1977")
 @CardRegistration(set = "AA2", collectorNumber = "16")
+@CardRegistration(set = "MH2", collectorNumber = "202")
+@CardRegistration(set = "MH2", collectorNumber = "306")
 public class GristTheHungerTide extends Card {
 
     public GristTheHungerTide() {

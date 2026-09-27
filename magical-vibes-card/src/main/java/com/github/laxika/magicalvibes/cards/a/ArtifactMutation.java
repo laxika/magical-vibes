@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "231")
+@CardRegistration(set = "SLD", collectorNumber = "269")
 public class ArtifactMutation extends Card {
 
     public ArtifactMutation() {

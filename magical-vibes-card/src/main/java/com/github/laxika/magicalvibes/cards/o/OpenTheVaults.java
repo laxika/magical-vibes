@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "21")
 @CardRegistration(set = "2XM", collectorNumber = "24")
+@CardRegistration(set = "C15", collectorNumber = "77")
 public class OpenTheVaults extends Card {
 
     public OpenTheVaults() {

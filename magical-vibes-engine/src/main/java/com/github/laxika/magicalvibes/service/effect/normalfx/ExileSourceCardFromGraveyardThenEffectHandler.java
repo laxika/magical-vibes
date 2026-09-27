@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -21,6 +23,7 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
     private final ExileSourceCardFromGraveyardEffectHandler exileHandler;
     private final GameQueryService gameQueryService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +43,8 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
             return;
         }
 
-        if (exileThen.thenEffect().targetSpec().equals(TargetSpec.NONE)) {
+        TargetSpec thenTargetSpec = exileThen.thenEffect().targetSpec();
+        if (thenTargetSpec.equals(TargetSpec.NONE)) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     entry.getCard(),
@@ -49,6 +53,11 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
                     List.of(exileThen.thenEffect()),
                     null,
                     entry.getSourcePermanentId()));
+        } else if (thenTargetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                || thenTargetSpec.admits(TargetPredicate.Kind.PLAYER)
+                || thenTargetSpec.admits(TargetPredicate.Kind.SPELL)) {
+            queueReflexiveAbilityEffectHandler.resolve(
+                    gameData, entry, new QueueReflexiveAbilityEffect(exileThen.thenEffect()));
         } else {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(exileThen.thenEffect()),

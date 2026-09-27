@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 @CardRegistration(set = "M12", collectorNumber = "106")
 @CardRegistration(set = "FDN", collectorNumber = "184")
 @CardRegistration(set = "IMA", collectorNumber = "106")
+@CardRegistration(set = "CMM", collectorNumber = "184")
+@CardRegistration(set = "CMM", collectorNumber = "521")
 public class RuneScarredDemon extends Card {
 
     public RuneScarredDemon() {

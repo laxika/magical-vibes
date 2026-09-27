@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MarchOfTheMachines.class, AngelsFeather.class, GloriousAnthem.class,
+        GrizzlyBears.class, IcyManipulator.class, LeoninScimitar.class, Ornithopter.class})
 class MarchOfTheMachinesTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -29,7 +34,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("March of the Machines");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(MarchOfTheMachines.class);
     }
 
     @Test
@@ -71,8 +76,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
 
         // March of the Machines makes artifacts into creatures but does NOT grant creature subtypes
         assertThat(gqs.isCreature(gd, feather)).isTrue();
-        assertThat(feather.getTransientSubtypes()).isEmpty();
-        assertThat(feather.getCard().getSubtypes()).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, feather)).isEmpty();
     }
 
     @Test
@@ -102,6 +106,19 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Does not change an existing artifact creature's printed P/T")
+    void doesNotAffectExistingArtifactCreature() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        Permanent ornithopter = findPermanent(player1, "Ornithopter");
+
+        assertThat(gqs.isCreature(gd, ornithopter)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ornithopter)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(2);
+    }
+
     // ===== Animated artifacts benefit from creature buffs =====
 
     @Test
@@ -124,20 +141,35 @@ class MarchOfTheMachinesTest extends BaseCardTest {
     @DisplayName("Artifacts revert to non-creatures when March of the Machines leaves")
     void artifactsRevertWhenMarchLeaves() {
         harness.addToBattlefield(player1, new AngelsFeather());
-        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        Permanent march = harness.addToBattlefieldAndReturn(player1, new MarchOfTheMachines());
 
         Permanent feather = findPermanent(player1, "Angel's Feather");
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
 
-        // Remove March of the Machines
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("March of the Machines"));
+        gd.playerBattlefields.get(player1.getId()).remove(march);
 
         assertThat(gqs.isCreature(gd, feather)).isFalse();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, feather)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("An Equipment animated by March cannot remain attached to a creature")
+    void animatedEquipmentDetachesFromCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        scimitar.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        assertThat(gqs.isCreature(gd, scimitar)).isTrue();
+
+        harness.runStateBasedActions();
+
+        assertThat(scimitar.isAttached()).isFalse();
+        assertThat(scimitar.getAttachedTo()).isNull();
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
     }
 
     // ===== Affects both players' artifacts =====

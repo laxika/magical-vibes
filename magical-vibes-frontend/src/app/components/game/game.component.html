@@ -407,7 +407,7 @@
               [class.needs-more-damage]="choice.damage.isTargetMissingLethalDamage(target)">
               <span class="target-name">{{ target.name }}</span>
               @if (!target.isPlayer) {
-                <span class="target-toughness">({{ target.toughness - target.currentDamage }} remaining toughness)</span>
+                <span class="target-toughness">({{ target.lethalDamageThreshold - target.currentDamage }} damage to lethal)</span>
               }
               @if (choice.damage.combatDamageIsTrample && !target.isPlayer) {
                 <span class="target-min-damage">min: {{ choice.damage.getLethalRequiredForTarget(target) }}</span>

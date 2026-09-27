@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "158")
+@CardRegistration(set = "SLD", collectorNumber = "645")
 public class ThorncasterSliver extends Card {
 
     public ThorncasterSliver() {

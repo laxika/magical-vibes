@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenColo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "25")
+@CardRegistration(set = "SLD", collectorNumber = "617")
 public class WardSliver extends Card {
 
     public WardSliver() {

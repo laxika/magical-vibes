@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.i.IronshellBeetle;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnuridBrushhopper.class, IronshellBeetle.class})
+@CardUsed({AnuridBrushhopper.class, GiantWarthog.class, IronshellBeetle.class})
 class AnuridBrushhopperTest extends BaseCardTest {
 
     @Test
@@ -86,5 +87,31 @@ class AnuridBrushhopperTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Anurid Brushhopper");
         harness.assertNotOnBattlefield(player2, "Anurid Brushhopper");
+    }
+
+    @Test
+    @DisplayName("Anurid Brushhopper returns under its owner's control")
+    void returnsUnderOwnersControl() {
+        AnuridBrushhopper brushhopper = new AnuridBrushhopper();
+        brushhopper.setOwnerId(player2.getId());
+        addCreatureReady(player1, brushhopper);
+        harness.setHand(player1, List.of(new GiantWarthog(), new GiantWarthog()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        advanceToEndStepForJudReview();
+
+        harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
+        harness.assertOnBattlefield(player2, "Anurid Brushhopper");
+    }
+
+    private void advanceToEndStepForJudReview() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
     }
 }

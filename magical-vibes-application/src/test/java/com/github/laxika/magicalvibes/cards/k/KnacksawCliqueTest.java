@@ -29,7 +29,7 @@ class KnacksawCliqueTest extends BaseCardTest {
 
         enterMainWithPriority(player1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         // Opponent's top card left their library and the controller may play it.
@@ -53,7 +53,7 @@ class KnacksawCliqueTest extends BaseCardTest {
 
         enterMainWithPriority(player1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(clique.isTapped()).isFalse();
@@ -68,7 +68,7 @@ class KnacksawCliqueTest extends BaseCardTest {
 
         enterMainWithPriority(player1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not tapped");
     }

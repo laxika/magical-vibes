@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "231")
+@CardRegistration(set = "SLD", collectorNumber = "531")
 public class KayaBaneOfTheDead extends Card {
 
     public KayaBaneOfTheDead() {

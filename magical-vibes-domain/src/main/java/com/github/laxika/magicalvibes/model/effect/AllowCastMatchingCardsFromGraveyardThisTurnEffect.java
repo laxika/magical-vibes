@@ -25,6 +25,10 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
         this(filter, false, null, null, null, null, 0);
     }
 
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect(CardPredicate filter, boolean singleUse) {
+        this(filter, singleUse, null, null, null, null, 0);
+    }
+
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect(
             CardPredicate filter, ForageOrPayManaCost additionalCost,
             CounterType enterWithCounter, int enterWithCounterCount) {

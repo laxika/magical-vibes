@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "87")
+@CardRegistration(set = "SLD", collectorNumber = "1784")
 public class AcererakTheArchlich extends Card {
 
     public AcererakTheArchlich() {

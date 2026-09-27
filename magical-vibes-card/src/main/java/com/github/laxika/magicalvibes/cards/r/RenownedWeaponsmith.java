@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "72")
 @CardRegistration(set = "FRF", collectorNumber = "48")
+@CardRegistration(set = "CMM", collectorNumber = "114")
 public class RenownedWeaponsmith extends Card {
 
     public RenownedWeaponsmith() {

@@ -16,6 +16,11 @@ import java.util.Set;
  */
 public interface AnyManaTypeCastEffect extends CardEffect {
 
+    /** Whether this permission applies only to spells owned by another player. */
+    default boolean appliesToNonOwnedSpellsOnly() {
+        return false;
+    }
+
     /** Card types whose spells this permanent lets the controller cast with mana of any type. */
     default Set<CardType> spellTypes() {
         return Set.of();

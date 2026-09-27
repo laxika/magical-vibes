@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoldenWish.class, Spellbook.class, EpicStruggle.class, SuntailHawk.class})
+@CardUsed({EpicStruggle.class, GoldenWish.class, Spellbook.class, SuntailHawk.class})
 class GoldenWishTest extends BaseCardTest {
 
     @Test

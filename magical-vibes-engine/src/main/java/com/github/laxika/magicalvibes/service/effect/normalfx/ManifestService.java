@@ -39,6 +39,21 @@ public class ManifestService {
         return manifestCardAndReturnPermanent(gameData, playerId, sourceCard, manifestedCard) != null;
     }
 
+    public void manifestCards(GameData gameData, UUID playerId, Card sourceCard, List<Card> cards) {
+        if (cards == null || cards.isEmpty()) {
+            return;
+        }
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        var enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        for (Card card : cards) {
+            putManifestedCard(gameData, playerId, card, simultaneouslyEntered, enterTappedTypesSnapshot);
+        }
+        for (Card card : cards) {
+            battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, playerId, card);
+        }
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard, " manifests the cards."));
+    }
+
     public Permanent manifestCardAndReturnPermanent(GameData gameData, UUID playerId,
                                                     Card sourceCard, Card manifestedCard) {
         Permanent manifested = putManifestedCard(gameData, playerId, manifestedCard, new ArrayList<>(),

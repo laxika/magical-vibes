@@ -11,7 +11,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TunnelerWurm.class)
+@CardUsed({TunnelerWurm.class})
 class TunnelerWurmTest extends BaseCardTest {
 
     @Test

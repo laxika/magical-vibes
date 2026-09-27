@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "42")
+@CardRegistration(set = "SLD", collectorNumber = "330")
 public class AetherGust extends Card {
 
     public AetherGust() {

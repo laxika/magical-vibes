@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RustElemental.class, Ornithopter.class})
 class RustElementalTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,21 @@ class RustElementalTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         assertThat(elemental.isTapped()).isFalse();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an artifact controlled by an opponent")
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new RustElemental());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentArtifact);
+        assertThat(elemental.isTapped()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 4);
     }
 
     @Test

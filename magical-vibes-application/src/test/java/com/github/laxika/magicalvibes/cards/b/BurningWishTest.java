@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BurningWish.class, BattleScreech.class, BattlewiseAven.class})
+@CardUsed({BattleScreech.class, BattlewiseAven.class, BookBurning.class, BurningWish.class})
 class BurningWishTest extends BaseCardTest {
 
     @Test
@@ -104,5 +104,31 @@ class BurningWishTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
         harness.handleCardChosen(player1, index);
+    }
+
+    @Test
+    @DisplayName("Does not offer an opponent's outside-the-game sorcery")
+    void searchesOnlyControllerOutsideTheGameCards() {
+        Card ownCreature = new BattlewiseAven();
+        Card opponentSorcery = new BookBurning();
+        setSideboardForJudReview(ownCreature);
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentSorcery)));
+
+        BurningWish wish = castBurningWishForJudReview();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentSorcery);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
+    private BurningWish castBurningWishForJudReview() {
+        BurningWish wish = new BurningWish();
+        harness.castFromHand(player1, wish, "{1}{R}");
+        harness.passBothPriorities();
+        return wish;
+    }
+
+    private void setSideboardForJudReview(Card... cards) {
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(cards)));
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 
 @CardRegistration(set = "SPG", collectorNumber = "71")
+@CardRegistration(set = "MH2", collectorNumber = "145")
 public class UnholyHeat extends Card {
 
     public UnholyHeat() {

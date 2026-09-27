@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "122")
+@CardRegistration(set = "CMM", collectorNumber = "212")
 public class CyclopsElectromancer extends Card {
 
     public CyclopsElectromancer() {

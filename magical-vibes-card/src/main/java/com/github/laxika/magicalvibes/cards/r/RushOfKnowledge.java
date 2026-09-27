@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "SCG", collectorNumber = "49")
 @CardRegistration(set = "2XM", collectorNumber = "66")
+@CardRegistration(set = "C14", collectorNumber = "123")
 public class RushOfKnowledge extends Card {
 
     public RushOfKnowledge() {

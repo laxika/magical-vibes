@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Flashfires.class, GrizzlyBears.class, Island.class, Mountain.class, Plateau.class, Plains.class})
+@CardUsed({Flashfires.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
 class FlashfiresTest extends BaseCardTest {
 
     @Test
@@ -58,6 +58,7 @@ class FlashfiresTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys nonbasic lands with the Plains subtype")
+    @CardUsed(Plateau.class)
     void destroysNonbasicPlains() {
         harness.addToBattlefield(player1, new Plateau());
         castFlashfiresAndResolve();
@@ -71,6 +72,18 @@ class FlashfiresTest extends BaseCardTest {
     void indestructiblePlainsSurvives() {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
         plains.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        castFlashfiresAndResolve();
+
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertNotInGraveyard(player2, "Plains");
+    }
+
+    @Test
+    @DisplayName("Regeneration shields save Plains from Flashfires")
+    void regenerationShieldsSavePlains() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        plains.setRegenerationShield(1);
 
         castFlashfiresAndResolve();
 

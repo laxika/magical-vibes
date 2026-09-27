@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "74")
+@CardRegistration(set = "CMM", collectorNumber = "177")
+@CardRegistration(set = "CMM", collectorNumber = "518")
 public class OgreSlumlord extends Card {
 
     public OgreSlumlord() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "125")
 @CardRegistration(set = "AKR", collectorNumber = "148")
+@CardRegistration(set = "LTC", collectorNumber = "212")
 public class CombatCelebrant extends Card {
 
     public CombatCelebrant() {

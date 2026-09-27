@@ -121,6 +121,7 @@ class PendingInteractionContractTest {
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,
             PendingInteraction.PlanarAbilityHandCardChoice.class,
+            PendingInteraction.PerpetualPowerToughnessChoice.class,
             PendingInteraction.ExchangeOutsideGameHandChoice.class,
             PendingInteraction.DiscardChoice.class,
             PendingInteraction.ExileFromHandChoice.class,

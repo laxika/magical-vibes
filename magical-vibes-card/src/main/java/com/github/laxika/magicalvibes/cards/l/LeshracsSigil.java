@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "144")
+@CardRegistration(set = "SLD", collectorNumber = "1188")
 public class LeshracsSigil extends Card {
 
     public LeshracsSigil() {

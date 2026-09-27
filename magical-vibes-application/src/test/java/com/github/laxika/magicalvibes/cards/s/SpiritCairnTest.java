@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CabalTherapy;
+import com.github.laxika.magicalvibes.cards.d.Distress;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpiritCairn.class, CabalTherapy.class})
+@CardUsed({CabalTherapy.class, Distress.class, GrizzlyBears.class, SpiritCairn.class})
 class SpiritCairnTest extends BaseCardTest {
 
     @Test
@@ -147,5 +149,30 @@ class SpiritCairnTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().isToken() && p.getCard().getSubtypes().contains(CardSubtype.SPIRIT));
+    }
+
+    @Test
+    @DisplayName("Creates one Spirit for each card a player discards")
+    void createsOneSpiritPerDiscardedCard() {
+        harness.addToBattlefield(player1, new SpiritCairn());
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(new Distress(), new Distress())));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castSorcery(player1, 0, player2.getId());
+            harness.passBothPriorities();
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            while (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            }
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getSubtypes().contains(CardSubtype.SPIRIT))
+                .hasSize(2);
     }
 }

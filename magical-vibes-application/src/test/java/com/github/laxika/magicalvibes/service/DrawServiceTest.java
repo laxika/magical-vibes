@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -136,6 +137,27 @@ class DrawServiceTest {
 
         assertThat(gd.playerHands.get(player1Id)).containsExactly(first, second);
         assertThat(gd.pendingCardDraws).isEmpty();
+    }
+
+    @Test
+    void opponentMultiCardDrawIsReplacedWithOneCardForEachPlayer() {
+        when(gameQueryService.getOpponentId(gd, player2Id)).thenReturn(player1Id);
+        Card almsCollector = createCard("Alms Collector", CardType.CREATURE);
+        almsCollector.addEffect(EffectSlot.STATIC, new OpponentDrawTwoOrMoreReplacedEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(almsCollector));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        gd.playerHands.put(player2Id, new ArrayList<>());
+        Card player1Card = createCard("Player 1 card", CardType.CREATURE);
+        Card player2Card = createCard("Player 2 card", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(player1Card)));
+        gd.playerDecks.put(player2Id, new ArrayList<>(List.of(player2Card)));
+
+        sut.resolveDrawCards(gd, player2Id, 2);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(player1Card);
+        assertThat(gd.playerHands.get(player2Id)).containsExactly(player2Card);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+        assertThat(gd.playerDecks.get(player2Id)).isEmpty();
     }
 
     @Mock

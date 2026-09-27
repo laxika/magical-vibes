@@ -12,12 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
-
 import java.util.List;
 import java.util.Set;
 
-@CardRegistration(set = "MB2", collectorNumber = "17")
+@CardRegistration(set = "SLD", collectorNumber = "995")
+@CardRegistration(set = "SLD", collectorNumber = "1252")
 @CardRegistration(set = "MH1", collectorNumber = "26")
+@CardRegistration(set = "MB2", collectorNumber = "17")
 public class SerraTheBenevolent extends Card {
 
     public SerraTheBenevolent() {

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({PresenceOfTheMaster.class, AngelicChorus.class, BrilliantHalo.class, DarkRitual.class,
         GorillaWarrior.class})
 class PresenceOfTheMasterTest extends BaseCardTest {
@@ -69,5 +71,6 @@ class PresenceOfTheMasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Dark Ritual");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(3);
     }
 }

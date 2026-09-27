@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "126")
+@CardRegistration(set = "SLD", collectorNumber = "1526")
 @CardRegistration(set = "KLR", collectorNumber = "141")
 public class RecklessFireweaver extends Card {
 

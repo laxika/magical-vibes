@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "117")
 @CardRegistration(set = "DDJ", collectorNumber = "75")
+@CardRegistration(set = "C14", collectorNumber = "198")
 public class GrimFlowering extends Card {
 
     public GrimFlowering() {

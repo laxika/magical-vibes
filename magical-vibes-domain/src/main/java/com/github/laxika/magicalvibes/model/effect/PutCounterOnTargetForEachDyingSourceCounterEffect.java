@@ -22,24 +22,26 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                    may decline placing the counters at resolution; the collector wraps the
  *                    snapshotted effect in a {@code MayEffect}
  * @param targetPredicate optional structural restriction for the target; {@code null} means any creature
+ * @param modular whether the counter placement is the result of a modular triggered ability
  */
 public record PutCounterOnTargetForEachDyingSourceCounterEffect(
         CounterType counterType,
         int count,
         boolean optional,
-        PermanentPredicate targetPredicate
+        PermanentPredicate targetPredicate,
+        boolean modular
 ) implements CardEffect {
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, int count, boolean optional) {
-        this(counterType, count, optional, null);
+        this(counterType, count, optional, null, false);
     }
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType) {
-        this(counterType, 0, false);
+        this(counterType, 0, false, null, false);
     }
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, boolean optional) {
-        this(counterType, 0, optional);
+        this(counterType, 0, optional, null, false);
     }
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(
@@ -47,7 +49,16 @@ public record PutCounterOnTargetForEachDyingSourceCounterEffect(
             boolean optional,
             PermanentPredicate targetPredicate
     ) {
-        this(counterType, 0, optional, targetPredicate);
+        this(counterType, 0, optional, targetPredicate, false);
+    }
+
+    public PutCounterOnTargetForEachDyingSourceCounterEffect(
+            CounterType counterType,
+            boolean optional,
+            PermanentPredicate targetPredicate,
+            boolean modular
+    ) {
+        this(counterType, 0, optional, targetPredicate, modular);
     }
 
     @Override

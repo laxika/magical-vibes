@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RuleOfLaw.class, GrizzlyBears.class, Plains.class, Shock.class})
 class RuleOfLawTest extends BaseCardTest {
 
     // ===== Spell limiting =====
@@ -82,6 +85,30 @@ class RuleOfLawTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Rule of Law counts noncreature spells toward the limit")
+    void countsNoncreatureSpells() {
+        harness.addToBattlefield(player1, new RuleOfLaw());
+
+        Shock shock = new Shock();
+        GrizzlyBears bear = new GrizzlyBears();
+        harness.setHand(player1, List.of(shock, bear));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
     @DisplayName("Removing Rule of Law restores normal casting")
     void removingRuleOfLawRestoresNormalCasting() {
         harness.addToBattlefield(player1, new RuleOfLaw());
@@ -111,6 +138,34 @@ class RuleOfLawTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Rule of Law resets the spell limit at the start of a new turn")
+    void resetsAtStartOfNewTurn() {
+        harness.addToBattlefield(player1, new RuleOfLaw());
+
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
     @DisplayName("Playing a land is not affected by Rule of Law")
     void landsAreNotAffected() {
         harness.addToBattlefield(player1, new RuleOfLaw());
@@ -130,7 +185,7 @@ class RuleOfLawTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Play land — should succeed even after casting a spell
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
 
         harness.assertOnBattlefield(player1, "Plains");
     }

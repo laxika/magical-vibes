@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "136")
 @CardRegistration(set = "H09", collectorNumber = "10")
+@CardRegistration(set = "SLD", collectorNumber = "655")
 public class QuickSliver extends Card {
 
     public QuickSliver() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "182")
+@CardRegistration(set = "SLD", collectorNumber = "1549")
 public class PrinceOfThralls extends Card {
 
     public PrinceOfThralls() {

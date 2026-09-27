@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "7")
+@CardRegistration(set = "SLD", collectorNumber = "420")
 public class HokoriDustDrinker extends Card {
 
     public HokoriDustDrinker() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LeoninScimitar.class, Deathmark.class, GrizzlyBears.class})
 class LeoninScimitarTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -55,7 +57,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @Test
     @DisplayName("Activating equip ability puts it on the stack")
     void activatingEquipPutsOnStack() {
-        Permanent scimitar = addScimitarReady(player1);
+        addScimitarReady(player1);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -249,6 +251,19 @@ class LeoninScimitarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot equip a creature controlled by an opponent")
+    void cannotEquipOpponentsCreature() {
+        addScimitarReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Cannot equip when the stack is not empty")
     void cannotEquipWhenStackNotEmpty() {
         addScimitarReady(player1);
@@ -307,9 +322,8 @@ class LeoninScimitarTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addScimitarReady(Player player) {
-        Permanent perm = new Permanent(new LeoninScimitar());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

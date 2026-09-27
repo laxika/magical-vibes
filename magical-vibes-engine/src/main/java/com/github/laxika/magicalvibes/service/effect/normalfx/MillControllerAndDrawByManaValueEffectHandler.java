@@ -40,24 +40,15 @@ public class MillControllerAndDrawByManaValueEffectHandler implements NormalEffe
             return;
         }
 
-        // Snapshot the top card before milling so its mana value is known afterwards.
-        Card milled = deck.getFirst();
-        graveyardService.resolveMillPlayer(gameData, controllerId, 1);
-
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard == null || !graveyard.contains(milled)) {
-            // A replacement effect diverted the card, so it was never milled.
-            return;
-        }
-
-        int drawCount = milled.getManaValue();
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, controllerId, 1);
+        int drawCount = milled.stream().mapToInt(Card::getManaValue).sum();
         for (int i = 0; i < drawCount; i++) {
             drawService.resolveDrawCard(gameData, controllerId);
         }
 
-        gameLogService.append(gameData, GameLog.builder().text(playerName + " mills ").card(milled)
-                .text(" and draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".").build());
-        log.info("Game {} - {} milled {} (mana value {}), drawing {}", gameData.id, playerName, milled.getName(),
-                drawCount, drawCount);
+        gameLogService.append(gameData, GameLog.text(playerName + " draws " + drawCount + " card"
+                + (drawCount != 1 ? "s" : "") + " for the cards milled."));
+        log.info("Game {} - {} draws {} cards for {} milled cards", gameData.id, playerName,
+                drawCount, milled.size());
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "272")
 @CardRegistration(set = "DDI", collectorNumber = "68")
+@CardRegistration(set = "CMM", collectorNumber = "418")
 public class VulshokBattlegear extends Card {
 
     public VulshokBattlegear() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GuidedStrike;
 import com.github.laxika.magicalvibes.cards.j.JeskaWarriorAdept;
+import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CommanderEesha.class, SuntailHawk.class, JeskaWarriorAdept.class, GuidedStrike.class})
+@CardUsed({CommanderEesha.class, GuidedStrike.class, JeskaWarriorAdept.class, LavaDart.class, SuntailHawk.class})
 class CommanderEeshaTest extends BaseCardTest {
 
     @Test
@@ -84,5 +85,34 @@ class CommanderEeshaTest extends BaseCardTest {
 
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    }
+
+    @Test
+    @DisplayName("Creature combat damage to Commander Eesha is prevented")
+    void creatureCombatDamageIsPrevented() {
+        Permanent eesha = addCreatureReady(player1, new CommanderEesha());
+        Permanent attacker = addCreatureReady(player2, new SuntailHawk());
+
+        declareAttackers(player2, List.of(indexOf(player2, attacker)));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, eesha), indexOf(player2, attacker))));
+        assertThat(eesha.isBlocking()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(eesha.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Noncreature spell damage can be dealt to Commander Eesha")
+    void noncreatureSpellDamageCanBeDealtToEesha() {
+        Permanent eesha = addCreatureReady(player2, new CommanderEesha());
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, eesha.getId());
+
+        assertThat(eesha.getMarkedDamage()).isEqualTo(1);
     }
 }

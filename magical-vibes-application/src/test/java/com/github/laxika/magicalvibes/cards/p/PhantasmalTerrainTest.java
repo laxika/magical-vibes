@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.c.CapashenUnicorn;
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhantasmalTerrain.class, Forest.class, Mountain.class, GrizzlyBears.class, CityOfBrass.class})
+@CardUsed({PhantasmalTerrain.class, Forest.class, Mountain.class, CapashenUnicorn.class, CityOfBrass.class})
 class PhantasmalTerrainTest extends BaseCardTest {
 
     @Test
@@ -95,6 +95,7 @@ class PhantasmalTerrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Changing a nonbasic land to a basic type removes its printed abilities")
     void changingNonbasicLandToBasicTypeRemovesPrintedAbilities() {
         Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new PhantasmalTerrain());
@@ -125,12 +126,12 @@ class PhantasmalTerrainTest extends BaseCardTest {
     @DisplayName("Cannot cast Phantasmal Terrain targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new CapashenUnicorn());
+        Permanent unicorn = findPermanent(player1, "Capashen Unicorn");
         harness.setHand(player1, List.of(new PhantasmalTerrain()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, unicorn.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }

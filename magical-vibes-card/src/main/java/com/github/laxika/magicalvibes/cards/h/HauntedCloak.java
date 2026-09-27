@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "SOI", collectorNumber = "257")
+@CardRegistration(set = "CMM", collectorNumber = "389")
 public class HauntedCloak extends Card {
 
     public HauntedCloak() {

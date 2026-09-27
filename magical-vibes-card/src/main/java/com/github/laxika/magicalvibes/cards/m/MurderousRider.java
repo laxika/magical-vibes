@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "97")
+@CardRegistration(set = "SLD", collectorNumber = "1981")
 public class MurderousRider extends Card {
 
     public MurderousRider() {

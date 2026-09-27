@@ -25,15 +25,28 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  *                                     trigger goes on the stack
  * @param untilNextTurn                whether the registration lasts through the controller's
  *                                     next turn's beginning instead of through turn cleanup
+ * @param persistsUntilConsumed         whether a one-shot registration remains until it fires
  */
 public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                                StackEntryPredicate stackEntryFilter,
                                                                List<CardEffect> resolvedEffects,
-                                                                boolean oneShot,
-                                                                boolean sourceMustRemainOnBattlefield,
+                                                               boolean oneShot,
+                                                               boolean sourceMustRemainOnBattlefield,
                                                                TargetFilter targetFilter,
-                                                               boolean untilNextTurn)
+                                                               boolean untilNextTurn,
+                                                               boolean persistsUntilConsumed)
         implements CardEffect {
+
+    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
+                                                            StackEntryPredicate stackEntryFilter,
+                                                            List<CardEffect> resolvedEffects,
+                                                            boolean oneShot,
+                                                            boolean sourceMustRemainOnBattlefield,
+                                                            TargetFilter targetFilter,
+                                                            boolean untilNextTurn) {
+        this(spellFilter, stackEntryFilter, resolvedEffects, oneShot,
+                sourceMustRemainOnBattlefield, targetFilter, untilNextTurn, false);
+    }
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects) {
@@ -90,6 +103,13 @@ public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spel
             boolean sourceMustRemainOnBattlefield, TargetFilter targetFilter) {
         return new RegisterDelayedControllerSpellCastTriggerEffect(
                 spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield,
-                targetFilter, true);
+                targetFilter, true, false);
+    }
+
+    /** Registers a source-independent one-shot boon that remains until the next matching spell is cast. */
+    public static RegisterDelayedControllerSpellCastTriggerEffect oneShotUntilConsumed(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(
+                spellFilter, null, resolvedEffects, true, false, null, false, true);
     }
 }

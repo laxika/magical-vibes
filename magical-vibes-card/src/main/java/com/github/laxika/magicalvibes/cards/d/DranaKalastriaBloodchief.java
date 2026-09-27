@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "107")
+@CardRegistration(set = "C14", collectorNumber = "141")
 public class DranaKalastriaBloodchief extends Card {
 
     public DranaKalastriaBloodchief() {

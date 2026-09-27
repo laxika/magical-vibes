@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "SLZ", collectorNumber = "72")
 @CardRegistration(set = "SLZ", collectorNumber = "193")
 @CardRegistration(set = "SLZ", collectorNumber = "314")
+@CardRegistration(set = "MH2", collectorNumber = "152")
 public class Chatterstorm extends Card {
 
     public Chatterstorm() {

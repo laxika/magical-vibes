@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "MRD", collectorNumber = "69")
+@CardRegistration(set = "SLD", collectorNumber = "1405")
 public class NecrogenMists extends Card {
 
     public NecrogenMists() {

@@ -22,8 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MaskedGorgon.class, AnuridBrushhopper.class, EpicStruggle.class, HaplessResearcher.class,
-        IronshellBeetle.class, SuntailHawk.class, XathridGorgon.class, Lifelace.class})
+@CardUsed({AnuridBrushhopper.class, EpicStruggle.class, HaplessResearcher.class, IronshellBeetle.class, Lifelace.class, MaskedGorgon.class, SuntailHawk.class, XathridGorgon.class})
 class MaskedGorgonTest extends BaseCardTest {
 
     @Test
@@ -104,5 +103,19 @@ class MaskedGorgonTest extends BaseCardTest {
             cards.add(new SuntailHawk());
         }
         harness.setGraveyard(player, cards);
+    }
+
+    @Test
+    @CardUsed(Lifelace.class)
+    @DisplayName("A green Masked Gorgon has protection from Gorgons")
+    void greenMaskedGorgonHasProtectionFromGorgons() {
+        Permanent maskedGorgon = addMaskedGorgon(player1);
+
+        harness.setHand(player1, List.of(new Lifelace()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, maskedGorgon.getId());
+
+        assertThat(gqs.getEffectiveColors(gd, maskedGorgon)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, maskedGorgon, maskedGorgon)).isTrue();
     }
 }

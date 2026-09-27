@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "53")
+@CardRegistration(set = "SLD", collectorNumber = "620")
 public class MesmericSliver extends Card {
 
     public MesmericSliver() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "195")
 @CardRegistration(set = "MMA", collectorNumber = "135")
+@CardRegistration(set = "C15", collectorNumber = "168")
 public class ThundercloudShaman extends Card {
 
     public ThundercloudShaman() {

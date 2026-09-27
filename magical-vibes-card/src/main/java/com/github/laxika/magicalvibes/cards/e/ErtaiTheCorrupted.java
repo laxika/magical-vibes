@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "107")
+@CardRegistration(set = "SLD", collectorNumber = "1216")
 public class ErtaiTheCorrupted extends Card {
 
     public ErtaiTheCorrupted() {

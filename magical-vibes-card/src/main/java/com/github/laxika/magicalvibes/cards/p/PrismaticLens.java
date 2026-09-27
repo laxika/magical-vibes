@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "EMA", collectorNumber = "230")
 @CardRegistration(set = "E02", collectorNumber = "43")
 @CardRegistration(set = "TSR", collectorNumber = "272")
+@CardRegistration(set = "CMM", collectorNumber = "403")
 public class PrismaticLens extends Card {
 
     public PrismaticLens() {

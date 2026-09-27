@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "228")
+@CardRegistration(set = "SLD", collectorNumber = "790★")
 public class CodexShredder extends Card {
 
     public CodexShredder() {

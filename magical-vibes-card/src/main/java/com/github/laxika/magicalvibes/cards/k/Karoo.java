@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "165")
+@CardRegistration(set = "C14", collectorNumber = "303")
 public class Karoo extends Card {
 
     private static final PermanentAllOfPredicate UNTAPPED_PLAINS = new PermanentAllOfPredicate(List.of(

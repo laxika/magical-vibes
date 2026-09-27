@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "94")
+@CardRegistration(set = "SLD", collectorNumber = "266")
+@CardRegistration(set = "SLD", collectorNumber = "2128")
 public class BreachTheMultiverse extends Card {
 
     public BreachTheMultiverse() {

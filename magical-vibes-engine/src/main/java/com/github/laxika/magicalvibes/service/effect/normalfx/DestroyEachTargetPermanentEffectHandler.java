@@ -74,10 +74,14 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
                 gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated());
 
         List<UUID> destroyedControllerIds = new ArrayList<>();
+        List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
         for (Permanent perm : actuallyDestroyed) {
             UUID controllerId = controllerByPermanentId.get(perm.getId());
             if (controllerId != null) {
                 destroyedControllerIds.add(controllerId);
+                if (!perm.getCard().isToken()) {
+                    destroyedNontokenControllerIds.add(controllerId);
+                }
             }
         }
         entry.setEventValue(actuallyDestroyed.size());
@@ -85,5 +89,6 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
         // controlled that were put into a graveyard this way" (Builder's Bane), which the single
         // event value can't express. Duplicates are meaningful: three artifacts lost = three entries.
         entry.setEventPlayerIds(destroyedControllerIds);
+        entry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
     }
 }

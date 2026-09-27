@@ -2,15 +2,14 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,73 +17,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThrivingHeathTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters tapped and chooses a non-white color")
+    @DisplayName("Enters tapped and offers every color except white")
     void entersTappedAndChoosesNonWhiteColor() {
         harness.setHand(player1, List.of(new ThrivingHeath()));
-        harness.playLand(player1, 0);
-
-        assertThat(findPermanent(player1, "Thriving Heath").isTapped()).isTrue();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-
-        harness.handleListChoice(player1, "GREEN");
-
-        assertThat(findPermanent(player1, "Thriving Heath").getChosenColor()).isEqualTo(CardColor.GREEN);
-    }
-
-    @Test
-    @DisplayName("Can tap for white mana")
-    void tapsForWhite() {
-        Permanent heath = addReadyHeath(CardColor.GREEN);
-
-        harness.activateAbility(player1, 0, 0, null, null);
-
-        ManaPool pool = gd.playerManaPools.get(player1.getId());
-        assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(pool.get(ManaColor.GREEN)).isZero();
-        assertThat(heath.isTapped()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Can tap for its chosen color")
-    void tapsForChosenColor() {
-        Permanent heath = addReadyHeath(CardColor.BLUE);
-
-        harness.activateAbility(player1, 0, 1, null, null);
-
-        ManaPool pool = gd.playerManaPools.get(player1.getId());
-        assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
-        assertThat(pool.get(ManaColor.WHITE)).isZero();
-        assertThat(heath.isTapped()).isTrue();
-    }
-
-    private Permanent addReadyHeath(CardColor chosenColor) {
-        Permanent heath = new Permanent(new ThrivingHeath());
-        heath.setSummoningSick(false);
-        heath.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player1.getId()).add(heath);
-        return heath;
-    }
-    @Test
-    @DisplayName("Enters tapped and lets you choose any color except white")
-    void entersTappedAndRestrictsChosenColor() {
-        harness.setHand(player1, List.of(new ThrivingHeath()));
 
         harness.playLand(player1, 0);
-
-        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.options()).containsExactly("BLUE", "BLACK", "RED", "GREEN");
-
-        harness.handleListChoice(player1, "BLUE");
 
         Permanent heath = findPermanent(player1, "Thriving Heath");
         assertThat(heath.isTapped()).isTrue();
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("BLUE", "BLACK", "RED", "GREEN");
+        assertThat(choice.options()).doesNotContain("WHITE");
+
+        harness.handleListChoice(player1, "BLUE");
+
         assertThat(heath.getChosenColor()).isEqualTo(CardColor.BLUE);
     }
 
     @Test
-    @DisplayName("Tapping adds white mana")
-    void tapsForWhiteMana() {
-        Permanent heath = addReadyHeath(player1, CardColor.BLUE);
+    @DisplayName("The first mana ability adds white mana")
+    void firstAbilityAddsWhiteMana() {
+        Permanent heath = addReadyHeath();
+        heath.setChosenColor(CardColor.BLUE);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -93,21 +48,20 @@ class ThrivingHeathTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapping adds one mana of the chosen color")
-    void tapsForChosenColorMana() {
-        Permanent heath = addReadyHeath(player1, CardColor.RED);
+    @DisplayName("The second mana ability adds mana of the chosen color")
+    void secondAbilityAddsChosenColorMana() {
+        Permanent heath = addReadyHeath();
+        heath.setChosenColor(CardColor.GREEN);
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(heath.isTapped()).isTrue();
     }
 
-    private Permanent addReadyHeath(Player player, CardColor chosenColor) {
-        Permanent heath = new Permanent(new ThrivingHeath());
+    private Permanent addReadyHeath() {
+        Permanent heath = harness.addToBattlefieldAndReturn(player1, new ThrivingHeath());
         heath.setSummoningSick(false);
-        heath.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player.getId()).add(heath);
         return heath;
     }
 }

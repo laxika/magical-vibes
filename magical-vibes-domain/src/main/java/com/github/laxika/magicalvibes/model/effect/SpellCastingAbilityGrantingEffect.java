@@ -28,4 +28,9 @@ public interface SpellCastingAbilityGrantingEffect extends CardEffect {
     default boolean appliesToAllPlayers() {
         return false;
     }
+
+    /** Whether this grant applies only to the first matching spell cast by its controller each turn. */
+    default boolean appliesOnlyToFirstMatchingSpellEachTurn() {
+        return false;
+    }
 }

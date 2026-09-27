@@ -1,38 +1,42 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.i.IronMyr;
+import com.github.laxika.magicalvibes.cards.t.TelJiladChosen;
+import com.github.laxika.magicalvibes.cards.w.WeldingJar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlissaSunseeker.class, IronMyr.class, TelJiladChosen.class, WeldingJar.class})
 class GlissaSunseekerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys an artifact whose mana value equals unspent mana")
     void destroysArtifactWithMatchingManaValue() {
-        addReady(player1, new GlissaSunseeker());
+        Permanent glissa = addCreatureReady(player1, new GlissaSunseeker());
         Permanent target = addArtifact(player2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(glissa.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Millstone");
+        harness.assertInGraveyard(player2, "Iron Myr");
     }
 
     @Test
     @DisplayName("Does nothing when the artifact mana value does not match unspent mana")
     void doesNothingWithMismatchedManaValue() {
-        addReady(player1, new GlissaSunseeker());
+        addCreatureReady(player1, new GlissaSunseeker());
         Permanent target = addArtifact(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -45,7 +49,7 @@ class GlissaSunseekerTest extends BaseCardTest {
     @Test
     @DisplayName("Checks unspent mana when the ability resolves")
     void checksManaAtResolution() {
-        addReady(player1, new GlissaSunseeker());
+        addCreatureReady(player1, new GlissaSunseeker());
         Permanent target = addArtifact(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -57,9 +61,51 @@ class GlissaSunseekerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses the ability controller's unspent mana")
+    void usesAbilityControllersUnspentMana() {
+        addCreatureReady(player1, new GlissaSunseeker());
+        Permanent target = addArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Destroys a zero-mana-value artifact when no mana is unspent")
+    void destroysZeroManaValueArtifactWithNoUnspentMana() {
+        addCreatureReady(player1, new GlissaSunseeker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WeldingJar());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Welding Jar");
+    }
+
+    @Test
+    @DisplayName("Does nothing if the targeted artifact leaves before resolution")
+    void doesNothingWhenTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new GlissaSunseeker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WeldingJar());
+        Permanent regenerationTarget = harness.addToBattlefieldAndReturn(player2, new IronMyr());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, 0, null, regenerationTarget.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Welding Jar");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(regenerationTarget);
+    }
+
+    @Test
     @DisplayName("Can target an artifact even when its mana value currently does not match")
     void targetRestrictionOnlyRequiresArtifact() {
-        addReady(player1, new GlissaSunseeker());
+        addCreatureReady(player1, new GlissaSunseeker());
         Permanent target = addArtifact(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -71,8 +117,8 @@ class GlissaSunseekerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a nonartifact permanent")
     void cannotTargetNonartifactPermanent() {
-        addReady(player1, new GlissaSunseeker());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GlissaSunseeker());
+        Permanent target = addCreatureReady(player2, new TelJiladChosen());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -80,14 +126,6 @@ class GlissaSunseekerTest extends BaseCardTest {
     }
 
     private Permanent addArtifact(Player player) {
-        harness.addToBattlefield(player, new Millstone());
-        return findPermanent(player, "Millstone");
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new IronMyr());
     }
 }

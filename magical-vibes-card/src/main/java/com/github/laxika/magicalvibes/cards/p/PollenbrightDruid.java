@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "173")
+@CardRegistration(set = "SLD", collectorNumber = "776")
+@CardRegistration(set = "CMM", collectorNumber = "312")
 public class PollenbrightDruid extends Card {
 
     public PollenbrightDruid() {

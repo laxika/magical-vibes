@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "120")
+@CardRegistration(set = "SOC", collectorNumber = "229")
 @CardRegistration(set = "C13", collectorNumber = "99")
 public class VisceraSeer extends Card {
 

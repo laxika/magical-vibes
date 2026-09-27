@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "63")
+@CardRegistration(set = "SLD", collectorNumber = "842")
 public class GeralfsMessenger extends Card {
 
     public GeralfsMessenger() {

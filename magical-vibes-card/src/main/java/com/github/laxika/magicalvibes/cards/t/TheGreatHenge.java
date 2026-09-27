@@ -19,6 +19,10 @@ import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "161")
 @CardRegistration(set = "TLE", collectorNumber = "41")
+@CardRegistration(set = "CMM", collectorNumber = "294")
+@CardRegistration(set = "CMM", collectorNumber = "562")
+@CardRegistration(set = "LTC", collectorNumber = "348")
+@CardRegistration(set = "LTC", collectorNumber = "378")
 public class TheGreatHenge extends Card {
 
     public TheGreatHenge() {

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "24")
+@CardRegistration(set = "SLD", collectorNumber = "23")
 public class RegalCaracal extends Card {
 
     public RegalCaracal() {

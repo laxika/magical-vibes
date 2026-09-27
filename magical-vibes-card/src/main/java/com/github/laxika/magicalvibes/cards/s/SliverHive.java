@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M15", collectorNumber = "247")
+@CardRegistration(set = "SLD", collectorNumber = "668")
 public class SliverHive extends Card {
 
     public SliverHive() {

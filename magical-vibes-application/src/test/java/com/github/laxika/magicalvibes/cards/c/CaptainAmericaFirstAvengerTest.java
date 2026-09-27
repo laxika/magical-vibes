@@ -1,24 +1,25 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.FlowstoneCrusher;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
+import com.github.laxika.magicalvibes.cards.s.StriderHarness;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CaptainAmericaFirstAvenger.class, FlowstoneCrusher.class, LeoninScimitar.class,
-        LoxodonWarhammer.class})
+@CardUsed({CaptainAmericaFirstAvenger.class, GrizzlyBears.class, StriderHarness.class, FlowstoneCrusher.class, LeoninScimitar.class, LoxodonWarhammer.class})
 class CaptainAmericaFirstAvengerTest extends BaseCardTest {
 
     @Test

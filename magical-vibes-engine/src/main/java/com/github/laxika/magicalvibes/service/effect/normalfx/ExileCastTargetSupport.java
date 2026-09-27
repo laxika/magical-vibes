@@ -193,7 +193,12 @@ public class ExileCastTargetSupport {
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
-            validTargets.addAll(gameData.orderedPlayerIds);
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (targetLegalityService.checkSpellTargeting(
+                        gameData, card, playerId, null, controllerId).isEmpty()) {
+                    validTargets.add(playerId);
+                }
+            }
         }
 
         if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {

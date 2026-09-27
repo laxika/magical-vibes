@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "SOC", collectorNumber = "411")
 @CardRegistration(set = "DMU", collectorNumber = "258")
 public class TangledIslet extends Card {
 

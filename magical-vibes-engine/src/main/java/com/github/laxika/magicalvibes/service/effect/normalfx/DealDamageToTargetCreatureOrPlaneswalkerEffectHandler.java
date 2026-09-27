@@ -50,7 +50,8 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
         Permanent singleTarget = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         boolean targetIsCreature = singleTarget != null && gameQueryService.isCreature(gameData, singleTarget);
         boolean targetIsPlaneswalker = singleTarget != null && singleTarget.getCard().hasType(CardType.PLANESWALKER);
-        int toughnessBefore = targetIsCreature ? gameQueryService.getEffectiveToughness(gameData, singleTarget) : 0;
+        int lethalDamageThresholdBefore = targetIsCreature
+                ? gameQueryService.getLethalDamageThreshold(gameData, singleTarget) : 0;
         int markedDamageBefore = singleTarget == null ? 0 : singleTarget.getMarkedDamage();
         int loyaltyBefore = targetIsPlaneswalker ? singleTarget.getCounterCount(CounterType.LOYALTY) : 0;
         boolean sourceHasDeathtouch = tracksExcess
@@ -81,7 +82,7 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
             entry.setEventValue(singleTarget == null
                     ? 0
                     : damageSupport.computeExcessDamageToAnyTarget(
-                    damageDealt, targetIsCreature, toughnessBefore, markedDamageBefore, sourceHasDeathtouch,
+                    damageDealt, targetIsCreature, lethalDamageThresholdBefore, markedDamageBefore, sourceHasDeathtouch,
                     targetIsPlaneswalker, loyaltyBefore, false, 0));
         }
     }

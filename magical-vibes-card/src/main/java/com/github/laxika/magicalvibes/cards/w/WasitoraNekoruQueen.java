@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatureOrCreatesTokenEffect;
-
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "2253")
 @CardRegistration(set = "2X2", collectorNumber = "293")
 public class WasitoraNekoruQueen extends Card {
 

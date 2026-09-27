@@ -361,7 +361,7 @@ public class StateBasedActionService {
                 } else if (gameQueryService.isCreature(gameData, p)
                         && isDestroyedByLethalDamage(gameData, p)
                         && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)) {
-                    // CR 704.5g — creature with damage >= toughness is destroyed, and
+                    // CR 704.5g — creature with lethal damage is destroyed, and
                     // CR 704.5h — creature dealt damage by a deathtouch source since the last check
                     // is destroyed (regeneration can replace either)
                     lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
@@ -433,7 +433,11 @@ public class StateBasedActionService {
 
             for (DeathEntry entry : toDie) {
                 processedIds.add(entry.permanent().getId());
-                permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+                if (entry.reason() == DeathReason.LETHAL_DAMAGE) {
+                    permanentRemovalService.destroyPermanentByStateBasedAction(gameData, entry.permanent());
+                } else {
+                    permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+                }
                 Card cardEntry = entry.permanent().getCard();
                 String name = cardEntry.getName();
                 switch (entry.reason()) {
@@ -699,8 +703,8 @@ public class StateBasedActionService {
      * {@link CantBeDestroyedByLethalDamageUnlessSingleSourceEffect}.
      */
     private boolean isDestroyedByLethalDamage(GameData gameData, Permanent p) {
-        int toughness = gameQueryService.getEffectiveToughness(gameData, p);
-        boolean totalLethal = p.getMarkedDamage() >= toughness || p.isDamagedByDeathtouch();
+        int lethalDamageThreshold = gameQueryService.getLethalDamageThreshold(gameData, p);
+        boolean totalLethal = p.getMarkedDamage() >= lethalDamageThreshold || p.isDamagedByDeathtouch();
         if (!totalLethal) {
             return false;
         }
@@ -714,6 +718,6 @@ public class StateBasedActionService {
             return true;
         }
         // Deathtouch from any single source is lethal damage from that source (CR 704.5h).
-        return p.isDamagedByDeathtouch() || p.hasLethalDamageFromSingleSource(toughness);
+        return p.isDamagedByDeathtouch() || p.hasLethalDamageFromSingleSource(lethalDamageThreshold);
     }
 }

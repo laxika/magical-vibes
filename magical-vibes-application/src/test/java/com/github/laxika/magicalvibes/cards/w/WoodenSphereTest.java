@@ -199,6 +199,23 @@ class WoodenSphereTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Trigger resolves after Wooden Sphere leaves the battlefield")
+    void triggerResolvesAfterWoodenSphereLeavesBattlefield() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new WoodenSphere());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, sphere));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
     @DisplayName("Each Wooden Sphere triggers for the same green spell")
     void multipleSpheresTriggerIndependently() {
         harness.addToBattlefield(player1, new WoodenSphere());

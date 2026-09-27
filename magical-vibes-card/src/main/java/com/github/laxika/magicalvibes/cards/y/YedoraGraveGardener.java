@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBat
 @CardRegistration(set = "MUL", collectorNumber = "30")
 @CardRegistration(set = "MUL", collectorNumber = "95")
 @CardRegistration(set = "MUL", collectorNumber = "160")
+@CardRegistration(set = "CMM", collectorNumber = "333")
 public class YedoraGraveGardener extends Card {
 
     public YedoraGraveGardener() {

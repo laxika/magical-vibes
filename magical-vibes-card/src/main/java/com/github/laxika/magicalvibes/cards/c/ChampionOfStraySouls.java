@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "63")
+@CardRegistration(set = "C15", collectorNumber = "119")
 public class ChampionOfStraySouls extends Card {
 
     public ChampionOfStraySouls() {

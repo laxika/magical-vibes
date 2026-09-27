@@ -229,6 +229,7 @@ public class PlayCardRequestDispatchService {
         }
         List<Card> hand = gameData.castingSourceCards(player.getId());
         return hand != null && request.cardIndex() < hand.size()
-                && hand.get(request.cardIndex()).getKeywords().contains(Keyword.WARP);
+                && (hand.get(request.cardIndex()).getKeywords().contains(Keyword.WARP)
+                || gameData.cardsGrantedWarpUntilEndOfTurn.contains(hand.get(request.cardIndex()).getId()));
     }
 }

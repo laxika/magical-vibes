@@ -136,7 +136,7 @@ export class DamageChoiceService {
     if (target.isPlayer) return 0;
     return this.combatDamageIsDeathtouch
       ? Math.max(0, 1 - target.currentDamage)
-      : target.toughness - target.currentDamage;
+      : target.lethalDamageThreshold - target.currentDamage;
   }
 
   isTargetMissingLethalDamage(target: CombatDamageTargetView): boolean {

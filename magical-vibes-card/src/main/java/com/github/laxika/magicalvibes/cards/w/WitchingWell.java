@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "74")
+@CardRegistration(set = "CMM", collectorNumber = "135")
 public class WitchingWell extends Card {
 
     public WitchingWell() {

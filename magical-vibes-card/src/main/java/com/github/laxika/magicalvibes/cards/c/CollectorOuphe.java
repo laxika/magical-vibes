@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "1077")
 @CardRegistration(set = "MH1", collectorNumber = "158")
 public class CollectorOuphe extends Card {
 

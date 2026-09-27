@@ -65,6 +65,7 @@ public class PhyrexianPortalEffectHandler implements NormalEffectHandlerBean {
             cardOwners.put(card.getId(), controllerId);
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
                 List.of(), pileCards, cardOwners, List.of(), List.of(),
                 CardPileDisposition.SEARCH_ONE_TO_HAND));

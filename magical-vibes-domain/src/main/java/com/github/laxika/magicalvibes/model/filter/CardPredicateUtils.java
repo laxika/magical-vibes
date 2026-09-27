@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.filter;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -87,6 +86,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
+        }
+        if (predicate instanceof CardHasUnearthPredicate) {
+            return "card with unearth";
         }
         if (predicate instanceof CardHasXInManaCostPredicate) {
             return "card with {X} in its mana cost";

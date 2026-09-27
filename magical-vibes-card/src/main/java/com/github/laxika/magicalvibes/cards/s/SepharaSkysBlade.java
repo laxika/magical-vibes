@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "36")
+@CardRegistration(set = "CMM", collectorNumber = "54")
+@CardRegistration(set = "CMM", collectorNumber = "471")
 public class SepharaSkysBlade extends Card {
 
     public SepharaSkysBlade() {

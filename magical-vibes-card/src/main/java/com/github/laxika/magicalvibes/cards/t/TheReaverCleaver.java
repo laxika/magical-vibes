@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "2095")
 @CardRegistration(set = "HOC", collectorNumber = "94")
 public class TheReaverCleaver extends Card {
 

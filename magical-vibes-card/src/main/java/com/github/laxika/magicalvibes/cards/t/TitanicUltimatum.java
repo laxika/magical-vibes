@@ -12,6 +12,8 @@ import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "204")
 @CardRegistration(set = "DDH", collectorNumber = "31")
+@CardRegistration(set = "SLD", collectorNumber = "1918")
+@CardRegistration(set = "SLD", collectorNumber = "1923")
 public class TitanicUltimatum extends Card {
 
     public TitanicUltimatum() {

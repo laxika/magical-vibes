@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "6")
 @CardRegistration(set = "AKR", collectorNumber = "11")
+@CardRegistration(set = "SLD", collectorNumber = "1228")
 public class CrestedSunmare extends Card {
 
     public CrestedSunmare() {

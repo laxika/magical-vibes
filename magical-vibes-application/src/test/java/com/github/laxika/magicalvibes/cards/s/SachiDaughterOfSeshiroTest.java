@@ -1,47 +1,44 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.o.OrochiSustainer;
+import com.github.laxika.magicalvibes.cards.r.Rootrunner;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SachiDaughterOfSeshiro.class, OrochiSustainer.class, Rootrunner.class})
 class SachiDaughterOfSeshiroTest extends BaseCardTest {
 
-    private static Card createCreature(String name, int power, int toughness, CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{G}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtypes));
-        return card;
+    private Permanent addSachi(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new SachiDaughterOfSeshiro());
     }
 
-    private Permanent addSachi(Player player) {
-        Permanent permanent = new Permanent(new SachiDaughterOfSeshiro());
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    private Permanent addNonCreatureShamanPermanent(Player player) {
+        Rootrunner shaman = new Rootrunner();
+        shaman.setType(CardType.ENCHANTMENT);
+        shaman.setAdditionalTypes(Set.of(CardType.KINDRED));
+        shaman.setSubtypes(List.of(CardSubtype.SHAMAN));
+        return harness.addToBattlefieldAndReturn(player, shaman);
     }
 
     @Test
     @DisplayName("Other Snakes you control get +0/+1")
     void boostsOtherOwnSnakes() {
-        harness.addToBattlefield(player1, createCreature("Sakura Snake", 1, 1, CardSubtype.SNAKE));
+        harness.addToBattlefield(player1, new OrochiSustainer());
         addSachi(player1);
 
-        Permanent snake = findPermanent(player1, "Sakura Snake");
+        Permanent snake = findPermanent(player1, "Orochi Sustainer");
         var bonus = gqs.computeStaticBonus(gd, snake);
 
         assertThat(bonus.power()).isZero();
@@ -59,10 +56,10 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Snakes an opponent controls are not boosted")
     void doesNotBoostOpponentSnakes() {
-        harness.addToBattlefield(player2, createCreature("Sakura Snake", 1, 1, CardSubtype.SNAKE));
+        harness.addToBattlefield(player2, new OrochiSustainer());
         addSachi(player1);
 
-        Permanent snake = findPermanent(player2, "Sakura Snake");
+        Permanent snake = findPermanent(player2, "Orochi Sustainer");
 
         assertThat(gqs.computeStaticBonus(gd, snake).toughness()).isZero();
     }
@@ -70,10 +67,10 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Snake creatures you control are not boosted")
     void doesNotBoostNonSnakes() {
-        harness.addToBattlefield(player1, createCreature("Grizzly Bears", 2, 2, CardSubtype.BEAR));
+        harness.addToBattlefield(player1, new Rootrunner());
         addSachi(player1);
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Rootrunner");
 
         assertThat(gqs.computeStaticBonus(gd, bears).toughness()).isZero();
     }
@@ -81,10 +78,10 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Shamans you control gain the {T}: Add {G}{G} ability")
     void grantsManaAbilityToShamans() {
-        harness.addToBattlefield(player1, createCreature("Orochi Leafcaller", 1, 1, CardSubtype.SHAMAN));
+        harness.addToBattlefield(player1, new OrochiSustainer());
         addSachi(player1);
 
-        Permanent shaman = findPermanent(player1, "Orochi Leafcaller");
+        Permanent shaman = findPermanent(player1, "Orochi Sustainer");
         var granted = gqs.computeStaticBonus(gd, shaman).grantedActivatedAbilities();
 
         assertThat(granted).hasSize(1);
@@ -102,21 +99,39 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Shaman creatures you control gain nothing")
     void doesNotGrantToNonShamans() {
-        harness.addToBattlefield(player1, createCreature("Sakura Snake", 1, 1, CardSubtype.SNAKE));
+        harness.addToBattlefield(player1, new Rootrunner());
         addSachi(player1);
 
-        Permanent snake = findPermanent(player1, "Sakura Snake");
+        Permanent snake = findPermanent(player1, "Rootrunner");
 
         assertThat(gqs.computeStaticBonus(gd, snake).grantedActivatedAbilities()).isEmpty();
     }
 
     @Test
+    @DisplayName("Opponent Shamans do not gain the mana ability")
+    void doesNotGrantToOpponentShamans() {
+        harness.addToBattlefield(player2, new OrochiSustainer());
+        addSachi(player1);
+
+        Permanent shaman = findPermanent(player2, "Orochi Sustainer");
+
+        assertThat(gqs.computeStaticBonus(gd, shaman).grantedActivatedAbilities()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Noncreature Shaman permanents you control gain the mana ability")
+    void grantsManaAbilityToNonCreatureShamanPermanents() {
+        Permanent shaman = addNonCreatureShamanPermanent(player1);
+        addSachi(player1);
+
+        assertThat(gqs.computeStaticBonus(gd, shaman).grantedActivatedAbilities()).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Activating the granted ability taps the Shaman and adds {G}{G}")
     void grantedAbilityProducesTwoGreenMana() {
-        harness.addToBattlefield(player1, createCreature("Orochi Leafcaller", 1, 1, CardSubtype.SHAMAN));
+        Permanent shaman = addCreatureReady(player1, new OrochiSustainer());
         addSachi(player1);
-        Permanent shaman = findPermanent(player1, "Orochi Leafcaller");
-        shaman.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, null, null);
 

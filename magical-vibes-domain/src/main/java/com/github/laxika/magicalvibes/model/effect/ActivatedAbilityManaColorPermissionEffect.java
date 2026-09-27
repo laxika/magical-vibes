@@ -11,4 +11,9 @@ import java.util.Set;
 public interface ActivatedAbilityManaColorPermissionEffect extends CardEffect {
 
     Set<ManaColor> manaColors();
+
+    /** Whether this permission applies to permanents the controller controls but does not own. */
+    default boolean appliesToControlledNonOwnedPermanentsOnly() {
+        return false;
+    }
 }

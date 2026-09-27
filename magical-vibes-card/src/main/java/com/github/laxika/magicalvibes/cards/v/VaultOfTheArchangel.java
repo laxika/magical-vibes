@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "158")
 @CardRegistration(set = "MD1", collectorNumber = "17")
+@CardRegistration(set = "SLD", collectorNumber = "350")
 public class VaultOfTheArchangel extends Card {
 
     public VaultOfTheArchangel() {

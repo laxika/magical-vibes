@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PromiseOfPower.class, YotianSoldier.class})
 class PromiseOfPowerTest extends BaseCardTest {
 
     @Test
     @DisplayName("The draw mode draws five cards and loses 5 life")
     void drawMode() {
         cast(new int[]{0}, false, List.of(new PromiseOfPower()),
-                List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                List.of(new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier()));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
@@ -31,7 +33,7 @@ class PromiseOfPowerTest extends BaseCardTest {
     @DisplayName("The token mode creates a Demon sized to the cards in hand")
     void tokenMode() {
         cast(new int[]{1}, false, List.of(
-                        new PromiseOfPower(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()),
+                        new PromiseOfPower(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier()),
                 List.of());
 
         Permanent demon = findPermanent(player1, "Demon");
@@ -45,8 +47,8 @@ class PromiseOfPowerTest extends BaseCardTest {
     @DisplayName("Entwine resolves both modes and pays the additional four mana")
     void entwined() {
         cast(new int[]{0, 1}, true,
-                List.of(new PromiseOfPower(), new GrizzlyBears(), new GrizzlyBears()),
-                List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                List.of(new PromiseOfPower(), new YotianSoldier(), new YotianSoldier()),
+                List.of(new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier()));
 
         Permanent demon = findPermanent(player1, "Demon");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);

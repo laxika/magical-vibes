@@ -1,21 +1,23 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AetherSpellbomb;
+import com.github.laxika.magicalvibes.cards.a.Annul;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NeurokFamiliar.class, AetherSpellbomb.class, Ornithopter.class, Annul.class})
 class NeurokFamiliarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Artifact card revealed on top goes to hand")
     void artifactCardGoesToHand() {
-        Card artifact = card("Test Artifact", CardType.ARTIFACT);
+        AetherSpellbomb artifact = new AetherSpellbomb();
         harness.setLibrary(player1, List.of(artifact));
 
         castNeurokFamiliar();
@@ -26,9 +28,22 @@ class NeurokFamiliarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Artifact creature revealed on top goes to hand")
+    void artifactCreatureGoesToHand() {
+        Ornithopter artifactCreature = new Ornithopter();
+        harness.setLibrary(player1, List.of(artifactCreature));
+
+        castNeurokFamiliar();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(artifactCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(artifactCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(artifactCreature);
+    }
+
+    @Test
     @DisplayName("Non-artifact card revealed on top goes to the graveyard")
     void nonArtifactCardGoesToGraveyard() {
-        Card nonArtifact = card("Test Sorcery", CardType.SORCERY);
+        Annul nonArtifact = new Annul();
         harness.setLibrary(player1, List.of(nonArtifact));
 
         castNeurokFamiliar();
@@ -50,18 +65,8 @@ class NeurokFamiliarTest extends BaseCardTest {
     }
 
     private void castNeurokFamiliar() {
-        harness.setHand(player1, List.of(new NeurokFamiliar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NeurokFamiliar(), "{1}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-    }
-
-    private static Card card(String name, CardType type) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(type);
-        return card;
     }
 }

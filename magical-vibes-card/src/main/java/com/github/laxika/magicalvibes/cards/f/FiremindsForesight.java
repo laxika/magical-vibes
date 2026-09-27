@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForInstantsWithM
 
 @CardRegistration(set = "RTR", collectorNumber = "162")
 @CardRegistration(set = "DDS", collectorNumber = "21")
+@CardRegistration(set = "C15", collectorNumber = "218")
 public class FiremindsForesight extends Card {
 
     public FiremindsForesight() {

@@ -27,4 +27,23 @@ class BottleGnomesTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(gnomes.getCard().getId()));
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid before Bottle Gnomes's ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(gnomes.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(gnomes.getCard().getId()));
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+    }
 }

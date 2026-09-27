@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
+import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathWish.class, AvenFogbringer.class})
+@CardUsed({AvenFogbringer.class, BorderPatrol.class, DeathWish.class})
 class DeathWishTest extends BaseCardTest {
 
     @Test
@@ -88,5 +89,43 @@ class DeathWishTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
         harness.handleCardChosen(player1, index);
+    }
+
+    @Test
+    @DisplayName("Does not offer an opponent's outside-the-game card")
+    void searchesOnlyControllerOutsideTheGameCards() {
+        Card chosen = new BorderPatrol();
+        Card opponentCard = new BorderPatrol();
+        setSideboard(chosen);
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentCard)));
+        harness.setLife(player1, 20);
+
+        DeathWish wish = castDeathWishForJudReview();
+
+        PendingInteraction.LibrarySearch search = pendingSearch();
+        assertThat(search.params().cards()).containsExactly(chosen);
+        choose(chosen);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
+    @Test
+    @DisplayName("Exiles Death Wish even when the life loss is lethal")
+    void exilesAfterLethalLifeLoss() {
+        harness.setLife(player1, 1);
+
+        DeathWish wish = castDeathWishForJudReview();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
+    private DeathWish castDeathWishForJudReview() {
+        DeathWish wish = new DeathWish();
+        harness.castFromHand(player1, wish, "{1}{B}{B}");
+        harness.passBothPriorities();
+        return wish;
     }
 }

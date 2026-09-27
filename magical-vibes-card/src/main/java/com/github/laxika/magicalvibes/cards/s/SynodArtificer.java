@@ -38,7 +38,7 @@ public class SynodArtificer extends Card {
                 List.of(),
                 0,
                 100
-        ).withXScaledTargets());
+        ).withExactXTargets());
 
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -52,6 +52,6 @@ public class SynodArtificer extends Card {
                 List.of(),
                 0,
                 100
-        ).withXScaledTargets());
+        ).withExactXTargets());
     }
 }

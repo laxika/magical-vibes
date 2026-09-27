@@ -12,9 +12,12 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,6 +28,12 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    void setTriggerCollectionService(@Lazy TriggerCollectionService triggerCollectionService) {
+        this.triggerCollectionService = triggerCollectionService;
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +47,9 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         List<UUID> targetIds = e.targetPermanent()
                 ? entry.targetsForEffect(effect)
                 : null;
-        UUID sourcePermanentId = e.useEnteringPermanentReference()
+        UUID sourcePermanentId = e.fixedSourcePermanentId() != null
+                ? e.fixedSourcePermanentId()
+                : e.useEnteringPermanentReference()
                 ? entry.getTargetId() != null ? entry.getTargetId() : entry.getTriggeringPermanentId()
                 : e.targetPermanent()
                 ? targetIds == null ? entry.getTargetId() : targetIds.stream().findFirst().orElse(entry.getTargetId())
@@ -67,5 +78,8 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
 
         gameData.discardCausedByOpponent = false;
         playerInteractionSupport.resolveDiscardCards(gameData, controllerId, discardAmount);
+        if (discardAmount == 0 && source != null) {
+            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
+        }
     }
 }

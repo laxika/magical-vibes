@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "130")
+@CardRegistration(set = "C15", collectorNumber = "193")
 public class NobleQuarry extends Card {
 
     public NobleQuarry() {

@@ -9,6 +9,8 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "50")
+@CardRegistration(set = "SLD", collectorNumber = "847")
+@CardRegistration(set = "SLD", collectorNumber = "1214")
 public class PhyrexianCrusader extends Card {
 
     public PhyrexianCrusader() {

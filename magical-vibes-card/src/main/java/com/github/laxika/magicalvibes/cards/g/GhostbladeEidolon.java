@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "12")
 @CardRegistration(set = "PIO", collectorNumber = "13")
+@CardRegistration(set = "C15", collectorNumber = "70")
 public class GhostbladeEidolon extends Card {
 
     public GhostbladeEidolon() {

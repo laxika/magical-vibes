@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "240")
+@CardRegistration(set = "SLD", collectorNumber = "663")
 @CardRegistration(set = "TSR", collectorNumber = "254")
 public class HarmonicSliver extends Card {
 

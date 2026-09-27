@@ -30,10 +30,15 @@ import java.util.UUID;
 public class LibraryRevealSupport {
 
     private final GameLogService gameLogService;
-    @lombok.Setter(onMethod_ = @org.springframework.beans.factory.annotation.Autowired(required = false))
     private CardCatalog cardCatalog;
     private volatile List<String> catalogCreatureNames;
+    private volatile List<String> catalogNonBasicLandNames;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setCardCatalog(CardCatalog cardCatalog) {
+        this.cardCatalog = cardCatalog;
+    }
 
     public record TopCardsResult(UUID controllerId, List<Card> topCards, String playerName) {}
 
@@ -118,8 +123,26 @@ public class LibraryRevealSupport {
 
     /** Every distinct card name in the game except basic land card names (Desperate Research). */
     public List<String> collectNonBasicLandCardNamesInGame(GameData gameData) {
-        return collectCardNamesInGame(gameData,
-                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)));
+        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
+                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
+        if (cardCatalog != null) {
+            List<String> cached = catalogNonBasicLandNames;
+            if (cached == null) {
+                Set<String> catalogNames = new TreeSet<>();
+                for (CardSet set : CardSet.values()) {
+                    for (var printing : cardCatalog.getPrintings(set)) {
+                        Card card = printing.createCard();
+                        if (!(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))) {
+                            catalogNames.add(card.getName());
+                        }
+                    }
+                }
+                cached = List.copyOf(catalogNames);
+                catalogNonBasicLandNames = cached;
+            }
+            names.addAll(cached);
+        }
+        return new ArrayList<>(names);
     }
 
     private List<String> collectCardNamesInGame(GameData gameData, java.util.function.Predicate<Card> candidate) {
