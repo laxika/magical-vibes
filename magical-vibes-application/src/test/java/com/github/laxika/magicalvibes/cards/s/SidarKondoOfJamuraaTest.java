@@ -107,10 +107,4 @@ class SidarKondoOfJamuraaTest extends BaseCardTest {
         assertThat(blocker.getToughnessModifier()).isEqualTo(-1);
     }
 
-    private void prepareDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
 }
