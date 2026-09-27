@@ -30,7 +30,6 @@ class TheHorusHeresyTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validPermanentIds()).contains(creature.getId()).doesNotContain(legendaryCreature.getId());
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -54,7 +53,6 @@ class TheHorusHeresyTest extends BaseCardTest {
 
         triggerChapter();
         harness.handlePermanentChosen(player1, stolenCreature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
@@ -74,6 +72,7 @@ class TheHorusHeresyTest extends BaseCardTest {
         addSagaWithLore(2);
 
         triggerChapter();
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice playerOneChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

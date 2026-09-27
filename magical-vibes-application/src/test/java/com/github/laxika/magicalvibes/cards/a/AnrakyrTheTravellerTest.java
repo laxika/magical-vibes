@@ -36,6 +36,7 @@ class AnrakyrTheTravellerTest extends BaseCardTest {
     @Test
     void attacksOfferArtifactFromGraveyardForLifeEqualToManaValue() {
         harness.setLife(player1, 10);
+        harness.setHand(player1, List.of());
         MindStone mindStone = new MindStone();
         harness.setGraveyard(player1, List.of(mindStone));
         addReadyAnrakyr();
