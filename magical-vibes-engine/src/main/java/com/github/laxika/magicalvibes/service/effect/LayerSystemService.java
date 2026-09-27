@@ -3087,7 +3087,9 @@ public class LayerSystemService {
         }
         if (handler != null) {
             for (PermanentSlot target : slots) {
-                if (target.permanent() == source.permanent()) continue;
+                if (target.permanent() == source.permanent()
+                        && !(instance.effect() instanceof GrantActivatedAbilityEffect grant
+                        && grant.scope() == GrantScope.OWN_PERMANENTS)) continue;
                 StaticBonusAccumulator harvested = new StaticBonusAccumulator();
                 handler.apply(new StaticEffectContext(source.permanent(), target.permanent(), source.controllerId(),
                         source.controllerId().equals(target.controllerId()), gameData),

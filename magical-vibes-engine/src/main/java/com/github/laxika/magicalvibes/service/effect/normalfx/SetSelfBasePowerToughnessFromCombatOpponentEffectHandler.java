@@ -39,12 +39,16 @@ public class SetSelfBasePowerToughnessFromCombatOpponentEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent combatOpponent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (source == null || combatOpponent == null) {
+        if (source == null || (combatOpponent == null
+                && (entry.getCombatOpponentPowerAtTrigger() == null
+                || entry.getCombatOpponentToughnessAtTrigger() == null))) {
             return;
         }
 
-        int power = gameQueryService.getEffectivePower(gameData, combatOpponent);
-        int toughness = gameQueryService.getEffectiveToughness(gameData, combatOpponent);
+        int power = combatOpponent == null ? entry.getCombatOpponentPowerAtTrigger()
+                : gameQueryService.getEffectivePower(gameData, combatOpponent);
+        int toughness = combatOpponent == null ? entry.getCombatOpponentToughnessAtTrigger()
+                : gameQueryService.getEffectiveToughness(gameData, combatOpponent);
 
         source.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
         source.setBasePowerOverride(power);

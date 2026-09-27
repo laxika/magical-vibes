@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageBecomeMonarch;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -943,6 +944,7 @@ public class TurnProgressionService {
         gameData.crewedPermanentSubtypesThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageToken.class);
+        gameData.clearDelayedActions(DelayedCombatDamageBecomeMonarch.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
@@ -991,6 +993,7 @@ public class TurnProgressionService {
         List<Card> handAtTurnStart = gameData.playerHands.get(nextActive);
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
+        gameData.permanentTriggeringEffectOnDeathThisTurn.clear();
         gameData.permanentsDealtNoncombatDamageThisTurn.clear();
         gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();

@@ -70,7 +70,7 @@ class PyreZombieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+                .isNull();
     }
 
     @Test

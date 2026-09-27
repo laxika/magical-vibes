@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "9")
+@CardRegistration(set = "LTC", collectorNumber = "163")
 public class CallForUnity extends Card {
 
     public CallForUnity() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SHM", collectorNumber = "135")
 @CardRegistration(set = "MMA", collectorNumber = "174")
 @CardRegistration(set = "UMA", collectorNumber = "195")
+@CardRegistration(set = "LTC", collectorNumber = "264")
 public class WoodfallPrimus extends Card {
 
     public WoodfallPrimus() {

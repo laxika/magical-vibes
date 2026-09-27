@@ -864,11 +864,13 @@ public class StackResolutionService {
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
-                boolean hasControlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
-                if (hasControlEffect) {
+                CardEffect controlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElse(null);
+                if (controlEffect != null) {
                     creatureControlService.applyControlEffect(gameData, controllerId, target,
-                            new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                            controlEffect, EffectDuration.WHILE_ATTACHED,
                             perm.getId(), characteristics.getName());
                 }
 

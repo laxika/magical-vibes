@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -348,6 +349,12 @@ public class TriggeredAbilityQueueService {
 
         if (matchingCards.isEmpty()) {
             if (target.minTargets() == 0) {
+                // A trigger consisting only of an optional graveyard return has nothing to do
+                // when no card can be returned. Avoid leaving an empty Soulshift trigger above
+                // another ability on the stack.
+                if (pending.effects().stream().allMatch(effect -> targetedReturnEffect(effect) != null)) {
+                    return false;
+                }
                 // "Any number of target cards" is legally satisfied by zero targets, so the trigger
                 // still goes on the stack and its non-targeting half still resolves (Iname, Life
                 // Aspect's "you may exile it").
@@ -1072,7 +1079,7 @@ public class TriggeredAbilityQueueService {
         return card.getSpellTargets().stream()
                 .anyMatch(group -> group.getMaxTargets() > 1
                         && effects.stream().anyMatch(effect ->
-                        card.getEffectTargetIndex(effect) == group.getIndex()));
+                        card.isEffectBoundToTargetGroup(effect, group.getIndex())));
     }
 
     private boolean hasLegalTriggeredModeTarget(GameData gameData,
@@ -2194,7 +2201,7 @@ public class TriggeredAbilityQueueService {
                 for (CardEffect effect : pending.effects()) {
                     CardEffect targetEffect = unwrapConditionalEffect(effect);
                     if (targetEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect
-                            && pending.sourceCard().getEffectTargetIndex(targetEffect) >= 0
+                            && pending.sourceCard().getEffectTargetIndex(effect) >= 0
                             && pending.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                         filter = graveyardFilter.predicate();
                         scope = graveyardFilter.scope();
@@ -2224,6 +2231,11 @@ public class TriggeredAbilityQueueService {
                         break;
                     }
                 }
+            }
+            if ((filter == null || filter instanceof CardTruePredicate)
+                    && pending.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                filter = graveyardFilter.predicate();
+                scope = graveyardFilter.scope();
             }
             // "mana value X or less, where X is the life you gained or lost this turn"
             int maxManaValue = lifeGainedCap

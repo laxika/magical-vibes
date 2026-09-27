@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "1778")
 @CardRegistration(set = "OTP", collectorNumber = "1")
 @CardRegistration(set = "C14", collectorNumber = "7")
+@CardRegistration(set = "LTC", collectorNumber = "167")
 public class FellTheMighty extends Card {
 
     public FellTheMighty() {

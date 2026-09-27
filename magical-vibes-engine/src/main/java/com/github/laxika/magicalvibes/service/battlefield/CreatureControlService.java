@@ -402,9 +402,13 @@ public class CreatureControlService {
                             && aura.getId().equals(fe.sourcePermanentId()));
             if (!present) {
                 UUID auraController = gameData.findControllerOf(aura);
+                CardEffect controlEffect = aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElseThrow();
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), aura.getCard().getName(), aura.getId(), auraController,
-                        new ControlEnchantedCreatureEffect(), enchanted.getId(), null, null,
+                        controlEffect, enchanted.getId(), null, null,
                         EffectDuration.WHILE_ATTACHED, 0));
             }
         }

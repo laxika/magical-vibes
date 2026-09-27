@@ -1965,7 +1965,10 @@ public class PermanentChoiceTriggerHandlerService {
                 lgt.sourcePermanentId()
         );
         entry.setTargetId(targetId);
-            pushTriggeredEntry(gameData, entry);
+        if (lgt.eventValue() != null) {
+            entry.setEventValue(lgt.eventValue());
+        }
+        pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);
         

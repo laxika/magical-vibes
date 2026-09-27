@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.mockito.ArgumentCaptor;
@@ -385,6 +387,29 @@ class FlickerEffectHandlerTest {
                         assertThat(pending.plusOnePlusOneCountersOnlyOnCreatures()).isTrue();
                         assertThat(pending.loyaltyCountersOnPlaneswalkers()).isEqualTo(1);
                     });
+        }
+
+        @Test
+        @DisplayName("Preserves multiple keyword counters in the pending return")
+        void preservesMultipleKeywordCounters() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Gilraen, Dúnedain Protector");
+            FlickerEffect effect = FlickerEffect.exileTargetReturnAtEndStepWithCounters(
+                    Map.of(CounterType.VIGILANCE, 1, CounterType.LIFELINK, 1));
+            StackEntry entry = new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+                    .singleElement()
+                    .satisfies(pending -> assertThat(pending.countersOnReturn())
+                            .containsExactlyInAnyOrderEntriesOf(
+                                    Map.of(CounterType.VIGILANCE, 1, CounterType.LIFELINK, 1)));
         }
 
         @Test

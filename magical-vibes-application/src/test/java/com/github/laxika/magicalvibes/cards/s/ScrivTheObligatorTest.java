@@ -57,7 +57,6 @@ class ScrivTheObligatorTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
-        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test

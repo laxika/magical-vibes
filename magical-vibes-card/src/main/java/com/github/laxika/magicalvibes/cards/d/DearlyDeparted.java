@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalC
 
 @CardRegistration(set = "ISD", collectorNumber = "9")
 @CardRegistration(set = "DDQ", collectorNumber = "6")
+@CardRegistration(set = "LTC", collectorNumber = "165")
 public class DearlyDeparted extends Card {
 
     public DearlyDeparted() {

@@ -29,6 +29,10 @@ class KillmongerRuthlessUsurperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, killmonger)).isEqualTo(5);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        harness.passBothPriorities();
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();

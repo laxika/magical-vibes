@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 public class RubyLeech extends Card {
 
     public RubyLeech() {
-        // Red spells you cast cost {R} more to cast (modeled as +1 generic).
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
-                new CardColorPredicate(CardColor.RED), 1, CostModificationScope.SELF));
+                new CardColorPredicate(CardColor.RED), "{R}", CostModificationScope.SELF));
     }
 }

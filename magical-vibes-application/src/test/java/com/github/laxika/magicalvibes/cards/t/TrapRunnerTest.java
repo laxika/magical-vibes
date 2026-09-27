@@ -115,7 +115,7 @@ class TrapRunnerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(trapRunner), null, blockedAttacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("Target must be an unblocked attacking creature");
     }
 
     private int battlefieldIndex(Permanent permanent) {

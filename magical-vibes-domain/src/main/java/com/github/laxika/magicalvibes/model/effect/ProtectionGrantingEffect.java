@@ -129,4 +129,9 @@ public interface ProtectionGrantingEffect extends CardEffect {
     default boolean protectsFromEverything() {
         return false;
     }
+
+    /** Whether this effect protects from permanents currently designated as Ring-bearers. */
+    default boolean protectionFromRingBearers() {
+        return false;
+    }
 }

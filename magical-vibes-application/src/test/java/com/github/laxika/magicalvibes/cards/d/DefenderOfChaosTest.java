@@ -57,11 +57,11 @@ class DefenderOfChaosTest extends BaseCardTest {
     void protectionFromWhitePreventsWhiteAbilityTargeting() {
         Permanent defender = addCreatureReady(player1, new DefenderOfChaos());
         addCreatureReady(player2, new ExpendableTroops());
-        declareAttackers(player1, List.of(0));
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, defender.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from the source");
+                .hasMessageContaining("protection from white");
     }
 
     @Test

@@ -13687,6 +13687,9 @@ public class SpellCastingService {
                 }
             }
         }
+        if (castEntry != null && gameQueryService.hasArtifactManaSplitSecond(gameData, playerId, card.getId())) {
+            castEntry.getGrantedKeywordsWhileOnStack().add(Keyword.SPLIT_SECOND);
+        }
 
         UUID commanderId = gameData.pendingCommandCasts.remove(card.getId());
         if (commanderId == null && playerId.equals(gameData.commandCastPlayerId)) commanderId = gameData.commandCastCardId;

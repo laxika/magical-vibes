@@ -173,6 +173,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanA
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
+import com.github.laxika.magicalvibes.model.condition.ControllerRingLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerEndStep;
 import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn;
@@ -329,6 +330,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFr
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
@@ -384,6 +386,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMotivated;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
+import com.github.laxika.magicalvibes.model.condition.SourceIsRingBearer;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
@@ -587,7 +590,8 @@ public class ConditionEvaluationService {
             case Coven ignored ->
                     isCovenMet(gameData, ctx);
             case FullParty ignored ->
-                    AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
+                    partyIsAlwaysFull(gameData, ctx.controllerId())
+                            || AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
             case AnotherCreatureDiedThisTurn ignored ->
                     gameData.creatureDeathCountThisTurn.values().stream()
                             .mapToInt(Integer::intValue)
@@ -753,6 +757,9 @@ public class ConditionEvaluationService {
             case GainedLifeThisTurn gainedLife ->
                     ctx.controllerId() != null
                             && gameData.getLifeGainedThisTurn(ctx.controllerId()) >= gainedLife.minimumAmount();
+            case ControllerRingLevelAtLeast ringLevel ->
+                    ctx.controllerId() != null
+                            && gameData.ringLevels.getOrDefault(ctx.controllerId(), 0) >= ringLevel.minimumLevel();
             case CommittedCrimeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
@@ -1079,8 +1086,10 @@ public class ConditionEvaluationService {
                     opponentAttacksPlaneswalker(gameData, ctx);
             case OpponentAttacksAnotherOpponent ignored ->
                     opponentAttacksAnotherOpponent(gameData, ctx);
-            case PlayerAttacksOneOfYourOpponents ignored ->
-                    playerAttacksOneOfYourOpponents(gameData, ctx);
+              case PlayerAttacksOneOfYourOpponents ignored ->
+                      playerAttacksOneOfYourOpponents(gameData, ctx);
+              case PlayerAttacksNotController ignored ->
+                      playerAttacksNotController(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
                     countAttackingCreaturesOfSubtype(gameData, ctx.controllerId(), c.subtype()) >= c.minimum();
             case HasAttacker c ->
@@ -1503,6 +1512,10 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getPairedWithId() != null;
             }
+            case SourceIsRingBearer ignored ->
+                    ctx.controllerId() != null
+                            && ctx.sourcePermanentId() != null
+                            && ctx.sourcePermanentId().equals(gameData.ringBearerIds.get(ctx.controllerId()));
             case SourceCanSoulbond ignored ->
                     canSoulbond(gameData, ctx);
             case SourceIsRenowned ignored -> {
@@ -1792,6 +1805,9 @@ public class ConditionEvaluationService {
     public boolean isInterveningIfMet(GameData gameData, CardEffect effect, Permanent source,
                                      UUID controllerId, UUID triggeringPermanentId) {
         if (!(effect instanceof ConditionalEffect conditional)) {
+            return true;
+        }
+        if (!conditional.interveningIf()) {
             return true;
         }
         return isMet(gameData, conditional.condition(), ConditionContext.forPermanent(source, controllerId)
@@ -3488,6 +3504,18 @@ public class ConditionEvaluationService {
                 .map(Permanent::getAttackTarget)
                 .filter(gameData.playerIds::contains)
                 .anyMatch(targetId -> !controllerId.equals(targetId));
+    }
+
+    private boolean playerAttacksNotController(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (controllerId == null || attackingPlayerId == null) {
+            return false;
+        }
+
+        return gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
+                .filter(Permanent::isAttacking)
+                .noneMatch(attacker -> controllerId.equals(attacker.getAttackTarget()));
     }
 
     private boolean controlsMatchingPermanentsWithSameName(GameData gameData, ConditionContext ctx,

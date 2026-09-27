@@ -2258,6 +2258,7 @@ public class EnterTriggerCollectorService {
                     targetPlayerId,
                     match.permanent().getId()
             );
+            entry.setNonTargeting(!isTargeting(effect));
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);

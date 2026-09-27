@@ -27,7 +27,7 @@ public class JunkyoBell extends Card {
                         new BoostTargetCreatureEffect(
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
-                        new SacrificeTargetPermanentAtEndStepEffect()),
+                        new SacrificeTargetPermanentAtEndStepEffect(false, true)),
                 "Have target creature you control get +X/+X until end of turn?"
         ));
     }

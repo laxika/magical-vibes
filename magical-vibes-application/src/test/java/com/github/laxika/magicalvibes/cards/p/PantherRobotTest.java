@@ -30,7 +30,7 @@ class PantherRobotTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.stack).hasSize(1);
-        assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
         assertThat(gameData.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 

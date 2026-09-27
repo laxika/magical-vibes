@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KeiTakahashi.class, GrizzlyBears.class, ProdigalPyromancer.class})
 class KeiTakahashiTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,25 @@ class KeiTakahashiTest extends BaseCardTest {
         addReadyPyromancer(player2);
         addReadyPyromancer(player2);
         addReadyPyromancer(player2);
+
+        dealDamage(player2, 0, target);
+        dealDamage(player2, 1, target);
+        assertThat(target.getMarkedDamage()).isZero();
+
+        dealDamage(player2, 2, target);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can target a creature an opponent controls")
+    void canTargetOpponentsCreature() {
+        addReadyKei();
+        addReadyPyromancer(player2);
+        addReadyPyromancer(player2);
+        addReadyPyromancer(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        activateKei(target);
 
         dealDamage(player2, 0, target);
         dealDamage(player2, 1, target);
@@ -58,12 +79,12 @@ class KeiTakahashiTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyKei() {
-        return addCreatureReady(player1, new KeiTakahashi());
+    private void addReadyKei() {
+        addCreatureReady(player1, new KeiTakahashi());
     }
 
-    private Permanent addReadyPyromancer(Player player) {
-        return addCreatureReady(player, new ProdigalPyromancer());
+    private void addReadyPyromancer(Player player) {
+        addCreatureReady(player, new ProdigalPyromancer());
     }
 
     private void activateKei(Permanent target) {

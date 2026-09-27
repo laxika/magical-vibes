@@ -133,6 +133,7 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -1056,11 +1057,6 @@ public class TargetLegalityService {
                     : "Ability requires a target");
         }
 
-        targetValidationService.validateEffectTargets(abilityEffects,
-                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
-                        playerId, null, deferCostDerivedXValueChecks,
-                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
-
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
@@ -1084,6 +1080,13 @@ public class TargetLegalityService {
                         filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             }
         }
+
+        // Prefer the ability's printed target restriction when both it and an individual effect
+        // reject the same target. The effect check still runs for all remaining restrictions.
+        targetValidationService.validateEffectTargets(abilityEffects,
+                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
+                        playerId, null, deferCostDerivedXValueChecks,
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
 
         if (targetId != null && gameData.playerIds.contains(targetId)) {
             validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
@@ -1293,6 +1296,8 @@ public class TargetLegalityService {
                                                  boolean teamworkCostPaid) {
         TargetFilter effectiveTargetFilter = targetFilterForCast(
                 card.getTargetFilter(kicked), kicked, giftPromised, teamworkCostPaid);
+        effectiveTargetFilter = TextChangeTransformer.transformTargetFilter(
+                effectiveTargetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
         if (effectiveTargetFilter instanceof StackEntryPredicateTargetFilter) {
             return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
                     controllerId, null, xValue, kicked);
@@ -3333,6 +3338,8 @@ public class TargetLegalityService {
                         effectiveTargetFilter = targetFilterForCast(
                                 effectiveTargetFilter, entry.isKicked(), entry.isGiftPromised(),
                                 entry.isTeamworkCostPaid());
+                        effectiveTargetFilter = TextChangeTransformer.transformTargetFilter(
+                                effectiveTargetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
                         if (effectiveTargetFilter != null) {
                             try {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
@@ -3388,7 +3395,7 @@ public class TargetLegalityService {
             }
         }
 
-        if (!targetFizzled) {
+        if (!targetFizzled && entry.getTargetId() == null && entry.getTargetIds().isEmpty()) {
             targetFizzled = allTargetsGone(entry.getTargetCardIds(),
                     id -> isTargetCardLegalOnResolution(gameData, entry, id));
         }
@@ -3604,6 +3611,8 @@ public class TargetLegalityService {
                                                           TargetFilter targetFilter) {
         targetFilter = targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised(),
                 entry.isTeamworkCostPaid());
+        targetFilter = TextChangeTransformer.transformTargetFilter(
+                targetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             if (!gameData.playerIds.contains(targetId)) {
@@ -4623,6 +4632,9 @@ public class TargetLegalityService {
             if (stackEntry.getSourcePermanentId() != null) {
                 Permanent abilitySource = gameQueryService.findPermanentById(
                         gameData, stackEntry.getSourcePermanentId());
+                if (abilitySource == null) {
+                    abilitySource = stackEntry.getSourcePermanentSnapshot();
+                }
                 if (abilitySource != null) {
                     return gameQueryService.getEffectiveCardTypes(gameData, abilitySource).stream()
                             .anyMatch(cardTypeInPredicate.cardTypes()::contains);
@@ -4660,11 +4672,15 @@ public class TargetLegalityService {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return manaValue <= maxManaValuePredicate.maxManaValue();
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return stackEntry.getManaSpentToCast() < manaValue;
         }
         if (predicate instanceof StackEntryManaValueEqualsXPredicate) {

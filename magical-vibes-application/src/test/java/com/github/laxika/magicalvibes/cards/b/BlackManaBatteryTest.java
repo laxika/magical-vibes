@@ -109,13 +109,24 @@ class BlackManaBatteryTest extends BaseCardTest {
         assertThat(battery.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Cannot produce mana while the battery is already tapped")
+    void secondAbilityRejectedWhenTapped() {
+        Permanent battery = addReadyBattery(player1);
+        battery.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(blackMana()).isZero();
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyBattery(Player player) {
-        Permanent perm = new Permanent(new BlackManaBattery());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent battery = harness.addToBattlefieldAndReturn(player, new BlackManaBattery());
+        battery.setSummoningSick(false);
+        return battery;
     }
 
     private int blackMana() {

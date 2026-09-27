@@ -1,23 +1,25 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Hankyu.class, WanderingOnes.class})
 class HankyuTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving equip attaches Hankyu to target creature")
     void equipAttachesToCreature() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
         Permanent hankyu = addHankyuReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -30,7 +32,7 @@ class HankyuTest extends BaseCardTest {
     @Test
     @DisplayName("Granted aim-counter ability puts the counter on Hankyu, not on the equipped creature")
     void aimCounterGoesOnHankyu() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
         Permanent hankyu = addHankyuReady(player1);
         hankyu.setAttachedTo(creature.getId());
 
@@ -46,7 +48,7 @@ class HankyuTest extends BaseCardTest {
     @DisplayName("Removing three aim counters deals 3 damage to a player")
     void removingAimCountersDealsDamageToPlayer() {
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
         Permanent hankyu = addHankyuReady(player1);
         hankyu.setAttachedTo(creature.getId());
         hankyu.setCounterCount(CounterType.AIM, 3);
@@ -61,12 +63,12 @@ class HankyuTest extends BaseCardTest {
     @Test
     @DisplayName("Damage equal to the aim counters removed kills a creature")
     void removingAimCountersKillsCreature() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
         Permanent hankyu = addHankyuReady(player1);
         hankyu.setAttachedTo(creature.getId());
         hankyu.setCounterCount(CounterType.AIM, 2);
 
-        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new WanderingOnes());
 
         harness.activateAbility(player1, 0, 1, null, victim.getId());
         harness.passBothPriorities();
@@ -79,7 +81,7 @@ class HankyuTest extends BaseCardTest {
     @DisplayName("With no aim counters the ability deals no damage")
     void noAimCountersDealsNoDamage() {
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
         Permanent hankyu = addHankyuReady(player1);
         hankyu.setAttachedTo(creature.getId());
 
@@ -93,7 +95,7 @@ class HankyuTest extends BaseCardTest {
     @DisplayName("The equipped creature is the damage source, not Hankyu")
     void damageSourceIsEquippedCreature() {
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
         Permanent hankyu = addHankyuReady(player1);
         hankyu.setAttachedTo(creature.getId());
         hankyu.setCounterCount(CounterType.AIM, 1);
@@ -101,14 +103,13 @@ class HankyuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("damage from Grizzly Bears"));
+        assertThat(gameLogContains("damage from Wandering Ones")).isTrue();
     }
 
     @Test
     @DisplayName("Aim counters stay on Hankyu when it is unattached, and are removed by a later activation")
     void aimCountersPersistAcrossUnattach() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
         Permanent hankyu = addHankyuReady(player1);
         hankyu.setAttachedTo(creature.getId());
 
@@ -118,7 +119,7 @@ class HankyuTest extends BaseCardTest {
         hankyu.setAttachedTo(null);
         assertThat(hankyu.getCounterCount(CounterType.AIM)).isEqualTo(1);
 
-        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new WanderingOnes());
         hankyu.setAttachedTo(other.getId());
         harness.setLife(player2, 20);
 
@@ -127,6 +128,32 @@ class HankyuTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(hankyu.getCounterCount(CounterType.AIM)).isZero();
+    }
+
+    @Test
+    @DisplayName("An unattached Hankyu grants no abilities")
+    void unattachedHankyuGrantsNoAbilities() {
+        addHankyuReady(player1);
+        addCreatureReady(player1, new WanderingOnes());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("Aim-counter ability still uses Hankyu if it becomes unattached after activation")
+    void aimCounterAbilityBindsHankyuAtActivation() {
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
+        Permanent hankyu = addHankyuReady(player1);
+        hankyu.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        hankyu.setAttachedTo(null);
+        harness.passBothPriorities();
+
+        assertThat(hankyu.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
     }
 
     private Permanent addHankyuReady(Player player) {

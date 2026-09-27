@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDama
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageBecomeMonarch;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
@@ -59,7 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerAssignsCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagedPlayerControlsTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -75,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageTo
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
@@ -542,6 +545,7 @@ public class CombatDamageService {
         // stack for normal priority rather than being folded into the engine's auto-resolved
         // combat-damage trigger batch below.
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        updateMonarchFromCombatDamage(gameData, state, defenderId);
         queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
@@ -602,6 +606,7 @@ public class CombatDamageService {
             processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
             processDelayedCombatDamageTokenTriggers(gameData, damageBySource, controllerId, defenderId);
         });
+        processDelayedCombatDamageBecomeMonarchTriggers(gameData, state, activeId);
 
         processDelayedCombatDamageLookAtHandAndDrawTriggers(gameData, state);
 
@@ -1602,6 +1607,7 @@ public class CombatDamageService {
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
 
+            gameData.recordCombatDamageByCreatureNameToPlayer(creature.getCard().getName(), defenderId);
             gameData.combatDamageToPlayersThisTurn
                     .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                     .add(defenderId);
@@ -1709,6 +1715,14 @@ public class CombatDamageService {
                 }
 
                 if (effect instanceof MayEffect may) {
+                    if (may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                creature.getCard(), attackerId, List.of(effect), attackerId,
+                                1, 0, 1, null, false, null, creature.getId()));
+                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        continue;
+                    }
                     if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
@@ -1763,11 +1777,11 @@ public class CombatDamageService {
                             continue;
                         }
                     }
-                    if (may.wrapped() instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
-                        if (damageDealt >= destroyEffect.minimumDamage()) {
+                    if (may.wrapped() instanceof DamagedPlayerControlsTargetEffect damageEffect) {
+                        if (damageDealt >= damageEffect.minimumDamage()) {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                     creature.getCard(), attackerId,
-                                    List.of(new MayEffect(destroyEffect.forDamagedPlayer(defenderId),
+                                    List.of(new MayEffect(damageEffect.forDamagedPlayer(defenderId),
                                             may.prompt(), may.elseEffect(), may.choicePlayer())),
                                     creature.getId(), attackerId, defenderId));
                         }
@@ -1800,9 +1814,9 @@ public class CombatDamageService {
                             creature.getId(), attackerId, defenderId));
                     continue;
                 }
-                if (specialEffect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
-                    if (damageDealt >= destroyEffect.minimumDamage()) {
-                        CardEffect targeted = destroyEffect.forDamagedPlayer(defenderId);
+                if (specialEffect instanceof DamagedPlayerControlsTargetEffect damageEffect) {
+                    if (damageDealt >= damageEffect.minimumDamage()) {
+                        CardEffect targeted = damageEffect.forDamagedPlayer(defenderId);
                         if (effect instanceof ConditionalEffect conditional) {
                             targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
                         }
@@ -2308,7 +2322,9 @@ public class CombatDamageService {
                         continue;
                     }
                     if ((firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            || firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && (perm.getCard().hasEffectTargetIndex(authoredEffect)
+                            || perm.getCard().hasEffectTargetIndex(firedEffect))))
                             && (!(firedEffect instanceof CombatDamageTriggerContextEffect contextEffect)
                             || contextEffect.combatDamageTriggerContext() == null
                             || perm.getCard().hasEffectTargetIndex(firedEffect))
@@ -2343,6 +2359,9 @@ public class CombatDamageService {
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
                     se.setEventValue(triggerDamage);
                     se.setNonTargeting(true);
+                    if (authoredEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+                        se.setMarkSourceOncePerTurnOnAcceptance(true);
+                    }
                     if (firedEffect instanceof CombatDamageDealerReferencingEffect) {
                         se.setTriggeringPermanentId(creature.getId());
                         se.setTriggeringPermanentControllerId(attackerId);
@@ -2496,6 +2515,32 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
                         "'s delayed trigger goes on the stack."));
             }
+        }
+    }
+
+    private void processDelayedCombatDamageBecomeMonarchTriggers(GameData gameData,
+                                                                  CombatDamageState state,
+                                                                  UUID activeId) {
+        if (!gameData.hasDelayedAction(DelayedCombatDamageBecomeMonarch.class)) return;
+
+        for (DelayedCombatDamageBecomeMonarch delayed
+                : gameData.getDelayedActions(DelayedCombatDamageBecomeMonarch.class)) {
+            boolean creatureDealtDamage = state.combatDamageDealtToPlayer.entrySet().stream()
+                    .anyMatch(entry -> entry.getValue() > 0
+                            && delayed.controllerId().equals(
+                            state.combatDamageDealerControllers.getOrDefault(entry.getKey(), activeId)));
+            if (!creatureDealtDamage) continue;
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger",
+                    List.of(new BecomeMonarchEffect()));
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
+                    "'s delayed trigger goes on the stack."));
         }
     }
 
@@ -3741,6 +3786,10 @@ public class CombatDamageService {
                     gameData.recordDamageDealtBySourceToPlayer(
                             redirect.damageSourceId(), targetId, redirectEffective);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
+                    if (damageSource != null) {
+                        gameData.recordCombatDamageByCreatureNameToPlayer(
+                                damageSource.getCard().getName(), targetId);
+                    }
                     triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
                             gameData, targetId, redirectEffective);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
@@ -3910,6 +3959,8 @@ public class CombatDamageService {
             if (damage > 0) restoreSourceShieldForCombatChunk(gameData, state, atk.getId(), pw.getId(), false);
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
             processEyeForAnEyeReflections(gameData);
+            damage = damagePreventionService.applyTargetSourcePreventionShield(
+                    gameData, pw.getId(), atk.getId(), damage, true);
             if (damagePreventionService.isColorDamagePreventedForTarget(
                     gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk), true)) {
                 damage = 0;

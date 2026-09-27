@@ -144,6 +144,7 @@ public enum CounterType {
     RALLY,
     REV,
     REVIVAL,
+    RIBBON,
     REJECTION,
     RITUAL,
     RUST,

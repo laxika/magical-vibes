@@ -36,6 +36,7 @@ public class ScuttlingDeath extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(4))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

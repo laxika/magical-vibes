@@ -38,7 +38,7 @@ class SeasonedDungeoneerTest extends BaseCardTest {
     @Test
     @DisplayName("Whenever you attack, an eligible attacking creature can be chosen to explore")
     void attacksTriggerProtectionAndExplore() {
-        Permanent dungeoneer = harness.addToBattlefieldAndReturn(player1, new SeasonedDungeoneer());
+        Permanent dungeoneer = addCreatureReady(player1, new SeasonedDungeoneer());
         harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setLibrary(player1, List.of(new Forest()));
 

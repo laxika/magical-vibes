@@ -150,6 +150,28 @@ class TempestEfreetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With an empty hand, the source still moves from its current zone to its owner's graveyard")
+    void emptyHandReturnsSourceToOwnersGraveyardFromCurrentZone() {
+        harness.setHand(player1, new ArrayList<>());
+        harness.setHand(player2, new ArrayList<>());
+        TempestEfreet efreet = new TempestEfreet();
+        efreet.setOwnerId(player1.getId());
+        addCreatureReady(player1, efreet);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerGraveyards.get(player1.getId()).remove(efreet);
+        harness.setLibrary(player1, List.of(efreet));
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(efreet);
+        harness.assertInGraveyard(player1, "Tempest Efreet");
+        harness.assertNotInGraveyard(player2, "Tempest Efreet");
+    }
+
+    @Test
     @DisplayName("The ability cannot target the activating player")
     void cannotTargetSelf() {
         addCreatureReady(player1, new TempestEfreet());

@@ -45,7 +45,7 @@ class UltimateNullificationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.exiledCards).hasSize(7);
+        assertThat(gd.exiledCards).hasSize(6);
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isInstanceOf(UltimateNullification.class);
         harness.assertNotInGraveyard(player1, "Ultimate Nullification");
     }

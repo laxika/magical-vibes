@@ -35,18 +35,34 @@ public class DamagePreventionReplacementSupport {
         if (battlefield == null) return 0;
 
         for (Permanent permanent : battlefield) {
-            PreventDamageToControllerAndPutCounterOnSelfEffect effect = permanent.getCard()
-                    .getEffects(EffectSlot.STATIC).stream()
-                    .filter(PreventDamageToControllerAndPutCounterOnSelfEffect.class::isInstance)
-                    .map(PreventDamageToControllerAndPutCounterOnSelfEffect.class::cast)
-                    .findFirst()
-                    .orElse(null);
+            PreventDamageToControllerAndPutCounterOnSelfEffect effect = findDamagePreventionEffect(gameData, permanent);
             if (effect == null) continue;
 
-            permanentCounterSupport.placeCounterOnPermanent(gameData, null, permanent, effect.counterType(), 1);
+            int counterCount = effect.putThatManyCounters() ? damage : 1;
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, null, permanent, effect.counterType(), counterCount);
             return damage;
         }
         return 0;
+    }
+
+    private PreventDamageToControllerAndPutCounterOnSelfEffect findDamagePreventionEffect(
+            GameData gameData, Permanent permanent) {
+        PreventDamageToControllerAndPutCounterOnSelfEffect printedEffect = permanent.getCard()
+                .getEffects(EffectSlot.STATIC).stream()
+                .filter(PreventDamageToControllerAndPutCounterOnSelfEffect.class::isInstance)
+                .map(PreventDamageToControllerAndPutCounterOnSelfEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (printedEffect != null) {
+            return printedEffect;
+        }
+
+        return gameQueryService.getGrantedEffects(gameData, permanent).stream()
+                .filter(PreventDamageToControllerAndPutCounterOnSelfEffect.class::isInstance)
+                .map(PreventDamageToControllerAndPutCounterOnSelfEffect.class::cast)
+                .findFirst()
+                .orElse(null);
     }
 
     /** Applies a permanent's damage replacement that consumes counters or sacrifices it. */

@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "81")
 @CardRegistration(set = "EOS", collectorNumber = "126")
 @CardRegistration(set = "EOS", collectorNumber = "171")
+@CardRegistration(set = "LTC", collectorNumber = "373")
 public class ReflectingPool extends Card {
 
     public ReflectingPool() {

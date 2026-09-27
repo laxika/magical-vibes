@@ -36,10 +36,8 @@ public class ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst().orElse(null);
-        if (opponentId == null) return;
+        UUID opponentId = entry.getTargetId();
+        if (opponentId == null || opponentId.equals(controllerId)) return;
 
         List<Card> deck = gameData.playerDecks.get(opponentId);
         String opponentName = gameData.playerIdToName.get(opponentId);

@@ -1518,6 +1518,9 @@ public class CastingPermissionService {
             return Optional.empty();
         }
         for (Permanent perm : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                continue;
+            }
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)

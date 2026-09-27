@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "HOC", collectorNumber = "46")
 @CardRegistration(set = "HOC", collectorNumber = "86")
+@CardRegistration(set = "LTC", collectorNumber = "79")
+@CardRegistration(set = "LTC", collectorNumber = "159")
 public class RelicOfSauron extends Card {
 
     public RelicOfSauron() {

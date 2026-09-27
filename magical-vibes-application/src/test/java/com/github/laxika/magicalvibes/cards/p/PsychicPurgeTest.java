@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HypnoticSpecter;
 import com.github.laxika.magicalvibes.cards.s.Sift;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PsychicPurge.class, Distress.class, Sift.class, GrizzlyBears.class})
+@CardUsed({PsychicPurge.class, Distress.class, HypnoticSpecter.class, Sift.class, GrizzlyBears.class})
 class PsychicPurgeTest extends BaseCardTest {
 
     @Test
@@ -25,10 +27,21 @@ class PsychicPurgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PsychicPurge()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to target creature")
+    void dealsDamageToTargetCreature() {
+        var target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PsychicPurge()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -41,13 +54,29 @@ class PsychicPurgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Makes the opponent lose 5 life when an opponent-controlled ability discards it")
+    void opponentControlledAbilityDiscardMakesOpponentLoseLife() {
+        harness.setHand(player2, List.of(new PsychicPurge()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
+        specter.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     @Test

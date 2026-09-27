@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "EXP", collectorNumber = "35")
 @CardRegistration(set = "A25", collectorNumber = "239")
 @CardRegistration(set = "2XM", collectorNumber = "318")
+@CardRegistration(set = "LTC", collectorNumber = "309")
 @CardRegistration(set = "SOC", collectorNumber = "373")
 @CardRegistration(set = "TDC", collectorNumber = "364")
 public class FloodedGrove extends Card {

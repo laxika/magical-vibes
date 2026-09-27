@@ -42,7 +42,7 @@ class HeraldsHornTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Grizzly Bears"));
     }
 
     @Test

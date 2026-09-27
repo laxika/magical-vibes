@@ -1093,7 +1093,8 @@ public class DamageSupport {
                 }
                 // CR 306.8: damage dealt to a planeswalker removes that many loyalty counters from it
                 // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
-                int loyaltyDamage = Math.max(0, rawDamage);
+                int loyaltyDamage = gameQueryService.applyDamageReplacementEffects(
+                        gameData, entry, null, Math.max(0, rawDamage));
                 // Djeru, With Eyes Open: prevent N of the damage dealt to a planeswalker you control.
                 UUID pwControllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
                 Permanent sourcePermanent = entry.getSourcePermanentId() == null
@@ -1285,11 +1286,10 @@ public class DamageSupport {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard(), entry.getControllerId())) continue;
-            // Mark before the damage lands so lethal damage is replaced by exile straight away.
-            if (exileInsteadOfDie && gameQueryService.isCreature(gameData, p)) {
+            int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
+            if (exileInsteadOfDie && damageDealt > 0 && gameQueryService.isCreature(gameData, p)) {
                 p.setExileInsteadOfDieThisTurn(true);
             }
-            int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
             if (cantRegenerate && damageDealt > 0) {
                 p.setCantRegenerateThisTurn(true);
             }

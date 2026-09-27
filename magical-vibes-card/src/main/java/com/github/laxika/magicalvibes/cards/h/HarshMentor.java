@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "135")
 @CardRegistration(set = "AKR", collectorNumber = "158")
+@CardRegistration(set = "LTC", collectorNumber = "221")
 public class HarshMentor extends Card {
 
     public HarshMentor() {

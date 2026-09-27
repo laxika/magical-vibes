@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -70,11 +71,14 @@ class AvengersQuinjetTest extends BaseCardTest {
         quinjet.setAnimatedUntilEndOfTurn(true);
         quinjet.setAnimatedPower(4);
         quinjet.setAnimatedToughness(4);
-        quinjet.setAttacking(true);
         Card hero = new BraveBrawler();
         harness.setHand(player1, List.of(hero));
 
-        resolveCombat();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
         harness.handleListChoice(player1, DEPLOY);
         harness.passBothPriorities();

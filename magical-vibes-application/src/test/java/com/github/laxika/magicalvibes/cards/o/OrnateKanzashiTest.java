@@ -32,7 +32,7 @@ class OrnateKanzashiTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -60,7 +60,7 @@ class OrnateKanzashiTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
@@ -84,7 +84,7 @@ class OrnateKanzashiTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
         assertThat(kanzashi.isTapped()).isFalse();
@@ -102,7 +102,7 @@ class OrnateKanzashiTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
     }

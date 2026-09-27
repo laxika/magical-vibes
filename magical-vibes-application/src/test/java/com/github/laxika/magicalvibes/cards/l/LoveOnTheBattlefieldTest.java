@@ -59,7 +59,7 @@ class LoveOnTheBattlefieldTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LoveOnTheBattlefield());
         Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(1, 2));
         resolveAllTriggers();
