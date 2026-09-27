@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "APC", collectorNumber = "142")
 @CardRegistration(set = "DDU", collectorNumber = "70")
 @CardRegistration(set = "SOC", collectorNumber = "404")
+@CardRegistration(set = "C21", collectorNumber = "316")
 public class ShivanReef extends Card {
 
     public ShivanReef() {

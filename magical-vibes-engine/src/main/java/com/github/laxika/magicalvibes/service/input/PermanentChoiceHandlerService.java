@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEff
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
@@ -86,6 +87,7 @@ public class PermanentChoiceHandlerService {
     private final ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler gutmornEffectHandler;
     private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler descendantsFuryEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
+    private final CreateTokenCopyOfChosenCreatureEffectHandler esixCreatureCopyHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -216,6 +218,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseOpponentDrawAndUntap(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentEachCreatesTokens chooseOpponent) {
             battlefieldHandler.handleChooseOpponentEachCreatesTokens(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentThenSearchLandDifference chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentThenSearchLandDifference(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.OrzhovAdvokistCreatureChoice advokistChoice) {
+            battlefieldHandler.handleOrzhovAdvokistCreatureChoice(gameData, permanentId, advokistChoice);
         } else if (context instanceof PermanentChoiceContext.InfernalOfferingOpponentChoice chooseOpponent) {
             infernalOfferingEffectHandler.completeOpponentChoice(gameData, permanentId, chooseOpponent);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
@@ -321,6 +327,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChampionCreature(gameData, permanentId, championCreature);
         } else if (context instanceof PermanentChoiceContext.Populate populate) {
             battlefieldHandler.handlePopulate(gameData, permanentId, populate);
+        } else if (context instanceof PermanentChoiceContext.EsixCreatureChoice esixChoice) {
+            esixCreatureCopyHandler.completeChoice(gameData, permanentId, esixChoice);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary putOnTop) {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
         } else if (context instanceof PermanentChoiceContext.PatternMatcherCreatureChoice patternMatcher) {

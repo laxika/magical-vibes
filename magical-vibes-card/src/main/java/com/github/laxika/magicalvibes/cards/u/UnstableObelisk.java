@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "416")
 @CardRegistration(set = "C14", collectorNumber = "58")
+@CardRegistration(set = "C21", collectorNumber = "272")
 public class UnstableObelisk extends Card {
 
     public UnstableObelisk() {

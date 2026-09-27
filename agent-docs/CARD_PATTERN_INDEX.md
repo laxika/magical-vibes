@@ -47,6 +47,7 @@
 | landfall perpetually grants a random library land a tap-draw trigger | `a/AmbassadorOfEvendo.java` | `ON_ALLY_LAND_ENTERS_BATTLEFIELD PerpetuallyGrantTapDrawToRandomLandInLibraryEffect()` |
 | conjure a named card into the top N cards of a library with a perpetual casting option | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
 | choose an opponent, then you and that player each create tokens | `ChooseOpponentEachCreatesTokensEffect` |
+| on leaving, choose an opponent with more lands and fetch Plains equal to the land-count difference | `ChooseOpponentThenSearchLandDifferenceEffect(CardSubtype.PLAINS)` |
 | upkeep creates tokens for each opponent meeting a hand-size threshold | `CreateTokenEffect(new PlayersWithCardsInHandAtLeast(CountScope.OPPONENTS, threshold), ...)` |
 
 - Lich (2ED 114): `LoseLifeEqualToLifeTotalAsEntersEffect` on `ON_ENTER_BATTLEFIELD`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `ON_DEATH`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
@@ -105,6 +106,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | target a creature card in your graveyard, make it perpetually only one card type, and let you cast it this turn | `GrantTargetGraveyardCardCastEffect` + `PerpetuallySetTargetCreatureCardTypeEffect` |
 | look at top seven cards, perpetually gain keywords | `p/PriestOfPossibility.java` and `LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler` |
 | exile top cards, play this turn, unplayed exiled cards to graveyard and tokens | `g/GlimpseTheImpossible.java` |
+| exile top X cards, free-cast one instant or sorcery with mana value X or less, put uncast instants/sorceries into hand and the rest on the bottom randomly | `m/MuseVortex.java` + `ExileTopCardsAndMayCastSpellsEffect.controllerWithRandomBottomAndMatchingRestToHand(...)` |
 | opponent-owned exile count + subtype-gated ETB exile-until-land | `u/UmbrisFearManifest.java` |
 | double any effect that doubles, quadruple | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -158,6 +160,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | first instant, sorcery, or subtype spell each turn — exile the triggering spell, dig to a nonland, damage by mana-value difference, and offer a free cast | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | combat damage → random own-graveyard instant/sorcery, free cast at next upkeep | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| random player chooses a graveyard instant/sorcery, then a free copy cast | `w/WildfireDevils.java` + `RandomPlayerExilesInstantOrSorceryAndMayCastCopyEffect` |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
 | demonstrate a spell copy for you and one chosen opponent | `MayEffect(new DemonstrateEffect(), "Copy [spell name]?")` in `ON_SELF_CAST` + the spell's normal effects |
 | chosen creature type, reveal until matching creature count, put matches onto battlefield | `RevealUntilChosenCreatureTypeCountToBattlefieldEffect` |
@@ -166,9 +169,11 @@ This index has been split into smaller files for faster lookup. Each file is und
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | token enters, target another player to copy it, once-per-turn conditional draw | `l/LucyMacLeanPositivelyArmed.java` + `CreateTokenCopyOfEnteringTokenForTargetPlayerEffect` |
+| first token creation each turn may copy another creature | `e/EsixFractalBloom.java` + `EsixFractalBloomEffect` + `CreateTokenCopyOfChosenCreatureEffect` |
 | encore, graveyard ability creates hasty copies attacking each opponent | `i/ImpulsivePilferer.java` + `EncoreEffect` |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | each opponent may investigate, opponent choice plus controller Clues | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| each player may put counters on a creature, and players who do cannot attack the trigger controller until their next turn | `o/OrzhovAdvokist.java` + `EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect` |
 | each opponent chooses one of three modes, controller and chosen opponent receive the matching reward | `m/MasterOfCeremonies.java` + `EachOpponentChoosesMasterOfCeremoniesEffect` |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | commander-only anthem, opponent attacks with two creatures | CARD_PATTERNS_PERMANENTS_STATIC.md and CARD_PATTERNS_CREATURES_TRIGGERED.md |

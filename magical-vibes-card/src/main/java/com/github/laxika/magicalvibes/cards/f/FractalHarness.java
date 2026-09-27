@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "268")
+@CardRegistration(set = "C21", collectorNumber = "61")
 public class FractalHarness extends Card {
 
     public FractalHarness() {

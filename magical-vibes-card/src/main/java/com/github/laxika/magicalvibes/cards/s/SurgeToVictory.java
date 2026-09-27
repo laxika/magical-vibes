@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "256")
+@CardRegistration(set = "C21", collectorNumber = "58")
 public class SurgeToVictory extends Card {
 
     public SurgeToVictory() {

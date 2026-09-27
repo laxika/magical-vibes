@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
@@ -58,28 +60,65 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
             return;
         }
 
-        ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
-                gameData, spellCard, targetEntry.getControllerId(), List.of(),
-                targetEntry.getXValue(), targetEntry.isKicked());
-        List<TargetCopy> targets = new ArrayList<>();
-        Zone permanentTargetZone = targetEntry.getTargetZone() == Zone.STACK ? Zone.STACK : null;
-        validTargets.validPermanentIds().forEach(id -> targets.add(new TargetCopy(id, permanentTargetZone)));
-        validTargets.validPlayerIds().forEach(id -> targets.add(new TargetCopy(id, null)));
-        validTargets.validGraveyardCardIds().forEach(id -> targets.add(new TargetCopy(id, Zone.GRAVEYARD)));
-        validTargets.validExiledCardIds().forEach(id -> targets.add(new TargetCopy(id, Zone.EXILE)));
+        List<TargetCopy> targets = legalTargets(gameData, targetEntry, copyEffect.permanentOrPlayerOnly());
         targets.removeIf(target -> originalTargetId.equals(target.id()));
 
         UUID copyControllerId = copyEffect.castingPlayerId() != null
                 ? copyEffect.castingPlayerId() : entry.getControllerId();
 
         for (TargetCopy target : targets) {
-            Card copyCard = copySupport.createCopyCard(spellCard);
+            Card copyCard = spellCard == null ? null : copySupport.createCopyCard(spellCard);
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     targetEntry, copyCard, copyControllerId, target.id(), target.zone());
+            if (isAbility(targetEntry)) {
+                copyEntry.setTargetFilter(targetEntry.getTargetFilter());
+                copyEntry.setTargetFilters(targetEntry.getTargetFilters());
+                copyEntry.setMultiTargetConstraint(targetEntry.getMultiTargetConstraint());
+            }
             copySupport.addCopyToStack(gameData, copyEntry);
 
-            gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
+            if (spellCard != null) {
+                gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
+            } else {
+                gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+            }
         }
+    }
+
+    private List<TargetCopy> legalTargets(GameData gameData, StackEntry targetEntry,
+                                          boolean permanentOrPlayerOnly) {
+        ValidTargetsResponse validTargets;
+        if (isAbility(targetEntry)) {
+            Card sourceCard = targetEntry.getCard();
+            if (sourceCard == null) {
+                return new ArrayList<>();
+            }
+            ActivatedAbility ability = new ActivatedAbility(
+                    false, null, targetEntry.getEffectsToResolve(), targetEntry.getDescription(),
+                    targetEntry.getTargetFilter());
+            validTargets = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, targetEntry.getControllerId(), -1,
+                    List.of(), targetEntry.getXValue());
+        } else {
+            validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, targetEntry.getCard(), targetEntry.getControllerId(), List.of(),
+                    targetEntry.getXValue(), targetEntry.isKicked());
+        }
+
+        List<TargetCopy> targets = new ArrayList<>();
+        Zone permanentTargetZone = targetEntry.getTargetZone() == Zone.STACK ? Zone.STACK : null;
+        validTargets.validPermanentIds().forEach(id -> targets.add(new TargetCopy(id, permanentTargetZone)));
+        validTargets.validPlayerIds().forEach(id -> targets.add(new TargetCopy(id, null)));
+        if (!permanentOrPlayerOnly) {
+            validTargets.validGraveyardCardIds().forEach(id -> targets.add(new TargetCopy(id, Zone.GRAVEYARD)));
+            validTargets.validExiledCardIds().forEach(id -> targets.add(new TargetCopy(id, Zone.EXILE)));
+        }
+        return targets;
+    }
+
+    private boolean isAbility(StackEntry entry) {
+        return entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
     }
 
     private boolean isSingleTarget(StackEntry stackEntry) {

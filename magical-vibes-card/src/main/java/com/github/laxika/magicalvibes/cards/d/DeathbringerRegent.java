@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "96")
+@CardRegistration(set = "C21", collectorNumber = "141")
 public class DeathbringerRegent extends Card {
 
     public DeathbringerRegent() {

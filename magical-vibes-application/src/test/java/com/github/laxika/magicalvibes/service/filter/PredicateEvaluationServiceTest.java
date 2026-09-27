@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlled
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
@@ -511,6 +512,23 @@ class PredicateEvaluationServiceTest {
                     null, null, 3)).isFalse();
             assertThat(evaluator.matchesCardPredicate(belowX, predicate, null, gd, player1Id,
                     null, null, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueEqualsXPredicate matches exactly")
+        void cardManaValueEqualsXPredicateMatchesExactly() {
+            Card oneMana = createCreature("One Mana", 1, 1, CardColor.BLUE);
+            oneMana.setManaCost("{1}");
+            Card twoMana = createCreature("Two Mana", 2, 2, CardColor.BLUE);
+            twoMana.setManaCost("{2}");
+            CardManaValueEqualsXPredicate predicate = new CardManaValueEqualsXPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(oneMana, predicate, null, gd, player1Id,
+                    null, null, 2)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id,
+                    null, null, 2)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(oneMana, predicate, null, gd, player1Id,
+                    null, null, null)).isTrue();
         }
 
         @Test

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 @CardRegistration(set = "SLD", collectorNumber = "1181")
 @CardRegistration(set = "BRR", collectorNumber = "62")
 @CardRegistration(set = "C13", collectorNumber = "271")
+@CardRegistration(set = "C21", collectorNumber = "275")
 public class WellOfLostDreams extends Card {
 
     public WellOfLostDreams() {

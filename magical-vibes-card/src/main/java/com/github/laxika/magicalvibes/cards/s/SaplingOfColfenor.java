@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureGainToughnessLosePowerToHandEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "128")
+@CardRegistration(set = "C21", collectorNumber = "228")
 public class SaplingOfColfenor extends Card {
 
     public SaplingOfColfenor() {

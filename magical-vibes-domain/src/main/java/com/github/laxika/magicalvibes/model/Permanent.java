@@ -438,6 +438,8 @@ public class Permanent {
     @Setter private boolean protectionFromOpponentsPermanently;
     /** Players from whom this permanent has durable protection, captured when the effect resolved. */
     private final Set<UUID> protectionFromPlayerIdsPermanently = new HashSet<>();
+    /** Players from whom this permanent has protection until end of turn. */
+    private final Set<UUID> protectionFromPlayerIdsUntilEndOfTurn = new HashSet<>();
     /** Subtypes for "protection from non-[subtype] creatures" granted until end of turn.
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
@@ -885,6 +887,7 @@ public class Permanent {
         this.protectionFromColorlessUntilEndOfTurn = source.protectionFromColorlessUntilEndOfTurn;
         this.protectionFromOpponentsPermanently = source.protectionFromOpponentsPermanently;
         this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
+        this.protectionFromPlayerIdsUntilEndOfTurn.addAll(source.protectionFromPlayerIdsUntilEndOfTurn);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
         this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
@@ -1700,6 +1703,7 @@ public class Permanent {
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
+        this.protectionFromPlayerIdsUntilEndOfTurn.clear();
         this.protectionFromColorlessUntilEndOfTurn = false;
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.protectionFromOpponentCreaturesUntilEndOfTurn = false;

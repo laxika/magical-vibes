@@ -193,6 +193,7 @@ public sealed interface DynamicAmount permits
         TargetPowerPlusToughness,
         TopCardOfLibraryManaValue,
         TotalManaValueOfCardsExiledWithSource,
+        TotalManaValueOfCardsInGraveyard,
         TotalManaValueOfCardsOwnedInExile,
         TotalManaValueOfOtherSpellsCastThisTurn,
         TotalPowerOfCardsExiledWithSource,

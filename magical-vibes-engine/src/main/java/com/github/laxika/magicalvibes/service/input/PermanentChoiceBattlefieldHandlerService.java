@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -218,6 +219,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentDrawAndUntapEffectHandler chooseOpponentDrawAndUntapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentEachCreatesTokensEffectHandler chooseOpponentEachCreatesTokensEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentThenSearchLandDifferenceEffectHandler chooseOpponentThenSearchLandDifferenceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler eachPlayerMayPutCountersAndRestrictAttacksHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffectHandler tapAndChooseOpponentGainsControlHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
@@ -970,6 +973,19 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleChooseOpponentEachCreatesTokens(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentEachCreatesTokens context) {
         chooseOpponentEachCreatesTokensEffectHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChooseOpponentThenSearchLandDifference(GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseOpponentThenSearchLandDifference context) {
+        chooseOpponentThenSearchLandDifferenceEffectHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleOrzhovAdvokistCreatureChoice(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OrzhovAdvokistCreatureChoice context) {
+        eachPlayerMayPutCountersAndRestrictAttacksHandler.completeCreatureChoice(
+                gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2785,11 +2801,19 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen player no longer exists");
         }
 
+        boolean opponentOnly = context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance);
+        if (opponentOnly && chosenPlayerId.equals(context.controllerId())) {
+            throw new IllegalStateException("Choose an opponent");
+        }
+
         entering.getProtectionFromPlayerIdsPermanently().clear();
         entering.getProtectionFromPlayerIdsPermanently().add(chosenPlayerId);
         entering.setRememberedTargetPlayerId(chosenPlayerId);
-        gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
-                " chooses " + gameData.playerIdToName.get(chosenPlayerId) + "."));
+        if (!opponentOnly) {
+            gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
+                    " chooses " + gameData.playerIdToName.get(chosenPlayerId) + "."));
+        }
         log.info("Game {} - {} chooses player {}", gameData.id,
                 entering.getCard().getName(), gameData.playerIdToName.get(chosenPlayerId));
 

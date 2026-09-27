@@ -422,6 +422,7 @@ public class TurnCleanupService {
         gameData.playersWithShroudThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
+        gameData.playerProtectionFromPlayerIdsUntilEndOfTurn.clear();
         gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -458,6 +459,7 @@ public class TurnCleanupService {
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellChosenSubtypeFlashGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
+        gameData.nextSpellPayLifeEqualToManaValueThisTurn.clear();
         gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();

@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSu
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -121,6 +122,7 @@ public class DamagePreventionService {
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
     private final ObjectProvider<DestructionSupport> destructionSupportProvider;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public DamagePreventionService(GameQueryService gameQueryService,
                                    PredicateEvaluationService predicateEvaluationService,
@@ -130,7 +132,8 @@ public class DamagePreventionService {
                                    StaticEffectConditionResolver staticEffectConditionResolver,
                                    ObjectProvider<PermanentControlSupport> permanentControlSupportProvider,
                                    ObjectProvider<DestructionSupport> destructionSupportProvider,
-                                   GameLogService gameLogService) {
+                                   GameLogService gameLogService,
+                                   TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.lifeSupport = lifeSupport;
@@ -141,6 +144,7 @@ public class DamagePreventionService {
         this.permanentControlSupportProvider = permanentControlSupportProvider;
         this.destructionSupportProvider = destructionSupportProvider;
         this.gameLogService = gameLogService;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     /** Applies a one-shot replacement that destroys a target creature instead of dealing damage. */
@@ -1016,17 +1020,30 @@ public class DamagePreventionService {
             CombatDamagePreventionTokenShield tokenShield =
                     gameData.combatDamagePreventionTokenShields.get(playerId);
             if (tokenShield != null) {
+                notifyControllerDamagePrevented(gameData, playerId, damage);
                 permanentControlSupportProvider.getObject().applyCreateToken(
                         gameData, playerId, tokenShield.token(), damage, tokenShield.sourceSetCode());
                 return 0;
             }
         }
-        if (combatDamage && gameData.preventAllCombatDamageToPlayers) return 0;
-        if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
+        if (combatDamage && gameData.preventAllCombatDamageToPlayers) {
+            notifyControllerDamagePrevented(gameData, playerId, damage);
+            return 0;
+        }
+        if (gameData.playersWithAllDamagePrevented.contains(playerId)) {
+            notifyControllerDamagePrevented(gameData, playerId, damage);
+            return 0;
+        }
         // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)
-        if (gameData.playersWithAllPlayerDamagePrevented.contains(playerId)) return 0;
+        if (gameData.playersWithAllPlayerDamagePrevented.contains(playerId)) {
+            notifyControllerDamagePrevented(gameData, playerId, damage);
+            return 0;
+        }
         // Morningtide's Light: prevent all damage that would be dealt to the caster until their next turn.
-        if (gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.contains(playerId)) return 0;
+        if (gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.contains(playerId)) {
+            notifyControllerDamagePrevented(gameData, playerId, damage);
+            return 0;
+        }
         // Gisela, Blade of Goldnight: prevent half the damage dealt to her controller, rounded up.
         damage = applyHalfDamagePrevention(gameData, playerId, damage);
         if (damage <= 0) return 0;
@@ -1049,6 +1066,7 @@ public class DamagePreventionService {
                     gameData.playerCombatDamagePreventionShields.put(playerId, remaining);
                 }
                 damage -= prevented;
+                notifyControllerDamagePrevented(gameData, playerId, prevented);
             }
         }
         if (damage <= 0) return 0;
@@ -1062,10 +1080,20 @@ public class DamagePreventionService {
                 gameData.playerDamagePreventionShields.put(playerId, remaining);
             }
             damage -= prevented;
+            notifyControllerDamagePrevented(gameData, playerId, prevented);
         }
         if (damage <= 0) return 0;
-        if (!combatDamage && hasControllerAndPermanentsNoncombatDamagePrevention(gameData, playerId)) return 0;
+        if (!combatDamage && hasControllerAndPermanentsNoncombatDamagePrevention(gameData, playerId)) {
+            notifyControllerDamagePrevented(gameData, playerId, damage);
+            return 0;
+        }
         return damage;
+    }
+
+    private void notifyControllerDamagePrevented(GameData gameData, UUID playerId, int amount) {
+        if (amount > 0) {
+            triggerCollectionService.checkControllerDamagePreventedTriggers(gameData, playerId, amount);
+        }
     }
 
     /** Applies target-specific shields that gain life for their resolving controller. */

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "193")
+@CardRegistration(set = "C21", collectorNumber = "26")
 public class DeekahFractalTheorist extends Card {
 
     public DeekahFractalTheorist() {

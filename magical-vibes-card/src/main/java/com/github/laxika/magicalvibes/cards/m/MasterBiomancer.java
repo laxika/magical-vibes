@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithS
 
 @CardRegistration(set = "GTC", collectorNumber = "176")
 @CardRegistration(set = "2X2", collectorNumber = "250")
+@CardRegistration(set = "C21", collectorNumber = "224")
 public class MasterBiomancer extends Card {
 
     public MasterBiomancer() {

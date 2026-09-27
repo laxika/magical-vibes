@@ -226,6 +226,23 @@ class ExileGraveyardCardsEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("Tracks all opponent graveyards with the source permanent")
+    void tracksAllOpponentsWithSource() {
+        Card card = createCard("Grizzly Bears");
+        gd.playerGraveyards.get(player2Id).add(card);
+        UUID sourcePermanentId = UUID.randomUUID();
+
+        ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect.allOpponentsWithSource();
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Author of Shadows"),
+                player1Id, "Author of Shadows", List.of(effect), 0, sourcePermanentId);
+
+        handler.resolve(gd, entry, effect);
+
+        verify(exileService).exileCard(eq(gd), eq(player2Id), eq(card), eq(sourcePermanentId));
+        assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Records the number of matching targeted cards exiled")
     void recordsMatchingTargetedExiledCardsInEventValue() {
         Card creature = createCard("Creature");

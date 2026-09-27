@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "322")
+@CardRegistration(set = "C21", collectorNumber = "72")
 public class Oversimplify extends Card {
 
     public Oversimplify() {

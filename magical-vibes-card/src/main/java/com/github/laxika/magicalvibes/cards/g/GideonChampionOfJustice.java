@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "13")
+@CardRegistration(set = "C21", collectorNumber = "93")
 public class GideonChampionOfJustice extends Card {
 
     public GideonChampionOfJustice() {

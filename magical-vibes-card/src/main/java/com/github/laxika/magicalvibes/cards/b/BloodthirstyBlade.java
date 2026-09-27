@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GN3", collectorNumber = "114")
+@CardRegistration(set = "C21", collectorNumber = "235")
 public class BloodthirstyBlade extends Card {
 
     public BloodthirstyBlade() {

@@ -47,7 +47,8 @@ public class ExileTargetCardFromGraveyardThenEffectHandler implements NormalEffe
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                targetCard, effect.filter(), entry.getCard().getId(), gameData, graveyardOwnerId)) {
+                targetCard, effect.filter(), entry.getCard().getId(), gameData, graveyardOwnerId,
+                entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue())) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer matches its restriction)."));
             return;

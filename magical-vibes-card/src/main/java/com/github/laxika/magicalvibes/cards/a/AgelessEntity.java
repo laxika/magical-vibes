@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "DST", collectorNumber = "73")
 @CardRegistration(set = "DDH", collectorNumber = "18")
+@CardRegistration(set = "C21", collectorNumber = "184")
 public class AgelessEntity extends Card {
 
     public AgelessEntity() {

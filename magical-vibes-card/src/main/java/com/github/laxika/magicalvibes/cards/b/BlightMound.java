@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "208")
+@CardRegistration(set = "C21", collectorNumber = "36")
 public class BlightMound extends Card {
 
     public BlightMound() {

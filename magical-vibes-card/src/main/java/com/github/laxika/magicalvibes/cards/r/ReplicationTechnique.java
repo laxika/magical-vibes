@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOC", collectorNumber = "200")
+@CardRegistration(set = "C21", collectorNumber = "31")
 public class ReplicationTechnique extends Card {
 
     public ReplicationTechnique() {
