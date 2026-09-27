@@ -36,7 +36,7 @@ class DeceptiveLandscapeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DeceptiveLandscape());
         setupLibrary();
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Deceptive Landscape");

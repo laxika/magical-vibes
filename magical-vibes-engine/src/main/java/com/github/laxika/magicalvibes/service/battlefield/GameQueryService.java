@@ -10565,9 +10565,8 @@ public class GameQueryService {
         }
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getSubtypes().contains(subtype)
-                    || permanent.getTransientSubtypes().contains(subtype)
-                    || permanent.getGrantedSubtypes().contains(subtype)) {
+            if (hasEffectiveSubtype(gameData, permanent, subtype)
+                    || (isCreatureSubtype(subtype) && hasKeyword(gameData, permanent, Keyword.CHANGELING))) {
                 count++;
             }
         }

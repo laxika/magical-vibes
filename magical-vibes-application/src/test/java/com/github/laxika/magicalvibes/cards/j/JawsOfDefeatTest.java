@@ -19,6 +19,7 @@ class JawsOfDefeatTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new JawsOfDefeat());
         harness.enterBattlefieldAndReturn(player1, new GiantSpider());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(player2.getId());
@@ -34,6 +35,7 @@ class JawsOfDefeatTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new JawsOfDefeat());
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(player2.getId());

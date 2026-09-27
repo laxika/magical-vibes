@@ -3649,6 +3649,10 @@ public class AbilityActivationService {
 
         int effectiveIndex = effectiveAbilityIndex(abilityIndex);
         ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
+        if (ability.getRequiredXSourceCounterType() != null
+                && effectiveXValue != permanent.getCounterCount(ability.getRequiredXSourceCounterType())) {
+            throw new IllegalStateException("X must equal the number of counters on the source");
+        }
         List<CardEffect> abilityEffects = ability.getEffects();
         if (ability.isSpecialAction() && abilityEffects.stream().noneMatch(CostEffect.class::isInstance)) {
             ManaCost cost = new ManaCost(ability.getManaCost() == null ? "{0}" : ability.getManaCost());

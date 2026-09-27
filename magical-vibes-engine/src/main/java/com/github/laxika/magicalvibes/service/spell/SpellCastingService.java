@@ -4220,6 +4220,22 @@ public class SpellCastingService {
         if (kicked && targetId != null && !card.isAllowSharedTargets() && targetIds.contains(targetId)) {
             throw new IllegalStateException("All targets must be different");
         }
+        List<Integer> modalTargetGroupSizes = List.of();
+        List<SpellTarget> modalGroups = card.getSpellTargets();
+        if (wasModal && targetId == null && modalGroups.size() > 1
+                && modalGroups.getFirst().getMinTargets() < modalGroups.getFirst().getMaxTargets()
+                && modalGroups.subList(1, modalGroups.size()).stream()
+                .allMatch(group -> group.getMinTargets() == group.getMaxTargets())) {
+            // A variable first mode followed by fixed-target modes needs its actual count
+            // recorded. Otherwise the first mode's maximum consumes later modes' targets.
+            int fixedTargets = modalGroups.subList(1, modalGroups.size()).stream()
+                    .mapToInt(SpellTarget::getMinTargets).sum();
+            List<Integer> sizes = new ArrayList<>();
+            sizes.add(targetIds.size() - fixedTargets);
+            modalGroups.subList(1, modalGroups.size()).stream()
+                    .map(SpellTarget::getMinTargets).forEach(sizes::add);
+            modalTargetGroupSizes = List.copyOf(sizes);
+        }
         if (!variableMixedTargetGroups && kicked && targetId != null && card.getSpellTargets().size() > 1
                 && !multipleSpellTargets) {
             targetLegalityService.validateSpellTargetGroupsAfterPrimary(
@@ -4227,7 +4243,11 @@ public class SpellCastingService {
         } else if (!variableMixedTargetGroups && card.getMaxTargets() > 0 && !multipleSpellTargets
                 && (!targetIds.isEmpty() || (targetId == null
                 && card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE))) {
-            if (!dividedDamageTargetGroupSizes.isEmpty()) {
+            if (!modalTargetGroupSizes.isEmpty()) {
+                targetLegalityService.validateMultiSpellTargets(
+                        gameData, card, targetIds, playerId, effectiveXValue, kicked, giftPromised,
+                        targetingSpellEffects, modalTargetGroupSizes);
+            } else if (!dividedDamageTargetGroupSizes.isEmpty()) {
                 targetLegalityService.validateMultiSpellTargets(
                         gameData, card, targetIds, playerId, effectiveXValue, kicked,
                         targetingSpellEffects, dividedDamageTargetGroupSizes);
@@ -5974,17 +5994,25 @@ public class SpellCastingService {
                     && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || hasBoundGraveyardTargetGroup)
                     && !additionalCosts.sacrificeAllCreatures()) {
                 List<UUID> graveyardTargetIds = graveyardTargetIds(gameData, null, targetIds);
-                gameData.stack.add(new StackEntry(
+                StackEntry graveyardEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null,
                         null, Map.of(), Zone.GRAVEYARD, graveyardTargetIds, targetIds
-                ));
+                );
+                if (!modalTargetGroupSizes.isEmpty()) {
+                    graveyardEntry.setTargetGroupSizes(modalTargetGroupSizes);
+                }
+                gameData.stack.add(graveyardEntry);
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
-                gameData.stack.add(new StackEntry(
+                StackEntry multiTargetEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetIds
-                ));
+                );
+                if (!modalTargetGroupSizes.isEmpty()) {
+                    multiTargetEntry.setTargetGroupSizes(modalTargetGroupSizes);
+                }
+                gameData.stack.add(multiTargetEntry);
             } else if (needsGraveyardOrExileTargeting) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),

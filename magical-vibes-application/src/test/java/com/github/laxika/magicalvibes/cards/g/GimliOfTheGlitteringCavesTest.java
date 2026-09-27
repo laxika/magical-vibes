@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.t.TymaretTheMurderKing;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class GimliOfTheGlitteringCavesTest extends BaseCardTest {
         gimli.setAttacking(true);
 
         resolveCombat();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
     }

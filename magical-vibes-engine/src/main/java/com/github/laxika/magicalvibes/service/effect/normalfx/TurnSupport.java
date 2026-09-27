@@ -99,6 +99,10 @@ public class TurnSupport {
         gameData.priorityPassedBy.clear();
 
         UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null) {
+            turnCleanupService.applyCleanupResets(gameData);
+            return;
+        }
         List<Card> hand = gameData.playerHands.get(activePlayerId);
         int maxHandSize = Math.max(turnCleanupService.getMaxHandSize(gameData, activePlayerId), 0);
         if (hand != null && hand.size() > maxHandSize

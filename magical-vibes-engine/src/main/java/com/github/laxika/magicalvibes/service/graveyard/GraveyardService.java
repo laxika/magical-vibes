@@ -1926,7 +1926,8 @@ public class GraveyardService {
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
             firePerpetualTriggeredAbilities(gameData, ownerId, List.of(leavingCard));
         }
-        notifyCardsLeftGraveyard(gameData, ownerId, 1);
+        notifyCardsLeftGraveyard(gameData, ownerId, 1,
+                leavingCard == null ? List.of() : List.of(leavingCard));
         notifyInstantOrSorceryCardLeftGraveyard(gameData, ownerId, leavingCard);
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, 1);
@@ -1951,7 +1952,7 @@ public class GraveyardService {
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         firePerpetualTriggeredAbilities(gameData, ownerId, leavingCards);
-        notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size());
+        notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size(), leavingCards);
         for (Card card : leavingCards) {
             notifyInstantOrSorceryCardLeftGraveyard(gameData, ownerId, card);
         }

@@ -1470,7 +1470,7 @@ public class LibraryChoiceHandlerService {
                 if (!accumulatedCards.isEmpty()) {
                     placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, battlefieldControllerId,
                             toBattlefieldTapped, grantHaste, exileAtEndStep, returnToHandAtEndStep,
-                            animateFound, battlefieldCounter, enterWithCounters);
+                            animateFound, battlefieldCounter, enterWithCounters, false, playerId);
                 }
                 gameData.addCardToHand(handOwnerId, chosenCard);
             } else if (remainingCount > 1) {
@@ -1482,7 +1482,7 @@ public class LibraryChoiceHandlerService {
                 allCards.add(chosenCard);
                 placeCardsOnBattlefieldSimultaneously(gameData, allCards, battlefieldControllerId, toBattlefieldTapped,
                         grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
-                        battlefieldCounter, enterWithCounters);
+                        battlefieldCounter, enterWithCounters, false, playerId);
             }
         }
 
@@ -2165,6 +2165,19 @@ public class LibraryChoiceHandlerService {
                                                         CounterType battlefieldCounter,
                                                         com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters,
                                                         boolean cloaked) {
+        return placeCardsOnBattlefieldSimultaneously(gameData, cards, ownerId, tapped, grantHaste,
+                exileAtEndStep, returnToHandAtEndStep, animateFound, battlefieldCounter,
+                enterWithCounters, cloaked, ownerId);
+    }
+
+    private List<Permanent> placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
+                                                        UUID ownerId, boolean tapped,
+                                                        boolean grantHaste, boolean exileAtEndStep,
+                                                        boolean returnToHandAtEndStep,
+                                                        AnimatePermanentsEffect animateFound,
+                                                        CounterType battlefieldCounter,
+                                                        com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters,
+                                                        boolean cloaked, UUID puttingPlayerId) {
         List<Permanent> permanents = new ArrayList<>();
         List<Card> placedCards = new ArrayList<>();
         String ownerName = gameData.playerIdToName.get(ownerId);
@@ -2189,6 +2202,8 @@ public class LibraryChoiceHandlerService {
                 continue;
             }
             Permanent perm = new Permanent(card, Zone.LIBRARY);
+            var landEquilibriumPlan = puttingPlayerId.equals(ownerId) ? null
+                    : landEquilibriumSupport.findPlan(gameData, puttingPlayerId, perm);
             if (cloaked) {
                 perm.setFaceDownAsCloaked();
             }
@@ -2198,6 +2213,7 @@ public class LibraryChoiceHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch,
                     enterWithCounters);
             initializeBattleDefenseCounters(perm);
+            landEquilibriumSupport.applyPlan(gameData, puttingPlayerId, perm, landEquilibriumPlan, null);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
             if (tapped) {

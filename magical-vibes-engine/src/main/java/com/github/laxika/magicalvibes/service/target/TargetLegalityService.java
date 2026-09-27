@@ -1959,6 +1959,14 @@ public class TargetLegalityService {
                 selectedEffects, targetGroupSizes, false);
     }
 
+    public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                          UUID controllerId, int xValue, boolean kicked,
+                                          boolean giftPromised, List<CardEffect> selectedEffects,
+                                          List<Integer> targetGroupSizes) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0,
+                selectedEffects, targetGroupSizes, giftPromised);
+    }
+
     /**
      * Validates the targets chosen for one spell target group when the number of targets in an
      * earlier group is supplied separately, such as a divided-damage assignment map.
@@ -4060,6 +4068,12 @@ public class TargetLegalityService {
 
     private String checkPlayerUntargetableReason(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {
         return checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, null);
+    }
+
+    /** Whether a triggered ability should omit this player from its offered targets. */
+    public boolean isPlayerUntargetable(GameData gameData, UUID targetPlayerId,
+                                         UUID sourcePlayerId, Card sourceCard) {
+        return checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, sourceCard) != null;
     }
 
     private String checkPlayerUntargetableReason(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId,

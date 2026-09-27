@@ -143,6 +143,13 @@ public class DamageSupport {
                 gameData.damageCantBePreventedThisTurn = previous;
             }
         }
+        // Prevention that applies to the creature also applies to damage from its abilities.
+        // Combat damage and damage to players already consult this flag; keep creature damage
+        // on the same path (for example, a Kry Shield-protected D'Avenant Archer).
+        if (source != null && gameQueryService.isPreventedFromDealingDamage(gameData, source)) {
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage is prevented."));
+            return 0;
+        }
         boolean sourceDamagePrevented = source != null
                 ? gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
                 : gameQueryService.isDamageFromStackEntryPrevented(gameData, entry);

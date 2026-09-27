@@ -2712,6 +2712,9 @@ public class ChoiceHandlerService {
                 : new TargetPlayerGainsLifeEffect(1);
 
         List<UUID> validTargets = new ArrayList<>(gameData.orderedPlayerIds);
+        validTargets.removeIf(pid -> !pid.equals(ctx.controllerId())
+                && gameQueryService.playerHasHexproof(gameData, pid)
+                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, ctx.controllerId()));
         if (damageMode) {
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);

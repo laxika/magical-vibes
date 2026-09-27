@@ -2279,13 +2279,21 @@ public class ActivatedAbilityExecutionService {
         }
         if (discardedCardSnapshot != null) {
             stackEntry.setDiscardedCardSnapshot(discardedCardSnapshot);
+        } else if (ability.getEffects().stream().anyMatch(effect -> effect instanceof
+                com.github.laxika.magicalvibes.model.effect.HandCardCost cost && cost.imprintOnSource())) {
+            stackEntry.setDiscardedCardSnapshot(gameData.getImprintedCard(permanent.getCard()));
         }
         if (exiledCostCardSnapshot != null) {
             stackEntry.setExiledCostCardSnapshot(exiledCostCardSnapshot);
             stackEntry.setExiledCostCardId(exiledCostCardSnapshot.getId());
         }
         if (recordsSacrificedPermanentSnapshot) {
-            stackEntry.setSacrificedPermanentSnapshot(permanent.getChosenSacrificedPermanentSnapshot());
+            Permanent sacrificed = permanent.getChosenSacrificedPermanentSnapshot();
+            stackEntry.setSacrificedPermanentSnapshot(sacrificed);
+            if (sacrificed != null) {
+                stackEntry.setSacrificedPower(sacrificed.getEffectivePower());
+                stackEntry.setSacrificedToughness(sacrificed.getEffectiveToughness());
+            }
         }
         if (sacrificedSourceSnapshot != null) {
             stackEntry.setSacrificedPermanentSnapshot(sacrificedSourceSnapshot);

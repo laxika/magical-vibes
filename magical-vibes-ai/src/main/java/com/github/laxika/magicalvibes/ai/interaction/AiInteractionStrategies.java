@@ -48,6 +48,7 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HeistCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.AminatousAuguryChoice.class, 0));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderBattlefieldChoice.class, 1));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCastCostHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualEnterExileHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTargetCardChoice.class));

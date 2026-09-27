@@ -1726,17 +1726,14 @@ public class CombatAttackService {
 
                 ConditionContext targetContext = ConditionContext.forPermanent(perm, playerId)
                         .withTargetId(attackedPlayerId);
-                Integer targetAttackerCount = null;
+                int targetAttackerCount = (int) attackerIndices.stream()
+                        .map(resolvedTargets::get)
+                        .filter(attackedPlayerId::equals)
+                        .count();
                 List<CardEffect> matchingEffects = new ArrayList<>();
                 for (CardEffect effect : effects) {
                     if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof MinimumAttackers minimumAttackers) {
-                        if (targetAttackerCount == null) {
-                            targetAttackerCount = (int) attackerIndices.stream()
-                                    .map(resolvedTargets::get)
-                                    .filter(attackedPlayerId::equals)
-                                    .count();
-                        }
                         if (targetAttackerCount < minimumAttackers.minimumAttackers()) continue;
                         matchingEffects.add(conditional.wrapped());
                     } else if (effect instanceof ConditionalEffect conditional
@@ -1769,8 +1766,9 @@ public class CombatAttackService {
                                 playerId,
                                 perm.getCard().getName() + "'s attack trigger",
                                 matchingEffects,
-                                targetAttackerCount != null ? targetAttackerCount : 0,
+                                0,
                                 perm.getId());
+                        attackTrigger.setEventValue(targetAttackerCount);
                         attackTrigger.setAttackedTargetId(attackedPlayerId);
                         attackTrigger.setNonTargeting(true);
                         gameData.stack.add(attackTrigger);

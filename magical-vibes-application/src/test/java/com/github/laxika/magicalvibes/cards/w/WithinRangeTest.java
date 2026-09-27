@@ -38,7 +38,7 @@ class WithinRangeTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
     private void castWithinRange() {

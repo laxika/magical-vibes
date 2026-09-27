@@ -240,13 +240,17 @@ public class TriggerTargetCollector {
             if (opponentOnly) {
                 for (UUID pid : gameData.orderedPlayerIds) {
                     if (!pid.equals(controllerId)
-                            && (excludedPlayerId == null || !excludedPlayerId.equals(pid))) {
+                            && (excludedPlayerId == null || !excludedPlayerId.equals(pid))
+                            && !targetLegalityService.isPlayerUntargetable(
+                            gameData, pid, controllerId, sourceCard)) {
                         validTargets.add(pid);
                     }
                 }
             } else {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (excludedPlayerId == null || !excludedPlayerId.equals(pid)) {
+                    if ((excludedPlayerId == null || !excludedPlayerId.equals(pid))
+                            && !targetLegalityService.isPlayerUntargetable(
+                            gameData, pid, controllerId, sourceCard)) {
                         validTargets.add(pid);
                     }
                 }

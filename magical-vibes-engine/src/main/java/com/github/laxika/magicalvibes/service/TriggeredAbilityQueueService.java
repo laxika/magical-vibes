@@ -1217,6 +1217,11 @@ public class TriggeredAbilityQueueService {
         Card targetingCard = sourceCard.createRuntimeCopy();
         targetingCard.clearRuntimeSpellTargets();
         targetingCard.setCastTimeTargetFilter(null);
+        // Each chosen mode has its own target instruction. The same object may be chosen
+        // for different modes, while repeated choices within one mode must stay distinct.
+        if (chosenModes.size() > 1) {
+            targetingCard.setAllowSharedTargets(true);
+        }
         for (ChooseOneEffect.ChooseOneOption mode : chosenModes) {
             if (mode.targetFilters() != null) {
                 for (int i = 0; i < mode.targetFilters().size(); i++) {
