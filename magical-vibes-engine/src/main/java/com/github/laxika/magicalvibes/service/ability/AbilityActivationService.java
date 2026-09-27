@@ -4183,6 +4183,13 @@ public class AbilityActivationService {
                     gameData.setImprintedCard(permanent.getCard(), graveyard.get(exileGraveyardCardIndex));
                 }
             }
+            if (exileGraveyardCost.payExiledCardManaCost()) {
+                effectiveManaCost = abilityCost == null ? null : applyActivatedAbilityManaCostReductions(
+                        gameData, playerId, permanent, ability, targetId, effectiveXValue, new ManaCost(abilityCost));
+                if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                    effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
+                }
+            }
         }
 
         ExileInstantOrSorcerySpellCost exileInstantOrSorcerySpellCost = abilityEffects.stream()

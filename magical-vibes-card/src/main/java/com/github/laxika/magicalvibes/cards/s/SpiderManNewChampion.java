@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -27,6 +26,6 @@ public class SpiderManNewChampion extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target")).addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,
-                SequenceEffect.of(new DealDamageToAnyTargetEffect(new EventValue())));
+                new DealDamageToAnyTargetEffect(new EventValue()));
     }
 }

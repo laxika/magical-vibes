@@ -114,7 +114,7 @@ class EtbTriggerServiceTest {
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
 
         assertThat(gameData.stack).singleElement()
-                .extracting(entry -> entry.getEffects().getFirst())
+                .extracting(entry -> entry.getEffectsToResolve().getFirst())
                 .isEqualTo(surveil);
 
         gameData.stack.clear();
