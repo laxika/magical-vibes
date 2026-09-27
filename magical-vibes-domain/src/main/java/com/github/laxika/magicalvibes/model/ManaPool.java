@@ -78,6 +78,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> additionalCounterGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent on a non-Human creature spell, it enters with an additional +1/+1 counter". */
     private final EnumMap<ManaColor, Integer> nonHumanAdditionalCounterGrantingMana = new EnumMap<>(ManaColor.class);
+    /** Mana carrying the rider "if spent on a creature spell, it enters with an additional +1/+1 counter". */
+    private final EnumMap<ManaColor, Integer> creatureAdditionalCounterGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent to cast a commander, it enters with additional +1/+1 counters". */
     private final EnumMap<ManaColor, Integer> commanderCounterGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent on a creature spell, it gains riot". */
@@ -274,6 +276,7 @@ public class ManaPool {
             hasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
+            creatureAdditionalCounterGrantingMana.put(color, 0);
             commanderCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
@@ -341,6 +344,7 @@ public class ManaPool {
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         additionalCounterGrantingMana.putAll(source.additionalCounterGrantingMana);
         nonHumanAdditionalCounterGrantingMana.putAll(source.nonHumanAdditionalCounterGrantingMana);
+        creatureAdditionalCounterGrantingMana.putAll(source.creatureAdditionalCounterGrantingMana);
         commanderCounterGrantingMana.putAll(source.commanderCounterGrantingMana);
         riotGrantingMana.putAll(source.riotGrantingMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
@@ -836,6 +840,7 @@ public class ManaPool {
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
             nonHumanAdditionalCounterGrantingMana.put(color, 0);
+            creatureAdditionalCounterGrantingMana.put(color, 0);
             commanderCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
@@ -1318,6 +1323,10 @@ public class ManaPool {
         if (nonHumanAdditionalCounterGranting > 0) {
             nonHumanAdditionalCounterGrantingMana.put(color, nonHumanAdditionalCounterGranting - 1);
         }
+        int creatureAdditionalCounterGranting = creatureAdditionalCounterGrantingMana.getOrDefault(color, 0);
+        if (creatureAdditionalCounterGranting > 0) {
+            creatureAdditionalCounterGrantingMana.put(color, creatureAdditionalCounterGranting - 1);
+        }
         int commanderCounterGranting = commanderCounterGrantingMana.getOrDefault(color, 0);
         if (commanderCounterGranting > 0) {
             commanderCounterGrantingMana.put(color, commanderCounterGranting - 1);
@@ -1350,6 +1359,9 @@ public class ManaPool {
         }
         if (nonHumanAdditionalCounterGrantingMana.getOrDefault(color, 0) > total) {
             nonHumanAdditionalCounterGrantingMana.put(color, total);
+        }
+        if (creatureAdditionalCounterGrantingMana.getOrDefault(color, 0) > total) {
+            creatureAdditionalCounterGrantingMana.put(color, total);
         }
         if (commanderCounterGrantingMana.getOrDefault(color, 0) > total) {
             commanderCounterGrantingMana.put(color, total);
@@ -1444,6 +1456,20 @@ public class ManaPool {
     public int getNonHumanAdditionalCounterGrantingManaTotal() {
         int total = 0;
         for (int value : nonHumanAdditionalCounterGrantingMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Adds mana carrying the "spent on a creature spell -> additional +1/+1 counter" rider. */
+    public void addCreatureAdditionalCounterGrantingMana(ManaColor color, int amount) {
+        creatureAdditionalCounterGrantingMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Total mana still carrying the creature-spell additional-counter rider, across all colors. */
+    public int getCreatureAdditionalCounterGrantingManaTotal() {
+        int total = 0;
+        for (int value : creatureAdditionalCounterGrantingMana.values()) {
             total += value;
         }
         return total;
@@ -3831,6 +3857,7 @@ public class ManaPool {
             moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
             moveTaggedManaToColorless(additionalCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(nonHumanAdditionalCounterGrantingMana, color, amount);
+            moveTaggedManaToColorless(creatureAdditionalCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(commanderCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(riotGrantingMana, color, amount);
         }
@@ -3922,6 +3949,7 @@ public class ManaPool {
             moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
             moveTaggedMana(additionalCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(nonHumanAdditionalCounterGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(creatureAdditionalCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(commanderCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(riotGrantingMana, color, replacementColor, amount);
         }
@@ -4176,6 +4204,7 @@ public class ManaPool {
         clampColorTag(uncounterableGrantingMana, protectedColors);
         clampColorTag(additionalCounterGrantingMana, protectedColors);
         clampColorTag(nonHumanAdditionalCounterGrantingMana, protectedColors);
+        clampColorTag(creatureAdditionalCounterGrantingMana, protectedColors);
         clampColorTag(commanderCounterGrantingMana, protectedColors);
         clampColorTag(riotGrantingMana, protectedColors);
         drainColorMap(spellCastTriggerMana, protectedColors);

@@ -71,6 +71,10 @@ import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageMillR
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagePreventionControlChangeEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -85,12 +89,14 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DamagePreventionReplacementSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -118,6 +124,8 @@ public class DamagePreventionService {
     private final DamagePreventionReplacementSupport damagePreventionReplacementSupport;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
+    private final ObjectProvider<CreatureControlService> creatureControlServiceProvider;
+    private final ObjectProvider<PlayerInputService> playerInputServiceProvider;
     private final ObjectProvider<DestructionSupport> destructionSupportProvider;
     private final GameLogService gameLogService;
 
@@ -128,6 +136,8 @@ public class DamagePreventionService {
                                    DamagePreventionReplacementSupport damagePreventionReplacementSupport,
                                    StaticEffectConditionResolver staticEffectConditionResolver,
                                    ObjectProvider<PermanentControlSupport> permanentControlSupportProvider,
+                                   ObjectProvider<CreatureControlService> creatureControlServiceProvider,
+                                   ObjectProvider<PlayerInputService> playerInputServiceProvider,
                                    ObjectProvider<DestructionSupport> destructionSupportProvider,
                                    GameLogService gameLogService) {
         this.gameQueryService = gameQueryService;
@@ -138,6 +148,8 @@ public class DamagePreventionService {
         this.damagePreventionReplacementSupport = damagePreventionReplacementSupport;
         this.staticEffectConditionResolver = staticEffectConditionResolver;
         this.permanentControlSupportProvider = permanentControlSupportProvider;
+        this.creatureControlServiceProvider = creatureControlServiceProvider;
+        this.playerInputServiceProvider = playerInputServiceProvider;
         this.destructionSupportProvider = destructionSupportProvider;
         this.gameLogService = gameLogService;
     }
@@ -630,6 +642,9 @@ public class DamagePreventionService {
             return damage;
         }
         int prevented = selfDamagePrevented(gameData, permanent, damage);
+        if (prevented > 0 && hasControlChangeOnPrevention(gameData, permanent)) {
+            makeOpponentGainControl(gameData, permanent);
+        }
         return damage - Math.min(damage, prevented);
     }
 
@@ -644,6 +659,38 @@ public class DamagePreventionService {
                 .map(SelfDamagePreventionEffect.class::cast)
                 .mapToInt(effect -> effect.preventedDamage(damage))
                 .sum();
+    }
+
+    private boolean hasControlChangeOnPrevention(GameData gameData, Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(DamagePreventionControlChangeEffect.class::isInstance)
+                || gameQueryService.getGrantedEffects(gameData, permanent).stream()
+                .anyMatch(DamagePreventionControlChangeEffect.class::isInstance);
+    }
+
+    private void makeOpponentGainControl(GameData gameData, Permanent permanent) {
+        UUID currentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        if (currentControllerId == null) return;
+
+        List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(currentControllerId))
+                .toList();
+        if (opponents.isEmpty()) return;
+
+        if (opponents.size() == 1) {
+            creatureControlServiceProvider.getObject().applyControlEffect(
+                    gameData, opponents.getFirst(), permanent,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    EffectDuration.PERMANENT, null, permanent.getCard().getName());
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.ChooseOpponentGainsControlOfSource(
+                        permanent.getId(), permanent.getCard().getName()));
+        playerInputServiceProvider.getObject().beginAnyTargetChoice(
+                gameData, currentControllerId, List.of(), opponents,
+                permanent.getCard().getName() + " — choose an opponent.");
     }
 
     /**

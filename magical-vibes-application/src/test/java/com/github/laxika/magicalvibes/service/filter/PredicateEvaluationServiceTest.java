@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePr
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -2907,6 +2908,18 @@ class PredicateEvaluationServiceTest {
                     target, new PermanentSharesNameWithAnotherControlledPermanentPredicate(), context))
                     .isFalse();
         }
+    }
+
+    @Test
+    void enteredBattlefieldThisTurnPredicateWorksInStaticFilterEvaluation() {
+        Permanent entered = addPermanent(player1Id, createCreature("Entered", 2, 2, CardColor.GREEN));
+        Permanent older = addPermanent(player1Id, createCreature("Older", 2, 2, CardColor.GREEN));
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1Id, new ArrayList<>(List.of(entered.getCard())));
+        PermanentEnteredBattlefieldThisTurnPredicate predicate = new PermanentEnteredBattlefieldThisTurnPredicate();
+
+        assertThat(evaluator.matchesPermanentPredicate(gd, entered, predicate)).isTrue();
+        assertThat(evaluator.matchesStaticFilter(entered, predicate, FilterContext.of(gd))).isTrue();
+        assertThat(evaluator.matchesStaticFilter(older, predicate, FilterContext.of(gd))).isFalse();
     }
 
     @Test

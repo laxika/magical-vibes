@@ -240,7 +240,7 @@ public class PlayerInputService {
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                 returnExiledSourceCardId, null, null, 0, returnToHandAtEndStep,
                 cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId,
-                untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype));
+                untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype, null, 0, null));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
@@ -263,6 +263,15 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, false, false, false, null, false, null,
                 false, null, null, false, false, 0, 0, Set.of(), null, null, counterType, counterCount));
+    }
+
+    public void beginCardChoiceWithEntryCounters(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                                  String prompt, CounterType counterType, int counterCount,
+                                                  CardPredicate condition) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt, false, false, false, null, false, null,
+                false, null, null, false, false, 0, 0, Set.of(), null, null, null, 0, false,
+                false, null, null, null, null, null, Set.of(), counterType, counterCount, condition));
     }
 
     public void beginCardChoiceThenReturnSourceToHand(GameData gameData, UUID playerId, List<Integer> validIndices,

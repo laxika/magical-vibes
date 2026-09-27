@@ -807,6 +807,13 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
+    public void castCreatureWithCounterCostReduction(Player player, int cardIndex,
+                                                      List<UUID> permanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, permanentIds, null, null, false);
+    }
+
     public void castEnchantment(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);

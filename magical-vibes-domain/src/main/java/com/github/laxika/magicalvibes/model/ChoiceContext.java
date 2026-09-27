@@ -157,6 +157,8 @@ public sealed interface ChoiceContext {
                                         boolean fromCaveSource) implements ChoiceContext {}
     record NonHumanCreatureCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
+    record CreatureCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount)
+            implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}

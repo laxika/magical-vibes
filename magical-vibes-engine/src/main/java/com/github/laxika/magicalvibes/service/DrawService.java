@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -283,6 +284,11 @@ public class DrawService {
     private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw,
                                         Card cycledCard) {
         if (preventDrawIfNeeded(gameData, playerId)) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            return;
+        }
+
+        if (resolveEmptyLibraryDrawReplacement(gameData, playerId)) {
             gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
         }
@@ -1312,6 +1318,65 @@ public class DrawService {
                     .anyMatch(effect -> effect instanceof ReturnFromGraveyardInsteadOfDrawEffect);
             if (hasEffect) {
                 return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves replacements whose condition is specifically an empty-library draw. These must be
+     * checked before {@link #performDrawCard} applies the normal empty-library loss.
+     */
+    private boolean resolveEmptyLibraryDrawReplacement(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        if (library != null && !library.isEmpty()) {
+            return false;
+        }
+
+        Permanent source = findEmptyLibraryDrawReplacementSource(gameData, playerId);
+        if (source == null) {
+            return false;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Integer> creatureIndices = graveyard == null
+                ? List.of()
+                : IntStream.range(0, graveyard.size())
+                        .filter(index -> graveyard.get(index).hasType(CardType.CREATURE))
+                        .boxed()
+                        .toList();
+        if (creatureIndices.isEmpty()) {
+            if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EFFECT) == LossOutcome.LOSES) {
+                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                String lossLog = gameData.playerIdToName.get(playerId)
+                        + " can't return a creature card from their graveyard and loses the game.";
+                gameLogService.append(gameData, GameLog.text(lossLog));
+                log.info("Game {} - {} loses ({}: no creature in graveyard on empty-library draw)",
+                        gameData.id, gameData.playerIdToName.get(playerId), source.getCard().getName());
+                gameOutcomeService.declareWinner(gameData, winnerId);
+            }
+            return true;
+        }
+
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(playerId, creatureIndices, GraveyardChoiceDestination.BATTLEFIELD,
+                        "Return a creature card from your graveyard to the battlefield.")
+                .mandatory(true)
+                .build());
+        return true;
+    }
+
+    private Permanent findEmptyLibraryDrawReplacementSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(EmptyLibraryDrawReplacementEffect.class::isInstance);
+            if (hasEffect) {
+                return permanent;
             }
         }
         return null;

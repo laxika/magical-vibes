@@ -190,6 +190,7 @@ public class CreatureControlService {
             triggerCollectionService.checkOpponentGainsControlTriggers(
                     gameData, permanent, current, derived);
         }
+        queueSelfControlLossTriggers(gameData, permanent, current);
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
         boolean hasControlLossUnattachTrigger = queueControlLossUnattachTriggers(
                 gameData, permanent, current);
@@ -318,6 +319,29 @@ public class CreatureControlService {
                 permanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
         effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
         effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+
+        for (CardEffect effect : effects) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    controllerId,
+                    permanent.getCard().getName() + "'s ability",
+                    List.of(effect),
+                    null,
+                    permanent.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        }
+    }
+
+    private void queueSelfControlLossTriggers(GameData gameData, Permanent permanent,
+                                              UUID controllerId) {
+        List<CardEffect> effects = new ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
 
         for (CardEffect effect : effects) {
             StackEntry entry = new StackEntry(

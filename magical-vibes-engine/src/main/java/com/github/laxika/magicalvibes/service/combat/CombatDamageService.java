@@ -1500,10 +1500,17 @@ public class CombatDamageService {
             if (controllerId == null) controllerId = gameData.findControllerOf(source);
             if (controllerId == null) continue;
             int damageToDefender = state.combatDamageDealtToPlayer.getOrDefault(source, 0);
+            Map<UUID, Integer> damageToPermanents = new HashMap<>();
+            state.combatDamageAmountsToCreatures.getOrDefault(source, Map.of())
+                    .forEach((permanentId, damage) -> damageToPermanents.merge(permanentId, damage, Integer::sum));
+            state.combatDamageAmountsToPlaneswalkers.getOrDefault(source, Map.of())
+                    .forEach((permanentId, damage) -> damageToPermanents.merge(permanentId, damage, Integer::sum));
+            state.combatDamageAmountsToBattles.getOrDefault(source, Map.of())
+                    .forEach((permanentId, damage) -> damageToPermanents.merge(permanentId, damage, Integer::sum));
             triggerCollectionService.queueSourceDealsDamageReflections(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
                     damageToDefender > 0 ? Map.of(defenderId, damageToDefender) : Map.of(),
-                    state.selfDealsDamageEffects.get(source));
+                    state.selfDealsDamageEffects.get(source), null, damageToPermanents);
         }
     }
 

@@ -96,6 +96,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsAttackingPredicate,
         PermanentIsAttackingAlonePredicate,
         PermanentIsAttackingEnchantedPlayerPredicate,
+        PermanentIsAttackingRememberedPlayerPredicate,
         PermanentAttacksPlayerWithMostLifePredicate,
         PermanentAttacksWhileSourceControllerHasMostLifePredicate,
         PermanentIsAttackingOpponentOfSourceControllerPredicate,

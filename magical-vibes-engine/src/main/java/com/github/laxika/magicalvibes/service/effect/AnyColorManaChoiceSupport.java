@@ -317,6 +317,9 @@ public final class AnyColorManaChoiceSupport {
                                                Card sourceCard,
                                                UUID sourcePermanentId,
                                                Set<CardColor> sourceColors) {
+        if (effect.grantsAdditionalPlusOneCounterToCreature()) {
+            return new ChoiceContext.CreatureCounterManaColorChoice(playerId, fromCreature, amount);
+        }
         if (effect.grantsAdditionalPlusOneCounterToNonHuman()) {
             return new ChoiceContext.NonHumanCreatureCounterManaColorChoice(playerId, fromCreature, amount);
         }

@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "EMA", collectorNumber = "246")
 @CardRegistration(set = "NEO", collectorNumber = "279")
 @CardRegistration(set = "C15", collectorNumber = "315")
+@CardRegistration(set = "40K", collectorNumber = "302")
 public class ThornwoodFalls extends Card {
 
     public ThornwoodFalls() {

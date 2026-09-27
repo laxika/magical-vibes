@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "258")
 @CardRegistration(set = "ECC", collectorNumber = "175")
+@CardRegistration(set = "40K", collectorNumber = "304")
 public class UnclaimedTerritory extends Card {
 
     public UnclaimedTerritory() {

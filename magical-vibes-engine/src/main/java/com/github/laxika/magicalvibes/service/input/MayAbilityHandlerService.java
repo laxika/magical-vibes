@@ -775,7 +775,9 @@ public class MayAbilityHandlerService {
                     GameLog.playerDeclinesAbility(player.getUsername(), ability.sourceCard()));
             gameData.resolvedMayAccepted = false;
         }
-        if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+        }
         if (gameData.interaction.isAwaitingInput()) { return; }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

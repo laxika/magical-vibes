@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "65")
 @CardRegistration(set = "MAR", collectorNumber = "59")
+@CardRegistration(set = "40K", collectorNumber = "193")
 public class ReconnaissanceMission extends Card {
 
     public ReconnaissanceMission() {

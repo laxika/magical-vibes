@@ -661,6 +661,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
                 gameData, target, controllerId, Zone.EXILE);
+        triggerCollectionService.checkAnyArtifactExiledFromBattlefieldTriggers(gameData, target, controllerId);
         for (Card leaving : leavingCards) {
             if (sourcePermanentId == null) {
                 if (faceDown) {

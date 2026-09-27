@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "691")
 @CardRegistration(set = "TSR", collectorNumber = "395")
+@CardRegistration(set = "40K", collectorNumber = "240")
 public class HedronArchive extends Card {
 
     public HedronArchive() {

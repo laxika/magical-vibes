@@ -3359,7 +3359,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           int artifactCounterCount, boolean returnToHandAtEndStep,
                           boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
                           CardPredicate enterTappedAndAttackingIf,
-                          UUID blockingAttackerId, UUID untapSourcePermanentId, java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype)
+                          UUID blockingAttackerId, UUID untapSourcePermanentId,
+                          java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                          CounterType entryCounterType, int entryCounterCount,
+                          CardPredicate entryCounterCondition)
             implements PendingInteraction, HandChoice {
     public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
@@ -3373,7 +3376,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
                           CardPredicate enterTappedAndAttackingIf,
                           UUID blockingAttackerId) {
-        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount, returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId, null, java.util.Set.of());
+        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount, returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId, null, java.util.Set.of(), null, 0, null);
     }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,

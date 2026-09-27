@@ -130,6 +130,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsTo
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -2898,6 +2899,12 @@ public class SpellCastingService {
         boolean hasSacrificeForCostReduction = !costReductionSacrificeIds.isEmpty() && !fromGraveyard
                 && handEarly.get(cardIndex).getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance);
+        RemoveCountersForCostReductionEffect counterCostReductionEffect = !fromGraveyard
+                ? additionalSpellCostService.findRemoveCountersForCostReductionEffect(handEarly.get(cardIndex))
+                : null;
+        boolean hasCounterRemovalForCostReduction = !costReductionSacrificeIds.isEmpty()
+                && counterCostReductionEffect != null;
+        boolean hasCostReduction = hasSacrificeForCostReduction || hasCounterRemovalForCostReduction;
         if (hasSacrificeForCostReduction) {
             gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                     .filter(permanent -> costReductionSacrificeIds.contains(permanent.getId()))
@@ -2927,7 +2934,7 @@ public class SpellCastingService {
                 && handEarly.get(cardIndex).getCastingOption(BestowCast.class).isPresent();
         WebSlingingEffect webSlingingEffect = null;
         if (!fromGraveyard && alternateCostSacrificePermanentIds.size() == 1
-                && !hasSacrificeForCostReduction) {
+                && !hasCostReduction) {
             Card webSlingingFace = handEarly.get(cardIndex);
             if (webSlingingFace.isModalDoubleFaced()
                     && webSlingingFace.getBackFaceCard() != null && effectiveXValue == 1) {
@@ -2979,7 +2986,7 @@ public class SpellCastingService {
                 || usingGrantedFreerunning
                 || hasGraveyardExileAlternateCost
                 || usingCollectEvidenceAlternativeCost
-                || (!alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction)
+                || (!alternateCostSacrificePermanentIds.isEmpty() && !hasCostReduction)
                 || (hasExileHandAlternateCost && discardHandCardIndex != null)
                 || alternateDiscardHandCardIndex != null
                 || usingSharedColorDiscardAlternativeCost
@@ -3148,8 +3155,8 @@ public class SpellCastingService {
             } else if (kicked && cardCheck.getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(KickerEffect.class::isInstance)) {
                 // Allow the cast-time kicker choice to determine the final cost below.
-            } else if (hasSacrificeForCostReduction) {
-                // Allow — sacrifice cost reduction will be validated during casting
+            } else if (hasCostReduction) {
+                // Allow — cost reduction will be validated during casting
             } else {
                 boolean playableWithTargetingReduction = false;
                 Permanent targetingReductionTarget = targetId != null
@@ -4526,11 +4533,16 @@ public class SpellCastingService {
                 sacrificeCostReduction = paySacrificeCreaturesForCostReduction(
                         gameData, player, card, costReductionSacrificeIds);
             }
+            int counterCostReduction = 0;
+            if (hasCounterRemovalForCostReduction) {
+                counterCostReduction = payRemoveCountersForCostReduction(
+                        gameData, player, card, counterCostReductionEffect, costReductionSacrificeIds);
+            }
             int maximumDelveReduction = castingCostService.maximumDelveReduction(
                     gameData, playerId, card, manaCostX,
                     castingCostService.getCastCostModifier(
                             gameData, playerId, card, effectiveXValue, null, kicked, collectEvidenceCostPaid)
-                            - sacrificeCostReduction - targetSubtypeCostReduction
+                            - sacrificeCostReduction - counterCostReduction - targetSubtypeCostReduction
                             - tapCreaturesCostReduction + targetingTax);
             if (additionalCosts.delveCost() != null) {
                 additionalSpellCostService.validateDelveCost(gameData, player, card, additionalCosts.delveCost(),
@@ -4594,7 +4606,7 @@ public class SpellCastingService {
                 }
             } else {
                 phyrexianManaPaidWithLife = paySpellManaCost(gameData, playerId, castCharacteristics, manaCostX, convokeContributions, phyrexianLifeCount, kicked,
-                        sacrificeCostReduction + delveReduction + targetSubtypeCostReduction
+                        sacrificeCostReduction + counterCostReduction + delveReduction + targetSubtypeCostReduction
                                 + exileFromHandCostReduction + exileFromGraveyardCostReduction
                                 + tapCreaturesCostReduction, targetingTax,
                         (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
@@ -4886,6 +4898,11 @@ public class SpellCastingService {
                 sacrificeCostReduction = paySacrificeCreaturesForCostReduction(
                         gameData, player, card, costReductionSacrificeIds);
             }
+            int counterCostReduction = 0;
+            if (hasCounterRemovalForCostReduction) {
+                counterCostReduction = payRemoveCountersForCostReduction(
+                        gameData, player, card, counterCostReductionEffect, costReductionSacrificeIds);
+            }
             ManaPool preManaPaymentPool = (kicked && kickerEffect != null && kickerEffect.hasManaCost())
                     || (kicked && kickerEffect != null && kickerEffect.hasForageCost()
                     && sacrificePermanentId == null
@@ -4929,7 +4946,7 @@ public class SpellCastingService {
                 paySpellManaCost(gameData, playerId, castCharacteristics,
                         resolvedXValue + (hasXCost ? perTargetCost : 0), convokeContributions,
                         phyrexianLifeCount, kicked,
-                        targetSubtypeCostReduction + sacrificeCostReduction + delveReduction
+                        targetSubtypeCostReduction + sacrificeCostReduction + counterCostReduction + delveReduction
                                 + exileFromHandCostReduction + exileFromGraveyardCostReduction
                                 + tapCreaturesCostReduction, targetingTax,
                         (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
@@ -7389,6 +7406,28 @@ public class SpellCastingService {
         }
 
         return sacrificedCount * effect.reductionPerCreature();
+    }
+
+    private int payRemoveCountersForCostReduction(
+            GameData gameData, Player player, Card card,
+            RemoveCountersForCostReductionEffect effect, List<UUID> permanentIds) {
+        List<UUID> selectedPermanentIds = permanentIds == null ? List.of() : permanentIds;
+        additionalSpellCostService.validateRemoveCountersForCostReduction(
+                gameData, player, card, effect, selectedPermanentIds);
+        for (UUID permanentId : selectedPermanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            removeOneCounter(gameData, permanent, effect.counterType());
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " removes a ")
+                    .text(counterLabel(effect.counterType()))
+                    .text(" counter from ")
+                    .card(permanent.getCard())
+                    .text(" to reduce the cost of ")
+                    .card(card)
+                    .text(".")
+                    .build());
+        }
+        return selectedPermanentIds.size() * effect.reductionPerCounter();
     }
 
     private int payExileGraveyardCost(GameData gameData, Player player, Card card,
@@ -10424,6 +10463,7 @@ public class SpellCastingService {
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
         int nonHumanAdditionalCounterGrantingBefore = nonHumanAdditionalCounterGrantingManaAvailable(gameData, playerId);
+        int creatureAdditionalCounterGrantingBefore = creatureAdditionalCounterGrantingManaAvailable(gameData, playerId);
         int commanderCounterGrantingBefore = commanderCounterGrantingManaAvailable(gameData, playerId);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
         boolean previousClassLevelManaPermission = pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery();
@@ -10455,6 +10495,8 @@ public class SpellCastingService {
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
         applyNonHumanAdditionalCounterGrantingMana(gameData, playerId, card,
                 nonHumanAdditionalCounterGrantingBefore);
+        applyCreatureAdditionalCounterGrantingMana(gameData, playerId, card,
+                creatureAdditionalCounterGrantingBefore);
         applyCommanderCounterGrantingMana(gameData, playerId, card, commanderCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
@@ -10498,6 +10540,7 @@ public class SpellCastingService {
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
         int nonHumanAdditionalCounterGrantingBefore = nonHumanAdditionalCounterGrantingManaAvailable(gameData, playerId);
+        int creatureAdditionalCounterGrantingBefore = creatureAdditionalCounterGrantingManaAvailable(gameData, playerId);
         int commanderCounterGrantingBefore = commanderCounterGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         null, false, 0, 0, 0, "", "", sourceZone, anyManaType, false);
@@ -10519,6 +10562,8 @@ public class SpellCastingService {
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
         applyNonHumanAdditionalCounterGrantingMana(gameData, playerId, card,
                 nonHumanAdditionalCounterGrantingBefore);
+        applyCreatureAdditionalCounterGrantingMana(gameData, playerId, card,
+                creatureAdditionalCounterGrantingBefore);
         applyCommanderCounterGrantingMana(gameData, playerId, card, commanderCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
@@ -10610,6 +10655,11 @@ public class SpellCastingService {
     private int nonHumanAdditionalCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         return pool != null ? pool.getNonHumanAdditionalCounterGrantingManaTotal() : 0;
+    }
+
+    private int creatureAdditionalCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        return pool != null ? pool.getCreatureAdditionalCounterGrantingManaTotal() : 0;
     }
 
     private int commanderCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
@@ -12157,6 +12207,19 @@ public class SpellCastingService {
         }
         int spent = nonHumanAdditionalCounterGrantingBefore
                 - nonHumanAdditionalCounterGrantingManaAvailable(gameData, playerId);
+        if (spent > 0) {
+            gameData.spellAdditionalEnterCounters.merge(card.getId(), spent, Integer::sum);
+        }
+    }
+
+    /** Biophagus: each tagged mana spent on a creature spell grants one additional counter. */
+    private void applyCreatureAdditionalCounterGrantingMana(GameData gameData, UUID playerId, Card card,
+                                                             int creatureAdditionalCounterGrantingBefore) {
+        if (!card.hasType(CardType.CREATURE)) {
+            return;
+        }
+        int spent = creatureAdditionalCounterGrantingBefore
+                - creatureAdditionalCounterGrantingManaAvailable(gameData, playerId);
         if (spent > 0) {
             gameData.spellAdditionalEnterCounters.merge(card.getId(), spent, Integer::sum);
         }

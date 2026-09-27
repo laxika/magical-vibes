@@ -768,6 +768,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isAttacking() ? 1 : 0);
         flags = flags << 1 | (p.isBlocking() ? 1 : 0);
         h = mix(h, flags);
+        h = mix(h, p.getAttackTarget() == null ? 0 : p.getAttackTarget().hashCode());
         h = mix(h, p.getAttacksThisTurn());
         for (UUID blockingTargetId : p.getBlockingTargetIds()) {
             h = mix(h, blockingTargetId.hashCode());
@@ -788,6 +789,7 @@ public class LayerSystemService {
         h = mix(h, chosenModeByPlayerSum);
         h = mix(h, p.getChosenModeByPlayer().size());
         h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
+        h = mix(h, p.getRememberedTargetPlayerId() == null ? 0 : p.getRememberedTargetPlayerId().hashCode());
         h = mix(h, p.getLastChosenExiledCard() == null
                 ? 0 : System.identityHashCode(p.getLastChosenExiledCard()));
 

@@ -74,6 +74,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -232,6 +233,28 @@ public class TriggeredAbilityQueueService {
                         "'s death trigger has no valid targets."));
                 log.info("Game {} - {} death trigger skipped (no valid creature targets)",
                         gameData.id, pending.dyingCard().getName());
+                continue;
+            }
+
+            if (pending.effects().stream().anyMatch(CardEffect::targetChosenAtRandom)) {
+                UUID targetId = result.validTargets().get(
+                        ThreadLocalRandom.current().nextInt(result.validTargets().size()));
+                gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.dyingCard(),
+                        pending.controllerId(),
+                        pending.dyingCard().getName() + "'s ability",
+                        new ArrayList<>(pending.effects()),
+                        targetId,
+                        pending.sourcePermanentSnapshot() == null
+                                ? null : pending.sourcePermanentSnapshot().getId()
+                );
+                entry.setEventValue(pending.eventValue() == null ? 0 : pending.eventValue());
+                entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
+                        "'s death trigger randomly targets " + gameData.playerIdToName.get(targetId) + "."));
                 continue;
             }
 

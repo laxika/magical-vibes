@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 import java.util.Set;
 
 @CardRegistration(set = "C15", collectorNumber = "1")
+@CardRegistration(set = "40K", collectorNumber = "182")
 public class BastionProtector extends Card {
 
     public BastionProtector() {
