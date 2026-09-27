@@ -291,7 +291,7 @@ public class SpellCastingService {
     }
 
     private List<Integer> spellCastingAbilityGrantValuesForCard(GameData gameData, UUID playerId,
-                                                                 Card card, Keyword ability) {
+                                                                 Card card, Keyword ability, Zone sourceZone) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         List<Integer> values = new ArrayList<>();
@@ -299,7 +299,15 @@ public class SpellCastingService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent)
                         && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    if (grant.appliesOnlyToFirstMatchingSpellEachTurn()
+                            && gameData.getSpellsCastThisTurn(playerId).stream().anyMatch(previousSpell ->
+                            predicateEvaluationService.matchesCardPredicate(
+                                    previousSpell, grant.filter(), permanent.getCard().getId(), gameData, playerId))) {
+                        continue;
+                    }
                     values.add(grant.abilityValue());
                 }
             }
@@ -3282,7 +3290,7 @@ public class SpellCastingService {
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.extractAndRemove(gameData, playerId, card, preliminarySpellEffects);
         List<Integer> casualtyValues = spellCastingAbilityGrantValuesForCard(
-                gameData, playerId, card, Keyword.CASUALTY);
+                gameData, playerId, card, Keyword.CASUALTY, castSourceZone);
         validateCasualtyPayments(gameData, player, card, casualtyValues, casualtyCreatureIds,
                 sacrificePermanentId, convokeCreatureIds, conspireCreatureIds,
                 alternateCostSacrificePermanentIds, imposedSacrificePermanentIds,
@@ -4587,7 +4595,7 @@ public class SpellCastingService {
             // Keep the distinct colored payment available to spell-cast triggers such as
             // Magmablood Archaic, even when the spell itself has no ColorSpentToCast condition.
             java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot =
-                    gameData.playerManaPools.get(playerId).getColoredManaTotals();
+                    gameData.playerManaPools.get(playerId).getAllManaTotals();
             int phyrexianManaPaidWithLife = 0;
             if (usingAlternateCost) {
                 if (usingWebSlingingCost) {
@@ -4649,8 +4657,8 @@ public class SpellCastingService {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
                         colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
-                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
-                        colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.manaSpentByColorIncludingColorless(
+                        colorsSpentSnapshot, pool.getAllManaTotals(), convokeContributions));
             }
             if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
                 stackX = gameData.getSpellCastManaSpent(card.getId());
@@ -4810,7 +4818,7 @@ public class SpellCastingService {
                             && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX()));
             boolean needsColorsSpent = EffectResolution.hasColorSpentCondition(card)
                     || EffectResolution.hasColorManaPairsSpentToCastAmount(card);
-            java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot = gameData.playerManaPools.get(playerId).getColoredManaTotals();
+            java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot = gameData.playerManaPools.get(playerId).getAllManaTotals();
             java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
                     ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
                     : null;
@@ -4988,8 +4996,8 @@ public class SpellCastingService {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
                         colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
-                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
-                        colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.manaSpentByColorIncludingColorless(
+                        colorsSpentSnapshot, pool.getAllManaTotals(), convokeContributions));
             }
             if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
                 resolvedXValue = gameData.getSpellCastManaSpent(card.getId());
@@ -5945,6 +5953,10 @@ public class SpellCastingService {
             }
             if (!gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setConvokeCreatureIds(convokeCreatureIds);
+                if (targetIsGraveyardCard && targetId != null) {
+                    gameData.stack.getLast().setTargetGraveyardEntryVersion(
+                            gameData.graveyardEntryVersion(targetId));
+                }
             }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
                     && !targetIds.isEmpty()) {
@@ -8454,7 +8466,7 @@ public class SpellCastingService {
                 ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
                 : null;
         java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot =
-                gameData.playerManaPools.get(playerId).getColoredManaTotals();
+                gameData.playerManaPools.get(playerId).getAllManaTotals();
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt,
                 grantedFlashbackOption, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
@@ -8527,8 +8539,8 @@ public class SpellCastingService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
                     colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
-            gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
-                    colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+            gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.manaSpentByColorIncludingColorless(
+                    colorsSpentSnapshot, pool.getAllManaTotals(), convokeContributions));
         }
         if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {
             effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
@@ -9021,6 +9033,9 @@ public class SpellCastingService {
             stackEntry.setCastWithFlashback(!isRetrace || isHarmonize);
         }
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        if (targetId != null && gameQueryService.findGraveyardOwnerById(gameData, targetId) != null) {
+            stackEntry.setTargetGraveyardEntryVersion(gameData.graveyardEntryVersion(targetId));
+        }
         preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
         gameData.stack.add(stackEntry);
 
@@ -13720,6 +13735,9 @@ public class SpellCastingService {
                     castEntry.getGrantedKeywordsWhileOnStack().addAll(marker.keywords());
                 }
             }
+        }
+        if (castEntry != null && gameQueryService.hasArtifactManaSplitSecond(gameData, playerId, card.getId())) {
+            castEntry.getGrantedKeywordsWhileOnStack().add(Keyword.SPLIT_SECOND);
         }
 
         UUID commanderId = gameData.pendingCommandCasts.remove(card.getId());

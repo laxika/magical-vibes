@@ -58,10 +58,11 @@ class MODOKEvilIntellectTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         draw(player1);
-        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         draw(player1);
         assertThat(gd.stack).isEmpty();
@@ -79,7 +80,7 @@ class MODOKEvilIntellectTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("opponent");
+                .hasMessageContaining("Invalid permanent");
     }
 
     private void draw(Player player) {

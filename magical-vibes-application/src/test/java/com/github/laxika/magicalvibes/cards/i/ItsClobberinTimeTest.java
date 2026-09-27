@@ -30,7 +30,7 @@ class ItsClobberinTimeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0},
+        harness.castModalSorceryWithModes(player1, 0, 1, 1, new int[]{0},
                 List.of(source.getId(), harness.getPermanentId(player2, "Grizzly Bears")), null);
         harness.passBothPriorities();
 
@@ -46,7 +46,7 @@ class ItsClobberinTimeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1},
+        harness.castModalSorceryWithModes(player1, 0, 1, 1, new int[]{1},
                 List.of(artifact.getId()), null);
         harness.passBothPriorities();
 
@@ -61,7 +61,7 @@ class ItsClobberinTimeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1},
+        harness.castModalSorceryWithModes(player1, 0, 1, 1, new int[]{1},
                 List.of(enchantment.getId()), null);
         harness.passBothPriorities();
 
@@ -77,7 +77,7 @@ class ItsClobberinTimeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castModalSorceryWithModes(player1, 0, 1, 2,
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(player1, 0, 1, 1,
                 new int[]{0}, List.of(source.getId(), ownTarget.getId()), null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent controls");
@@ -92,7 +92,7 @@ class ItsClobberinTimeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1},
+        harness.castModalSorceryWithModes(player1, 0, 1, 1, new int[]{1},
                 List.of(artifact.getId()), null);
         harness.passBothPriorities();
 

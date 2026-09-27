@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -505,11 +504,11 @@ public class PredicateEvaluationService {
                 if (gameData == null || !card.hasType(CardType.CREATURE)) {
                     yield false;
                 }
-                Permanent source = sourcePermanentId != null
-                        ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
-                        : sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
+                Permanent source = sourcePermanentSnapshot;
                 if (source == null) {
-                    source = sourcePermanentSnapshot;
+                    source = sourcePermanentId != null
+                            ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
+                            : sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
                 }
                 yield source != null && gameQueryService.isCreature(gameData, source)
                         && gameQueryService.shareCreatureType(gameData, source, card);
@@ -1165,8 +1164,17 @@ public class PredicateEvaluationService {
                 if (gameData == null) {
                     yield false;
                 }
-                yield permanent.getEffectiveColors().stream()
-                        .anyMatch(color -> ColorMostCommonAmongAllPermanents.isMostCommon(gameData, color));
+                var counts = new java.util.EnumMap<CardColor, Integer>(CardColor.class);
+                gameData.forEachPermanent((playerId, candidate) -> {
+                    Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, candidate);
+                    for (CardColor color : colors) {
+                        counts.merge(color, 1, Integer::sum);
+                    }
+                });
+                Set<CardColor> targetColors = gameQueryService.getEffectiveColors(gameData, permanent);
+                yield targetColors.stream()
+                        .anyMatch(color -> counts.values().stream()
+                                .allMatch(count -> count <= counts.getOrDefault(color, 0)));
             }
             case PermanentIsAuraAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {
@@ -1603,11 +1611,11 @@ public class PredicateEvaluationService {
                         .getSpellCastColorsSpent(filterContext.sourceCardId()).size();
             }
             case PermanentMaxManaValuePredicate maxManaValuePredicate ->
-                    permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();
+                    (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) <= maxManaValuePredicate.maxManaValue();
             case PermanentMinManaValuePredicate minManaValuePredicate ->
-                    permanent.getCard().getManaValue() >= minManaValuePredicate.minManaValue();
+                    (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) >= minManaValuePredicate.minManaValue();
             case PermanentManaValueParityPredicate parityPredicate ->
-                    parityPredicate.parity().matches(permanent.getCard().getManaValue());
+                    parityPredicate.parity().matches(permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
             case PermanentManaValueEqualsSourceCountersPredicate equalsSourceCounters -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -3863,9 +3871,13 @@ public class PredicateEvaluationService {
             case StackEntryManaValuePredicate manaValue ->
                     entry.getCard().getManaValue() + entry.getXValue() == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
-                    entry.getCard().getManaValue() + entry.getXValue() <= maxManaValue.maxManaValue();
+                    entry.getCard().getManaValue() + entry.getXValue()
+                            * (entry.getCard().getParsedManaCost() == null ? 0
+                            : entry.getCard().getParsedManaCost().getXSymbolCount()) <= maxManaValue.maxManaValue();
             case StackEntryManaSpentLessThanManaValuePredicate ignored ->
-                    entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue();
+                    entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue()
+                            * (entry.getCard().getParsedManaCost() == null ? 0
+                            : entry.getCard().getParsedManaCost().getXSymbolCount());
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;

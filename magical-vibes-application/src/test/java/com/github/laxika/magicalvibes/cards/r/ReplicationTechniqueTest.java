@@ -22,7 +22,7 @@ class ReplicationTechniqueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReplicationTechnique()));
         addMana();
 
-        harness.castSorcery(player1, 0, bears.getId());
+        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).hasSize(1);
@@ -36,14 +36,9 @@ class ReplicationTechniqueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReplicationTechnique()));
         addMana();
 
-        harness.castSorcery(player1, 0, bears.getId());
+        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handleMayAbilityChosen(player2, false);
-        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2)
@@ -58,7 +53,7 @@ class ReplicationTechniqueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReplicationTechnique()));
         addMana();
 
-        harness.castSorcery(player1, 0, bears.getId());
+        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

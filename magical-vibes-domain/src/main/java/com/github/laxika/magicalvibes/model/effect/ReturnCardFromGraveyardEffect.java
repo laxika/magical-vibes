@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.Set;
@@ -462,7 +463,10 @@ public record ReturnCardFromGraveyardEffect(
         if (!targetGraveyard) {
             return TargetSpec.NONE;
         }
+        // The card exiled to pay Holistic Wisdom's cost is chosen after the ability is announced.
+        // Its type is therefore a resolution condition, not a target restriction.
         TargetPredicate graveyardTarget = filter == null
+                || filter instanceof CardSharesCardTypeWithImprintedCardPredicate
                 ? TargetPredicates.graveyardCard(source)
                 : TargetPredicates.graveyardCards(filter, source);
         if (targetGroup >= 0) {

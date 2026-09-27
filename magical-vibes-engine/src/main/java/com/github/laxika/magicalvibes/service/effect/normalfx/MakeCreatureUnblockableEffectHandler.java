@@ -36,6 +36,12 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var unblockable = (MakeCreatureUnblockableEffect) effect;
 
+        if (unblockable.triggeringPermanent()) {
+            makeUnblockable(gameData,
+                    gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId()), entry, unblockable);
+            return;
+        }
+
         // Multi-target: make each target in the group unblockable (e.g. Open into Wonder's
         // "X target creatures can't be blocked this turn").
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {

@@ -356,7 +356,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
         }
 
-        entry.setEventValue(toExile.size());
+        int eventValue = e.eventValueFilter() == null ? toExile.size()
+                : (int) toExile.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, e.eventValueFilter(), null))
+                .count();
+        entry.setEventValue(eventValue);
 
         if (toExile.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile."));

@@ -46,11 +46,11 @@ class CalamityOfTheTitansTest extends BaseCardTest {
     @Test
     @DisplayName("Requires revealing a colorless creature card")
     void requiresColorlessCreatureCard() {
-        harness.setHand(player1, List.of(new CalamityOfTheTitans(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new CalamityOfTheTitans(), new GrizzlyBears(), new ThoughtKnotSeer()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         assertThatThrownBy(() -> harness.castSorceryWithDiscard(player1, 0, 1))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Revealed card must be colorless creature");
+                .hasMessage("Revealed card must be colorless creature card");
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoothaMasteringTheMoment.class, Divination.class, GrizzlyBears.class, ThinkTwice.class})
+@CardUsed({RoothaMasteringTheMoment.class, Divination.class, Forest.class, GrizzlyBears.class, ThinkTwice.class})
 class RoothaMasteringTheMomentTest extends BaseCardTest {
 
     @Test
@@ -25,7 +26,7 @@ class RoothaMasteringTheMomentTest extends BaseCardTest {
     void createsTokenSizedByGreatestSpellManaValue() {
         harness.addToBattlefield(player1, new RoothaMasteringTheMoment());
         harness.setHand(player1, List.of(new ThinkTwice(), new Divination()));
-        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         addMana();
 
         harness.castInstant(player1, 0);
@@ -59,6 +60,7 @@ class RoothaMasteringTheMomentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RoothaMasteringTheMoment());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         addMana();
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

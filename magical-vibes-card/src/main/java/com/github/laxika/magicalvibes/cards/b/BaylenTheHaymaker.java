@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "205")
+@CardRegistration(set = "SLD", collectorNumber = "2377")
 public class BaylenTheHaymaker extends Card {
 
     public BaylenTheHaymaker() {

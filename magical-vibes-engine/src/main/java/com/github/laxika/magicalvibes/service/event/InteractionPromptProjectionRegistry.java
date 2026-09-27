@@ -74,6 +74,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.RevealedMatchingHandCardChoice.class,
                 this::projectRevealedMatchingHandCardChoice);
         register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
+        register(PendingInteraction.StingingStudyCommanderChoice.class,
+                this::projectStingingStudyCommanderChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.TargetPlayerHandOrderChoice.class,
@@ -259,6 +261,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.SpellbookCardChoice.class, this::projectSpellbookCardChoice);
+        register(PendingInteraction.ApplejackToyChoice.class, this::projectApplejackToyChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
@@ -423,6 +426,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.commanders()), 1,
                 "Choose one of your commanders to put into your hand.");
+    }
+
+    private InteractionPromptMessage projectStingingStudyCommanderChoice(
+            GameData gameData, PendingInteraction.StingingStudyCommanderChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
+                "Choose a commander to determine X for Stinging Study.");
     }
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(
@@ -1437,6 +1447,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectApplejackToyChoice(
+            GameData gameData, PendingInteraction.ApplejackToyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.toys()), 1,
+                "Choose a toy.");
     }
 
     private InteractionPromptMessage projectVividCardChoice(

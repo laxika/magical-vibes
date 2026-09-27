@@ -22,7 +22,7 @@ public class KimoyoBeads extends Card {
     public KimoyoBeads() {
         // At the beginning of your end step, choose one that hasn't been chosen. Each mode is
         // consumed by this permanent, and the Prime Bead mode returns it as a new object.
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
+        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "AV Bead \u2014 Draw a card.",
                         new DrawCardEffect()),

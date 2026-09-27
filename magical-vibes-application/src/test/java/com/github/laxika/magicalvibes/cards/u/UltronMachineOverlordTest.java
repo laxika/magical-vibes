@@ -25,12 +25,12 @@ class UltronMachineOverlordTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ultron)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, ultron)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, nonmatching)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, nonmatching)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, opposingRobot)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opposingRobot)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingRobot)).isEqualTo(3);
     }
 }

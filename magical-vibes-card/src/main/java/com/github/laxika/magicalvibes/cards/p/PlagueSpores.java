@@ -19,6 +19,7 @@ import java.util.Set;
 public class PlagueSpores extends Card {
 
     public PlagueSpores() {
+        setAllowSharedTargets(true);
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

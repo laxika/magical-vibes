@@ -91,7 +91,7 @@ class ClockOfOmensTest extends BaseCardTest {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(clock);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target does not match the required predicate");
+                .hasMessageContaining("Target must be an artifact");
     }
 
     /**

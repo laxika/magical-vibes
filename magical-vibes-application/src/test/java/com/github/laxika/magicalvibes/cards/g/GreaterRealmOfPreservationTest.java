@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,7 +27,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
     @DisplayName("Prevents the next combat damage from a chosen black source and consumes the shield")
     void preventsBlackSourceDamage() {
         harness.setLife(player1, 20);
-        addReadyRealm(player1);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         Permanent zombie = addCreatureReady(player2, new ScatheZombies());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -36,8 +35,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, zombie.getId());
 
-        zombie.setAttacking(true);
-        resolveCombat(player2);
+        declareAttackers(player2, List.of(0));
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
@@ -47,7 +45,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
     @DisplayName("Prevents the next combat damage from a chosen red source and consumes the shield")
     void preventsRedSourceDamage() {
         harness.setLife(player1, 20);
-        addReadyRealm(player1);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         Permanent giant = addCreatureReady(player2, new HillGiant());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -55,8 +53,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, giant.getId());
 
-        giant.setAttacking(true);
-        resolveCombat(player2);
+        declareAttackers(player2, List.of(0));
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
@@ -65,7 +62,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
     @Test
     @DisplayName("A source that is neither black nor red is not a valid choice")
     void nonBlackOrRedSourceNotValid() {
-        addReadyRealm(player1);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -80,7 +77,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
     @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        addReadyRealm(player1);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         Permanent zombie = addCreatureReady(player2, new ScatheZombies());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -102,7 +99,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
     @DisplayName("Only the chosen red source is prevented")
     void differentRedSourceStillDealsDamage() {
         harness.setLife(player1, 20);
-        addReadyRealm(player1);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         Permanent chosen = addCreatureReady(player2, new HillGiant());
         Permanent other = addCreatureReady(player2, new HillGiant());
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -111,8 +108,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosen.getId());
 
-        other.setAttacking(true);
-        resolveCombat(player2);
+        declareAttackers(player2, List.of(1));
 
         harness.assertLife(player1, 17);
         assertThat(gd.playerSourceNextDamageShields)
@@ -124,7 +120,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
     void preventsNextNoncombatDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        addReadyRealm(player1);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         Permanent artillery = addCreatureReady(player2, new OrcishArtillery());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -144,7 +140,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
     @DisplayName("Prevents damage from a chosen red spell on the stack")
     void preventsNextDamageFromChosenRedSpell() {
         harness.setLife(player1, 20);
-        addReadyRealm(player1);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         Incinerate incinerate = new Incinerate();
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(incinerate));
@@ -169,10 +165,25 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
-    private Permanent addReadyRealm(Player player) {
-        Permanent perm = new Permanent(new GreaterRealmOfPreservation());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Does not prevent the chosen source's damage to a creature you control")
+    void doesNotPreventDamageToYourCreature() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent artillery = addCreatureReady(player2, new OrcishArtillery());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artillery.getId());
+
+        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(shield -> shield.sourceId().equals(artillery.getId()));
     }
 }

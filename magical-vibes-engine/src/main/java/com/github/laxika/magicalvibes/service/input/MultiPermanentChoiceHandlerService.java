@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEff
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,6 +87,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final VotingFinishedSupport votingFinishedSupport;
     private final PermanentChoiceTriggerHandlerService triggerHandler;
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
     private final TurnProgressionService turnProgressionService;
@@ -114,6 +116,8 @@ public class MultiPermanentChoiceHandlerService {
     private final ReturnNControlledPermanentsToHandEffectHandler returnNControlledPermanentsToHandEffectHandler;
     private final ReturnUpToNControlledPermanentsToHandEffectHandler returnUpToNControlledPermanentsToHandEffectHandler;
     private final PhaseOutUpToNControlledPermanentsEffectHandler phaseOutUpToNControlledPermanentsEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .PhaseOutPermanentsThatReceivedCountersThisWayEffectHandler phaseOutPermanentsThatReceivedCountersThisWayEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler distinctTokenCopyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -208,6 +212,12 @@ public class MultiPermanentChoiceHandlerService {
             .DefendingPlayerChoosesPermanentsToExileEffectHandler defendingPlayerChoosesPermanentsToExileHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .WillOfTheCouncilEffectHandler willOfTheCouncilEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .SecretCouncilEffectHandler secretCouncilEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .ElrondOfTheWhiteCouncilEffectHandler elrondOfTheWhiteCouncilEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .CirdanTheShipwrightEffectHandler cirdanTheShipwrightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ExpropriateEffectHandler expropriateEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -305,6 +315,9 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentThenReturnRestChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentAndPutCounterChoice
                 || context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice
+                || context instanceof MultiPermanentChoiceContext.SecretCouncilChoice
+                || context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice
+                || context instanceof MultiPermanentChoiceContext.CirdanVoteChoice
                 || context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice)
                 && permanentIds.size() != 1) {
@@ -659,6 +672,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
+        recordVotingChoiceIfApplicable(gameData, playerId, permanentIds, context);
 
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
@@ -758,6 +772,8 @@ public class MultiPermanentChoiceHandlerService {
             handleReturnUpToNControlledPermanentsToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PhaseOutUpToNControlledPermanents ctx) {
             handlePhaseOutUpToNControlledPermanents(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.PhaseOutPermanentsThatReceivedCountersThisWay) {
+            handlePhaseOutPermanentsThatReceivedCountersThisWay(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber ctx) {
             if (flickerEffectHandler.completeAnyNumberChoice(gameData, permanentIds, ctx)
                     && !gameData.interaction.isAwaitingInput()) {
@@ -869,6 +885,14 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesOpponentPermanentToDestroy(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice ctx) {
             handleWillOfTheCouncilChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SecretCouncilChoice ctx) {
+            handleSecretCouncilChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice ctx) {
+            handleElrondFellowshipChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.CirdanVoteChoice ctx) {
+            handleCirdanVoteChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.CirdanHandChoice ctx) {
+            handleCirdanHandChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice ctx) {
             handleExpropriatePermanentChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
@@ -1729,6 +1753,16 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handlePhaseOutPermanentsThatReceivedCountersThisWay(
+            GameData gameData, List<UUID> permanentIds) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No pending effect resolution entry");
+        }
+        phaseOutPermanentsThatReceivedCountersThisWayEffectHandler.completeChoice(gameData, permanentIds, entry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext.ForcedSacrifice context) {
         boolean simultaneousFlow = context.simultaneousFlow()
@@ -2351,7 +2385,8 @@ public class MultiPermanentChoiceHandlerService {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     if (!gameQueryService.cantHaveCounters(gameData, perm)) {
-                        proliferatePermanent(gameData, playerId, perm, loyaltyCountersPlacedByController);
+                        proliferatePermanent(gameData, gameData.pendingEffectResolutionEntry,
+                                playerId, perm, loyaltyCountersPlacedByController);
                     }
                     proliferatedCards.add(perm.getCard());
                 } else if (gameData.playerIds.contains(permId)
@@ -2422,7 +2457,7 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void proliferatePermanent(GameData gameData, UUID playerId, Permanent permanent,
+    private void proliferatePermanent(GameData gameData, StackEntry entry, UUID playerId, Permanent permanent,
                                       Map<UUID, Integer> loyaltyCountersPlacedByController) {
         int totalPlaced = 0;
         for (var counter : new ArrayList<>(permanent.getCounters().entrySet())) {
@@ -2460,6 +2495,9 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
         if (totalPlaced > 0) {
+            if (!entry.getCounteredPermanentIdsThisResolution().contains(permanent.getId())) {
+                entry.getCounteredPermanentIdsThisResolution().add(permanent.getId());
+            }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, totalPlaced);
         }
     }
@@ -3163,6 +3201,68 @@ public class MultiPermanentChoiceHandlerService {
     private void handleWillOfTheCouncilChoice(GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.WillOfTheCouncilChoice context) {
         willOfTheCouncilEffectHandler.completeVote(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId,
+                                                List<UUID> selectedIds,
+                                                MultiPermanentChoiceContext context) {
+        if (selectedIds.isEmpty()) {
+            return;
+        }
+        if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice vote) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
+                    "permanent:" + selectedIds.getFirst());
+        } else if (context instanceof MultiPermanentChoiceContext.SecretCouncilChoice vote) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
+                    "permanent:" + selectedIds.getFirst());
+        } else if (context instanceof MultiPermanentChoiceContext.CirdanVoteChoice vote) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
+                    "player:" + selectedIds.getFirst());
+        }
+    }
+
+    private void handleSecretCouncilChoice(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.SecretCouncilChoice context) {
+        secretCouncilEffectHandler.completeVote(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleElrondFellowshipChoice(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.ElrondFellowshipChoice context) {
+        elrondOfTheWhiteCouncilEffectHandler.completeFellowshipChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleCirdanVoteChoice(GameData gameData, List<UUID> playerIds,
+            MultiPermanentChoiceContext.CirdanVoteChoice context) {
+        cirdanTheShipwrightEffectHandler.completeVote(gameData, playerIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleCirdanHandChoice(GameData gameData, List<UUID> cardIds,
+            MultiPermanentChoiceContext.CirdanHandChoice context) {
+        cirdanTheShipwrightEffectHandler.completeHandChoice(gameData, cardIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

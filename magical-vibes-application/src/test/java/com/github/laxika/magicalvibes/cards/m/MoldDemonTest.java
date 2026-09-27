@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.k.Karakas;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,14 +14,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoldDemon.class, Swamp.class})
+@CardUsed({MoldDemon.class, Swamp.class, Karakas.class})
 class MoldDemonTest extends BaseCardTest {
-
-    private long swampsControlledBy(UUID playerId) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Swamp"))
-                .count();
-    }
 
     private void castMoldDemon() {
         harness.setHand(player1, List.of(new MoldDemon()));
@@ -41,7 +36,7 @@ class MoldDemonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Mold Demon");
         harness.assertInGraveyard(player1, "Mold Demon");
-        assertThat(swampsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(countPermanents(player1, "Swamp")).isEqualTo(1);
     }
 
     @Test
@@ -55,7 +50,7 @@ class MoldDemonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(swampsControlledBy(player1.getId())).isZero();
+        assertThat(countPermanents(player1, "Swamp")).isZero();
         harness.assertOnBattlefield(player1, "Mold Demon");
     }
 
@@ -70,15 +65,28 @@ class MoldDemonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-        List<UUID> swampIds = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Swamp"))
+        List<UUID> swampIds = findPermanents(player1, "Swamp").stream()
                 .map(permanent -> permanent.getId())
                 .limit(2)
                 .toList();
         harness.handleMultiplePermanentsChosen(player1, swampIds);
 
-        assertThat(swampsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(countPermanents(player1, "Swamp")).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Mold Demon");
+    }
+
+    @Test
+    @DisplayName("Non-Swamp lands do not satisfy the requirement")
+    void nonSwampLandsDoNotSatisfyRequirement() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Karakas());
+        castMoldDemon();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Mold Demon");
+        harness.assertInGraveyard(player1, "Mold Demon");
+        assertThat(countPermanents(player1, "Swamp")).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Karakas");
     }
 
     @Test
@@ -92,7 +100,7 @@ class MoldDemonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Mold Demon");
         harness.assertInGraveyard(player1, "Mold Demon");
-        assertThat(swampsControlledBy(player1.getId())).isEqualTo(2);
+        assertThat(countPermanents(player1, "Swamp")).isEqualTo(2);
     }
 
     @Test
@@ -105,6 +113,6 @@ class MoldDemonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Mold Demon");
         harness.assertInGraveyard(player1, "Mold Demon");
-        assertThat(swampsControlledBy(player2.getId())).isEqualTo(2);
+        assertThat(countPermanents(player2, "Swamp")).isEqualTo(2);
     }
 }

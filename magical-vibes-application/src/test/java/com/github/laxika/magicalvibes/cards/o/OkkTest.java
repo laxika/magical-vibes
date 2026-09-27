@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GoblinAssault;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.t.TrumpetingArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinAssault.class, GrizzlyBears.class, HillGiant.class, Okk.class, ShivanDragon.class,
+@CardUsed({GrizzlyBears.class, HillGiant.class, Okk.class, ShivanDragon.class,
         TrumpetingArmodon.class})
 class OkkTest extends BaseCardTest {
 
@@ -78,7 +78,7 @@ class OkkTest extends BaseCardTest {
     void lostAttackRestrictionStillSatisfiesMustAttackRequirement() {
         Permanent okk = addCreatureReady(player1, new Okk());
         okk.setLosesAllAbilitiesUntilEndOfTurn(true);
-        harness.addToBattlefield(player1, new GoblinAssault());
+        okk.setMustAttackThisTurn(true);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -197,8 +197,10 @@ class OkkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, null, okk.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.activateAbility(player1, 0, null, okk.getId());
+            harness.passBothPriorities();
+        });
         okk.setLosesAllAbilitiesUntilEndOfTurn(true);
         armodon.setAttacking(true);
         prepareDeclareBlockers();

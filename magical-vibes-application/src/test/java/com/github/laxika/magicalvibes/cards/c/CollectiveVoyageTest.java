@@ -75,10 +75,8 @@ class CollectiveVoyageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castSorcery(player1, 0);
+        harness.forceActivePlayer(player2);
         harness.passBothPriorities();
-
-        harness.handleCardChosen(player1, -1);
-        harness.handleCardChosen(player2, -1);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

@@ -154,8 +154,11 @@ class InameAsOneTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Iname as One");
         harness.assertInGraveyard(player1, "Hundred-Talon Kami");
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertOnBattlefield(player1, "Iname as One");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Iname as One");
         harness.assertInGraveyard(player1, "Hundred-Talon Kami");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }

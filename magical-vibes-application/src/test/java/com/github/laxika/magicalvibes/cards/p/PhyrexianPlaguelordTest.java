@@ -129,7 +129,10 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
     @DisplayName("Sacrifice-a-creature ability can sacrifice the Plaguelord itself")
     void sacCreatureAbilityCanSacrificeSource() {
         addCreatureReady(player1, new PhyrexianPlaguelord());
-        Permanent target = addCreatureReady(player2, new BogImp());
+        BogImp targetCard = new BogImp();
+        targetCard.setPower(2);
+        targetCard.setToughness(2);
+        Permanent target = addCreatureReady(player2, targetCard);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();

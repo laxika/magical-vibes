@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "110")
+@CardRegistration(set = "SLD", collectorNumber = "2405")
 public class QuestForRenewal extends Card {
 
     public QuestForRenewal() {

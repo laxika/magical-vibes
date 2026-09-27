@@ -26,8 +26,9 @@ class JocastaAutomatonAvengerTest extends BaseCardTest {
         addCreatureReady(player1, commander);
 
         declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(jocasta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -39,6 +40,7 @@ class JocastaAutomatonAvengerTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
         assertThat(jocasta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

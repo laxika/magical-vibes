@@ -85,6 +85,7 @@ class MirarisWakeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
 
         var manaPool = gd.playerManaPools.get(player1.getId());
         assertThat(manaPool.get(ManaColor.COLORLESS)).isZero();

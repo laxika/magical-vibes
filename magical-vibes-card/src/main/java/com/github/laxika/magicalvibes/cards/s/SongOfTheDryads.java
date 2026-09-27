@@ -18,6 +18,7 @@ public class SongOfTheDryads extends Card {
 
     public SongOfTheDryads() {
         target(TargetFilters.permanent())
+                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesOnlyLandEffect())
                 .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesTypeEffect(CardSubtype.FOREST))
                 .addEffect(EffectSlot.STATIC, new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT));
     }

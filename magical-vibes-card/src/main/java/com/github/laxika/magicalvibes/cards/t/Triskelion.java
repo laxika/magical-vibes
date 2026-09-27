@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "DDF", collectorNumber = "57")
 @CardRegistration(set = "ATQ", collectorNumber = "73")
 @CardRegistration(set = "DMR", collectorNumber = "236")
+@CardRegistration(set = "SLD", collectorNumber = "2371")
 public class Triskelion extends Card {
 
     public Triskelion() {

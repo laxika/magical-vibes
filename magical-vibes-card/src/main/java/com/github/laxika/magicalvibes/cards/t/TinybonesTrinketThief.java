@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1407")
+@CardRegistration(set = "SLD", collectorNumber = "2458")
 public class TinybonesTrinketThief extends Card {
 
     public TinybonesTrinketThief() {

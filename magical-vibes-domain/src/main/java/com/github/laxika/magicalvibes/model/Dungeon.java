@@ -9,7 +9,8 @@ public enum Dungeon {
 
     LOST_MINE_OF_PHANDELVER(4),
     TOMB_OF_ANNIHILATION(4),
-    DUNGEON_OF_THE_MAD_MAGE(7);
+    DUNGEON_OF_THE_MAD_MAGE(7),
+    UNDERCITY(9);
 
     private final int roomCount;
 }

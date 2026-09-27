@@ -1214,9 +1214,7 @@ public class PlayerInputService {
                 ? Arrays.stream(CardSubtype.values())
                 .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
                 .toList()
-                : allowedSubtypes.stream()
-                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
-                .toList();
+                : allowedSubtypes;
         List<String> creatureTypes = choices.stream()
                 .map(CardSubtype::name)
                 .toList();
@@ -2257,6 +2255,11 @@ public class PlayerInputService {
 
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
         return collectCardNamesInGameExcluding(gameData, excludedTypes, null);
+    }
+
+    public boolean isNameExcludedByType(GameData gameData, String cardName, List<CardType> excludedTypes) {
+        return !collectCardNamesInGame(gameData,
+                card -> card.getName().equals(cardName) && hasExcludedType(card, excludedTypes)).isEmpty();
     }
 
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes, CardType requiredType) {

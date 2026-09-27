@@ -53,8 +53,7 @@ class GalinasKnightTest extends BaseCardTest {
     void redCreatureCannotBlockKnight() {
         addCreatureReady(player1, new GalinasKnight());
         addCreatureReady(player2, new AncientKavu());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

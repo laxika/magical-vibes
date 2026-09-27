@@ -109,6 +109,7 @@ public sealed interface DynamicAmount permits
         FixedIfTargetMatches,
         FixedIfTargetPlayerControlsMoreLands,
         GreatestManaValueAmongControlled,
+        GreatestManaValueAmongOwnedCommanders,
         GreatestManaValueAmongSpellsCastThisTurn,
         GreatestCreatureCountAmongPlayers,
         GreatestPermanentCountAmongOpponents,

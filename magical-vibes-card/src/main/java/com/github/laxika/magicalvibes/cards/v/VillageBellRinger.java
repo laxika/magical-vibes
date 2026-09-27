@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "41")
 @CardRegistration(set = "DDQ", collectorNumber = "22")
+@CardRegistration(set = "LTC", collectorNumber = "181")
 public class VillageBellRinger extends Card {
 
     public VillageBellRinger() {

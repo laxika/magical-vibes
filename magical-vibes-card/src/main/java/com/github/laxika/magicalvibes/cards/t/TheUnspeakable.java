@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "98")
@@ -14,11 +15,12 @@ public class TheUnspeakable extends Card {
 
     public TheUnspeakable() {
         // Whenever The Unspeakable deals combat damage to a player, you may return target
-        // Arcane card from your graveyard to your hand. The search-and-choose path is
-        // optional, which covers the "you may".
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, ReturnCardFromGraveyardEffect.builder()
+        // Arcane card from your graveyard to your hand. Choose the target as the trigger
+        // is put on the stack, then choose whether to return it on resolution.
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardSubtypePredicate(CardSubtype.ARCANE))
-                .build());
+                .targetGraveyard(true)
+                .build(), "Return target Arcane card to your hand?"));
     }
 }

@@ -1091,10 +1091,14 @@ public class PermanentRemovalService {
                     }
                 }
                 case SACRIFICE -> {
+                    UUID sacrificeControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                    if (action.sacrificingPlayerId() != null
+                            && !action.sacrificingPlayerId().equals(sacrificeControllerId)) {
+                        continue;
+                    }
                     if (gameQueryService.cantBeSacrificed(gameData, perm)) {
                         continue;
                     }
-                    UUID sacrificeControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
                     boolean sacrificed = sacrificePermanentToGraveyard(gameData, perm);
                     if (sacrificed && sacrificeControllerId != null) {
                         triggerCollectionService.checkAllyPermanentSacrificedTriggers(
@@ -1832,7 +1836,8 @@ public class PermanentRemovalService {
                 }
                 if (!creatureDeathTriggersSuppressed) {
                     triggerCollectionService.checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
-                            gameData, target.getOriginalCard(), ownerId, controllerId);
+                            gameData, target, ownerId, controllerId,
+                            dyingPowerAtDeath, dyingToughnessAtDeath);
                     triggerCollectionService.checkAllyCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkGraveyardAllyCreatureDeathTriggers(gameData, controllerId, target);

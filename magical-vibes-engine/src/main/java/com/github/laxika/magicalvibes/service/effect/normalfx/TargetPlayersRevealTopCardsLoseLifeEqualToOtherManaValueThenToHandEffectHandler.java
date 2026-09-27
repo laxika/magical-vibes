@@ -49,13 +49,7 @@ public class TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandE
                 && entry.getTargetId() != null;
 
         String sourceName = entry.getCard().getName();
-        List<UUID> playerIds = revealEffect.controllerAndTarget()
-                ? List.of(entry.getControllerId(), targets.getFirst())
-                : targets;
-        boolean[] legal = revealEffect.controllerAndTarget()
-                ? new boolean[]{true, entry.getDeclaredTargetIds().isEmpty()
-                        || entry.isTargetLegal(entry.getDeclaredTargetIds().indexOf(targets.getFirst()))}
-                : new boolean[]{entry.isTargetLegal(0), entry.isTargetLegal(1)};
+        List<UUID> playerIds = targets;
         Card[] revealed = new Card[2];
         for (int i = 0; i < targets.size(); i++) {
             boolean targetLegal = revealEffect.controllerAndTarget()

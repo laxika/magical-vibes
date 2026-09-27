@@ -82,16 +82,16 @@ class AuraShardsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No artifact or enchantment means the trigger is not put on the stack")
-    void noLegalTargetMeansNoTrigger() {
-        harness.addToBattlefield(player1, new AuraShards());
+    @DisplayName("Aura Shards itself is a legal target when no other artifact or enchantment is present")
+    void auraShardsCanTargetItself() {
+        Permanent shards = harness.addToBattlefieldAndReturn(player1, new AuraShards());
         harness.addToBattlefield(player2, new Forest());
 
         castYavimayaBarbarian(player1);
         resolveCreatureAndTrigger();
 
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class)
+                .validIds()).containsExactly(shards.getId());
         harness.assertOnBattlefield(player2, "Forest");
     }
 

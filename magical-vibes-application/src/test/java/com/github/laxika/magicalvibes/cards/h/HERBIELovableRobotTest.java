@@ -70,8 +70,7 @@ class HERBIELovableRobotTest extends BaseCardTest {
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
 
         herbie.untap();
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
 
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);

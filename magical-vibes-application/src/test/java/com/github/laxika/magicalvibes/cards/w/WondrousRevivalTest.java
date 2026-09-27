@@ -26,8 +26,9 @@ class WondrousRevivalTest extends BaseCardTest {
         Card third = new IronManArmoredAvenger();
         Card fourth = new ZuriWarriorOfWakanda();
         Card nonHero = new WondrousRevival();
+        Card spell = new WondrousRevival();
         harness.setGraveyard(player1, List.of(first, second, third, fourth, nonHero));
-        harness.setHand(player1, List.of(new WondrousRevival()));
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -47,6 +48,6 @@ class WondrousRevivalTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactly(fourth.getId(), nonHero.getId());
+                .containsExactly(fourth.getId(), nonHero.getId(), spell.getId());
     }
 }

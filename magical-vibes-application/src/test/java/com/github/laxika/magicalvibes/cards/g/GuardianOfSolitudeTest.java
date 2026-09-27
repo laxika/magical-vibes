@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GuardianOfSolitude.class, DevotedRetainer.class, DesperateRitual.class, HarshDeceiver.class})
 class GuardianOfSolitudeTest extends BaseCardTest {
 
     @Test
@@ -44,6 +46,21 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(retainer.getGrantedKeywords()).contains(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("The triggered ability can target an opponent's creature")
+    void spiritSpellCanTargetOpponentsCreature() {
+        harness.addToBattlefield(player1, new GuardianOfSolitude());
+        Permanent opponentRetainer = addCreatureReady(player2, new DevotedRetainer());
+
+        harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, opponentRetainer.getId());
+        harness.passBothPriorities();
+
+        assertThat(opponentRetainer.getGrantedKeywords()).contains(Keyword.FLYING);
     }
 
     @Test

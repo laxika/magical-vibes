@@ -53,4 +53,23 @@ class RighteousAvengersTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Righteous Avengers can be blocked when only the attacking player controls a Plains")
+    void canBeBlockedWhenOnlyAttackerControlsPlains() {
+        harness.addToBattlefield(player1, new Plains());
+
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attackerPerm = addCreatureReady(player1, new RighteousAvengers());
+        attackerPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
 }

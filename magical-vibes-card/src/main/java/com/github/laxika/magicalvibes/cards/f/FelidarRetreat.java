@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZNR", collectorNumber = "16")
+@CardRegistration(set = "SLD", collectorNumber = "2378")
 public class FelidarRetreat extends Card {
 
     public FelidarRetreat() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "DDH", collectorNumber = "3")
 @CardRegistration(set = "SLD", collectorNumber = "764")
 @CardRegistration(set = "C14", collectorNumber = "194")
+@CardRegistration(set = "LTC", collectorNumber = "242")
 public class EssenceWarden extends Card {
 
     public EssenceWarden() {

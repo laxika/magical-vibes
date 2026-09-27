@@ -205,8 +205,13 @@ public class GraveyardService {
         int cardsEntered = (int) cardsEnteredGraveyard.stream()
                 .filter(card -> !card.isToken())
                 .count();
+        int nonlandCardsEntered = (int) cardsEnteredGraveyard.stream()
+                .filter(card -> !card.isToken() && !card.hasType(CardType.LAND))
+                .count();
         triggerCollectionService.checkOpponentMillTriggers(
                 gameData, targetPlayerId, cardsEnteredGraveyard.size());
+        triggerCollectionService.checkNonlandCardsMilledTriggers(
+                gameData, targetPlayerId, nonlandCardsEntered);
         triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
                 gameData, targetPlayerId, cardsEntered, cardsEnteredGraveyard);
         triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
@@ -1481,17 +1486,21 @@ public class GraveyardService {
         boolean beingCycled = card.getId().equals(gameData.cardEnteringGraveyardByCycling);
         if (bf != null) {
             for (Permanent permanent : bf) {
-                if (permanentExilesOwnCard(permanent, card, beingCycled)) {
+                if (permanentExilesOwnCard(gameData, permanent, card, beingCycled)) {
                     return true;
                 }
             }
         }
         return battlefieldSnapshot != null
                 && ownerId.equals(battlefieldControllerId)
-                && permanentExilesOwnCard(battlefieldSnapshot, card, beingCycled);
+                && permanentExilesOwnCard(gameData, battlefieldSnapshot, card, beingCycled);
     }
 
-    private boolean permanentExilesOwnCard(Permanent permanent, Card card, boolean beingCycled) {
+    private boolean permanentExilesOwnCard(GameData gameData, Permanent permanent, Card card,
+                                           boolean beingCycled) {
+        if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+            return false;
+        }
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (!(effect instanceof OwnGraveyardExileReplacement replacement)) {
                 continue;

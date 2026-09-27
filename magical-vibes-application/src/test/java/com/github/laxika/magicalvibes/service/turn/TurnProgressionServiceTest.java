@@ -691,7 +691,7 @@ class TurnProgressionServiceTest {
 
             turnProgressionService.advanceTurn(gd);
 
-            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.activePlayerId).isEqualTo(player2Id);
             assertThat(gd.extraTurns).isEmpty();
             assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
         }

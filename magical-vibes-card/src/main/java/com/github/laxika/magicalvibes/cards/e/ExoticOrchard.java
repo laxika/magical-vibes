@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "148")
 @CardRegistration(set = "TMC", collectorNumber = "66")
 @CardRegistration(set = "DSC", collectorNumber = "275")
+@CardRegistration(set = "LTC", collectorNumber = "307")
 public class ExoticOrchard extends Card {
 
     public ExoticOrchard() {

@@ -41,7 +41,7 @@ class ElvishSkysweeperTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("creature with flying");
 
         harness.assertOnBattlefield(player1, "Elvish Skysweeper");
     }
