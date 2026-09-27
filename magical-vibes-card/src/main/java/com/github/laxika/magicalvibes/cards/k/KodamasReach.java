@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToB
 @CardRegistration(set = "C15", collectorNumber = "188")
 @CardRegistration(set = "CMM", collectorNumber = "300")
 @CardRegistration(set = "CMM", collectorNumber = "649")
+@CardRegistration(set = "MOC", collectorNumber = "306")
 @CardRegistration(set = "C21", collectorNumber = "197")
 @CardRegistration(set = "NCC", collectorNumber = "298")
 @CardRegistration(set = "TDC", collectorNumber = "261")

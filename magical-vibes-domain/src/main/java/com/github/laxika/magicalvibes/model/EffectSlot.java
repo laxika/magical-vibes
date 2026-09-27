@@ -633,6 +633,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GAINS_LIFE,
     /** Triggers whenever this permanent's controller becomes the monarch. */
     ON_CONTROLLER_BECOMES_MONARCH,
+    /** Triggers whenever an opponent of this permanent's controller becomes the monarch. */
+    ON_OPPONENT_BECOMES_MONARCH,
     /** Triggers whenever this permanent's controller is tempted by the Ring. */
     ON_RING_TEMPTS_YOU,
     /** Triggers whenever an opponent of this permanent's controller gains life. */
@@ -680,6 +682,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
+    /** Command-zone mirror of {@link #ON_ALLY_CREATURES_ATTACK} for Eminence abilities. */
+    COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
     /** Triggers once for each player directly attacked by one or more creatures the controller
      *  controls. Attacking a planeswalker does not count. Checked in
      *  {@code CombatAttackService.declareAttackers}. */
@@ -1387,6 +1391,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE,
     /** Triggers whenever a creature the controller controls deals damage to a planeswalker. */
     ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,
+    /** Triggers whenever any creature deals damage to this permanent when it is an enchanted planeswalker. */
+    ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat, from any
      *  source — creatures, spells, abilities). Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}
      *  (which reacts to the damage <em>source</em> and only fires for permanent sources), this fires

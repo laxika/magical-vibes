@@ -110,6 +110,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -2525,15 +2526,32 @@ public class DamagePreventionService {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
         if (damage <= 0 || planeswalkerControllerId == null) return 0;
 
+        int reduction = 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(planeswalkerControllerId);
-        if (battlefield == null) return 0;
-
-        int reduction = battlefield.stream()
-                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
-                .filter(e -> e instanceof PlaneswalkerDamagePreventionEffect)
-                .mapToInt(e -> ((PlaneswalkerDamagePreventionEffect) e).amount())
-                .sum();
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PlaneswalkerDamagePreventionEffect prevention) {
+                        reduction = saturatingAdd(reduction, prevention.amount());
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null
+                && Objects.equals(gameData.planechase.controllerId, planeswalkerControllerId)) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PlaneswalkerDamagePreventionEffect prevention) {
+                        reduction = saturatingAdd(reduction, prevention.amount());
+                    }
+                }
+            }
+        }
         return Math.min(damage, reduction);
+    }
+
+    private int saturatingAdd(int left, int right) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) left + right);
     }
 
     /**

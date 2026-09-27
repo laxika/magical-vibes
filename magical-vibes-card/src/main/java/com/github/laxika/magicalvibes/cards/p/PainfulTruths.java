@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 @CardRegistration(set = "SLD", collectorNumber = "2302")
 @CardRegistration(set = "PIO", collectorNumber = "101")
 @CardRegistration(set = "ECC", collectorNumber = "82")
+@CardRegistration(set = "MOC", collectorNumber = "262")
 @CardRegistration(set = "NCC", collectorNumber = "255")
 public class PainfulTruths extends Card {
 

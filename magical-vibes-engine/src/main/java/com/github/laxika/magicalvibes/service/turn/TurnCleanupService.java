@@ -460,6 +460,7 @@ public class TurnCleanupService {
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellChosenSubtypeFlashGrantsThisTurn.clear();
+        gameData.nextSpellConvokeGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
         gameData.nextSpellPayLifeEqualToManaValueThisTurn.clear();
         gameData.nextSpellFreeCastPermissionsThisTurn.clear();

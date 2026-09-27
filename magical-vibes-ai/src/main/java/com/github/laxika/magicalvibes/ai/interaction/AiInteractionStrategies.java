@@ -37,6 +37,7 @@ public final class AiInteractionStrategies {
         register(new TargetPlayerHandOrderChoiceAiStrategy());
         register(new SpatialMergingCardOrderAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
+        register(new PlanarDieChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class, 1));

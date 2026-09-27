@@ -248,6 +248,9 @@ public class CombatAttackService {
                                              boolean mustAttackWithAtLeastOne) {
     }
 
+    private record AttackTriggerSource(Permanent permanent, EffectSlot effectSlot) {
+    }
+
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as
      * attackers against at least one available attack target.
@@ -1489,11 +1492,26 @@ public class CombatAttackService {
         // These fire once per combat (not per creature) when at least one creature attacks.
         // The attacker count is locked at trigger time via xValue (per MTG rules: creatures
         // removed before resolution still count, tokens entering attacking after don't).
+        List<AttackTriggerSource> attackTriggerSources = new ArrayList<>();
         for (Permanent perm : battlefield) {
+            attackTriggerSources.add(new AttackTriggerSource(perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
+        }
+        List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+        if (commandZone != null) {
+            for (Card card : new ArrayList<>(commandZone)) {
+                attackTriggerSources.add(new AttackTriggerSource(
+                        new Permanent(card), EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK));
+            }
+        }
+        for (AttackTriggerSource triggerSource : attackTriggerSources) {
+            Permanent perm = triggerSource.permanent();
+            EffectSlot effectSlot = triggerSource.effectSlot();
             List<CardEffect> allyAttackEffects = new ArrayList<>(
-                    perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK));
-            allyAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
+                    perm.getCard().getEffects(effectSlot));
+            if (effectSlot == EffectSlot.ON_ALLY_CREATURES_ATTACK) {
+                allyAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, effectSlot));
+            }
             if (allyAttackEffects.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
@@ -1913,6 +1931,8 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             triggerCollectionService.checkPlanarAllyCreatureAttackTriggers(gameData, battlefield.get(idx));
         }
+        triggerCollectionService.checkPlanarAllyCreaturesAttackTriggers(
+                gameData, playerId, attackerIndices.size());
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers
         // (GRAVEYARD_ON_ALLY_CREATURES_ATTACK). These fire from the controller's graveyard.

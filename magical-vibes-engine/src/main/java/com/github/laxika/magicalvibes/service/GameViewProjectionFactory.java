@@ -1002,6 +1002,15 @@ public class GameViewProjectionFactory {
         if (view.hasAlternateCastingCost()) {
             return view;
         }
+        var grantedBlitz = gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card);
+        if (grantedBlitz.isPresent()) {
+            return view.toBuilder()
+                    .hasAlternateCastingCost(true)
+                    .alternateCostManaCost(grantedBlitz.get().getCost(ManaCastingCost.class)
+                            .map(ManaCastingCost::manaCost)
+                            .orElse(null))
+                    .build();
+        }
         WebSlingingEffect webSlinging = castingCostService.findWebSlingingEffectFromBattlefield(
                 gameData, playerId, card);
         if (webSlinging != null) {

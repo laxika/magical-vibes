@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "1")
 @CardRegistration(set = "IMA", collectorNumber = "2")
+@CardRegistration(set = "MOC", collectorNumber = "164")
 public class AbzanBattlePriest extends Card {
 
     public AbzanBattlePriest() {

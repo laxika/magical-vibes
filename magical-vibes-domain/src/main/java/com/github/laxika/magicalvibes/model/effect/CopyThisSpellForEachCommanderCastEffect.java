@@ -8,7 +8,11 @@ import java.util.UUID;
  * Trigger descriptor for a spell that copies itself once for each time its controller has cast a
  * commander from the command zone this game.
  */
-public record CopyThisSpellForEachCommanderCastEffect() implements SpellCastCopyTriggerEffect {
+public record CopyThisSpellForEachCommanderCastEffect(boolean tokenCopy) implements SpellCastCopyTriggerEffect {
+
+    public CopyThisSpellForEachCommanderCastEffect() {
+        this(true);
+    }
 
     @Override
     public int copyCount(GameData gameData, UUID castingPlayerId) {
@@ -17,8 +21,4 @@ public record CopyThisSpellForEachCommanderCastEffect() implements SpellCastCopy
                 .sum();
     }
 
-    @Override
-    public boolean tokenCopy() {
-        return true;
-    }
 }

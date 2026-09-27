@@ -27,6 +27,7 @@ import java.util.List;
  * III — Exile all opponents' graveyards.
  */
 @CardRegistration(set = "DOM", collectorNumber = "100")
+@CardRegistration(set = "MOC", collectorNumber = "266")
 public class PhyrexianScriptures extends Card {
 
     public PhyrexianScriptures() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "18")
 @CardRegistration(set = "OPCA", collectorNumber = "34")
+@CardRegistration(set = "MOC", collectorNumber = "145")
 public class GroveOfTheDreampods extends Card {
 
     public GroveOfTheDreampods() {

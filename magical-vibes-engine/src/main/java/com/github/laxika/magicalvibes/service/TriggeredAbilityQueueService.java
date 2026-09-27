@@ -1362,14 +1362,23 @@ public class TriggeredAbilityQueueService {
             if (pending.planarSource() != null) {
                 var targets = triggerTargetCollector.collect(gameData, pending.effects(), pending.targetFilter(),
                         pending.controllerId(), pending.sourceCard(), TriggerTargetCollector.Options.END_STEP);
+                boolean optionalTarget = pending.optionalTarget()
+                        || hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
                 gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-                if (targets.validTargets().isEmpty()) continue;
+                if (targets.validTargets().isEmpty()) {
+                    if (optionalTarget) {
+                        pushSpellTargetTriggerWithoutTarget(gameData, pending);
+                    }
+                    continue;
+                }
                 gameData.interaction.setPermanentChoiceContext(pending);
                 UUID choosingPlayerId = pending.choosingPlayerId() != null
                         ? pending.choosingPlayerId() : pending.controllerId();
                 playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
                         targets.validTargets().stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
-                        targets.validTargets().stream().filter(gameData.playerIds::contains).toList(),
+                        optionalTarget
+                                ? List.of(pending.controllerId())
+                                : targets.validTargets().stream().filter(gameData.playerIds::contains).toList(),
                         pending.sourceCard().getName() + "'s ability: choose a target.");
                 return;
             }
@@ -1526,6 +1535,7 @@ public class TriggeredAbilityQueueService {
                             new ArrayList<>(pending.effects()));
         }
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+        entry.setSourcePlanarObject(pending.planarSource());
         gameData.stack.add(entry);
     }
 

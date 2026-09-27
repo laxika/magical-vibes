@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "192")
 @CardRegistration(set = "CMM", collectorNumber = "336")
+@CardRegistration(set = "MOC", collectorNumber = "318")
 public class AryelKnightOfWindgrace extends Card {
 
     public AryelKnightOfWindgrace() {

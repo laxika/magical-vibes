@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "124")
+@CardRegistration(set = "MOC", collectorNumber = "301")
 public class Hindervines extends Card {
 
     public Hindervines() {

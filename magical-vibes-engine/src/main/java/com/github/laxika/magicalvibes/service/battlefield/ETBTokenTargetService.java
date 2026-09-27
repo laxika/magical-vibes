@@ -556,10 +556,13 @@ public class ETBTokenTargetService {
                 validPlayerTargets.add(pending.controllerId());
             }
 
+            boolean optionalGraveyardTargetCanBeDeclined = effectiveMinTargets == 0
+                    && validPlayerTargets.size() == 1
+                    && validPlayerTargets.contains(pending.controllerId());
             if (!validGraveyardCardTargets.isEmpty()
                     && validPermanentTargets.isEmpty()
                     && validExiledCardTargets.isEmpty()
-                    && validPlayerTargets.isEmpty()) {
+                    && (validPlayerTargets.isEmpty() || optionalGraveyardTargetCanBeDeclined)) {
                 playerInputService.beginMultiPermanentChoice(
                         gameData, pending.controllerId(), List.of(), validGraveyardCardTargets,
                         Math.min(validGraveyardCardTargets.size(), effectiveMaxTargets - chosenInGroup),

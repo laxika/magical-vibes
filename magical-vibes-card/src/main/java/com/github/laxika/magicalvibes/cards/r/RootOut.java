@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "224")
+@CardRegistration(set = "MOC", collectorNumber = "311")
 public class RootOut extends Card {
 
     public RootOut() {

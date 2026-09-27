@@ -330,9 +330,10 @@ public class EnterTriggerCollectorService {
         if (enteringPermanent == null) return false;
 
         FilterContext filterContext = FilterContext.of(match.gameData())
-                .withSourceCardId(match.permanent().getCard().getId())
+                .withSourceCardId(match.sourceCard().getId())
                 .withSourceControllerId(match.controllerId())
-                .withSourcePermanentSnapshot(match.permanent());
+                .withSourcePermanentSnapshot(match.permanent())
+                .withSourcePermanentId(match.permanent() == null ? null : match.permanent().getId());
         if (!predicateEvaluationService.matchesPermanentPredicate(enteringPermanent, conditional.predicate(),
                 filterContext)) {
             return false;
@@ -398,37 +399,42 @@ public class EnterTriggerCollectorService {
             return false;
         }
 
+        Card sourceCard = match.sourceCard();
+        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        match.permanent().getCard(), match.controllerId(),
-                        new ArrayList<>(List.of(effect)), match.permanent().getId(), enteringPermanentId));
+                        sourceCard, match.controllerId(),
+                        new ArrayList<>(List.of(effect)), sourcePermanentId, enteringPermanentId));
             }
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} ally-permanent-enters trigger awaiting target selection",
-                    match.gameData().id, match.permanent().getCard().getName());
+                    match.gameData().id, sourceCard.getName());
             return true;
         }
 
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
+                    sourceCard,
                     match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
+                    sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
                     null,
-                    match.permanent().getId());
+                    sourcePermanentId);
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
             entry.setTriggeringCardId(pe.enteringCard().getId());
+            if (match.sourcePlanarObject() != null) {
+                entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+            }
             match.gameData().stack.add(entry);
         }
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ally-permanent-enters trigger queued",
-                match.gameData().id, match.permanent().getCard().getName());
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

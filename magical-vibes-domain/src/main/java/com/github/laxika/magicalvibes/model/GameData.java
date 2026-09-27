@@ -402,6 +402,8 @@ public class GameData {
     public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
     /** Directly phased-out permanent ids that remain phased out until their source leaves. */
     public final Map<UUID, Set<UUID>> phasedOutUntilSourceLeaves = new ConcurrentHashMap<>();
+    /** Directly phased-out permanent ids that remain phased out until a player planeswalks. */
+    public final Set<UUID> phasedOutUntilPlaneswalk = ConcurrentHashMap.newKeySet();
     /** Directly phased-out permanent ids that remain phased out while their source stays controlled. */
     public final Map<UUID, Map<UUID, Integer>> phasedOutWhileSourceControlled = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
@@ -1580,6 +1582,8 @@ public class GameData {
     public final Map<UUID, List<CardType>> nextSpellFlashGrantsThisTurn = new ConcurrentHashMap<>();
     /** Pending flash grants for the next spell of a chosen creature subtype, keyed by player. */
     public final Map<UUID, List<CardSubtype>> nextSpellChosenSubtypeFlashGrantsThisTurn = new ConcurrentHashMap<>();
+    /** Pending one-shot convoke grants for the next spell each player casts this turn. */
+    public final Map<UUID, Integer> nextSpellConvokeGrantsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<NextSpellCostReduction>> nextSpellCostReductionsThisTurn = new ConcurrentHashMap<>();
     /** Pending life alternatives for the next spell, keyed by controller. */
     public final Map<UUID, Integer> nextSpellPayLifeEqualToManaValueThisTurn = new ConcurrentHashMap<>();
@@ -2869,6 +2873,13 @@ public class GameData {
         turnStartSnapshot = snapshot;
     }
 
+    /** Returns whether the given player was the monarch when the current turn began. */
+    public boolean wasMonarchAtTurnStart(UUID playerId) {
+        return playerId != null
+                && turnStartSnapshot != null
+                && playerId.equals(turnStartSnapshot.monarchPlayerId);
+    }
+
     /**
      * Restores the mutable game state captured at the start of the current turn.
      *
@@ -3854,6 +3865,7 @@ public class GameData {
         consumePendingAnyManaTypePermission(playerId, card);
         consumeNextSpellFlashGrant(playerId, card);
         consumeNextSpellChosenSubtypeFlashGrant(playerId, card);
+        consumeNextSpellConvokeGrant(playerId);
         consumeNextSpellCostReductions(playerId, card);
         consumeNextSpellPayLifeEqualToManaValue(playerId);
         consumeNextCreatureSpellEmpowerments(playerId, card);
@@ -4143,6 +4155,14 @@ public class GameData {
                 .add(subtype);
     }
 
+    public void addNextSpellConvokeGrant(UUID playerId) {
+        nextSpellConvokeGrantsThisTurn.merge(playerId, 1, Integer::sum);
+    }
+
+    public boolean hasNextSpellConvokeGrant(UUID playerId) {
+        return nextSpellConvokeGrantsThisTurn.getOrDefault(playerId, 0) > 0;
+    }
+
     public void addNextSpellCostReduction(UUID playerId, NextSpellCostReduction reduction) {
         nextSpellCostReductionsThisTurn
                 .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
@@ -4251,6 +4271,10 @@ public class GameData {
             grants.removeIf(subtype -> card.getSubtypes().contains(subtype)
                     || card.hasKeyword(Keyword.CHANGELING));
         }
+    }
+
+    private void consumeNextSpellConvokeGrant(UUID playerId) {
+        nextSpellConvokeGrantsThisTurn.remove(playerId);
     }
 
     /**
@@ -6673,6 +6697,7 @@ public class GameData {
             targetIds.addAll(v);
             copy.phasedOutUntilSourceLeaves.put(k, targetIds);
         });
+        copy.phasedOutUntilPlaneswalk.addAll(this.phasedOutUntilPlaneswalk);
         this.phasedOutWhileSourceControlled.forEach((sourceId, targetSequences) -> {
             Map<UUID, Integer> targetSequenceCopy = new ConcurrentHashMap<>();
             targetSequenceCopy.putAll(targetSequences);
@@ -7377,6 +7402,7 @@ public class GameData {
         this.nextSpellChosenSubtypeFlashGrantsThisTurn.forEach((k, v) ->
                 copy.nextSpellChosenSubtypeFlashGrantsThisTurn.put(k,
                         Collections.synchronizedList(new ArrayList<>(v))));
+        copy.nextSpellConvokeGrantsThisTurn.putAll(this.nextSpellConvokeGrantsThisTurn);
         this.nextSpellCostReductionsThisTurn.forEach((k, v) ->
                 copy.nextSpellCostReductionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.nextSpellPayLifeEqualToManaValueThisTurn.putAll(this.nextSpellPayLifeEqualToManaValueThisTurn);

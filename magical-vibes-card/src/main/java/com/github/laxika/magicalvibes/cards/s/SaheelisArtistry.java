@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "62")
+@CardRegistration(set = "MOC", collectorNumber = "234")
 public class SaheelisArtistry extends Card {
 
     public SaheelisArtistry() {

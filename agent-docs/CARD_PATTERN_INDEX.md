@@ -1,4 +1,5 @@
 # CARD_PATTERN_INDEX
+| planar arrival and upkeep token, then targeted-player chaos sacrifice with a toughness-based token rider | `t/TheWilds.java` + `TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEffect` |
 | target player sacrifices an attacking creature, then the spell controller creates Soldier tokens equal to its toughness | `e/EntrapmentManeuver.java` + `TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffect` |
 | attack trigger offers one artifact spell from hand or graveyard, cast by paying life equal to its mana value | `a/AnrakyrTheTraveller.java` + `MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffect` |
 | spell costs less for each distinct graveyard mana value and discard trigger casts the exact discarded card | `o/OskarRubbishReclaimer.java` + `ReduceOwnCastCostEffect(new DistinctManaValuesAmongCardsInGraveyard())` + `CastDiscardedCardFromGraveyardEffect` |
