@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ThroneOfTheHighCity.class})
 class ThroneOfTheHighCityTest extends BaseCardTest {
@@ -40,6 +41,17 @@ class ThroneOfTheHighCityTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(throne.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Throne of the High City"));
+    }
+
+    @Test
+    void cannotActivateMonarchAbilityWithoutFourMana() {
+        Permanent throne = addReadyThrone(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(throne.isTapped()).isFalse();
+        assertThat(gd.monarchPlayerId).isNull();
     }
 
     private Permanent addReadyThrone(Player player) {

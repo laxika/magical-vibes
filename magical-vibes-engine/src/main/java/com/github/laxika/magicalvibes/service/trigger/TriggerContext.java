@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.VotingResult;
 
 import java.util.UUID;
 import java.util.Map;
@@ -57,6 +58,9 @@ public sealed interface TriggerContext {
             return castZone == Zone.HAND;
         }
     }
+
+    /** Context for a scheme being set in motion. */
+    record SchemeSetInMotion(StackEntry schemeEntry, UUID settingPlayerId) implements TriggerContext {}
 
     record GiftGiven(UUID giverId) implements TriggerContext {}
 
@@ -564,14 +568,24 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness, boolean wasCreature,
+                                   int dyingCreatureToughness, int dyingCreatureManaValue,
+                                   boolean wasCreature,
                                    List<UUID> dyingPermanentCardIds) implements TriggerContext {
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness) {
             this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
-                    dyingCreaturePower, dyingCreatureToughness, true,
+                    dyingCreaturePower, dyingCreatureToughness, 0, true,
                     dyingCreatureCardId == null ? List.of() : List.of(dyingCreatureCardId));
+        }
+
+        public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                       UUID dyingCreatureCardId, int dyingCreaturePower,
+                                       int dyingCreatureToughness, boolean wasCreature,
+                                       List<UUID> dyingPermanentCardIds) {
+            this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
+                    dyingCreaturePower, dyingCreatureToughness, 0, wasCreature,
+                    dyingPermanentCardIds);
         }
 
         @Override
@@ -900,6 +914,9 @@ public sealed interface TriggerContext {
     }
 
     record Crime(UUID committingPlayerId) implements TriggerContext {}
+
+    /** Context for abilities that trigger after all players finish voting. */
+    record VotingFinished(VotingResult result) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
     record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,

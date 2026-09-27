@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinSpelunkers.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({GoblinSpelunkers.class, Mountain.class})
 class GoblinSpelunkersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Mountainwalk prevents blocking when the defending player controls a Mountain")
     void cannotBeBlockedWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new Mountain());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GoblinSpelunkers());
         Permanent attacker = addCreatureReady(player1, new GoblinSpelunkers());
 
         declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
@@ -35,7 +35,7 @@ class GoblinSpelunkersTest extends BaseCardTest {
     @Test
     @DisplayName("Mountainwalk allows blocking when the defending player controls no Mountain")
     void canBeBlockedWhenDefenderControlsNoMountain() {
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GoblinSpelunkers());
         Permanent attacker = addCreatureReady(player1, new GoblinSpelunkers());
 
         declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
@@ -52,7 +52,7 @@ class GoblinSpelunkersTest extends BaseCardTest {
     @DisplayName("Mountainwalk does not count a Mountain controlled by the attacking player")
     void canBeBlockedWhenOnlyAttackerControlsMountain() {
         harness.addToBattlefield(player1, new Mountain());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GoblinSpelunkers());
         Permanent attacker = addCreatureReady(player1, new GoblinSpelunkers());
 
         declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));

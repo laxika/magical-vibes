@@ -3,14 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,24 +17,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SelflessSquireTest extends BaseCardTest {
 
     @Test
-    void preventsDamageAndPutsCountersForEachPointPrevented() {
+    @DisplayName("Prevents all damage to its controller this turn and gets that many counters")
+    void preventsDamageAndAddsCounters() {
         Permanent squire = castSquire();
-
-        castShock(player2, player1.getId());
+        castShockAtPlayer();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
+    @DisplayName("The damage prevention expires at end of turn")
     void preventionExpiresAtEndOfTurn() {
         Permanent squire = castSquire();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-
-        castShock(player2, player1.getId());
+        castShockAtPlayer();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -48,16 +47,13 @@ class SelflessSquireTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof SelflessSquire)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Selfless Squire");
     }
 
-    private void castShock(Player caster, UUID targetPlayerId) {
-        harness.setHand(caster, List.of(new Shock()));
-        harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetPlayerId);
+    private void castShockAtPlayer() {
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
     }
 }

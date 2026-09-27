@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M15", collectorNumber = "46")
 @CardRegistration(set = "PIO", collectorNumber = "49")
+@CardRegistration(set = "NCC", collectorNumber = "214")
 public class ChasmSkulker extends Card {
 
     public ChasmSkulker() {

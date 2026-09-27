@@ -84,7 +84,7 @@ class GethThaneOfContractsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> activateGeth(geth, instant))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("creature card");
     }
 
     private Permanent addReadyGeth() {

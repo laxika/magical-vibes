@@ -167,6 +167,8 @@ class EnterTriggerCollectorServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.orderedPlayerIds.add(player1Id);
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.getEffectivePower(eq(gd), any(Permanent.class)))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getPower());
         lenient().when(gameQueryService.getEffectiveGraveyardEffects(
                         eq(gd), any(Card.class), any(EffectSlot.class)))
                 .thenAnswer(invocation -> ((Card) invocation.getArgument(1))

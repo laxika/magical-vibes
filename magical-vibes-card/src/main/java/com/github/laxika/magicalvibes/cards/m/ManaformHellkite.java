@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "VOW", collectorNumber = "170")
 @CardRegistration(set = "SOC", collectorNumber = "248")
 @CardRegistration(set = "DBL", collectorNumber = "437")
+@CardRegistration(set = "TDC", collectorNumber = "224")
 public class ManaformHellkite extends Card {
 
     public ManaformHellkite() {

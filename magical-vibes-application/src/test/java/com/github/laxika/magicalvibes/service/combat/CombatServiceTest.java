@@ -332,6 +332,19 @@ class CombatServiceTest {
         }
 
         @Test
+        @DisplayName("Rolls over players attacked during the completed combat")
+        void rollsOverPlayersAttackedDuringCompletedCombat() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player2Id);
+
+            combatService.clearCombatState(gd);
+
+            assertThat(attacker.getPlayersAttackedLastCombat()).containsExactly(player2Id);
+            assertThat(attacker.getPlayersAttackedThisCombat()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears combat-scoped attack requirements")
         void clearsCombatScopedAttackRequirements() {
             Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears"));

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TwistedJustice.class, Forest.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({TwistedJustice.class, Forest.class, BorosSwiftblade.class, Watchwolf.class})
 class TwistedJusticeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target player chooses a creature, and the controller draws cards equal to its power")
     void targetPlayerChoosesCreatureAndControllerDrawsItsPower() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent swiftblade = harness.addToBattlefieldAndReturn(player2, new BorosSwiftblade());
+        Permanent watchwolf = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new TwistedJustice()));
         addManaForTwistedJustice();
@@ -34,20 +34,20 @@ class TwistedJusticeTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), giant.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(swiftblade.getId(), watchwolf.getId());
 
-        harness.handlePermanentChosen(player2, giant.getId());
+        harness.handlePermanentChosen(player2, watchwolf.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 3);
-        harness.assertInGraveyard(player2, "Hill Giant");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Watchwolf");
+        harness.assertOnBattlefield(player2, "Boros Swiftblade");
     }
 
     @Test
     @DisplayName("With one creature, the target player sacrifices it automatically")
     void automaticallySacrificesOnlyCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addToBattlefield(player2, new BorosSwiftblade());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new TwistedJustice()));
         addManaForTwistedJustice();
 
@@ -55,7 +55,21 @@ class TwistedJusticeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Boros Swiftblade");
+    }
+
+    @Test
+    @DisplayName("The controller may target themselves")
+    void controllerMayBeTargeted() {
+        harness.addToBattlefield(player1, new Watchwolf());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new TwistedJustice()));
+        addManaForTwistedJustice();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Watchwolf");
     }
 
     @Test

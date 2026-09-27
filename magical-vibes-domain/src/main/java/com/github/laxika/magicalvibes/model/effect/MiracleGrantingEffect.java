@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -11,5 +12,12 @@ public interface MiracleGrantingEffect extends CardEffect {
 
     CardPredicate miracleGrantFilter();
 
-    String miracleCost();
+    default String miracleCost() {
+        return null;
+    }
+
+    /** Returns the cost to snapshot for this particular card. */
+    default String miracleCostFor(Card card) {
+        return miracleCost();
+    }
 }

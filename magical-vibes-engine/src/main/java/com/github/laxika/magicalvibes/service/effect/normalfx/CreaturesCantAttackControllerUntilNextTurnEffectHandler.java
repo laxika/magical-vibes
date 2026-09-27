@@ -23,13 +23,15 @@ public class CreaturesCantAttackControllerUntilNextTurnEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var restriction = (CreaturesCantAttackControllerUntilNextTurnEffect) effect;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(),
                 entry.getCard() == null ? "Creatures Cant Attack Controller" : entry.getCard().getName(),
                 entry.getSourcePermanentId(),
                 entry.getControllerId(),
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
-                        new PermanentNotPredicate(new PermanentTruePredicate())),
+                        new PermanentNotPredicate(new PermanentTruePredicate()),
+                        restriction.protectsPlaneswalkers(), restriction.restrictedAttackerId()),
                 null,
                 entry.getControllerId(),
                 null,

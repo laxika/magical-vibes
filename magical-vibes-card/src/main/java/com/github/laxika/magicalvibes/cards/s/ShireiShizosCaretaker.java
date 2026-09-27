@@ -21,7 +21,7 @@ public class ShireiShizosCaretaker extends Card {
         // The power check reads the dying permanent's last-known power, so a creature shrunk to 1 or
         // less before it died qualifies. The delayed return is gated on this exact Shirei permanent
         // still being on the battlefield at the end step.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentPowerAtMostPredicate(1),
                         new MayEffect(

@@ -103,6 +103,7 @@ public class MayAbilityHandlerService {
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
@@ -130,6 +131,7 @@ public class MayAbilityHandlerService {
                                     BendOrBreakEffectHandler bendOrBreakEffectHandler,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport,
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler,
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport,
                                     MayAbilityTapCostService mayAbilityTapCostService,
@@ -153,6 +155,7 @@ public class MayAbilityHandlerService {
         this.bendOrBreakEffectHandler = bendOrBreakEffectHandler;
         this.fightOrFlightSupport = fightOrFlightSupport;
         this.standOrFallSupport = standOrFallSupport;
+        this.makeAnExampleEffectHandler = makeAnExampleEffectHandler;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.brilliantUltimatumSupport = brilliantUltimatumSupport;
         this.mayAbilityTapCostService = mayAbilityTapCostService;
@@ -194,7 +197,9 @@ public class MayAbilityHandlerService {
         // Unesh, Curator of Destinies)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null) {
-            if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {
+            if (pileSeparation.disposition() == CardPileDisposition.MAKE_AN_EXAMPLE) {
+                makeAnExampleEffectHandler.completePileSeparationStep2(gameData, accepted);
+            } else if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {
                 fightOrFlightSupport.completePileSeparationStep2(gameData, accepted);
             } else if (pileSeparation.disposition() == CardPileDisposition.BLOCKERS) {
                 standOrFallSupport.completePileSeparationStep2(gameData, accepted);

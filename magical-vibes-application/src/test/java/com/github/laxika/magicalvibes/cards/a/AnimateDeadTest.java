@@ -238,6 +238,6 @@ class AnimateDeadTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("Target card must be a creature card");
     }
 }

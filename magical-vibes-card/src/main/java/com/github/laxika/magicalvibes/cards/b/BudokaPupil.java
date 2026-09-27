@@ -23,13 +23,12 @@ public class BudokaPupil extends Card {
     public BudokaPupil() {
         setBackFaceCard(new IchigaWhoTopplesOaks());
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new PutCountersOnSelfEffect(CounterType.KI))),
-                "Put a ki counter on Budoka Pupil?"));
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                new CardAnyOfPredicate(List.of(
+                        new CardSubtypePredicate(CardSubtype.SPIRIT),
+                        new CardSubtypePredicate(CardSubtype.ARCANE))),
+                List.of(new MayEffect(new PutCountersOnSelfEffect(CounterType.KI),
+                        "Put a ki counter on Budoka Pupil?"))));
 
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.KI),

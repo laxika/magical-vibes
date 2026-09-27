@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "IKO", collectorNumber = "200")
 @CardRegistration(set = "C21", collectorNumber = "227")
+@CardRegistration(set = "NCC", collectorNumber = "348")
 public class PrimalEmpathy extends Card {
 
     public PrimalEmpathy() {

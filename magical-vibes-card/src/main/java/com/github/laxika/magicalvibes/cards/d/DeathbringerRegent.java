@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "96")
 @CardRegistration(set = "C21", collectorNumber = "141")
+@CardRegistration(set = "NCC", collectorNumber = "246")
 public class DeathbringerRegent extends Card {
 
     public DeathbringerRegent() {

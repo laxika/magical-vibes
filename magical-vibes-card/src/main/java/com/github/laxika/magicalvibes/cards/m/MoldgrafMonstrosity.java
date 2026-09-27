@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "194")
+@CardRegistration(set = "DSC", collectorNumber = "83")
 public class MoldgrafMonstrosity extends Card {
 
     public MoldgrafMonstrosity() {

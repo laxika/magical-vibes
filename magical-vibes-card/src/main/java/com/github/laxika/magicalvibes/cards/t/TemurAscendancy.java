@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "207")
 @CardRegistration(set = "TSR", collectorNumber = "387")
+@CardRegistration(set = "TDC", collectorNumber = "305")
 public class TemurAscendancy extends Card {
 
     public TemurAscendancy() {

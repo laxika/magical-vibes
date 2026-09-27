@@ -6,11 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -19,15 +15,9 @@ import java.util.List;
 public class ShiftingBorders extends Card {
 
     public ShiftingBorders() {
-        target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentIsLandPredicate(),
-                "First target must be a land you control"));
+        target(new PermanentPredicateTargetFilter(new PermanentIsLandPredicate(), "First target must be a land"));
 
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                        new PermanentIsLandPredicate())),
-                "Second target must be a land an opponent controls"))
+        target(new PermanentPredicateTargetFilter(new PermanentIsLandPredicate(), "Second target must be a land"))
                 .addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
                         new PermanentIsLandPredicate(), false));
 

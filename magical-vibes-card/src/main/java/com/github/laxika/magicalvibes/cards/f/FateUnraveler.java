@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "BNG", collectorNumber = "68")
 @CardRegistration(set = "C15", collectorNumber = "126")
+@CardRegistration(set = "DSC", collectorNumber = "141")
 public class FateUnraveler extends Card {
 
     public FateUnraveler() {

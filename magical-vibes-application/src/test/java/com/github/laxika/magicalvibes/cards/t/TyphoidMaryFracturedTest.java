@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.z.ZagothTriome;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -59,7 +58,7 @@ class TyphoidMaryFracturedTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 
     @Test
@@ -74,7 +73,7 @@ class TyphoidMaryFracturedTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Grizzly Bears")
                         || card.getName().equals("Shock"));
         boolean drain = gd.playerLifeTotals.get(player1.getId()) == 22
-                && gd.playerLifeTotals.get(player2.getId()) == 18;
+                && gd.playerLifeTotals.get(player2.getId()) == 15;
         assertThat(treasure || draw || drain).isTrue();
     }
 
@@ -87,8 +86,8 @@ class TyphoidMaryFracturedTest extends BaseCardTest {
     }
 
     private void attackMary() {
-        Permanent mary = addCreatureReady(player1, new TyphoidMaryFractured());
-        mary.setAttacking(true);
-        resolveCombat();
+        addCreatureReady(player1, new TyphoidMaryFractured());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
     }
 }

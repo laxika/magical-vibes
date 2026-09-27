@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,43 +8,51 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AlchorsTomb.class, GrizzlyBears.class})
+@CardUsed({AlchorsTomb.class, BarbaryApes.class})
 class AlchorsTombTest extends BaseCardTest {
 
     @Test
     void targetBecomesOneChosenColorIndefinitely() {
-        harness.addToBattlefield(player1, new AlchorsTomb());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new AlchorsTomb());
+        Permanent apes = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.activateAbility(player1, 0, 0, null, bearsId);
+        harness.activateAbility(player1, 0, 0, null, apes.getId());
+        assertThat(tomb.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.RED);
+        assertThat(gqs.getEffectiveColors(gd, apes)).containsExactly(CardColor.RED);
 
         gd.expireEndOfTurnFloatingEffects();
-        bears.resetModifiers();
+        apes.resetModifiers();
 
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.RED);
+        assertThat(gqs.getEffectiveColors(gd, apes)).containsExactly(CardColor.RED);
     }
 
     @Test
     void canTargetOnlyAPermanentYouControl() {
         harness.addToBattlefield(player1, new AlchorsTomb());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent opponentApes = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, opponentApes.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetANoncreaturePermanentYouControl() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new AlchorsTomb());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, tomb.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gqs.getEffectiveColors(gd, tomb)).containsExactly(CardColor.BLUE);
     }
 }

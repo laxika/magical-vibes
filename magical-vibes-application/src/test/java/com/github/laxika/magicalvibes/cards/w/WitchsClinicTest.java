@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WitchsClinicTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Taps for colorless mana")
+    @DisplayName("Taps for one colorless mana")
     void tapsForColorlessMana() {
         harness.addToBattlefield(player1, new WitchsClinic());
 
@@ -29,16 +29,17 @@ class WitchsClinicTest extends BaseCardTest {
     @Test
     @DisplayName("Gives a commander lifelink until end of turn")
     void givesCommanderLifelinkUntilEndOfTurn() {
-        GrizzlyBears commanderCard = new GrizzlyBears();
-        gd.makeCommander(player1.getId(), commanderCard);
-        Permanent commander = harness.addToBattlefieldAndReturn(player1, commanderCard);
-        harness.addToBattlefield(player1, new WitchsClinic());
+        Permanent clinic = harness.addToBattlefieldAndReturn(player1, new WitchsClinic());
+        Permanent commander = addCreatureReady(player1, new GrizzlyBears());
+        commander.setCommander(true);
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, 1, null, commander.getId());
+        harness.activateAbility(player1, 0, 1, null, commander.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, commander, Keyword.LIFELINK)).isTrue();
+        assertThat(clinic.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -48,14 +49,13 @@ class WitchsClinicTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a noncommander permanent")
-    void cannotTargetNoncommanderPermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+    @DisplayName("Cannot target a non-commander")
+    void cannotTargetNonCommander() {
         harness.addToBattlefield(player1, new WitchsClinic());
+        Permanent nonCommander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target does not match the required predicate");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, nonCommander.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

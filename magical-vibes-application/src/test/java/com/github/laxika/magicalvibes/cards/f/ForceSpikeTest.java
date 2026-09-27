@@ -27,9 +27,7 @@ class ForceSpikeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Llanowar Elves");
@@ -49,9 +47,7 @@ class ForceSpikeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shock.getId());
 
         harness.assertInGraveyard(player1, "Shock");
         assertThat(gd.stack).isEmpty();

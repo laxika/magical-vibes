@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "392")
+@CardRegistration(set = "DSC", collectorNumber = "293")
 public class OverflowingBasin extends Card {
 
     public OverflowingBasin() {

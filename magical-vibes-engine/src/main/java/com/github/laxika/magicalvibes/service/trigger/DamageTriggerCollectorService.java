@@ -1019,15 +1019,17 @@ public class DamageTriggerCollectorService {
         if (controllerId == null) return false;
 
         // Ragged Veins: the card-def amount is a placeholder; bake in the damage just dealt.
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 aura.getCard(),
                 match.controllerId(),
                 aura.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new EnchantedCreatureControllerLosesLifeEffect(dc.damageDealt(), controllerId))),
-                null,
+                dc.damagedCreature().getId(),
                 aura.getId()
-        ));
+        );
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE life-loss trigger fires",
                 gameData.id, aura.getCard().getName());

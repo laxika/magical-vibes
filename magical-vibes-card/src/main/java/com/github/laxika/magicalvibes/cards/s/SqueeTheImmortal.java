@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 @CardRegistration(set = "MUL", collectorNumber = "22")
 @CardRegistration(set = "MUL", collectorNumber = "87")
 @CardRegistration(set = "MUL", collectorNumber = "152")
+@CardRegistration(set = "NCC", collectorNumber = "275")
 public class SqueeTheImmortal extends Card {
 
     public SqueeTheImmortal() {

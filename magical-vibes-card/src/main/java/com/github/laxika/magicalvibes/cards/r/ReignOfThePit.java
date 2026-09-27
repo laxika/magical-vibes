@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VMA", collectorNumber = "138")
+@CardRegistration(set = "NCC", collectorNumber = "258")
 public class ReignOfThePit extends Card {
 
     public ReignOfThePit() {

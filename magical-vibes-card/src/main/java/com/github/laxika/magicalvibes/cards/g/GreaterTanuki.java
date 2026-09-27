@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "189")
+@CardRegistration(set = "DSC", collectorNumber = "181")
 public class GreaterTanuki extends Card {
 
     public GreaterTanuki() {

@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TokTokVolcanoBorn.class, AkkiLavarunner.class, AvatarOfMight.class,
+        GrizzlyBears.class, LightningBolt.class, RagingGoblin.class})
 class TokTokVolcanoBornTest extends BaseCardTest {
 
     /** Puts a flipped Akki Lavarunner (i.e. Tok-Tok) onto {@code player}'s battlefield. */
@@ -103,5 +107,32 @@ class TokTokVolcanoBornTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, tokTok.getId()))
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection from red prevents a red creature from blocking Tok-Tok")
+    void redCreatureCannotBlockTokTok() {
+        addTokTok(player1);
+        addCreatureReady(player2, new RagingGoblin());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection from red prevents combat damage from red creatures")
+    void redCombatDamageIsPrevented() {
+        Permanent tokTok = addTokTok(player1);
+        addCreatureReady(player2, new RagingGoblin());
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(tokTok.getMarkedDamage()).isZero();
     }
 }

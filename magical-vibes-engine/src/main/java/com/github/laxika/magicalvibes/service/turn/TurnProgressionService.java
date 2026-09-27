@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
+import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageBecomeMonarch;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -404,6 +406,7 @@ public class TurnProgressionService {
                 // Conduit of Storms / Emrakul: "add mana at the beginning of your next main phase this turn"
                 // after attacking — the next main is postcombat.
                 stepTriggerService.drainAddManaAtNextMainPhase(gameData, false);
+                stepTriggerService.drainDrawCardsAtNextMainPhase(gameData);
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
@@ -854,6 +857,7 @@ public class TurnProgressionService {
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
+        gameData.playersWhoAttackedWithCommanderThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
         gameData.permanentsWithCountersPutByPlayerThisTurn.clear();
         gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.clear();
@@ -865,6 +869,9 @@ public class TurnProgressionService {
         gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoCreatedTokensThisTurn.clear();
+        gameData.treasureTokensCreatedThisTurn.clear();
+        gameData.permanentsThatFoughtThisTurn.clear();
+        gameData.tokensCreatedThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.playersWhoSacrificedArtifactsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
@@ -893,6 +900,7 @@ public class TurnProgressionService {
         gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromLibraryThisTurn.clear();
+        gameData.cardsPutIntoGraveyardFromHandThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.playersWhoDescendedThisTurn.clear();
         gameData.descentsThisTurn.clear();
@@ -911,6 +919,8 @@ public class TurnProgressionService {
         gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
+        gameData.cardsDrawnLastTurn.clear();
+        gameData.cardsDrawnLastTurn.putAll(gameData.cardsDrawnThisTurn);
         gameData.cardsDrawnThisTurn.clear();
         gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();
@@ -940,11 +950,13 @@ public class TurnProgressionService {
         gameData.crewedPermanentSubtypesThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageToken.class);
+        gameData.clearDelayedActions(DelayedCombatDamageBecomeMonarch.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
+        gameData.clearDelayedActions(DrawCardsAtNextMainPhase.class);
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerKeywordGrant.class);
@@ -988,6 +1000,7 @@ public class TurnProgressionService {
         List<Card> handAtTurnStart = gameData.playerHands.get(nextActive);
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
+        gameData.permanentTriggeringEffectOnDeathThisTurn.clear();
         gameData.permanentsDealtNoncombatDamageThisTurn.clear();
         gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
@@ -1000,6 +1013,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
+        gameData.firstOpponentLifeLossTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();

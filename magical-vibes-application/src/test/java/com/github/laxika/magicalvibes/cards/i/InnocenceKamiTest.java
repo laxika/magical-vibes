@@ -2,27 +2,29 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
+import com.github.laxika.magicalvibes.cards.h.HonorWornShaku;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InnocenceKami.class, DesperateRitual.class, DevotedRetainer.class,
+        HarshDeceiver.class, HonorWornShaku.class})
 class InnocenceKamiTest extends BaseCardTest {
 
     @Test
     @DisplayName("White mana and tapping Innocence Kami taps target creature")
     void tapsTargetCreature() {
         Permanent kami = addReadyKami(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new DevotedRetainer());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -37,10 +39,8 @@ class InnocenceKamiTest extends BaseCardTest {
     void arcaneSpellUntapsKami() {
         Permanent kami = addReadyKami(player1);
         kami.tap();
-        harness.setHand(player1, List.of(new DesperateRitual()));
-        harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, (UUID) null);
+        harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
         harness.passBothPriorities();
 
         assertThat(kami.isTapped()).isFalse();
@@ -51,11 +51,8 @@ class InnocenceKamiTest extends BaseCardTest {
     void spiritSpellUntapsKami() {
         Permanent kami = addReadyKami(player1);
         kami.tap();
-        harness.setHand(player1, List.of(new HarshDeceiver()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
         harness.passBothPriorities();
 
         assertThat(kami.isTapped()).isFalse();
@@ -66,12 +63,37 @@ class InnocenceKamiTest extends BaseCardTest {
     void unrelatedSpellDoesNotUntapKami() {
         Permanent kami = addReadyKami(player1);
         kami.tap();
-        harness.setHand(player1, List.of(new DevotedRetainer()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DevotedRetainer(), "{W}");
+        harness.passBothPriorities();
 
         assertThat(kami.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Spirit spell cast by an opponent does not untap Innocence Kami")
+    void opponentSpiritSpellDoesNotUntapKami() {
+        Permanent kami = addReadyKami(player1);
+        kami.tap();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new HarshDeceiver(), "{3}{W}");
+        harness.passBothPriorities();
+
+        assertThat(kami.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Innocence Kami cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        addReadyKami(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HonorWornShaku());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyKami(Player player) {

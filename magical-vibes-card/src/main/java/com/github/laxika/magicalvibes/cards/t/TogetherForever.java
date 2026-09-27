@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMC", collectorNumber = "44")
 @CardRegistration(set = "C21", collectorNumber = "108")
+@CardRegistration(set = "NCC", collectorNumber = "212")
 public class TogetherForever extends Card {
 
     public TogetherForever() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "29")
+@CardRegistration(set = "TDC", collectorNumber = "128")
 public class RhoxFaithmender extends Card {
 
     public RhoxFaithmender() {

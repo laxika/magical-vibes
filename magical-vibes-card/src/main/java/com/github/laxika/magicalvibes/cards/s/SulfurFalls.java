@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "MSC", collectorNumber = "269")
 @CardRegistration(set = "MSC", collectorNumber = "496")
 @CardRegistration(set = "YEOE", collectorNumber = "38")
+@CardRegistration(set = "LTC", collectorNumber = "333")
 public class SulfurFalls extends Card {
 
     public SulfurFalls() {

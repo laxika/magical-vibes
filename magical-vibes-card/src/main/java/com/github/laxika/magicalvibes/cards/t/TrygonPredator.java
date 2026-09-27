@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "TSR", collectorNumber = "389")
 @CardRegistration(set = "C15", collectorNumber = "236")
 @CardRegistration(set = "C21", collectorNumber = "231")
+@CardRegistration(set = "DSC", collectorNumber = "238")
 public class TrygonPredator extends Card {
 
     public TrygonPredator() {

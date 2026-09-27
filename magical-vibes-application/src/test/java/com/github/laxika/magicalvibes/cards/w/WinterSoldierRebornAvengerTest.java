@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HerculesOlympianHero;
+import com.github.laxika.magicalvibes.cards.c.CaptainAmericaTeamLeader;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,14 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WinterSoldierRebornAvenger.class, HerculesOlympianHero.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({WinterSoldierRebornAvenger.class, CaptainAmericaTeamLeader.class, GrizzlyBears.class, HillGiant.class})
 class WinterSoldierRebornAvengerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking returns a legal Hero with a +1/+1 counter")
     void attackingReturnsHeroWithCounter() {
         addCreatureReady(player1, new WinterSoldierRebornAvenger());
-        Card hero = new HerculesOlympianHero();
+        Card hero = new CaptainAmericaTeamLeader();
         harness.setGraveyard(player1, List.of(hero));
 
         declareAttackers(List.of(0));

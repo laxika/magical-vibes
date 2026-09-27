@@ -12,14 +12,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GreaterMossdog.class, Forest.class, GrizzlyBears.class})
+@CardUsed({GreaterMossdog.class, Forest.class})
 class GreaterMossdogTest extends BaseCardTest {
 
     @Test
     @DisplayName("May dredge Greater Mossdog instead of drawing")
     void dredgesInsteadOfDrawing() {
         GreaterMossdog mossdog = new GreaterMossdog();
-        List<Card> milled = List.of(new Forest(), new GrizzlyBears(), new Forest());
+        List<Card> milled = List.of(new Forest(), new Forest(), new Forest());
         harness.setGraveyard(player1, List.of(mossdog));
         harness.setLibrary(player1, milled);
 
@@ -40,7 +40,7 @@ class GreaterMossdogTest extends BaseCardTest {
         GreaterMossdog mossdog = new GreaterMossdog();
         Card topCard = new Forest();
         harness.setGraveyard(player1, List.of(mossdog));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest()));
 
         resolveDraw();
         harness.handleGraveyardCardChosen(player1, -1);
@@ -56,7 +56,7 @@ class GreaterMossdogTest extends BaseCardTest {
         GreaterMossdog mossdog = new GreaterMossdog();
         Card topCard = new Forest();
         harness.setGraveyard(player1, List.of(mossdog));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(topCard, new Forest()));
 
         resolveDraw();
 

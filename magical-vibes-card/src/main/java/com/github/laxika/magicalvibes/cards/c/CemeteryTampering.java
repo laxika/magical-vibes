@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayin
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SNC", collectorNumber = "69")
+@CardRegistration(set = "DSC", collectorNumber = "135")
 public class CemeteryTampering extends Card {
 
     public CemeteryTampering() {

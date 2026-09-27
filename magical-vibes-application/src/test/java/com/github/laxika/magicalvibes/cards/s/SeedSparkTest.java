@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.g.GolgariGermination;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,36 +16,39 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeedSpark.class, AngelicChorus.class, Forest.class, Millstone.class})
+@CardUsed({SeedSpark.class, BorosSignet.class, GolgariGermination.class, Forest.class})
 class SeedSparkTest extends BaseCardTest {
 
     @Test
     void destroysArtifactAndCreatesSaprolingsIfGreenWasSpent() {
-        harness.addToBattlefield(player2, new Millstone());
+        harness.addToBattlefield(player2, new BorosSignet());
         harness.setHand(player1, List.of(new SeedSpark()));
         addManaWithGreen();
 
-        UUID targetId = harness.getPermanentId(player2, "Millstone");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Boros Signet");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Millstone");
-        harness.assertInGraveyard(player2, "Millstone");
-        assertThat(countPermanents(player1, "Saproling")).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Boros Signet");
+        harness.assertInGraveyard(player2, "Boros Signet");
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().getColors()).containsExactly(CardColor.GREEN);
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        });
     }
 
     @Test
     void destroysEnchantmentWithoutCreatingSaprolingsIfGreenWasNotSpent() {
-        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player2, new GolgariGermination());
         harness.setHand(player1, List.of(new SeedSpark()));
         addManaWithoutGreen();
 
-        UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Golgari Germination");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Golgari Germination");
+        harness.assertInGraveyard(player2, "Golgari Germination");
         assertThat(countPermanents(player1, "Saproling")).isZero();
     }
 

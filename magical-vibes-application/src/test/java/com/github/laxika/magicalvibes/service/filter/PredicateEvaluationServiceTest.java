@@ -133,8 +133,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
@@ -1782,6 +1784,29 @@ class PredicateEvaluationServiceTest {
 
             gd.playerGraveyards.get(player1Id).remove(2);
             assertThat(evaluator.matchesPermanentPredicate(target, predicate, ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Power hand-size predicates use the source controller's hand and strict comparisons")
+        void powerComparedToSourceControllerHandSize() {
+            Permanent lower = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent equal = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Hill Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT)));
+            Permanent higher = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Air Elemental", 4, 4, CardColor.BLUE, List.of(CardSubtype.ELEMENTAL)));
+            gd.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            gd.playerHands.get(player2Id).addAll(List.of(new Card(), new Card(), new Card(), new Card()));
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(higher,
+                    new PermanentPowerGreaterThanSourceControllerHandSizePredicate(), ctx)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(equal,
+                    new PermanentPowerGreaterThanSourceControllerHandSizePredicate(), ctx)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(lower,
+                    new PermanentPowerLessThanSourceControllerHandSizePredicate(), ctx)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(equal,
+                    new PermanentPowerLessThanSourceControllerHandSizePredicate(), ctx)).isFalse();
         }
 
         @Test

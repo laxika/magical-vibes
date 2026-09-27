@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,7 +18,8 @@ public class TeardropKami extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new TapOrUntapTargetPermanentEffect()),
+                List.of(new SacrificeSelfCost(), new MayEffect(new TapOrUntapTargetPermanentEffect(),
+                        "Tap or untap target creature?")),
                 "Sacrifice Teardrop Kami: You may tap or untap target creature.",
                 TargetFilters.creature()
         ));

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,6 +63,10 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
                 continue;
             }
             if (!gameQueryService.isCreature(gameData, target)) {
+                continue;
+            }
+            if (e.anyCreature() && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                    gameData, target, entry.getCard(), entry.getControllerId()).isPresent()) {
                 continue;
             }
             permanentCounterSupport.placeCounterOnPermanent(

@@ -1,41 +1,47 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AkkiCoalflinger.class, WanderingOnes.class})
 class AkkiCoalflingerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Ability grants first strike to every attacking creature, including the opponent's")
     void grantsFirstStrikeToAttackers() {
-        addReadyCoalflinger(player1);
-        Permanent ownAttacker = addBears(player1, true);
-        Permanent opponentAttacker = addBears(player2, true);
-        Permanent idleBears = addBears(player1, false);
+        Permanent coalflinger = addCreatureReady(player1, new AkkiCoalflinger());
+        Permanent ownAttacker = addCreatureReady(player1, new WanderingOnes());
+        ownAttacker.setAttacking(true);
+        Permanent opponentAttacker = addCreatureReady(player2, new WanderingOnes());
+        opponentAttacker.setAttacking(true);
+        Permanent idleCreature = addCreatureReady(player1, new WanderingOnes());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        assertThat(coalflinger.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, ownAttacker, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentAttacker, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(gqs.hasKeyword(gd, idleBears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, idleCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
     @DisplayName("Granted first strike wears off at end of turn")
     void grantWearsOff() {
-        addReadyCoalflinger(player1);
-        Permanent attacker = addBears(player1, true);
+        addCreatureReady(player1, new AkkiCoalflinger());
+        Permanent attacker = addCreatureReady(player1, new WanderingOnes());
+        attacker.setAttacking(true);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -52,8 +58,8 @@ class AkkiCoalflingerTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures that start attacking after the ability resolves do not gain first strike")
     void grantDoesNotApplyToLaterAttackers() {
-        addReadyCoalflinger(player1);
-        Permanent lateAttacker = addBears(player1, false);
+        addCreatureReady(player1, new AkkiCoalflinger());
+        Permanent lateAttacker = addCreatureReady(player1, new WanderingOnes());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -64,18 +70,14 @@ class AkkiCoalflingerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, lateAttacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
-    private Permanent addReadyCoalflinger(Player player) {
-        Permanent perm = new Permanent(new AkkiCoalflinger());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @DisplayName("Cannot activate the ability without red mana")
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new AkkiCoalflinger());
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
-    private Permanent addBears(Player player, boolean attacking) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        perm.setAttacking(attacking);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 }

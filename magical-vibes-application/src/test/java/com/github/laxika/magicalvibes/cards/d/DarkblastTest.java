@@ -24,7 +24,9 @@ class DarkblastTest extends BaseCardTest {
     void debuffsTargetCreatureUntilEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        castDarkblast(target.getId());
+        harness.setHand(player1, List.of(new Darkblast()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
@@ -85,13 +87,6 @@ class DarkblastTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(darkblast);
-    }
-
-    private void castDarkblast(java.util.UUID targetId) {
-        harness.setHand(player1, List.of(new Darkblast()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
     }
 
     private void resolveDraw() {

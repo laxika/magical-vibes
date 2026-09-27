@@ -25,10 +25,15 @@ class TheFrightfulFourTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         prepareCast(player2);
 
-        harness.castArtifact(player2, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castArtifact(player2, 0);
+            while (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            }
+        });
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
+        prepareCast(player2);
         harness.castArtifact(player2, 0);
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

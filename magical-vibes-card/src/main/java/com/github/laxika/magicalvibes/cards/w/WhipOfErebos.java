@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "CP2", collectorNumber = "5")
 @CardRegistration(set = "SLD", collectorNumber = "2218")
 @CardRegistration(set = "PIO", collectorNumber = "119")
+@CardRegistration(set = "DSC", collectorNumber = "159")
 public class WhipOfErebos extends Card {
 
     public WhipOfErebos() {

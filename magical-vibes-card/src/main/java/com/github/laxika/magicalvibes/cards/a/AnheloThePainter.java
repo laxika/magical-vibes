@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "NCC", collectorNumber = "1")
+@CardRegistration(set = "NCC", collectorNumber = "100")
+@CardRegistration(set = "NCC", collectorNumber = "186")
 @CardRegistration(set = "SLD", collectorNumber = "2353")
 public class AnheloThePainter extends Card {
 
@@ -18,6 +21,7 @@ public class AnheloThePainter extends Card {
         addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
                 Keyword.CASUALTY, 2, new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
-                new CardTypePredicate(CardType.SORCERY)))));
+                new CardTypePredicate(CardType.SORCERY))
+        )));
     }
 }

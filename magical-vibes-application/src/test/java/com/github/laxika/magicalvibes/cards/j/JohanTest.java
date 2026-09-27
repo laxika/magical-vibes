@@ -1,23 +1,25 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KoboldsOfKherKeep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Johan.class, KoboldsOfKherKeep.class})
 class JohanTest extends BaseCardTest {
 
     private void resolveCombatMay(boolean accepted) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -34,22 +36,24 @@ class JohanTest extends BaseCardTest {
     @Test
     void acceptingMayLetsOtherCreaturesAttackWithoutTapping() {
         Permanent johan = addCreatureReady(player1, new Johan());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent kobold = addCreatureReady(player1, new KoboldsOfKherKeep());
 
         resolveCombatMay(true);
         declareAttackers(List.of(1));
 
         assertThat(johan.isTapped()).isFalse();
-        assertThat(bear.isTapped()).isFalse();
+        assertThat(kobold.isTapped()).isFalse();
     }
 
     @Test
     void acceptingMayPreventsJohanFromAttacking() {
         Permanent johan = addCreatureReady(player1, new Johan());
+        addCreatureReady(player1, new KoboldsOfKherKeep());
 
         resolveCombatMay(true);
         beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(0));
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(johan.isAttacking()).isFalse();
     }
@@ -67,25 +71,25 @@ class JohanTest extends BaseCardTest {
     @Test
     void tappedJohanDoesNotPreventAttackersFromTapping() {
         Permanent johan = addCreatureReady(player1, new Johan());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent kobold = addCreatureReady(player1, new KoboldsOfKherKeep());
 
         resolveCombatMay(true);
         johan.tap();
         declareAttackers(List.of(1));
 
-        assertThat(bear.isTapped()).isTrue();
+        assertThat(kobold.isTapped()).isTrue();
     }
 
     @Test
     void combatPermissionExpiresAtEndOfCombat() {
         addCreatureReady(player1, new Johan());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent kobold = addCreatureReady(player1, new KoboldsOfKherKeep());
 
         resolveCombatMay(true);
         declareAttackers(List.of(1));
-        assertThat(bear.isTapped()).isFalse();
+        assertThat(kobold.isTapped()).isFalse();
 
         declareAttackers(List.of(1));
-        assertThat(bear.isTapped()).isTrue();
+        assertThat(kobold.isTapped()).isTrue();
     }
 }

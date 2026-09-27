@@ -33,7 +33,8 @@ public class ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControlle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID damagedPlayerId = entry.getTargetId();
-        UUID creatureControllerId = entry.getTriggeringPermanentControllerId();
+        UUID creatureControllerId = entry.getTriggeringPermanentControllerId() != null
+                ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
         if (damagedPlayerId == null || creatureControllerId == null) {
             return;
         }

@@ -38,8 +38,10 @@ class JinSakaiGhostOfTsushimaTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(indexOf(player1, attacker)));
         harness.passBothPriorities();
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+        assertThat(gd.pendingEffectResolutionEntry.getTriggeringPermanentId()).isEqualTo(attacker.getId());
         harness.handleListChoice(player1, "Ghost — It can't be blocked this turn");
-        harness.passBothPriorities();
+        assertThat(attacker.isCantBeBlocked()).isTrue();
 
         assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }

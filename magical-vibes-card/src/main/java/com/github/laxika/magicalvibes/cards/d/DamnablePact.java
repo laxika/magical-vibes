@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "93")
 @CardRegistration(set = "C21", collectorNumber = "139")
+@CardRegistration(set = "NCC", collectorNumber = "245")
 public class DamnablePact extends Card {
 
     public DamnablePact() {

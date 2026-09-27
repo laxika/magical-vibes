@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "MAR", collectorNumber = "58")
 @CardRegistration(set = "SLC", collectorNumber = "14")
 @CardRegistration(set = "SLC", collectorNumber = "41")
+@CardRegistration(set = "TDC", collectorNumber = "92")
 public class NarsetsReversal extends Card {
 
     public NarsetsReversal() {

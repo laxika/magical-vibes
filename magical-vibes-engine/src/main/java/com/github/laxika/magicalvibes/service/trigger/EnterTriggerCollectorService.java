@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MoveChosenCounterFromSourceToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -84,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffec
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -1125,6 +1127,49 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    /** Handles a controller's choice of which counter to move onto an entering creature. */
+    @CollectsTrigger(value = MoveChosenCounterFromSourceToEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyCreatureMoveChosenCounterToEntering(
+            TriggerMatchContext match, MoveChosenCounterFromSourceToEnteringCreatureEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        List<CounterType> availableCounterTypes = effect.counterTypes().stream()
+                .filter(counterType -> match.permanent().getCounterCount(counterType) > 0)
+                .toList();
+        if (availableCounterTypes.isEmpty()) {
+            return false;
+        }
+
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+                    sourceCard,
+                    match.controllerId(),
+                    List.of(effect),
+                    sourceCard.getName() + " — Move a counter onto " + pe.enteringCard().getName() + "?",
+                    enteringPermanentId,
+                    null,
+                    match.permanent().getId(),
+                    null,
+                    0,
+                    0,
+                    null,
+                    null,
+                    match.controllerId(),
+                    new Permanent(match.permanent())));
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (may move a chosen counter onto it)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = SearchLibraryForCreatureWithSameTotalPowerToughnessEffect.class,
             slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureSearchSameTotalPowerToughness(
@@ -1325,6 +1370,30 @@ public class EnterTriggerCollectorService {
                 " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                 gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
+        return true;
+    }
+
+    @CollectsTrigger(value = TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handlePowerToughnessDifferenceLifeLoss(TriggerMatchContext match,
+            TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        int power = enteringPermanent == null
+                ? (pe.enteringCard().getPower() == null ? 0 : pe.enteringCard().getPower())
+                : gameQueryService.getEffectivePower(match.gameData(), enteringPermanent);
+        int toughness = enteringPermanent == null
+                ? (pe.enteringCard().getToughness() == null ? 0 : pe.enteringCard().getToughness())
+                : gameQueryService.getEffectiveToughness(match.gameData(), enteringPermanent);
+
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getId(), enteringPermanentId, null, null, false, power, toughness));
+        }
+        logTriggered(match);
         return true;
     }
 
@@ -2233,6 +2302,7 @@ public class EnterTriggerCollectorService {
                     targetPlayerId,
                     match.permanent().getId()
             );
+            entry.setNonTargeting(!isTargeting(effect));
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);

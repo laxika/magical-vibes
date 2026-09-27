@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.g.GlassGolem;
+import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,21 +17,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BatheInLight.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class})
+@CardUsed({BatheInLight.class, BorosRecruit.class, GlassGolem.class, SnappingDrake.class, Watchwolf.class})
 class BatheInLightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Protects the target and every creature sharing a color with it")
     void protectsTargetAndColorSharingCreatures() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent ownMatchingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentMatchingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+        Permanent ownMatchingCreature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent opponentMatchingCreature = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
+        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new SnappingDrake());
         harness.setHand(player1, List.of(new BatheInLight()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
 
         harness.handleListChoice(player1, "RED");
@@ -44,14 +44,13 @@ class BatheInLightTest extends BaseCardTest {
     @Test
     @DisplayName("A colorless target does not share a color with other colorless creatures")
     void colorlessTargetOnlyAffectsItself() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        Permanent otherColorlessCreature = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        Permanent coloredCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlassGolem());
+        Permanent otherColorlessCreature = harness.addToBattlefieldAndReturn(player2, new GlassGolem());
+        Permanent coloredCreature = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
         harness.setHand(player1, List.of(new BatheInLight()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
@@ -62,7 +61,7 @@ class BatheInLightTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles without a color choice if the target leaves before resolution")
     void fizzlesIfTargetLeavesBeforeResolution() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
         harness.setHand(player1, List.of(new BatheInLight()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -72,5 +71,24 @@ class BatheInLightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Protection wears off at end of turn")
+    void protectionWearsOffAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+        harness.setHand(player1, List.of(new BatheInLight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
     }
 }

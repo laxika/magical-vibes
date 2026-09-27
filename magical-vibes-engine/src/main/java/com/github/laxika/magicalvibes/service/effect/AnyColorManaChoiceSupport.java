@@ -221,7 +221,7 @@ public final class AnyColorManaChoiceSupport {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
             case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
-            case COMMANDER_COLOR_IDENTITY, PATH_OF_ANCESTRY,
+            case COMMANDER_COLOR_IDENTITY, COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS, PATH_OF_ANCESTRY,
                     COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY ->
                     ManaProductionSupport.commanderColorIdentity(gameData, playerId);
             default -> effect.allowedColors();
@@ -415,6 +415,10 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
                             effect.allowedColors(), new ManaRestriction.LegendarySpells());
             case INSTANT_SORCERY_ONLY -> ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, amount);
+            case INSTANT_SORCERY_OR_SUBTYPES ->
+                    new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
+                            effect.allowedColors(), new ManaRestriction.InstantSorceryOrSubtypes(
+                            Set.of(CardSubtype.DEMON, CardSubtype.SPIRIT)), true);
             case ARTIFACT_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.artifactSpellOrAbilityOnly(playerId, amount);
             case FLASHBACK_ONLY ->
@@ -526,6 +530,8 @@ public final class AnyColorManaChoiceSupport {
             case ABILITIES -> "Choose a color of mana to add (activated abilities only).";
             case EXILED_CARD_COLORS -> "Choose a color among the exiled cards' colors.";
             case INSTANT_SORCERY_ONLY -> "Choose a color of mana to add (instant and sorcery spells only).";
+            case INSTANT_SORCERY_OR_SUBTYPES ->
+                    "Choose a color of mana to add (instant, sorcery, Demon, and Spirit spells only).";
             case ARTIFACT_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (artifact spells or artifact abilities only).";
             case CREATURE_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (creature spells or creature abilities only).";
             case CREATURE_COLORS_ABILITIES -> "Choose a color of mana to add (creature abilities only).";

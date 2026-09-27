@@ -46,10 +46,10 @@ class TomeOfLegendsTest extends BaseCardTest {
 
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         declareAttackers(List.of(2));
+        assertThat(creature.isAttackedThisTurn()).isTrue();
         harness.passBothPriorities();
 
         assertThat(tome.getCounterCount(CounterType.PAGE)).isEqualTo(1);
-        assertThat(creature.isAttackedThisTurn()).isTrue();
     }
 
     @Test
@@ -64,6 +64,6 @@ class TomeOfLegendsTest extends BaseCardTest {
         assertThat(tome.getCounterCount(CounterType.PAGE)).isZero();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
 }

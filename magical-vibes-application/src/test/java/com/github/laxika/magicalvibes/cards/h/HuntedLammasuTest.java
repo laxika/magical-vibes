@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(HuntedLammasu.class)
+@CardUsed({HuntedLammasu.class})
 class HuntedLammasuTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,7 @@ class HuntedLammasuTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> horrors = findPermanents(player2, "Horror");
         assertThat(horrors).hasSize(1);

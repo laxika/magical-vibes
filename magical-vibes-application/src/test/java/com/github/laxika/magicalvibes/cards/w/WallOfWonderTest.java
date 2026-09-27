@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WallOfWonder.class, GrizzlyBears.class})
+@CardUsed(WallOfWonder.class)
 class WallOfWonderTest extends BaseCardTest {
 
     @Test
@@ -31,7 +30,7 @@ class WallOfWonderTest extends BaseCardTest {
     @DisplayName("Ability gives +4/-4 and lets the wall attack this turn")
     void abilityBoostsAndAllowsAttack() {
         Permanent wall = addCreatureReady(player1, new WallOfWonder());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new WallOfWonder());
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.activateAbility(player1, 0, null, null);

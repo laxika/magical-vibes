@@ -119,7 +119,7 @@ class HateWeaverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("Target must be a blue or red creature");
     }
 
     @Test

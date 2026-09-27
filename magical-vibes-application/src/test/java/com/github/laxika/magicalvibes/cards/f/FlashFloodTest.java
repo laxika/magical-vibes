@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Manabarbs;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FlashFlood.class, RagingGoblin.class, GrizzlyBears.class, Mountain.class, Manabarbs.class})
 class FlashFloodTest extends BaseCardTest {
 
     @Nested
@@ -23,11 +26,10 @@ class FlashFloodTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys a red permanent")
         void destroysRedPermanent() {
-            harness.addToBattlefield(player2, new RagingGoblin());
+            Permanent goblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
             harness.setHand(player1, List.of(new FlashFlood()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
-            Permanent goblin = findPermanent(player2, "Raging Goblin");
             harness.castInstant(player1, 0, 0, goblin.getId());
             harness.passBothPriorities();
 
@@ -36,13 +38,26 @@ class FlashFloodTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Cannot target a nonred permanent")
-        void cannotTargetNonredPermanent() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+        @DisplayName("Destroys a red noncreature permanent")
+        void destroysRedNoncreaturePermanent() {
+            Permanent manabarbs = harness.addToBattlefieldAndReturn(player2, new Manabarbs());
             harness.setHand(player1, List.of(new FlashFlood()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
-            Permanent bears = findPermanent(player2, "Grizzly Bears");
+            harness.castInstant(player1, 0, 0, manabarbs.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Manabarbs");
+            harness.assertInGraveyard(player2, "Manabarbs");
+        }
+
+        @Test
+        @DisplayName("Cannot target a nonred permanent")
+        void cannotTargetNonredPermanent() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new FlashFlood()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, bears.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
@@ -55,11 +70,10 @@ class FlashFloodTest extends BaseCardTest {
         @Test
         @DisplayName("Returns a Mountain to its owner's hand")
         void returnsMountain() {
-            harness.addToBattlefield(player2, new Mountain());
+            Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
             harness.setHand(player1, List.of(new FlashFlood()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
-            Permanent mountain = findPermanent(player2, "Mountain");
             harness.castInstant(player1, 0, 1, mountain.getId());
             harness.passBothPriorities();
 
@@ -70,11 +84,10 @@ class FlashFloodTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a non-Mountain permanent")
         void cannotTargetNonMountainPermanent() {
-            harness.addToBattlefield(player2, new RagingGoblin());
+            Permanent goblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
             harness.setHand(player1, List.of(new FlashFlood()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
-            Permanent goblin = findPermanent(player2, "Raging Goblin");
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, goblin.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }

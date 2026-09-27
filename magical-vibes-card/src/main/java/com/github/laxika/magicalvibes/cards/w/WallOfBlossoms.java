@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "PCA", collectorNumber = "81")
 @CardRegistration(set = "MH1", collectorNumber = "190")
 @CardRegistration(set = "C15", collectorNumber = "211")
+@CardRegistration(set = "TDC", collectorNumber = "277")
 public class WallOfBlossoms extends Card {
 
     public WallOfBlossoms() {

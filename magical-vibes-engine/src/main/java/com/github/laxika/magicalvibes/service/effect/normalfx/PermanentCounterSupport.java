@@ -120,6 +120,9 @@ public class PermanentCounterSupport {
                     null,
                     source.getId()
             );
+            trigger.setTriggeringPermanentId(creature.getId());
+            trigger.setTriggeringPermanentControllerId(creatureControllerId);
+            trigger.setNonTargeting(true);
             trigger.setEventValue(count);
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));

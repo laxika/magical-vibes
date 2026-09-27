@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "213")
+@CardRegistration(set = "NCC", collectorNumber = "349")
 public class RoaleskApexHybrid extends Card {
 
     public RoaleskApexHybrid() {

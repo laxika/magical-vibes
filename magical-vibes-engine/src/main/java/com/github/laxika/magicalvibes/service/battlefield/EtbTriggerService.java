@@ -385,6 +385,13 @@ public class EtbTriggerService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
+                if (may.wrapped() instanceof ExileCardsFromGraveyardEffect exile) {
+                    for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        graveyardTargetingService.handleGraveyardExileETBTargeting(
+                                gameData, controllerId, card, List.of(may), triggerSourcePermanentId, exile);
+                    }
+                    continue;
+                }
                 if (may.wrapped() instanceof ExchangeControlOfTargetPermanentsEffect exchange
                         && exchange.requireOpponentPowerNotGreater()) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {

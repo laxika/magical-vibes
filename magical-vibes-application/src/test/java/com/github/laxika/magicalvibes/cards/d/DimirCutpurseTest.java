@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,13 +14,13 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DimirCutpurse.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DimirCutpurse.class, Forest.class, GoblinSpelunkers.class})
 class DimirCutpurseTest extends BaseCardTest {
 
     @Test
     void combatDamageMakesPlayerDiscardAndControllerDraw() {
         harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
+        harness.setHand(player2, List.of(new GoblinSpelunkers(), new Forest()));
         harness.setLibrary(player1, List.of(new Forest()));
 
         addAttackingCutpurse(player1);
@@ -38,6 +38,29 @@ class DimirCutpurseTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void controllerDrawsWhenOpponentControlsTheCutpurse() {
+        harness.setHand(player1, List.of(new GoblinSpelunkers(), new Forest()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        addAttackingCutpurse(player2);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     @Test
@@ -63,7 +86,7 @@ class DimirCutpurseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         addAttackingCutpurse(player1);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GoblinSpelunkers());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
