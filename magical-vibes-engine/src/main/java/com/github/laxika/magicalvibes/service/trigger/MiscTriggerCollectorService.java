@@ -1706,6 +1706,8 @@ public class MiscTriggerCollectorService {
             @CollectsTrigger(value = CardEffect.class,
                     slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
             @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class,
                     slot = EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
             @CollectsTrigger(value = CardEffect.class,
                     slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
@@ -2541,6 +2543,46 @@ public class MiscTriggerCollectorService {
         return enqueueNoncombatDamageTrigger(match, effect);
     }
 
+    @CollectsTrigger(value = OncePerTurnTriggerEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtNoncombatDamageToOpponentOncePerTurn(
+            TriggerMatchContext match, OncePerTurnTriggerEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.NoncombatDamageToOpponent damage)
+                || match.permanent() == null
+                || !match.controllerId().equals(damage.sourceControllerId())) {
+            return false;
+        }
+
+        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
+                match.gameData(), match.permanent(), effect);
+        if (resolved instanceof ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                    ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+                return false;
+            }
+            resolved = conditional.wrapped();
+        }
+        if (resolved == null) return false;
+
+        boolean triggered = enqueueNoncombatDamageTrigger(match, resolved);
+        if (triggered) {
+            OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
+        }
+        return triggered;
+    }
+
+    @CollectsTrigger(value = CreateTokenEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtNoncombatDamageToOpponentToken(TriggerMatchContext match,
+            CreateTokenEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.NoncombatDamageToOpponent damage)
+                || match.permanent() == null
+                || !match.controllerId().equals(damage.sourceControllerId())) {
+            return false;
+        }
+        return enqueueNoncombatDamageTrigger(match, effect);
+    }
+
     @CollectsTrigger(value = MayEffect.class,
             slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponentMay(TriggerMatchContext match,
@@ -3159,10 +3201,10 @@ public class MiscTriggerCollectorService {
             slot = EffectSlot.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
     boolean handleAnyCreatureExiledFromBattlefield(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureExiledFromBattlefield)) {
+        if (!(ctx instanceof TriggerContext.CreatureExiledFromBattlefield exiled)) {
             return false;
         }
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -3170,7 +3212,12 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        entry.setTriggeringPermanentId(exiled.exiledPermanent().getId());
+        entry.setTriggeringPermanentControllerId(exiled.exiledControllerId());
+        entry.setTriggeringPermanentPowerAtTrigger(exiled.exiledPowerAtTrigger());
+        entry.setEventValue(exiled.exiledPowerAtTrigger());
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creature exiled from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());

@@ -399,6 +399,7 @@ public class TurnCleanupService {
         gameData.drawReplacementTargetToController.clear();
         gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
+        gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawGainLife.clear();
         gameData.pendingNextDrawCreateBears.clear();
@@ -411,6 +412,7 @@ public class TurnCleanupService {
         gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
+        gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();

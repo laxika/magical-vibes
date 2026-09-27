@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "MSC", collectorNumber = "527")
+@CardRegistration(set = "MSC", collectorNumber = "845")
 public class WinterSoldierBuckyBarnes extends Card {
 
     public WinterSoldierBuckyBarnes() {

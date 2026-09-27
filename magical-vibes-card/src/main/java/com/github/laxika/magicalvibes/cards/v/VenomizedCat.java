@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "SPM", collectorNumber = "72")
 @CardRegistration(set = "OM1", collectorNumber = "50")
+@CardRegistration(set = "MSC", collectorNumber = "801")
 public class VenomizedCat extends Card {
 
     public VenomizedCat() {

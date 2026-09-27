@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "69")
 @CardRegistration(set = "OM1", collectorNumber = "73")
+@CardRegistration(set = "MSC", collectorNumber = "799")
 public class SwarmBeingOfBees extends Card {
 
     public SwarmBeingOfBees() {

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
@@ -6230,10 +6231,16 @@ public class SpellCastingService {
     private void validateCardFlashAdditionalCost(GameData gameData, Player player, Card card,
                                                  AdditionalSpellCostService.ExtractedCosts costs,
                                                  AdditionalSpellCostService.CostSelection selection) {
+        boolean usingCardFlash = castingPermissionService.isUsingCardFlashPermission(gameData, player.getId(), card);
+        if (usingCardFlash
+                && card.getFlashCastCondition() instanceof TeamworkCostPaid
+                && !isTeamworkCostPaid(costs, selection)) {
+            throw new IllegalStateException("Must pay teamwork to cast " + card.getName() + " at instant speed");
+        }
         BeholdCost beholdCost = costs.beholdSelectionCost();
         if (beholdCost == null
                 || !beholdCost.optional()
-                || !castingPermissionService.isUsingCardFlashPermission(gameData, player.getId(), card)) {
+                || !usingCardFlash) {
             return;
         }
         if (!isBeholdCostPaid(costs, selection)) {

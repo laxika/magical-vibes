@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "MSC", collectorNumber = "521")
+@CardRegistration(set = "MSC", collectorNumber = "841")
 public class MandroidSquadron extends Card {
 
     public MandroidSquadron() {

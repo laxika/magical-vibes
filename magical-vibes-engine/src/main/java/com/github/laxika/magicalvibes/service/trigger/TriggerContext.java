@@ -812,7 +812,8 @@ public sealed interface TriggerContext {
     }
 
     /** Context for creatures exiled from the battlefield, regardless of controller. */
-    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
+    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId,
+                                         int exiledPowerAtTrigger)
             implements TriggerContext {}
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */

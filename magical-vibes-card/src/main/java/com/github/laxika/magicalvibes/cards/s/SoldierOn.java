@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MSC", collectorNumber = "524")
+@CardRegistration(set = "MSC", collectorNumber = "843")
 public class SoldierOn extends Card {
 
     public SoldierOn() {

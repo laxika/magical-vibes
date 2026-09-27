@@ -1599,6 +1599,9 @@ public class AbilityActivationService {
             for (CardEffect effect : abilityEffects) {
                 if (effect instanceof ActivationCostModifierEffect modifier) {
                     int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                    if (!modifier.modifiesGenericCost()) {
+                        continue;
+                    }
                     if (modifier.reducesGenericCost()) {
                         int reduction = Math.min(
                                 amount, Math.max(0, genericCost + additionalGenericCost));
@@ -2324,6 +2327,9 @@ public class AbilityActivationService {
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ActivationCostModifierEffect modifier) {
                 int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                if (!modifier.modifiesGenericCost()) {
+                    continue;
+                }
                 if (modifier.reducesGenericCost()) {
                     int reduction = Math.min(
                             amount, Math.max(0, genericCost + additionalGenericCost));
@@ -3612,6 +3618,9 @@ public class AbilityActivationService {
             if (pool != null && promotedAbilityOnlyMana) {
                 pool.restorePromotedAbilityOnlyMana();
             }
+            if (pool != null) {
+                pool.restorePromotedPowerUpAbilityOnlyMana();
+            }
             if (pool != null && promotedLandAbilityOnlyMana) {
                 pool.restorePromotedLandAbilityOnlyMana();
             }
@@ -3673,17 +3682,23 @@ public class AbilityActivationService {
             activatedAbilityExecutionService.performSpecialAction(gameData, player, permanent, ability);
             return;
         }
+        if (activationPool != null && ability.isPowerUpAbility()) {
+            activationPool.promotePowerUpAbilityOnlyMana();
+        }
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
-        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
+                || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
             abilityCost = null;
         }
         gameData.abilityActivationTreasureManaSpent.remove(permanent.getCard().getId());
         ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
-        if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
-            effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
-        }
         if (ability.getSourceCounterScaledTargetsType() != null) {
             effectiveXValue = permanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
+        }
+        effectiveManaCost = applyActivatedAbilityManaCostReductions(
+                gameData, playerId, permanent, ability, targetId, effectiveXValue, effectiveManaCost);
+        if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
         }
         List<CardEffect> activationEffects = abilityEffects;
         if (ability.isModalChoiceAtActivation()) {
@@ -4372,7 +4387,7 @@ public class AbilityActivationService {
                             subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
                             additionalGenericCost - creatureManaPaymentCount, ability.getXColorRestrictions(), colorlessPermanentContext);
                 } else {
-                    payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                    payManaCost(effectiveManaCost, gameData, playerId, effectiveXValue, artifactContext, myrContext,
                             subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
                             additionalGenericCost - creatureManaPaymentCount, ability.getXColorRestrictions(), colorlessPermanentContext);
                 }
@@ -5856,6 +5871,9 @@ public class AbilityActivationService {
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ActivationCostModifierEffect modifier) {
                 int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                if (!modifier.modifiesGenericCost()) {
+                    continue;
+                }
                 if (modifier.reducesGenericCost()) {
                     int reduction = Math.min(
                             amount, Math.max(0, genericCost + additionalGenericCost));
@@ -5866,6 +5884,27 @@ public class AbilityActivationService {
             }
         }
         return additionalGenericCost;
+    }
+
+    private ManaCost applyActivatedAbilityManaCostReductions(
+            GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability,
+            UUID targetId, int xValue, ManaCost cost) {
+        if (cost == null) {
+            return null;
+        }
+        ManaCost effectiveCost = cost;
+        AmountContext context = new AmountContext(playerId, permanent, targetId, xValue, 0,
+                false, null, List.of(), permanent.getCard());
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof ActivationCostModifierEffect modifier) {
+                int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), context);
+                ManaCost reduction = modifier.manaCostReduction(amount);
+                if (reduction != null) {
+                    effectiveCost = effectiveCost.reducedBy(reduction);
+                }
+            }
+        }
+        return effectiveCost;
     }
 
     /**
@@ -6136,7 +6175,8 @@ public class AbilityActivationService {
             }
         }
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
-        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
+                || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
             abilityCost = null;
         }
         if (ability.isManaCostOfEnchantedPermanent() && abilityCost == null) {
@@ -6146,6 +6186,8 @@ public class AbilityActivationService {
                 gameData, playerId, permanent, ability, abilityCost, xValue,
                 additionalGenericCost, selectedCreatureManaPaymentIds);
         ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
+        effectiveManaCost = applyActivatedAbilityManaCostReductions(
+                gameData, playerId, permanent, ability, null, xValue, effectiveManaCost);
         CastingCostService.ImposedSacrificeRequirement imposedTax = ability.isPowerUpAbility()
                 ? castingCostService.getImposedSacrificeRequirement(gameData, effectiveManaCost, false, true)
                 : castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);
@@ -6628,6 +6670,9 @@ public class AbilityActivationService {
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
+        }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting,
                 targetIds, damageAssignments, sacrificedCardIds);
@@ -6657,6 +6702,9 @@ public class AbilityActivationService {
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
+        }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
         if (chosenCostPermanentIds == null || chosenCostPermanentIds.isEmpty()) {
             activatedAbilityExecutionService.completeActivationAfterCosts(
@@ -6692,6 +6740,9 @@ public class AbilityActivationService {
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
+        }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
                 nonTargeting, targetIds, damageAssignments, List.of(), List.of(), discardedCardSnapshot,
@@ -6707,6 +6758,9 @@ public class AbilityActivationService {
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
+        }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,

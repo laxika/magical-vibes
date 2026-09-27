@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -64,6 +65,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -313,6 +315,26 @@ public class EtbTriggerService {
                 .filter(e -> !isEntryReplacementEffect(e))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
+            List<OncePerTurnTriggerEffect> oncePerTurnEffects = new ArrayList<>();
+            triggeredEffects = triggeredEffects.stream()
+                    .filter(effect -> {
+                        if (!(effect instanceof OncePerTurnTriggerEffect once)) return true;
+                        if (enteringPermanent != null
+                                && OncePerTurnTriggerSupport.unwrapIfAvailable(
+                                gameData, enteringPermanent, once) == null) {
+                            return false;
+                        }
+                        oncePerTurnEffects.add(once);
+                        return true;
+                    })
+                    .map(effect -> effect instanceof OncePerTurnTriggerEffect once
+                            ? once.wrapped() : effect)
+                    .toList();
+            if (triggeredEffects.isEmpty()) {
+                processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
+                return;
+            }
+
             // Extract per-mode targetFilter from ChooseOneEffect (if present)
             TargetFilter modeTargetFilter = null;
             for (CardEffect e : triggeredEffects) {
@@ -433,6 +455,11 @@ public class EtbTriggerService {
                 queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                         mandatoryEffects, modeTargetFilter, extraTriggerCopies, etbMode, xValue,
                         repeatedAdditionalCosts, convokeCreatureIds);
+                if (!oncePerTurnEffects.isEmpty() && enteringPermanent != null) {
+                    for (OncePerTurnTriggerEffect once : oncePerTurnEffects) {
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, enteringPermanent, once);
+                    }
+                }
             }
         }
 
@@ -933,7 +960,10 @@ public class EtbTriggerService {
         // Handle graveyard exile-and-may-play effects: target card in controller's graveyard
         for (CardEffect effect : graveyardMayPlayEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardMayPlayETBTargeting(gameData, controllerId, card, List.of(effect));
+                UUID sourcePermanentId = sourceBattlefield != null && !sourceBattlefield.isEmpty()
+                        ? sourceBattlefield.getLast().getId() : null;
+                graveyardTargetingService.handleGraveyardMayPlayETBTargeting(
+                        gameData, controllerId, card, List.of(effect), sourcePermanentId);
             }
         }
 

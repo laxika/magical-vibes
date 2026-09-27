@@ -3783,7 +3783,8 @@ public class StepTriggerService {
         Permanent primaryPermanent = null;
         for (Card card : returningCards) {
             Permanent perm = new Permanent(card);
-            if (pending.returnTapped()) {
+            if (pending.returnTapped()
+                    || (pending.returnLandsTapped() && card.hasType(CardType.LAND))) {
                 perm.tap();
             }
             if (pending.returnAttacking() && attackTargetId != null) {

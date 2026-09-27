@@ -18,6 +18,7 @@ import java.util.List;
  * Draw a card.
  */
 @CardRegistration(set = "MSC", collectorNumber = "515")
+@CardRegistration(set = "MSC", collectorNumber = "836")
 public class CaptainsDefense extends Card {
 
     public CaptainsDefense() {

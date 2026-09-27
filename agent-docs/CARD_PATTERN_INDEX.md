@@ -1,5 +1,6 @@
 # CARD_PATTERN_INDEX
 | ETB draft from a spellbook, then perpetually grant the card a Food artifact type and sacrifice-for-life ability | `h/HinterlandChef.java` + `PerpetuallyGrantCardCharacteristicsEffect` |
+| non-hand spell-cast trigger plus a tapped mana/discard activation that exiles until a nonland and offers it for free | `n/NicoMinoruRunaway.java` + `SpellCastTriggerEffect` + `ExileTopUntilNonlandMayCastWithoutPayingManaEffect` |
 | ETB draft that gives the chosen card perpetual any-color casting and a self-cast bounce trigger | `o/OminousTraveler.java` + `DraftCardFromSpellbookEffect(..., chosenCardEffects)` + `PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect` |
 | upkeep draft from a spellbook, exile the choice, and grant end-of-turn play permission | `a/ArmsScavenger.java` + `DraftCardFromSpellbookEffect(..., true)` + `ReduceEquipCostEffect(1)` |
 | planeswalker with a perpetual hand-card choice, spellbook battlefield draft, and mass trample pump | `g/GarrukWrathOfTheWilds.java` + `ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect` + `DraftCardFromSpellbookEffect(..., false, true)` |

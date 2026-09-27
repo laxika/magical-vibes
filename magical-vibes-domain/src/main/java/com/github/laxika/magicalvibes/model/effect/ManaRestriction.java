@@ -283,6 +283,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to activate Power-up abilities (Quinjet Technician). */
+    record PowerUpAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addPowerUpAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "Power-up abilities only";
+        }
+    }
+
     /** Mana spendable only to activate abilities of land sources (Sunken Citadel). */
     record LandAbilities() implements ManaRestriction {
         @Override

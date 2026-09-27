@@ -331,6 +331,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPre
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterThanControllerExperienceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -3848,6 +3849,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueGreaterThanControllerExperienceCountersPredicate ignored -> false;
             case StackEntryManaValueEqualsSourcePowerPredicate ignored -> false;
             case StackEntryManaValueAtMostSourcePowerPredicate ignored -> false;
+            case StackEntryManaValuePowerOrToughnessEqualsPredicate ignored -> false;
             case StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate ignored -> false;
             case StackEntryManaValueParityMatchesSourceChosenParityPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;

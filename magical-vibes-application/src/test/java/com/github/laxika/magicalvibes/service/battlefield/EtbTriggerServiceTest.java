@@ -21,7 +21,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -96,6 +98,30 @@ class EtbTriggerServiceTest {
 
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(3);
+    }
+
+    @Test
+    void oncePerTurnEtbSkipsAfterTheSourceHasTriggered() {
+        Card creature = new Card();
+        creature.setName("Once-per-turn creature");
+        creature.setType(CardType.CREATURE);
+        SurveilEffect surveil = new SurveilEffect(1);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new OncePerTurnTriggerEffect(surveil));
+        Permanent permanent = new Permanent(creature);
+        gameData.playerBattlefields.get(controllerId).add(permanent);
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        assertThat(gameData.stack).singleElement()
+                .extracting(entry -> entry.getEffects().getFirst())
+                .isEqualTo(surveil);
+
+        gameData.stack.clear();
+        gameData.oncePerTurnTriggersFiredThisTurn.add(permanent.getId());
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        assertThat(gameData.stack).isEmpty();
     }
 
     @Test

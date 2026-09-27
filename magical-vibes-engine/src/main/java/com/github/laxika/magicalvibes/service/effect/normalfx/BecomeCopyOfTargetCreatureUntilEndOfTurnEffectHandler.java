@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +12,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -59,6 +63,8 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         String originalName = sourcePermanent.getCard().getName();
         BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect =
                 (BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) effect;
+        Card originalCard = sourcePermanent.getCard();
+        EffectRegistration retainedRegistration = findRetainedRegistration(originalCard, copyEffect);
         permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm,
                 copyEffect.powerOverride(), copyEffect.toughnessOverride(),
                 copyEffect.additionalTypesOverride());
@@ -87,6 +93,11 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             keywords.addAll(copyEffect.additionalKeywordsOverride());
             sourcePermanent.getCard().setKeywords(keywords);
         }
+        if (retainedRegistration != null) {
+            sourcePermanent.getCard().copyTargetingFrom(originalCard);
+            sourcePermanent.getCard().addEffect(copyEffect.retainedEffectSlot(),
+                    retainedRegistration.effect(), retainedRegistration.triggerMode());
+        }
         sourcePermanent.setCopyUntilEndOfTurn(true);
         // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card
         // swap above stores the copiable values; the floating effect carries the CR 613.7
@@ -100,5 +111,26 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";
         gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} becomes a copy of {} until end of turn", gameData.id, originalName, targetName);
+    }
+
+    private EffectRegistration findRetainedRegistration(
+            Card sourceCard, BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect) {
+        if (copyEffect.retainedEffectSlot() == null) {
+            return null;
+        }
+        return sourceCard.getEffectRegistrations(copyEffect.retainedEffectSlot()).stream()
+                .filter(registration -> containsEffect(registration.effect(), copyEffect))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean containsEffect(CardEffect candidate, CardEffect target) {
+        if (candidate.equals(target)) {
+            return true;
+        }
+        return candidate instanceof SequenceEffect sequence
+                && sequence.steps().stream().anyMatch(step -> containsEffect(step, target))
+                || candidate instanceof SpellCastTriggerEffect spellCastTrigger
+                && spellCastTrigger.resolvedEffects().stream().anyMatch(step -> containsEffect(step, target));
     }
 }

@@ -186,11 +186,12 @@ public class GameActionAvailabilityService {
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
                     continue;
                 }
-                if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+                if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
+                        || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
                     payable.add(i);
                     continue;
                 }
-                ManaPool pool = fullPool;
+                VirtualManaPool pool = fullPool;
                 if (gameQueryService.isLand(gameData, perm)) {
                     pool = new VirtualManaPool(fullPool);
                     pool.promoteLandAbilityOnlyMana();
@@ -207,6 +208,10 @@ public class GameActionAvailabilityService {
                         }
                     }
                     pool = poolWithoutSource;
+                }
+                if (ability.isPowerUpAbility()) {
+                    pool = new VirtualManaPool(pool);
+                    pool.promotePowerUpAbilityOnlyMana();
                 }
                 ManaCost manaCost = new ManaCost(abilityManaCost);
                 if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {

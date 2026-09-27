@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnContro
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
 
@@ -38,8 +40,13 @@ public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements 
         }
 
         List<Permanent> doubled = new ArrayList<>();
+        DoublePlusOneCountersOnControlledCreaturesEffect doublingEffect =
+                (DoublePlusOneCountersOnControlledCreaturesEffect) effect;
         for (Permanent permanent : new ArrayList<>(battlefield)) {
             if (!gameQueryService.isCreature(gameData, permanent)) continue;
+            if (doublingEffect.predicate() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, permanent, doublingEffect.predicate())) continue;
             if (gameQueryService.cantHaveCounters(gameData, permanent)) continue;
 
             int current = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -2376,6 +2378,27 @@ class StepTriggerServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(player1Id), argThat(Permanent::isTapped), any(), any());
+        }
+
+        @Test
+        @DisplayName("Pending exile returns can tap lands without tapping other permanents")
+        void pendingExileReturnsLandsTappedOnly() {
+            Card land = new Forest();
+            Card creature = new GrizzlyBears();
+            gd.addToExile(player1Id, land);
+            gd.addToExile(player1Id, creature);
+            gd.queueDelayedAction(new PendingExileReturn(land, player1Id, false, false,
+                    TurnStep.END_STEP, 0, List.of(creature), false, false, false, false,
+                    null, null, false, false, 0, null, 0, true));
+
+            sut.processPendingExileReturns(gd, TurnStep.END_STEP);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), argThat(permanent -> permanent.getCard() == land
+                            && permanent.isTapped()), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), argThat(permanent -> permanent.getCard() == creature
+                            && !permanent.isTapped()), any(), any());
         }
 
         @Test

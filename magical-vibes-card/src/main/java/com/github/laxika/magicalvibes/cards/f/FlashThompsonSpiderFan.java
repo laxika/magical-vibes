@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "7")
 @CardRegistration(set = "OM1", collectorNumber = "3")
+@CardRegistration(set = "MSC", collectorNumber = "772")
 public class FlashThompsonSpiderFan extends Card {
 
     public FlashThompsonSpiderFan() {

@@ -60,7 +60,8 @@ public record FlickerEffect(
         int counterAmountOnReturn,
         Set<CardSubtype> bonusSubtypes,
         boolean returnFaceDown,
-        boolean returnAttacking, boolean tapOnImmediateReturn) implements AttachedPermanentSelfTargetingEffect {
+        boolean returnAttacking, boolean tapOnImmediateReturn,
+        boolean returnLandsTapped) implements AttachedPermanentSelfTargetingEffect {
     public FlickerEffect(
         FlickerScope scope,
         PermanentPredicate filter,
@@ -85,7 +86,7 @@ public record FlickerEffect(
         Set<CardSubtype> bonusSubtypes,
         boolean returnFaceDown,
         boolean returnAttacking) {
-        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect, plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkersOnReturn, addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn, chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst, counterTypeOnReturn, counterAmountOnReturn, bonusSubtypes, returnFaceDown, returnAttacking, false);
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect, plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkersOnReturn, addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn, chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst, counterTypeOnReturn, counterAmountOnReturn, bonusSubtypes, returnFaceDown, returnAttacking, false, false);
     }
 
 
@@ -234,6 +235,14 @@ public record FlickerEffect(
                 TurnStep.END_STEP, returnTapped, null, null, 0, false, false);
     }
 
+    /** Exile target permanent, return it at the next end step, and return lands tapped. */
+    public static FlickerEffect exileTargetReturnAtEndStepWithLandsTapped() {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), false, false, false,
+                null, 0, Set.of(), false, false, false, true);
+    }
+
     /** Exile target permanent, returning it under its owner's control at that owner's next end step. */
     public static FlickerEffect exileTargetReturnAtOwnerNextEndStep() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
@@ -351,7 +360,7 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetReturningTapped() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, false, false,
-                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true);
+                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true, false);
     }
 
     /** Exile a target permanent matching {@code filter}, immediately return it under its owner's control. */
@@ -387,7 +396,7 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetUnderYourControlTappedAndAttacking() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, true, null, null, 0, true, false,
-                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true);
+                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true, false);
     }
 
     /** Immediate flicker that returns the permanent with {@code counters} +1/+1 counters (Daydream). */

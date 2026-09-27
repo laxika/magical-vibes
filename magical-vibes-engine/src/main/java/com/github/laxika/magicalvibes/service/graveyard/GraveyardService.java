@@ -687,6 +687,10 @@ public class GraveyardService {
         }
         if (!card.isToken()) {
             triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            if (sourceZone != Zone.BATTLEFIELD && card.hasType(CardType.ARTIFACT)) {
+                triggerCollectionService.checkAllyArtifactCardPutIntoGraveyardFromNonBattlefieldTriggers(
+                        gameData, ownerId, card);
+            }
             triggerCollectionService.checkNonblackCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
         if (!card.isToken() && card.hasType(CardType.CREATURE)) {

@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect
 import com.github.laxika.magicalvibes.model.effect.SpellCastingTimingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1157,7 +1158,25 @@ public class CastingPermissionService {
         Condition condition = card.getFlashCastCondition();
         return condition != null
                 && conditionEvaluationService.isMet(gameData, condition,
-                ConditionContext.forCasting(playerId).withXValue(xValue));
+                ConditionContext.forCasting(playerId)
+                        .withXValue(xValue)
+                        .withTeamworkCostPaid(hasAvailableTeamworkPayment(gameData, playerId, card)));
+    }
+
+    private boolean hasAvailableTeamworkPayment(GameData gameData, UUID playerId, Card card) {
+        TeamworkCost teamworkCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(TeamworkCost.class::isInstance)
+                .map(TeamworkCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (teamworkCost == null) {
+            return false;
+        }
+        int availablePower = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))
+                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                .sum();
+        return availablePower >= teamworkCost.requiredPower();
     }
 
     /**

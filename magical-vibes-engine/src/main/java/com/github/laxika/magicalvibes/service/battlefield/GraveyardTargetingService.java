@@ -809,7 +809,7 @@ public class GraveyardTargetingService {
     }
 
     public void handleGraveyardMayPlayETBTargeting(GameData gameData, UUID controllerId, Card card,
-                                                    List<CardEffect> effects) {
+                                                    List<CardEffect> effects, UUID sourcePermanentId) {
         ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect mayPlayEffect = effects.stream()
                 .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect)
                 .map(e -> (ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) e)
@@ -837,6 +837,7 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.card = card;
             gameData.graveyardTargetOperation.controllerId = controllerId;
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                     "Choose target card from your graveyard to exile.");
         }

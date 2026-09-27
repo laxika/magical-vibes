@@ -236,7 +236,8 @@ public class DiscardTriggerCollectorService {
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
         damage += gameQueryService.getControllerDamageToOpponentBonus(
-                gameData, match.controllerId(), discardingPlayerId);
+                gameData, match.controllerId(), discardingPlayerId, false,
+                match.permanent().getId());
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(discardingPlayerId) + "."));
