@@ -544,7 +544,9 @@ public class GameActionAvailabilityService {
                 .toList();
         boolean allEffectTargetsOptional = !declaredTargetEffects.isEmpty()
                 && declaredTargetEffects.stream()
-                .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        || effect instanceof IndependentlyTargetedGraveyardCardsEffect
+                        && effect.hasOptionalTarget()
                         || effect instanceof ReturnCardFromGraveyardEffect returnEffect
                         && returnEffect.upTo()
                         || effect instanceof DealDividedDamageEffect dividedDamage

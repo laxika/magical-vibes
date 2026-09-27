@@ -20,6 +20,12 @@ public interface IndependentlyTargetedGraveyardCardsEffect extends CardEffect {
         return java.util.Collections.nCopies(targetFilters().size(), 0);
     }
 
+    /** Whether every independent graveyard target group may be declined. */
+    @Override
+    default boolean hasOptionalTarget() {
+        return minimumTargetCounts().stream().allMatch(count -> count == 0);
+    }
+
     /** The graveyard scope for each target group; defaults to the controller's graveyard. */
     default List<GraveyardSearchScope> targetScopes() {
         return Collections.nCopies(targetFilters().size(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);

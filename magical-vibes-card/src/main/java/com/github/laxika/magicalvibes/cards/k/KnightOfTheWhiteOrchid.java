@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "SLD", collectorNumber = "1045")
 @CardRegistration(set = "PIO", collectorNumber = "21")
 @CardRegistration(set = "MOC", collectorNumber = "193")
+@CardRegistration(set = "C21", collectorNumber = "95")
 public class KnightOfTheWhiteOrchid extends Card {
 
     public KnightOfTheWhiteOrchid() {

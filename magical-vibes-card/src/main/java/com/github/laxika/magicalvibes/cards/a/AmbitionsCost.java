@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDR", collectorNumber = "38")
 @CardRegistration(set = "C15", collectorNumber = "113")
 @CardRegistration(set = "MOC", collectorNumber = "246")
+@CardRegistration(set = "C21", collectorNumber = "134")
 public class AmbitionsCost extends Card {
 
     public AmbitionsCost() {

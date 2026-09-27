@@ -1779,6 +1779,14 @@ public class CastingCostService {
                                                                             Card card, ManaPool pool,
                                                                             int additionalCost, Zone sourceZone) {
         if (sourceZone == null) sourceZone = Zone.HAND;
+        if (gameData.hasNextSpellPayLifeEqualToManaValue(playerId)
+                && gameData.getLife(playerId) >= card.getManaValue()
+                && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && canPayAdditionalManaCost(pool, additionalCost)) {
+            return new AlternativeCostSelection(null, false,
+                    new PayLifeEqualToSpellManaValueCost(), null, false);
+        }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent perm : bf) {

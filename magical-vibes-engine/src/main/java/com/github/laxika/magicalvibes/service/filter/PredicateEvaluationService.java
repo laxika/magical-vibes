@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCo
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
@@ -148,6 +149,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePl
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCouldProduceManaPredicate;
@@ -735,6 +737,8 @@ public class PredicateEvaluationService {
                     xValue == null || card.getManaValue() <= xValue;
             case CardManaValueLessThanXPredicate ignored ->
                     xValue != null && card.getManaValue() < xValue;
+            case CardManaValueEqualsXPredicate ignored ->
+                    xValue == null || card.getManaValue() == xValue;
             case CardMinManaValuePredicate p ->
                     card.getManaValue() + (p.includeXValue() && xValue != null
                             && card.getParsedManaCost() != null
@@ -1948,6 +1952,11 @@ public class PredicateEvaluationService {
             case PermanentControlledByPlayerPredicate p ->
                     gameData != null && p.playerId() != null
                             && p.playerId().equals(gameData.findControllerOf(permanent));
+            case PermanentControlledBySourceChosenPlayerPredicate ignored -> {
+                UUID chosenPlayerId = sourceChosenPlayerId(filterContext);
+                yield gameData != null && chosenPlayerId != null
+                        && chosenPlayerId.equals(gameData.findControllerOf(permanent));
+            }
             case PermanentControlledByActivePlayerPredicate ignored -> {
                 if (gameData == null || gameData.activePlayerId == null) {
                     yield false;
@@ -2698,6 +2707,12 @@ public class PredicateEvaluationService {
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
                 UUID currentControllerId = gameData == null ? null : gameData.findControllerOf(permanent);
                 yield sourceControllerId != null && sourceControllerId.equals(currentControllerId);
+            }
+            case PermanentControlledBySourceChosenPlayerPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID chosenPlayerId = sourceChosenPlayerId(context);
+                yield gameData != null && chosenPlayerId != null
+                        && chosenPlayerId.equals(gameData.findControllerOf(permanent));
             }
             case PermanentControlledByMonarchPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
@@ -3865,6 +3880,20 @@ public class PredicateEvaluationService {
             }
         }
         return null;
+    }
+
+    private UUID sourceChosenPlayerId(FilterContext context) {
+        if (context == null) {
+            return null;
+        }
+        Permanent source = context.sourcePermanentSnapshot();
+        if (source == null && context.gameData() != null && context.sourcePermanentId() != null) {
+            source = gameQueryService.findPermanentById(context.gameData(), context.sourcePermanentId());
+        }
+        if (source == null && context.gameData() != null && context.sourceCardId() != null) {
+            source = findPermanentByOriginalCardId(context.gameData(), context.sourceCardId());
+        }
+        return source == null ? null : source.getRememberedTargetPlayerId();
     }
 
     /**

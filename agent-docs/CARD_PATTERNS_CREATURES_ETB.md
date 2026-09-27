@@ -1,5 +1,7 @@
 # Card Patterns: Vanilla, Keyword & ETB Creatures
 
+| ETB +1/+1 counters equal to total mana value of own instants and sorceries in graveyard | `i/InfernoProject.java` | ON_ENTER_BATTLEFIELD EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, TotalManaValueOfCardsInGraveyard(CardAnyOfPredicate(INSTANT, SORCERY), CONTROLLER)) |
+
 | ETB during declare attackers may reselect an attacking creature's target | `p/PortalMage.java` | `target(TargetFilters.attackingCreature()).addEffect(ON_ENTER_BATTLEFIELD, ConditionalEffect(new DuringDeclareAttackers(), MayEffect(new ReselectAttackingCreatureAttackTargetEffect(), ...)))`; the original attacker is chosen at trigger time and the replacement attack target is chosen on resolution using current attack legality |
 
 All paths relative to `cards/`.

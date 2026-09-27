@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "KLR", collectorNumber = "267")
 @CardRegistration(set = "BRR", collectorNumber = "49")
 @CardRegistration(set = "MOC", collectorNumber = "373")
+@CardRegistration(set = "C21", collectorNumber = "260")
 public class ScrapTrawler extends Card {
 
     public ScrapTrawler() {

@@ -67,6 +67,9 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
+            if (typedEffect.recordRevealedCount()) {
+                entry.setEventValue(0);
+            }
             if (shuffleLibrary && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
@@ -84,6 +87,10 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
                 foundCard = card;
                 break;
             }
+        }
+
+        if (typedEffect.recordRevealedCount()) {
+            entry.setEventValue(revealedCards.size());
         }
 
         String revealedNames = revealedCards.stream()

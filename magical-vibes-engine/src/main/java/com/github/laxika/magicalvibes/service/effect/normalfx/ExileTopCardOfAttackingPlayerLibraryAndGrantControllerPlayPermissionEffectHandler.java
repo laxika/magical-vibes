@@ -1,0 +1,62 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
+
+/** Resolves Cunning Rhetoric's attack trigger. */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffectHandler
+        implements NormalEffectHandlerBean {
+
+    private final ExileService exileService;
+    private final GameLogService gameLogService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID attackingPlayerId = entry.getTargetId();
+        UUID controllerId = entry.getControllerId();
+        if (attackingPlayerId == null || controllerId == null) {
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(attackingPlayerId);
+        String attackingPlayerName = gameData.playerIdToName.get(attackingPlayerId);
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    attackingPlayerName + "'s library is empty — nothing to exile."));
+            return;
+        }
+
+        Card topCard = deck.removeFirst();
+        exileService.exileCard(gameData, attackingPlayerId, topCard);
+        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
+        gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(attackingPlayerName + " exiles ").card(topCard)
+                .text(" from the top of their library — " + controllerName
+                        + " may play it for as long as it remains exiled.").build());
+        log.info("Game {} - {} exiles {} from the top of their library; {} may play it while it remains exiled",
+                gameData.id, attackingPlayerName, topCard.getName(), controllerName);
+    }
+}

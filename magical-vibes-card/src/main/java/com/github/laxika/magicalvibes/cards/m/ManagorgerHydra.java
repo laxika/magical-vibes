@@ -10,6 +10,7 @@ import java.util.Set;
 @CardRegistration(set = "ORI", collectorNumber = "186")
 @CardRegistration(set = "SLD", collectorNumber = "306")
 @CardRegistration(set = "MOC", collectorNumber = "307")
+@CardRegistration(set = "C21", collectorNumber = "199")
 public class ManagorgerHydra extends Card {
 
     public ManagorgerHydra() {

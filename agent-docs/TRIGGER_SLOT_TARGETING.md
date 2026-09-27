@@ -400,6 +400,10 @@ event caused by the controller, including poison counters, and uses the spell-ta
 event when the controller puts one or more counters of any kind on another creature, regardless of
 that creature's controller; non-targeting and captures the counter kind, amount, and creature for
 resolution),
+`ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL` (Bold Plagiarist; fires once per placement
+event when an opponent puts one or more counters on a creature they control; the trigger remains
+controlled by Bold Plagiarist's controller and captures the opponent who placed the counters so the
+same number and kind are placed by that opponent),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
 the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
 is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same

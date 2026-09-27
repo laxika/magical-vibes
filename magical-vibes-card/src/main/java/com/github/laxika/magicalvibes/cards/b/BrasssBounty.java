@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "FDN", collectorNumber = "190")
 @CardRegistration(set = "RIX", collectorNumber = "94")
 @CardRegistration(set = "MOC", collectorNumber = "272")
+@CardRegistration(set = "C21", collectorNumber = "160")
 public class BrasssBounty extends Card {
 
     public BrasssBounty() {

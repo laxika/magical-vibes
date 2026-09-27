@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "141")
 @CardRegistration(set = "GK2", collectorNumber = "39")
+@CardRegistration(set = "C21", collectorNumber = "215")
 public class DebtorsKnell extends Card {
 
     public DebtorsKnell() {

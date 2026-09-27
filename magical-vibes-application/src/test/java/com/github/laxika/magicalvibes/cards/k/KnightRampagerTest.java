@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KnightRampager.class, Murder.class, JaceBeleren.class})
+@CardUsed({KnightRampager.class, Murder.class, JaceBeleren.class, LeylineOfSanctity.class})
 class KnightRampagerTest extends BaseCardTest {
 
     @Test
@@ -57,6 +58,18 @@ class KnightRampagerTest extends BaseCardTest {
 
         harness.assertLife(player2, 16);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The random target excludes an opponent with hexproof")
+    void deathTriggerCannotTargetHexproofOpponent() {
+        Permanent knight = addReadyKnight(player1);
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setLife(player2, 20);
+
+        killKnight(knight);
+
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addReadyKnight(Player player) {

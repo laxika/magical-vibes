@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "141")
+@CardRegistration(set = "C21", collectorNumber = "14")
 public class CombatCalligrapher extends Card {
 
     public CombatCalligrapher() {

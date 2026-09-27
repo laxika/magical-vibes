@@ -304,6 +304,7 @@ public enum CardSet {
     SET_CMD("CMD"),
     SET_C15("C15"),
     SET_C20("C20"),
+    SET_C21("C21"),
     SET_GN2("GN2"),
     SET_GN3("GN3"),
     SET_GK2("GK2"),

@@ -11,21 +11,30 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param enterTappedAndAttacking if true, a battlefield card enters tapped and attacking after its
  *                                controller chooses a legal attack destination
+ * @param recordRevealedCount if true, stores the number of revealed cards in the stack entry's
+ *                            event value for a following effect to use
  */
 public record RevealUntilCardPredicateRestOnBottomRandomEffect(
         CardPredicate predicate,
         LibrarySearchDestination destination,
-        boolean enterTappedAndAttacking
+        boolean enterTappedAndAttacking,
+        boolean recordRevealedCount
 ) implements CardEffect {
 
     public RevealUntilCardPredicateRestOnBottomRandomEffect(
             CardPredicate predicate, LibrarySearchDestination destination) {
-        this(predicate, destination, false);
+        this(predicate, destination, false, false);
+    }
+
+    public RevealUntilCardPredicateRestOnBottomRandomEffect(
+            CardPredicate predicate, LibrarySearchDestination destination,
+            boolean enterTappedAndAttacking) {
+        this(predicate, destination, enterTappedAndAttacking, false);
     }
 
     public static RevealUntilCardPredicateRestOnBottomRandomEffect tappedAndAttacking(
             CardPredicate predicate) {
         return new RevealUntilCardPredicateRestOnBottomRandomEffect(
-                predicate, LibrarySearchDestination.BATTLEFIELD, true);
+                predicate, LibrarySearchDestination.BATTLEFIELD, true, false);
     }
 }

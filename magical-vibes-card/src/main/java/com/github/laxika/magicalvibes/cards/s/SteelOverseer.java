@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "M20", collectorNumber = "239")
 @CardRegistration(set = "DDF", collectorNumber = "44")
 @CardRegistration(set = "MPS", collectorNumber = "27")
+@CardRegistration(set = "C21", collectorNumber = "267")
 public class SteelOverseer extends Card {
 
     public SteelOverseer() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "162")
+@CardRegistration(set = "C21", collectorNumber = "229")
 public class SpittingImage extends Card {
 
     public SpittingImage() {

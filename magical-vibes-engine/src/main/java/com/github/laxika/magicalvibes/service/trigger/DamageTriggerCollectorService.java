@@ -1182,6 +1182,30 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DAMAGE_PREVENTED)
+    private boolean handleControllerDamagePreventedDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                perm.getId());
+        entry.setEventValue(dc.amount());
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} ON_CONTROLLER_DAMAGE_PREVENTED trigger fires ({} damage prevented)",
+                gameData.id, perm.getCard().getName(), dc.amount());
+        return true;
+    }
+
     @CollectsTrigger(value = SacrificePermanentsOrLoseGameEffect.class,
             slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageSacrificeOrLose(TriggerMatchContext match,

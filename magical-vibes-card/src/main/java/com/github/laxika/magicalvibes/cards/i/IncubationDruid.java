@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "131")
 @CardRegistration(set = "MOC", collectorNumber = "302")
+@CardRegistration(set = "C21", collectorNumber = "195")
 @CardRegistration(set = "NCC", collectorNumber = "296")
 public class IncubationDruid extends Card {
 

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -322,6 +323,25 @@ public class AsEntersInteractionService {
                                 convokeCreatureIds));
                 playerInputService.beginAnyTargetChoice(gameData, controllerId, new ArrayList<>(validIds),
                         List.of(controllerId), "Choose a nonland permanent, or choose yourself to decline.");
+                return;
+            }
+        }
+
+        boolean needsOpponentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance);
+        if (needsOpponentChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            UUID choiceControllerId = controllerId;
+            List<UUID> validOpponentIds = gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(choiceControllerId))
+                    .toList();
+            if (!validOpponentIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChoosePlayerAsEnter(
+                        justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                        etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                        convokeCreatureIds));
+                playerInputService.beginPlayerChoice(gameData, controllerId,
+                        new ArrayList<>(validOpponentIds), "Secretly choose an opponent.");
                 return;
             }
         }

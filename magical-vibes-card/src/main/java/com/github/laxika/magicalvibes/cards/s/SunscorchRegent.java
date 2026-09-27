@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "41")
 @CardRegistration(set = "MOC", collectorNumber = "209")
+@CardRegistration(set = "C21", collectorNumber = "107")
 public class SunscorchRegent extends Card {
 
     public SunscorchRegent() {

@@ -13,6 +13,7 @@ import java.util.Set;
 @CardRegistration(set = "TSR", collectorNumber = "344")
 @CardRegistration(set = "C14", collectorNumber = "35")
 @CardRegistration(set = "MOC", collectorNumber = "277")
+@CardRegistration(set = "C21", collectorNumber = "169")
 public class FeldonOfTheThirdPath extends Card {
 
     public FeldonOfTheThirdPath() {

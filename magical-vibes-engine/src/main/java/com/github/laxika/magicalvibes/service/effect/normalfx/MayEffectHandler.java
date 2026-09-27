@@ -82,6 +82,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     ? targetId
                     : gameQueryService.findPermanentController(gameData, targetId);
             case TRIGGERING_SPELL_CONTROLLER -> targetId;
+            case SOURCE_OWNER -> sourceOwnerId(entry);
         };
         if (choicePlayerId == null) {
             gameData.resolvingMayEffectFromStack = false;
@@ -146,6 +147,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         return entry.getTriggeringPermanentControllerId() != null
                 ? entry.getTriggeringPermanentControllerId() : fallback;
+    }
+
+    private UUID sourceOwnerId(StackEntry entry) {
+        return entry.getCard() != null && entry.getCard().getOwnerId() != null
+                ? entry.getCard().getOwnerId() : entry.getControllerId();
     }
 
     private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {

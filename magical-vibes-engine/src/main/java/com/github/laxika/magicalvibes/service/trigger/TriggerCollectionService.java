@@ -12713,6 +12713,38 @@ public class TriggerCollectionService {
                 }
             }
         });
+
+        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
+        if (enteringPermanent == null) return;
+
+        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (watcher.slot() != EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD
+                    || watcher.controllerId().equals(enteringCreatureControllerId)) {
+                continue;
+            }
+
+            CardEffect resolvedEffect = unwrapTriggeringCardConditional(
+                    watcher.effect(), enteringCreature, gameData, watcher.controllerId());
+            if (resolvedEffect == null) continue;
+
+            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, enteringPermanent.getId(), 0);
+        }
+    }
+
+    /** Handles "Whenever damage that would be dealt to you is prevented, ..." triggers. */
+    public void checkControllerDamagePreventedTriggers(GameData gameData, UUID damagedPlayerId, int amount) {
+        if (amount <= 0) return;
+
+        List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
+        if (damagedPlayerBattlefield == null) return;
+
+        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, null, null);
+        for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DAMAGE_PREVENTED)) {
+                var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
+                dispatch(match, EffectSlot.ON_CONTROLLER_DAMAGE_PREVENTED, effect, ctx);
+            }
+        }
     }
 
     /** "Whenever a land enters under an opponent's control" (ON_OPPONENT_LAND_ENTERS_BATTLEFIELD). */
