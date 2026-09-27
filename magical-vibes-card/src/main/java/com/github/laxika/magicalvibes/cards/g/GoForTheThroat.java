@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "163")
 @CardRegistration(set = "SLZ", collectorNumber = "284")
 @CardRegistration(set = "MOC", collectorNumber = "250")
+@CardRegistration(set = "40K", collectorNumber = "201")
 @CardRegistration(set = "LTC", collectorNumber = "201")
 public class GoForTheThroat extends Card {
 

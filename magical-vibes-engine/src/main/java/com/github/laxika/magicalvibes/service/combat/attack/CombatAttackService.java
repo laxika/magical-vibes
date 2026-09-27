@@ -148,6 +148,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
@@ -3094,7 +3095,7 @@ public class CombatAttackService {
 
     /**
      * Returns true if an opponent controls a permanent with
-     * {@link OpponentsMustAttackControllerEffect}, forcing this player to attack
+     * {@link OpponentsMustAttackRequirementEffect}, forcing this player to attack
      * with at least one creature each combat if able. Respects attack tax exemption
      * (CR 508.1d — the player is not required to pay optional attack costs).
      */
@@ -3111,7 +3112,7 @@ public class CombatAttackService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof OpponentsMustAttackControllerEffect) {
+                    if (effect instanceof OpponentsMustAttackRequirementEffect) {
                         return true;
                     }
                 }

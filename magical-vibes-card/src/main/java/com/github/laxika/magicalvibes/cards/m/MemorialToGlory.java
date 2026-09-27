@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "244")
+@CardRegistration(set = "40K", collectorNumber = "283")
 public class MemorialToGlory extends Card {
 
     public MemorialToGlory() {

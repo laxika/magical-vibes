@@ -164,6 +164,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Intellectual Offering: choose an opponent for one of its two independent modes. */
     record ChooseOpponentDrawAndUntap(UUID controllerId, boolean untapChoice, String sourceCardName)
             implements PermanentChoiceContext {}
+    /** Triarch Stalker: choose the opponent remembered by its targeting relay. */
+    record ChooseOpponentForTargetingRelay(UUID controllerId, UUID sourcePermanentId, String sourceCardName)
+            implements PermanentChoiceContext {}
     /** Sylvan Offering: choose the opponent who creates tokens alongside the controller. */
     record ChooseOpponentEachCreatesTokens(UUID controllerId,
                                            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect token,
@@ -215,6 +218,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sacrificingPlayerId, UUID tokenControllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
             int toughnessThreshold, int normalAmount, int increasedAmount)
+            implements PermanentChoiceContext {}
+
+    /** Entrapment Maneuver: the target player chooses an attacking creature to sacrifice, then
+     *  the spell's controller creates tokens equal to that creature's toughness. */
+    record TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness(
+            UUID sacrificingPlayerId, StackEntry resolvingEntry, CreateTokenEffect tokenTemplate)
             implements PermanentChoiceContext {}
 
     /** Wasitora: the damaged player chooses a creature to sacrifice, or the source controller
@@ -276,6 +285,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Highcliff Felidar: the controller chooses a greatest-power creature for one opponent. */
     record EachOpponentChoosesGreatestPowerCreatureToDestroy(
+            UUID controllerId,
+            Card sourceCard,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
+
+    /** The Horus Heresy: starting with the Saga's controller, each player chooses a creature to destroy. */
+    record EachPlayerChoosesCreatureToDestroy(
+            UUID controllerId,
+            Card sourceCard,
+            UUID choosingPlayerId,
+            List<UUID> remainingChooserIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
+
+    /** Chaos Defiler: the controller chooses one nonland permanent for an opponent. */
+    record ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom(
             UUID controllerId,
             Card sourceCard,
             UUID opponentId,
@@ -1369,6 +1396,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Pattern Matcher: choose another controlled creature whose name bounds the library search. */
     record PatternMatcherCreatureChoice(UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** Canoptek Wraith: choose a land before searching for same-name basic lands. */
+    record SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand(UUID controllerId)
+            implements PermanentChoiceContext {}
 
     /** Deepfathom Echo: choose another creature the source controller controls to copy until end of turn. */
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -1327,6 +1328,12 @@ public class GameQueryService {
                 && card.getManaCost() != null && !card.getManaCost().isBlank()) {
             result.add(Card.embalmAbility(card.getManaCost()));
         }
+        if (card != null) {
+            String unearthCost = gameData.cardsGrantedUnearthUntilEndOfTurn.get(card.getId());
+            if (unearthCost != null && !unearthCost.isBlank()) {
+                result.add(Card.unearthAbility(unearthCost));
+            }
+        }
         if (card != null && gameData.cardsGrantedPerpetualUnearth.contains(card.getId())
                 && card.getManaCost() != null && !card.getManaCost().isBlank()
                 && !cardHasUnearthAbilityBeforePerpetualGrant(gameData, ownerId, card)) {
@@ -1343,6 +1350,9 @@ public class GameQueryService {
         }
         if (gameData != null && gameData.cardsGrantedPerpetualUnearth.contains(card.getId())
                 && card.getManaCost() != null && !card.getManaCost().isBlank()) {
+            return true;
+        }
+        if (gameData != null && gameData.cardsGrantedUnearthUntilEndOfTurn.containsKey(card.getId())) {
             return true;
         }
         return cardHasUnearthAbilityBeforePerpetualGrant(gameData, ownerId, card);
@@ -6354,16 +6364,26 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the target permanent has protection from mana value N or greater
-     * and the source's mana value meets that threshold (e.g. Mistmeadow Skulk).
+     * Returns {@code true} if the target permanent has protection from a mana-value threshold
+     * and the source's mana value meets it (e.g. Mistmeadow Skulk or Reaver Titan).
      */
-    private boolean hasProtectionFromSourceManaValue(Permanent target, Card sourceCard) {
+    private boolean hasProtectionFromSourceManaValue(GameData gameData, Permanent target, Card sourceCard) {
         if (target == null) {
             return false;
         }
         int chosenNumber = target.getChosenNumber();
         var chosenParity = target.getChosenManaValueParity();
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+        if (hasProtectionFromSourceManaValue(
+                target.getCard().getEffects(EffectSlot.STATIC), sourceCard, chosenNumber, chosenParity)) {
+            return true;
+        }
+        return hasProtectionFromSourceManaValue(
+                computeStaticBonus(gameData, target).grantedEffects(), sourceCard, chosenNumber, chosenParity);
+    }
+
+    private boolean hasProtectionFromSourceManaValue(Iterable<CardEffect> effects, Card sourceCard,
+                                                      int chosenNumber, ManaValueParity chosenParity) {
+        for (CardEffect effect : effects) {
             if (effect instanceof ProtectionGrantingEffect protection) {
                 if (protection.protectionFromManaValueParity()
                         && chosenParity != null
@@ -6372,6 +6392,10 @@ public class GameQueryService {
                 }
                 if (protection.protectionFromManaValueAtLeast().isPresent()
                         && sourceCard.getManaValue() >= protection.protectionFromManaValueAtLeast().getAsInt()) {
+                    return true;
+                }
+                if (protection.protectionFromManaValueAtMost().isPresent()
+                        && sourceCard.getManaValue() <= protection.protectionFromManaValueAtMost().getAsInt()) {
                     return true;
                 }
                 if (protection.protectionFromManaValuesOtherThanChosen().contains(chosenNumber)
@@ -6424,7 +6448,7 @@ public class GameQueryService {
                 || hasProtectionFromModifiedCreatures(gameData, target, source)
                 || hasProtectionFromPermanentsWithCounters(gameData, target, source)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, source)
-                || hasProtectionFromSourceManaValue(target, source.getCard());
+                || hasProtectionFromSourceManaValue(gameData, target, source.getCard());
     }
 
     private boolean hasProtectionFromRingBearer(GameData gameData, Permanent target, Permanent source) {
@@ -6505,7 +6529,7 @@ public class GameQueryService {
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
-                || hasProtectionFromSourceManaValue(target, sourceCard);
+                || hasProtectionFromSourceManaValue(gameData, target, sourceCard);
     }
 
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
@@ -6531,7 +6555,7 @@ public class GameQueryService {
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
-                || hasProtectionFromSourceManaValue(target, sourceCard);
+                || hasProtectionFromSourceManaValue(gameData, target, sourceCard);
     }
 
     public boolean hasProtectionFromColoredSpellSource(GameData gameData, Permanent target, Card sourceCard) {

@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -76,27 +77,34 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
         PermanentHasSubtypePredicate subtypePredicate = new PermanentHasSubtypePredicate(chosenSubtype);
         int[] affectedCount = {0};
 
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)
-                        && predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, subtypePredicate, filterContext)) {
-                    permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
-                    permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
-                    Set<Keyword> grantableKeywords = boost.keywords().stream()
-                            .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
-                            .collect(Collectors.toSet());
-                    if (!grantableKeywords.isEmpty()) {
-                        permanent.getGrantedKeywords().addAll(grantableKeywords);
-                        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                                UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
-                                new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
-                                permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
-                    }
-                    affectedCount[0]++;
+        Consumer<Permanent> applyToPermanent = permanent -> {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && predicateEvaluationService.matchesPermanentPredicate(
+                    permanent, subtypePredicate, filterContext)) {
+                permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
+                permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                Set<Keyword> grantableKeywords = boost.keywords().stream()
+                        .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
+                        .collect(Collectors.toSet());
+                if (!grantableKeywords.isEmpty()) {
+                    permanent.getGrantedKeywords().addAll(grantableKeywords);
+                    gameData.addFloatingEffect(new FloatingContinuousEffect(
+                            UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
+                            new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
+                            permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
                 }
+                affectedCount[0]++;
             }
-        });
+        };
+
+        if (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES) {
+            var battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                battlefield.forEach(applyToPermanent);
+            }
+        } else {
+            gameData.forEachBattlefield((playerId, battlefield) -> battlefield.forEach(applyToPermanent));
+        }
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())

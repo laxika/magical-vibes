@@ -195,6 +195,9 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeast targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeast(
                     gameData, permanentId, targetPlayerSacrifice);
+        } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness targetPlayerSacrifice) {
+            battlefieldHandler.handleTargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness(
+                    gameData, permanentId, targetPlayerSacrifice);
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureOrCreatesToken targetPlayerSacrificeOrToken) {
             battlefieldHandler.handleTargetPlayerSacrificesCreatureOrCreatesToken(
                     gameData, permanentId, targetPlayerSacrificeOrToken);
@@ -232,6 +235,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentDrawAndUntap chooseOpponent) {
             battlefieldHandler.handleChooseOpponentDrawAndUntap(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentForTargetingRelay chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentForTargetingRelay(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentEachCreatesTokens chooseOpponent) {
             battlefieldHandler.handleChooseOpponentEachCreatesTokens(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.InfernalOfferingOpponentChoice chooseOpponent) {
@@ -354,6 +359,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
         } else if (context instanceof PermanentChoiceContext.PatternMatcherCreatureChoice patternMatcher) {
             battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
+        } else if (context instanceof PermanentChoiceContext.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand chosenLand) {
+            battlefieldHandler.handleSearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand(
+                    gameData, permanentId, chosenLand);
         } else if (context instanceof PermanentChoiceContext.DeepfathomEchoCreatureChoice deepfathomEcho) {
             battlefieldHandler.handleDeepfathomEchoCreatureChoice(gameData, permanentId, deepfathomEcho);
         } else if (context instanceof PermanentChoiceContext.BrudicladTokenChoice brudicladToken) {
@@ -629,6 +637,11 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy) {
             battlefieldHandler.handleEachOpponentChoosesGreatestPowerCreatureToDestroy(gameData, permanentId, destroy);
+        } else if (context instanceof PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy destroy) {
+            battlefieldHandler.handleEachPlayerChoosesCreatureToDestroy(gameData, permanentId, destroy);
+        } else if (context instanceof PermanentChoiceContext.ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom destroy) {
+            battlefieldHandler.handleChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom(
+                    gameData, permanentId, destroy);
         } else if (context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken) {
             battlefieldHandler.handleEachOpponentCreatesTokenUnlessSacrificesCreature(gameData, permanentId,
                     sacrificeOrToken);

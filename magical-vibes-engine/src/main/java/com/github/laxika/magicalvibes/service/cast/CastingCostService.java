@@ -1433,7 +1433,16 @@ public class CastingCostService {
         int reduction = 0;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
+                CardEffect activeEffect = effect;
+                while (activeEffect instanceof ConditionalEffect conditional) {
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(perm, activatingPlayerId))) {
+                        activeEffect = null;
+                        break;
+                    }
+                    activeEffect = conditional.wrapped();
+                }
+                if (activeEffect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
                         && predicateEvaluationService.matchesCardPredicate(
                                 graveyardCard, reducer.affectedGraveyardCards(), null)) {
                     reduction += reducer.genericCostReduction();

@@ -34,7 +34,9 @@ public class CreateTokenForTargetPlayerEffectHandler implements NormalEffectHand
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenForTargetPlayerEffect) effect;
 
-        UUID targetPlayerId = entry.getTargetId();
+        UUID targetPlayerId = e.targetGroup() >= 0
+                ? entry.targetsForGroup(e.targetGroup()).stream().findFirst().orElse(null)
+                : entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             log.info("Game {} - CreateTokenForTargetPlayerEffect fizzles (no valid target player)", gameData.id);
             return;

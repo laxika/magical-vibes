@@ -41,6 +41,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryIsCopyPredicate,
         StackEntryNotTargetedByNamedCreatureAbilityPredicate,
         StackEntrySharesChosenNameWithSourcePredicate,
+        StackEntryIsCardExiledWithSourcePredicate,
         StackEntrySharesNameWithCardExiledWithSourcePredicate,
         StackEntrySourceIsColorlessPredicate,
         StackEntrySupertypeInPredicate,

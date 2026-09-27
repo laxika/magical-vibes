@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffe
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
@@ -1149,6 +1150,31 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
+            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
+    boolean handleEquippedCreatureDelayedReturn(TriggerMatchContext match,
+            RegisterDelayedReturnDyingCreatureUnderControlEffect effect, TriggerContext ctx) {
+        TriggerContext.EquippedCreatureDeath death = (TriggerContext.EquippedCreatureDeath) ctx;
+        if (death.dyingCard() == null) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setTriggeringCardId(death.dyingCard().getId());
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                "'s ability triggers (equipped creature died)."));
+        return true;
+    }
+
     @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
             slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureDeathExileAndTrack(TriggerMatchContext match,
@@ -1789,6 +1815,24 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId()
         ));
         logArtifactGraveyard(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_EXILED_FROM_BATTLEFIELD)
+    boolean handleArtifactExiledDefault(TriggerMatchContext match,
+                                        CardEffect effect, TriggerContext ctx) {
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (artifact exiled from battlefield)",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 
@@ -2812,6 +2856,37 @@ public class DeathTriggerCollectorService {
                 cd.dyingCreatureControllerId(),
                 match.permanent().getId()
         ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenCopyOfDyingCreatureEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathCreateTokenCopy(TriggerMatchContext match,
+            CreateTokenCopyOfDyingCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        if (death.dyingCard() == null) {
+            return false;
+        }
+
+        CardEffect resolvedEffect = effect.dyingCardId() == null
+                ? effect.boundToDyingCard(death.dyingCard().getId())
+                : effect;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolvedEffect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setTriggeringPermanentId(death.dyingPermanentId());
+        entry.rememberLastKnownPermanentCard(death.dyingPermanentId(), death.dyingCard());
+        entry.setTriggeringPermanentPowerAtTrigger(death.dyingCreaturePower());
+        entry.setEventValue(death.dyingCreaturePower());
+        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }

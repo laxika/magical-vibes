@@ -61,6 +61,7 @@ public class BattlefieldEntryService {
 
     public void putLandOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                        Zone landPlayZone) {
+        permanent.setEnteredFromZone(landPlayZone);
         if (beginLandCardNameChoice(gameData, controllerId, permanent, landPlayZone)) {
             return;
         }

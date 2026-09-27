@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HeraldsHornTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Choosing a creature type as Herald's Horn enters stores that type")
+    @DisplayName("Casting Herald's Horn prompts for a creature type")
     void choosesCreatureTypeOnEntry() {
         harness.setHand(player1, List.of(new HeraldsHorn()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -35,7 +35,7 @@ class HeraldsHornTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creature spells of the chosen type cost {1} less")
-    void reducesChosenCreatureTypeSpellCost() {
+    void reducesChosenTypeSpellCost() {
         addHorn(CardSubtype.BEAR);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -46,8 +46,8 @@ class HeraldsHornTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Creature spells of another type are not reduced")
-    void doesNotReduceAnotherCreatureType() {
+    @DisplayName("Creature spells without the chosen type are not reduced")
+    void doesNotReduceOtherTypeSpellCost() {
         addHorn(CardSubtype.BEAR);
         harness.setHand(player1, List.of(new WalkingCorpse()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -57,7 +57,7 @@ class HeraldsHornTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The upkeep ability may reveal a matching creature card to hand")
+    @DisplayName("The upkeep ability may reveal a matching top card to hand")
     void matchingTopCardGoesToHand() {
         addHorn(CardSubtype.BEAR);
         GrizzlyBears bear = new GrizzlyBears();
@@ -65,8 +65,7 @@ class HeraldsHornTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -74,7 +73,7 @@ class HeraldsHornTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A nonmatching top card stays on top of the library")
+    @DisplayName("A nonmatching top card stays on top")
     void nonmatchingTopCardStaysOnTop() {
         addHorn(CardSubtype.BEAR);
         WalkingCorpse corpse = new WalkingCorpse();
@@ -83,13 +82,13 @@ class HeraldsHornTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(corpse);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(corpse);
     }
 
     private Permanent addHorn(CardSubtype chosenSubtype) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new HeraldsHorn());
-        permanent.setChosenSubtype(chosenSubtype);
-        return permanent;
+        Permanent horn = harness.addToBattlefieldAndReturn(player1, new HeraldsHorn());
+        horn.setChosenSubtype(chosenSubtype);
+        return horn;
     }
 }

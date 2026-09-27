@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -83,6 +84,7 @@ public class MayCastHandlerService {
     private final TargetLegalityService targetLegalityService;
     private final CopySupport copySupport;
     private final ValidTargetService validTargetService;
+    private final LifeSupport lifeSupport;
 
     /** Resolves Word of Command's accepted card choice using the targeted player's normal cast/play rules. */
     public void handleWordOfCommandPlay(GameData gameData, Player player, boolean accepted,
@@ -1604,6 +1606,82 @@ public class MayCastHandlerService {
     /** Casts an accepted commander-zone offer without paying its mana cost. */
     public void castCardFromCommandZoneWithoutPaying(GameData gameData, Player player, Card card) {
         castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0, false, Zone.COMMAND);
+    }
+
+    public void handleMayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValue(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to cast ", cardToCast, "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        int handIndex = hand == null ? -1 : indexOfCard(hand, cardToCast.getId());
+        if (handIndex >= 0) {
+            if (!isEligibleArtifact(cardToCast) || !canPayManaValueLife(gameData, player, cardToCast)) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                        " can't be cast by paying life equal to its mana value."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
+            hand.remove(handIndex);
+            lifeSupport.applyLifePayment(gameData, player.getId(), cardToCast.getManaValue(),
+                    cardToCast.getName() + "'s alternate cost");
+            castCardFromHandPayingAlternateCost(gameData, player, cardToCast,
+                    cardToCast.getManaValue() + " life", "mana value");
+            return;
+        }
+
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());
+        UUID graveyardOwnerId = graveyardCard == null
+                ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToCast.getId());
+        if (graveyardCard == null || !player.getId().equals(graveyardOwnerId)
+                || !isEligibleArtifact(graveyardCard)
+                || !canPayManaValueLife(gameData, player, graveyardCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast by paying life equal to its mana value."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        lifeSupport.applyLifePayment(gameData, player.getId(), graveyardCard.getManaValue(),
+                graveyardCard.getName() + "'s alternate cost");
+        permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
+
+        StackEntry stackEntry = new StackEntry(
+                mapCardTypeToSpellType(graveyardCard),
+                graveyardCard,
+                player.getId(),
+                graveyardCard.getName(),
+                List.of(),
+                0,
+                (UUID) null,
+                null);
+        stackEntry.setSourceZone(Zone.GRAVEYARD);
+        stackEntry.setOwnerIdOverride(graveyardOwnerId);
+        gameData.stack.add(stackEntry);
+        gameData.recordSpellCast(player.getId(), graveyardCard);
+        gameData.priorityPassedBy.clear();
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " casts ", graveyardCard,
+                " from the graveyard by paying " + graveyardCard.getManaValue() + " life."));
+        triggerCollectionService.checkSpellCastTriggers(gameData, graveyardCard, player.getId(), false);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean isEligibleArtifact(Card card) {
+        return card.hasType(CardType.ARTIFACT) && !card.hasType(CardType.LAND);
+    }
+
+    private boolean canPayManaValueLife(GameData gameData, Player player, Card card) {
+        return gameData.getLife(player.getId()) >= card.getManaValue()
+                && gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                && gameQueryService.canPayLifeForCosts(gameData);
     }
 
     private void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
