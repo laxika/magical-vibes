@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "145")
 @CardRegistration(set = "PIO", collectorNumber = "200")
+@CardRegistration(set = "DSC", collectorNumber = "204")
 public class WhisperwoodElemental extends Card {
 
     public WhisperwoodElemental() {

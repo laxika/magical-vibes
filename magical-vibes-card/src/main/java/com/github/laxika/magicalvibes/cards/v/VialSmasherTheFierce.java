@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1202")
 @CardRegistration(set = "FCA", collectorNumber = "59")
+@CardRegistration(set = "DSC", collectorNumber = "239")
 public class VialSmasherTheFierce extends Card {
 
     public VialSmasherTheFierce() {

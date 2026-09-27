@@ -1008,7 +1008,7 @@ public class PlayerInputService {
                         sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
                         consumeModes, chosenModes, triggeringCardId, attackedTargetId);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
-                .filter(option -> !chosenModes.contains(option))
+                .filter(option -> effect.modesMayRepeat() || !chosenModes.contains(option))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList());
         if (effect.optional() && chosenModes.isEmpty()) {

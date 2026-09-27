@@ -393,6 +393,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `PlayerAttackedThisTurnPredicate` | `()` | players who declared at least one attacker this turn (evaluated against `GameData.playersDeclaredAttackersThisTurn`). Used by Fire and Brimstone's "target player who attacked this turn" |
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerIdPredicate` | `(UUID)` | exactly the specified player; useful after an effect has randomly selected a player |
+| `PlayerOtherThanPredicate` | `(UUID excludedPlayerId)` | any player other than the specified player; useful for "another target player" triggers |
 | `PlayerOtherThanSourceOwnerPredicate` | `()` | any player other than the owner of the ability's source permanent; source-relative |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerCastSorceryThisTurnPredicate` | `()` | players who cast at least one sorcery spell this turn (evaluated against `GameData.getSpellsCastThisTurn`). Used by Backdraft's player target |

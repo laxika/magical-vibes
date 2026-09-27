@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "154")
+@CardRegistration(set = "DSC", collectorNumber = "117")
 public class ExtravagantReplication extends Card {
 
     public ExtravagantReplication() {

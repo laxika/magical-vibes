@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "731")
 @CardRegistration(set = "CMM", collectorNumber = "762")
+@CardRegistration(set = "DSC", collectorNumber = "137")
 public class DemonOfFatesDesign extends Card {
 
     public DemonOfFatesDesign() {

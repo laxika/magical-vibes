@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
@@ -174,6 +175,9 @@ public class StackResolutionService {
         // opponent's spell or ability. Cleared once resolution finishes.
         gameData.currentlyResolvingControllerId = entry.getControllerId();
         try {
+            if (beginDirectTriggeredModal(gameData, entry)) {
+                return;
+            }
             switch (entry.getEntryType()) {
                 case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
                 case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
@@ -433,6 +437,19 @@ public class StackResolutionService {
                     entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
                     entry.getConvokeCreatureIds().size(), entry);
         }
+    }
+
+    private boolean beginDirectTriggeredModal(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                || entry.getEffectsToResolve().size() != 1
+                || !(entry.getEffectsToResolve().getFirst() instanceof TriggeredModalEffect modal)) {
+            return false;
+        }
+
+        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                entry.getCard(), entry.getControllerId(), modal.choice(), entry.getSourcePermanentId()));
+        triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+        return true;
     }
 
     private void queueWarpExileIfPresent(GameData gameData, StackEntry entry, Permanent permanent) {

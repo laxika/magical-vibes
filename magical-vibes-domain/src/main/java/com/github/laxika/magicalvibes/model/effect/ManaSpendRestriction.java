@@ -58,6 +58,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast instant and sorcery spells (Resonating Lute). */
     INSTANT_SORCERY_ONLY,
 
+    /** Spendable only to cast instant, sorcery, or one of the effect's printed subtypes (Séance Board). */
+    INSTANT_SORCERY_OR_SUBTYPES,
+
     /** Spendable only to cast artifact spells or activate abilities of artifacts (Vedalken Engineer). */
     ARTIFACT_SPELLS_OR_ABILITIES,
 

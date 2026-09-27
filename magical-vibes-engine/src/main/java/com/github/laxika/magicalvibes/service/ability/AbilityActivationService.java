@@ -4962,7 +4962,9 @@ public class AbilityActivationService {
                 effectiveXValue, resolutionTargetId, resolutionTargetZone, nonTargeting, effectiveIndex,
                 targetIds, damageAssignments, chosenCostPermanentIds, discardedCardSnapshot,
                 paidExiledCardSnapshot != null ? paidExiledCardSnapshot
-                        : exiledTopCardSnapshot != null ? exiledTopCardSnapshot : exiledGraveyardCardSnapshot,
+                        : exiledTopCardSnapshot != null ? exiledTopCardSnapshot
+                        : exiledGraveyardCardSnapshot != null ? exiledGraveyardCardSnapshot
+                        : trackedExiledCardSnapshot(activationEffects, permanent),
                 activatedAbilityExiledCardIds);
     }
 
@@ -5113,6 +5115,20 @@ public class AbilityActivationService {
         }
     }
 
+    private void recordTrackedExiledCard(CardEffect costEffect, Permanent source, Permanent chosen) {
+        if (costEffect instanceof CostEffect cost && cost.tracksExiledCard() && chosen != null) {
+            source.setChosenCard(chosen.getCard());
+        }
+    }
+
+    private Card trackedExiledCardSnapshot(List<CardEffect> abilityEffects, Permanent source) {
+        boolean tracksExiledCard = abilityEffects.stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::tracksExiledCard);
+        return tracksExiledCard ? source.getChosenCard() : null;
+    }
+
     /**
      * Remembers the land sacrificed to pay a {@link SacrificePermanentCost} when the ability adds
      * mana of a type that land could produce (Squandered Resources) or grants landwalk of its land
@@ -5183,6 +5199,7 @@ public class AbilityActivationService {
                                     abilityEffects, costDerivedXValue, damageAssignments, false);
                         }
                         recordSacrificedLandCard(gameData, handler.costEffect(), source, abilityIndex, chosen);
+                        recordTrackedExiledCard(handler.costEffect(), source, chosen);
                         handler.validateAndPay(gameData, player, chosen);
                         recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
                         recordTappedCostPermanent(handler.costEffect(), source, chosen.getId());
@@ -5377,6 +5394,7 @@ public class AbilityActivationService {
         }
         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
         recordSacrificedLandCard(gameData, context.costEffect(), sourcePermanent, effectiveIndex, chosen);
+        recordTrackedExiledCard(context.costEffect(), sourcePermanent, chosen);
 
         handler.validateAndPay(gameData, player, chosen);
         Integer paymentValue = handler.lastPaymentValue();
@@ -5400,6 +5418,7 @@ public class AbilityActivationService {
                 for (UUID id : validIds) {
                     Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
                     if (autoPay != null) {
+                        recordTrackedExiledCard(context.costEffect(), sourcePermanent, autoPay);
                         handler.validateAndPay(gameData, player, autoPay);
                         paymentValue = handler.lastPaymentValue();
                         if (paymentValue != null) {
@@ -5445,7 +5464,8 @@ public class AbilityActivationService {
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecordWithChosenPermanents(gameData, player, sourcePermanent, ability, activationEffects,
                 finalXValue, context.targetId(), context.targetZone(), nonTargeting, effectiveIndex,
-                context.targetIds(), context.damageAssignments(), chosenCostPermanentIds, null, null);
+                context.targetIds(), context.damageAssignments(), chosenCostPermanentIds, null,
+                trackedExiledCardSnapshot(activationEffects, sourcePermanent));
     }
 
     public void validateActivatedAbilityExileArtifactsChoice(

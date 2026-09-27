@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FRF", collectorNumber = "142")
+@CardRegistration(set = "DSC", collectorNumber = "200")
 public class TemurWarShaman extends Card {
 
     public TemurWarShaman() {

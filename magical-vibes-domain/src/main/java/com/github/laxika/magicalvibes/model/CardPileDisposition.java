@@ -25,6 +25,8 @@ public enum CardPileDisposition {
     SEARCH_ONE_TO_HAND,
     /** Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom of their library in any order. */
     HAND_AND_BOTTOM,
+    /** Choose Your Demise: chosen pile goes to hand; the other goes to the library bottom, with one pile face down. */
+    HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE,
     /** Truth or Tale: one card from the chosen pile → controller's hand; every other card → the bottom of their library in any order. */
     ONE_FROM_CHOSEN_HAND_AND_BOTTOM,
     /**

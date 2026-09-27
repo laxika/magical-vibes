@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -53,6 +54,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
@@ -81,6 +84,7 @@ public class LandTapTriggerCollectorService {
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
     private final ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
@@ -105,6 +109,21 @@ public class LandTapTriggerCollectorService {
                 match.gameData(), entry, new DealDamageToPlayersEffect(
                         damage.damage(), DamageRecipient.TARGET_PLAYER));
         return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleConditionalManaAbilitySequence(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (match.permanent() == null
+                || (conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId())))) {
+            return false;
+        }
+        if (!(conditional.wrapped() instanceof SequenceEffect sequence)) {
+            return false;
+        }
+        return handleManaAbilitySequence(match, sequence, ctx);
     }
 
     @CollectsTrigger(value = RemoveCounterFromSourceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)

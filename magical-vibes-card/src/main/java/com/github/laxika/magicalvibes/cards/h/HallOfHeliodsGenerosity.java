@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "241")
+@CardRegistration(set = "DSC", collectorNumber = "283")
 public class HallOfHeliodsGenerosity extends Card {
 
     public HallOfHeliodsGenerosity() {

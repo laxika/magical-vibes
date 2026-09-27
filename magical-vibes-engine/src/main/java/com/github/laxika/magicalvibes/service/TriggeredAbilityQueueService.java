@@ -1063,7 +1063,8 @@ public class TriggeredAbilityQueueService {
             }
             if (legalOptions.size() != effect.options().size()) {
                 effect = new ChooseOneEffect(legalOptions, effect.optional(), effect.choicesRequired(),
-                        effect.choicesMax(), effect.allModesWhenOptionalCostPaid(), effect.additionalModesCondition());
+                        effect.choicesMax(), effect.allModesWhenOptionalCostPaid(), effect.modesMayRepeat(),
+                        effect.additionalModesCondition());
             }
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),

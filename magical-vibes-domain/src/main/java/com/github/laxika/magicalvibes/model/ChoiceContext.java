@@ -2133,6 +2133,14 @@ public sealed interface ChoiceContext {
         public static final String PAY_NOTHING = "Pay nothing";
     }
 
+    /** Disorienting Choice: the controller of each chosen permanent may exile it. */
+    record DisorientingChoiceExileChoice(UUID affectedPlayerId, UUID targetPermanentId,
+                                          String sourceCardName) implements ChoiceContext {
+
+        public static final String EXILE = "Exile it";
+        public static final String KEEP = "Keep it";
+    }
+
     /**
      * Forgotten Lore and Shrouded Lore: after the targeted opponent has chosen a card in the
      * controller's graveyard, the controller chooses whether to pay the configured mana cost and

@@ -915,6 +915,8 @@ public class TurnProgressionService {
         gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
+        gameData.cardsDrawnLastTurn.clear();
+        gameData.cardsDrawnLastTurn.putAll(gameData.cardsDrawnThisTurn);
         gameData.cardsDrawnThisTurn.clear();
         gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();
@@ -1006,6 +1008,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
+        gameData.firstOpponentLifeLossTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();

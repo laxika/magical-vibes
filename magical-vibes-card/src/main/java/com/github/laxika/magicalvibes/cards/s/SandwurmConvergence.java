@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "183")
 @CardRegistration(set = "AKR", collectorNumber = "215")
+@CardRegistration(set = "DSC", collectorNumber = "195")
 public class SandwurmConvergence extends Card {
 
     public SandwurmConvergence() {

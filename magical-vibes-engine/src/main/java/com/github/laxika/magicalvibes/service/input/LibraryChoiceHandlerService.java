@@ -3446,7 +3446,8 @@ public class LibraryChoiceHandlerService {
                 if (chosenIds.contains(card.getId())) {
                     returnCardExiledWithSourceToBattlefieldEffectHandler.returnToBattlefield(
                             gameData, returnControllerId, card, "exile", pending.grantedSubtype(),
-                            pending.enterTapped(), pending.enterAttacking(), pending.grantHaste());
+                            pending.enterTapped(), pending.enterAttacking(), pending.grantHaste(),
+                            pending.battlefieldEntryReplacement());
                     break;
                 }
             }

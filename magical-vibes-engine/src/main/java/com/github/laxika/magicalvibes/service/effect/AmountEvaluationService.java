@@ -210,6 +210,7 @@ import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
+import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfDestroyedPermanents;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfOtherSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
@@ -335,6 +336,9 @@ public class AmountEvaluationService {
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastCaveManaSpent(ctx.sourceCard().getId());
             case EventValue ignored ->
                     ctx.eventValue();
+            case TotalManaValueOfDestroyedPermanents ignored ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventManaValues().stream()
+                            .mapToInt(Integer::intValue).sum();
             case ConvokeCreatureCount ignored ->
                     ctx.convokeCreatureCount();
             case RepeatedAdditionalCostCount a ->

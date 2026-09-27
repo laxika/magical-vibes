@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreviouslyAttackedPlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUntilNextTurnEffect.Direction;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -673,6 +674,14 @@ public class AttackLegalityService {
      * "Each opponent who cast a spell this turn can't attack with creatures").
      */
     public boolean isPlayerPreventedFromAttacking(GameData gameData, UUID playerId) {
+        synchronized (gameData.floatingEffects) {
+            if (gameData.floatingEffects.stream().anyMatch(floating ->
+                    playerId.equals(floating.affectedPlayerId())
+                            && floating.effect() instanceof PlayerCantCastSpellsAndAttackWithCreaturesEffect)) {
+                return true;
+            }
+        }
+
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         if (spellsCast == 0) return false;
 

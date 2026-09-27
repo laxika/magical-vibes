@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "271")
+@CardRegistration(set = "DSC", collectorNumber = "272")
 @CardRegistration(set = "TDC", collectorNumber = "359")
 public class DrownyardTemple extends Card {
 

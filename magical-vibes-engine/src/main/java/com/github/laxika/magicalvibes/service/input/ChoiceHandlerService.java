@@ -969,6 +969,10 @@ public class ChoiceHandlerService {
             handleWintersChillPaymentChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.DisorientingChoiceExileChoice ctx) {
+            handleDisorientingChoiceExileChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
             handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
             return;
@@ -2336,7 +2340,7 @@ public class ChoiceHandlerService {
                     .filter(o -> o.label().equals(chosenLabel))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
-            if (chosenModes.contains(chosen)) {
+            if (!ctx.effect().modesMayRepeat() && chosenModes.contains(chosen)) {
                 throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
             }
             if (ctx.consumeModes()) {
@@ -4237,6 +4241,26 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for Winter's Chill target {}",
+                gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Records Disorienting Choice's independent exile decision and resumes its effect handler. */
+    private void handleDisorientingChoiceExileChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.DisorientingChoiceExileChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Disorienting Choice decision: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.disorientingChoice.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for Disorienting Choice target {}",
                 gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
