@@ -21,9 +21,7 @@ class LifeChiselTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LifeChisel());
         harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);
@@ -40,9 +38,7 @@ class LifeChiselTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);
@@ -52,6 +48,20 @@ class LifeChiselTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(secondCreature);
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated during an opponent's upkeep")
+    void abilityRequiresControllerUpkeep() {
+        harness.addToBattlefield(player1, new LifeChisel());
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToUpkeep(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

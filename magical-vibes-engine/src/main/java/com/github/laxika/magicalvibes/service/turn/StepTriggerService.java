@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -118,6 +119,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
@@ -180,6 +182,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -212,6 +215,7 @@ import com.github.laxika.magicalvibes.service.effect.SurvivalTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerIfLifeAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.EndStepPlayerTargetedEffect;
+import com.github.laxika.magicalvibes.model.effect.MonarchEndStepTriggeredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
@@ -282,6 +286,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -459,6 +464,18 @@ public class StepTriggerService {
                 permanent.clearUntilNextUpkeepTriggeredEffects(gameData.activePlayerId));
         gameData.phasedOutPermanents.values().forEach(permanents -> permanents.forEach(permanent ->
                 permanent.clearUntilNextUpkeepTriggeredEffects(gameData.activePlayerId)));
+
+        if (gameData.activePlayerId != null
+                && gameData.activePlayerId.equals(gameData.initiativePlayerId)) {
+            StackEntry initiativeTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    null,
+                    gameData.activePlayerId,
+                    "The initiative's ability",
+                    new ArrayList<>(List.of(new VentureIntoDungeonEffect(Dungeon.UNDERCITY))));
+            initiativeTrigger.setNonTargeting(true);
+            gameData.enqueueTrigger(initiativeTrigger);
+        }
 
         // Spatial Binding: "Until your next upkeep, target permanent can't phase out." Phasing is a
         // turn-based action of the untap step (CR 502.1), which has already passed, so clearing here
@@ -1318,6 +1335,7 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), namesCheck.minCount());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
                         && conditional.condition() instanceof ControlsPermanentCountAtMost atMostCheck) {
                     // Intervening-if: only trigger if controller has few enough matching permanents
                     // (Sheltered Valley "three or fewer lands"; Kookus "don't control a Keeper of Kookus")
@@ -3056,6 +3074,8 @@ public class StepTriggerService {
         if (gameData.planechase != null) planechaseService.step(gameData,
                 EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
 
+        handleRadCounterTrigger(gameData);
+
         // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
         handleSagaLoreCounters(gameData);
 
@@ -3106,6 +3126,27 @@ public class StepTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
+    }
+
+    private void handleRadCounterTrigger(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        int radCounters = gameData.playerRadCounters.getOrDefault(activePlayerId, 0);
+        if (radCounters <= 0) {
+            return;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                null,
+                activePlayerId,
+                gameData.playerIdToName.get(activePlayerId) + "'s rad ability",
+                new ArrayList<>(List.of(new ResolveRadCountersEffect())));
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.text(
+                gameData.playerIdToName.get(activePlayerId) + "'s rad ability triggers."));
+        log.info("Game {} - {}'s rad ability triggers", gameData.id,
+                gameData.playerIdToName.get(activePlayerId));
     }
 
     /**
@@ -3842,6 +3883,16 @@ public class StepTriggerService {
                         pending.counterTypeOnReturn(), pending.counterAmountOnReturn(), controllerId);
                 if (counters > 0) {
                     perm.setCounterCount(pending.counterTypeOnReturn(), counters);
+                }
+            }
+            for (Map.Entry<CounterType, Integer> counter : pending.countersOnReturn().entrySet()) {
+                if (counter.getValue() <= 0) {
+                    continue;
+                }
+                int counters = gameQueryService.replaceCounters(
+                        gameData, perm, controllerId, counter.getKey(), counter.getValue(), controllerId);
+                if (counters > 0) {
+                    perm.setCounterCount(counter.getKey(), counters);
                 }
             }
             perm.setEnteredFromExile(true);
@@ -5062,6 +5113,10 @@ public class StepTriggerService {
                 if (endStepEffects == null || endStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : endStepEffects) {
+                    if (effect instanceof MonarchEndStepTriggeredEffect
+                            && !activePlayerId.equals(gameData.monarchPlayerId)) {
+                        continue;
+                    }
                     if (effect instanceof ConditionalEffect conditional
                             && conditional.interveningIf()
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),

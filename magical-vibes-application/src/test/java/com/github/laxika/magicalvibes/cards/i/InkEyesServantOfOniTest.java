@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,51 +15,60 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InkEyesServantOfOni.class, GnarledMass.class, GodsEyeGateToTheReikai.class})
 class InkEyesServantOfOniTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage lets the controller reanimate a creature from the damaged player's graveyard")
     void combatDamageReanimatesChosenCreature() {
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player2, List.of(bears));
+        Card creature = new GnarledMass();
+        harness.setGraveyard(player2, List.of(creature));
         attackWithInkEyesDealingDamage();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(bears.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(c -> c.getId().equals(bears.getId()));
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertNotInGraveyard(player2, "Gnarled Mass");
+        assertThat(findPermanent(player1, "Gnarled Mass").isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Choosing no card declines the optional reanimation")
     void decliningLeavesCreatureInGraveyard() {
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player2, List.of(bears));
+        Card creature = new GnarledMass();
+        harness.setGraveyard(player2, List.of(creature));
         attackWithInkEyesDealingDamage();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultipleCardsChosen(player1, List.of());
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getId().equals(bears.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(bears.getId()));
+        harness.assertNotOnBattlefield(player1, "Gnarled Mass");
+        harness.assertInGraveyard(player2, "Gnarled Mass");
     }
 
     @Test
     @DisplayName("Only creature cards from the damaged player's graveyard are offered")
     void controllerOwnGraveyardIsNotOffered() {
-        Card ownBears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(ownBears));
-        harness.setGraveyard(player2, List.of());
+        Card ownCreature = new GnarledMass();
+        Card opponentCreature = new GnarledMass();
+        Card opponentLand = new GodsEyeGateToTheReikai();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentLand, opponentCreature));
         attackWithInkEyesDealingDamage();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(ownBears.getId()));
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(opponentCreature.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentLand, opponentCreature);
     }
 
     @Test
@@ -72,16 +83,26 @@ class InkEyesServantOfOniTest extends BaseCardTest {
         assertThat(inkEyes.getRegenerationShield()).isEqualTo(1);
     }
 
-    private void attackWithInkEyesDealingDamage() {
-        Permanent inkEyes = addCreatureReady(player1, new InkEyesServantOfOni());
-        inkEyes.setAttacking(true);
+    @Test
+    @DisplayName("Ninjutsu returns an unblocked attacker and puts Ink-Eyes onto the battlefield tapped and attacking")
+    void ninjutsuSwapsTheUnblockedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        addCreatureReady(player2, new GnarledMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of());
+        harness.setHand(player1, List.of(new InkEyesServantOfOni()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.activateHandAbility(player1, 0, attacker.getId());
         harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gnarled Mass");
+        Permanent inkEyes = findPermanent(player1, "Ink-Eyes, Servant of Oni");
+        assertThat(inkEyes.isTapped()).isTrue();
+        assertThat(inkEyes.isAttackedThisTurn()).isTrue();
+    }
+
+    private void attackWithInkEyesDealingDamage() {
+        addCreatureReady(player1, new InkEyesServantOfOni()).setAttacking(true);
+        resolveCombat();
     }
 }

@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/** Resolves a full card copy conjured onto its controller's battlefield. */
 @Component
 @RequiredArgsConstructor
 public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandlerBean {
@@ -34,8 +35,10 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ConjureCardToBattlefieldEffect) effect;
-        Card conjuredCard = findCard(e.cardName());
+        ConjureCardToBattlefieldEffect conjure = (ConjureCardToBattlefieldEffect) effect;
+        Card conjuredCard = conjure.setCode() == null
+                ? findCard(conjure.cardName())
+                : findPrinting(conjure.setCode(), conjure.collectorNumber());
         conjuredCard.setOwnerId(entry.getControllerId());
 
         Permanent permanent = new Permanent(conjuredCard);
@@ -49,6 +52,14 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, entry.getControllerId(), conjuredCard, null, false);
         }
+    }
+
+    private Card findPrinting(String setCode, String collectorNumber) {
+        CardSet set = CardSet.findByCode(setCode);
+        if (set == null) {
+            throw new IllegalArgumentException("Unknown card set: " + setCode);
+        }
+        return cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
     }
 
     private Card findCard(String cardName) {

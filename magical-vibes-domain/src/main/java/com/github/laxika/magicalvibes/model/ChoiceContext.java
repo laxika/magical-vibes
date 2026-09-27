@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -152,6 +153,8 @@ public sealed interface ChoiceContext {
     record KickedSpellManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record PersistentSpellOnlyManaColorChoice(UUID playerId, int amount, boolean anyColorCombination)
+            implements ChoiceContext {}
     record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record SourceTrackedManaColorChoice(UUID playerId, UUID sourcePermanentId, UUID recipientPlayerId,
                                         boolean fromCreature, int amount, boolean fromSnowSource,
@@ -221,6 +224,14 @@ public sealed interface ChoiceContext {
 
     record ChosenPlayerManaColorChoice(UUID playerId, UUID sourceControllerId, UUID recipientPlayerId,
                                        boolean fromCreature, int amount) implements ChoiceContext {}
+
+    record CommanderCastCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                               UUID sourcePermanentId, List<ManaColor> allowedColors)
+            implements ChoiceContext {
+        public CommanderCastCounterManaColorChoice {
+            allowedColors = List.copyOf(allowedColors);
+        }
+    }
 
     record EnchantedManaCostChoice(UUID playerId, List<Set<ManaColor>> choices,
                                    boolean fromCreature) implements ChoiceContext {
@@ -814,7 +825,13 @@ public sealed interface ChoiceContext {
     record DualCardNameChoice(Card card, UUID controllerId, UUID choosingPlayerId,
                               String firstChosenName) implements ChoiceContext {}
 
-    record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
+    record KeywordGrantChoice(UUID targetId, List<Keyword> options,
+                              GrantDuration duration, String sourceCardName,
+                              UUID sourcePermanentId) implements ChoiceContext {
+        public KeywordGrantChoice(UUID targetId, List<Keyword> options) {
+            this(targetId, options, GrantDuration.END_OF_TURN, null, null);
+        }
+    }
 
     record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
         public LegacyWordChoice {
@@ -1861,6 +1878,49 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Travel Through Caradhras: the current player voted for Redhorn Pass or Mines of Moria. */
+    record TravelThroughCaradhrasChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                        int redhornPassVotes, int minesOfMoriaVotes,
+                                        String sourceName) implements ChoiceContext {
+        public static final String REDHORN_PASS = "Redhorn Pass";
+        public static final String MINES_OF_MORIA = "Mines of Moria";
+        public static final List<String> OPTIONS = List.of(REDHORN_PASS, MINES_OF_MORIA);
+
+        public TravelThroughCaradhrasChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
+    }
+
+    /** Sail into the West: the current player voted for return or embark. */
+    record SailIntoTheWestChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                 int returnVotes, int embarkVotes, String sourceName)
+            implements ChoiceContext {
+        public static final String RETURN = "Return";
+        public static final String EMBARK = "Embark";
+        public static final List<String> OPTIONS = List.of(RETURN, EMBARK);
+
+        public SailIntoTheWestChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
+    }
+
+    /** Master of Ceremonies: the current opponent chooses money, friends, or secrets. */
+    record MasterOfCeremoniesChoice(UUID effectControllerId, List<UUID> remainingOpponentIds,
+                                    List<UUID> moneyPlayerIds, List<UUID> friendsPlayerIds,
+                                    List<UUID> secretsPlayerIds, String sourceName) implements ChoiceContext {
+        public static final String MONEY = "Money";
+        public static final String FRIENDS = "Friends";
+        public static final String SECRETS = "Secrets";
+        public static final List<String> OPTIONS = List.of(MONEY, FRIENDS, SECRETS);
+
+        public MasterOfCeremoniesChoice {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            moneyPlayerIds = List.copyOf(moneyPlayerIds);
+            friendsPlayerIds = List.copyOf(friendsPlayerIds);
+            secretsPlayerIds = List.copyOf(secretsPlayerIds);
+        }
+    }
+
     /** Expropriate: the current player voted for time or money. */
     record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                              List<UUID> moneyVoterIds, int timeVotes, String sourceName)
@@ -1902,24 +1962,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Master of Ceremonies: the current opponent chooses money, friends, or secrets. */
-    record MasterOfCeremoniesChoice(UUID effectControllerId, UUID choosingPlayerId,
-                                    List<UUID> remainingPlayerIds, List<UUID> moneyPlayerIds,
-                                    List<UUID> friendsPlayerIds, List<UUID> secretsPlayerIds,
-                                    String sourceName) implements ChoiceContext {
-        public static final String MONEY = "Money";
-        public static final String FRIENDS = "Friends";
-        public static final String SECRETS = "Secrets";
-        public static final List<String> OPTIONS = List.of(MONEY, FRIENDS, SECRETS);
-
-        public MasterOfCeremoniesChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            moneyPlayerIds = List.copyOf(moneyPlayerIds);
-            friendsPlayerIds = List.copyOf(friendsPlayerIds);
-            secretsPlayerIds = List.copyOf(secretsPlayerIds);
-        }
-    }
-
     /** Zndrsplt's Judgment: the current player chooses friend or foe. */
     record ZndrsplatsJudgmentChoice(UUID choosingPlayerId, List<UUID> remainingPlayerIds,
                                     List<UUID> chosenPlayerIds, List<UUID> friendPlayerIds,
@@ -1949,6 +1991,19 @@ public sealed interface ChoiceContext {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             famePlayerIds = List.copyOf(famePlayerIds);
             fortunePlayerIds = List.copyOf(fortunePlayerIds);
+        }
+    }
+
+    /** Fateful Tempest: the current player voted for past or present. */
+    record FatefulTempestChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String PAST = "Past";
+        public static final String PRESENT = "Present";
+        public static final List<String> OPTIONS = List.of(PAST, PRESENT);
+
+        public FatefulTempestChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
         }
     }
 
@@ -2001,6 +2056,33 @@ public sealed interface ChoiceContext {
         public CoercivePortalChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Galadriel, Elven-Queen: the current player voted for dominion or guidance. */
+    record GaladrielElvenQueenChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                     Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String DOMINION = "Dominion";
+        public static final String GUIDANCE = "Guidance";
+        public static final List<String> OPTIONS = List.of(DOMINION, GUIDANCE);
+
+        public GaladrielElvenQueenChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Elrond of the White Council: the current player voted for fellowship or aid. */
+    record ElrondOfTheWhiteCouncilChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                         List<UUID> fellowshipVoterIds, int aidVotes,
+                                         String sourceName) implements ChoiceContext {
+        public static final String FELLOWSHIP = "Fellowship";
+        public static final String AID = "Aid";
+        public static final List<String> OPTIONS = List.of(FELLOWSHIP, AID);
+
+        public ElrondOfTheWhiteCouncilChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            fellowshipVoterIds = List.copyOf(fellowshipVoterIds);
         }
     }
 

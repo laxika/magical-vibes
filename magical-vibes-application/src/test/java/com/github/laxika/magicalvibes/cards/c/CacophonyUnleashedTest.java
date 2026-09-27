@@ -52,8 +52,8 @@ class CacophonyUnleashedTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, cacophony)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, cacophony))
                 .containsExactlyInAnyOrder(CardSubtype.NIGHTMARE, CardSubtype.GOD);
-        assertThat(gqs.getEffectivePower(gd, cacophony)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, cacophony)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, cacophony)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, cacophony)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, cacophony, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, cacophony, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasEffectiveSupertype(gd, cacophony, CardSupertype.LEGENDARY)).isTrue();

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.a.AetherFlash;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AetherFlash.class, Confiscate.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, Unsummon.class})
+@CardUsed({Confiscate.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, Unsummon.class})
 class UnsummonTest extends BaseCardTest {
 
     @Test
@@ -54,14 +54,14 @@ class UnsummonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target an enchantment")
-    void cannotTargetEnchantmentUpstreamReview() {
+    @DisplayName("Cannot target an Aura")
+    void cannotTargetAura() {
         harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new AetherFlash());
+        harness.addToBattlefield(player2, new Confiscate());
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Aether Flash");
+        UUID targetId = harness.getPermanentId(player2, "Confiscate");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
@@ -112,6 +112,22 @@ class UnsummonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A token target ceases to exist instead of remaining in hand")
+    void tokenTargetCeasesToExist() {
+        Card tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, tokenCard);
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .noneMatch(card -> card.getId().equals(tokenCard.getId()));
+    }
+
+    @Test
     @DisplayName("Returns a stolen creature to its owner's hand")
     void returnsStolenCreatureToOwnersHand() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -130,6 +146,7 @@ class UnsummonTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Confiscate");
     }
 
     @Test

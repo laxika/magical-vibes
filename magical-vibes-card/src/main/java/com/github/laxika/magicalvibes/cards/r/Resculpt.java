@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "51")
+@CardRegistration(set = "SOC", collectorNumber = "201")
 @CardRegistration(set = "SLD", collectorNumber = "2029")
 @CardRegistration(set = "CMM", collectorNumber = "115")
 public class Resculpt extends Card {

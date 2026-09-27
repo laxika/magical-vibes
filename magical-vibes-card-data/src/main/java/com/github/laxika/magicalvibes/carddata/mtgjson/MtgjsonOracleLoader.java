@@ -56,6 +56,11 @@ public class MtgjsonOracleLoader implements OracleLoader {
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(20);
     private static final Duration REQUEST_TIMEOUT = Duration.ofMinutes(2);
+    // MTGJSON omits these MSC Beginner Box numbers but includes the same cards as alternate
+    // printings. Prefer the real number if the upstream set file gains it later.
+    private static final Map<String, String> MSC_BEGINNER_BOX_ALIASES = Map.of(
+            "513", "834", "514", "835", "515", "836", "516", "837", "519", "839",
+            "521", "841", "524", "843", "526", "844", "527", "845", "542", "847");
 
     private final SetJsonCache cache;
     private final SetJsonCache legalityCache;
@@ -101,6 +106,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
             Map<String, JsonNode> cardFrontFaceNodes = faces.frontFaces();
             Map<String, JsonNode> frontFaceNodes = new HashMap<>(cardFrontFaceNodes);
             mergeImplementedTokenFaces(frontFaceNodes, setData.get("tokens"), implementedCollectorNumbers);
+            int cardTotal = frontFaceNodes.size();
             Map<String, JsonNode> backFaceNodes = faces.backFaces();
 
             // Rarity covers every card in the set, implemented or not.
@@ -111,6 +117,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
                     rarities.put(entry.getKey(), cardNode.get("rarity").asText());
                 }
             }
+            applyMissingPrintingAliases(sourceSetCode, frontFaceNodes, rarities);
 
             // Oracle text is parsed only for printings the game implements.
             Map<String, OracleData> frontFaces = new HashMap<>();
@@ -130,7 +137,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
             // Total cards in the set (one entry per collector number, meld results included —
             // the same count Scryfall yields) — the set-completeness denominator.
-            return new SetOracleData(setName, frontFaceNodes.size(), rarities,
+            return new SetOracleData(setName, cardTotal, rarities,
                     frontFaces, backFaces, faces.faceNamesByCollectorNumber(),
                     parseTokens(sourceSetCode, setData));
         } catch (Exception e) {
@@ -191,6 +198,23 @@ public class MtgjsonOracleLoader implements OracleLoader {
                 frontFaces.putIfAbsent(number, token);
             }
         }
+    }
+
+    static void applyMissingPrintingAliases(String setCode, Map<String, JsonNode> frontFaces,
+                                            Map<String, String> rarities) {
+        if (!"MSC".equalsIgnoreCase(setCode)) {
+            return;
+        }
+        MSC_BEGINNER_BOX_ALIASES.forEach((missingNumber, alternateNumber) -> {
+            JsonNode alternate = frontFaces.get(alternateNumber);
+            if (alternate != null && !frontFaces.containsKey(missingNumber)) {
+                frontFaces.put(missingNumber, alternate);
+                String rarity = rarities.get(alternateNumber);
+                if (rarity != null) {
+                    rarities.put(missingNumber, rarity);
+                }
+            }
+        });
     }
 
     private static String fetchFromMtgjson(String setCode) throws IOException, InterruptedException {

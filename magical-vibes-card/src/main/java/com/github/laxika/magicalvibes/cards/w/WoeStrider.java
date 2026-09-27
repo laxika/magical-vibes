@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "123")
 @CardRegistration(set = "NCC", collectorNumber = "262")
+@CardRegistration(set = "SOC", collectorNumber = "231")
 public class WoeStrider extends Card {
 
     public WoeStrider() {

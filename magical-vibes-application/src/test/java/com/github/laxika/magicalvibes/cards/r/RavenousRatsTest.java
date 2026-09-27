@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinBerserker;
+import com.github.laxika.magicalvibes.cards.k.KavuTitan;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RavenousRats.class, GoblinBerserker.class})
+@CardUsed({RavenousRats.class, KavuTitan.class})
 class RavenousRatsTest extends BaseCardTest {
 
     
@@ -37,9 +37,26 @@ class RavenousRatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB target is chosen after the creature enters when the spell was cast without one")
+    void choosesTargetWhenEtbTriggerIsPutOnStack() {
+        harness.setHand(player1, List.of(new RavenousRats()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("ETB trigger makes target opponent discard one card")
     void etbMakesTargetOpponentDiscard() {
-        harness.setHand(player2, List.of(new GoblinBerserker()));
+        harness.setHand(player2, List.of(new KavuTitan(), new KavuTitan()));
         castRavenousRats(player2.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -52,8 +69,8 @@ class RavenousRatsTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Goblin Berserker");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Kavu Titan");
     }
 
     @Test
@@ -72,7 +89,10 @@ class RavenousRatsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast by targeting yourself")
     void cannotTargetYourself() {
-        assertThatThrownBy(() -> castRavenousRats(player1.getId()))
+        harness.setHand(player1, List.of(new RavenousRats()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }

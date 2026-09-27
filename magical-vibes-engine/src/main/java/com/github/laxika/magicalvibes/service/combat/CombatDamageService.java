@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDama
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageBecomeMonarch;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -58,7 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerAssignsCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagedPlayerControlsTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -74,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageTo
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
@@ -86,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -541,6 +545,8 @@ public class CombatDamageService {
         // stack for normal priority rather than being folded into the engine's auto-resolved
         // combat-damage trigger batch below.
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        updateMonarchFromCombatDamage(gameData, state, defenderId);
+        queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
         processSelfDealsCombatDamageTriggers(gameData, state);
@@ -600,6 +606,7 @@ public class CombatDamageService {
             processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
             processDelayedCombatDamageTokenTriggers(gameData, damageBySource, controllerId, defenderId);
         });
+        processDelayedCombatDamageBecomeMonarchTriggers(gameData, state, activeId);
 
         processDelayedCombatDamageLookAtHandAndDrawTriggers(gameData, state);
 
@@ -683,6 +690,36 @@ public class CombatDamageService {
                 gameData.monarchPlayerId = controllerId;
                 return;
             }
+        }
+    }
+
+    private void queueInitiativeTransferFromCombatDamage(GameData gameData, CombatDamageState state,
+                                                         UUID defenderId) {
+        boolean combatDamageWasDealt = state.combatDamageDealtToPlayer.values().stream()
+                .anyMatch(damage -> damage > 0);
+        if (!defenderId.equals(gameData.initiativePlayerId) || !combatDamageWasDealt) {
+            return;
+        }
+
+        Set<UUID> controllers = new LinkedHashSet<>();
+        for (var damageEntry : state.combatDamageDealtToPlayer.entrySet()) {
+            if (damageEntry.getValue() <= 0) {
+                continue;
+            }
+            UUID controllerId = state.combatDamageDealerControllers.get(damageEntry.getKey());
+            if (controllerId != null && !controllerId.equals(defenderId)) {
+                controllers.add(controllerId);
+            }
+        }
+        for (UUID controllerId : controllers) {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    null,
+                    controllerId,
+                    "Combat damage causes a player to take the initiative",
+                    List.of(new TakeInitiativeEffect()));
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
         }
     }
 
@@ -1543,6 +1580,13 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        triggerCollectionService.checkGoadedCreatureCombatDamageToOpponentTriggers(
+                gameData,
+                defenderId,
+                combatDamageDealtToPlayer.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 0)
+                        .map(Map.Entry::getKey)
+                        .toList());
         triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
                 gameData, attackerId, defenderId,
                 combatDamageDealtToPlayer.entrySet().stream()
@@ -1563,6 +1607,7 @@ public class CombatDamageService {
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
 
+            gameData.recordCombatDamageByCreatureNameToPlayer(creature.getCard().getName(), defenderId);
             gameData.combatDamageToPlayersThisTurn
                     .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                     .add(defenderId);
@@ -1670,6 +1715,14 @@ public class CombatDamageService {
                 }
 
                 if (effect instanceof MayEffect may) {
+                    if (may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                creature.getCard(), attackerId, List.of(effect), attackerId,
+                                1, 0, 1, null, false, null, creature.getId()));
+                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        continue;
+                    }
                     if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
@@ -1724,11 +1777,11 @@ public class CombatDamageService {
                             continue;
                         }
                     }
-                    if (may.wrapped() instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
-                        if (damageDealt >= destroyEffect.minimumDamage()) {
+                    if (may.wrapped() instanceof DamagedPlayerControlsTargetEffect damageEffect) {
+                        if (damageDealt >= damageEffect.minimumDamage()) {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                     creature.getCard(), attackerId,
-                                    List.of(new MayEffect(destroyEffect.forDamagedPlayer(defenderId),
+                                    List.of(new MayEffect(damageEffect.forDamagedPlayer(defenderId),
                                             may.prompt(), may.elseEffect(), may.choicePlayer())),
                                     creature.getId(), attackerId, defenderId));
                         }
@@ -1761,9 +1814,9 @@ public class CombatDamageService {
                             creature.getId(), attackerId, defenderId));
                     continue;
                 }
-                if (specialEffect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
-                    if (damageDealt >= destroyEffect.minimumDamage()) {
-                        CardEffect targeted = destroyEffect.forDamagedPlayer(defenderId);
+                if (specialEffect instanceof DamagedPlayerControlsTargetEffect damageEffect) {
+                    if (damageDealt >= damageEffect.minimumDamage()) {
+                        CardEffect targeted = damageEffect.forDamagedPlayer(defenderId);
                         if (effect instanceof ConditionalEffect conditional) {
                             targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
                         }
@@ -1909,11 +1962,64 @@ public class CombatDamageService {
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false);
+            checkSameNameCreatureCombatDamageToPlayerTriggers(gameData, creature, defenderId, damageDealt);
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
         }
+    }
+
+    /**
+     * Checks global triggers that watch for a creature with the same name as the watcher dealing
+     * combat damage to a player. The watcher need not be controlled by the creature's controller;
+     * this models text such as Pirated Copy's "this creature or another creature with the same name".
+     */
+    private void checkSameNameCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature,
+                                                                    UUID defenderId,
+                                                                    int damageDealt) {
+        gameData.forEachPermanent((watcherControllerId, watcher) -> {
+            List<CardEffect> effects = new ArrayList<>(watcher.getCard().getEffects(
+                    EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(watcher.getTemporaryTriggeredEffects(
+                    EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(watcher.getPersistentTriggeredEffects(
+                    EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, watcher, EffectSlot.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER));
+
+            FilterContext triggerContext = FilterContext.of(gameData)
+                    .withSourceCardId(watcher.getCard().getId())
+                    .withSourceControllerId(watcherControllerId)
+                    .withSourcePermanentId(watcher.getId());
+            for (CardEffect authoredEffect : effects) {
+                CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, watcher, authoredEffect);
+                if (!(effect instanceof AllyCombatDamageTriggerEffect trigger)) {
+                    continue;
+                }
+                if (trigger.dealerPredicate() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        creature, trigger.dealerPredicate(), triggerContext)) {
+                    continue;
+                }
+
+                CardEffect firedEffect = trigger.effect() instanceof CombatDamageAmountAwareEffect amountAware
+                        ? amountAware.snapshotCombatDamage(damageDealt) : trigger.effect();
+                StackEntry stackEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        watcherControllerId,
+                        watcher.getCard().getName() + "'s triggered ability",
+                        List.of(firedEffect),
+                        defenderId,
+                        watcher.getId());
+                setCombatDamageEventValue(stackEntry, firedEffect, damageDealt);
+                stackEntry.setNonTargeting(true);
+                gameData.stack.add(stackEntry);
+                gameLogService.append(gameData, GameLog.cardThen(watcher.getCard(),
+                        "'s same-name combat damage trigger goes on the stack."));
+            }
+        });
     }
 
     private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,
@@ -2111,6 +2217,9 @@ public class CombatDamageService {
         if (!battleDamage) {
             triggerCollectionService.checkEmblemAllyCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, damageDealt);
+            triggerCollectionService.collectTemporaryGlobalTriggers(
+                    gameData, EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                    creature.getId(), damageDealt);
         }
         if (attackerBattlefield == null) return;
 
@@ -2181,10 +2290,12 @@ public class CombatDamageService {
                     }
                     // Player recipients on this trigger slot normally mean "that player":
                     // bind the damaged player unless the card explicitly declares a target.
-                    if (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    if (!(firedEffect instanceof CombatOpponentReferencingEffect opponentReference
+                            && opponentReference.referencesCombatOpponent())
+                            && (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && (perm.getCard().hasEffectTargetIndex(authoredEffect)
-                            || perm.getCard().hasEffectTargetIndex(firedEffect)))) {
+                            || perm.getCard().hasEffectTargetIndex(firedEffect))))) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId));
                         OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
@@ -2200,6 +2311,23 @@ public class CombatDamageService {
                                 0, triggerDamage, 0, null, false, perm.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        continue;
+                    }
+                    if ((firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && (perm.getCard().hasEffectTargetIndex(authoredEffect)
+                            || perm.getCard().hasEffectTargetIndex(firedEffect))))
+                            && (!(firedEffect instanceof CombatDamageTriggerContextEffect contextEffect)
+                            || contextEffect.combatDamageTriggerContext() == null
+                            || perm.getCard().hasEffectTargetIndex(firedEffect))
+                            && !(firedEffect instanceof CombatOpponentReferencingEffect c
+                            && c.referencesCombatOpponent())) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId,
+                                defenderId, creature.getId()));
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a target."));
                         continue;
                     }
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
@@ -2223,6 +2351,9 @@ public class CombatDamageService {
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
                     se.setEventValue(triggerDamage);
                     se.setNonTargeting(true);
+                    if (authoredEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+                        se.setMarkSourceOncePerTurnOnAcceptance(true);
+                    }
                     if (firedEffect instanceof CombatDamageDealerReferencingEffect) {
                         se.setTriggeringPermanentId(creature.getId());
                         se.setTriggeringPermanentControllerId(attackerId);
@@ -2376,6 +2507,32 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
                         "'s delayed trigger goes on the stack."));
             }
+        }
+    }
+
+    private void processDelayedCombatDamageBecomeMonarchTriggers(GameData gameData,
+                                                                  CombatDamageState state,
+                                                                  UUID activeId) {
+        if (!gameData.hasDelayedAction(DelayedCombatDamageBecomeMonarch.class)) return;
+
+        for (DelayedCombatDamageBecomeMonarch delayed
+                : gameData.getDelayedActions(DelayedCombatDamageBecomeMonarch.class)) {
+            boolean creatureDealtDamage = state.combatDamageDealtToPlayer.entrySet().stream()
+                    .anyMatch(entry -> entry.getValue() > 0
+                            && delayed.controllerId().equals(
+                            state.combatDamageDealerControllers.getOrDefault(entry.getKey(), activeId)));
+            if (!creatureDealtDamage) continue;
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger",
+                    List.of(new BecomeMonarchEffect()));
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
+                    "'s delayed trigger goes on the stack."));
         }
     }
 
@@ -3626,6 +3783,10 @@ public class CombatDamageService {
                     gameData.recordDamageDealtBySourceToPlayer(
                             redirect.damageSourceId(), targetId, redirectEffective);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
+                    if (damageSource != null) {
+                        gameData.recordCombatDamageByCreatureNameToPlayer(
+                                damageSource.getCard().getName(), targetId);
+                    }
                     triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
                             gameData, targetId, redirectEffective);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
@@ -3795,6 +3956,8 @@ public class CombatDamageService {
             if (damage > 0) restoreSourceShieldForCombatChunk(gameData, state, atk.getId(), pw.getId(), false);
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
             processEyeForAnEyeReflections(gameData);
+            damage = damagePreventionService.applyTargetSourcePreventionShield(
+                    gameData, pw.getId(), atk.getId(), damage, true);
             if (damagePreventionService.isColorDamagePreventedForTarget(
                     gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk), true)) {
                 damage = 0;

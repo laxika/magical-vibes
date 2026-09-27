@@ -7,13 +7,15 @@ import java.util.Set;
 
 /** Makes the source permanent a copy of a creature card exiled with it until end of turn. */
 public record BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect(
-        Set<CardType> additionalTypes,
-        Set<CardSubtype> additionalSubtypes
+        Set<CardType> additionalTypesOverride,
+        Set<CardSubtype> additionalSubtypesOverride
 ) implements CardEffect {
 
     public BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect {
-        additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
-        additionalSubtypes = additionalSubtypes == null ? Set.of() : Set.copyOf(additionalSubtypes);
+        additionalTypesOverride = additionalTypesOverride == null
+                ? Set.of() : Set.copyOf(additionalTypesOverride);
+        additionalSubtypesOverride = additionalSubtypesOverride == null
+                ? Set.of() : Set.copyOf(additionalSubtypesOverride);
     }
 
     public BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect() {

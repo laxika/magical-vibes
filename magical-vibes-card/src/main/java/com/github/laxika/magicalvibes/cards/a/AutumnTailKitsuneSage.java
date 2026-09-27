@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -25,6 +26,6 @@ public class AutumnTailKitsuneSage extends Card {
                 ),
                 2,
                 2
-        ));
+        ).withMultiTargetConstraint(MultiTargetConstraint.SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST));
     }
 }

@@ -56,6 +56,16 @@ public class SpellbookCardChoiceInteractionHandler
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Chosen spellbook card is no longer available"));
 
+        if (interaction.draftMode()
+                == com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND) {
+            gameData.addCardToHand(player.getId(), selected);
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " conjures "
+                    + selected.getName() + " into their hand."));
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         Card drafted = selected.createRuntimeCopy();
         drafted.setOwnerId(player.getId());
         if (interaction.draftMode()

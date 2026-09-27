@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.a.AutumnTailKitsuneSage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KitsuneMystic.class, AutumnTailKitsuneSage.class, GrizzlyBears.class, Pacifism.class})
 class KitsuneMysticTest extends BaseCardTest {
 
     @Test
@@ -32,6 +35,39 @@ class KitsuneMysticTest extends BaseCardTest {
 
         assertThat(mystic.isTransformed()).isTrue();
         assertThat(mystic.getCard().getActivatedAbilities()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Flips at the end step when enchanted by more than two Auras")
+    void flipsWithMoreThanTwoAuras() {
+        Permanent mystic = addMystic();
+        addAuraAttachedTo(player1, mystic);
+        addAuraAttachedTo(player1, mystic);
+        addAuraAttachedTo(player1, mystic);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(mystic.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flips during an opponent's end step when it has two Auras")
+    void flipsDuringOpponentsEndStep() {
+        Permanent mystic = addMystic();
+        addAuraAttachedTo(player1, mystic);
+        addAuraAttachedTo(player1, mystic);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(mystic.isTransformed()).isTrue();
     }
 
     @Test
@@ -86,6 +122,21 @@ class KitsuneMysticTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Autumn-Tail cannot target the Aura's current creature as the destination")
+    void autumnTailRequiresAnotherDestinationCreature() {
+        Permanent mystic = addMystic();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = addAuraAttachedTo(player1, creature);
+        mystic.setTransformed(true);
+        mystic.setCard(mystic.getOriginalCard().getBackFaceCard());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(aura.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Autumn-Tail requires an Aura attached to a creature as its first target")
     void autumnTailRequiresAttachedAuraTarget() {
         Permanent mystic = addMystic();
@@ -102,16 +153,12 @@ class KitsuneMysticTest extends BaseCardTest {
     }
 
     private Permanent addMystic() {
-        Permanent mystic = new Permanent(new KitsuneMystic());
-        mystic.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mystic);
-        return mystic;
+        return addCreatureReady(player1, new KitsuneMystic());
     }
 
     private Permanent addAuraAttachedTo(Player player, Permanent host) {
-        Permanent aura = new Permanent(new Pacifism());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new Pacifism());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return aura;
     }
 }

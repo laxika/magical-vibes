@@ -18,6 +18,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
+/** Resolves a full card copy conjured into its controller's hand. */
 @Component
 @RequiredArgsConstructor
 public class ConjureCardToHandEffectHandler implements NormalEffectHandlerBean {
@@ -32,20 +33,30 @@ public class ConjureCardToHandEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ConjureCardToHandEffect) effect;
-        Card conjuredCard = findCard(e.cardName());
+        ConjureCardToHandEffect conjure = (ConjureCardToHandEffect) effect;
+        Card conjuredCard = conjure.setCode() == null
+                ? findCard(conjure.cardName())
+                : findPrinting(conjure.setCode(), conjure.collectorNumber());
         conjuredCard.setOwnerId(entry.getControllerId());
-        if (!e.removedKeywords().isEmpty()) {
+        if (!conjure.removedKeywords().isEmpty()) {
             EnumSet<Keyword> keywords = conjuredCard.getKeywords().isEmpty()
                     ? EnumSet.noneOf(Keyword.class)
                     : EnumSet.copyOf(conjuredCard.getKeywords());
-            keywords.removeAll(e.removedKeywords());
+            keywords.removeAll(conjure.removedKeywords());
             conjuredCard.setKeywords(keywords);
         }
         conjuredCard.freeze();
         gameData.addCardToHand(entry.getControllerId(), conjuredCard);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures " + conjuredCard.getName() + " into their hand."));
+    }
+
+    private Card findPrinting(String setCode, String collectorNumber) {
+        CardSet set = CardSet.findByCode(setCode);
+        if (set == null) {
+            throw new IllegalArgumentException("Unknown card set: " + setCode);
+        }
+        return cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
     }
 
     private Card findCard(String cardName) {

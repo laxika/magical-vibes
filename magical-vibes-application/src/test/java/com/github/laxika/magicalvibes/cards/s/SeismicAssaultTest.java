@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.cards.w.WallOfFire;
+import com.github.laxika.magicalvibes.cards.w.WallOfStone;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,14 +21,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeismicAssault.class, Forest.class, RagingGoblin.class, Spellbook.class, WallOfFire.class})
+@CardUsed({SeismicAssault.class, Mountain.class, RagingGoblin.class, Spellbook.class, WallOfStone.class})
 class SeismicAssaultTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability starts discard-cost choice before stack entry")
     void activationStartsDiscardChoice() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new RagingGoblin(), new Forest()));
+        harness.setHand(player1, List.of(new RagingGoblin(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -42,7 +42,7 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Choosing a land pays cost and puts ability on stack")
     void choosingLandPaysCostAndStacksAbility() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new RagingGoblin(), new Spellbook(), new Forest()));
+        harness.setHand(player1, List.of(new RagingGoblin(), new Spellbook(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.handleCardChosen(player1, 2);
@@ -50,8 +50,8 @@ class SeismicAssaultTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        harness.assertNotInHand(player1, "Forest");
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotInHand(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -73,7 +73,7 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Cannot choose nonland for discard cost")
     void cannotChooseNonLandForDiscardCost() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new RagingGoblin(), new Forest()));
+        harness.setHand(player1, List.of(new RagingGoblin(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -90,7 +90,7 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Illegal target is rejected before discard cost is paid")
     void illegalTargetRejectedBeforePayingCost() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Mountain()));
         UUID illegalTarget = UUID.randomUUID();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, illegalTarget))
@@ -104,17 +104,32 @@ class SeismicAssaultTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        addReadySeismicAssault(player1);
+        harness.setHand(player1, List.of(new Mountain()));
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Deals 2 damage to target player")
     void deals2DamageToPlayer() {
         harness.setLife(player2, 20);
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Mountain()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -122,20 +137,20 @@ class SeismicAssaultTest extends BaseCardTest {
     void deals2DamageToActivatingPlayer() {
         harness.setLife(player1, 20);
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Mountain()));
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
     @DisplayName("Deals 2 damage to target creature")
     void deals2DamageToCreature() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Mountain()));
         harness.addToBattlefield(player2, new RagingGoblin());
 
         UUID goblinId = harness.getPermanentId(player2, "Raging Goblin");
@@ -151,15 +166,15 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Deals exactly 2 damage to a surviving target creature")
     void dealsExactly2DamageToSurvivingCreature() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Forest()));
-        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfFire());
+        harness.setHand(player1, List.of(new Mountain()));
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfStone());
 
         harness.activateAbility(player1, 0, null, wall.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(wall.getMarkedDamage()).isEqualTo(2);
-        harness.assertOnBattlefield(player2, "Wall of Fire");
+        harness.assertOnBattlefield(player2, "Wall of Stone");
     }
 
     private void addReadySeismicAssault(Player player) {

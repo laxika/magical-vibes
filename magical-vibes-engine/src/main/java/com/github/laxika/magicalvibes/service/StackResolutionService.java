@@ -868,11 +868,13 @@ public class StackResolutionService {
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
-                boolean hasControlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
-                if (hasControlEffect) {
+                CardEffect controlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElse(null);
+                if (controlEffect != null) {
                     creatureControlService.applyControlEffect(gameData, controllerId, target,
-                            new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                            controlEffect, EffectDuration.WHILE_ATTACHED,
                             perm.getId(), characteristics.getName());
                 }
 
@@ -1556,6 +1558,8 @@ public class StackResolutionService {
         if (placed <= 0) return;
         target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + placed);
         triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
+        permanentCounterSupport.fireYouPutCountersOnAnotherCreatureTriggers(
+                gameData, target, CounterType.PHYLACTERY, placed, controllerId);
         gameLogService.append(gameData,
                 GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());

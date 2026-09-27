@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "NCC", collectorNumber = "1")
 @CardRegistration(set = "NCC", collectorNumber = "100")
 @CardRegistration(set = "NCC", collectorNumber = "186")
+@CardRegistration(set = "SLD", collectorNumber = "2353")
 public class AnheloThePainter extends Card {
 
     public AnheloThePainter() {

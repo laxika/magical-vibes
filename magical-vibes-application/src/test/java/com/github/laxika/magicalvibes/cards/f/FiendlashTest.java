@@ -25,7 +25,7 @@ class FiendlashTest extends BaseCardTest {
         Permanent lash = addLashReady();
         lash.setAttachedTo(creature.getId());
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isTrue();
     }
 
@@ -45,7 +45,7 @@ class FiendlashTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
     }
 
     @Test

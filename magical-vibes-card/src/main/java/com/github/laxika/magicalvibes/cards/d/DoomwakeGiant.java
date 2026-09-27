@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "JOU", collectorNumber = "66")
+@CardRegistration(set = "SOC", collectorNumber = "212")
 @CardRegistration(set = "C15", collectorNumber = "121")
 public class DoomwakeGiant extends Card {
 

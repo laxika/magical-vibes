@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.e.Expunge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Fecundity.class, Expunge.class, ArgothianSwine.class, Forest.class})
+@CardUsed({Fecundity.class, Expunge.class, Disenchant.class, ArgothianSwine.class, Forest.class})
 class FecundityTest extends BaseCardTest {
 
     // ===== Dying creature's controller (an opponent) may draw =====
@@ -61,6 +62,23 @@ class FecundityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore);
+    }
+
+    @Test
+    @DisplayName("Destroying a noncreature permanent does not trigger Fecundity")
+    void noncreaturePermanentDoesNotTrigger() {
+        Permanent fecundity = harness.addToBattlefieldAndReturn(player1, new Fecundity());
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player1, 0, fecundity.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fecundity");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Also fires for the controller's own creatures =====

@@ -31,7 +31,7 @@ public class SupportSkyforge extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenEffect(4, "Servo", 1, 1, null,
                         List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
-        addEffect(EffectSlot.ON_ATTACK, new DraftCardFromSpellbookEffect(SPELLBOOK));
+        addEffect(EffectSlot.ON_ATTACK, DraftCardFromSpellbookEffect.withArtifactCreatureGrant(SPELLBOOK));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -19,6 +19,11 @@ public record GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
         this(grantedAbility, filter, null, abilityValue);
     }
 
+    public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
+            Keyword grantedAbility, CardPredicate filter, Zone sourceZone) {
+        this(grantedAbility, filter, sourceZone, 0);
+    }
+
     public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect {
         if (grantedAbility != Keyword.CONSPIRE
                 && grantedAbility != Keyword.CONVOKE

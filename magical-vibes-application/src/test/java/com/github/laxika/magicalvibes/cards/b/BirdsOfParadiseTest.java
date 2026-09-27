@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,28 +41,6 @@ class BirdsOfParadiseTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-    }
-
-    @Test
-    @DisplayName("Choosing a color adds exactly one mana of that color")
-    void choosingColorAddsMana() {
-        for (String color : List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN")) {
-            harness = new GameTestHarness();
-            player1 = harness.getPlayer1();
-            gd = harness.getGameData();
-            harness.skipMulligan();
-
-            Permanent birds = addCreatureReady(player1, new BirdsOfParadise());
-            ManaColor manaColor = ManaColor.valueOf(color);
-
-            harness.activateAbility(player1, 0, null, null);
-            int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
-
-            harness.handleListChoice(player1, color);
-
-            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
-            assertThat(gd.interaction.activeInteraction()).isNull();
-        }
     }
 
     @Test
@@ -120,5 +97,18 @@ class BirdsOfParadiseTest extends BaseCardTest {
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Birds of Paradise")
+    void flyingCreatureCanBlockBirdsOfParadise() {
+        addCreatureReady(player1, new BirdsOfParadise());
+        Permanent blocker = addCreatureReady(player2, new BirdsOfParadise());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

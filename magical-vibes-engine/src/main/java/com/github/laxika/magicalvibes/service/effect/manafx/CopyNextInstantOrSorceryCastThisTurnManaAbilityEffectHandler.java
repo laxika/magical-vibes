@@ -32,7 +32,11 @@ public class CopyNextInstantOrSorceryCastThisTurnManaAbilityEffectHandler implem
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
         CopyNextInstantOrSorceryCastThisTurnEffect copyEffect =
                 (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
-        if (copyEffect.maxManaValue() == null) {
+        if (copyEffect.dynamicCopyCount() != null) {
+            gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts
+                    .computeIfAbsent(playerId, ignored -> new ArrayList<>())
+                    .add(copyEffect.dynamicCopyCount());
+        } else if (copyEffect.maxManaValue() == null) {
             resolve(gameData, playerId, player, permanent, manaMultiplier, creatureSource);
             return;
         }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,16 +26,13 @@ class IchneumonDruidTest extends BaseCardTest {
 
         int lifeBefore = gd.getLife(player2.getId());
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 8);
     }
 
@@ -52,13 +50,11 @@ class IchneumonDruidTest extends BaseCardTest {
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
     }
@@ -73,11 +69,39 @@ class IchneumonDruidTest extends BaseCardTest {
 
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Treats the first instant of a new opponent turn as exempt again")
+    void resetsInstantCountEachTurn() {
+        harness.addToBattlefield(player1, new IchneumonDruid());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        int lifeBeforeSecondInstant = gd.getLife(player2.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBeforeSecondInstant - 4);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        int lifeBeforeNewTurn = gd.getLife(player2.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBeforeNewTurn);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBeforeNewTurn - 4);
     }
 }

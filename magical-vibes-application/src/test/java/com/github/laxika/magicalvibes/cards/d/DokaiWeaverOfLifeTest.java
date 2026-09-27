@@ -2,21 +2,26 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BudokaGardener;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BudokaGardener.class, DokaiWeaverOfLife.class, Forest.class})
 class DokaiWeaverOfLifeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creates an Elemental token whose power and toughness equal the lands controlled")
     void tokenSizeMatchesLandCount() {
-        addTransformedGardener(player1);
+        Permanent gardener = addTransformedGardener(player1);
         addForests(player1, 7);
         harness.addMana(player1, ManaColor.GREEN, 6);
 
@@ -26,6 +31,9 @@ class DokaiWeaverOfLifeTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Elemental");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(7);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gardener.isTapped()).isTrue();
     }
 
     @Test
@@ -41,21 +49,32 @@ class DokaiWeaverOfLifeTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Elemental");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Requires two green mana to create the token")
+    void requiresTwoGreenMana() {
+        addTransformedGardener(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 
     private Permanent addTransformedGardener(Player player) {
         BudokaGardener card = new BudokaGardener();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setCard(card.getBackFaceCard());
         permanent.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private void addForests(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            gd.playerBattlefields.get(player.getId()).add(new Permanent(new Forest()));
+            harness.addToBattlefield(player, new Forest());
         }
     }
 }

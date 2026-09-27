@@ -189,6 +189,10 @@ another player's dash costs.
   restricts by source zone, hand plotting, or face-down casting, matches the spell against the predicate,
   and evaluates the amount with the **source permanent** in the `AmountContext` so `CountersOnSource`
   works ("costs {1} less for each +1/+1 counter on this creature" — Herald of War).
+- `cast/costmod/ModifyCastCostForCardsDrawnThisTurnEffectHandler.java` — battlefield handler for
+  `ModifyCastCostForCardsDrawnThisTurnEffect(int, boolean)`; matches the spell's card id against
+  the per-turn draw-id tracker for the source controller or that controller's opponents, then
+  returns the corresponding generic reduction or tax.
 - `cast/costmod/ReduceBuybackCostEffectHandler.java` — battlefield handler for
   `ReduceBuybackCostEffect(int)`; contributes only through `modifyBuybackCost`, so the effect is
   isolated from ordinary spell-cost calculations.

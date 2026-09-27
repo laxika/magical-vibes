@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  *
  * <p>The trigger collector carries that player on the stack entry. Permanent-event triggers use
  * the triggering permanent's controller field; spell-cast and upkeep triggers use the target or
- * active-player context as appropriate. In a spell-cast trigger, the collector also stores the
- * triggering spell's mana value in the entry event value, so the token blueprint may use
- * {@code EventValue} for its power and toughness.
+ * active-player context as appropriate. Direct attack-player triggers use the stack entry's
+ * controller as the player whose attack caused the trigger. In a spell-cast trigger, the collector
+ * also stores the triggering spell's mana value in the entry event value, so the token blueprint
+ * may use {@code EventValue} for its power and toughness.
  *
  * @param token token blueprint to create
  * @param attacking whether created attacking creatures attack the trigger's captured target

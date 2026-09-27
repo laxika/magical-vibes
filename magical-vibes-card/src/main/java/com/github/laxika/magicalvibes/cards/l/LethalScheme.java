@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "MSC", collectorNumber = "157")
+@CardRegistration(set = "MSC", collectorNumber = "353")
 @CardRegistration(set = "SLD", collectorNumber = "2187")
 @CardRegistration(set = "NCC", collectorNumber = "36")
 @CardRegistration(set = "NCC", collectorNumber = "137")
@@ -25,7 +27,6 @@ public class LethalScheme extends Card {
                 )),
                 "Target must be a creature or planeswalker"
         )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-
         addEffect(EffectSlot.SPELL, new ConniveConvokeCreaturesEffect());
     }
 }

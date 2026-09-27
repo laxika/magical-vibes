@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.z.Zap;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UrborgSkeleton.class, Zap.class})
 class UrborgSkeletonTest extends BaseCardTest {
 
     @Test
@@ -51,10 +53,10 @@ class UrborgSkeletonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         java.util.UUID skeletonId = harness.getPermanentId(player1, "Urborg Skeleton");
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, skeletonId);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Zap()));
+        harness.setLibrary(player1, List.of(new UrborgSkeleton()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, skeletonId);
 
         Permanent skeleton = findPermanent(player1, "Urborg Skeleton");
         assertThat(skeleton).isNotNull();

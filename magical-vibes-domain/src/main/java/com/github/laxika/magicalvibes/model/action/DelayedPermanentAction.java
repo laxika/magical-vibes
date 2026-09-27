@@ -12,24 +12,30 @@ import java.util.UUID;
  */
 public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                      boolean cannotBeRegenerated, UUID returnExiledCardId,
-                                     UUID controllerId) implements DelayedAction {
+                                     UUID controllerId, UUID sacrificingPlayerId) implements DelayedAction {
+
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
+                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
+                                  UUID controllerId) {
+        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId, null);
+    }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                   boolean cannotBeRegenerated, UUID returnExiledCardId) {
-        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, null);
+        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, null, null);
     }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                   boolean cannotBeRegenerated) {
-        this(permanentId, kind, cannotBeRegenerated, null, null);
+        this(permanentId, kind, cannotBeRegenerated, null, null, null);
     }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind) {
-        this(permanentId, kind, false, null, null);
+        this(permanentId, kind, false, null, null, null);
     }
 
     /** Creates an end-step action that is drained only during the controller's end step. */
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind, UUID controllerId) {
-        this(permanentId, kind, false, null, controllerId);
+        this(permanentId, kind, false, null, controllerId, null);
     }
 }

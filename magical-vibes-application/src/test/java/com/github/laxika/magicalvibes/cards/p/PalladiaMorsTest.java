@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(PalladiaMors.class)
 class PalladiaMorsTest extends BaseCardTest {
 
     @Test
@@ -38,5 +40,19 @@ class PalladiaMorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countPermanents(player1, "Palladia-Mors")).isZero();
+    }
+
+    @Test
+    @DisplayName("Accepting the upkeep payment without enough mana sacrifices Palladia-Mors")
+    void acceptingUpkeepCostWithoutEnoughManaSacrificesPalladiaMors() {
+        addCreatureReady(player1, new PalladiaMors());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Palladia-Mors")).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }

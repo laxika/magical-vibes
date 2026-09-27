@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Tek.class, Plains.class, Island.class, Swamp.class, Mountain.class, Forest.class})
 class TekTest extends BaseCardTest {
 
     @Test
@@ -45,7 +47,37 @@ class TekTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only basic lands controlled by Tek's controller count")
+    @DisplayName("Each matching basic land grants only its own effect")
+    void eachBasicLandGrantsItsOwnEffect() {
+        Permanent tek = addTek();
+
+        harness.addToBattlefield(player1, new Plains());
+        assertThat(gqs.getEffectivePower(gd, tek)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tek)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.TRAMPLE)).isFalse();
+
+        harness.addToBattlefield(player1, new Island());
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.TRAMPLE)).isFalse();
+
+        harness.addToBattlefield(player1, new Swamp());
+        assertThat(gqs.getEffectivePower(gd, tek)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tek)).isEqualTo(4);
+
+        harness.addToBattlefield(player1, new Mountain());
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.TRAMPLE)).isFalse();
+
+        harness.addToBattlefield(player1, new Forest());
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled basic lands do not count")
     void opponentBasicLandsDoNotCount() {
         Permanent tek = addTek();
         harness.addToBattlefield(player2, new Plains());
@@ -85,7 +117,6 @@ class TekTest extends BaseCardTest {
     }
 
     private Permanent addTek() {
-        harness.addToBattlefield(player1, new Tek());
-        return findPermanent(player1, "Tek");
+        return harness.addToBattlefieldAndReturn(player1, new Tek());
     }
 }

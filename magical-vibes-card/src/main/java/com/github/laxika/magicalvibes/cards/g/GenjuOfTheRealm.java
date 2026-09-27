@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -22,24 +22,16 @@ import java.util.Set;
 public class GenjuOfTheRealm extends Card {
 
     public GenjuOfTheRealm() {
-        target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                        new ActivatedAbility(
-                                false,
-                                "{2}",
-                                List.of(
-                                        new AnimatePermanentsEffect(
-                                                8, 12, List.of(CardSubtype.SPIRIT), Set.of(Keyword.TRAMPLE)),
-                                        new GrantSupertypeUntilEndOfTurnEffect(
-                                                CardSupertype.LEGENDARY, GrantScope.SELF)
-                                ),
-                                "Enchanted land becomes a legendary 8/12 Spirit creature with trample until end of turn. It's still a land."
-                        ),
-                        GrantScope.ENCHANTED_PERMANENT
-                ))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new MayEffect(
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Return Genju of the Realm to your hand?"
-                ));
+        target(TargetFilters.land());
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
+                new AnimatePermanentsEffect(8, 12, List.of(CardSubtype.SPIRIT),
+                        Set.of(Keyword.TRAMPLE), null, Set.of(), GrantScope.ENCHANTED_PERMANENT,
+                        EffectDuration.UNTIL_END_OF_TURN),
+                new GrantSupertypeUntilEndOfTurnEffect(
+                        CardSupertype.LEGENDARY, GrantScope.ENCHANTED_PERMANENT)
+        ), "Enchanted land becomes a legendary 8/12 Spirit creature with trample until end of turn. It's still a land."));
+        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new MayEffect(
+                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                "Return Genju of the Realm to your hand?"));
     }
 }

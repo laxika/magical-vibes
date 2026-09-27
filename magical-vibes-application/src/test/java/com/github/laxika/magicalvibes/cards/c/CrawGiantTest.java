@@ -20,10 +20,9 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("With one blocker Rampage 2 grants no bonus")
     void oneBlockerGivesNothing() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        giant.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -35,11 +34,10 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("With two blockers Rampage 2 grants +2/+2 until end of turn")
     void twoBlockersGivesPlusTwo() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        giant.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -54,12 +52,11 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("With three blockers Rampage 2 grants +4/+4 until end of turn")
     void threeBlockersGivesPlusFour() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        giant.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0),
@@ -72,12 +69,33 @@ class CrawGiantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts the blockers still blocking when Rampage resolves")
+    void countsBlockersAtResolution() {
+        Permanent giant = addCreatureReady(player1, new CrawGiant());
+        Permanent removedBlocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, removedBlocker));
+        harness.passBothPriorities();
+
+        assertThat(giant.getPowerModifier()).isEqualTo(2);
+        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("If unblocked no becomes-blocked trigger is created")
     void unblockedCreatesNoTrigger() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        giant.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
@@ -89,11 +107,10 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("The rampage bonus wears off at end of turn")
     void rampageBonusWearsOffAtEndOfTurn() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        giant.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)

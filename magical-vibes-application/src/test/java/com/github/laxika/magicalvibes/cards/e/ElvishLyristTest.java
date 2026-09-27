@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
-import com.github.laxika.magicalvibes.cards.c.Caltrops;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.t.TolarianAcademy;
-import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArgothianSwine.class, Caltrops.class, ElvishLyrist.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, TolarianAcademy.class, VoltaicKey.class})
+@CardUsed({ElvishLyrist.class, GloriousAnthem.class, GrizzlyBears.class, HowlingMine.class, Island.class})
 class ElvishLyristTest extends BaseCardTest {
 
     @Test
@@ -63,11 +59,24 @@ class ElvishLyristTest extends BaseCardTest {
     @DisplayName("Cannot activate with summoning sickness (tap cost)")
     void cannotActivateWithSummoningSickness() {
         harness.addToBattlefield(player1, new ElvishLyrist());
-        Permanent target = addReadyEnchantment(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileAlreadyTapped() {
+        Permanent lyrist = addCreatureReady(player1, new ElvishLyrist());
+        lyrist.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     @Test
@@ -85,7 +94,7 @@ class ElvishLyristTest extends BaseCardTest {
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addCreatureReady(player1, new ElvishLyrist());
-        Permanent creature = addCreatureReady(player2, new ArgothianSwine());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -95,8 +104,8 @@ class ElvishLyristTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact")
     void cannotTargetArtifact() {
-        addReadyLyrist(player1);
-        Permanent artifact = addArtifact(player2);
+        addCreatureReady(player1, new ElvishLyrist());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
@@ -107,7 +116,7 @@ class ElvishLyristTest extends BaseCardTest {
     @DisplayName("Cannot target an artifact")
     void cannotTargetArtifactUpstreamReview() {
         addCreatureReady(player1, new ElvishLyrist());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new VoltaicKey());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
@@ -118,7 +127,7 @@ class ElvishLyristTest extends BaseCardTest {
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         addCreatureReady(player1, new ElvishLyrist());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new TolarianAcademy());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
@@ -141,25 +150,6 @@ class ElvishLyristTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
-
-    private Permanent addReadyLyrist(Player player) {
-        return addCreatureReady(player, new ElvishLyrist());
-    }
-
-
-    private Permanent addReadyEnchantment(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
-    }
-
-
-    private Permanent addArtifact(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Caltrops());
-    }
-
-    private Permanent addReadyLand(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Island());
-    }
-
 
     @Test
     @DisplayName("Pays the sacrifice cost when the ability is activated")

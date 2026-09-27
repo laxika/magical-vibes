@@ -161,4 +161,21 @@ class GauntletsOfChaosTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Exchange fizzles when the targets stop sharing a listed type")
+    void exchangeFizzlesWhenTargetsStopSharingAListedType() {
+        harness.addToBattlefield(player1, new GauntletsOfChaos());
+        Permanent livingLands = harness.addToBattlefieldAndReturn(player1, new LivingLands());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(own.getId(), opp.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(livingLands);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
 }

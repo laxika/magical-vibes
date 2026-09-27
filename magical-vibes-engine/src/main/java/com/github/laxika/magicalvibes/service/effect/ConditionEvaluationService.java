@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -51,12 +52,16 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
+import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
 import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
@@ -64,6 +69,18 @@ import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CanBeholdSubtype;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
+import com.github.laxika.magicalvibes.model.condition.CardsInExileAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInExileMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandGraveyardAndLibraryMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
@@ -99,6 +116,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedA
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
@@ -122,6 +140,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisT
 import com.github.laxika.magicalvibes.model.condition.ControllerControlledSourcesDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.RedSourcesControlledDealtNoncombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasNotDealtCombatDamageSinceLastTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerWasAttackedByPlayerLastTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerWasNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
@@ -140,6 +160,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsIn
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActivePlayer;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
@@ -152,6 +173,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanA
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
+import com.github.laxika.magicalvibes.model.condition.ControllerRingLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerEndStep;
 import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn;
@@ -206,6 +228,7 @@ import com.github.laxika.magicalvibes.model.condition.CreatureCardsPutIntoGravey
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ModifiedCreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureWithDifferentNameDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
@@ -308,6 +331,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFr
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
@@ -325,6 +349,7 @@ import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedBattleThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceCardToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedDuringControllersLastTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisTurn;
@@ -339,10 +364,12 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledDifferentManaValuesThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
@@ -360,6 +387,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMotivated;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
+import com.github.laxika.magicalvibes.model.condition.SourceIsRingBearer;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
@@ -564,7 +592,8 @@ public class ConditionEvaluationService {
             case Coven ignored ->
                     isCovenMet(gameData, ctx);
             case FullParty ignored ->
-                    AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
+                    partyIsAlwaysFull(gameData, ctx.controllerId())
+                            || AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
             case AnotherCreatureDiedThisTurn ignored ->
                     gameData.creatureDeathCountThisTurn.values().stream()
                             .mapToInt(Integer::intValue)
@@ -603,6 +632,9 @@ public class ConditionEvaluationService {
             case CreatureDiedUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
+            case ModifiedCreatureDiedUnderYourControlThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoControlledModifiedCreatureDiedThisTurn.contains(ctx.controllerId());
             case CreatureLeftBattlefieldUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureLeftBattlefieldCountThisTurn
@@ -728,6 +760,9 @@ public class ConditionEvaluationService {
             case GainedLifeThisTurn gainedLife ->
                     ctx.controllerId() != null
                             && gameData.getLifeGainedThisTurn(ctx.controllerId()) >= gainedLife.minimumAmount();
+            case ControllerRingLevelAtLeast ringLevel ->
+                    ctx.controllerId() != null
+                            && gameData.ringLevels.getOrDefault(ctx.controllerId(), 0) >= ringLevel.minimumLevel();
             case CommittedCrimeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
@@ -902,6 +937,9 @@ public class ConditionEvaluationService {
                     gameData.cardPutIntoExileThisTurn;
             case CardsInHandMatchingAtLeast c ->
                     countMatchingCardsInHand(gameData, ctx.controllerId(), c.filter()) >= c.threshold();
+            case CardsInHandGraveyardAndLibraryMatchingAtLeast c ->
+                    countMatchingCardsInHandGraveyardAndLibrary(gameData, ctx.controllerId(), c.filter())
+                            >= c.threshold();
             case ActivePlayerControlsPermanent c ->
                     activePlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case ActivePlayerControlsMoreLandsThanEachOtherPlayer ignored ->
@@ -954,6 +992,8 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerIsActivePlayer ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
+            case TargetPlayerIsController ignored ->
+                    ctx.targetId() != null && ctx.targetId().equals(ctx.controllerId());
             case TargetPlayerIsActive ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerLifeTotalEquals c ->
@@ -1008,6 +1048,17 @@ public class ConditionEvaluationService {
             case AttackedTargetIsOpponent ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
+            case AttackedOpponentHasMoreLifeThanAnotherOpponent ignored ->
+                    ctx.targetId() != null && ctx.controllerId() != null
+                            && gameData.playerIds.contains(ctx.targetId())
+                            && !ctx.targetId().equals(ctx.controllerId())
+                            && gameData.orderedPlayerIds.stream()
+                                    .filter(playerId -> !playerId.equals(ctx.controllerId())
+                                            && !playerId.equals(ctx.targetId()))
+                                    .anyMatch(playerId -> gameData.getLife(ctx.targetId()) > gameData.getLife(playerId));
+            case AttackedTargetIsMonarch ignored ->
+                    ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
+                            && ctx.targetId().equals(gameData.monarchPlayerId);
             case AttacksEnchantedPlayer ignored -> attacksEnchantedPlayer(gameData, ctx);
             case ControllerAndEnchantedPlayerAttackEachOther ignored ->
                     controllerAndEnchantedPlayerAttackEachOther(gameData, ctx);
@@ -1042,8 +1093,10 @@ public class ConditionEvaluationService {
                     opponentAttacksPlaneswalker(gameData, ctx);
             case OpponentAttacksAnotherOpponent ignored ->
                     opponentAttacksAnotherOpponent(gameData, ctx);
-            case PlayerAttacksOneOfYourOpponents ignored ->
-                    playerAttacksOneOfYourOpponents(gameData, ctx);
+              case PlayerAttacksOneOfYourOpponents ignored ->
+                      playerAttacksOneOfYourOpponents(gameData, ctx);
+              case PlayerAttacksNotController ignored ->
+                      playerAttacksNotController(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
                     countAttackingCreaturesOfSubtype(gameData, ctx.controllerId(), c.subtype()) >= c.minimum();
             case HasAttacker c ->
@@ -1143,10 +1196,18 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.redSourceNoncombatDamageThisTurn.getOrDefault(ctx.controllerId(), 0)
                                     >= c.minimumAmount();
+            case ControllerWasAttackedByPlayerLastTurn ignored ->
+                    ctx.controllerId() != null
+                            && !gameData.playersWhoAttackedPlayersLastTurn
+                                    .getOrDefault(ctx.controllerId(), Set.of()).isEmpty();
             case ControllerWasNotDealtCombatDamageSinceLastTurn ignored ->
                     ctx.controllerId() != null
                             && !gameData.playersDealtCombatDamageLastTurn.contains(ctx.controllerId())
                             && !gameData.playersDealtCombatDamageSinceTheirLastTurn.contains(ctx.controllerId());
+            case ControllerWasNotStartingPlayer ignored ->
+                    ctx.controllerId() != null
+                            && gameData.startingPlayerId != null
+                            && !ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerDealtDamageByAtLeastCreaturesThisTurn c ->
                     countCreatureDamageSourcesToPlayer(gameData, ctx.controllerId())
                             >= Math.max(1, c.minimumCreatures());
@@ -1324,6 +1385,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
             case ControllerIsMonarch ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.monarchPlayerId);
+            case ControllerIsStartingPlayer ignored ->
+                    ctx.controllerId() != null && ctx.controllerId().equals(gameData.startingPlayerId);
             case ControllerIsNotStartingPlayer ignored ->
                     ctx.controllerId() != null && gameData.startingPlayerId != null
                             && !ctx.controllerId().equals(gameData.startingPlayerId);
@@ -1432,6 +1495,8 @@ public class ConditionEvaluationService {
                     isSourceCardOnBattlefield(gameData, ctx);
             case SourceCardInGraveyard ignored ->
                     isSourceCardInGraveyard(gameData, ctx);
+            case SourceCardToughnessAtLeast c ->
+                    sourceCardToughnessAtLeast(gameData, ctx, c.threshold());
             case SourceCardSuspended ignored ->
                     isSourceCardSuspended(gameData, ctx);
             case SourceAttackedOrBlockedThisCombat ignored -> {
@@ -1454,6 +1519,10 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getPairedWithId() != null;
             }
+            case SourceIsRingBearer ignored ->
+                    ctx.controllerId() != null
+                            && ctx.sourcePermanentId() != null
+                            && ctx.sourcePermanentId().equals(gameData.ringBearerIds.get(ctx.controllerId()));
             case SourceCanSoulbond ignored ->
                     canSoulbond(gameData, ctx);
             case SourceIsRenowned ignored -> {
@@ -1493,12 +1562,19 @@ public class ConditionEvaluationService {
                                 : source.getCounterCount(c.counterType());
                 yield counterCount >= c.threshold();
             }
+            case SourceIntensityThreshold c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null
+                        && gameData.getCardIntensity(source.getCard().getId()) >= c.threshold();
+            }
             case SourceExiledCardsThreshold c ->
                     ctx.sourcePermanentId() != null
                             && gameData.exiledCards.stream()
                                     .filter(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()))
                                     .filter(e -> !e.card().isToken())
                                     .count() >= c.threshold();
+            case SourceExiledCardsMatchingAtLeast c ->
+                    sourceExiledCardsMatchingAtLeast(gameData, ctx, c.threshold(), c.filter());
             case SourceExiledDifferentManaValuesThreshold c ->
                     ctx.sourcePermanentId() != null
                             && gameData.exiledCards.stream()
@@ -1738,6 +1814,9 @@ public class ConditionEvaluationService {
         if (!(effect instanceof ConditionalEffect conditional)) {
             return true;
         }
+        if (!conditional.interveningIf()) {
+            return true;
+        }
         return isMet(gameData, conditional.condition(), ConditionContext.forPermanent(source, controllerId)
                 .withTriggeringPermanentId(triggeringPermanentId));
     }
@@ -1785,6 +1864,24 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private boolean attackedOpponentHasMoreLifeThanAnotherOpponent(GameData gameData,
+                                                                    ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackedOpponentId = ctx.targetId();
+        if (controllerId == null
+                || attackedOpponentId == null
+                || !gameData.playerIds.contains(attackedOpponentId)
+                || controllerId.equals(attackedOpponentId)) {
+            return false;
+        }
+
+        int attackedOpponentLife = gameData.getLife(attackedOpponentId);
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId)
+                        && !playerId.equals(attackedOpponentId))
+                .anyMatch(playerId -> attackedOpponentLife > gameData.getLife(playerId));
     }
 
     private boolean anOpponentHasMoreCardsInHandThanController(GameData gameData, UUID controllerId) {
@@ -2248,6 +2345,15 @@ public class ConditionEvaluationService {
         return gameData.playerGraveyards.values().stream()
                 .flatMap(List::stream)
                 .anyMatch(card -> card.getId().equals(ctx.sourceCard().getId()));
+    }
+
+    /** True when the source card's printed toughness plus its perpetual modifiers meets the threshold. */
+    private boolean sourceCardToughnessAtLeast(GameData gameData, ConditionContext ctx, int threshold) {
+        if (ctx.sourceCard() == null || ctx.sourceCard().getToughness() == null) return false;
+        CardPowerToughnessModifier modifier = gameData.perpetualCardPowerToughnessModifiers
+                .get(ctx.sourceCard().getId());
+        int toughness = ctx.sourceCard().getToughness() + (modifier == null ? 0 : modifier.toughness());
+        return toughness >= threshold;
     }
 
     /** True when the source card is still exiled with a positive time-counter entry. */
@@ -3436,6 +3542,18 @@ public class ConditionEvaluationService {
                 .anyMatch(targetId -> !controllerId.equals(targetId));
     }
 
+    private boolean playerAttacksNotController(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (controllerId == null || attackingPlayerId == null) {
+            return false;
+        }
+
+        return gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
+                .filter(Permanent::isAttacking)
+                .noneMatch(attacker -> controllerId.equals(attacker.getAttackTarget()));
+    }
+
     private boolean controlsMatchingPermanentsWithSameName(GameData gameData, ConditionContext ctx,
                                                             int minimum, PermanentPredicate filter) {
         if (ctx.controllerId() == null) return false;
@@ -3789,6 +3907,24 @@ public class ConditionEvaluationService {
                 .count();
     }
 
+    private int countMatchingCardsInHandGraveyardAndLibrary(GameData gameData, UUID controllerId,
+                                                            CardPredicate filter) {
+        if (controllerId == null) return 0;
+        return countMatchingCards(gameData.playerHands.get(controllerId), gameData, controllerId, filter)
+                + countMatchingCards(gameData.playerGraveyards.get(controllerId), gameData, controllerId, filter)
+                + countMatchingCards(gameData.playerDecks.get(controllerId), gameData, controllerId, filter);
+    }
+
+    private int countMatchingCards(List<Card> cards, GameData gameData, UUID controllerId,
+                                   CardPredicate filter) {
+        if (cards == null) return 0;
+        return (int) cards.stream()
+                .filter(card -> !card.isToken())
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, null, gameData, controllerId))
+                .count();
+    }
+
     private int countMatchingCardsInExile(GameData gameData, UUID ownerId, CardPredicate filter) {
         if (ownerId == null) return 0;
         int count = 0;
@@ -3801,6 +3937,20 @@ public class ConditionEvaluationService {
             if (matches) count++;
         }
         return count;
+    }
+
+    private boolean sourceExiledCardsMatchingAtLeast(GameData gameData, ConditionContext ctx,
+                                                     int threshold, CardPredicate filter) {
+        if (ctx.sourcePermanentId() == null) return false;
+        long count = gameData.exiledCards.stream()
+                .filter(entry -> ctx.sourcePermanentId().equals(entry.sourcePermanentId()))
+                .filter(entry -> !entry.card().isToken())
+                .filter(entry -> GameQueryService.isStaticEvaluationActive()
+                        ? predicateEvaluationService.matchesCardPredicate(entry.card(), filter, null)
+                        : predicateEvaluationService.matchesCardPredicate(
+                                entry.card(), filter, null, gameData, entry.ownerId()))
+                .count();
+        return count >= threshold;
     }
 
     private boolean isTopCardOfLibraryColor(GameData gameData, UUID controllerId, TopCardOfLibraryColor c) {

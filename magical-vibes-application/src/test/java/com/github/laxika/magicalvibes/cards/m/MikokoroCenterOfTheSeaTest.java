@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(MikokoroCenterOfTheSea.class)
 class MikokoroCenterOfTheSeaTest extends BaseCardTest {
 
     @Test
@@ -43,10 +45,21 @@ class MikokoroCenterOfTheSeaTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore - 1);
     }
 
+    @Test
+    @DisplayName("{2}, {T} draw ability pays two generic mana and taps Mikokoro")
+    void drawAbilityPaysTwoGenericManaAndTapsSource() {
+        Permanent mikokoro = addReadyMikokoro(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(mikokoro.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private Permanent addReadyMikokoro(Player player) {
-        Permanent perm = new Permanent(new MikokoroCenterOfTheSea());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MikokoroCenterOfTheSea());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

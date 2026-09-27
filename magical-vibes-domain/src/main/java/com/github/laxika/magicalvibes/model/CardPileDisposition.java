@@ -48,5 +48,7 @@ public enum CardPileDisposition {
     /** Do or Die: target player chooses the pile whose creatures are destroyed without regeneration. */
     DESTROY,
     /** Make an Example: the spell controller chooses the pile each opponent sacrifices. */
-    MAKE_AN_EXAMPLE
+    MAKE_AN_EXAMPLE,
+    /** Abstract Performance: the chosen pile goes to the controller's graveyard; the other is offered for one free spell cast and then the rest go to hand. */
+    GRAVEYARD_AND_FREE_CAST_ONE_REST_TO_HAND
 }

@@ -48,7 +48,7 @@ class ElvenFortressTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("blocking creature");
     }
 
     @Test
@@ -62,7 +62,7 @@ class ElvenFortressTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("must be a creature");
+                .hasMessageContaining("blocking creature");
     }
 
     @Test

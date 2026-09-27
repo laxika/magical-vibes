@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -22,7 +23,6 @@ import java.util.*;
  * engine action validation, AI planning, and the human player-view projector.
  */
 @Service
-@RequiredArgsConstructor
 public class GameActionAvailabilityService {
 
     private final GameQueryService gameQueryService;
@@ -30,7 +30,37 @@ public class GameActionAvailabilityService {
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
     private final PotentialManaService potentialManaService;
+    private final AdditionalSpellCostService additionalSpellCostService;
     private final PredicateEvaluationService predicateEvaluationService;
+
+    @Autowired
+    public GameActionAvailabilityService(GameQueryService gameQueryService,
+                                         ValidTargetService validTargetService,
+                                         CastingCostService castingCostService,
+                                         CastingPermissionService castingPermissionService,
+                                         PotentialManaService potentialManaService,
+                                         AdditionalSpellCostService additionalSpellCostService,
+                                         PredicateEvaluationService predicateEvaluationService) {
+        this.gameQueryService = gameQueryService;
+        this.validTargetService = validTargetService;
+        this.castingCostService = castingCostService;
+        this.castingPermissionService = castingPermissionService;
+        this.potentialManaService = potentialManaService;
+        this.additionalSpellCostService = additionalSpellCostService;
+        this.predicateEvaluationService = predicateEvaluationService;
+    }
+
+    /** Compatibility constructor for focused service tests that predate additional-cost queries. */
+    public GameActionAvailabilityService(GameQueryService gameQueryService,
+                                         ValidTargetService validTargetService,
+                                         CastingCostService castingCostService,
+                                         CastingPermissionService castingPermissionService,
+                                         PotentialManaService potentialManaService,
+                                         PredicateEvaluationService predicateEvaluationService) {
+        this(gameQueryService, validTargetService, castingCostService, castingPermissionService,
+                potentialManaService, new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
+                predicateEvaluationService);
+    }
 
     /**
      * The potential-mana model this service answers playability with. Exposed so AI planning shares
@@ -403,7 +433,8 @@ public class GameActionAvailabilityService {
             flagged.setWhiteSpendableAsAnyColorWithoutRestriction(true);
             pool = flagged;
         }
-        if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId) && !pool.isAllManaSpendableAsAnyColor()) {
+        if (gameQueryService.canSpendManaAsAnyColorToCastCard(gameData, playerId, card)
+                && !pool.isAllManaSpendableAsAnyColor()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             flagged.setAllManaSpendableAsAnyColor(true);
@@ -622,6 +653,11 @@ public class GameActionAvailabilityService {
                 && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, kicker.returnPredicate()))) {
+            return false;
+        }
+        if (kicker.hasForageCost()
+                && !additionalSpellCostService.canPayForageOrPayManaCost(
+                gameData, playerId, card, kicker.forageCost())) {
             return false;
         }
         if (!kicker.hasManaCost()) {

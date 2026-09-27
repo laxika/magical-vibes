@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardNameRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
+import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
@@ -754,6 +755,14 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.CantCastSpellsSharingColorWithMostRecentSpellEffect) {
+                        if (mostRecentSpell != null && card != null
+                                && gameQueryService.getEffectiveCardColors(gameData, mostRecentSpell).stream()
+                                .anyMatch(gameQueryService.getEffectiveCardColors(gameData, card)::contains)) {
+                            return true;
+                        }
+                        continue;
+                    }
                     if (effect instanceof SpellCastingRestrictionEffect restriction
                             && restriction.preventsCasting(perm, mostRecentSpell, card, chosenX)) {
                         return true;
@@ -1274,6 +1283,7 @@ public class CastingPermissionService {
         }
         // Quicken: an unconsumed grant for the next spell of a given type this turn.
         if (gameData.hasNextSpellFlashGrant(playerId, card)) return true;
+        if (gameData.hasNextSpellChosenSubtypeFlashGrant(playerId, card)) return true;
         for (UUID ownerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
             if (battlefield == null) continue;
@@ -1508,30 +1518,35 @@ public class CastingPermissionService {
             return Optional.empty();
         }
         for (Permanent perm : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                continue;
+            }
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
                         || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
                     continue;
                 }
-                if (permission.availabilityCondition() != null
-                        && !conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
-                        ConditionContext.forCasting(playerId))) {
-                    continue;
-                }
-                if (permission.onlyDuringControllerTurn()
-                        && !playerId.equals(gameData.activePlayerId)) {
-                    continue;
-                }
-                if (permission.oncePerControllerTurn()
-                        && (!playerId.equals(gameData.activePlayerId)
-                            || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
+                if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
                     continue;
                 }
                 return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
             }
         }
         return Optional.empty();
+    }
+
+    private boolean isGraveyardPermissionAvailable(GameData gameData, UUID playerId,
+                                                     Permanent source,
+                                                     CastSpellsFromGraveyardPermission permission) {
+        return (permission.availabilityCondition() == null
+                || conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
+                ConditionContext.forCasting(playerId)))
+                && (!permission.onlyDuringControllerTurn()
+                || playerId.equals(gameData.activePlayerId))
+                && (!permission.oncePerControllerTurn()
+                || (playerId.equals(gameData.activePlayerId)
+                && !gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(source.getId())));
     }
 
     /**
@@ -2087,6 +2102,9 @@ public class CastingPermissionService {
      * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).
      */
     public boolean canSpendAnyManaTypeToCast(GameData gameData, UUID playerId, Card card) {
+        if (canSpendAnyManaTypeFromCard(card)) {
+            return true;
+        }
         if (hasLibraryTopPermissionForCard(gameData, playerId, card)) {
             return true;
         }
@@ -2094,6 +2112,12 @@ public class CastingPermissionService {
             return true;
         }
         return canSpendAnyManaTypeFromBattlefield(gameData, playerId, card);
+    }
+
+    /** Returns whether the card itself carries a perpetual any-color casting permission. */
+    public boolean canSpendAnyManaTypeFromCard(Card card) {
+        return card != null && card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PerpetualAnyManaTypeToCastSelfEffect.class::isInstance);
     }
 
     public boolean canSpendAnyManaTypeFromBattlefield(GameData gameData, UUID playerId, Card card) {

@@ -27,6 +27,8 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GameQueryService gameQueryService;
+    private final ExileSupport exileSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,6 +65,19 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
                     permanentRemovalService.removePermanentToExile(gameData, perm, sourcePermanentId);
                 } else {
                     permanentRemovalService.removePermanentToExile(gameData, perm);
+                }
+                if (e.perpetualCastCostIncrease() != 0) {
+                    gameData.perpetualGenericCastCostIncreases.merge(
+                            perm.getOriginalCard().getId(), e.perpetualCastCostIncrease(), Integer::sum);
+                }
+                if (e.perpetualEnterTapped()) {
+                    gameData.perpetualEnterTappedCardIds.add(perm.getOriginalCard().getId());
+                }
+                if (e.ownerMayPlayWhileExiled()) {
+                    UUID ownerId = gameQueryService.findExileOwnerById(gameData, perm.getOriginalCard().getId());
+                    if (ownerId != null) {
+                        exileSupport.grantPlayWhileExiled(gameData, perm.getOriginalCard().getId(), ownerId);
+                    }
                 }
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
                 log.info("Game {} - {} is exiled by {}",

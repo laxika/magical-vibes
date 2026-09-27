@@ -33,14 +33,14 @@ public class WaxmaneBaku extends Card {
                                 "Put a ki counter on this creature?"))));
 
         // {1}, Remove X ki counters from this creature: Tap X target creatures. X is announced at
-        // activation (capped by the ki counters present) and bounds the target count via
-        // withXScaledTargets; the tap handler fans over the whole chosen target group.
+        // activation (capped by the ki counters present) and requires exactly X targets;
+        // the tap handler fans over the whole chosen target group.
         addActivatedAbility(new ActivatedAbility(false, "{1}",
                 List.of(new RemoveXCountersFromSourceCost(CounterType.KI),
                         new TapPermanentsEffect(TapUntapScope.TARGET)),
                 "{1}, Remove X ki counters from this creature: Tap X target creatures.",
                 TargetFilters.creature(),
                 null, null, null, List.of(), 0, 100)
-                .withXScaledTargets());
+                .withExactXTargets());
     }
 }

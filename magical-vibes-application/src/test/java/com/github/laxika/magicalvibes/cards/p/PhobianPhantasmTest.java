@@ -52,14 +52,10 @@ class PhobianPhantasmTest extends BaseCardTest {
     @Test
     @DisplayName("Fear prevents non-black creatures from blocking Phobian Phantasm")
     void fearPreventsNonBlackBlockers() {
-        Permanent phantasm = new Permanent(new PhobianPhantasm());
-        phantasm.setSummoningSick(false);
+        Permanent phantasm = addCreatureReady(player1, new PhobianPhantasm());
         phantasm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(phantasm);
 
-        Permanent cloudSprite = new Permanent(new CloudSprite());
-        cloudSprite.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(cloudSprite);
+        addCreatureReady(player2, new CloudSprite());
 
         prepareDeclareBlockers();
 
@@ -71,14 +67,10 @@ class PhobianPhantasmTest extends BaseCardTest {
     @Test
     @DisplayName("Fear allows black creatures to block Phobian Phantasm")
     void fearAllowsBlackBlockers() {
-        Permanent phantasm = new Permanent(new PhobianPhantasm());
-        phantasm.setSummoningSick(false);
+        Permanent phantasm = addCreatureReady(player1, new PhobianPhantasm());
         phantasm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(phantasm);
 
-        Permanent imp = new Permanent(new DuskImp());
-        imp.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(imp);
+        addCreatureReady(player2, new DuskImp());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

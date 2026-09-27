@@ -110,6 +110,18 @@ class GreenManaBatteryTest extends BaseCardTest {
         assertThat(battery.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Cannot produce mana while the battery is already tapped")
+    void secondAbilityRejectedWhenTapped() {
+        Permanent battery = addReadyBattery(player1);
+        battery.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(greenMana()).isZero();
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyBattery(Player player) {

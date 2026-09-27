@@ -23,7 +23,7 @@ class TheUrDragonTest extends BaseCardTest {
     void reducesOtherDragonSpellsFromTheBattlefield() {
         addCreatureReady(player1, new TheUrDragon());
         harness.setHand(player1, List.of(new DragonWhelp()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
@@ -35,7 +35,7 @@ class TheUrDragonTest extends BaseCardTest {
     void reducesOtherDragonSpellsFromTheCommandZone() {
         gd.playerCommandZones.get(player1.getId()).add(new TheUrDragon());
         harness.setHand(player1, List.of(new DragonWhelp()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);

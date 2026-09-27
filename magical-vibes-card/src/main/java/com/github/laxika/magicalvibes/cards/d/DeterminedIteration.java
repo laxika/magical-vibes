@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtE
 
 @CardRegistration(set = "NCC", collectorNumber = "45")
 @CardRegistration(set = "NCC", collectorNumber = "146")
+@CardRegistration(set = "SOC", collectorNumber = "122")
 public class DeterminedIteration extends Card {
 
     public DeterminedIteration() {

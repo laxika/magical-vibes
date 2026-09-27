@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -255,6 +256,8 @@ public class CombatBlockService {
                 }
             }
             collectUnblockedAttackTriggers(gameData, activeId, defenderId);
+            checkOpponentCreaturesAttackYouUnblockedTriggers(gameData, activeId, defenderId,
+                    unblockedAttackers);
             checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
             checkUnblockedExileCardTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
@@ -587,6 +590,7 @@ public class CombatBlockService {
         // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeBlockerTriggers = gameData.stack.size();
         Set<Integer> blockersWithOncePerBlockTrigger = new HashSet<>();
+        Set<UUID> blockersWithBushidoTrigger = new HashSet<>();
         Set<UUID> auraOncePerBlockTriggers = new HashSet<>();
 
         // Check for "when this creature blocks" triggers (defending player's / NAP's)
@@ -595,6 +599,9 @@ public class CombatBlockService {
             List<CardEffect> blockEffects = new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
+            if (!blockersWithBushidoTrigger.add(blocker.getId())) {
+                blockEffects.removeIf(BushidoEffect.class::isInstance);
+            }
             boolean hasOncePerBlockEffect = blocker.getCard().getEffectRegistrations(EffectSlot.ON_BLOCK).stream()
                     .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
             boolean collectBlockTrigger = !hasOncePerBlockEffect
@@ -682,6 +689,8 @@ public class CombatBlockService {
                 );
                 // Block triggers reference "that creature" but don't target — they can't fizzle
                 blockTrigger.setTriggeringPermanentId(attacker.getId());
+                blockTrigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attacker));
+                blockTrigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, attacker));
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
@@ -808,6 +817,8 @@ public class CombatBlockService {
                 unblockedAttackers.add(attacker);
             }
         }
+        checkOpponentCreaturesAttackYouUnblockedTriggers(gameData, activeId, defenderId,
+                unblockedAttackers);
         checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
         checkUnblockedExileCardTriggers(gameData, activeId, unblockedAttackers);
 
@@ -1071,6 +1082,8 @@ public class CombatBlockService {
                         blocker.getId(),
                         attacker.getId());
                 trigger.setNonTargeting(true);
+                trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
+                trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
                 gameData.stack.add(trigger);
             }
         }
@@ -1670,6 +1683,52 @@ public class CombatBlockService {
     }
 
     /**
+     * Collects batched triggers for permanents watching an opponent's unblocked direct attack.
+     * The attacking player is stored as the non-targeting {@code targetId}, so player-affecting
+     * effects can resolve against that player even though the trigger itself has no target.
+     */
+    private int checkOpponentCreaturesAttackYouUnblockedTriggers(GameData gameData, UUID activeId,
+                                                                  UUID defenderId,
+                                                                  List<Permanent> unblockedAttackers) {
+        if (activeId.equals(defenderId) || unblockedAttackers.stream()
+                .noneMatch(attacker -> defenderId.equals(attacker.getAttackTarget()))) {
+            return 0;
+        }
+
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null) {
+            return 0;
+        }
+
+        int pushed = 0;
+        for (Permanent permanent : new ArrayList<>(defenderBattlefield)) {
+            List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(
+                    EffectSlot.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED));
+            effects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                    gameData, permanent, EffectSlot.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED));
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    defenderId,
+                    permanent.getCard().getName() + "'s unblocked-attack trigger",
+                    effects,
+                    activeId,
+                    permanent.getId());
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+            log.info("Game {} - {} opponent unblocked-attack trigger for player {}",
+                    gameData.id, permanent.getCard().getName(), activeId);
+            pushed++;
+        }
+        return pushed;
+    }
+
+    /**
      * CR 702.22h: for each declared block of a band member, marks the blocker as also blocking every
      * other member of that band. These consequential blocks bypass block legality (a non-flyer can end
      * up "blocking" a flying band-mate) and are applied only after all declared blocks have been
@@ -1962,6 +2021,8 @@ public class CombatBlockService {
                     );
                     // "That creature" wording references a blocker without targeting it.
                     trigger.setNonTargeting(true);
+                    trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
+                    trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s becomes-blocked ability triggers."));
@@ -2776,6 +2837,9 @@ public class CombatBlockService {
 
         if (hasCantAttackOrBlockAlone(blocker) && maximumAdditionalBlockers < 1) {
             return false;
+        }
+        if (gameQueryService.hasLostPrintedAbilities(gameData, blocker)) {
+            return true;
         }
 
         int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);

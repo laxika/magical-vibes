@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalBeginningPhaseEffec
 public class SphinxOfTheSecondSun extends Card {
 
     public SphinxOfTheSecondSun() {
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new AdditionalBeginningPhaseEffect());
+        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new AdditionalBeginningPhaseEffect(true));
     }
 }

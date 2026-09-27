@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomS
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
@@ -1074,6 +1076,7 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (drawReplacementDeclined(gameData, drawingPlayerId, permanent.getCard())) continue;
                 boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
@@ -1430,7 +1433,8 @@ public class DrawService {
                 false, false, 0, null, 1,
                 restToGraveyard
                         ? "Put one of these cards into your hand and the rest into your graveyard."
-                        : "Put one of these cards into your hand and the rest on the bottom of your library in any order."));
+                        : "Put one of these cards into your hand and the rest on the bottom of your library in any order.",
+                false, 1, false, null, false));
     }
 
     private Permanent findRevealTopCreatureToGraveyardElseDrawSource(GameData gameData, UUID playerId) {
@@ -1933,6 +1937,12 @@ public class DrawService {
                         continue;
                     }
                 }
+                if (effect instanceof DrawnCardTriggerEffect drawnCardTrigger) {
+                    effect = drawnCardTrigger.effectForDrawnCard(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                }
                 if (effect instanceof DrawTriggerEffect drawTrigger) {
                     effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                     if (effect == null) {
@@ -2011,7 +2021,7 @@ public class DrawService {
                                 drawingPlayerId,
                                 perm.getCard().getName() + "'s ability",
                                 new ArrayList<>(List.of(effect)),
-                                drawingPlayerId,
+                                effect instanceof ChooseOneEffect ? null : drawingPlayerId,
                                 perm.getId()
                         ));
 
@@ -2151,6 +2161,7 @@ public class DrawService {
             if (playerId.equals(drawingPlayerId)) return;
 
             for (Permanent perm : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DRAWS);
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
@@ -2195,7 +2206,7 @@ public class DrawService {
                             ));
 
                         } else {
-                            gameData.stack.add(new StackEntry(
+                            StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
@@ -2203,7 +2214,9 @@ public class DrawService {
                                 new ArrayList<>(List.of(effect)),
                                 drawingPlayerId,
                                 perm.getId()
-                            ));
+                            );
+                            trigger.setNonTargeting(true);
+                            gameData.stack.add(trigger);
                         }
 
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));

@@ -56,12 +56,12 @@ class TheHippodromeTest extends BaseCardTest {
 
     @Test
     void chaosDoesNotDestroyCreatureWhosePowerIsAboveZeroAtResolution() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         triggerChaosAndChooseTarget(target);
+        target.setPowerModifier(4);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

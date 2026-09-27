@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "THB", collectorNumber = "291")
 @CardRegistration(set = "SLD", collectorNumber = "1489")
 public class SerpentOfYawningDepths extends Card {
 

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "191")
+@CardRegistration(set = "SLD", collectorNumber = "2409")
 public class BrightstoneRitual extends Card {
 
     public BrightstoneRitual() {

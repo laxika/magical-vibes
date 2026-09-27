@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -124,6 +125,29 @@ class CardRevealEventVisibilityTest {
         assertThat(messagesFor(ownerId)).isEmpty();
         assertThat(messagesFor(aiOpponentId)).isEmpty();
         assertPrivateRevealBatch(ownerId, controllerId, 0);
+    }
+
+    @Test
+    void privateCreatureHandLookOnlyReachesControllerWithCreatureCards() {
+        Card creature = card("Hidden creature");
+        creature.setType(CardType.CREATURE);
+        Card instant = card("Hidden instant");
+        instant.setType(CardType.INSTANT);
+        gameData.playerHands.get(ownerId).addAll(List.of(creature, instant));
+
+        coordinator.mutate(gameData, () ->
+                reveals.lookAtCreatureCardsInHand(gameData, controllerId, ownerId));
+
+        assertThat(messagesFor(controllerId))
+                .singleElement()
+                .isInstanceOfSatisfying(
+                        RevealHandMessage.class,
+                        message -> assertThat(message.cards())
+                                .extracting(card -> card.name())
+                                .containsExactly("Hidden creature"));
+        assertThat(messagesFor(ownerId)).isEmpty();
+        assertThat(messagesFor(aiOpponentId)).isEmpty();
+        assertPrivateRevealBatch(ownerId, controllerId, 1);
     }
 
     @Test

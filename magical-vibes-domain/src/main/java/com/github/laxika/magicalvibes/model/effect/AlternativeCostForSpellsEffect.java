@@ -37,13 +37,16 @@ import java.util.Set;
  * mana value rather than the fixed {@code manaCost} string — "You may pay {X} rather than pay the mana
  * cost for Samurai spells you cast, where X is that spell's mana value" (Kentaro, the Smiling Cat).
  * Callers must resolve the cost through {@link #manaCostFor(int)} instead of reading {@code manaCost}.
+ * A card-carried effect created by {@link #perpetualZeroCostForThisSpell()} applies only to that
+ * card while it is cast and is ignored as a battlefield permission after the card enters.
  */
 public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                              CounterType manaValueCapCounter, boolean oncePerTurn,
                                              boolean fromHandOnly, boolean appliesToAllPlayers,
                                              boolean genericEqualToManaValue, boolean controllerTurnOnly,
                                              Set<Zone> allowedZones, CostEffect nonManaCost,
-                                             DynamicAmount manaValueCapAmount, boolean castsWithWarp)
+                                             DynamicAmount manaValueCapAmount, boolean castsWithWarp,
+                                             boolean appliesToSpellItself)
         implements CardEffect {
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
@@ -54,36 +57,49 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                                           DynamicAmount manaValueCapAmount) {
         this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
                 genericEqualToManaValue, controllerTurnOnly, allowedZones, nonManaCost,
-                manaValueCapAmount, false);
+                manaValueCapAmount, false, false);
+    }
+
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
+                                          CounterType manaValueCapCounter, boolean oncePerTurn,
+                                          boolean fromHandOnly, boolean appliesToAllPlayers,
+                                          boolean genericEqualToManaValue, boolean controllerTurnOnly,
+                                          Set<Zone> allowedZones, CostEffect nonManaCost,
+                                          DynamicAmount manaValueCapAmount, boolean castsWithWarp) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
+                genericEqualToManaValue, controllerTurnOnly, allowedZones, nonManaCost,
+                manaValueCapAmount, castsWithWarp, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter, CounterType manaValueCapCounter,
                                           boolean oncePerTurn, boolean fromHandOnly, boolean appliesToAllPlayers,
                                           boolean genericEqualToManaValue, boolean controllerTurnOnly) {
         this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
-                genericEqualToManaValue, controllerTurnOnly, null, null, null);
+                genericEqualToManaValue, controllerTurnOnly, null, null, null, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
-        this(manaCost, filter, null, false, false, false, false, false, null, null, null);
+        this(manaCost, filter, null, false, false, false, false, false, null, null, null, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false, false, null, null, null);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false, false, null, null, null,
+                false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false, false, null, null, null);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false, false, null, null,
+                null, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly, boolean appliesToAllPlayers) {
         this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
-                false, false, null, null, null);
+                false, false, null, null, null, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
@@ -92,7 +108,7 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                                           boolean genericEqualToManaValue, boolean controllerTurnOnly,
                                           Set<Zone> allowedZones) {
         this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
-                genericEqualToManaValue, controllerTurnOnly, allowedZones, null, null);
+                genericEqualToManaValue, controllerTurnOnly, allowedZones, null, null, false, false);
     }
 
     /**
@@ -110,7 +126,7 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
      */
     public static AlternativeCostForSpellsEffect genericEqualToManaValue(CardPredicate filter) {
         return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false,
-                true, false, null, null, null);
+                true, false, null, null, null, false, false);
     }
 
     /** A zero alternative cost usable once during each turn of the source controller. */
@@ -130,19 +146,25 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
     public static AlternativeCostForSpellsEffect collectEvidence(int minimumManaValue,
                                                                   CardPredicate filter) {
         return new AlternativeCostForSpellsEffect(null, filter, null, false, false, false,
-                false, false, null, new CollectEvidenceCost(minimumManaValue), null);
+                false, false, null, new CollectEvidenceCost(minimumManaValue), null, false, false);
     }
 
     /** A zero alternative cost for spells whose mana value is at most a dynamic amount. */
     public static AlternativeCostForSpellsEffect zeroManaValueAtMost(CardPredicate filter,
                                                                      DynamicAmount cap) {
         return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false,
-                false, true, null, null, cap);
+                false, true, null, null, cap, false, false);
     }
 
     /** An alternative cost from hand that casts the resulting permanent with Warp. */
     public static AlternativeCostForSpellsEffect warp(String manaCost, CardPredicate filter) {
         return new AlternativeCostForSpellsEffect(manaCost, filter, null, false, true, false,
-                false, false, Set.of(Zone.HAND), null, null, true);
+                false, false, Set.of(Zone.HAND), null, null, true, false);
+    }
+
+    /** A perpetual "you may pay {0} rather than pay this spell's mana cost" ability. */
+    public static AlternativeCostForSpellsEffect perpetualZeroCostForThisSpell() {
+        return new AlternativeCostForSpellsEffect("{0}", null, null, false, false, false,
+                false, false, null, null, null, false, true);
     }
 }

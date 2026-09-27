@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1915")
+@CardRegistration(set = "SOC", collectorNumber = "337")
 public class VeyranVoiceOfDuality extends Card {
 
     private static final CardAnyOfPredicate INSTANT_OR_SORCERY = new CardAnyOfPredicate(List.of(

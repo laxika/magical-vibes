@@ -70,6 +70,27 @@ class DeterminedIterationTest extends BaseCardTest {
                 .hasSize(1);
     }
 
+    @Test
+    @DisplayName("Does nothing without a creature token")
+    void doesNothingWithoutCreatureToken() {
+        harness.addToBattlefield(player1, new DeterminedIteration());
+
+        advanceToBeginningOfCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's combat")
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new DeterminedIteration());
+        harness.addToBattlefield(player1, soldierToken());
+
+        advanceToBeginningOfCombat(player2);
+
+        assertThat(soldierTokens(player1)).hasSize(1);
+    }
+
     private List<Permanent> soldierTokens(Player player) {
         return findPermanents(player, "Soldier Token").stream()
                 .filter(permanent -> permanent.getCard().isToken())

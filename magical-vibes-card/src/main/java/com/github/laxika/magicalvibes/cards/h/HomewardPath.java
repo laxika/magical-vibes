@@ -14,6 +14,8 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1851")
 @CardRegistration(set = "CMD", collectorNumber = "277")
 @CardRegistration(set = "C13", collectorNumber = "295")
+@CardRegistration(set = "LTC", collectorNumber = "365")
+@CardRegistration(set = "LTC", collectorNumber = "395")
 public class HomewardPath extends Card {
 
     public HomewardPath() {
