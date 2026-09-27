@@ -856,6 +856,9 @@ public class CombatAttackService {
                 .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
+            if (gameData.isCommander(attacker.getOriginalCard().getId())) {
+                gameData.playersWhoAttackedWithCommanderThisTurn.add(playerId);
+            }
             Set<CardSubtype> subtypes = new HashSet<>(gameQueryService.effectiveCreatureSubtypes(gameData, attacker));
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.CHANGELING)) {
                 for (CardSubtype subtype : CardSubtype.values()) {

@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,5 +54,23 @@ class LifeInsuranceTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A token creature death does not trigger Life Insurance")
+    void tokenCreatureDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new LifeInsurance());
+        Card token = new GrizzlyBears();
+        token.setToken(true);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, token);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 }

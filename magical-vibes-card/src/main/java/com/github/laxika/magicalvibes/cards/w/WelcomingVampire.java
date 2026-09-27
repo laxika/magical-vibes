@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "46")
 @CardRegistration(set = "DBL", collectorNumber = "313")
+@CardRegistration(set = "TDC", collectorNumber = "140")
 public class WelcomingVampire extends Card {
 
     public WelcomingVampire() {

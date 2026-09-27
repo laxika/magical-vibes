@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "MAR", collectorNumber = "32")
 @CardRegistration(set = "OMB", collectorNumber = "32")
 @CardRegistration(set = "NCC", collectorNumber = "279")
+@CardRegistration(set = "TDC", collectorNumber = "244")
 public class ArastaOfTheEndlessWeb extends Card {
 
     public ArastaOfTheEndlessWeb() {

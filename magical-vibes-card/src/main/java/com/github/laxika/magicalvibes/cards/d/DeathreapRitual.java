@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "VMA", collectorNumber = "250")
 @CardRegistration(set = "2XM", collectorNumber = "194")
 @CardRegistration(set = "NCC", collectorNumber = "336")
+@CardRegistration(set = "DSC", collectorNumber = "86")
 public class DeathreapRitual extends Card {
 
     public DeathreapRitual() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 
 @CardRegistration(set = "BRO", collectorNumber = "30")
 @CardRegistration(set = "SOC", collectorNumber = "181")
+@CardRegistration(set = "TDC", collectorNumber = "135")
 public class TocasiasWelcome extends Card {
 
     public TocasiasWelcome() {

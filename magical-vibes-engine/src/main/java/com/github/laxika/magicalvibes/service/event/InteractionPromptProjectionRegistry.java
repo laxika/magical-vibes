@@ -74,6 +74,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.RevealedMatchingHandCardChoice.class,
                 this::projectRevealedMatchingHandCardChoice);
         register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
+        register(PendingInteraction.CommanderBattlefieldChoice.class,
+                this::projectCommanderBattlefieldChoice);
         register(PendingInteraction.StingingStudyCommanderChoice.class,
                 this::projectStingingStudyCommanderChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
@@ -428,6 +430,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.commanders()), 1,
                 "Choose one of your commanders to put into your hand.");
+    }
+
+    private InteractionPromptMessage projectCommanderBattlefieldChoice(
+            GameData gameData, PendingInteraction.CommanderBattlefieldChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
+                "Choose a commander to put onto the battlefield.");
     }
 
     private InteractionPromptMessage projectStingingStudyCommanderChoice(

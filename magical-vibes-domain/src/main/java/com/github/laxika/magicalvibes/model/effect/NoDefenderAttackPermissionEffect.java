@@ -26,6 +26,14 @@ public interface NoDefenderAttackPermissionEffect extends CardEffect {
     }
 
     /**
+     * Whether this effect grants the carrier the same permission only when attacking a player who
+     * attacked the carrier's controller during that player's last turn.
+     */
+    default boolean grantsCarrierAttackAsThoughNoDefenderAgainstDefenderWhoAttackedControllerLastTurn() {
+        return false;
+    }
+
+    /**
      * When non-{@code null}, this effect lets every creature matching this predicate (any controller)
      * attack as though it had no defender.
      */

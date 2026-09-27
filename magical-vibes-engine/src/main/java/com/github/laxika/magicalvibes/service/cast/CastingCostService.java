@@ -1774,7 +1774,9 @@ public class CastingCostService {
         if (bf == null) return null;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AlternativeCostForSpellsEffect altCost
+                AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
+                        gameData, effect, perm, playerId);
+                if (altCost != null
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                         && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
                         && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
@@ -2593,6 +2595,47 @@ public class CastingCostService {
     public boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
         return additionalSpellCostService.satisfiable(gameData, playerId, card)
                 && canPayImposedSacrificeTax(gameData, playerId, card);
+    }
+
+    /** Validates permanent selections for additional costs imposed by a top-library permission. */
+    public void validateTopLibraryAdditionalCosts(GameData gameData, UUID playerId, Card card,
+                                                  List<CastingCost> costs, List<UUID> permanentIds) {
+        List<UUID> ids = permanentIds == null ? List.of() : permanentIds;
+        int required = 0;
+        for (CastingCost cost : costs) {
+            if (cost instanceof SacrificePermanentsCost sacrificeCost) {
+                required += sacrificeCost.count();
+            } else if (!(cost instanceof RemoveCountersFromControlledCreaturesCastingCost)) {
+                throw new IllegalStateException("Top-library additional cost is not supported");
+            }
+        }
+        if (ids.size() != required) {
+            throw new IllegalStateException("Must sacrifice exactly " + required
+                    + " permanents to cast " + card.getName() + " from the top of the library");
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Cannot sacrifice the same permanent more than once");
+        }
+        int selectedIndex = 0;
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(playerId);
+        for (CastingCost cost : costs) {
+            if (!(cost instanceof SacrificePermanentsCost sacrificeCost)) continue;
+            for (int i = 0; i < sacrificeCost.count(); i++) {
+                UUID permanentId = ids.get(selectedIndex++);
+                Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+                if (permanent == null
+                        || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                    throw new IllegalStateException("Can only sacrifice permanents you control");
+                }
+                if (!gameQueryService.canSacrificePermanentForCosts(gameData, permanent)) {
+                    throw new IllegalStateException("Permanent cannot be sacrificed to cast " + card.getName());
+                }
+                if (!predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, sacrificeCost.filter(), filterContext)) {
+                    throw new IllegalStateException("Sacrifice target does not match the top-library cost");
+                }
+            }
+        }
     }
 
     /** Checks the alternate mana option of a graveyard-exile-or-pay spell against a given pool. */

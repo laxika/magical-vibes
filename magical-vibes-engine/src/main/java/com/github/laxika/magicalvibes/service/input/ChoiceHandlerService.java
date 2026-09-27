@@ -150,6 +150,8 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SelvalasStampedeEffectHandler
+            selvalasStampedeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TravelThroughCaradhrasEffectHandler
             travelThroughCaradhrasEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SailIntoTheWestEffectHandler
@@ -810,6 +812,17 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SelvalasStampedeChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Selvala's Stampede vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            selvalasStampedeEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.TravelThroughCaradhrasChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Travel Through Caradhras vote: " + colorName);
@@ -1020,6 +1033,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.WintersChillPaymentChoice ctx) {
             handleWintersChillPaymentChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.DisorientingChoiceExileChoice ctx) {
+            handleDisorientingChoiceExileChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
@@ -2389,7 +2406,7 @@ public class ChoiceHandlerService {
                     .filter(o -> o.label().equals(chosenLabel))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
-            if (chosenModes.contains(chosen)) {
+            if (!ctx.effect().modesMayRepeat() && chosenModes.contains(chosen)) {
                 throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
             }
             if (ctx.consumeModes()) {
@@ -2405,7 +2422,7 @@ public class ChoiceHandlerService {
         if (!selectionComplete) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
                     ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), ctx.consumeModes(),
-                    chosenModes, ctx.triggeringCardId());
+                    chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
             return;
         }
         if (ctx.consumeModes() || ctx.modesResetEachTurn()) {
@@ -2423,7 +2440,7 @@ public class ChoiceHandlerService {
                         + chosenModes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList()
                         + " for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
+                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
@@ -4375,6 +4392,26 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for Winter's Chill target {}",
+                gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Records Disorienting Choice's independent exile decision and resumes its effect handler. */
+    private void handleDisorientingChoiceExileChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.DisorientingChoiceExileChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Disorienting Choice decision: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.disorientingChoice.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for Disorienting Choice target {}",
                 gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

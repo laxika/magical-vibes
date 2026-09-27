@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanC
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIsActiveOpponentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -86,6 +88,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasAnyTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
@@ -139,6 +142,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -2202,6 +2206,7 @@ public class TargetLegalityService {
             }
         }
 
+        validateGraveyardChoicePowerLimit(gameData, card, targetIds, selectedEffects, targetGroups);
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
         if (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
             Set<UUID> targetedControllers = targetIds.stream()
@@ -2215,6 +2220,42 @@ public class TargetLegalityService {
                 if (hasLegalTarget) {
                     throw new IllegalStateException("Must target a permanent controlled by each opponent if able");
                 }
+            }
+        }
+    }
+
+    private void validateGraveyardChoicePowerLimit(GameData gameData, Card card, List<UUID> targetIds,
+                                                   List<CardEffect> selectedEffects,
+                                                   List<SpellTarget> targetGroups) {
+        if (targetGroups.size() != 1
+                || !(targetGroups.getFirst().getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
+            return;
+        }
+        validateGraveyardChoicePowerLimit(gameData, card, targetIds, selectedEffects);
+    }
+
+    public void validateGraveyardChoicePowerLimit(GameData gameData, Card card, List<UUID> targetIds,
+                                                  List<CardEffect> selectedEffects) {
+        List<CardEffect> effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        if (selectedEffects != null) {
+            selectedEffects.stream()
+                    .filter(effect -> !effects.contains(effect))
+                    .forEach(effects::add);
+        }
+        for (CardEffect effect : effects) {
+            if (!(effect instanceof GraveyardCardChoosingEffect choosingEffect)
+                    || choosingEffect.graveyardChoiceMaxTotalPower() == null) {
+                continue;
+            }
+
+            int totalPower = targetIds.stream()
+                    .map(targetId -> gameQueryService.findCardInGraveyardById(gameData, targetId))
+                    .filter(Objects::nonNull)
+                    .mapToInt(targetCard -> targetCard.getPower() == null ? 0 : targetCard.getPower())
+                    .sum();
+            int maxTotalPower = choosingEffect.graveyardChoiceMaxTotalPower();
+            if (totalPower > maxTotalPower) {
+                throw new IllegalStateException("Target cards' total power cannot exceed " + maxTotalPower);
             }
         }
     }
@@ -4464,6 +4505,7 @@ public class TargetLegalityService {
 
     private boolean predicateAdmitsAbilityTarget(StackEntryPredicate predicate) {
         if (predicate instanceof StackEntryHasTargetPredicate
+                || predicate instanceof StackEntryHasAnyTargetPredicate
                 || predicate instanceof StackEntryIsSingleTargetPredicate) {
             return true;
         }
@@ -4614,6 +4656,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryIsSingleTargetPredicate) {
             return stackEntry.isSingleTarget();
+        }
+        if (predicate instanceof StackEntryHasAnyTargetPredicate) {
+            return stackEntry.hasAnyTarget();
         }
         if (predicate instanceof StackEntryHasTargetPredicate) {
             // Matches any spell or ability — per rules (e.g. Spellskite), activation is legal
@@ -5029,6 +5074,9 @@ public class TargetLegalityService {
         return switch (predicate) {
             case PlayerIdPredicate player -> player.playerId() != null
                     && player.playerId().equals(targetPlayerId);
+            case PlayerOtherThanPredicate other -> other.excludedPlayerId() != null
+                    && targetPlayerId != null
+                    && !other.excludedPlayerId().equals(targetPlayerId);
             case PlayerOtherThanSourceOwnerPredicate ignored -> {
                 if (sourcePermanentId == null || targetPlayerId == null) {
                     yield false;

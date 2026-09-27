@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "421")
+@CardRegistration(set = "DSC", collectorNumber = "324")
 public class ViridescentBog extends Card {
 
     public ViridescentBog() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "49")
+@CardRegistration(set = "TDC", collectorNumber = "166")
 public class RiverKelpie extends Card {
 
     public RiverKelpie() {

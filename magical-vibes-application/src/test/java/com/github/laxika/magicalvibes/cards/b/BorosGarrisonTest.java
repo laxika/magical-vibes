@@ -51,6 +51,25 @@ class BorosGarrisonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can return itself when it is the only land")
+    void canReturnItselfWhenItIsOnlyLand() {
+        harness.setHand(player1, List.of(new BorosGarrison()));
+        harness.playLand(player1, 0);
+
+        Permanent garrison = findPermanent(player1, "Boros Garrison");
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(garrison.getId());
+
+        harness.handlePermanentChosen(player1, garrison.getId());
+
+        harness.assertNotOnBattlefield(player1, "Boros Garrison");
+        harness.assertInHand(player1, "Boros Garrison");
+    }
+
+    @Test
     @DisplayName("Tapping Boros Garrison adds red and white mana")
     void tappingAddsRedAndWhiteMana() {
         Permanent garrison = harness.addToBattlefieldAndReturn(player1, new BorosGarrison());

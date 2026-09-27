@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfAir;
+import com.github.laxika.magicalvibes.cards.b.BenevolentAncestor;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SabertoothAlleyCat.class, GrizzlyBears.class, WallOfAir.class})
+@CardUsed({SabertoothAlleyCat.class, BorosRecruit.class, BenevolentAncestor.class})
 class SabertoothAlleyCatTest extends BaseCardTest {
 
     @Test
@@ -33,12 +33,12 @@ class SabertoothAlleyCatTest extends BaseCardTest {
     @DisplayName("Its ability prevents creatures without defender from blocking it")
     void nonDefenderCannotBlockAfterActivation() {
         Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent recruit = addCreatureReady(player2, new BorosRecruit());
         activateBlockingRestriction();
         cat.setAttacking(true);
-        beginBlockers();
+        prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> declareBlock(bears, cat))
+        assertThatThrownBy(() -> declareBlock(recruit, cat))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only be blocked by creatures with defender");
     }
@@ -47,14 +47,32 @@ class SabertoothAlleyCatTest extends BaseCardTest {
     @DisplayName("Its ability still allows creatures with defender to block it")
     void defenderCanBlockAfterActivation() {
         Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
-        Permanent wall = addCreatureReady(player2, new WallOfAir());
+        Permanent ancestor = addCreatureReady(player2, new BenevolentAncestor());
         activateBlockingRestriction();
         cat.setAttacking(true);
-        beginBlockers();
+        prepareDeclareBlockers();
 
-        declareBlock(wall, cat);
+        declareBlock(ancestor, cat);
 
-        assertThat(wall.isBlocking()).isTrue();
+        assertThat(ancestor.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Its blocking restriction expires at end of turn")
+    void nonDefenderCanBlockAfterRestrictionExpires() {
+        Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
+        Permanent recruit = addCreatureReady(player2, new BorosRecruit());
+        activateBlockingRestriction();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        cat.setAttacking(true);
+        prepareDeclareBlockers();
+        declareBlock(recruit, cat);
+
+        assertThat(recruit.isBlocking()).isTrue();
     }
 
     private void activateBlockingRestriction() {
@@ -65,13 +83,6 @@ class SabertoothAlleyCatTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {

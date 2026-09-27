@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "IKO", collectorNumber = "215")
 @CardRegistration(set = "MSC", collectorNumber = "190")
 @CardRegistration(set = "MSC", collectorNumber = "424")
+@CardRegistration(set = "TDC", collectorNumber = "311")
 public class WhirlwindOfThought extends Card {
 
     public WhirlwindOfThought() {

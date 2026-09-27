@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.ZephyrSpirit;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,14 +10,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlazingArchon.class, GrizzlyBears.class})
+@CardUsed({BlazingArchon.class, ZephyrSpirit.class})
 class BlazingArchonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creatures cannot attack Blazing Archon's controller")
     void creaturesCannotAttackController() {
         harness.addToBattlefield(player2, new BlazingArchon());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ZephyrSpirit());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -28,8 +28,19 @@ class BlazingArchonTest extends BaseCardTest {
     @DisplayName("The restriction does not stop the controller's creatures from attacking an opponent")
     void creaturesCanAttackOpponent() {
         harness.addToBattlefield(player1, new BlazingArchon());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ZephyrSpirit());
 
         declareAttackers(player1, List.of(1));
+    }
+
+    @Test
+    @DisplayName("Flying creatures cannot attack Blazing Archon's controller either")
+    void flyingCreaturesCannotAttackController() {
+        harness.addToBattlefield(player2, new BlazingArchon());
+        addCreatureReady(player1, new BlazingArchon());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 }

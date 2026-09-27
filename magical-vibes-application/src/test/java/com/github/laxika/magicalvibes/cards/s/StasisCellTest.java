@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StasisCell.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({StasisCell.class, BorosRecruit.class, BorosSignet.class})
 class StasisCellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Stasis Cell attaches it to the target creature")
     void resolvingAttachesToTargetCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BorosRecruit());
 
         harness.setHand(player1, List.of(new StasisCell()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -40,14 +40,13 @@ class StasisCellTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature does not untap during its controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BorosRecruit());
         creature.tap();
 
-        Permanent aura = new Permanent(new StasisCell());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisCell());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -55,9 +54,10 @@ class StasisCellTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability moves Stasis Cell to another creature")
     void activatedAbilityMovesAura() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent aura = attachAura(player1, first);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisCell());
+        aura.setAttachedTo(first.getId());
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.forceActivePlayer(player1);
@@ -74,7 +74,7 @@ class StasisCellTest extends BaseCardTest {
     @DisplayName("Activated ability cannot target a noncreature permanent")
     void activatedAbilityCannotTargetNoncreature() {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisCell());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.forceActivePlayer(player1);
@@ -84,24 +84,6 @@ class StasisCellTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, aura), null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
-    }
-
-    private Permanent attachAura(Player controller, Permanent host) {
-        Permanent aura = new Permanent(new StasisCell());
-        aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
-        return aura;
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 
     private int indexOf(Player player, Permanent permanent) {

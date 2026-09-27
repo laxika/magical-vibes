@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "DMU", collectorNumber = "245")
+@CardRegistration(set = "TDC", collectorNumber = "353")
 public class ContaminatedAquifer extends Card {
 
     public ContaminatedAquifer() {

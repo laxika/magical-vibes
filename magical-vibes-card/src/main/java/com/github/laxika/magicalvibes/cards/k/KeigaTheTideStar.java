@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "CHK", collectorNumber = "72")
 @CardRegistration(set = "MMA", collectorNumber = "48")
 @CardRegistration(set = "IMA", collectorNumber = "63")
+@CardRegistration(set = "TDC", collectorNumber = "156")
 public class KeigaTheTideStar extends Card {
 
     public KeigaTheTideStar() {

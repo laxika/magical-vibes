@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.cards.p.Putrefy;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,22 +17,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Gleancrawler.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Gleancrawler.class, ElvesOfDeepShadow.class, LastGasp.class, BorosSignet.class, Putrefy.class})
 class GleancrawlerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns creature cards that were put into your graveyard from the battlefield this turn")
     void returnsCreaturesPutIntoGraveyardFromBattlefieldThisTurn() {
-        Card alreadyInGraveyard = new GrizzlyBears();
-        Card diedThisTurn = new GrizzlyBears();
+        Card alreadyInGraveyard = new ElvesOfDeepShadow();
+        Card diedThisTurn = new ElvesOfDeepShadow();
         harness.setGraveyard(player1, List.of(alreadyInGraveyard));
         harness.addToBattlefield(player1, new Gleancrawler());
         harness.addToBattlefield(player1, diedThisTurn);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LastGasp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Elves of Deep Shadow"));
 
         advanceToEndStep(player1);
 
@@ -42,14 +44,13 @@ class GleancrawlerTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger during an opponent's end step")
     void doesNotTriggerDuringOpponentsEndStep() {
-        Card diedThisTurn = new GrizzlyBears();
+        Card diedThisTurn = new ElvesOfDeepShadow();
         harness.addToBattlefield(player1, new Gleancrawler());
         harness.addToBattlefield(player1, diedThisTurn);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LastGasp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Elves of Deep Shadow"));
 
         advanceToEndStep(player2);
 
@@ -62,14 +63,13 @@ class GleancrawlerTest extends BaseCardTest {
     @Test
     @DisplayName("Does not return creatures put into your graveyard during a previous turn")
     void doesNotReturnCreaturesFromPreviousTurn() {
-        Card diedLastTurn = new GrizzlyBears();
+        Card diedLastTurn = new ElvesOfDeepShadow();
         harness.addToBattlefield(player1, new Gleancrawler());
         harness.addToBattlefield(player1, diedLastTurn);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LastGasp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Elves of Deep Shadow"));
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
@@ -82,11 +82,47 @@ class GleancrawlerTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(diedLastTurn.getId()));
     }
 
+    @Test
+    @DisplayName("Returns all own creature cards only, excluding noncreatures and opponents' cards")
+    void returnsAllOwnCreatureCardsOnly() {
+        Card firstCreature = new ElvesOfDeepShadow();
+        Card secondCreature = new ElvesOfDeepShadow();
+        Card nonCreature = new BorosSignet();
+        Card opponentCreature = new ElvesOfDeepShadow();
+
+        harness.addToBattlefield(player1, new Gleancrawler());
+        harness.addToBattlefield(player1, firstCreature);
+        harness.addToBattlefield(player1, secondCreature);
+        harness.addToBattlefield(player1, nonCreature);
+        harness.addToBattlefield(player2, opponentCreature);
+
+        harness.setHand(player1, List.of(new Putrefy(), new Putrefy(), new LastGasp(), new LastGasp()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Boros Signet"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Elves of Deep Shadow"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Elves of Deep Shadow"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Elves of Deep Shadow"));
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(firstCreature.getId()))
+                .anyMatch(card -> card.getId().equals(secondCreature.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(nonCreature.getId()))
+                .noneMatch(card -> card.getId().equals(opponentCreature.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(nonCreature.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(opponentCreature.getId()));
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }

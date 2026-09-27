@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "CMM", collectorNumber = "96")
 @CardRegistration(set = "CMM", collectorNumber = "632")
 @CardRegistration(set = "NCC", collectorNumber = "222")
+@CardRegistration(set = "TDC", collectorNumber = "153")
 public class FranticSearch extends Card {
 
     public FranticSearch() {

@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
+import com.github.laxika.magicalvibes.cards.t.TempleGarden;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,13 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PerilousForays.class, Forest.class, GrizzlyBears.class, TropicalIsland.class})
+@CardUsed({PerilousForays.class, Forest.class, Watchwolf.class, TempleGarden.class})
 class PerilousForaysTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrifices a creature and searches for a land with a basic land type")
     void searchesForLandWithBasicLandType() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Watchwolf());
         harness.addToBattlefield(player1, new PerilousForays());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         setupLibrary();
@@ -34,18 +33,21 @@ class PerilousForaysTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Watchwolf");
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards())
                 .extracting(Card::getName)
-                .containsExactly("Tropical Island", "Forest")
-                .doesNotContain("Grizzly Bears");
+                .containsExactly("Temple Garden", "Forest")
+                .doesNotContain("Watchwolf");
         assertThat(search.params().cards()).allMatch(card -> card.hasType(CardType.LAND));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(findPermanent(player1, "Tropical Island").isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findPermanent(player1, "Temple Garden").isTapped()).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -59,9 +61,26 @@ class PerilousForaysTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Sacrifices the creature even when no land matches")
+    void sacrificesCreatureWhenNoLandMatches() {
+        harness.addToBattlefield(player1, new Watchwolf());
+        harness.addToBattlefield(player1, new PerilousForays());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new Watchwolf()));
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Watchwolf");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Watchwolf");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Watchwolf");
+    }
+
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new TropicalIsland(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new TempleGarden(), new Forest(), new Watchwolf()));
     }
 }

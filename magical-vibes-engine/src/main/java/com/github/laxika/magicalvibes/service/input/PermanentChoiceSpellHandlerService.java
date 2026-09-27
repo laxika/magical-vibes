@@ -742,6 +742,8 @@ public class PermanentChoiceSpellHandlerService {
                         hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
             }
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, hct.cardToCast(), hct.controllerId(),
+                    hct.sourcePermanentId(), hct.afterSuccessfulCastEffect());
         } else {
             if (hct.sourceZone() == Zone.COMMAND) {
                 gameData.playerCommandZones.computeIfAbsent(hct.controllerId(), ignored -> new ArrayList<>())

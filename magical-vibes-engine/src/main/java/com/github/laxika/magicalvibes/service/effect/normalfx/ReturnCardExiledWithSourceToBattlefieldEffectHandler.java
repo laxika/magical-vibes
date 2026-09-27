@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -157,9 +158,26 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
                 grantedSubtype, enterTapped, enterAttacking, 0, grantHaste);
     }
 
+    /** Shared with resolution-time choices that also carry an as-enters counter replacement. */
+    public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                    CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
+                                    boolean grantHaste, EnterWithCountersEffect battlefieldEntryReplacement) {
+        returnToBattlefield(gameData, controllerId, card, sourceName,
+                grantedSubtype, enterTapped, enterAttacking, 0, grantHaste,
+                battlefieldEntryReplacement);
+    }
+
     private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                      CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
                                      int additionalPlusOnePlusOneCounters, boolean grantHaste) {
+        returnToBattlefield(gameData, controllerId, card, sourceName, grantedSubtype, enterTapped,
+                enterAttacking, additionalPlusOnePlusOneCounters, grantHaste, null);
+    }
+
+    private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                     CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
+                                     int additionalPlusOnePlusOneCounters, boolean grantHaste,
+                                     EnterWithCountersEffect battlefieldEntryReplacement) {
         if (!gameData.removeFromExile(card.getId())) {
             return;
         }
@@ -180,7 +198,14 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         if (enterTapped) {
             permanent.tap();
         }
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+        if (battlefieldEntryReplacement == null) {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+        } else {
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent,
+                    battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(),
+                    battlefieldEntryReplacement);
+        }
         if (grantHaste) {
             grantKeywordEffectHandler.grantToPermanent(gameData, sourceName, controllerId,
                     permanent, Set.of(Keyword.HASTE));

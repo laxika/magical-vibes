@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "TSB", collectorNumber = "89")
 @CardRegistration(set = "IMA", collectorNumber = "190")
 @CardRegistration(set = "NCC", collectorNumber = "319")
+@CardRegistration(set = "TDC", collectorNumber = "278")
 public class WallOfRoots extends Card {
 
     public WallOfRoots() {

@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "FDN", collectorNumber = "154")
 @CardRegistration(set = "NCC", collectorNumber = "25")
 @CardRegistration(set = "NCC", collectorNumber = "126")
+@CardRegistration(set = "DSC", collectorNumber = "117")
 public class ExtravagantReplication extends Card {
 
     public ExtravagantReplication() {

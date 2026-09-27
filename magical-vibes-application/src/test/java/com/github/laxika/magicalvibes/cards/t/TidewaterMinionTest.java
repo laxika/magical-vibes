@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VituGhaziTheCityTree;
+import com.github.laxika.magicalvibes.cards.v.VotaryOfTheConclave;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TidewaterMinion.class, GrizzlyBears.class})
+@CardUsed({TidewaterMinion.class, VotaryOfTheConclave.class, VituGhaziTheCityTree.class})
 class TidewaterMinionTest extends BaseCardTest {
 
     @Test
@@ -34,7 +35,20 @@ class TidewaterMinionTest extends BaseCardTest {
     @Test
     void untapsTargetPermanent() {
         Permanent minion = addCreatureReady(player1, new TidewaterMinion());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new VotaryOfTheConclave());
+        target.tap();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(minion.isTapped()).isTrue();
+    }
+
+    @Test
+    void untapsTargetNoncreaturePermanent() {
+        Permanent minion = addCreatureReady(player1, new TidewaterMinion());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VituGhaziTheCityTree());
         target.tap();
 
         harness.activateAbility(player1, 0, 1, null, target.getId());

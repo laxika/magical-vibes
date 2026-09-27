@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "108")
+@CardRegistration(set = "DSC", collectorNumber = "149")
 public class NightmareShepherd extends Card {
 
     public NightmareShepherd() {

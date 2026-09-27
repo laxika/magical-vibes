@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.GlassGolem;
+import com.github.laxika.magicalvibes.cards.g.GolgariBrownscale;
+import com.github.laxika.magicalvibes.cards.g.GolgariRotwurm;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Moroii;
+import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
+import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,24 +19,91 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CleansingBeam.class, HillGiant.class, AirElemental.class, Island.class})
+@CardUsed({CleansingBeam.class, ViashinoFangtail.class, SnappingDrake.class, Island.class,
+        GolgariRotwurm.class, GolgariBrownscale.class, Moroii.class, GlassGolem.class})
 class CleansingBeamTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals damage to the target and every creature sharing a color with it")
     void damagesTargetAndColorSharingCreatures() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ViashinoFangtail());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new SnappingDrake());
         harness.setHand(player1, List.of(new CleansingBeam()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(matchingCreature.getMarkedDamage()).isEqualTo(2);
         assertThat(differentColorCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damages creatures sharing either color with a multicolored target")
+    void damagesCreaturesSharingEitherColorWithMulticoloredTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GolgariRotwurm());
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new GolgariBrownscale());
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new Moroii());
+        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        harness.setHand(player1, List.of(new CleansingBeam()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(greenCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(blackCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(differentColorCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A colorless target damages only itself")
+    void colorlessTargetOnlyDamagesItself() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlassGolem());
+        Permanent otherColorlessCreature = harness.addToBattlefieldAndReturn(player2, new GlassGolem());
+        Permanent coloredCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        harness.setHand(player1, List.of(new CleansingBeam()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(otherColorlessCreature.getMarkedDamage()).isZero();
+        assertThat(coloredCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Determines color-sharing creatures when the spell resolves")
+    void determinesColorSharingCreaturesOnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ViashinoFangtail());
+        harness.setHand(player1, List.of(new CleansingBeam()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castInstant(player1, 0, target.getId());
+        Permanent creatureEnteringBeforeResolution =
+                harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new SnappingDrake());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(creatureEnteringBeforeResolution.getMarkedDamage()).isEqualTo(2);
+        assertThat(differentColorCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not damage other creatures if the target leaves before resolution")
+    void doesNothingIfTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ViashinoFangtail());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        harness.setHand(player1, List.of(new CleansingBeam()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(matchingCreature.getMarkedDamage()).isZero();
     }
 
     @Test

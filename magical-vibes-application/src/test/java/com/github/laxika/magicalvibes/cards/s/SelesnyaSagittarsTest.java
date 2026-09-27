@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SelesnyaSagittars.class, GrizzlyBears.class})
+@CardUsed({SelesnyaSagittars.class, BorosRecruit.class, CourierHawk.class})
 class SelesnyaSagittarsTest extends BaseCardTest {
 
     @Test
@@ -23,7 +23,7 @@ class SelesnyaSagittarsTest extends BaseCardTest {
         Permanent sagittars = addSagittars();
         int sagittarsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(sagittars);
         addAttackers(2);
-        enterBlockerDeclaration();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(sagittarsIndex, 0),
@@ -40,7 +40,7 @@ class SelesnyaSagittarsTest extends BaseCardTest {
         Permanent sagittars = addSagittars();
         int sagittarsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(sagittars);
         addAttackers(3);
-        enterBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(sagittarsIndex, 0),
@@ -52,46 +52,47 @@ class SelesnyaSagittarsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Selesnya Sagittars can block a creature with flying")
+    void canBlockFlyingCreature() {
+        Permanent sagittars = addSagittars();
+        int sagittarsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(sagittars);
+        Permanent flyer = addCreatureReady(player1, new CourierHawk());
+        flyer.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(sagittarsIndex, 0)));
+
+        assertThat(sagittars.isBlocking()).isTrue();
+        assertThat(sagittars.getBlockingTargets()).containsExactly(0);
+    }
+
+    @Test
     @DisplayName("Selesnya Sagittars does not grant additional blocks to other creatures")
     void doesNotGrantAdditionalBlocksToOthers() {
         addSagittars();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-        int bearsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
+        Permanent otherBlocker = addCreatureReady(player2, new BorosRecruit());
+        int otherBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(otherBlocker);
 
         addAttackers(2);
-        enterBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(bearsIndex, 0),
-                new BlockerAssignment(bearsIndex, 1)
+                new BlockerAssignment(otherBlockerIndex, 0),
+                new BlockerAssignment(otherBlockerIndex, 1)
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("too many times");
     }
 
     private Permanent addSagittars() {
-        Permanent perm = new Permanent(new SelesnyaSagittars());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player2, new SelesnyaSagittars());
     }
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent attacker = new Permanent(new GrizzlyBears());
-            attacker.setSummoningSick(false);
+            Permanent attacker = addCreatureReady(player1, new BorosRecruit());
             attacker.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(attacker);
         }
-    }
-
-    private void enterBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

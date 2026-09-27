@@ -93,6 +93,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
 | `PermanentIsSuspectedPredicate` | `()` | permanents that have the suspected designation |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
+| `PermanentIsGoadedPredicate` | `()` | permanents with an active goad requirement; needs game data |
 | `PermanentIsAttackingAlonePredicate` | `()` | creatures currently attacking that were the only creatures declared as attackers in the current combat; needs game data |
 | `PermanentIsAttackingEnchantedPlayerPredicate` | `()` | creatures attacking the player enchanted by the source Aura directly; attacks against that player's planeswalker or battle do not match, and the source must be attached to a player (Curse of Hospitality) |
 | `PermanentIsAttackingMonarchPredicate` | `()` | creatures attacking the monarch directly; attacks against the monarch's planeswalker or battle do not match (M'Baku, Jabari Chieftain) |
@@ -298,6 +299,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsNthSpellCastThisTurnPredicate` | `(int spellNumber)` | the spell at 1-based position `spellNumber` in this turn's **global** cast order across all players. "counter target spell that's the second spell cast this turn" — Second Guess with `2`. Read from `GameData.getSpellCastOrdinalThisTurn(cardId)` (appended by `recordSpellCast`, cleared each turn), so copies put on the stack without being cast never match |
 | `StackEntryKickedPredicate` | `()` | spells cast with a kicker or at least one multikicker payment |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
+| `StackEntryHasAnyTargetPredicate` | `()` | spells/abilities with at least one chosen target; useful for spell-cast trigger conditions |
 | `StackEntryTargetsOnlySinglePermanentOrPlayerPredicate` | `()` | spells whose target occurrences all identify the same permanent or player; repeated occurrences are allowed (Chef's Kiss) |
 | `StackEntryTargetsOnlySingleCreaturePredicate` | `()` | spells whose target occurrences all identify one creature; repeated occurrences of that creature are allowed (Muck Drubb) |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
@@ -398,6 +400,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerIdPredicate` | `(UUID)` | exactly the specified player; useful after an effect has randomly selected a player |
 | `PlayerIsActiveOpponentPredicate` | `()` | opponent who is currently the active player |
+| `PlayerOtherThanPredicate` | `(UUID excludedPlayerId)` | any player other than the specified player; useful for "another target player" triggers |
 | `PlayerOtherThanSourceOwnerPredicate` | `()` | any player other than the owner of the ability's source permanent; source-relative |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerCastSorceryThisTurnPredicate` | `()` | players who cast at least one sorcery spell this turn (evaluated against `GameData.getSpellsCastThisTurn`). Used by Backdraft's player target |

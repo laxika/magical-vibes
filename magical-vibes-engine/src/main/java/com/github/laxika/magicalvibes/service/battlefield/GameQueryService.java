@@ -979,12 +979,25 @@ public class GameQueryService {
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (card.getType() != null && card.getType().isPermanentType()
-                && !card.hasType(CardType.LAND)
-                && battlefield != null && battlefield.stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(effect -> effect instanceof GrantCardTypeToOwnNonlandPermanentsEffect grant
-                        && grant.cardType() == type)) {
-            return true;
+                && !card.hasType(CardType.LAND) && battlefield != null) {
+            boolean permanentSpell = isPermanentSpellOnStackControlledBy(gameData, card, playerId);
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    GrantCardTypeToOwnNonlandPermanentsEffect grant = null;
+                    if (effect instanceof GrantCardTypeToOwnNonlandPermanentsEffect directGrant) {
+                        grant = directGrant;
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof GrantCardTypeToOwnNonlandPermanentsEffect conditionalGrant
+                            && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(source, playerId))) {
+                        grant = conditionalGrant;
+                    }
+                    if (grant != null && grant.cardType() == type
+                            && (grant.includeNonBattlefieldCards() || permanentSpell)) {
+                        return true;
+                    }
+                }
+            }
         }
 
         List<Permanent> sources = gameData.playerBattlefields.get(playerId);
@@ -1000,6 +1013,18 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    private boolean isPermanentSpellOnStackControlledBy(GameData gameData, Card card, UUID playerId) {
+        return gameData.stack.stream()
+                .filter(entry -> card.getId().equals(entry.getTargetableId()))
+                .filter(entry -> playerId.equals(entry.getControllerId()))
+                .anyMatch(entry -> switch (entry.getEntryType()) {
+                    case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL,
+                            PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+                    case TRIGGERED_ABILITY, ACTIVATED_ABILITY, SORCERY_SPELL,
+                            INSTANT_SPELL -> false;
+                });
     }
 
     // --- Arcane Adaptation / all-zone subtype grants ---
@@ -1533,7 +1558,7 @@ public class GameQueryService {
                 if (effect instanceof MiracleGrantingEffect grant
                         && predicateEvaluationService.matchesCardPredicate(
                                 card, grant.miracleGrantFilter(), null, gameData, playerId)) {
-                    return Optional.ofNullable(grant.miracleCost());
+                    return Optional.ofNullable(grant.miracleCostFor(card));
                 }
             }
         }
@@ -9164,11 +9189,18 @@ public class GameQueryService {
     public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
                                                    UUID recipientPlayerId) {
         return getControllerDamageToOpponentBonus(
-                gameData, sourceControllerId, recipientPlayerId, false);
+                gameData, sourceControllerId, recipientPlayerId, false, false);
     }
 
     public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
                                                    UUID recipientPlayerId, boolean combatDamage) {
+        return getControllerDamageToOpponentBonus(
+                gameData, sourceControllerId, recipientPlayerId, combatDamage, false);
+    }
+
+    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
+                                                   UUID recipientPlayerId, boolean combatDamage,
+                                                   boolean opponentPermanent) {
         if (sourceControllerId == null || recipientPlayerId == null
                 || sourceControllerId.equals(recipientPlayerId)) {
             return 0;
@@ -9179,7 +9211,7 @@ public class GameQueryService {
             if (!sourceControllerId.equals(controllerId)) return;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 bonus[0] += getControllerDamageToOpponentBonus(
-                        gameData, effect, permanent, controllerId, combatDamage);
+                        gameData, effect, permanent, controllerId, combatDamage, opponentPermanent);
             }
         });
         return bonus[0];
@@ -9209,9 +9241,10 @@ public class GameQueryService {
 
     private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
                                                      Permanent source, UUID controllerId,
-                                                     boolean combatDamage) {
+                                                     boolean combatDamage, boolean opponentPermanent) {
         if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus
-                && (!combatDamage || damageBonus.appliesToCombatDamage())) {
+                && (!combatDamage || damageBonus.appliesToCombatDamage())
+                && (!opponentPermanent || damageBonus.appliesToOpponentPermanents())) {
             return amountEvaluationService.evaluate(gameData, damageBonus.amount(),
                     AmountContext.forStaticEffect(source, controllerId));
         }
@@ -9219,7 +9252,7 @@ public class GameQueryService {
                 && conditionEvaluationService.isMet(gameData, conditional.condition(),
                 ConditionContext.forStaticEffect(source, controllerId))) {
             return getControllerDamageToOpponentBonus(
-                    gameData, conditional.wrapped(), source, controllerId, combatDamage);
+                    gameData, conditional.wrapped(), source, controllerId, combatDamage, opponentPermanent);
         }
         return 0;
     }
@@ -9491,6 +9524,7 @@ public class GameQueryService {
                             entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId())
                     + getSubtypeSourceDamageBonus(gameData, controllerId,
                             entry.getEffectiveDamageSourceCard(), source)
+                    + getControllerDamageBonusThisTurn(gameData, controllerId)
                     + getControllerDamageBonus(gameData, entry)
                     + getSpellDamageBonus(gameData, entry);
         }
@@ -9820,6 +9854,7 @@ public class GameQueryService {
                         + getColorSourcePermanentDamageBonus(gameData, controllerId,
                                 source.getCard().getColors(), source.getId())
                         + getSubtypeSourceDamageBonus(gameData, controllerId, source.getCard(), source);
+                bonus += getControllerDamageBonusThisTurn(gameData, controllerId);
                 if (target != null) {
                     UUID targetControllerId = findPermanentController(gameData, target.getId());
                     bonus += getAdditionalDamageToOpponentsBonus(
@@ -9829,7 +9864,7 @@ public class GameQueryService {
         }
         if (target != null) {
             bonus += getControllerDamageToOpponentBonus(gameData, controllerId,
-                    findPermanentController(gameData, target.getId()));
+                    findPermanentController(gameData, target.getId()), false, true);
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
         result *= getControllerDamageMultiplier(gameData, controllerId, null, true);
@@ -9915,6 +9950,14 @@ public class GameQueryService {
             return 0;
         }
         return gameData.controllerNoncombatDamageBonusThisTurn.getOrDefault(controllerId, 0);
+    }
+
+    /** Returns the additive damage bonus for all sources controlled by {@code controllerId} this turn. */
+    int getControllerDamageBonusThisTurn(GameData gameData, UUID controllerId) {
+        if (controllerId == null) {
+            return 0;
+        }
+        return gameData.controllerDamageBonusThisTurn.getOrDefault(controllerId, 0);
     }
 
     /** Returns the perpetual noncombat damage bonus granted to the resolving spell card. */

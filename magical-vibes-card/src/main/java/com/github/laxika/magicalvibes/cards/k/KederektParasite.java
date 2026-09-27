@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "48")
+@CardRegistration(set = "DSC", collectorNumber = "144")
 public class KederektParasite extends Card {
 
     public KederektParasite() {

@@ -142,6 +142,7 @@ public enum CounterType {
     POSSESSION,
     PUPA,
     QUEST,
+    RALLY,
     REV,
     REVIVAL,
     RIBBON,

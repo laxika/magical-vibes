@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "316")
 @CardRegistration(set = "SLD", collectorNumber = "1694")
+@CardRegistration(set = "DSC", collectorNumber = "221")
 public class Inkshield extends Card {
 
     public Inkshield() {

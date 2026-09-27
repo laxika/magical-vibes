@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TempleGarden.class})
 class TempleGardenTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class TempleGardenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Temple Garden enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playTempleGarden(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findGarden(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Temple Garden produces green mana")
     void producesGreenMana() {
         Permanent garden = addGardenReady(player1);
@@ -78,9 +92,8 @@ class TempleGardenTest extends BaseCardTest {
     }
 
     private Permanent addGardenReady(Player player) {
-        Permanent garden = new Permanent(new TempleGarden());
+        Permanent garden = harness.addToBattlefieldAndReturn(player, new TempleGarden());
         garden.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(garden);
         return garden;
     }
 

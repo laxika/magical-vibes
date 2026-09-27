@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Sewerdreg;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SellSwordBrute.class, GrizzlyBears.class})
+@CardUsed({SellSwordBrute.class, Sewerdreg.class})
 class SellSwordBruteTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Sell-Sword Brute dies, it deals 2 damage to its controller")
     void deathTriggerDamagesController() {
-        harness.addToBattlefield(player1, new SellSwordBrute());
+        addCreatureReady(player1, new SellSwordBrute());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
@@ -28,23 +30,34 @@ class SellSwordBruteTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Sell-Sword Brute");
     }
 
+    @Test
+    @DisplayName("When an opponent controls Sell-Sword Brute, its death trigger damages that opponent")
+    void deathTriggerDamagesItsControllerWhenOpponentControlsIt() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent attacker = addCreatureReady(player1, new Sewerdreg());
+        Permanent brute = addCreatureReady(player2, new SellSwordBrute());
+        resolveCombat(attacker, brute);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        harness.assertInGraveyard(player2, "Sell-Sword Brute");
+    }
+
     private void killSellSwordBrute() {
         Permanent brute = findPermanent(player1, "Sell-Sword Brute");
-        brute.setSummoningSick(false);
-        brute.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Sewerdreg());
+        resolveCombat(brute, blocker);
+    }
 
-        GrizzlyBears blockerCard = new GrizzlyBears();
-        blockerCard.setPower(3);
-        blockerCard.setToughness(3);
-        Permanent blocker = new Permanent(blockerCard);
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+    private void resolveCombat(Permanent attacker, Permanent blocker) {
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
         harness.passBothPriorities();
     }
 }

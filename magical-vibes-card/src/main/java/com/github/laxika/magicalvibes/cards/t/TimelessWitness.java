@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "MH2", collectorNumber = "179")
+@CardRegistration(set = "TDC", collectorNumber = "274")
 public class TimelessWitness extends Card {
 
     public TimelessWitness() {

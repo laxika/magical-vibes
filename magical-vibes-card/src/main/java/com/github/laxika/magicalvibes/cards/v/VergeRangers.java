@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 
+@CardRegistration(set = "DSC", collectorNumber = "108")
 @CardRegistration(set = "LTC", collectorNumber = "180")
 public class VergeRangers extends Card {
 

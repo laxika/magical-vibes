@@ -1531,6 +1531,11 @@ public class GraveyardService {
                         .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
                         .add(card.getId());
             }
+            if (sourceZone == Zone.HAND) {
+                gameData.cardsPutIntoGraveyardFromHandThisTurn
+                        .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
+                        .add(card.getId());
+            }
             if (card.hasType(CardType.CREATURE)) {
                 gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn
                         .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())

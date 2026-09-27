@@ -872,6 +872,20 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Snapshots cards drawn this turn into cardsDrawnLastTurn before clearing")
+        void snapshotsCardsDrawnLastTurn() {
+            gd.cardsDrawnThisTurn.put(player1Id, 2);
+            gd.cardsDrawnThisTurn.put(player2Id, 1);
+            gd.cardsDrawnLastTurn.put(player1Id, 99);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.cardsDrawnLastTurn).containsEntry(player1Id, 2);
+            assertThat(gd.cardsDrawnLastTurn).containsEntry(player2Id, 1);
+            assertThat(gd.cardsDrawnThisTurn).isEmpty();
+        }
+
+        @Test
         @DisplayName("Resets additionalCombatMainPhasePairs to 0")
         void resetsAdditionalCombatPairs() {
             gd.additionalCombatMainPhasePairs = 2;

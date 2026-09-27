@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "95")
 @CardRegistration(set = "FCA", collectorNumber = "35")
+@CardRegistration(set = "TDC", collectorNumber = "181")
 public class GixYawgmothPraetor extends Card {
 
     public GixYawgmothPraetor() {

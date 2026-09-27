@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "85")
 @CardRegistration(set = "NCC", collectorNumber = "185")
+@CardRegistration(set = "TDC", collectorNumber = "336")
 public class WeatheredSentinels extends Card {
 
     public WeatheredSentinels() {

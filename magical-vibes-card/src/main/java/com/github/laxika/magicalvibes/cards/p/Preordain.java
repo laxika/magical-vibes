@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "C15", collectorNumber = "101")
 @CardRegistration(set = "NCC", collectorNumber = "230")
 @CardRegistration(set = "LTC", collectorNumber = "196")
+@CardRegistration(set = "TDC", collectorNumber = "161")
 public class Preordain extends Card {
 
     public Preordain() {

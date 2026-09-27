@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "223")
+@CardRegistration(set = "TDC", collectorNumber = "291")
 public class HarbingerOfTheHunt extends Card {
 
     public HarbingerOfTheHunt() {
