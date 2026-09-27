@@ -1119,6 +1119,13 @@ public class GameActionAvailabilityService {
             }
         }
 
+        int counterCostReduction = additionalSpellCostService.maximumRemoveCountersForCostReduction(
+                gameData, playerId, card);
+        if (counterCostReduction > 0
+                && cost.canPay(paymentPool, additionalCost - counterCostReduction)) {
+            return true;
+        }
+
         // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)
         ReduceOwnCastCostIfTargetingPermanentEffect targetReduce = null;
         GraveyardCardTargetCostReductionEffect graveyardTargetReduce = null;

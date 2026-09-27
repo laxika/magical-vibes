@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "C14", collectorNumber = "6")
+@CardRegistration(set = "40K", collectorNumber = "184")
 public class DeployToTheFront extends Card {
 
     public DeployToTheFront() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BarkshellBlessing;
 import com.github.laxika.magicalvibes.cards.e.EnterTheInfinite;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JacesIngenuity;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ZaffaiThunderConductor.class, Shock.class, JacesIngenuity.class,
-        EnterTheInfinite.class, BarkshellBlessing.class, GrizzlyBears.class})
+        EnterTheInfinite.class, BarkshellBlessing.class, GrizzlyBears.class,
+        LeylineOfSanctity.class})
 class ZaffaiThunderConductorTest extends BaseCardTest {
 
     @Test
@@ -59,6 +61,24 @@ class ZaffaiThunderConductorTest extends BaseCardTest {
     @DisplayName("Casting a spell with mana value 10 deals 10 damage to the opponent")
     void veryHighManaValueSpellDealsTenDamage() {
         addZaffai();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new EnterTheInfinite()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castSorcery(player1, 0);
+        resolveZaffaiTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("The random damage does not target and can damage a hexproof opponent")
+    void randomDamageDoesNotTarget() {
+        addZaffai();
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new EnterTheInfinite()));
         harness.addMana(player1, ManaColor.BLUE, 4);

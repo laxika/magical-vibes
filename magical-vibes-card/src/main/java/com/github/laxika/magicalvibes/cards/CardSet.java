@@ -224,6 +224,7 @@ public enum CardSet {
     SET_FDN("FDN"),
     SET_FIN("FIN"),
     SET_FCA("FCA"),
+    SET_40K("40K"),
     SET_EOE("EOE"),
     SET_YEOE("YEOE"),
     SET_EOS("EOS"),

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Resolves non-targeting damage to one randomly chosen opponent. */
+/** Resolves {@link DealDamageToRandomOpponentEffect}. */
 @Component
 @RequiredArgsConstructor
 public class DealDamageToRandomOpponentEffectHandler implements NormalEffectHandlerBean {
@@ -34,15 +34,27 @@ public class DealDamageToRandomOpponentEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToRandomOpponentEffect) effect;
-        List<UUID> opponents = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(entry.getControllerId()))
-                .toList();
-        if (opponents.isEmpty()) return;
+        UUID chosenOpponent;
+        if (e.targeted()) {
+            chosenOpponent = entry.getTargetId();
+            if (chosenOpponent == null || !gameData.playerIds.contains(chosenOpponent)) {
+                return;
+            }
+        } else {
+            List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                    .toList();
+            if (opponents.isEmpty()) {
+                return;
+            }
+            chosenOpponent = opponents.get(ThreadLocalRandom.current().nextInt(opponents.size()));
+        }
 
-        UUID chosenOpponent = opponents.get(ThreadLocalRandom.current().nextInt(opponents.size()));
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) source = entry.getSourcePermanentSnapshot();
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 
 @CardRegistration(set = "CMM", collectorNumber = "369")
 @CardRegistration(set = "C14", collectorNumber = "53")
+@CardRegistration(set = "40K", collectorNumber = "230")
 public class AssaultSuit extends Card {
 
     public AssaultSuit() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "121")
+@CardRegistration(set = "40K", collectorNumber = "212")
 public class DeathsPresence extends Card {
 
     public DeathsPresence() {

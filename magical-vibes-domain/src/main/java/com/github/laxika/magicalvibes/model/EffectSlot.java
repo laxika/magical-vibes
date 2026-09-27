@@ -18,6 +18,8 @@ public enum EffectSlot {
     ON_ENTER_BATTLEFIELD,
     /** Triggers when this permanent changes control to another player. */
     ON_SELF_BECOMES_CONTROLLED,
+    /** Triggers when this permanent changes control away from its current controller. */
+    ON_SELF_LOSES_CONTROL,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
@@ -277,6 +279,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_CREATURE_DIES,
     ON_ANY_NONTOKEN_CREATURE_DIES,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever an artifact is put into exile from the battlefield. */
+    ON_ANY_ARTIFACT_EXILED_FROM_BATTLEFIELD,
     /** Triggers whenever an enchantment (any player's) is put into a graveyard from the battlefield.
      *  Fires for destroy, sacrifice, etc. Checked in {@code PermanentRemovalService} via
      *  {@code TriggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers}.
@@ -719,6 +723,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,
+    /** Triggers at the beginning of the owner's precombat main phase while the source card is in
+     *  its owner's graveyard. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
+    GRAVEYARD_PRECOMBAT_MAIN_TRIGGERED,
     /** Triggers at the beginning of each player's first main phase (any player's turn), not only
      *  the controller's. Checked in {@code StepTriggerService.handlePrecombatMainTriggers} by
      *  scanning all battlefields; the trigger is controlled by the source's controller while the
@@ -1033,6 +1040,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more artifact and/or creature cards leave the controller's graveyard. */
     ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever one or more artifact cards leave the controller's graveyard. */
+    ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
@@ -1201,6 +1210,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
      *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
     GRANT_CASCADE_TO_SLIVER_SPELL,
+    /** Marker slot: during your turn, hand-cast spells with mana value at most the life lost by
+     *  your opponents this turn have cascade. Holds a {@code CascadeEffect}; detected by presence
+     *  on the casting player's battlefield when a qualifying spell is cast. */
+    GRANT_CASCADE_TO_HAND_SPELLS_WITH_MANA_VALUE_AT_MOST_OPPONENTS_LIFE_LOST,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
