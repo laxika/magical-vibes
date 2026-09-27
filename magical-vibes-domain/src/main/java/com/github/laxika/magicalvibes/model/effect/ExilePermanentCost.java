@@ -11,21 +11,33 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param trackExiledManaValue when true, the exiled permanent's mana value is snapshotted into
  *                             the ability's xValue at payment
  * @param trackWithSource when true, cards exiled for this cost are tracked with the ability's source
+ * @param trackExiledCard when true, the exact exiled card is snapshotted for a later effect
  */
 public record ExilePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
-                                 boolean trackExiledManaValue, boolean trackWithSource) implements CostEffect {
+                                 boolean trackExiledManaValue, boolean trackWithSource,
+                                 boolean trackExiledCard) implements CostEffect {
 
     public ExilePermanentCost(PermanentPredicate filter, String description) {
-        this(filter, description, true, false, false);
+        this(filter, description, true, false, false, false);
     }
 
     public ExilePermanentCost(PermanentPredicate filter, String description, boolean excludeSource) {
-        this(filter, description, excludeSource, false, false);
+        this(filter, description, excludeSource, false, false, false);
     }
 
     public ExilePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
                               boolean trackExiledManaValue) {
-        this(filter, description, excludeSource, trackExiledManaValue, false);
+        this(filter, description, excludeSource, trackExiledManaValue, false, false);
+    }
+
+    public ExilePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
+                              boolean trackExiledManaValue, boolean trackWithSource) {
+        this(filter, description, excludeSource, trackExiledManaValue, trackWithSource, false);
+    }
+
+    @Override
+    public boolean tracksExiledCard() {
+        return trackExiledCard;
     }
 
     @Override

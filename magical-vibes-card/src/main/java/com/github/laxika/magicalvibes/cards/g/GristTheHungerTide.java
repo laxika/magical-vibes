@@ -33,6 +33,7 @@ import java.util.Set;
 @CardRegistration(set = "AA2", collectorNumber = "16")
 @CardRegistration(set = "MH2", collectorNumber = "202")
 @CardRegistration(set = "MH2", collectorNumber = "306")
+@CardRegistration(set = "DSC", collectorNumber = "220")
 public class GristTheHungerTide extends Card {
 
     public GristTheHungerTide() {

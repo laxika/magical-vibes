@@ -143,6 +143,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ReturnPermanentAndPutCounterOnSource(UUID controllerId, Card sourceCard,
                                                 UUID sourcePermanentId) implements PermanentChoiceContext {}
     record ChoosePlayerThenReturnCreatureToHand(String sourceCardName) implements PermanentChoiceContext {}
+    /** Choose Your Champion: the targeted opponent chooses which player shares the restriction. */
+    record TargetOpponentChoosesPlayerForRestriction(UUID controllerId, UUID targetOpponentId,
+                                                     String sourceCardName) implements PermanentChoiceContext {}
     /** Intellectual Offering: choose an opponent for one of its two independent modes. */
     record ChooseOpponentDrawAndUntap(UUID controllerId, boolean untapChoice, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -1703,33 +1706,43 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                StackEntryType spellType, int xValue, boolean castForMadnessCost,
-                               boolean exileInsteadOfGraveyard, Zone sourceZone)
+                               boolean exileInsteadOfGraveyard, Zone sourceZone,
+                               CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId)
             implements PermanentChoiceContext {
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, 0, false, false, Zone.HAND);
+            this(cardToCast, controllerId, spellEffects, spellType, 0, false, false, Zone.HAND, null, null);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue) {
-            this(cardToCast, controllerId, spellEffects, spellType, xValue, false, false, Zone.HAND);
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, false, false, Zone.HAND, null, null);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue, boolean castForMadnessCost) {
-            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost, false, Zone.HAND);
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost, false,
+                    Zone.HAND, null, null);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue, boolean castForMadnessCost,
                                    boolean exileInsteadOfGraveyard) {
             this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost,
-                    exileInsteadOfGraveyard, Zone.HAND);
+                    exileInsteadOfGraveyard, Zone.HAND, null, null);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue, boolean castForMadnessCost,
                                    boolean exileInsteadOfGraveyard, Zone sourceZone) {
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost,
+                    exileInsteadOfGraveyard, sourceZone, null, null);
+        }
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                   StackEntryType spellType, int xValue, boolean castForMadnessCost,
+                                   boolean exileInsteadOfGraveyard, Zone sourceZone,
+                                   CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) {
             this.cardToCast = cardToCast;
             this.controllerId = controllerId;
             this.spellEffects = spellEffects;
@@ -1738,6 +1751,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this.castForMadnessCost = castForMadnessCost;
             this.exileInsteadOfGraveyard = exileInsteadOfGraveyard;
             this.sourceZone = sourceZone;
+            this.afterSuccessfulCastEffect = afterSuccessfulCastEffect;
+            this.sourcePermanentId = sourcePermanentId;
         }
     }
 

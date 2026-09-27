@@ -1001,6 +1001,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChosenCardIds =
+                    List.copyOf(cardIds);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.cloneOperation.exileTwoAndAddOtherPowerCounters) {
             if (gameData.cloneOperation.selectedGraveyardCopyCardIds.isEmpty()) {
                 if (cardIds.size() != 2) {

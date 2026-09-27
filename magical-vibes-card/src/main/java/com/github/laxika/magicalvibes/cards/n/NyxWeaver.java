@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "153")
 @CardRegistration(set = "PIO", collectorNumber = "236")
+@CardRegistration(set = "DSC", collectorNumber = "226")
 public class NyxWeaver extends Card {
 
     public NyxWeaver() {

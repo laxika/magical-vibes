@@ -154,6 +154,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileAnyNumberThenEffectChoiceMade;
     /** The cards chosen for the optional any-number graveyard exile, or an empty list for a decline. */
     public List<UUID> resolutionTimeExileAnyNumberThenEffectChosenCardIds;
+    /** Whether Winter's multi-card graveyard selection is awaiting its answer. */
+    public boolean resolutionTimeExileAnyNumberWithFourCardTypesResume;
+    /** Whether Winter's multi-card graveyard selection has been answered. */
+    public boolean resolutionTimeExileAnyNumberWithFourCardTypesChoiceMade;
+    /** Cards chosen for Winter's multi-card graveyard selection. */
+    public List<UUID> resolutionTimeExileAnyNumberWithFourCardTypesChosenCardIds;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore or Shrouded
      * Lore). When set,

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "159")
 @CardRegistration(set = "SIR", collectorNumber = "196")
+@CardRegistration(set = "DSC", collectorNumber = "180")
 public class GnarlwoodDryad extends Card {
 
     public GnarlwoodDryad() {

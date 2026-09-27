@@ -58,6 +58,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for a scheme being set in motion. */
+    record SchemeSetInMotion(StackEntry schemeEntry, UUID settingPlayerId) implements TriggerContext {}
+
     record GiftGiven(UUID giverId) implements TriggerContext {}
 
     /** Context for "whenever a spell or ability you control counters a spell" triggers. */

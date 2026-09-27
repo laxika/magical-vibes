@@ -73,6 +73,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers when this permanent's controller sets a scheme in motion. */
+    ON_CONTROLLER_SETS_SCHEME_IN_MOTION,
     ON_CONTROLLER_GIVES_GIFT,
     /** Triggers whenever a Case is solved by the controller. */
     ON_ALLY_CASE_SOLVES,

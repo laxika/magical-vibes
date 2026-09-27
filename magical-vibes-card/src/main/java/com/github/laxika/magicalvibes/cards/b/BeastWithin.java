@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "OMB", collectorNumber = "33")
 @CardRegistration(set = "SOC", collectorNumber = "263")
 @CardRegistration(set = "MSC", collectorNumber = "169")
+@CardRegistration(set = "DSC", collectorNumber = "80")
 public class BeastWithin extends Card {
 
     public BeastWithin() {

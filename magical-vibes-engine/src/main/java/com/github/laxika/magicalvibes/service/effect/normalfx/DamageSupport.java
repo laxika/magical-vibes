@@ -257,7 +257,7 @@ public class DamageSupport {
             rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
-                    gameData, bonusSourceControllerId, targetControllerId);
+                    gameData, bonusSourceControllerId, targetControllerId, false, true);
             rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
                     gameData, entry, targetControllerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(

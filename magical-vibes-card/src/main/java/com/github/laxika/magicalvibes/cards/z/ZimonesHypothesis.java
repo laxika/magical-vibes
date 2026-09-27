@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCreaturesOfChosenPow
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "206")
+@CardRegistration(set = "DSC", collectorNumber = "15")
+@CardRegistration(set = "DSC", collectorNumber = "46")
 public class ZimonesHypothesis extends Card {
 
     public ZimonesHypothesis() {

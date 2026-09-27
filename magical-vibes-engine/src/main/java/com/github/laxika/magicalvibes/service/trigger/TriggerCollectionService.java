@@ -646,6 +646,30 @@ public class TriggerCollectionService {
                 castFromHand ? Zone.HAND : Zone.GRAVEYARD);
     }
 
+    /**
+     * Fires triggers caused by a scheme being set in motion. The scheme ability must already be
+     * on the stack so effects that repeat it can snapshot the exact set-in-motion ability.
+     */
+    public void checkSchemeSetInMotionTriggers(GameData gameData, StackEntry schemeEntry) {
+        if (schemeEntry == null || schemeEntry.getCard() == null
+                || schemeEntry.getControllerId() == null
+                || !schemeEntry.getCard().hasType(CardType.SCHEME)) {
+            return;
+        }
+
+        UUID settingPlayerId = schemeEntry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(settingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.SchemeSetInMotion(schemeEntry, settingPlayerId);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, settingPlayerId,
+                    EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
+        }
+    }
+
     public void checkCrimeTriggers(GameData gameData, StackEntry stackEntry) {
         if (!gameData.isCommittedCrime(stackEntry)) return;
 

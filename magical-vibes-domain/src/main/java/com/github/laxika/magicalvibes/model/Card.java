@@ -271,6 +271,8 @@ public class Card {
      * normal cost — only the timing permission changes. Swift Reckoning (spell mastery).
      */
     private Condition flashCastCondition;
+    /** Optional permanent predicate that makes this spell castable at instant speed when targeted. */
+    private PermanentPredicate flashCastTargetPredicate;
 
     /**
      * Card-specific "this Equipment can be attached only to …" restriction (Konda's Banner), or
@@ -419,6 +421,7 @@ public class Card {
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
+        this.flashCastTargetPredicate = source.flashCastTargetPredicate;
         this.attachRestriction = source.attachRestriction;
         source.effectRegistrations.forEach((slot, regs) ->
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
@@ -658,6 +661,7 @@ public class Card {
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
     public void setCastCondition(Condition castCondition) { assertMutable(); this.castCondition = castCondition; }
     public void setFlashCastCondition(Condition flashCastCondition) { assertMutable(); this.flashCastCondition = flashCastCondition; }
+    public void setFlashCastTargetPredicate(PermanentPredicate flashCastTargetPredicate) { assertMutable(); this.flashCastTargetPredicate = flashCastTargetPredicate; }
     public void setAttachRestriction(PermanentPredicate attachRestriction) { assertMutable(); this.attachRestriction = attachRestriction; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
@@ -700,6 +704,7 @@ public class Card {
         setSpellCastTimingRestriction(null);
         setCastCondition(null);
         setFlashCastCondition(null);
+        setFlashCastTargetPredicate(null);
         setAttachRestriction(null);
         setWatermark(null);
         setBackFaceCard(null);
@@ -1176,7 +1181,7 @@ public class Card {
      * group for each selection.
      */
     public int getEffectTargetIndex(CardEffect effect, int occurrence) {
-        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        List<Integer> targetIndices = targetIndicesForEffect(effect);
         if (targetIndices == null || occurrence < 0 || occurrence >= targetIndices.size()) {
             return -1;
         }
@@ -1184,12 +1189,23 @@ public class Card {
     }
 
     public boolean hasEffectTargetIndex(CardEffect effect) {
-        return effectTargetIndexMap.containsKey(effect);
+        return targetIndicesForEffect(effect) != null;
     }
 
     public boolean isEffectBoundToTargetGroup(CardEffect effect, int groupIndex) {
-        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        List<Integer> targetIndices = targetIndicesForEffect(effect);
         return targetIndices != null && targetIndices.contains(groupIndex);
+    }
+
+    private List<Integer> targetIndicesForEffect(CardEffect effect) {
+        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        if (targetIndices != null) {
+            return targetIndices;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return targetIndicesForEffect(conditional.wrapped());
+        }
+        return null;
     }
 
     /**
