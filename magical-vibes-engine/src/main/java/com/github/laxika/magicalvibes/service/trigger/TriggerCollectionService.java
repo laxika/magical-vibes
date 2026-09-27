@@ -12819,6 +12819,14 @@ public class TriggerCollectionService {
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
+                    // Archaeomancer's Map uses an intervening "if": check the land counts
+                    // both when the ability would trigger and again when it resolves.
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && conditional.condition() instanceof com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController
+                            && !gameQueryService.controlsMoreLandsThan(gameData, landControllerId, playerId)) {
+                        continue;
+                    }
                     CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringLand, gameData, playerId);
                     if (resolved == null) continue;
                     resolved = unwrapImprintedCardNameConditional(gameData, enteringLand, perm, resolved);
