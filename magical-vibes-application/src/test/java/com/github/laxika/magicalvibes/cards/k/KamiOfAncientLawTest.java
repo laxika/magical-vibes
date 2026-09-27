@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.b.BloodRites;
+import com.github.laxika.magicalvibes.cards.i.ImiStatue;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KamiOfAncientLaw.class, BloodRites.class, WanderingOnes.class, ImiStatue.class})
 class KamiOfAncientLawTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,8 @@ class KamiOfAncientLawTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Kami of Ancient Law");
         harness.assertInGraveyard(player1, "Kami of Ancient Law");
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Blood Rites");
+        harness.assertInGraveyard(player2, "Blood Rites");
     }
 
     @Test
@@ -45,7 +47,7 @@ class KamiOfAncientLawTest extends BaseCardTest {
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addReadyKami(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -55,8 +57,7 @@ class KamiOfAncientLawTest extends BaseCardTest {
     @DisplayName("Cannot target an artifact")
     void cannotTargetArtifact() {
         addReadyKami(player1);
-        Permanent artifact = new Permanent(new LeoninScimitar());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ImiStatue());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -71,7 +72,7 @@ class KamiOfAncientLawTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Glorious Anthem"));
+                .removeIf(p -> p.getId().equals(target.getId()));
 
         harness.passBothPriorities();
 
@@ -81,15 +82,10 @@ class KamiOfAncientLawTest extends BaseCardTest {
     }
 
     private Permanent addReadyKami(Player player) {
-        Permanent perm = new Permanent(new KamiOfAncientLaw());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new KamiOfAncientLaw());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Permanent perm = new Permanent(new GloriousAnthem());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new BloodRites());
     }
 }

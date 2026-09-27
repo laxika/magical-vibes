@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardP
 import com.github.laxika.magicalvibes.model.effect.ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToOneOfEachCardTypeFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTargetCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
@@ -127,6 +128,10 @@ public class GraveyardTargetingSupport {
                     ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD : GraveyardSearchScope.ALL_GRAVEYARDS,
                     "to exile", exile.maxTargets(), exile.graveyardChoiceMinTargets(), null,
                     exile.singleGraveyard());
+        }
+        if (effect instanceof ExileUpToOneOfEachCardTypeFromGraveyardEffect exile) {
+            return new Target(null, GraveyardSearchScope.OPPONENT_GRAVEYARD,
+                    "to exile", exile.graveyardChoiceMaxTargets(), exile.graveyardChoiceMinTargets());
         }
         if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
             return findTarget(List.of(exileThen.thenEffect()));

@@ -22,6 +22,7 @@ class ShangChiAndTheTenRingsTest extends BaseCardTest {
     void tenthCounterTriggersDrawAndLifeGain() {
         Permanent shangChi = harness.addToBattlefieldAndReturn(player1, new ShangChiAndTheTenRings());
         shangChi.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
 

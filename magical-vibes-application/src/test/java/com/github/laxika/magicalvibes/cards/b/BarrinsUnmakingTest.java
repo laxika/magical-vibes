@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({AlloyGolem.class, BarrinsUnmaking.class, BenalishLancer.class, BlindSeer.class,
         BloodstoneCameo.class, GalinasKnight.class})
 class BarrinsUnmakingTest extends BaseCardTest {
@@ -100,9 +102,16 @@ class BarrinsUnmakingTest extends BaseCardTest {
     void countsColorsSuppliedByContinuousEffects() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
         harness.addToBattlefield(player1, new BlindSeer());
-        harness.addToBattlefield(player1, new BlindSeer());
+        addColoredPermanent(player1, "Blue Support", CardColor.BLUE);
         Permanent alloyGolem = harness.addToBattlefieldAndReturn(player1, new AlloyGolem());
         alloyGolem.setChosenColor(CardColor.WHITE);
+        assertThat(gqs.getEffectiveColors(gd, alloyGolem)).containsExactly(CardColor.WHITE);
+        assertThat(gd.playerBattlefields.values().stream().flatMap(List::stream)
+                .filter(permanent -> gqs.getEffectiveColors(gd, permanent).contains(CardColor.WHITE)))
+                .hasSize(2);
+        assertThat(gd.playerBattlefields.values().stream().flatMap(List::stream)
+                .filter(permanent -> gqs.getEffectiveColors(gd, permanent).contains(CardColor.BLUE)))
+                .hasSize(2);
 
         castBarrinsUnmaking(target);
 

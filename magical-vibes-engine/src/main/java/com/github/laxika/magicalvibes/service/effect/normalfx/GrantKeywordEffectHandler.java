@@ -481,6 +481,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     private void addLegacyBucket(Permanent permanent, GrantDuration duration, Set<Keyword> keywords) {
         if (!sourceLinked(duration)
+                && duration != GrantDuration.UNTIL_YOUR_NEXT_TURN
                 && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP
                 && duration != GrantDuration.UNTIL_END_OF_COMBAT) {
             keywords.stream().filter(keyword -> keyword != Keyword.FLANKING)

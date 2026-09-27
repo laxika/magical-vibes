@@ -76,7 +76,7 @@ class EyesEverywhereTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("nonland permanent");
     }
 
     private void addActivationMana() {

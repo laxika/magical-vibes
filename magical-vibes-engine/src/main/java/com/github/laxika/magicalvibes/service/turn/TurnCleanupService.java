@@ -413,6 +413,7 @@ public class TurnCleanupService {
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
+        gameData.controllerDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();
         gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
@@ -523,6 +524,7 @@ public class TurnCleanupService {
         gameData.kayaExileNotificationPendingCreatureCards.clear();
         gameData.kayaExileNotificationPendingCounts.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
+        gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn.clear();
         gameData.cardsLeftGraveyardCountThisTurn.clear();
         gameData.creatureExileCountThisTurn.clear();
 

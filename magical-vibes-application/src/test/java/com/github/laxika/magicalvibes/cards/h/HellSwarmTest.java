@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,10 +19,7 @@ class HellSwarmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new HellSwarm()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castAndResolveInstant(player1, 0);
+        castHellSwarm();
 
         Permanent own = findPermanent(player1, "Grizzly Bears");
         Permanent theirs = findPermanent(player2, "Grizzly Bears");
@@ -39,10 +33,7 @@ class HellSwarmTest extends BaseCardTest {
     @DisplayName("Effect wears off at end of turn")
     void wearsOffAtEndOfTurn() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new HellSwarm()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castAndResolveInstant(player1, 0);
+        castHellSwarm();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(1);
@@ -53,5 +44,25 @@ class HellSwarmTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not affect creatures that enter after it resolves")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        Permanent existing = addCreatureReady(player1, new GrizzlyBears());
+
+        castHellSwarm();
+
+        Permanent later = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(existing.getEffectivePower()).isEqualTo(1);
+        assertThat(existing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    private void castHellSwarm() {
+        harness.castFromHand(player1, new HellSwarm(), "{B}");
+        harness.passBothPriorities();
     }
 }

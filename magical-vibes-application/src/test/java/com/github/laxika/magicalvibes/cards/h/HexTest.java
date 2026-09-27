@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +17,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hex.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Hex.class, BorosRecruit.class, Forest.class})
 class HexTest extends BaseCardTest {
 
     @Test
@@ -27,10 +27,23 @@ class HexTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hex()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, targets);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targets);
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Boros Recruit");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroys creature targets controlled by either player")
+    void destroysCreatureTargetsControlledByEitherPlayer() {
+        List<UUID> targets = new ArrayList<>(addCreatures(player1, 3));
+        targets.addAll(addCreatures(player2, 3));
+        harness.setHand(player1, List.of(new Hex()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, targets);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
@@ -42,6 +55,30 @@ class HexTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targets.subList(0, 5)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rejects duplicate creature targets")
+    void rejectsDuplicateCreatureTargets() {
+        List<UUID> targets = new ArrayList<>(addSixCreatures());
+        targets.set(5, targets.getFirst());
+        harness.setHand(player1, List.of(new Hex()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, targets))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rejects more than six creature targets")
+    void rejectsMoreThanSixCreatureTargets() {
+        List<UUID> targets = new ArrayList<>(addSixCreatures());
+        targets.add(harness.addToBattlefieldAndReturn(player2, new BorosRecruit()).getId());
+        harness.setHand(player1, List.of(new Hex()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, targets))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -60,8 +97,12 @@ class HexTest extends BaseCardTest {
     }
 
     private List<UUID> addSixCreatures() {
-        return IntStream.range(0, 6)
-                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId())
+        return addCreatures(player2, 6);
+    }
+
+    private List<UUID> addCreatures(com.github.laxika.magicalvibes.model.Player player, int count) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player, new BorosRecruit()).getId())
                 .toList();
     }
 }

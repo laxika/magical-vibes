@@ -18,6 +18,7 @@ class HawkeyeAvengingArcherTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card when damage kills an opponent's creature")
     void drawsWhenDamagedOpponentCreatureDies() {
+        harness.setHand(player1, List.of());
         Permanent hawkeye = addReadyHawkeye();
         Permanent target = addOneToughnessCreature(player2);
         Forest drawn = new Forest();
@@ -35,6 +36,7 @@ class HawkeyeAvengingArcherTest extends BaseCardTest {
     @Test
     @DisplayName("Does not draw when damage kills a creature its controller controls")
     void doesNotDrawWhenDamagedAllyCreatureDies() {
+        harness.setHand(player1, List.of());
         addReadyHawkeye();
         Permanent target = addOneToughnessCreature(player1);
         Forest notDrawn = new Forest();

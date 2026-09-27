@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ class PavelMalikiTest extends BaseCardTest {
     @Test
     @DisplayName("Pavel Maliki gets +1/+0 after paying black and red mana")
     void activationBoostsPower() {
-        Permanent pavel = addPavelReady(player1);
+        Permanent pavel = addCreatureReady(player1, new PavelMaliki());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -32,7 +31,7 @@ class PavelMalikiTest extends BaseCardTest {
     @Test
     @DisplayName("Pavel Maliki can be activated repeatedly")
     void activationCanBeRepeated() {
-        Permanent pavel = addPavelReady(player1);
+        Permanent pavel = addCreatureReady(player1, new PavelMaliki());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -47,7 +46,7 @@ class PavelMalikiTest extends BaseCardTest {
     @Test
     @DisplayName("Pavel Maliki's boost wears off at end of turn")
     void activationBoostWearsOff() {
-        Permanent pavel = addPavelReady(player1);
+        Permanent pavel = addCreatureReady(player1, new PavelMaliki());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -63,7 +62,7 @@ class PavelMalikiTest extends BaseCardTest {
     @Test
     @DisplayName("Pavel Maliki cannot be activated without both colors of mana")
     void activationRequiresBlackAndRedMana() {
-        addPavelReady(player1);
+        addCreatureReady(player1, new PavelMaliki());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -71,10 +70,17 @@ class PavelMalikiTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addPavelReady(Player player) {
-        Permanent permanent = new Permanent(new PavelMaliki());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Pavel Maliki's ability does not require tapping")
+    void activationDoesNotRequireTapping() {
+        Permanent pavel = addCreatureReady(player1, new PavelMaliki());
+        pavel.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pavel.getPowerModifier()).isEqualTo(1);
     }
 }

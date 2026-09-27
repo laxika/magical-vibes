@@ -1,27 +1,24 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HondenOfSeeingWinds.class, HondenOfLifesWeb.class})
 class HondenOfSeeingWindsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws a card for each Shrine its controller controls")
     void drawsForEachControlledShrine() {
         harness.addToBattlefield(player1, new HondenOfSeeingWinds());
-        harness.addToBattlefield(player1, shrine());
+        harness.addToBattlefield(player1, new HondenOfLifesWeb());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
@@ -33,8 +30,22 @@ class HondenOfSeeingWindsTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
-        harness.addToBattlefield(player1, shrine());
-        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new HondenOfLifesWeb());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Does not count Shrines controlled by an opponent")
+    void ignoresOpponentControlledShrines() {
+        harness.addToBattlefield(player1, new HondenOfSeeingWinds());
+        harness.addToBattlefield(player1, new HondenOfLifesWeb());
+        harness.addToBattlefield(player2, new HondenOfLifesWeb());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
@@ -43,20 +54,12 @@ class HondenOfSeeingWindsTest extends BaseCardTest {
     @DisplayName("Does not trigger during an opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
         harness.addToBattlefield(player1, new HondenOfSeeingWinds());
-        harness.addToBattlefield(player2, shrine());
+        harness.addToBattlefield(player2, new HondenOfLifesWeb());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-    }
-
-    private Card shrine() {
-        Card card = new Card();
-        card.setName("Test Shrine");
-        card.setType(CardType.ENCHANTMENT);
-        card.setSubtypes(List.of(CardSubtype.SHRINE));
-        return card;
     }
 }

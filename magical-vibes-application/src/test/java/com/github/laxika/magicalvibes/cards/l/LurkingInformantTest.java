@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,14 +13,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LurkingInformant.class, GrizzlyBears.class})
+@CardUsed({LurkingInformant.class, BorosRecruit.class})
 class LurkingInformantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting puts the target player's top card into their graveyard")
     void acceptsPuttingTopCardIntoGraveyard() {
         addReadyInformant();
-        Card topCard = new GrizzlyBears();
+        Card topCard = new BorosRecruit();
         harness.setLibrary(player2, java.util.List.of(topCard));
 
         activate(player2.getId());
@@ -34,7 +34,7 @@ class LurkingInformantTest extends BaseCardTest {
     @DisplayName("Declining leaves the target player's top card on their library")
     void declinesPuttingTopCardIntoGraveyard() {
         addReadyInformant();
-        Card topCard = new GrizzlyBears();
+        Card topCard = new BorosRecruit();
         harness.setLibrary(player2, java.util.List.of(topCard));
 
         activate(player2.getId());
@@ -48,7 +48,7 @@ class LurkingInformantTest extends BaseCardTest {
     @DisplayName("The ability can target the controller's library")
     void targetsController() {
         addReadyInformant();
-        Card topCard = new GrizzlyBears();
+        Card topCard = new BorosRecruit();
         harness.setLibrary(player1, java.util.List.of(topCard));
 
         activate(player1.getId());
@@ -71,9 +71,7 @@ class LurkingInformantTest extends BaseCardTest {
     }
 
     private Permanent addReadyInformant() {
-        Permanent informant = harness.addToBattlefieldAndReturn(player1, new LurkingInformant());
-        informant.setSummoningSick(false);
-        return informant;
+        return addCreatureReady(player1, new LurkingInformant());
     }
 
     private void activate(UUID targetPlayerId) {

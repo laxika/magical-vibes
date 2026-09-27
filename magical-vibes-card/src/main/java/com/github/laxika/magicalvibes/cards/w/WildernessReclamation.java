@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "149")
+@CardRegistration(set = "DSC", collectorNumber = "205")
 public class WildernessReclamation extends Card {
 
     public WildernessReclamation() {

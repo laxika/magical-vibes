@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourceP
 @CardRegistration(set = "SLD", collectorNumber = "2245")
 @CardRegistration(set = "2XM", collectorNumber = "156")
 @CardRegistration(set = "MOC", collectorNumber = "293")
+@CardRegistration(set = "NCC", collectorNumber = "284")
 public class ChampionOfLambholt extends Card {
 
     public ChampionOfLambholt() {

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Char;
+import com.github.laxika.magicalvibes.cards.c.CrownOfConvergence;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,18 +17,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reroute.class, RodOfRuin.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Reroute.class, ViashinoFangtail.class, Forest.class, Char.class, CrownOfConvergence.class})
 class RerouteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Changes the target of a single-target activated ability and draws a card")
     void reroutesActivatedAbilityAndDraws() {
-        RodOfRuin rod = new RodOfRuin();
-        harness.addToBattlefield(player2, rod);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        ViashinoFangtail fangtail = new ViashinoFangtail();
+        addCreatureReady(player2, fangtail);
 
         harness.setHand(player1, List.of(new Reroute()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -38,7 +39,7 @@ class RerouteTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, rod.getId());
+        harness.castInstant(player1, 0, fangtail.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -51,7 +52,7 @@ class RerouteTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore - 1);
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -61,16 +62,38 @@ class RerouteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Shock shock = new Shock();
-        harness.setHand(player2, List.of(shock));
+        Char charSpell = new Char();
+        harness.setHand(player2, List.of(charSpell));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, shock.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, charSpell.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("activated ability");
+    }
+
+    @Test
+    @DisplayName("Cannot target an activated ability without a target")
+    void cannotTargetUntargetedActivatedAbility() {
+        CrownOfConvergence crown = new CrownOfConvergence();
+        harness.addToBattlefield(player2, crown);
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Reroute()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, crown.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("single-target activated ability");
     }
 }

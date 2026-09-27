@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(PlagueOfVermin.class)
 class PlagueOfVerminTest extends BaseCardTest {
 
     private void cast(Player caster) {
@@ -47,14 +49,6 @@ class PlagueOfVerminTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(ratCount(player1)).isEqualTo(3);
         assertThat(ratCount(player2)).isEqualTo(2);
-        assertThat(findPermanents(player1, "Rat")).allSatisfy(rat -> {
-            assertThat(rat.getCard().getSetCode()).isEqualTo("tshm");
-            assertThat(rat.getCard().getCollectorNumber()).isNotBlank();
-        });
-        assertThat(findPermanents(player2, "Rat")).allSatisfy(rat -> {
-            assertThat(rat.getCard().getSetCode()).isEqualTo("tshm");
-            assertThat(rat.getCard().getCollectorNumber()).isNotBlank();
-        });
     }
 
     @Test

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CountAsCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenColorEffect;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreat
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfLandCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfChosenPermanentEffect;
@@ -257,6 +259,7 @@ public final class LayerClassifier {
 
         // Layer 2 — control-changing effects (CR 613.2b).
         map.put(GainControlOfTargetEffect.class, fixed(Layer.L2_CONTROL));
+        map.put(GainControlOfTargetWhileHasCounterEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfEnchantedTargetEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfEnchantedPermanentEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfTargetAuraEffect.class, fixed(Layer.L2_CONTROL));
@@ -464,6 +467,8 @@ public final class LayerClassifier {
         map.put(GainActivatedAbilitiesOfCardsInControllerGraveyardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect.class,
+                fixed(Layer.L6_ABILITIES));
+        map.put(GrantActivatedAbilitiesOfLandCardsExiledWithSourceEffect.class,
                 fixed(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));

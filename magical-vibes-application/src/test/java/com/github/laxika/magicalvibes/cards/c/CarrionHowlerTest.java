@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CarrionHowler.class})
 class CarrionHowlerTest extends BaseCardTest {
@@ -33,11 +34,19 @@ class CarrionHowlerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, howler)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, howler)).isEqualTo(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, howler)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, howler)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotPayActivationCostWithoutEnoughLife() {
+        harness.addToBattlefield(player1, new CarrionHowler());
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
     }
 }

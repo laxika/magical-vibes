@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOC", collectorNumber = "274")
+@CardRegistration(set = "TDC", collectorNumber = "209")
 public class CurseOfOpulence extends Card {
 
     public CurseOfOpulence() {

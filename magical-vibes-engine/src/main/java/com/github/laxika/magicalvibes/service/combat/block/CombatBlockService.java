@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -589,6 +590,7 @@ public class CombatBlockService {
         // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeBlockerTriggers = gameData.stack.size();
         Set<Integer> blockersWithOncePerBlockTrigger = new HashSet<>();
+        Set<UUID> blockersWithBushidoTrigger = new HashSet<>();
         Set<UUID> auraOncePerBlockTriggers = new HashSet<>();
 
         // Check for "when this creature blocks" triggers (defending player's / NAP's)
@@ -597,6 +599,9 @@ public class CombatBlockService {
             List<CardEffect> blockEffects = new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
+            if (!blockersWithBushidoTrigger.add(blocker.getId())) {
+                blockEffects.removeIf(BushidoEffect.class::isInstance);
+            }
             boolean hasOncePerBlockEffect = blocker.getCard().getEffectRegistrations(EffectSlot.ON_BLOCK).stream()
                     .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
             boolean collectBlockTrigger = !hasOncePerBlockEffect
@@ -684,6 +689,8 @@ public class CombatBlockService {
                 );
                 // Block triggers reference "that creature" but don't target — they can't fizzle
                 blockTrigger.setTriggeringPermanentId(attacker.getId());
+                blockTrigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attacker));
+                blockTrigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, attacker));
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
@@ -1075,6 +1082,8 @@ public class CombatBlockService {
                         blocker.getId(),
                         attacker.getId());
                 trigger.setNonTargeting(true);
+                trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
+                trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
                 gameData.stack.add(trigger);
             }
         }
@@ -2012,6 +2021,8 @@ public class CombatBlockService {
                     );
                     // "That creature" wording references a blocker without targeting it.
                     trigger.setNonTargeting(true);
+                    trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
+                    trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s becomes-blocked ability triggers."));
@@ -2826,6 +2837,9 @@ public class CombatBlockService {
 
         if (hasCantAttackOrBlockAlone(blocker) && maximumAdditionalBlockers < 1) {
             return false;
+        }
+        if (gameQueryService.hasLostPrintedAbilities(gameData, blocker)) {
+            return true;
         }
 
         int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);

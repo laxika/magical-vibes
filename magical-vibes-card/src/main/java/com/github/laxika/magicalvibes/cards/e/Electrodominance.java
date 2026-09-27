@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastSpellFromHandWithManaV
 
 @CardRegistration(set = "RNA", collectorNumber = "99")
 @CardRegistration(set = "OTP", collectorNumber = "23")
+@CardRegistration(set = "TDC", collectorNumber = "212")
 public class Electrodominance extends Card {
 
     public Electrodominance() {

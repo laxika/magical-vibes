@@ -14,6 +14,8 @@ import java.util.List;
 @CardRegistration(set = "CHK", collectorNumber = "273")
 @CardRegistration(set = "V12", collectorNumber = "2")
 @CardRegistration(set = "SLD", collectorNumber = "426")
+@CardRegistration(set = "LTC", collectorNumber = "359")
+@CardRegistration(set = "LTC", collectorNumber = "389")
 public class BoseijuWhoSheltersAll extends Card {
 
     public BoseijuWhoSheltersAll() {

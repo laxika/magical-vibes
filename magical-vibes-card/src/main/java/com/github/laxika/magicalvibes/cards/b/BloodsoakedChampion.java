@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "66")
+@CardRegistration(set = "NCC", collectorNumber = "243")
 public class BloodsoakedChampion extends Card {
 
     public BloodsoakedChampion() {

@@ -37,14 +37,13 @@ class SheHulkWallbreakerTest extends BaseCardTest {
     void putsCountersEqualToBlockersOnBecomingBlocked() {
         Permanent sheHulk = addCreatureReady(player1, new SheHulkWallbreaker());
         Permanent hero = addCreatureReady(player1, new AgentMariaHill());
-        hero.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
         gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(0, 0),
-                new BlockerAssignment(1, 0)));
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 1)));
         harness.passBothPriorities();
 
         assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

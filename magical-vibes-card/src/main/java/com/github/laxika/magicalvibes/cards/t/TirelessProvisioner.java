@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "2057")
 @CardRegistration(set = "MH2", collectorNumber = "180")
 @CardRegistration(set = "MOC", collectorNumber = "313")
+@CardRegistration(set = "LTC", collectorNumber = "262")
 public class TirelessProvisioner extends Card {
 
     public TirelessProvisioner() {

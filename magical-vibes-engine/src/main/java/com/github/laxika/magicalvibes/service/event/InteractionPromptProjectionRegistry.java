@@ -75,6 +75,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.RevealedMatchingHandCardChoice.class,
                 this::projectRevealedMatchingHandCardChoice);
         register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
+        register(PendingInteraction.CommanderBattlefieldChoice.class,
+                this::projectCommanderBattlefieldChoice);
+        register(PendingInteraction.StingingStudyCommanderChoice.class,
+                this::projectStingingStudyCommanderChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.PlanarDeckPlaneswalkCardOrder.class,
                 this::projectPlanarDeckPlaneswalkCardOrder);
@@ -185,6 +189,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
+        register(PendingInteraction.HitCounterExiledCardChoice.class,
+                this::projectHitCounterExiledCardChoice);
         register(PendingInteraction.CommanderReplacementChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
                 "Put " + choice.move().card().getName() + " into the command zone instead of your " + choice.move().destination().name().toLowerCase() + "?", true, null));
         register(PendingInteraction.CommanderReturnChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
@@ -262,6 +268,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.SpellbookCardChoice.class, this::projectSpellbookCardChoice);
+        register(PendingInteraction.ApplejackToyChoice.class, this::projectApplejackToyChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
@@ -432,6 +439,20 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.commanders()), 1,
                 "Choose one of your commanders to put into your hand.");
+    }
+
+    private InteractionPromptMessage projectCommanderBattlefieldChoice(
+            GameData gameData, PendingInteraction.CommanderBattlefieldChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
+                "Choose a commander to put onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectStingingStudyCommanderChoice(
+            GameData gameData, PendingInteraction.StingingStudyCommanderChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
+                "Choose a commander to determine X for Stinging Study.");
     }
 
     private InteractionPromptMessage projectSpatialMergingCardOrder(
@@ -1069,13 +1090,23 @@ public class InteractionPromptProjectionRegistry {
         addMatchingCardViews(cardViews,
                 gameData.playerHands.getOrDefault(interaction.playerId(), List.of()),
                 interaction.validCardIds());
-        addMatchingCardViews(cardViews,
-                gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of()),
-                interaction.validCardIds());
+        if (interaction.includeGraveyard()) {
+            addMatchingCardViews(cardViews,
+                    gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of()),
+                    interaction.validCardIds());
+        }
+        if (interaction.includeCommandZone()) {
+            addMatchingCardViews(cardViews,
+                    gameData.playerCommandZones.getOrDefault(interaction.playerId(), List.of()),
+                    interaction.validCardIds());
+        }
+        String zones = interaction.includeCommandZone()
+                ? "hand or command zone"
+                : interaction.includeGraveyard() ? "hand or graveyard" : "hand";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "Choose up to one " + interaction.label()
-                        + " card from your hand or graveyard to put onto the battlefield.");
+                        + " card from your " + zones + " to put onto the battlefield.");
     }
 
     private InteractionPromptMessage projectExileNonlandCardFromTargetHandOrGraveyardChoice(
@@ -1181,6 +1212,15 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 "Choose an exiled card named \"" + interaction.cardName()
                         + "\" to return to the battlefield.");
+    }
+
+    private InteractionPromptMessage projectHitCounterExiledCardChoice(
+            GameData gameData, PendingInteraction.HitCounterExiledCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a card with a hit counter to remove a hit counter from.");
     }
 
     private InteractionPromptMessage projectCommandZoneCardChoice(
@@ -1452,6 +1492,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectApplejackToyChoice(
+            GameData gameData, PendingInteraction.ApplejackToyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.toys()), 1,
+                "Choose a toy.");
     }
 
     private InteractionPromptMessage projectVividCardChoice(

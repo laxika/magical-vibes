@@ -38,7 +38,10 @@ public class EachPlayerChoosesOpponentPermanentToDestroyEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroyEffect = (EachPlayerChoosesOpponentPermanentToDestroyEffect) effect;
         UUID controllerId = entry.getControllerId();
-        beginNextChoice(gameData, orderStartingWith(gameData, controllerId), List.of(),
+        List<UUID> playerOrder = destroyEffect.startWithNextOpponent()
+                ? orderStartingWithNextOpponent(gameData, controllerId)
+                : orderStartingWith(gameData, controllerId);
+        beginNextChoice(gameData, playerOrder, List.of(),
                 destroyEffect.filter(), entry.getCard().getId(), controllerId, entry.getCard().getName());
     }
 
@@ -120,5 +123,15 @@ public class EachPlayerChoosesOpponentPermanentToDestroyEffectHandler implements
         List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
         rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
         return rotated;
+    }
+
+    private List<UUID> orderStartingWithNextOpponent(GameData gameData, UUID controllerId) {
+        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
+        int controllerIndex = orderedPlayerIds.indexOf(controllerId);
+        if (controllerIndex < 0 || orderedPlayerIds.isEmpty()) {
+            return orderedPlayerIds;
+        }
+        UUID nextPlayerId = orderedPlayerIds.get((controllerIndex + 1) % orderedPlayerIds.size());
+        return orderStartingWith(gameData, nextPlayerId);
     }
 }

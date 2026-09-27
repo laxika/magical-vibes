@@ -82,9 +82,9 @@ class HammerOfBogardanTest extends BaseCardTest {
         void returnsToHandDuringUpkeep() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer));
+            advanceToUpkeep(player1);
             harness.addMana(player1, ManaColor.RED, 3);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
-            advanceToUpkeep(player1);
 
             harness.activateGraveyardAbility(player1, 0);
 
@@ -103,9 +103,9 @@ class HammerOfBogardanTest extends BaseCardTest {
         void returnsOnlyTheActivatedCard() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer, new DwarvenNomad()));
+            advanceToUpkeep(player1);
             harness.addMana(player1, ManaColor.RED, 3);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
-            advanceToUpkeep(player1);
 
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();
@@ -121,9 +121,9 @@ class HammerOfBogardanTest extends BaseCardTest {
             HammerOfBogardan activatedHammer = new HammerOfBogardan();
             HammerOfBogardan otherHammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(activatedHammer, otherHammer));
+            advanceToUpkeep(player1);
             harness.addMana(player1, ManaColor.RED, 3);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
-            advanceToUpkeep(player1);
 
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();
@@ -195,8 +195,8 @@ class HammerOfBogardanTest extends BaseCardTest {
         void paysGenericCostWithColoredMana() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer));
-            harness.addMana(player1, ManaColor.RED, 5);
             advanceToUpkeep(player1);
+            harness.addMana(player1, ManaColor.RED, 5);
 
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();

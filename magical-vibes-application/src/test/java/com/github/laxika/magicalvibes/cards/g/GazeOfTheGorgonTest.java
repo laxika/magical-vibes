@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,21 +13,23 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GazeOfTheGorgon.class, GiantSpider.class, GrizzlyBears.class, Forest.class})
+@CardUsed({GazeOfTheGorgon.class, GoliathSpider.class, GlassGolem.class, Watchwolf.class, Forest.class})
 class GazeOfTheGorgonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Regenerates the target and destroys its combat opponents at end of combat")
     void regeneratesTargetAndDestroysCombatOpponents() {
-        Permanent target = addReady(player1, new GiantSpider());
-        target.setAttacking(true);
-        addReady(player2, new GrizzlyBears());
-        addReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new Watchwolf());
+        Permanent blockerOne = addCreatureReady(player2, new GlassGolem());
+        Permanent blockerTwo = addCreatureReady(player2, new GlassGolem());
+        Permanent bystander = addCreatureReady(player2, new GlassGolem());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
 
@@ -35,20 +37,44 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getRegenerationShield()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(blockerOne, blockerTwo, bystander);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blockerOne.getId(), 2, blockerTwo.getId(), 1));
+        resolveAllTriggers();
 
-        harness.assertOnBattlefield(player1, "Giant Spider");
-        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bystander);
+    }
+
+    @Test
+    @DisplayName("Destroys creatures that were blocked by the target at end of combat")
+    void destroysCreaturesBlockedByTarget() {
+        Permanent attacker = addCreatureReady(player1, new GoliathSpider());
+        Permanent target = addCreatureReady(player2, new GlassGolem());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        castGaze(player1, target);
+        resolveAllTriggers();
+
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(target);
+        assertThat(target.getRegenerationShield()).isZero();
     }
 
     @Test
     @DisplayName("A noncreature permanent cannot be targeted")
     void cannotTargetNonCreature() {
-        Permanent land = addReady(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -64,12 +90,5 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         harness.setHand(caster, List.of(new GazeOfTheGorgon()));
         harness.addMana(caster, ManaColor.GREEN, 4);
         harness.castInstant(caster, 0, target.getId());
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

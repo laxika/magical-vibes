@@ -56,6 +56,7 @@ class FlameOnTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         FlameOn card = new FlameOn();
         harness.setHand(player1, List.of(card));
+        harness.setGraveyard(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

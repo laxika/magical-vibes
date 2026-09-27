@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -28,16 +30,26 @@ public class TargetPlayerBecomesMonarchEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getTargetId();
-        if (playerId == null || !gameData.playerIds.contains(playerId)
-                || playerId.equals(gameData.monarchPlayerId)) {
-            return;
+        var e = (TargetPlayerBecomesMonarchEffect) effect;
+        List<UUID> targetPlayerIds = e.targetGroup() >= 0
+                ? entry.targetsForGroup(e.targetGroup()) : entry.targetsForEffect(effect);
+        if (e.targetGroup() < 0 && targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
+            targetPlayerIds = Collections.singletonList(entry.getTargetId());
         }
 
-        gameData.monarchPlayerId = playerId;
-        gameLogService.append(gameData, GameLog.text(
-                gameData.playerIdToName.getOrDefault(playerId, "A player") + " becomes the monarch."));
-        permanentRemovalService.returnExileReturnsOnOpponentBecomesMonarch(gameData, playerId);
-        triggerCollectionService.checkBecomesMonarchTriggers(gameData, playerId);
+        for (UUID targetPlayerId : targetPlayerIds) {
+            if (!gameData.playerIds.contains(targetPlayerId)
+                    || targetPlayerId.equals(gameData.monarchPlayerId)) {
+                continue;
+            }
+
+            gameData.monarchPlayerId = targetPlayerId;
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.getOrDefault(targetPlayerId, "A player")
+                            + " becomes the monarch."));
+            permanentRemovalService.returnExileReturnsOnOpponentBecomesMonarch(gameData, targetPlayerId);
+            triggerCollectionService.checkBecomesMonarchTriggers(gameData, targetPlayerId);
+            return;
+        }
     }
 }

@@ -1915,6 +1915,7 @@ public class MayPenaltyChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + energyCost.amount()
                                 + " energy counter(s). (", ability.sourceCard(), ")"));
+                forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, 0);
                 clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;

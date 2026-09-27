@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -21,13 +23,13 @@ public class PyreZombie extends Card {
         // At the beginning of your upkeep, if this card is in your graveyard, you may pay
         // {1}{B}{B}. If you do, return it to your hand.
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                new MayPayManaEffect("{1}{B}{B}",
+                ConditionalEffect.unless(new SourceCardInGraveyard(), new MayPayManaEffect("{1}{B}{B}",
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
                                 .build(),
-                        "Pay {1}{B}{B} to return Pyre Zombie from your graveyard to your hand?"));
+                        "Pay {1}{B}{B} to return Pyre Zombie from your graveyard to your hand?")));
 
         // {1}{R}{R}, Sacrifice this creature: It deals 2 damage to any target.
         addActivatedAbility(new ActivatedAbility(

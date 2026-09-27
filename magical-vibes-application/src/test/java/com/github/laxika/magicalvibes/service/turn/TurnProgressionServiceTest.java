@@ -691,7 +691,7 @@ class TurnProgressionServiceTest {
 
             turnProgressionService.advanceTurn(gd);
 
-            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.activePlayerId).isEqualTo(player2Id);
             assertThat(gd.extraTurns).isEmpty();
             assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
         }
@@ -869,6 +869,20 @@ class TurnProgressionServiceTest {
             assertThat(gd.spellsCastLastTurn).containsEntry(player1Id, 2);
             assertThat(gd.spellsCastLastTurn).containsEntry(player2Id, 1);
             assertThat(gd.isSpellsCastThisTurnEmpty()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Snapshots cards drawn this turn into cardsDrawnLastTurn before clearing")
+        void snapshotsCardsDrawnLastTurn() {
+            gd.cardsDrawnThisTurn.put(player1Id, 2);
+            gd.cardsDrawnThisTurn.put(player2Id, 1);
+            gd.cardsDrawnLastTurn.put(player1Id, 99);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.cardsDrawnLastTurn).containsEntry(player1Id, 2);
+            assertThat(gd.cardsDrawnLastTurn).containsEntry(player2Id, 1);
+            assertThat(gd.cardsDrawnThisTurn).isEmpty();
         }
 
         @Test

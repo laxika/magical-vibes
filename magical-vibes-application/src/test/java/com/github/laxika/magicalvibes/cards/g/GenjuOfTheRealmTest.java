@@ -72,7 +72,7 @@ class GenjuOfTheRealmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        activateGenju(player1, player2);
+        activateGenju(player1);
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, land)).isTrue();
@@ -139,13 +139,9 @@ class GenjuOfTheRealmTest extends BaseCardTest {
     }
 
     private void activateGenju(Player controller) {
-        activateGenju(controller, controller);
-    }
-
-    private void activateGenju(Player activator, Player landController) {
-        int landIndex = gd.playerBattlefields.get(landController.getId()).indexOf(
-                findPermanent(landController, "Tendo Ice Bridge"));
-        harness.activateAbility(activator, landIndex, 2, null, null);
+        int genjuIndex = gd.playerBattlefields.get(controller.getId()).indexOf(
+                findPermanent(controller, "Genju of the Realm"));
+        harness.activateAbility(controller, genjuIndex, 0, null, null);
     }
 
     private void addGenjuMana(Player player) {

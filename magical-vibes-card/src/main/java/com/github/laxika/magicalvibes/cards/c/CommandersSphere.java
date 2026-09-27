@@ -17,6 +17,8 @@ import java.util.List;
 @CardRegistration(set = "C14", collectorNumber = "54")
 @CardRegistration(set = "ECC", collectorNumber = "139")
 @CardRegistration(set = "MOC", collectorNumber = "352")
+@CardRegistration(set = "DSC", collectorNumber = "244")
+@CardRegistration(set = "LTC", collectorNumber = "276")
 public class CommandersSphere extends Card {
 
     public CommandersSphere() {

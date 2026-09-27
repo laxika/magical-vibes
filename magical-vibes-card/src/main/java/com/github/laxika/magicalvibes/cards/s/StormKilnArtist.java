@@ -22,6 +22,8 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "255")
 @CardRegistration(set = "CMM", collectorNumber = "260")
 @CardRegistration(set = "CMM", collectorNumber = "644")
+@CardRegistration(set = "SLD", collectorNumber = "2352")
+@CardRegistration(set = "TDC", collectorNumber = "235")
 public class StormKilnArtist extends Card {
 
     public StormKilnArtist() {

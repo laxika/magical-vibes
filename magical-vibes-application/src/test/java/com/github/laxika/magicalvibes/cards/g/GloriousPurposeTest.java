@@ -32,7 +32,7 @@ class GloriousPurposeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(purpose.getCounterCount(CounterType.PLAN)).isEqualTo(1);
     }
 
@@ -53,6 +53,7 @@ class GloriousPurposeTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 

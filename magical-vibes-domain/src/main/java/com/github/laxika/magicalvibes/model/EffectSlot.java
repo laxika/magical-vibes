@@ -73,6 +73,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers when this permanent's controller sets a scheme in motion. */
+    ON_CONTROLLER_SETS_SCHEME_IN_MOTION,
     ON_CONTROLLER_GIVES_GIFT,
     /** Triggers whenever a Case is solved by the controller. */
     ON_ALLY_CASE_SOLVES,
@@ -174,6 +176,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this card's owner draws their second card of the turn while this card is in
      *  their graveyard. Checked in {@code DrawService}. */
     GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
+    /** Triggers when an opponent of this card's owner draws their second card of the turn while
+     *  this card is in the owner's graveyard. Checked in {@code DrawService}. */
+    GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
     ON_OPPONENT_DRAWS,
     /** Triggers whenever the player enchanted by this Aura draws a card. */
     ON_ENCHANTED_PLAYER_DRAWS,
@@ -191,6 +196,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers after all players finish a voting event. */
+    ON_PLAYERS_FINISH_VOTING,
     /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
     ON_CONTROLLER_TEMPTS_RING,
     /** Triggers when this permanent's controller investigates for the first time each turn. */
@@ -640,6 +647,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever one or more matching creatures deal combat damage to a player or battle. */
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+    /** Triggers from a permanent whenever a creature with the same name deals combat damage to a player. */
+    ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers once when one or more goaded creatures deal combat damage to one of this permanent's controller's opponents. */
@@ -647,6 +656,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers once whenever an opponent mills one or more cards. */
     ON_OPPONENT_MILLS,
+    /** Triggers once whenever one or more nonland cards are milled by any player. */
+    ON_ANY_NONLAND_CARDS_MILLED,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
@@ -1181,6 +1192,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  a triggered ability keyed to the just-cast spell (so the cascade threshold is the spell's mana
      *  value, not this permanent's). Used by Maelstrom Nexus. */
     GRANT_CASCADE_TO_FIRST_SPELL,
+    /** Marker slot: "The first spell you cast each turn that mana from a Treasure was spent to cast
+     *  has cascade." Holds a {@code CascadeEffect}; detected by presence on the casting player's
+     *  battlefield when the first Treasure-mana-funded spell of the turn is cast. */
+    GRANT_CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA,
     /** Marker slot: "Instant and sorcery spells you cast from your hand have cascade." Holds a
      *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
      *  instant or sorcery is cast from hand. */

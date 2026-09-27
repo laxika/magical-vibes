@@ -24,6 +24,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "40")
 @CardRegistration(set = "OTP", collectorNumber = "8")
+@CardRegistration(set = "SLD", collectorNumber = "2490")
 public class ArchmagesCharm extends Card {
 
     public ArchmagesCharm() {

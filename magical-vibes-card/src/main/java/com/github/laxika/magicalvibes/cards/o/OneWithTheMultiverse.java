@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffe
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "59")
+@CardRegistration(set = "DSC", collectorNumber = "121")
 public class OneWithTheMultiverse extends Card {
 
     public OneWithTheMultiverse() {

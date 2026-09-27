@@ -56,6 +56,8 @@ class KodamaOfTheCenterTreeTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(eligibleSpirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Tallowisp");
     }
@@ -77,7 +79,6 @@ class KodamaOfTheCenterTreeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(eligibleSpirit.getId()));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Tallowisp");

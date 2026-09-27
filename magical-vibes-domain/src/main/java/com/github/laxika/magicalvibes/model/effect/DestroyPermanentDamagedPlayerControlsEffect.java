@@ -16,7 +16,7 @@ import java.util.UUID;
  * @param minimumDamage  the trigger only fires if this much damage or more was dealt (Deus of Calamity: 6)
  */
 public record DestroyPermanentDamagedPlayerControlsEffect(PermanentPredicate predicate, int minimumDamage)
-        implements CardEffect {
+        implements DamagedPlayerControlsTargetEffect {
 
     /** Binds the damaged player before the trigger's target is chosen. */
     public DestroyTargetPermanentEffect forDamagedPlayer(UUID playerId) {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(HuntedPhantasm.class)
+@CardUsed({HuntedPhantasm.class})
 class HuntedPhantasmTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class HuntedPhantasmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> goblins = findPermanents(player2, "Goblin");
         assertThat(goblins).hasSize(5);
@@ -60,5 +60,22 @@ class HuntedPhantasmTest extends BaseCardTest {
         Permanent phantasm = findPermanent(player1, "Hunted Phantasm");
 
         assertThat(gqs.hasCantBeBlocked(gd, phantasm)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot be assigned a blocker in combat")
+    void cannotBeBlockedInCombat() {
+        Permanent phantasm = addCreatureReady(player1, new HuntedPhantasm());
+        Permanent blocker = addCreatureReady(player2, new HuntedPhantasm());
+        phantasm.setAttacking(true);
+
+        prepareDeclareBlockers();
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(phantasm);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }

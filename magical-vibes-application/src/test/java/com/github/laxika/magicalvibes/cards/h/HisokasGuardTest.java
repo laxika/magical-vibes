@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
+import com.github.laxika.magicalvibes.cards.l.LanternKami;
+import com.github.laxika.magicalvibes.cards.r.RendFlesh;
+import com.github.laxika.magicalvibes.cards.s.SenseisDiviningTop;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +19,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HisokasGuard.class, LanternKami.class, DevotedRetainer.class, RendFlesh.class,
+        SenseisDiviningTop.class})
 class HisokasGuardTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability gives the target creature shroud")
     void resolvingGrantsShroud() {
-        addReadyGuard(player1);
-        Permanent bear = addReadyBear(player1);
+        addCreatureReady(player1, new HisokasGuard());
+        Permanent bear = addCreatureReady(player1, new LanternKami());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, bear.getId());
@@ -33,8 +39,8 @@ class HisokasGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Shroud persists past end of turn while the Guard stays tapped")
     void shroudSurvivesEndOfTurnWhileTapped() {
-        addReadyGuard(player1);
-        Permanent bear = addReadyBear(player1);
+        addCreatureReady(player1, new HisokasGuard());
+        Permanent bear = addCreatureReady(player1, new LanternKami());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, bear.getId());
@@ -50,8 +56,8 @@ class HisokasGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Shroud ends when the Guard becomes untapped")
     void shroudEndsWhenGuardUntaps() {
-        Permanent guard = addReadyGuard(player1);
-        Permanent bear = addReadyBear(player1);
+        Permanent guard = addCreatureReady(player1, new HisokasGuard());
+        Permanent bear = addCreatureReady(player1, new LanternKami());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, bear.getId());
@@ -67,8 +73,8 @@ class HisokasGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Shroud persists when the controller keeps the Guard tapped")
     void shroudPersistsWhenKeptTapped() {
-        Permanent guard = addReadyGuard(player1);
-        Permanent bear = addReadyBear(player1);
+        Permanent guard = addCreatureReady(player1, new HisokasGuard());
+        Permanent bear = addCreatureReady(player1, new LanternKami());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, bear.getId());
@@ -83,8 +89,8 @@ class HisokasGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Shroud ends when the Guard leaves the battlefield")
     void shroudEndsWhenGuardRemoved() {
-        Permanent guard = addReadyGuard(player1);
-        Permanent bear = addReadyBear(player1);
+        Permanent guard = addCreatureReady(player1, new HisokasGuard());
+        Permanent bear = addCreatureReady(player1, new LanternKami());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, bear.getId());
@@ -99,7 +105,7 @@ class HisokasGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target the Guard itself")
     void cannotTargetItself() {
-        Permanent guard = addReadyGuard(player1);
+        Permanent guard = addCreatureReady(player1, new HisokasGuard());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, guard.getId()))
@@ -110,24 +116,41 @@ class HisokasGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature an opponent controls")
     void cannotTargetOpponentCreature() {
-        addReadyGuard(player1);
-        Permanent enemyBear = addReadyBear(player2);
+        addCreatureReady(player1, new HisokasGuard());
+        Permanent enemyBear = addCreatureReady(player2, new LanternKami());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enemyBear.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyGuard(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new HisokasGuard());
-        perm.setSummoningSick(false);
-        return perm;
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        addCreatureReady(player1, new HisokasGuard());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new SenseisDiviningTop());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature you control other than this creature");
     }
 
-    private Permanent addReadyBear(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        perm.setSummoningSick(false);
-        return perm;
+    @Test
+    @DisplayName("Shroud prevents a targeted spell from targeting the protected creature")
+    void shroudPreventsTargetedSpell() {
+        addCreatureReady(player1, new HisokasGuard());
+        Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, retainer.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new RendFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, retainer.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("has shroud and can't be targeted");
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -136,9 +159,9 @@ class HisokasGuardTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

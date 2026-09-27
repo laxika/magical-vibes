@@ -62,10 +62,21 @@ class MirrorUniverseTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() instanceof MirrorUniverse);
     }
 
+    @Test
+    @DisplayName("Requires the artifact to be untapped")
+    void requiresUntappedArtifact() {
+        Permanent mirror = addReadyMirror(player1);
+        advanceToUpkeep(player1);
+        mirror.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
     private Permanent addReadyMirror(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new MirrorUniverse());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new MirrorUniverse());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

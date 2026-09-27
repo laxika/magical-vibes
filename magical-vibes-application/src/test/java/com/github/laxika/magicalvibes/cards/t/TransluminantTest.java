@@ -58,6 +58,42 @@ class TransluminantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activation during the end step creates the token at the following end step")
+    void activationDuringEndStepWaitsForFollowingEndStep() {
+        setupTransluminant();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spirit");
+        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).isNotEmpty();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Spirit");
+        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick because the ability does not tap")
+    void canActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new Transluminant());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Transluminant");
+    }
+
+    @Test
     @DisplayName("Cannot activate without white mana")
     void cannotActivateWithoutWhiteMana() {
         harness.addToBattlefield(player1, new Transluminant());
@@ -69,8 +105,7 @@ class TransluminantTest extends BaseCardTest {
     }
 
     private void setupTransluminant() {
-        harness.addToBattlefield(player1, new Transluminant());
-        findPermanent(player1, "Transluminant").setSummoningSick(false);
+        addCreatureReady(player1, new Transluminant());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceActivePlayer(player1);
     }

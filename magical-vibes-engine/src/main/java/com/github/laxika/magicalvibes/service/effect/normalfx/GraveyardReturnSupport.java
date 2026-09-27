@@ -2527,7 +2527,8 @@ public class GraveyardReturnSupport {
         // Fortune's Favor uses a face-down Pile 1 while Curator of Destinies uses a face-down Pile 2.
         boolean bothPilesFaceDown = state.disposition() == CardPileDisposition.SEARCH_ONE_TO_HAND;
         boolean onePileFaceDown = state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE
-                || state.disposition() == CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE;
+                || state.disposition() == CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE
+                || state.disposition() == CardPileDisposition.HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE;
         boolean pile1FaceDown = bothPilesFaceDown || onePileFaceDown && state.controllerChoosesPile();
         boolean pile2FaceDown = bothPilesFaceDown || onePileFaceDown && !state.controllerChoosesPile();
         String pile1Desc = pile1FaceDown ? describePileSize(pile1) : buildCardPileDescription(state.cards(), pile1);
@@ -2564,7 +2565,8 @@ public class GraveyardReturnSupport {
 
         UUID controllerId = state.controllerId();
         String destText = switch (state.disposition()) {
-            case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_EXILE_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM -> "put into your hand";
+            case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_EXILE_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM,
+                    HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE -> "put into your hand";
             case ONE_FROM_CHOSEN_HAND_AND_BOTTOM -> "put one card into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
             case OPPONENT_CHOOSES_EXILE -> "exile";
@@ -2617,7 +2619,8 @@ public class GraveyardReturnSupport {
 
         gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + chosenPileName + "."));
 
-        if (state.disposition() == CardPileDisposition.HAND_AND_BOTTOM) {
+        if (state.disposition() == CardPileDisposition.HAND_AND_BOTTOM
+                || state.disposition() == CardPileDisposition.HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE) {
             // Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom
             // of their library in an order they choose (an async LibraryReorder when two or more).
             for (UUID cardId : chosenPileCardIds) {

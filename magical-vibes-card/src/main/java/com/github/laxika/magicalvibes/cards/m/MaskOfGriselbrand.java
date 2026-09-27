@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "111")
 @CardRegistration(set = "DBL", collectorNumber = "111")
+@CardRegistration(set = "DSC", collectorNumber = "145")
 public class MaskOfGriselbrand extends Card {
 
     public MaskOfGriselbrand() {

@@ -29,6 +29,23 @@ class MoroiiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Moroii creates a separate upkeep trigger")
+    void eachMoroiiTriggersSeparately() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new Moroii());
+        addCreatureReady(player1, new Moroii());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Does not trigger during an opponent's upkeep")
     void doesNotTriggerOnOpponentUpkeep() {
         harness.setLife(player1, 20);

@@ -49,6 +49,7 @@ public class ThiefOfHope extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(2))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

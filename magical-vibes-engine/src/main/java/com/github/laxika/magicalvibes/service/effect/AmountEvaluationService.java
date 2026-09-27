@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TokensCreatedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
 import com.github.laxika.magicalvibes.model.amount.TurnsBegunSinceForetell;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
@@ -87,6 +89,7 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThis
 import com.github.laxika.magicalvibes.model.amount.DescentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.amount.DistinctColorPairsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.DistinctCounterKindsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.DistinctKeywordAbilitiesAmongControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongCardsInGraveyard;
@@ -118,6 +121,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValu
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.GreatestPermanentCountAmongOpponents;
@@ -155,6 +159,8 @@ import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponen
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastCardsDrawnThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
@@ -207,12 +213,14 @@ import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
+import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfDestroyedPermanents;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfOtherSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.TreasuresCreatedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
@@ -241,6 +249,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -331,6 +340,9 @@ public class AmountEvaluationService {
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastCaveManaSpent(ctx.sourceCard().getId());
             case EventValue ignored ->
                     ctx.eventValue();
+            case TotalManaValueOfDestroyedPermanents ignored ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventManaValues().stream()
+                            .mapToInt(Integer::intValue).sum();
             case ConvokeCreatureCount ignored ->
                     ctx.convokeCreatureCount();
             case RepeatedAdditionalCostCount a ->
@@ -363,6 +375,8 @@ public class AmountEvaluationService {
                     countCommanderCastsFromCommandZoneThisGame(gameData, c, ctx);
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case TreasuresCreatedThisTurn ignored ->
+                    gameData.getTreasureTokensCreatedThisTurn(ctx.controllerId());
             case PileGroupingOrGuessCountThisTurn ignored ->
                     gameData.pileGroupingOrGuessCountThisTurn;
             case UnlockedRoomDoorsCount c ->
@@ -407,6 +421,8 @@ public class AmountEvaluationService {
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
+            case OpponentsWithAtLeastCardsDrawnThisTurn c ->
+                    opponentsWithAtLeastCardsDrawnThisTurn(gameData, c, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
                     countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctPermanentNamesAmongControlled c ->
@@ -415,6 +431,8 @@ public class AmountEvaluationService {
                     countDistinctManaValuesAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctColorPairsAmongControlledPermanents ignored ->
                     countDistinctColorPairsAmongControlledPermanents(gameData, ctx);
+            case DistinctCounterKindsAmongControlledPermanents ignored ->
+                    countDistinctCounterKindsAmongControlledPermanents(gameData, ctx);
             case DistinctManaValuesAmongControlledPermanents ignored ->
                     countDistinctManaValuesAmongControlledPermanents(gameData, ctx);
             case DistinctManaValuesAmongStudyCounterCardsInExile ignored ->
@@ -443,6 +461,8 @@ public class AmountEvaluationService {
                             .getOrDefault(ctx.controllerId(), List.of()).stream()
                             .filter(card -> card.hasType(CardType.LAND))
                             .count();
+            case OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn c ->
+                    opponentsWithAtLeastLandsEnteredBattlefieldThisTurn(gameData, c, ctx);
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
             case CardsExiledWithSource c ->
@@ -490,6 +510,9 @@ public class AmountEvaluationService {
                     countCountersOnStackEntryCard(gameData, c, ctx);
             case TimesSourceRegeneratedThisTurn ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTimesRegeneratedThisTurn();
+            case TokensCreatedThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.tokensCreatedThisTurn.getOrDefault(ctx.controllerId(), 0);
             case TimesSourceMutated ignored -> {
                 Permanent source = ctx.sourcePermanent();
                 if (source == null && ctx.stackEntry() != null) {
@@ -581,6 +604,8 @@ public class AmountEvaluationService {
                     greatestManaValueAmongCardsInGraveyard(gameData, a, ctx);
             case GreatestManaValueAmongControlled a ->
                     greatestManaValueAmongControlled(gameData, a, ctx);
+            case GreatestManaValueAmongOwnedCommanders ignored ->
+                    greatestManaValueAmongOwnedCommanders(gameData, ctx);
             case GreatestManaValueAmongSpellsCastThisTurn a ->
                     greatestManaValueAmongSpellsCastThisTurn(gameData, a, ctx);
             case GreatestStackSourceCountThisTurn ignored ->
@@ -662,6 +687,16 @@ public class AmountEvaluationService {
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                                     .getOrDefault(ctx.targetPermanentId(), java.util.Set.of()).size();
+            case CardsPutIntoGraveyardFromHandOrLibraryThisTurn ignored -> {
+                if (ctx.controllerId() == null) {
+                    yield 0;
+                }
+                Set<UUID> cards = new HashSet<>(gameData.cardsPutIntoGraveyardFromHandThisTurn
+                        .getOrDefault(ctx.controllerId(), java.util.Set.of()));
+                cards.addAll(gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                        .getOrDefault(ctx.controllerId(), java.util.Set.of()));
+                yield cards.size();
+            }
             case DescentsThisTurn ignored ->
                     ctx.controllerId() == null ? 0 : gameData.descentsThisTurn.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToControllerThisTurn ignored ->
@@ -1412,6 +1447,23 @@ public class AmountEvaluationService {
                 .count();
     }
 
+    private int countDistinctCounterKindsAmongControlledPermanents(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+
+        Set<CounterType> found = EnumSet.noneOf(CounterType.class);
+        for (Permanent permanent : battlefield) {
+            for (CounterType counterType : CounterType.values()) {
+                if (counterType != CounterType.ANY && counterType != CounterType.SILVER
+                        && permanent.getCounterCount(counterType) > 0) {
+                    found.add(counterType);
+                }
+            }
+        }
+        return found.size();
+    }
+
     private int countDistinctKeywordAbilitiesAmongControlledCreatures(
             GameData gameData, DistinctKeywordAbilitiesAmongControlledCreatures amount, AmountContext ctx) {
         if (ctx.controllerId() == null || amount.abilities().isEmpty()) return 0;
@@ -1728,6 +1780,10 @@ public class AmountEvaluationService {
             return 0;
         }
         List<UUID> targetIds = new ArrayList<>(spellEntry.getDeclaredTargetIds());
+        if (amount.filter() == null) {
+            return (spellEntry.getTargetId() != null ? 1 : 0)
+                    + targetIds.size() + spellEntry.getTargetCardIds().size();
+        }
         if (spellEntry.getTargetId() != null && spellEntry.getTargetZone() == null
                 && (targetIds.isEmpty() || spellEntry.isPrimaryTargetStoredSeparately())) {
             targetIds.add(spellEntry.getTargetId());
@@ -2149,6 +2205,34 @@ public class AmountEvaluationService {
         return greatest;
     }
 
+    private int greatestManaValueAmongOwnedCommanders(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+
+        Set<UUID> commanderIds = gameData.playerCommanders
+                .getOrDefault(ctx.controllerId(), List.of())
+                .stream()
+                .map(Card::getId)
+                .collect(Collectors.toSet());
+        if (commanderIds.isEmpty()) return 0;
+
+        int greatest = 0;
+        for (Card card : gameData.playerCommandZones.values().stream()
+                .flatMap(List::stream)
+                .filter(card -> commanderIds.contains(card.getId()))
+                .toList()) {
+            greatest = Math.max(greatest, card.getManaValue());
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (commanderIds.contains(permanent.getOriginalCard().getId())) {
+                    greatest = Math.max(greatest,
+                            permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
+                }
+            }
+        }
+        return greatest;
+    }
+
     private int countAttachmentsOnSource(GameData gameData, AttachmentsOnSource amount, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
         UUID sourceId = ctx.sourcePermanent().getId();
@@ -2417,6 +2501,36 @@ public class AmountEvaluationService {
         return total;
     }
 
+    private int opponentsWithAtLeastCardsDrawnThisTurn(
+            GameData gameData, OpponentsWithAtLeastCardsDrawnThisTurn count, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0) >= count.minimum()) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
+    }
+
+    private int opponentsWithAtLeastLandsEnteredBattlefieldThisTurn(
+            GameData gameData, OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn count,
+            AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            long landsEntered = gameData.permanentsEnteredBattlefieldThisTurn
+                    .getOrDefault(playerId, List.of()).stream()
+                    .filter(card -> card.hasType(CardType.LAND))
+                    .count();
+            if (landsEntered >= count.minimum()) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
+    }
     private int greatestManaValueAmongSpellsCastThisTurn(
             GameData gameData, GreatestManaValueAmongSpellsCastThisTurn amount, AmountContext ctx) {
         int greatestManaValue = 0;

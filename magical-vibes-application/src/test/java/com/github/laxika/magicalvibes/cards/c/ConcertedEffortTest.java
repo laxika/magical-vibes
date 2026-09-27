@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
+import com.github.laxika.magicalvibes.cards.d.DesertNomads;
+import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGuildpact;
+import com.github.laxika.magicalvibes.cards.s.SiegeWurm;
 import com.github.laxika.magicalvibes.cards.w.WeatherseedFaeries;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,39 +21,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ConcertedEffort.class, GrizzlyBears.class, CloudSprite.class, WeatherseedFaeries.class})
+@CardUsed({ConcertedEffort.class, BorosRecruit.class, BorosSwiftblade.class, CourierHawk.class,
+        SiegeWurm.class, WeatherseedFaeries.class, DesertNomads.class, GuardianOfTheGuildpact.class})
 class ConcertedEffortTest extends BaseCardTest {
 
     private void resolveUpkeepTrigger(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToUpkeep(activePlayer);
+        resolveAllTriggers();
     }
 
     @Test
     @DisplayName("Shares keywords present among creatures you control at upkeep")
     void sharesKeywords() {
         harness.addToBattlefield(player1, new ConcertedEffort());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent sprite = harness.addToBattlefieldAndReturn(player1, new CloudSprite());
-        bears.getGrantedKeywords().add(Keyword.ISLANDWALK);
-        bears.getGrantedKeywords().add(Keyword.TRAMPLE);
+        Permanent firstStrike = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent doubleStrike = harness.addToBattlefieldAndReturn(player1, new BorosSwiftblade());
+        Permanent flyingAndVigilance = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        Permanent trample = harness.addToBattlefieldAndReturn(player1, new SiegeWurm());
 
         resolveUpkeepTrigger(player1);
 
-        assertThat(gqs.hasKeyword(gd, sprite, Keyword.ISLANDWALK)).isTrue();
-        assertThat(gqs.hasKeyword(gd, sprite, Keyword.TRAMPLE)).isTrue();
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstStrike, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstStrike, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, doubleStrike, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trample, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, flyingAndVigilance, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
     @DisplayName("Shares protection abilities from creatures you control")
     void sharesProtection() {
         harness.addToBattlefield(player1, new ConcertedEffort());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
         Permanent faeries = harness.addToBattlefieldAndReturn(player1, new WeatherseedFaeries());
 
         resolveUpkeepTrigger(player1);
@@ -62,8 +66,8 @@ class ConcertedEffortTest extends BaseCardTest {
     @DisplayName("Shared abilities wear off at end of turn")
     void sharedAbilitiesWearOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new ConcertedEffort());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new CloudSprite());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.addToBattlefield(player1, new CourierHawk());
 
         resolveUpkeepTrigger(player1);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
@@ -74,5 +78,55 @@ class ConcertedEffortTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Checks shared keywords when the upkeep trigger resolves")
+    void checksSharedKeywordsAtResolution() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+
+        advanceToUpkeep(player1);
+        harness.addToBattlefield(player1, new CourierHawk());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Triggers during each player's upkeep")
+    void triggersDuringEachPlayersUpkeep() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.addToBattlefield(player1, new CourierHawk());
+
+        resolveUpkeepTrigger(player2);
+
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shares desertwalk as a landwalk ability")
+    void sharesDesertwalk() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent desertwalker = harness.addToBattlefieldAndReturn(player1, new DesertNomads());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DESERTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, desertwalker, Keyword.DESERTWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shares protection from monocolored sources")
+    void sharesProtectionFromMonocolored() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianOfTheGuildpact());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, guardian)).isTrue();
     }
 }

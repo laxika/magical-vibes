@@ -24,6 +24,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "340")
 @CardRegistration(set = "SLX", collectorNumber = "1")
+@CardRegistration(set = "DSC", collectorNumber = "130")
 public class ArvinoxTheMindFlail extends Card {
 
     public ArvinoxTheMindFlail() {

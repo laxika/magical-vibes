@@ -76,7 +76,7 @@ class BlindingPowderTest extends BaseCardTest {
         Permanent powder = addPowderReady(player1);
         powder.setAttachedTo(creature.getId());
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         Permanent damageSource = addCreatureReady(player1, new Frostling());

@@ -205,14 +205,18 @@ class DeathTriggerCollectorServiceTest {
         var context = new TriggerContext.OpponentPermanentGraveyard(
                 dyingCard, PLAYER2_ID, PLAYER2_ID, dyingPermanent);
         when(predicateEvaluationService.matchesPermanentPredicate(
-                gd, dyingPermanent, effect.predicate())).thenReturn(true);
+                eq(dyingPermanent), eq(effect.predicate()),
+                org.mockito.ArgumentMatchers.any(com.github.laxika.magicalvibes.model.filter.FilterContext.class)))
+                .thenReturn(true);
 
         assertThat(svc.handleOpponentPermanentGraveyardConditional(
                 match(watcher, PLAYER1_ID, effect), effect, context)).isTrue();
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect.wrapped());
-        verify(predicateEvaluationService).matchesPermanentPredicate(gd, dyingPermanent, effect.predicate());
+        verify(predicateEvaluationService).matchesPermanentPredicate(
+                eq(dyingPermanent), eq(effect.predicate()),
+                org.mockito.ArgumentMatchers.any(com.github.laxika.magicalvibes.model.filter.FilterContext.class));
     }
 
     // ── ON_DEATH handlers ──────────────────────────────────────────────

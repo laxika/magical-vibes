@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachTokenEnteredThisTurnEffect;
 
 @CardRegistration(set = "SOC", collectorNumber = "251")
+@CardRegistration(set = "TDC", collectorNumber = "37")
+@CardRegistration(set = "TDC", collectorNumber = "77")
 public class RedoubledStormsinger extends Card {
 
     public RedoubledStormsinger() {

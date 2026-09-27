@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BenevolentAncestor;
+import com.github.laxika.magicalvibes.cards.h.HuntedLammasu;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,28 +14,28 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Disembowel.class, GrizzlyBears.class, HillGiant.class, Plains.class})
+@CardUsed({Disembowel.class, Watchwolf.class, BenevolentAncestor.class, Plains.class, HuntedLammasu.class})
 class DisembowelTest extends BaseCardTest {
 
     @Test
     void destroysTargetCreatureWithManaValueX() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new HillGiant());
-        UUID target = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new Watchwolf());
+        harness.addToBattlefield(player2, new BenevolentAncestor());
+        UUID target = harness.getPermanentId(player2, "Watchwolf");
 
         harness.setHand(player1, List.of(new Disembowel()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castInstant(player1, 0, 2, target);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Watchwolf");
+        harness.assertOnBattlefield(player2, "Benevolent Ancestor");
     }
 
     @Test
     void cannotTargetCreatureWithDifferentManaValue() {
-        harness.addToBattlefield(player2, new HillGiant());
-        UUID target = harness.getPermanentId(player2, "Hill Giant");
+        harness.addToBattlefield(player2, new BenevolentAncestor());
+        UUID target = harness.getPermanentId(player2, "Benevolent Ancestor");
 
         harness.setHand(player1, List.of(new Disembowel()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -53,5 +54,22 @@ class DisembowelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, target))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void destroysZeroManaValueCreatureTokenWhenXIsZero() {
+        harness.setHand(player1, List.of(new HuntedLammasu()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        UUID token = findPermanent(player2, "Horror").getId();
+        harness.setHand(player1, List.of(new Disembowel()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, 0, token);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Horror");
     }
 }

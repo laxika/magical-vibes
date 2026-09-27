@@ -95,8 +95,11 @@ public record ExileTopCardsAndMayCastSpellsEffect(
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return trackWithSource && scope == LibraryScope.TARGET_OPPONENT
-                ? TriggerContext.DAMAGED_PLAYER : null;
+        if (!trackWithSource) {
+            return null;
+        }
+        return scope == LibraryScope.TARGET_OPPONENT
+                ? TriggerContext.DAMAGED_PLAYER : TriggerContext.SOURCE_SELF;
     }
 
     @Override

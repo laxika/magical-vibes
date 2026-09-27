@@ -17,6 +17,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryControlledByChosenPlayerPredicate,
         StackEntryControlledByEnchantedPlayerPredicate,
         StackEntryControlledByPredicate,
+        StackEntryHasAnyTargetPredicate,
         StackEntryHasSourceChosenSubtypePredicate,
         StackEntryHasTargetPredicate,
         StackEntryHasXInManaCostPredicate,

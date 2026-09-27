@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "INR", collectorNumber = "208")
 @CardRegistration(set = "VOW", collectorNumber = "209")
 @CardRegistration(set = "DBL", collectorNumber = "476")
+@CardRegistration(set = "DSC", collectorNumber = "188")
 public class MoldgrafMillipede extends Card {
 
     public MoldgrafMillipede() {

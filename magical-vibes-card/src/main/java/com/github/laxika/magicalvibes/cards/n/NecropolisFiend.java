@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "82")
 @CardRegistration(set = "CP2", collectorNumber = "1")
+@CardRegistration(set = "TDC", collectorNumber = "190")
 public class NecropolisFiend extends Card {
 
     public NecropolisFiend() {

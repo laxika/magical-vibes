@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "71")
 @CardRegistration(set = "GN2", collectorNumber = "24")
+@CardRegistration(set = "NCC", collectorNumber = "231")
 public class RiversRebuke extends Card {
 
     public RiversRebuke() {

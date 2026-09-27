@@ -1,59 +1,72 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Char;
+import com.github.laxika.magicalvibes.cards.v.VotaryOfTheConclave;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DromadPurebred.class, FugitiveWizard.class, Shock.class})
+@CardUsed({DromadPurebred.class, Char.class, VotaryOfTheConclave.class})
 class DromadPurebredTest extends BaseCardTest {
 
     @Test
     void gainsLifeWhenDealtNoncombatDamage() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player1, new DromadPurebred());
-        harness.setHand(player2, List.of(new Shock()));
+        Permanent dromad = harness.addToBattlefieldAndReturn(player1, new DromadPurebred());
+        harness.setHand(player2, List.of(new Char()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        UUID dromadId = harness.getPermanentId(player1, "Dromad Purebred");
-        harness.castInstant(player2, 0, dromadId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castInstant(player2, 0, dromad.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(dromad.getMarkedDamage()).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Dromad Purebred");
+    }
+
+    @Test
+    void gainsLifeWhenLethallyDamaged() {
+        harness.setLife(player1, 20);
+        Permanent dromad = harness.addToBattlefieldAndReturn(player1, new DromadPurebred());
+        harness.setHand(player2, List.of(
+                new Char(),
+                new Char()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castInstant(player2, 0, dromad.getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertInGraveyard(player1, "Dromad Purebred");
     }
 
     @Test
     void gainsLifeWhenDealtCombatDamage() {
         harness.setLife(player1, 20);
-        Permanent dromad = harness.addToBattlefieldAndReturn(player1, new DromadPurebred());
-        dromad.setSummoningSick(false);
-        harness.addToBattlefield(player2, new FugitiveWizard());
+        Permanent dromad = addCreatureReady(player1, new DromadPurebred());
+        Permanent attacker = addCreatureReady(player2, new VotaryOfTheConclave());
 
-        Permanent attacker = gd.playerBattlefields.get(player2.getId()).getFirst();
-        attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         dromad.setBlocking(true);
         dromad.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat(player2);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         harness.assertOnBattlefield(player1, "Dromad Purebred");
-        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        harness.assertInGraveyard(player2, "Votary of the Conclave");
     }
 }

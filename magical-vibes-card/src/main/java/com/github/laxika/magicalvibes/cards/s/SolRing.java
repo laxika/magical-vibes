@@ -32,6 +32,10 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1993")
 @CardRegistration(set = "SLD", collectorNumber = "2063")
 @CardRegistration(set = "SLD", collectorNumber = "2093")
+@CardRegistration(set = "SLD", collectorNumber = "2315")
+@CardRegistration(set = "SLD", collectorNumber = "2330")
+@CardRegistration(set = "SLD", collectorNumber = "2417")
+@CardRegistration(set = "SLD", collectorNumber = "2467")
 @CardRegistration(set = "MB1", collectorNumber = "222")
 @CardRegistration(set = "SLC", collectorNumber = "19")
 @CardRegistration(set = "SLC", collectorNumber = "46")
@@ -55,6 +59,9 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "410")
 @CardRegistration(set = "CMM", collectorNumber = "703")
 @CardRegistration(set = "MOC", collectorNumber = "381")
+@CardRegistration(set = "DSC", collectorNumber = "94")
+@CardRegistration(set = "LTC", collectorNumber = "284")
+@CardRegistration(set = "TDC", collectorNumber = "106")
 public class SolRing extends Card {
 
     public SolRing() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "22")
+@CardRegistration(set = "TDC", collectorNumber = "117")
 public class GoldnightCommander extends Card {
 
     public GoldnightCommander() {

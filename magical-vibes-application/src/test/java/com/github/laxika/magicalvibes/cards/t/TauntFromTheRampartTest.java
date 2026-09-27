@@ -52,6 +52,21 @@ class TauntFromTheRampartTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creatures entering after the spell resolves are not goaded")
+    void laterCreaturesAreNotGoaded() {
+        castTaunt();
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatCode(() -> gs.declareAttackers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     @DisplayName("Goad and the blocking restriction expire at the controller's next turn")
     void restrictionsExpireAtControllersNextTurn() {
         addCreatureReady(player2, new GrizzlyBears());

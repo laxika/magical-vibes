@@ -83,6 +83,7 @@ class PhyrexianInfiltratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ownTarget.getId());
         harness.activateAbility(player1, 0, null, opponentsTarget.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(controls(player1.getId(), infiltrator.getId())).isTrue();
         assertThat(controls(player1.getId(), opponentsTarget.getId())).isTrue();

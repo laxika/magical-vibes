@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "8")
 @CardRegistration(set = "AKR", collectorNumber = "9")
+@CardRegistration(set = "DSC", collectorNumber = "98")
 public class CastOut extends Card {
 
     public CastOut() {

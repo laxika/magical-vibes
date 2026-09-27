@@ -556,9 +556,13 @@ public class AdditionalSpellCostService {
         if (hasCreatureSpellAdditionalCountersCost(gameData, playerId, card)) {
             effects.add(new RepeatableAdditionalManaCost(List.of("{1}")));
         }
-        if (card.getManaCost() != null
-                && gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.REPLICATE)) {
-            effects.add(new RepeatableAdditionalManaCost(List.of(card.getManaCost())));
+        if (card.getManaCost() != null) {
+            gameQueryService.getSpellCastingAbilityGrantValues(gameData, playerId, card, Keyword.REPLICATE)
+                    .stream()
+                    .map(value -> value > 0 ? "{" + value + "}" : card.getManaCost())
+                    .distinct()
+                    .forEach(replicateCost ->
+                            effects.add(new RepeatableAdditionalManaCost(List.of(replicateCost))));
         }
         addPayLifeToReduceColoredCastCost(gameData, playerId, card, effects);
         return extractAndRemove(effects);

@@ -20,10 +20,10 @@ public class Probe extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
         addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.CONTROLLER));
-        target(new PlayerPredicateTargetFilter(
+        targetWhenKicked(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ), 0, 1).addEffect(EffectSlot.SPELL,
+        ), 0, 0, 1, 1).addEffect(EffectSlot.SPELL,
                 new ConditionalEffect(new Kicked(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)));
     }
 }

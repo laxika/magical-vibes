@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 
 @CardRegistration(set = "ISD", collectorNumber = "77")
+@CardRegistration(set = "DSC", collectorNumber = "128")
 public class SkaabRuinator extends Card {
 
     public SkaabRuinator() {

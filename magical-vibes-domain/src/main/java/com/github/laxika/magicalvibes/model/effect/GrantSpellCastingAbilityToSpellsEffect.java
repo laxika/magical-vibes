@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * (convoke, on artifact spells), Inspiring Statuary (improvise, on nonartifact spells), and
  * Niv-Mizzet, Supreme (jump-start, on exactly two-color instants and sorceries in the graveyard),
  * and Wrenn and Six (retrace, on instants and sorceries in the graveyard).
+ * For replicate, a positive {@code abilityValue} grants that fixed generic cost;
+ * zero keeps the default of the matching spell's mana cost.
  * The {@link #allPlayers(Keyword, CardPredicate)} factory is for symmetric grants such as a Plane's
  * "instant and sorcery spells have rebound" ability.
  * <p>

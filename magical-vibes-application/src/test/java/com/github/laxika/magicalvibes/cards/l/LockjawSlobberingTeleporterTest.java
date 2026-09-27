@@ -45,7 +45,7 @@ class LockjawSlobberingTeleporterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(lockjaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(lockjaw.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, lockjaw)).isTrue();
         assertThat(otherCreature.isCantBeBlocked()).isTrue();
         assertThat(opposingCreature.isCantBeBlocked()).isFalse();
     }

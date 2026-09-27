@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1075,6 +1076,7 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (drawReplacementDeclined(gameData, drawingPlayerId, permanent.getCard())) continue;
                 boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
@@ -1431,7 +1433,8 @@ public class DrawService {
                 false, false, 0, null, 1,
                 restToGraveyard
                         ? "Put one of these cards into your hand and the rest into your graveyard."
-                        : "Put one of these cards into your hand and the rest on the bottom of your library in any order."));
+                        : "Put one of these cards into your hand and the rest on the bottom of your library in any order.",
+                false, 1, false, null, false));
     }
 
     private Permanent findRevealTopCreatureToGraveyardElseDrawSource(GameData gameData, UUID playerId) {
@@ -2018,7 +2021,7 @@ public class DrawService {
                                 drawingPlayerId,
                                 perm.getCard().getName() + "'s ability",
                                 new ArrayList<>(List.of(effect)),
-                                drawingPlayerId,
+                                effect instanceof ChooseOneEffect ? null : drawingPlayerId,
                                 perm.getId()
                         ));
 
@@ -2054,6 +2057,43 @@ public class DrawService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on second card draw",
                         gameData.id, card.getName());
+            }
+        }
+    }
+
+    private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        if (cardsDrawnThisTurn != 2) return;
+
+        for (UUID graveyardOwnerId : gameData.playerGraveyards.keySet()) {
+            if (graveyardOwnerId.equals(drawingPlayerId)) continue;
+
+            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            if (graveyard == null) continue;
+
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect authoredEffect : effects) {
+                    CardEffect effect = authoredEffect;
+                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                        if (effect == null) continue;
+                    }
+
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            graveyardOwnerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard ability triggers on opponent's second card draw",
+                            gameData.id, card.getName());
+                }
             }
         }
     }
@@ -2121,6 +2161,7 @@ public class DrawService {
             if (playerId.equals(drawingPlayerId)) return;
 
             for (Permanent perm : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DRAWS);
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
@@ -2165,7 +2206,7 @@ public class DrawService {
                             ));
 
                         } else {
-                            gameData.stack.add(new StackEntry(
+                            StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
@@ -2173,7 +2214,9 @@ public class DrawService {
                                 new ArrayList<>(List.of(effect)),
                                 drawingPlayerId,
                                 perm.getId()
-                            ));
+                            );
+                            trigger.setNonTargeting(true);
+                            gameData.stack.add(trigger);
                         }
 
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -2182,6 +2225,7 @@ public class DrawService {
                 }
             }
         });
+        checkGraveyardOpponentDrawTriggerSlot(gameData, drawingPlayerId);
     }
 
     private void checkPlanarDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {

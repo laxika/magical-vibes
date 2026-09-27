@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "HA6", collectorNumber = "3")
 @CardRegistration(set = "SOC", collectorNumber = "118")
 @CardRegistration(set = "C13", collectorNumber = "84")
+@CardRegistration(set = "TDC", collectorNumber = "193")
 public class Ophiomancer extends Card {
 
     public Ophiomancer() {

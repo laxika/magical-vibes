@@ -11,6 +11,7 @@ import java.util.Set;
 @CardRegistration(set = "M14", collectorNumber = "148")
 @CardRegistration(set = "DDN", collectorNumber = "16")
 @CardRegistration(set = "ANB", collectorNumber = "80")
+@CardRegistration(set = "TDC", collectorNumber = "227")
 public class OgreBattledriver extends Card {
 
     public OgreBattledriver() {

@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "53")
 @CardRegistration(set = "GK1", collectorNumber = "2")
+@CardRegistration(set = "NCC", collectorNumber = "233")
 public class StolenIdentity extends Card {
 
     public StolenIdentity() {

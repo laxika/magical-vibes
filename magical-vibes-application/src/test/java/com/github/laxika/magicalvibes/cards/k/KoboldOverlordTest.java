@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,15 +11,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KoboldOverlord.class, KherKeep.class, GrizzlyBears.class})
+@CardUsed({KoboldOverlord.class, KoboldsOfKherKeep.class, BarbaryApes.class})
 class KoboldOverlordTest extends BaseCardTest {
 
     @Test
     @DisplayName("Other Kobold creatures you control have first strike")
     void grantsFirstStrikeToOtherKoboldsYouControl() {
-        Permanent ownKobold = createKoboldToken(player1);
-        Permanent opponentKobold = createKoboldToken(player2);
-        Permanent ownNonKobold = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownKobold = createKobold(player1);
+        Permanent opponentKobold = createKobold(player2);
+        Permanent ownNonKobold = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
 
         harness.addToBattlefield(player1, new KoboldOverlord());
 
@@ -33,18 +33,12 @@ class KoboldOverlordTest extends BaseCardTest {
     void affectsKoboldsEnteringLater() {
         harness.addToBattlefield(player1, new KoboldOverlord());
 
-        Permanent ownKobold = createKoboldToken(player1);
+        Permanent ownKobold = createKobold(player1);
 
         assertThat(gqs.hasKeyword(gd, ownKobold, Keyword.FIRST_STRIKE)).isTrue();
     }
 
-    private Permanent createKoboldToken(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent kherKeep = harness.addToBattlefieldAndReturn(player, new KherKeep());
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.addMana(player, ManaColor.RED, 1);
-        harness.activateAbility(player,
-                gd.playerBattlefields.get(player.getId()).indexOf(kherKeep), 1, null, null);
-        harness.passBothPriorities();
-        return findPermanent(player, "Kobolds of Kher Keep");
+    private Permanent createKobold(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new KoboldsOfKherKeep());
     }
 }

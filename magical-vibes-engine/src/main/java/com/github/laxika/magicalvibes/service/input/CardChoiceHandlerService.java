@@ -1829,7 +1829,7 @@ public class CardChoiceHandlerService {
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
         exiledCount += exileNamedCardsFromZone(gameData, targetPlayerId, library, names);
         if (library != null) {
-            java.util.Collections.shuffle(library);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
         }
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles " + exiledCount
@@ -2455,9 +2455,10 @@ public class CardChoiceHandlerService {
         if (source == null) {
             return;
         }
-        source.untap();
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-        log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
+        if (tapUntapSupport.untapPermanent(gameData, source)) {
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+            log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
+        }
     }
 
     private void checkPendingBoostSourceByDiscardedManaValue(GameData gameData, Card discardedCard) {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "38")
+@CardRegistration(set = "DSC", collectorNumber = "116")
 public class DreamEater extends Card {
 
     public DreamEater() {

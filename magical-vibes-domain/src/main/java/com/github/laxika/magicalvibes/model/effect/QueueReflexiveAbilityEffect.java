@@ -12,14 +12,20 @@ import java.util.Objects;
  * @param useEventValueAsX whether the preceding event value supplies X for the reflexive ability
  */
 public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
-                                           boolean useEventValueAsX) implements CardEffect {
+                                           boolean useEventValueAsX,
+                                           boolean useEntryTargetAsTriggeringPermanent) implements CardEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
-        this(effect, false, false);
+        this(effect, false, false, false);
     }
 
     public QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget) {
-        this(effect, optionalTarget, false);
+        this(effect, optionalTarget, false, false);
+    }
+
+    public QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
+                                       boolean useEventValueAsX) {
+        this(effect, optionalTarget, useEventValueAsX, false);
     }
 
     public QueueReflexiveAbilityEffect {

@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandType
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -124,6 +125,7 @@ public class ChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    private final VotingFinishedSupport votingFinishedSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
@@ -149,8 +151,22 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SelvalasStampedeEffectHandler
+            selvalasStampedeEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TravelThroughCaradhrasEffectHandler
+            travelThroughCaradhrasEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SailIntoTheWestEffectHandler
+            sailIntoTheWestEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesMasterOfCeremoniesEffectHandler
+            eachOpponentChoosesMasterOfCeremoniesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
             expropriateEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CouncilDilemmaEffectHandler
+            councilDilemmaEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler
+            zndrsplatsJudgmentEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler
+            seizeTheSpotlightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FatefulTempestEffectHandler
             fatefulTempestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
@@ -164,6 +180,10 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WillOfThePlaneswalkersEffectHandler
             willOfThePlaneswalkersEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.GaladrielElvenQueenEffectHandler
+            galadrielElvenQueenEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
+            elrondOfTheWhiteCouncilEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
 
     @Autowired @Lazy
@@ -185,6 +205,8 @@ public class ChoiceHandlerService {
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
+
+        recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
         if (colorChoice.context() instanceof ChoiceContext.RegenerationShieldChoice choice) {
             if (!choice.shields().containsKey(colorName)) {
@@ -277,6 +299,11 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.PersistentManaColorChoice ctx) {
             handlePersistentManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.PersistentSpellOnlyManaColorChoice ctx) {
+            handlePersistentSpellOnlyManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
             return;
         }
 
@@ -582,6 +609,10 @@ public class ChoiceHandlerService {
             handleMoveCountersFromControlledPermanentsAmountChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice ctx) {
+            handleMoveAnyCountersFromControlledCreaturesAmountChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
             handlePrimalClayFormChoice(gameData, player, colorName, ctx);
             return;
@@ -738,6 +769,10 @@ public class ChoiceHandlerService {
             handleAddAnotherCounterTypeChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseCounterForEachControlledCounterKindChoice ctx) {
+            handleChooseCounterForEachControlledCounterKindChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CreateTokenCounterChoice ctx) {
             handleCreateTokenCounterChoice(gameData, colorName, ctx);
             return;
@@ -756,6 +791,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.RemoveOneCounterChoice ctx) {
             handleRemoveOneCounterChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.MoveOneCounterChoice ctx) {
+            handleMoveOneCounterChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
@@ -777,12 +816,101 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SelvalasStampedeChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Selvala's Stampede vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            selvalasStampedeEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.TravelThroughCaradhrasChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Travel Through Caradhras vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            travelThroughCaradhrasEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SailIntoTheWestChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Sail into the West vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            sailIntoTheWestEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.MasterOfCeremoniesChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Master of Ceremonies choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            eachOpponentChoosesMasterOfCeremoniesEffectHandler.completeChoice(
+                    gameData, colorName, player.getId(), ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ExpropriateChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Expropriate vote: " + colorName);
             }
             gameData.interaction.clearAwaitingInput();
             expropriateEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CouncilDilemmaChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid council's dilemma vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            councilDilemmaEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CouncilDilemmaAdditionalVoteChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid additional council's dilemma vote choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            councilDilemmaEffectHandler.completeAdditionalVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ZndrsplatsJudgmentChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Zndrsplt's Judgment choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            zndrsplatsJudgmentEffectHandler.completeModeChoice(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SeizeTheSpotlightChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Seize the Spotlight choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            seizeTheSpotlightEffectHandler.completeModeChoice(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -854,12 +982,34 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.GaladrielElvenQueenChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Galadriel, Elven-Queen vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            galadrielElvenQueenEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesTokenChoice ctx) {
             if (!colorChoice.options().contains(colorName)) {
                 throw new IllegalArgumentException("Invalid token choice: " + colorName);
             }
             gameData.interaction.clearAwaitingInput();
             eachPlayerChoosesTokenEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Elrond of the White Council vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            elrondOfTheWhiteCouncilEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -899,12 +1049,20 @@ public class ChoiceHandlerService {
             handleEachPlayerSacrificeOrDiscardChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice ctx) {
+            handleEachPlayerSacrificeOrLoseLifeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.VillainousChoice ctx) {
             handleVillainousChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.WintersChillPaymentChoice ctx) {
             handleWintersChillPaymentChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.DisorientingChoiceExileChoice ctx) {
+            handleDisorientingChoiceExileChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
@@ -956,6 +1114,41 @@ public class ChoiceHandlerService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId, String choice,
+                                                ChoiceContext context) {
+        if (context instanceof ChoiceContext.PleaForPowerChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.TravelThroughCaradhrasChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.SailIntoTheWestChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.ExpropriateChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.VoteForDenialOrDuplicationChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.TyrantsChoiceChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.GraceOrCondemnationChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.CoercivePortalChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.GaladrielElvenQueenChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        }
     }
 
     private void handleDevotionManaColorChosen(GameData gameData, Player player, String colorName,
@@ -2242,7 +2435,7 @@ public class ChoiceHandlerService {
                     .filter(o -> o.label().equals(chosenLabel))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
-            if (chosenModes.contains(chosen)) {
+            if (!ctx.effect().modesMayRepeat() && chosenModes.contains(chosen)) {
                 throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
             }
             if (ctx.consumeModes()) {
@@ -2258,7 +2451,7 @@ public class ChoiceHandlerService {
         if (!selectionComplete) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
                     ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), ctx.consumeModes(),
-                    chosenModes, ctx.triggeringCardId());
+                    chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
             return;
         }
         if (ctx.consumeModes() || ctx.modesResetEachTurn()) {
@@ -2276,7 +2469,7 @@ public class ChoiceHandlerService {
                         + chosenModes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList()
                         + " for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
+                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
@@ -2781,7 +2974,8 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         if (ChoiceContext.AddAnotherCounterTypeChoice.POISON.equals(choice)) {
-            lifeSupport.applyPoisonCounters(gameData, ctx.targetId(), 1, ctx.sourceCardName(),
+            UUID targetId = ctx.placementTargetId() != null ? ctx.placementTargetId() : ctx.targetId();
+            lifeSupport.applyPoisonCounters(gameData, targetId, 1, ctx.sourceCardName(),
                     gameData.pendingEffectResolutionEntry != null
                             ? gameData.pendingEffectResolutionEntry.getControllerId()
                             : gameData.currentlyResolvingControllerId);
@@ -2790,11 +2984,53 @@ public class ChoiceHandlerService {
                     .filter(type -> ChoiceContext.AddAnotherCounterTypeChoice.counterLabel(type).equals(choice))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
-            Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-            if (target != null) {
-                permanentCounterSupport.placeCounterOnPermanent(
-                        gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
+            StackEntry entry = gameData.pendingEffectResolutionEntry;
+            if (ctx.distributeToOtherControlledCreatures()) {
+                for (Permanent permanent : new ArrayList<>(gameData.playerBattlefields
+                        .getOrDefault(ctx.controllerId(), List.of()))) {
+                    if (!permanent.getId().equals(ctx.targetId())
+                            && gameQueryService.isCreature(gameData, permanent)) {
+                        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, permanent, counterType, 1);
+                    }
+                }
+            } else {
+                UUID targetId = ctx.placementTargetId() != null ? ctx.placementTargetId() : ctx.targetId();
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target != null
+                        && (ctx.placementTargetId() == null || target.getCounterCount(counterType) == 0)) {
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, counterType, 1);
+                }
             }
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseCounterForEachControlledCounterKindChoice(GameData gameData, String choice,
+            ChoiceContext.ChooseCounterForEachControlledCounterKindChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter choice: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source != null && !ChoiceContext.ChooseCounterForEachControlledCounterKindChoice.SKIP.equals(choice)) {
+            CounterType counterType = ChoiceContext.ChooseCounterForEachControlledCounterKindChoice
+                    .counterLabel(CounterType.PLUS_ONE_PLUS_ONE).equals(choice)
+                    ? CounterType.PLUS_ONE_PLUS_ONE
+                    : ctx.currentKind();
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, gameData.pendingEffectResolutionEntry, source, counterType, 1);
+        }
+
+        List<CounterType> remaining = new ArrayList<>(ctx.remainingKinds());
+        remaining.removeFirst();
+        if (source != null && !remaining.isEmpty()) {
+            playerInputService.beginChooseCounterForEachControlledCounterKindChoice(
+                    gameData, ctx.controllerId(), ctx.sourcePermanentId(), ctx.sourceCardName(), remaining);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
         }
 
         stateBasedActionService.performStateBasedActions(gameData);
@@ -2955,6 +3191,28 @@ public class ChoiceHandlerService {
             if (gameData.pendingEffectResolutionEntry != null) {
                 gameData.pendingEffectResolutionEntry.setEventValue(1);
             }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleMoveOneCounterChoice(GameData gameData, String choice,
+            ChoiceContext.MoveOneCounterChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter choice: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        CounterType counterType = ctx.counterTypes().stream()
+                .filter(type -> ChoiceContext.RemoveChosenCountersChoice.counterLabel(type).equals(choice))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (source != null && target != null && source.getCounterCount(counterType) > 0) {
+            source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -3830,9 +4088,6 @@ public class ChoiceHandlerService {
 
         int[] matches = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.getCard().hasType(CardType.LAND)) {
-                return;
-            }
             if (gameQueryService.getEffectiveColors(gameData, permanent).contains(color)) {
                 matches[0]++;
             }
@@ -4107,6 +4362,26 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /** Records an each-player sacrifice-or-life-loss choice and resumes its parked effect. */
+    private void handleEachPlayerSacrificeOrLoseLifeChoice(GameData gameData, Player player,
+            String chosen, ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid sacrifice-or-life-loss choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.eachPlayerSacrificeOrLoseLife.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen,
+                ctx.sourceCardName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     /** Records Dr. Eggman's villainous choice and resumes its parked resolution. */
     private void handleVillainousChoice(GameData gameData, Player player, String chosen,
             ChoiceContext.VillainousChoice ctx) {
@@ -4146,6 +4421,26 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for Winter's Chill target {}",
+                gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Records Disorienting Choice's independent exile decision and resumes its effect handler. */
+    private void handleDisorientingChoiceExileChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.DisorientingChoiceExileChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Disorienting Choice decision: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.disorientingChoice.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for Disorienting Choice target {}",
                 gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -4305,6 +4600,44 @@ public class ChoiceHandlerService {
         String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
                 + colorName.toLowerCase() + " mana."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePersistentSpellOnlyManaColorChosen(
+            GameData gameData, Player player, String colorName, List<String> options,
+            ChoiceContext.PersistentSpellOnlyManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        if (ctx.anyColorCombination()) {
+            manaPool.addPersistentMana(manaColor, 1);
+            manaPool.addSpellOnlyMana(manaColor, 1);
+
+            int remaining = ctx.amount() - 1;
+            if (remaining > 0) {
+                ChoiceContext.PersistentSpellOnlyManaColorChoice nextContext =
+                        new ChoiceContext.PersistentSpellOnlyManaColorChoice(
+                                ctx.playerId(), remaining, true);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextContext,
+                        List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"),
+                        "Choose a color of mana to add (spells only)."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
+        } else {
+            manaPool.addPersistentMana(manaColor, ctx.amount());
+            manaPool.addSpellOnlyMana(manaColor, ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana (spells only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -4841,10 +5174,66 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleMoveAnyCountersFromControlledCreaturesAmountChoice(
+            GameData gameData, Player player, String numberName,
+            ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice ctx) {
+        int chosen = Integer.parseInt(numberName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        ChoiceContext.CounterSource source = ctx.sources().get(ctx.index());
+        Permanent from = gameQueryService.findPermanentById(gameData, source.permanentId());
+        Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
+        if (from != null && to != null && chosen > 0
+                && gameQueryService.isCreature(gameData, from)
+                && !cantHaveCounter(gameData, to, source.counterType())) {
+            int moved = Math.min(chosen, from.getCounterCount(source.counterType()));
+            if (moved > 0) {
+                from.setCounterCount(source.counterType(), from.getCounterCount(source.counterType()) - moved);
+                if (source.counterType() == CounterType.OIL) {
+                    gameData.recordOilCounterRemoved(from, moved);
+                }
+                StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+                if (sourceEntry != null) {
+                    permanentCounterSupport.placeCounterOnPermanent(
+                            gameData, sourceEntry, to, source.counterType(), moved);
+                } else {
+                    to.setCounterCount(source.counterType(), to.getCounterCount(source.counterType()) + moved);
+                }
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername()).text(" moves ").text(Integer.toString(moved))
+                        .text(" ").text(source.counterType().name().toLowerCase()).text(" counter")
+                        .text(moved == 1 ? " from " : "s from ").card(from.getCard()).text(" onto ")
+                        .card(to.getCard()).text(".").build());
+            }
+        }
+
+        int nextIndex = ctx.index() + 1;
+        while (nextIndex < ctx.sources().size()) {
+            ChoiceContext.CounterSource next = ctx.sources().get(nextIndex);
+            Permanent nextFrom = gameQueryService.findPermanentById(gameData, next.permanentId());
+            if (nextFrom != null && to != null && gameQueryService.isCreature(gameData, nextFrom)
+                    && nextFrom.getCounterCount(next.counterType()) > 0
+                    && !cantHaveCounter(gameData, to, next.counterType())) {
+                playerInputService.beginMoveAnyCountersFromControlledCreaturesAmountChoice(
+                        gameData, player.getId(), ctx.sources(), nextIndex, ctx.toPermanentId(),
+                        ctx.sourceCardName(), nextFrom.getCounterCount(next.counterType()));
+                return;
+            }
+            nextIndex++;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private boolean cantHaveCounter(GameData gameData, Permanent permanent, CounterType counterType) {
-        return counterType == CounterType.PLUS_ONE_PLUS_ONE
-                ? gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)
-                : gameQueryService.cantHaveCounters(gameData, permanent);
+        if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+            return gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent);
+        }
+        if (counterType == CounterType.MINUS_ONE_MINUS_ONE) {
+            return gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent);
+        }
+        return gameQueryService.cantHaveCounters(gameData, permanent);
     }
 
     private void handlePrimalClayFormChoice(GameData gameData, Player player, String formName, ChoiceContext.PrimalClayFormChoice ctx) {
@@ -6013,7 +6402,7 @@ public class ChoiceHandlerService {
         if (matchingCards.isEmpty()) {
             // No matching cards — just shuffle library and resolve
             if (library != null) {
-                Collections.shuffle(library);
+                LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             }
 
             String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
@@ -6123,7 +6512,7 @@ public class ChoiceHandlerService {
             library.removeAll(toExile);
             toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
             exiledCount += toExile.size();
-            Collections.shuffle(library);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
         }
 
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
@@ -6222,6 +6611,9 @@ public class ChoiceHandlerService {
      */
     private void handleRevealLibraryNameGuessChoice(GameData gameData, String cardName,
             ChoiceContext.RevealLibraryNameGuessChoice ctx) {
+        if (playerInputService.isNameExcludedByType(gameData, cardName, ctx.excludedTypes())) {
+            throw new IllegalArgumentException("Choose a nonland card name");
+        }
         gameData.interaction.clearAwaitingInput();
 
         String controllerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -6239,9 +6631,11 @@ public class ChoiceHandlerService {
      */
     private void handleRevealLibraryNumberGuessChoice(GameData gameData, String numberText,
             ChoiceContext.RevealLibraryNumberGuessChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
         int chosenNumber = Integer.parseInt(numberText);
+        if (chosenNumber <= 0) {
+            throw new IllegalArgumentException("Choose a number greater than 0");
+        }
+        gameData.interaction.clearAwaitingInput();
         UUID targetPlayerId = ctx.targetPlayerId();
         String controllerName = gameData.playerIdToName.get(ctx.controllerId());
         String targetName = gameData.playerIdToName.get(targetPlayerId);

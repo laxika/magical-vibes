@@ -27,6 +27,7 @@ class HawkeyeTrickShotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
@@ -55,7 +56,8 @@ class HawkeyeTrickShotTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HawkeyeTrickShot());
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 

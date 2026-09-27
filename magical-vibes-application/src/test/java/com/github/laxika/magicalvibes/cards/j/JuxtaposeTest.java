@@ -128,6 +128,23 @@ class JuxtaposeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature tie still resolves when the target player controls no creature")
+    void creatureTieWithNoTargetCreatureSkipsCreatureExchange() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        castJuxtapose();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, first.getId());
+
+        assertThat(controls(player1.getId(), first.getId())).isTrue();
+        assertThat(controls(player1.getId(), second.getId())).isTrue();
+        assertThat(controls(player2.getId(), first.getId())).isFalse();
+        assertThat(controls(player2.getId(), second.getId())).isFalse();
+    }
+
+    @Test
     @DisplayName("A tie for greatest lets the target player choose which permanent is exchanged")
     void tieLetsTargetPlayerChoose() {
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new AirElemental());

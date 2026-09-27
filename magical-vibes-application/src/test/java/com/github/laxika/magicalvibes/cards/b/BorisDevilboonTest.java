@@ -19,10 +19,11 @@ class BorisDevilboonTest extends BaseCardTest {
     @Test
     @DisplayName("{2}{B}{R}, {T}: creates a 1/1 black-and-red Minor Demon token")
     void createsMinorDemonToken() {
-        Permanent boris = addReadyBoris();
+        Permanent boris = addCreatureReady(player1, new BorisDevilboon());
         addCostMana(player1);
 
         harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Minor Demon");
@@ -37,7 +38,7 @@ class BorisDevilboonTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while Boris Devilboon is tapped")
     void cannotActivateWhileTapped() {
-        addReadyBoris();
+        addCreatureReady(player1, new BorisDevilboon());
         addCostMana(player1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -48,10 +49,16 @@ class BorisDevilboonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyBoris() {
-        Permanent boris = harness.addToBattlefieldAndReturn(player1, new BorisDevilboon());
-        boris.setSummoningSick(false);
-        return boris;
+    @Test
+    @DisplayName("Cannot activate without both black and red mana")
+    void cannotActivateWithoutBothColoredMana() {
+        Permanent boris = addCreatureReady(player1, new BorisDevilboon());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(boris.isTapped()).isFalse();
     }
 
     private void addCostMana(Player player) {

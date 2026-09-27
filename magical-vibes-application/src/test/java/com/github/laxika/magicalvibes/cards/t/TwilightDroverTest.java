@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
+import com.github.laxika.magicalvibes.cards.p.PeelFromReality;
+import com.github.laxika.magicalvibes.cards.p.Putrefy;
+import com.github.laxika.magicalvibes.cards.s.ScatterTheSeeds;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,38 +21,51 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TwilightDrover.class, GrizzlyBears.class, Shock.class})
+@CardUsed({TwilightDrover.class, BorosSwiftblade.class, Putrefy.class, ScatterTheSeeds.class,
+        PeelFromReality.class})
 class TwilightDroverTest extends BaseCardTest {
 
     @Test
     @DisplayName("A creature token leaving the battlefield puts a +1/+1 counter on Twilight Drover")
     void tokenLeavingBattlefieldAddsCounter() {
         Permanent drover = harness.addToBattlefieldAndReturn(player1, new TwilightDrover());
-        Permanent token = addCreatureToken(player2);
+        Permanent token = addSaprolingToken(player2);
 
-        harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, token.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        destroyPermanent(player1, token);
 
         assertThat(drover.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player2, "Saproling")).hasSize(2);
     }
 
     @Test
     @DisplayName("A nontoken creature leaving the battlefield does not trigger Twilight Drover")
     void nontokenCreatureLeavingBattlefieldDoesNotAddCounter() {
         Permanent drover = harness.addToBattlefieldAndReturn(player1, new TwilightDrover());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BorosSwiftblade());
 
-        harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        destroyPermanent(player1, creature);
 
         assertThat(drover.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player2, "Boros Swiftblade")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature token returning to hand triggers Twilight Drover")
+    void tokenReturningToHandAddsCounter() {
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new TwilightDrover());
+        Permanent token = addSaprolingToken(player1);
+        Permanent opposingCreature = addCreatureReady(player2, new BorosSwiftblade());
+
+        harness.setHand(player1, List.of(new PeelFromReality()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.castAndResolveInstant(player1, 0, List.of(token.getId(), opposingCreature.getId()));
+        resolveAllTriggers();
+
+        assertThat(drover.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Boros Swiftblade")).isEmpty();
     }
 
     @Test
@@ -88,19 +101,32 @@ class TwilightDroverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addCreatureToken(Player player) {
-        Card tokenCard = new Card();
-        tokenCard.setName("Bear Token");
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setManaCost("");
-        tokenCard.setToken(true);
-        tokenCard.setColor(CardColor.GREEN);
-        tokenCard.setPower(2);
-        tokenCard.setToughness(2);
-        tokenCard.setSubtypes(List.of(CardSubtype.BEAR));
-        Permanent token = new Permanent(tokenCard);
-        token.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(token);
-        return token;
+    @Test
+    @DisplayName("The token-making ability cannot be activated without enough mana")
+    void cannotActivateWithoutMana() {
+        Permanent drover = addCreatureReady(player1, new TwilightDrover());
+        drover.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent addSaprolingToken(Player player) {
+        harness.setHand(player, List.of(new ScatterTheSeeds()));
+        harness.addMana(player, ManaColor.COLORLESS, 3);
+        harness.addMana(player, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player);
+        harness.castAndResolveInstant(player, 0);
+        return findPermanents(player, "Saproling").getFirst();
+    }
+
+    private void destroyPermanent(Player player, Permanent target) {
+        harness.setHand(player, List.of(new Putrefy()));
+        harness.addMana(player, ManaColor.COLORLESS, 1);
+        harness.addMana(player, ManaColor.BLACK, 1);
+        harness.addMana(player, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player);
+        harness.castAndResolveInstant(player, 0, target.getId());
+        resolveAllTriggers();
     }
 }

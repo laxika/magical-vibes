@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "RIX", collectorNumber = "111")
+@CardRegistration(set = "NCC", collectorNumber = "273")
 public class RekindlingPhoenix extends Card {
 
     private static final String NAME = "Rekindling Phoenix";

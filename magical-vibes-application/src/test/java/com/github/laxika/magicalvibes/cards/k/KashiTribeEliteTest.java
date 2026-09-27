@@ -32,7 +32,7 @@ class KashiTribeEliteTest extends BaseCardTest {
         Permanent opposingSosuke = addCreatureReady(player2, new SosukeSonOfSeshiro());
 
         assertThat(gqs.hasKeyword(gd, sosuke, Keyword.SHROUD)).isTrue();
-        assertThat(gqs.hasKeyword(gd, kashi, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kashi, Keyword.SHROUD)).isFalse();
         assertThat(gqs.hasKeyword(gd, ordinarySnake, Keyword.SHROUD)).isFalse();
         assertThat(gqs.hasKeyword(gd, opposingSosuke, Keyword.SHROUD)).isFalse();
     }

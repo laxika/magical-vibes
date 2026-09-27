@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "21")
 @CardRegistration(set = "ECC", collectorNumber = "64")
+@CardRegistration(set = "NCC", collectorNumber = "203")
 public class HoofprintsOfTheStag extends Card {
 
     public HoofprintsOfTheStag() {

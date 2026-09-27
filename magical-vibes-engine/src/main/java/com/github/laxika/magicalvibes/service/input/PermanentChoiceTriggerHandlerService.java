@@ -1455,6 +1455,10 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setTriggeringPermanentControllerId(
                         gameQueryService.findPermanentController(gameData, ett.enteringPermanentId()));
             }
+            if (ett.enteringPowerAtTrigger() != null) {
+                entry.setTriggeringPermanentPowerAtTrigger(ett.enteringPowerAtTrigger());
+                entry.setTriggeringPermanentToughnessAtTrigger(ett.enteringToughnessAtTrigger());
+            }
             if (ett.sourceIsEnteringPermanent() && sourcePermanentId != null) {
                 Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (enteringPermanent != null) {
@@ -1961,7 +1965,10 @@ public class PermanentChoiceTriggerHandlerService {
                 lgt.sourcePermanentId()
         );
         entry.setTargetId(targetId);
-            pushTriggeredEntry(gameData, entry);
+        if (lgt.eventValue() != null) {
+            entry.setEventValue(lgt.eventValue());
+        }
+        pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);
         
