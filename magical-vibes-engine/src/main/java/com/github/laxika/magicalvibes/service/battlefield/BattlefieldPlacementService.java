@@ -322,6 +322,7 @@ public class BattlefieldPlacementService {
         gameData.playerBattlefields.get(controllerId).add(permanent);
         if (permanent.getCard().isToken()) {
             gameData.playersWhoCreatedTokensThisTurn.add(puttingPlayerId);
+            gameData.tokensCreatedThisTurn.merge(puttingPlayerId, 1, Integer::sum);
         }
         if (permanent.getCard().isAura() && permanent.getAttachedTo() != null) {
             triggerCollectionService.checkAuraAttachedTriggers(gameData, permanent, permanent.getAttachedTo());

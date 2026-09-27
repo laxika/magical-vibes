@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -1062,11 +1063,12 @@ public class TriggeredAbilityQueueService {
             }
             if (legalOptions.size() != effect.options().size()) {
                 effect = new ChooseOneEffect(legalOptions, effect.optional(), effect.choicesRequired(),
-                        effect.choicesMax(), effect.allModesWhenOptionalCostPaid(), effect.additionalModesCondition());
+                        effect.choicesMax(), effect.allModesWhenOptionalCostPaid(), effect.modesMayRepeat(),
+                        effect.additionalModesCondition());
             }
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
-                    List.of(), pending.triggeringCardId());
+                    List.of(), pending.triggeringCardId(), pending.attackedTargetId());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
@@ -1101,7 +1103,8 @@ public class TriggeredAbilityQueueService {
                 pending.controllerId(),
                 pending.sourceCard(),
                 TriggerTargetCollector.Options.ATTACK,
-                source);
+                source,
+                defendingPlayerId(gameData, pending.attackedTargetId()));
         return !result.validTargets().isEmpty();
     }
 
@@ -1117,6 +1120,13 @@ public class TriggeredAbilityQueueService {
 
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId) {
+        queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId, sourcePermanentId,
+                chosenModes, triggeringCardId, null);
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
+            UUID attackedTargetId) {
         if (chosenModes.isEmpty()) {
             return;
         }
@@ -1145,21 +1155,34 @@ public class TriggeredAbilityQueueService {
             } else {
                 TargetFilter targetFilter = targetingCard.getSpellTargets().isEmpty()
                         ? null : targetingCard.getSpellTargets().getFirst().getFilter();
-                gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
-                        targetingCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
+                if (attackedTargetId == null) {
+                    gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
+                            targetingCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
+                } else {
+                    gameData.queueInteractionFirst(new PermanentChoiceContext.AttackTriggerTarget(
+                            targetingCard, controllerId, effects, sourcePermanentId, controllerId, attackedTargetId));
+                }
             }
             return;
         }
 
+        UUID triggerTargetId = attackedTargetId != null && effects.stream().anyMatch(effect ->
+                effect instanceof CombatDamageTriggerContextEffect contextEffect
+                        && contextEffect.combatDamageTriggerContext()
+                        == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER)
+                ? attackedTargetId : null;
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
                 effects,
-                null,
+                triggerTargetId,
                 sourcePermanentId);
         entry.setTriggeringCardId(triggeringCardId);
+        if (attackedTargetId != null) {
+            entry.setAttackedTargetId(attackedTargetId);
+        }
         gameData.stack.add(entry);
     }
 
@@ -2144,6 +2167,7 @@ public class TriggeredAbilityQueueService {
             // Find the graveyard-targeting effect to extract its filter and search scope
             CardPredicate filter = null;
             boolean lifeGainedCap = false;
+            boolean lifeLostCap = false;
             boolean manaValueEqualsX = false;
             int manaValueXOffset = 0;
             boolean manaValueAtMostX = false;
@@ -2165,6 +2189,7 @@ public class TriggeredAbilityQueueService {
             } else if (returnEffect != null) {
                 filter = returnEffect.filter();
                 lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
+                lifeLostCap = returnEffect.maxManaValueEqualsLifeLostThisTurn();
                 manaValueEqualsX = returnEffect.requiresManaValueEqualsX();
                 manaValueXOffset = returnEffect.manaValueXOffset();
                 manaValueAtMostX = returnEffect.requiresManaValueAtMostX()
@@ -2213,9 +2238,11 @@ public class TriggeredAbilityQueueService {
                 filter = graveyardFilter.predicate();
                 scope = graveyardFilter.scope();
             }
-            // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
+            // "mana value X or less, where X is the life you gained or lost this turn"
             int maxManaValue = lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId())
+                    : lifeLostCap
+                    ? gameData.lifeLostThisTurn.getOrDefault(pending.controllerId(), 0)
                     : manaValueAtMostX ? pending.xValue() + manaValueXOffset : Integer.MAX_VALUE;
 
             List<UUID> searchPlayerIds = pending.graveyardOwnerId() != null

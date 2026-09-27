@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
@@ -58,6 +59,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AttackedWithCommanderThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
@@ -145,6 +147,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHand
 import com.github.laxika.magicalvibes.model.condition.ControllerIsNotStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsLastTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentSubtypeAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedArtifactThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
@@ -361,6 +364,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
+import com.github.laxika.magicalvibes.model.condition.SourcePowerParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
@@ -651,7 +655,10 @@ public class ConditionEvaluationService {
                             .mapToInt(Set::size)
                             .sum() >= c.minimum();
             case CreatureDeathsThisTurnAtLeast c ->
-                    gameData.orderedPlayerIds.stream()
+                    c.scope() == CountScope.CONTROLLER
+                            ? ctx.controllerId() != null
+                            && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum()
+                            : gameData.orderedPlayerIds.stream()
                             .mapToInt(playerId -> gameData.creatureDeathCountThisTurn.getOrDefault(playerId, 0))
                             .sum() >= c.minimum();
             case Kicked ignored ->
@@ -720,6 +727,9 @@ public class ConditionEvaluationService {
                             && gameData.creaturesAttackedCountBySubtypeThisTurn
                             .getOrDefault(ctx.controllerId(), Map.of())
                             .getOrDefault(c.subtype(), 0) >= c.minimum();
+            case AttackedWithCommanderThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoAttackedWithCommanderThisTurn.contains(ctx.controllerId());
             case Equipped ignored ->
                     isSourceEquipped(gameData, ctx);
             case EquippedCreatureDidntDealCombatDamageToCreatureThisTurn ignored ->
@@ -1203,6 +1213,9 @@ public class ConditionEvaluationService {
             case ControllerDrewAtLeastCardsThisTurn c ->
                     ctx.controllerId() != null
                             && gameData.cardsDrawnThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
+            case ControllerDrewAtLeastCardsLastTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.cardsDrawnLastTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
             case ControllerSacrificedPermanentSubtypeAtLeastThisTurn c ->
                     ctx.controllerId() != null
                             && gameData.sacrificedPermanentSubtypeCountThisTurn
@@ -1648,6 +1661,14 @@ public class ConditionEvaluationService {
                         ? -1
                         : source.getCounters().values().stream().mapToInt(Integer::intValue).sum();
                 yield source != null && c.parity().matches(counterCount);
+            }
+            case SourcePowerParity c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                int power = source == null ? 0
+                        : GameQueryService.isStaticEvaluationActive()
+                        ? gameQueryService.powerForStaticFilter(source)
+                        : gameQueryService.getEffectivePower(gameData, source);
+                yield source != null && c.parity().matches(power);
             }
             case SourceAddedManaThisTurn ignored ->
                     ctx.sourcePermanentId() != null

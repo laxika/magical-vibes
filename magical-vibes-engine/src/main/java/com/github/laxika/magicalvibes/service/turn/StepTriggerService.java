@@ -4503,6 +4503,8 @@ public class StepTriggerService {
         // Perform the scheduled end-step returns to hand (e.g. Dragon Mask)
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.RETURN_TO_COMMAND_ZONE_AT_END_STEP);
 
         // Process delayed "lose the game" triggers (e.g. Last Chance, Glorious End). These fire at the
         // beginning of the scheduling player's *own* next end step ("your next end step"): only entries

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DMU", collectorNumber = "39")
+@CardRegistration(set = "TDC", collectorNumber = "141")
 public class WingmantleChaplain extends Card {
 
     public WingmantleChaplain() {

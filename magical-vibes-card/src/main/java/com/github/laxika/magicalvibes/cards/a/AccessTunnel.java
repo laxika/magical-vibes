@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "262")
 @CardRegistration(set = "LTC", collectorNumber = "294")
+@CardRegistration(set = "TDC", collectorNumber = "337")
 public class AccessTunnel extends Card {
 
     public AccessTunnel() {

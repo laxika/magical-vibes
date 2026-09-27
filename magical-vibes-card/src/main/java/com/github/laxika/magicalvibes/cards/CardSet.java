@@ -240,6 +240,8 @@ public enum CardSet {
     SET_SNC("SNC"),
     SET_NCC("NCC"),
     SET_TDM("TDM"),
+    SET_TDC("TDC"),
+    SET_DSC("DSC"),
     SET_TMC("TMC"),
     SET_TMT("TMT"),
     SET_BOT("BOT"),

@@ -724,6 +724,8 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        validateGraveyardMultiTargetConstraint(gameData, cardIds);
+
         if (gameData.cloneOperation.mimeoplasmGraveyardChoicePending) {
             List<Card> selectedCards = cardIds.stream()
                     .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
@@ -996,6 +998,16 @@ public class GraveyardChoiceHandlerService {
             gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberThenEffectResume = false;
             gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberThenEffectChoiceMade = true;
             gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberThenEffectChosenCardIds =
+                    List.copyOf(cardIds);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChosenCardIds =
                     List.copyOf(cardIds);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -2130,6 +2142,22 @@ public class GraveyardChoiceHandlerService {
                 context.sourcePermanentId());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, context.forcedCost());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void validateGraveyardMultiTargetConstraint(GameData gameData, List<UUID> cardIds) {
+        Card sourceCard = gameData.graveyardTargetOperation.card;
+        if (sourceCard == null
+                || sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+            return;
+        }
+
+        Set<UUID> graveyardOwners = new HashSet<>();
+        for (UUID cardId : cardIds) {
+            UUID graveyardOwner = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwner != null && !graveyardOwners.add(graveyardOwner)) {
+                throw new IllegalStateException("May target at most one card per graveyard");
+            }
+        }
     }
 
     private boolean canAssignEachFilter(GameData gameData, List<UUID> cardIds,

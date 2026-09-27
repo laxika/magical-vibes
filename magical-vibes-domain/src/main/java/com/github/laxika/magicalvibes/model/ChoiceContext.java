@@ -1869,6 +1869,19 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Selvala's Stampede: the current player voted for wild or free. */
+    record SelvalasStampedeChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                  Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String WILD = "Wild";
+        public static final String FREE = "Free";
+        public static final List<String> OPTIONS = List.of(WILD, FREE);
+
+        public SelvalasStampedeChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
     /** Split Decision: the current player voted for denial or duplication. */
     record VoteForDenialOrDuplicationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                                              Map<String, Integer> votes, String sourceName) implements ChoiceContext {
@@ -2000,7 +2013,7 @@ public sealed interface ChoiceContext {
     record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
                                 List<ChooseOneEffect.ChooseOneOption> chosenModes,
-                                UUID triggeringCardId) implements ChoiceContext {
+                                UUID triggeringCardId, UUID attackedTargetId) implements ChoiceContext {
 
         public TriggeredModalChoice {
             chosenModes = List.copyOf(chosenModes);
@@ -2008,26 +2021,26 @@ public sealed interface ChoiceContext {
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, List.of(), null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, List.of(), null, null);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, List.of(), null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, List.of(), null, null);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
                                     List<ChooseOneEffect.ChooseOneOption> chosenModes) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
-                    chosenModes, null);
+                    chosenModes, null, null);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn,
                                     List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false,
-                    chosenModes, triggeringCardId);
+                    chosenModes, triggeringCardId, null);
         }
 
     }
@@ -2118,6 +2131,14 @@ public sealed interface ChoiceContext {
         public static final String PAY_TWO = "Pay {2}";
         public static final String PAY_ONE = "Pay {1}";
         public static final String PAY_NOTHING = "Pay nothing";
+    }
+
+    /** Disorienting Choice: the controller of each chosen permanent may exile it. */
+    record DisorientingChoiceExileChoice(UUID affectedPlayerId, UUID targetPermanentId,
+                                          String sourceCardName) implements ChoiceContext {
+
+        public static final String EXILE = "Exile it";
+        public static final String KEEP = "Keep it";
     }
 
     /**

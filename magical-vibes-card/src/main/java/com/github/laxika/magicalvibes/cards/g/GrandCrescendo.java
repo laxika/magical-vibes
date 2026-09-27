@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "947")
 @CardRegistration(set = "SLD", collectorNumber = "2432")
+@CardRegistration(set = "TDC", collectorNumber = "118")
 public class GrandCrescendo extends Card {
 
     public GrandCrescendo() {

@@ -16,7 +16,8 @@ public enum CardType {
     BATTLE("Battle"),
     KINDRED("Kindred"),
     PLANE("Plane"),
-    PHENOMENON("Phenomenon");
+    PHENOMENON("Phenomenon"),
+    SCHEME("Scheme");
 
     @Getter
     private final String displayName;

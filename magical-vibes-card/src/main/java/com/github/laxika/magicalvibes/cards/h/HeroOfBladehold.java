@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "8")
+@CardRegistration(set = "TDC", collectorNumber = "119")
 public class HeroOfBladehold extends Card {
 
     public HeroOfBladehold() {

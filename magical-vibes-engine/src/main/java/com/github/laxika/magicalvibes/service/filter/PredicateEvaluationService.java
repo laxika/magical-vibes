@@ -208,6 +208,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSameTarge
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
@@ -322,6 +323,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenP
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasAnyTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
@@ -1260,6 +1262,8 @@ public class PredicateEvaluationService {
                     permanent.isTransformed();
             case PermanentIsAttackingPredicate ignored ->
                     permanent.isAttacking();
+            case PermanentIsGoadedPredicate ignored ->
+                    gameData != null && gameQueryService.isGoaded(gameData, permanent);
             case PermanentIsAttackingAlonePredicate ignored ->
                     isAttackingAlone(gameData, permanent);
             case PermanentIsAttackingEnchantedPlayerPredicate ignored -> {
@@ -3863,6 +3867,7 @@ public class PredicateEvaluationService {
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
             case StackEntryIsSingleTargetPredicate ignored -> false;
+            case StackEntryHasAnyTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;
             case StackEntryHasSourceChosenSubtypePredicate ignored -> false;
             case StackEntryHasXInManaCostPredicate ignored ->

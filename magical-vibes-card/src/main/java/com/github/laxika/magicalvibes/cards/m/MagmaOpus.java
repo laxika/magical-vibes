@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "203")
 @CardRegistration(set = "SOC", collectorNumber = "318")
+@CardRegistration(set = "TDC", collectorNumber = "296")
 public class MagmaOpus extends Card {
 
     public MagmaOpus() {

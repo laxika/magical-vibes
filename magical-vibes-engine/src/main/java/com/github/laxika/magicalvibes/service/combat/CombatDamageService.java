@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefending
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
@@ -2287,6 +2288,14 @@ public class CombatDamageService {
                     if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
                         firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
                     }
+                    if (firedEffect instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), attackerId, new ChooseOneEffect(modal.options()),
+                                perm.getId(), true, false, null, defenderId));
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        continue;
+                    }
                     // Player recipients on this trigger slot normally mean "that player":
                     // bind the damaged player unless the card explicitly declares a target.
                     if (!(firedEffect instanceof CombatOpponentReferencingEffect opponentReference
@@ -3932,7 +3941,7 @@ public class CombatDamageService {
                 damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                         gameData, sourceControllerId, atk.getCard(), atk, pwControllerId);
                 damage += gameQueryService.getControllerDamageToOpponentBonus(
-                        gameData, sourceControllerId, pwControllerId, true);
+                        gameData, sourceControllerId, pwControllerId, true, true);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(

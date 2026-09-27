@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "370")
+@CardRegistration(set = "TDC", collectorNumber = "361")
 public class FerrousLake extends Card {
 
     public FerrousLake() {

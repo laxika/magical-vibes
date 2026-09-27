@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "DMR", collectorNumber = "231")
 @CardRegistration(set = "SOC", collectorNumber = "351")
 @CardRegistration(set = "MH2", collectorNumber = "297")
+@CardRegistration(set = "TDC", collectorNumber = "321")
 public class Millikin extends Card {
 
     public Millikin() {
