@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "220")
+@CardRegistration(set = "C21", collectorNumber = "273")
 public class VensersJournal extends Card {
 
     public VensersJournal() {

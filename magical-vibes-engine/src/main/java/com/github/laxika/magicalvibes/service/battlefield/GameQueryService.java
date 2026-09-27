@@ -5668,6 +5668,9 @@ public class GameQueryService {
         if (bonus.losesAllAbilities() || bonus.protectionRemoved()) {
             return false;
         }
+        if (target.getProtectionFromPlayerIdsUntilEndOfTurn().contains(sourceControllerId)) {
+            return true;
+        }
         if (target.isProtectionFromOpponentsPermanently()
                 && target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)) {
             return true;
@@ -7338,7 +7341,14 @@ public class GameQueryService {
      */
     public boolean playerHasProtectionFromOpponents(GameData gameData, UUID playerId,
                                                     UUID sourceControllerId) {
-        if (playerId == null || sourceControllerId == null || playerId.equals(sourceControllerId)) {
+        if (playerId == null || sourceControllerId == null) {
+            return false;
+        }
+        Set<UUID> protectedPlayers = gameData.playerProtectionFromPlayerIdsUntilEndOfTurn.get(playerId);
+        if (protectedPlayers != null && protectedPlayers.contains(sourceControllerId)) {
+            return true;
+        }
+        if (playerId.equals(sourceControllerId)) {
             return false;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

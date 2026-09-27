@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "252")
+@CardRegistration(set = "C21", collectorNumber = "55")
 public class RionyaFireDancer extends Card {
 
     public RionyaFireDancer() {

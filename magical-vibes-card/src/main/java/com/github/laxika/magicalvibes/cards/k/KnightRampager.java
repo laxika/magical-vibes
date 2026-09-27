@@ -12,6 +12,6 @@ public class KnightRampager extends Card {
     public KnightRampager() {
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new ChooseRandomOpponentMustAttackThisCombatEffect());
-        addEffect(EffectSlot.ON_DEATH, new DealDamageToRandomOpponentEffect(4));
+        addEffect(EffectSlot.ON_DEATH, DealDamageToRandomOpponentEffect.targeted(4));
     }
 }

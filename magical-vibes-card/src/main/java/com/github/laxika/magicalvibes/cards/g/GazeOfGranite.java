@@ -17,6 +17,7 @@ import java.util.List;
  */
 @CardRegistration(set = "DGM", collectorNumber = "72")
 @CardRegistration(set = "GK1", collectorNumber = "61")
+@CardRegistration(set = "C21", collectorNumber = "217")
 public class GazeOfGranite extends Card {
 
     public GazeOfGranite() {

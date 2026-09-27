@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /** Resolves an event-bound "put the same counters on this source" effect. */
 @Component
 @RequiredArgsConstructor
@@ -35,11 +37,14 @@ public class PutSameCountersOnSourceEffectHandler implements NormalEffectHandler
         Permanent target = gameQueryService.findPermanentById(gameData, e.targetPermanentId());
         if (source == null || target == null || source.getId().equals(target.getId())
                 || !gameQueryService.isCreature(gameData, target)
-                || gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.KREE)) {
+                || (e.requiresNonKree()
+                && gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.KREE))) {
             return;
         }
 
-        permanentCounterSupport.placeCounterOnPermanent(
-                gameData, entry, source, e.counterType(), e.amount());
+        UUID placingPlayerId = e.placingPlayerId() != null
+                ? e.placingPlayerId() : entry.getControllerId();
+        permanentCounterSupport.placeCounterOnPermanentForPlayer(
+                gameData, entry, source, e.counterType(), e.amount(), placingPlayerId);
     }
 }

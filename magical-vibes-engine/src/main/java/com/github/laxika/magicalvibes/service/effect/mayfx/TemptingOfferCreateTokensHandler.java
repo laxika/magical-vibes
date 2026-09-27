@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Handles one opponent's choice for Tempt with Vengeance. */
+/** Handles one opponent's choice for a tempting token offer. */
 @Component
 @RequiredArgsConstructor
 public class TemptingOfferCreateTokensHandler implements MayEffectHandlerBean {

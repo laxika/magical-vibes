@@ -1413,6 +1413,9 @@ public class GameData {
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
 
+    /** Per-player: this player has protection from these players until end of turn. */
+    public final Map<UUID, Set<UUID>> playerProtectionFromPlayerIdsUntilEndOfTurn = new ConcurrentHashMap<>();
+
     /** Per-player: this player has a temporary targeting keyword until end of turn. */
     public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
     /** Per-player: this player has a temporary targeting keyword until the beginning of their next turn. */
@@ -1578,6 +1581,8 @@ public class GameData {
     /** Pending flash grants for the next spell of a chosen creature subtype, keyed by player. */
     public final Map<UUID, List<CardSubtype>> nextSpellChosenSubtypeFlashGrantsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<NextSpellCostReduction>> nextSpellCostReductionsThisTurn = new ConcurrentHashMap<>();
+    /** Pending life alternatives for the next spell, keyed by controller. */
+    public final Map<UUID, Integer> nextSpellPayLifeEqualToManaValueThisTurn = new ConcurrentHashMap<>();
     /** Pending one-shot free-cast permissions for the next matching spell this turn. */
     public final Map<UUID, List<CardPredicate>> nextSpellFreeCastPermissionsThisTurn = new ConcurrentHashMap<>();
 
@@ -3850,6 +3855,7 @@ public class GameData {
         consumeNextSpellFlashGrant(playerId, card);
         consumeNextSpellChosenSubtypeFlashGrant(playerId, card);
         consumeNextSpellCostReductions(playerId, card);
+        consumeNextSpellPayLifeEqualToManaValue(playerId);
         consumeNextCreatureSpellEmpowerments(playerId, card);
         consumePersistentNextCreatureSpellEmpowerments(playerId, card);
         consumeNextSpellUncounterableGrant(playerId, card);
@@ -4143,6 +4149,14 @@ public class GameData {
                 .add(reduction);
     }
 
+    public void addNextSpellPayLifeEqualToManaValue(UUID playerId) {
+        nextSpellPayLifeEqualToManaValueThisTurn.merge(playerId, 1, Integer::sum);
+    }
+
+    public boolean hasNextSpellPayLifeEqualToManaValue(UUID playerId) {
+        return nextSpellPayLifeEqualToManaValueThisTurn.getOrDefault(playerId, 0) > 0;
+    }
+
     public void addNextSpellFreeCastPermission(UUID playerId, CardPredicate predicate) {
         nextSpellFreeCastPermissionsThisTurn
                 .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
@@ -4155,6 +4169,10 @@ public class GameData {
         synchronized (reductions) {
             reductions.removeIf(reduction -> reduction.cardTypes().stream().anyMatch(card::hasType));
         }
+    }
+
+    private void consumeNextSpellPayLifeEqualToManaValue(UUID playerId) {
+        nextSpellPayLifeEqualToManaValueThisTurn.remove(playerId);
     }
 
     /** Adds an unlimited flash permission for spells of the given type until end of turn. */
@@ -7077,6 +7095,8 @@ public class GameData {
                 copy.spellColorOverridesUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
+        this.playerProtectionFromPlayerIdsUntilEndOfTurn.forEach((k, v) ->
+                copy.playerProtectionFromPlayerIdsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilNextTurn.forEach((k, v) ->
@@ -7359,6 +7379,7 @@ public class GameData {
                         Collections.synchronizedList(new ArrayList<>(v))));
         this.nextSpellCostReductionsThisTurn.forEach((k, v) ->
                 copy.nextSpellCostReductionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.nextSpellPayLifeEqualToManaValueThisTurn.putAll(this.nextSpellPayLifeEqualToManaValueThisTurn);
         this.nextSpellFreeCastPermissionsThisTurn.forEach((k, v) ->
                 copy.nextSpellFreeCastPermissionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->

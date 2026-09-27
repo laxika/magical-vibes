@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1776")
+@CardRegistration(set = "C21", collectorNumber = "41")
 public class IncarnationTechnique extends Card {
 
     public IncarnationTechnique() {

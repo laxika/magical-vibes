@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerAndPutCounterOnSelfEffect;
 
+@CardRegistration(set = "C21", collectorNumber = "103")
 @CardRegistration(set = "LTC", collectorNumber = "176")
 public class SelflessSquire extends Card {
 

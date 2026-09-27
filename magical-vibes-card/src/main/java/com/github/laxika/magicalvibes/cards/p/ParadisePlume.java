@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "260")
 @CardRegistration(set = "TSR", collectorNumber = "271")
+@CardRegistration(set = "C21", collectorNumber = "255")
 public class ParadisePlume extends Card {
 
     public ParadisePlume() {

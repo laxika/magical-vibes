@@ -171,6 +171,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentEachCreatesTokens(UUID controllerId,
                                            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect token,
                                            String sourceCardName) implements PermanentChoiceContext {}
+    /** Boreas Charger: choose an opponent before searching for the land-count difference. */
+    record ChooseOpponentThenSearchLandDifference(UUID controllerId, CardSubtype subtype,
+                                                   String sourceCardName) implements PermanentChoiceContext {}
     /** Infernal Offering: choose the opponent affected by the selected mode. */
     record InfernalOfferingOpponentChoice(UUID controllerId, boolean sacrificeMode, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -1411,6 +1414,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
     record Populate(UUID controllerId) implements PermanentChoiceContext {}
 
+    /** Esix: choose the creature whose copiable characteristics the replacement creates. */
+    record EsixCreatureChoice(UUID controllerId, Card sourceCard, StackEntry resolvingEntry,
+                              int amount, UUID excludedPermanentId) implements PermanentChoiceContext {}
+
     /** Soulbond self-enter: choose another unpaired creature you control to pair with the source. */
     record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
@@ -2283,6 +2290,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                    com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost costEffect,
                                    int remaining,
                                    PendingMayAbility mayAbility) implements PermanentChoiceContext {}
+
+    /** Orzhov Advokist: the accepting player chooses which creature receives the counters. */
+    record OrzhovAdvokistCreatureChoice(PendingMayAbility ability,
+                                        com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect effect)
+            implements PermanentChoiceContext {}
 
     /**
      * Spell-cast trigger that needs to target a card in a graveyard (e.g. Teshar, Ancestor's Apostle).

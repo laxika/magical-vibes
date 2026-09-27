@@ -955,6 +955,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once per counter-placement event whenever the controller puts one or more counters
      *  of any kind on another creature, regardless of that creature's controller. */
     ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE,
+    /** Triggers whenever an opponent puts one or more counters on a creature they control. */
+    ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL,
     /** Triggers once for each lore counter put on a Saga the controller controls. */
     ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
     /** Triggers once for each counter put on a creature the controller controls. */
@@ -1395,6 +1397,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
      *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
     ON_CONTROLLER_DEALT_DAMAGE,
+    /** Triggers whenever damage that would be dealt to this permanent's controller is prevented. */
+    ON_CONTROLLER_DAMAGE_PREVENTED,
     /** Triggers whenever an opponent of this permanent's controller is dealt damage. The damage
      *  amount is snapshotted onto the triggered ability's event value. */
     ON_OPPONENT_DEALT_DAMAGE,

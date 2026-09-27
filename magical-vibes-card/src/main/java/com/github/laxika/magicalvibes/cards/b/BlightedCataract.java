@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "DDT", collectorNumber = "26")
+@CardRegistration(set = "C21", collectorNumber = "279")
 public class BlightedCataract extends Card {
 
     public BlightedCataract() {

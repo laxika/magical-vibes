@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "M19", collectorNumber = "95")
 @CardRegistration(set = "M20", collectorNumber = "99")
+@CardRegistration(set = "C21", collectorNumber = "143")
 public class EpicureOfBlood extends Card {
 
     public EpicureOfBlood() {

@@ -586,6 +586,7 @@ public class InteractionPromptProjectionRegistry {
             case END_OF_TURN -> "until the end of this turn";
             case NEXT_END_STEP -> "until your next end step";
             case NEXT_TURN -> "until the end of your next turn";
+            case WHILE_EXILED -> "for as long as it remains exiled";
         };
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),

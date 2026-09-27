@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "59")
+@CardRegistration(set = "C21", collectorNumber = "124")
 public class NaruMehaMasterWizard extends Card {
 
     public NaruMehaMasterWizard() {

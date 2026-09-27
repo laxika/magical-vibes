@@ -22,6 +22,7 @@ import java.util.List;
 
 @CardRegistration(set = "MAR", collectorNumber = "39")
 @CardRegistration(set = "OMB", collectorNumber = "39")
+@CardRegistration(set = "C21", collectorNumber = "7")
 public class AlibouAncientWitness extends Card {
 
     public AlibouAncientWitness() {
