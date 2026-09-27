@@ -76,7 +76,8 @@ class UriangerAugureltTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        harness.assertOnBattlefield(player1, "Forest", "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

@@ -46,7 +46,7 @@ class UmaroRagingYetiTest extends BaseCardTest {
             if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
                 harness.handlePermanentChosen(controller, opponent.getId());
             }
-            harness.resolveAllTriggers();
+            resolveAllTriggers();
 
             if (bear.getEffectivePower() > bearPower) {
                 modes.add("pump");
