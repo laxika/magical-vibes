@@ -204,6 +204,7 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
             eachPlayerChoosesCreatureThenSacrificesRestHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandAndPutCounterEffectHandler eachPlayerChoosesLandAndPutCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .TurfWarCombatDamageEffectHandler turfWarCombatDamageHandler;

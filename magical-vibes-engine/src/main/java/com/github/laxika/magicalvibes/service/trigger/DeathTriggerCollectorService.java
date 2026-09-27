@@ -4092,20 +4092,6 @@ public class DeathTriggerCollectorService {
         return count;
     }
 
-    private Map<CounterType, Integer> snapshotConcreteCounters(Permanent permanent) {
-        Map<CounterType, Integer> snapshot = new EnumMap<>(CounterType.class);
-        for (CounterType type : CounterType.values()) {
-            if (type == CounterType.ANY || type == CounterType.SILVER) {
-                continue;
-            }
-            int count = permanent.getCounterCount(type);
-            if (count > 0) {
-                snapshot.put(type, count);
-            }
-        }
-        return snapshot;
-    }
-
     // ── ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ──
 
     @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToHandEffect.class, slot = EffectSlot.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)

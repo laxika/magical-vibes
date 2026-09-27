@@ -61,6 +61,23 @@ class ResourcefulDefenseTest extends BaseCardTest {
     }
 
     @Test
+    void transfersCountersWhenResourcefulDefenseItselfLeaves() {
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent defense = harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        defense.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        defense.setCounterCount(CounterType.CHARGE, 1);
+
+        removePermanent(defense);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(recipient.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
     void movesAnyChosenNumberOfEachCounterKind() {
         harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
