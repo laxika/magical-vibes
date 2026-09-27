@@ -13,6 +13,8 @@ import java.util.List;
 @CardRegistration(set = "MM3", collectorNumber = "134")
 @CardRegistration(set = "SLD", collectorNumber = "135")
 @CardRegistration(set = "CMD", collectorNumber = "170")
+@CardRegistration(set = "NCC", collectorNumber = "309")
+@CardRegistration(set = "DSC", collectorNumber = "196")
 public class ScavengingOoze extends Card {
 
     public ScavengingOoze() {

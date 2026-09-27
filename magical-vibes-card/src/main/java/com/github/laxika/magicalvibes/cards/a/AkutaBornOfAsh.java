@@ -28,7 +28,7 @@ public class AkutaBornOfAsh extends Card {
                                                 .filter(new CardIsSelfPredicate())
                                                 .returnAll(true)
                                                 .build(),
-                                        "a Swamp"),
+                                        "a Swamp", false, false),
                                 "Sacrifice a Swamp to return Akuta, Born of Ash from your graveyard to the battlefield?")));
     }
 }

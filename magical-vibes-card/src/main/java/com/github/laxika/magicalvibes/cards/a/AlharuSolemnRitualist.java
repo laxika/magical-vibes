@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "8")
+@CardRegistration(set = "MOC", collectorNumber = "168")
 public class AlharuSolemnRitualist extends Card {
 
     public AlharuSolemnRitualist() {

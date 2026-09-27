@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinHero;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HeroInTraining;
 import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,13 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CaptainAmericaUnbowed.class, GoblinHero.class, GrizzlyBears.class, MetathranSoldier.class})
+@CardUsed({CaptainAmericaUnbowed.class, HeroInTraining.class, GrizzlyBears.class, MetathranSoldier.class})
 class CaptainAmericaUnbowedTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it enters, your Soldiers and Heroes gain indestructible until end of turn")
     void entersAndProtectsSoldiersAndHeroes() {
-        Permanent hero = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroInTraining());
         Permanent soldier = harness.addToBattlefieldAndReturn(player1, new MetathranSoldier());
         Permanent nonMatching = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingSoldier = harness.addToBattlefieldAndReturn(player2, new MetathranSoldier());

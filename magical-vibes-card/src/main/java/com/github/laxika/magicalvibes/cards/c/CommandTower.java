@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "ANB", collectorNumber = "118")
 @CardRegistration(set = "TMC", collectorNumber = "63")
 @CardRegistration(set = "REX", collectorNumber = "26")
+@CardRegistration(set = "SOC", collectorNumber = "129")
 @CardRegistration(set = "C13", collectorNumber = "281")
 @CardRegistration(set = "C15", collectorNumber = "281")
 @CardRegistration(set = "CMD", collectorNumber = "269")
@@ -38,6 +39,13 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "60")
 @CardRegistration(set = "CMM", collectorNumber = "420")
 @CardRegistration(set = "CMM", collectorNumber = "659")
+@CardRegistration(set = "C21", collectorNumber = "284")
+@CardRegistration(set = "40K", collectorNumber = "270")
+@CardRegistration(set = "40K", collectorNumber = "271")
+@CardRegistration(set = "40K", collectorNumber = "272")
+@CardRegistration(set = "DSC", collectorNumber = "96")
+@CardRegistration(set = "LTC", collectorNumber = "301")
+@CardRegistration(set = "TDC", collectorNumber = "107")
 public class CommandTower extends Card {
 
     public CommandTower() {

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(PatagiaGolem.class)
+@CardUsed({PatagiaGolem.class, GrizzlyBears.class})
 class PatagiaGolemTest extends BaseCardTest {
 
     @Test
@@ -60,7 +60,6 @@ class PatagiaGolemTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(GrizzlyBears.class)
     @DisplayName("Grants flying only to itself")
     void grantsFlyingOnlyToItself() {
         Permanent golem = addCreatureReady(player1, new PatagiaGolem());
@@ -86,8 +85,7 @@ class PatagiaGolemTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
     }

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "32")
+@CardRegistration(set = "SOC", collectorNumber = "169")
 public class SerraParagon extends Card {
 
     public SerraParagon() {

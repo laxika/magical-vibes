@@ -39,12 +39,17 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "249")
 @CardRegistration(set = "OMB", collectorNumber = "4")
 @CardRegistration(set = "PZA", collectorNumber = "1")
+@CardRegistration(set = "SOC", collectorNumber = "159")
 @CardRegistration(set = "MSC", collectorNumber = "141")
 @CardRegistration(set = "ECC", collectorNumber = "65")
 @CardRegistration(set = "ACR", collectorNumber = "81")
 @CardRegistration(set = "CMD", collectorNumber = "25")
 @CardRegistration(set = "CMM", collectorNumber = "49")
 @CardRegistration(set = "CMM", collectorNumber = "626")
+@CardRegistration(set = "FIC", collectorNumber = "248")
+@CardRegistration(set = "MOC", collectorNumber = "198")
+@CardRegistration(set = "NCC", collectorNumber = "208")
+@CardRegistration(set = "LTC", collectorNumber = "175")
 public class PathToExile extends Card {
 
     public PathToExile() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "223")
+@CardRegistration(set = "DSC", collectorNumber = "242")
 public class Brainstone extends Card {
 
     public Brainstone() {

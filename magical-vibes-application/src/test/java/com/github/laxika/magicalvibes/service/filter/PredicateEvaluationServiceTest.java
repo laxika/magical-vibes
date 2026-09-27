@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlled
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
@@ -65,6 +66,7 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -82,6 +84,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePr
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -131,8 +134,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
@@ -510,6 +515,23 @@ class PredicateEvaluationServiceTest {
                     null, null, 3)).isFalse();
             assertThat(evaluator.matchesCardPredicate(belowX, predicate, null, gd, player1Id,
                     null, null, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueEqualsXPredicate matches exactly")
+        void cardManaValueEqualsXPredicateMatchesExactly() {
+            Card oneMana = createCreature("One Mana", 1, 1, CardColor.BLUE);
+            oneMana.setManaCost("{1}");
+            Card twoMana = createCreature("Two Mana", 2, 2, CardColor.BLUE);
+            twoMana.setManaCost("{2}");
+            CardManaValueEqualsXPredicate predicate = new CardManaValueEqualsXPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(oneMana, predicate, null, gd, player1Id,
+                    null, null, 2)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id,
+                    null, null, 2)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(oneMana, predicate, null, gd, player1Id,
+                    null, null, null)).isTrue();
         }
 
         @Test
@@ -1670,6 +1692,21 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentBasePowerEqualsPredicate ignores counters and matches the current base power")
+        void basePowerEqualsPredicateIgnoresPowerModifiers() {
+            Permanent zeroBasePower = addPermanent(player1Id,
+                    createCreature("Zero Base Power", 0, 2, CardColor.GREEN));
+            zeroBasePower.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            Permanent nonzeroBasePower = addPermanent(player1Id,
+                    createCreature("Nonzero Base Power", 2, 2, CardColor.GREEN));
+            nonzeroBasePower.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+            PermanentBasePowerEqualsPredicate predicate = new PermanentBasePowerEqualsPredicate(0);
+            assertThat(evaluator.matchesPermanentPredicate(gd, zeroBasePower, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, nonzeroBasePower, predicate)).isFalse();
+        }
+
+        @Test
         @DisplayName("greatest power among controller's creatures is evaluated per permanent controller")
         void greatestPowerAmongControllerCreatures() {
             Permanent p1Small = addPermanent(player1Id,
@@ -1748,6 +1785,29 @@ class PredicateEvaluationServiceTest {
 
             gd.playerGraveyards.get(player1Id).remove(2);
             assertThat(evaluator.matchesPermanentPredicate(target, predicate, ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Power hand-size predicates use the source controller's hand and strict comparisons")
+        void powerComparedToSourceControllerHandSize() {
+            Permanent lower = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent equal = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Hill Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT)));
+            Permanent higher = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Air Elemental", 4, 4, CardColor.BLUE, List.of(CardSubtype.ELEMENTAL)));
+            gd.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            gd.playerHands.get(player2Id).addAll(List.of(new Card(), new Card(), new Card(), new Card()));
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(higher,
+                    new PermanentPowerGreaterThanSourceControllerHandSizePredicate(), ctx)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(equal,
+                    new PermanentPowerGreaterThanSourceControllerHandSizePredicate(), ctx)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(lower,
+                    new PermanentPowerLessThanSourceControllerHandSizePredicate(), ctx)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(equal,
+                    new PermanentPowerLessThanSourceControllerHandSizePredicate(), ctx)).isFalse();
         }
 
         @Test
@@ -2952,6 +3012,18 @@ class PredicateEvaluationServiceTest {
                     target, new PermanentSharesNameWithAnotherControlledPermanentPredicate(), context))
                     .isFalse();
         }
+    }
+
+    @Test
+    void enteredBattlefieldThisTurnPredicateWorksInStaticFilterEvaluation() {
+        Permanent entered = addPermanent(player1Id, createCreature("Entered", 2, 2, CardColor.GREEN));
+        Permanent older = addPermanent(player1Id, createCreature("Older", 2, 2, CardColor.GREEN));
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1Id, new ArrayList<>(List.of(entered.getCard())));
+        PermanentEnteredBattlefieldThisTurnPredicate predicate = new PermanentEnteredBattlefieldThisTurnPredicate();
+
+        assertThat(evaluator.matchesPermanentPredicate(gd, entered, predicate)).isTrue();
+        assertThat(evaluator.matchesStaticFilter(entered, predicate, FilterContext.of(gd))).isTrue();
+        assertThat(evaluator.matchesStaticFilter(older, predicate, FilterContext.of(gd))).isFalse();
     }
 
     @Test

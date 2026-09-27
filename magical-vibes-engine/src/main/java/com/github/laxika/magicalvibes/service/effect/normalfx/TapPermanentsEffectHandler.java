@@ -42,6 +42,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, effect);
             case SELF -> resolveSelf(gameData, entry);
+            case TRIGGERING -> resolveTriggering(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry);
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
@@ -98,6 +99,19 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " taps itself."));
         log.info("Game {} - {} taps itself", gameData.id, self.getCard().getName());
+    }
+
+    private void resolveTriggering(GameData gameData, StackEntry entry) {
+        UUID triggeringId = entry.getTriggeringPermanentId();
+        Permanent triggering = gameQueryService.findPermanentById(gameData, triggeringId);
+        if (triggering == null) {
+            return;
+        }
+
+        tapUntapSupport.tapPermanent(gameData, triggering);
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", triggering.getCard(), "."));
+        log.info("Game {} - {} taps triggering permanent {}", gameData.id,
+                entry.getCard().getName(), triggering.getCard().getName());
     }
 
     private void resolveEnchanted(GameData gameData, StackEntry entry) {

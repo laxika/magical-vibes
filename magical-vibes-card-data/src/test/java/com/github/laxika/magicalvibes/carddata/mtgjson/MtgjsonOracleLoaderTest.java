@@ -266,4 +266,26 @@ class MtgjsonOracleLoaderTest {
         assertThat(data.subtypes()).containsExactly(CardSubtype.TREASURE);
         assertThat(data.cardText()).isEqualTo("{T}, Sacrifice this token: Add one mana of any color.");
     }
+
+    @Test
+    void usesMscAlternatePrintingOnlyWhileBeginnerBoxNumberIsMissing() {
+        JsonNode alternate = MAPPER.readTree("""
+                { "name": "Ant-Man, Scott Lang", "number": "834", "rarity": "common" }
+                """);
+        JsonNode original = MAPPER.readTree("""
+                { "name": "Ant-Man, Scott Lang", "number": "513", "rarity": "rare" }
+                """);
+        Map<String, JsonNode> faces = new HashMap<>(Map.of("834", alternate));
+        Map<String, String> rarities = new HashMap<>(Map.of("834", "common"));
+
+        MtgjsonOracleLoader.applyMissingPrintingAliases("MSC", faces, rarities);
+        assertThat(faces.get("513")).isSameAs(alternate);
+        assertThat(rarities.get("513")).isEqualTo("common");
+
+        faces.put("513", original);
+        rarities.put("513", "rare");
+        MtgjsonOracleLoader.applyMissingPrintingAliases("MSC", faces, rarities);
+        assertThat(faces.get("513")).isSameAs(original);
+        assertThat(rarities.get("513")).isEqualTo("rare");
+    }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.a.AbundantGrowth;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PreyUpon;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.c.ChainLightning;
+import com.github.laxika.magicalvibes.cards.g.GiantStrength;
+import com.github.laxika.magicalvibes.cards.k.KoboldsOfKherKeep;
+import com.github.laxika.magicalvibes.cards.m.ManaDrain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,64 +16,62 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvoidFate.class, AbundantGrowth.class, Forest.class, GrizzlyBears.class, PreyUpon.class, Shock.class})
+@CardUsed({AvoidFate.class, Boomerang.class, ChainLightning.class, GiantStrength.class,
+        KoboldsOfKherKeep.class, ManaDrain.class})
 class AvoidFateTest extends BaseCardTest {
 
     @Test
     @DisplayName("Counters an instant that targets a permanent you control")
     void countersInstantTargetingYourPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep()).getId();
 
-        Shock shock = new Shock();
-        harness.setHand(player1, List.of(shock));
-        harness.addMana(player1, ManaColor.RED, 1);
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.setHand(player2, List.of(new AvoidFate()));
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, targetId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
+        harness.castInstant(player2, 0, boomerang.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Shock");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Boomerang");
+        harness.assertOnBattlefield(player2, "Kobolds of Kher Keep");
         harness.assertInGraveyard(player2, "Avoid Fate");
     }
 
     @Test
     @DisplayName("Counters an Aura spell that targets a permanent you control")
     void countersAuraTargetingYourPermanent() {
-        harness.addToBattlefield(player2, new Forest());
-        UUID targetId = harness.getPermanentId(player2, "Forest");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep()).getId();
 
-        AbundantGrowth growth = new AbundantGrowth();
-        harness.setHand(player1, List.of(growth));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        GiantStrength giantStrength = new GiantStrength();
+        harness.setHand(player1, List.of(giantStrength));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.setHand(player2, List.of(new AvoidFate()));
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castEnchantment(player1, 0, targetId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, growth.getId());
+        harness.castInstant(player2, 0, giantStrength.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Abundant Growth");
-        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Giant Strength");
+        harness.assertOnBattlefield(player2, "Kobolds of Kher Keep");
         harness.assertInGraveyard(player2, "Avoid Fate");
     }
 
     @Test
     @DisplayName("Cannot target an instant that targets an opponent's permanent")
     void cannotTargetInstantTargetingOpponentsPermanent() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep()).getId();
 
-        Shock shock = new Shock();
-        harness.setHand(player1, List.of(shock));
-        harness.addMana(player1, ManaColor.RED, 1);
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.setHand(player2, List.of(new AvoidFate()));
         harness.addMana(player2, ManaColor.GREEN, 1);
@@ -81,29 +79,46 @@ class AvoidFateTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, shock.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, boomerang.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Cannot target a sorcery even when it targets a permanent you control")
     void cannotTargetSorcery() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID ownTargetId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID opponentTargetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID opponentTargetId = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep()).getId();
 
-        PreyUpon preyUpon = new PreyUpon();
-        harness.setHand(player1, List.of(preyUpon));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        ChainLightning chainLightning = new ChainLightning();
+        harness.setHand(player1, List.of(chainLightning));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.setHand(player2, List.of(new AvoidFate()));
         harness.addMana(player2, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, List.of(ownTargetId, opponentTargetId));
+        harness.castSorcery(player1, 0, List.of(opponentTargetId));
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, preyUpon.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, chainLightning.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target an instant that targets a spell instead of a permanent")
+    void cannotTargetInstantTargetingSpell() {
+        ChainLightning chainLightning = new ChainLightning();
+        harness.setHand(player1, List.of(chainLightning, new AvoidFate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        ManaDrain manaDrain = new ManaDrain();
+        harness.setHand(player2, List.of(manaDrain));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, chainLightning.getId());
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, manaDrain.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

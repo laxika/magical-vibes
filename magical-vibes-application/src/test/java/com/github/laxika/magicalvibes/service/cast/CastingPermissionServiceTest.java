@@ -173,6 +173,30 @@ class CastingPermissionServiceTest {
     }
 
     @Test
+    @DisplayName("filtered graveyard-land permission only allows matching lands")
+    void filteredGraveyardLandPermission() {
+        Card source = new Card();
+        CardSubtypePredicate filter = new CardSubtypePredicate(CardSubtype.FOREST);
+        source.addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect(filter));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card forest = new Card();
+        forest.setType(CardType.LAND);
+        forest.setSubtypes(List.of(CardSubtype.FOREST));
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(forest), eq(filter), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(true);
+
+        Card island = new Card();
+        island.setType(CardType.LAND);
+        island.setSubtypes(List.of(CardSubtype.ISLAND));
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(island), eq(filter), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(false);
+
+        assertThat(svc.canPlayLandFromGraveyard(gd, player1Id, forest)).isTrue();
+        assertThat(svc.canPlayLandFromGraveyard(gd, player1Id, island)).isFalse();
+    }
+
+    @Test
     @DisplayName("conditional graveyard-spell permission applies only when its condition is met")
     void conditionalGraveyardSpellPermission() {
         Card source = new Card();

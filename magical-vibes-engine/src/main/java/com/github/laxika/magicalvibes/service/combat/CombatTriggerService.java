@@ -126,7 +126,9 @@ public class CombatTriggerService {
                                 effectsForStack.add(conditional.wrapped());
                                 autoTargetOpponent = true;
                             }
-                        } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
+                        } else if (slot != EffectSlot.ON_ATTACK
+                                && effect instanceof CombatOpponentReferencingEffect c
+                                && c.referencesCombatOpponent()) {
                             if (combatOpponent != null
                                     && (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
                                     || predicateEvaluationService.matchesPermanentPredicate(

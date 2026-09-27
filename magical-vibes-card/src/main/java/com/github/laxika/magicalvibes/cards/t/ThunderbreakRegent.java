@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "162")
+@CardRegistration(set = "TDC", collectorNumber = "241")
 public class ThunderbreakRegent extends Card {
 
     public ThunderbreakRegent() {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -66,7 +67,9 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGra
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
@@ -77,6 +80,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCas
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -264,7 +268,8 @@ public class CastingPermissionService {
         synchronized (gameData.floatingEffects) {
             if (gameData.floatingEffects.stream().anyMatch(floating ->
                     playerId.equals(floating.affectedPlayerId())
-                            && floating.effect() instanceof PlayerCantCastSpellsEffect)) {
+                            && (floating.effect() instanceof PlayerCantCastSpellsEffect
+                            || floating.effect() instanceof PlayerCantCastSpellsAndAttackWithCreaturesEffect))) {
                 return true;
             }
         }
@@ -756,6 +761,14 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.CantCastSpellsSharingColorWithMostRecentSpellEffect) {
+                        if (mostRecentSpell != null && card != null
+                                && gameQueryService.getEffectiveCardColors(gameData, mostRecentSpell).stream()
+                                .anyMatch(gameQueryService.getEffectiveCardColors(gameData, card)::contains)) {
+                            return true;
+                        }
+                        continue;
+                    }
                     if (effect instanceof SpellCastingRestrictionEffect restriction
                             && restriction.preventsCasting(perm, mostRecentSpell, card, chosenX)) {
                         return true;
@@ -1028,6 +1041,7 @@ public class CastingPermissionService {
                 || (fromLibraryTop && hasTopLibraryFlashGrant(gameData, playerId, card))
                 || grantsItselfFlashTiming(card)
                 || hasMetFlashCastCondition(gameData, playerId, card, xValue)
+                || card.getFlashCastTargetPredicate() != null
                 || hasAvailableFlashAlternateCast(gameData, playerId, card)
                 || hasSneakTiming(gameData, playerId, card);
         // A card-specific timing restriction is itself the permission to cast outside normal
@@ -1177,6 +1191,26 @@ public class CastingPermissionService {
                 .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
                 .sum();
         return availablePower >= teamworkCost.requiredPower();
+    }
+
+    /**
+     * Checks the target-dependent part of a conditional flash permission after targets are chosen.
+     * The normal sorcery window never needs the target-dependent permission.
+     */
+    public boolean isFlashCastTargetPermissionSatisfied(GameData gameData, UUID playerId, Card card,
+                                                        UUID targetId, List<UUID> targetIds) {
+        PermanentPredicate predicate = card.getFlashCastTargetPredicate();
+        if (predicate == null || sorceryTimingAvailable(gameData, playerId)) {
+            return true;
+        }
+        Stream<UUID> candidates = Stream.concat(
+                targetId == null ? Stream.empty() : Stream.of(targetId),
+                targetIds == null ? Stream.empty() : targetIds.stream());
+        return candidates.distinct()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(Objects::nonNull)
+                .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, predicate));
     }
 
     /**
@@ -1361,8 +1395,27 @@ public class CastingPermissionService {
                 .anyMatch(PlayLandsFromGraveyardPermission.class::isInstance);
     }
 
+    /** Returns whether a specific land matches a currently available graveyard-play permission. */
+    public boolean canPlayLandFromGraveyard(GameData gameData, UUID playerId, Card card) {
+        if (findGraveyardLandPermission(gameData, playerId, card).isPresent()) {
+            return true;
+        }
+        return gameData.emblems.stream()
+                .filter(emblem -> emblem.controllerId().equals(playerId))
+                .flatMap(emblem -> emblem.staticEffects().stream())
+                .filter(PlayLandsFromGraveyardPermission.class::isInstance)
+                .map(PlayLandsFromGraveyardPermission.class::cast)
+                .anyMatch(permission -> matchesLandFilter(gameData, playerId, card, permission, null));
+    }
+
     /** Returns the available permanent granting this player permission to play a land from a graveyard. */
     public Optional<GraveyardLandPermission> findGraveyardLandPermission(GameData gameData, UUID playerId) {
+        return findGraveyardLandPermission(gameData, playerId, null);
+    }
+
+    /** Returns the available permanent permission that matches the given land, if any. */
+    public Optional<GraveyardLandPermission> findGraveyardLandPermission(
+            GameData gameData, UUID playerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         for (Permanent perm : battlefield == null ? List.<Permanent>of() : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
@@ -1376,10 +1429,22 @@ public class CastingPermissionService {
                         || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
                     continue;
                 }
+                if (card != null && !matchesLandFilter(gameData, playerId, card, permission,
+                        perm.getOriginalCard().getId())) {
+                    continue;
+                }
                 return Optional.of(new GraveyardLandPermission(perm.getId(), permission));
             }
         }
         return Optional.empty();
+    }
+
+    private boolean matchesLandFilter(GameData gameData, UUID playerId, Card card,
+                                      PlayLandsFromGraveyardPermission permission,
+                                      UUID sourceCardId) {
+        return permission.landFilter() == null
+                || predicateEvaluationService.matchesCardPredicate(
+                card, permission.landFilter(), sourceCardId, gameData, playerId);
     }
 
     public boolean isLandPlayFromGraveyardRestricted(GameData gameData, UUID playerId) {
@@ -1529,30 +1594,35 @@ public class CastingPermissionService {
             return Optional.empty();
         }
         for (Permanent perm : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                continue;
+            }
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
                         || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
                     continue;
                 }
-                if (permission.availabilityCondition() != null
-                        && !conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
-                        ConditionContext.forCasting(playerId))) {
-                    continue;
-                }
-                if (permission.onlyDuringControllerTurn()
-                        && !playerId.equals(gameData.activePlayerId)) {
-                    continue;
-                }
-                if (permission.oncePerControllerTurn()
-                        && (!playerId.equals(gameData.activePlayerId)
-                            || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
+                if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
                     continue;
                 }
                 return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
             }
         }
         return Optional.empty();
+    }
+
+    private boolean isGraveyardPermissionAvailable(GameData gameData, UUID playerId,
+                                                     Permanent source,
+                                                     CastSpellsFromGraveyardPermission permission) {
+        return (permission.availabilityCondition() == null
+                || conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
+                ConditionContext.forCasting(playerId)))
+                && (!permission.onlyDuringControllerTurn()
+                || playerId.equals(gameData.activePlayerId))
+                && (!permission.oncePerControllerTurn()
+                || (playerId.equals(gameData.activePlayerId)
+                && !gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(source.getId())));
     }
 
     /**
@@ -2086,8 +2156,52 @@ public class CastingPermissionService {
                                                      AllowCastFromTopOfLibraryEffect permission) {
         if (permission.additionalCosts().isEmpty()) return true;
         OptionalInt counterCost = permission.counterRemovalCost();
-        return counterCost.isPresent()
-                && hasSufficientCountersAmongControlledCreatures(gameData, playerId, counterCost.getAsInt());
+        if (counterCost.isPresent()) {
+            return hasSufficientCountersAmongControlledCreatures(gameData, playerId, counterCost.getAsInt());
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        for (CastingCost cost : permission.additionalCosts()) {
+            if (!(cost instanceof SacrificePermanentsCost sacrificeCost)) {
+                return false;
+            }
+            long matching = battlefield.stream()
+                    .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                    .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, sacrificeCost.filter(),
+                            FilterContext.of(gameData).withSourceControllerId(playerId)))
+                    .count();
+            if (matching < sacrificeCost.count()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Returns the additional casting costs imposed by the selected top-library permission. */
+    public List<CastingCost> findTopLibraryAdditionalCosts(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)
+                || gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
+                || hasAnyLibraryTopPermission(gameData, playerId)
+                || hasLibraryTopPermissionForCard(gameData, playerId, card)) {
+            return List.of();
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return List.of();
+        for (Permanent perm : battlefield) {
+            if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (!(resolved instanceof AllowCastFromTopOfLibraryEffect allow)
+                        || !matchesTopLibraryPermission(gameData, playerId, perm, card, allow)
+                        || (allow.oncePerTurn()
+                        && gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(perm.getId()))
+                        || !canPayTopLibraryAdditionalCosts(gameData, playerId, allow)) {
+                    continue;
+                }
+                return allow.additionalCosts();
+            }
+        }
+        return List.of();
     }
 
     /** Marks the once-each-turn top-library permission used by a successful normal-cost cast. */

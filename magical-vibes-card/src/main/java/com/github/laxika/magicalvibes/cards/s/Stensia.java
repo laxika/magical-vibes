@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "34")
 @CardRegistration(set = "OPCA", collectorNumber = "74")
+@CardRegistration(set = "MOC", collectorNumber = "159")
 public class Stensia extends Card {
 
     public Stensia() {

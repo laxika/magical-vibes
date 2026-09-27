@@ -1,27 +1,31 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FirstVolley;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.i.IreOfKaminari;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KitsunePalliator.class, GnarledMass.class, IreOfKaminari.class, FirstVolley.class})
 class KitsunePalliatorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating shields every creature and every player with a 1-damage shield")
     void shieldsEveryCreatureAndPlayer() {
         Permanent palliator = addReadyPalliator();
-        Permanent friendly = addReadyBear(player1);
-        Permanent enemy = addReadyBear(player2);
+        Permanent friendly = addReadyCreature(player1);
+        Permanent enemy = addReadyCreature(player2);
 
         activatePalliator(palliator);
 
@@ -36,13 +40,11 @@ class KitsunePalliatorTest extends BaseCardTest {
     @DisplayName("Only the next 1 damage to a shielded creature is prevented")
     void preventsOnlyOneDamageToCreature() {
         Permanent palliator = addReadyPalliator();
-        Permanent enemy = addReadyBear(player2);
+        Permanent enemy = addReadyCreature(player2);
 
         activatePalliator(palliator);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player1, 0, enemy.getId());
+        castIre(enemy.getId());
 
         assertThat(enemy.getMarkedDamage()).isEqualTo(1);
         assertThat(enemy.getDamagePreventionShield()).isEqualTo(0);
@@ -56,9 +58,7 @@ class KitsunePalliatorTest extends BaseCardTest {
 
         activatePalliator(palliator);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player1, 0, player2.getId());
+        castIre(player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
     }
@@ -70,7 +70,7 @@ class KitsunePalliatorTest extends BaseCardTest {
 
         activatePalliator(palliator);
 
-        Permanent latecomer = addReadyBear(player2);
+        Permanent latecomer = addReadyCreature(player2);
 
         assertThat(latecomer.getDamagePreventionShield()).isEqualTo(0);
     }
@@ -94,10 +94,7 @@ class KitsunePalliatorTest extends BaseCardTest {
     }
 
     private Permanent addReadyPalliator() {
-        harness.addToBattlefield(player1, new KitsunePalliator());
-        Permanent palliator = findPermanent(player1, "Kitsune Palliator");
-        palliator.setSummoningSick(false);
-        return palliator;
+        return addCreatureReady(player1, new KitsunePalliator());
     }
 
     private void activatePalliator(Permanent palliator) {
@@ -105,11 +102,16 @@ class KitsunePalliatorTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addReadyBear(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private void castIre(UUID targetId) {
+        harness.setGraveyard(player1, List.of(new FirstVolley(), new FirstVolley()));
+        harness.setHand(player1, List.of(new IreOfKaminari()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player1, 0, targetId);
+    }
+
+    private Permanent addReadyCreature(Player player) {
+        return addCreatureReady(player, new GnarledMass());
     }
 
     private int indexOf(Player player, Permanent perm) {

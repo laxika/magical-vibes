@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "252")
+@CardRegistration(set = "DSC", collectorNumber = "291")
 public class ObscuraStorefront extends Card {
 
     public ObscuraStorefront() {

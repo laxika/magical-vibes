@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ class ViashinoSlasherTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability gives Viashino Slasher +1/-1 until end of turn")
     void activatingAbilityBoostsSelf() {
-        Permanent slasher = addReadySlasher(player1);
+        Permanent slasher = addCreatureReady(player1, new ViashinoSlasher());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -29,9 +28,9 @@ class ViashinoSlasherTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ability can be activated multiple times and its boosts stack")
+    @DisplayName("Repeated activations stack and put Viashino Slasher into its owner's graveyard")
     void boostsStack() {
-        Permanent slasher = addReadySlasher(player1);
+        Permanent slasher = addCreatureReady(player1, new ViashinoSlasher());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -42,12 +41,29 @@ class ViashinoSlasherTest extends BaseCardTest {
 
         assertThat(slasher.getPowerModifier()).isEqualTo(2);
         assertThat(slasher.getToughnessModifier()).isEqualTo(-2);
+        harness.assertNotOnBattlefield(player1, "Viashino Slasher");
+        harness.assertInGraveyard(player1, "Viashino Slasher");
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while Viashino Slasher has summoning sickness")
+    void canActivateWhileSummoningSick() {
+        Permanent slasher = new Permanent(new ViashinoSlasher());
+        slasher.setSummoningSick(true);
+        gd.playerBattlefields.get(player1.getId()).add(slasher);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(slasher.getPowerModifier()).isEqualTo(1);
+        assertThat(slasher.getToughnessModifier()).isEqualTo(-1);
     }
 
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent slasher = addReadySlasher(player1);
+        Permanent slasher = addCreatureReady(player1, new ViashinoSlasher());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -63,17 +79,10 @@ class ViashinoSlasherTest extends BaseCardTest {
     @Test
     @DisplayName("The ability requires red mana")
     void abilityRequiresRedMana() {
-        addReadySlasher(player1);
+        addCreatureReady(player1, new ViashinoSlasher());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addReadySlasher(Player player) {
-        Permanent permanent = new Permanent(new ViashinoSlasher());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

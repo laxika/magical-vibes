@@ -61,6 +61,22 @@ class FlyingCarpetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not grant flying if the target leaves before resolution")
+    void doesNotGrantFlyingWhenTargetLeavesBeforeResolution() {
+        addReadyCarpet(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Flying is removed at end of turn")
     void flyingRemovedAtEndOfTurn() {
         addReadyCarpet(player1);

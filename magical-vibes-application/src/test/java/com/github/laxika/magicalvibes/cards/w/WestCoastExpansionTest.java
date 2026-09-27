@@ -23,7 +23,7 @@ class WestCoastExpansionTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new WestCoastExpansion()));
         addManaForX(3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -37,7 +37,7 @@ class WestCoastExpansionTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new WestCoastExpansion(), new CaptainAmericaTeamLeader()));
         addManaForX(4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -54,7 +54,7 @@ class WestCoastExpansionTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new WestCoastExpansion(), hero, bears));
         addManaForX(5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 5);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

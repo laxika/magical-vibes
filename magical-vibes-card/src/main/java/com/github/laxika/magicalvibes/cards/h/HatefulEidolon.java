@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachAuraAttachedToDyingCreatureEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "101")
+@CardRegistration(set = "SOC", collectorNumber = "215")
 public class HatefulEidolon extends Card {
 
     public HatefulEidolon() {

@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -66,14 +69,16 @@ class OracleLoaderIntegrationTest {
         assertThat(new RavagerOfTheFells().getName()).isEqualTo("Ravager of the Fells");
 
         // Every implemented printing must resolve to oracle data
+        List<String> missingOracleData = new ArrayList<>();
         for (CardSet set : CardSet.values()) {
             for (CardPrinting printing : catalog.getPrintings(set)) {
                 Card card = printing.factory().get();
-                assertThat(card.getName())
-                        .as("oracle data for %s #%s (%s)", set.getCode(), printing.collectorNumber(),
-                                card.getClass().getSimpleName())
-                        .isNotNull();
+                if (card.getName() == null) {
+                    missingOracleData.add("%s #%s (%s)".formatted(set.getCode(), printing.collectorNumber(),
+                            card.getClass().getSimpleName()));
+                }
             }
         }
+        assertThat(missingOracleData).as("printings without oracle data").isEmpty();
     }
 }

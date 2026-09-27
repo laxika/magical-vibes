@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "115")
+@CardRegistration(set = "TDC", collectorNumber = "248")
 public class AxebaneGuardian extends Card {
 
     public AxebaneGuardian() {

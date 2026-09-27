@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Memnite;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
+import com.github.laxika.magicalvibes.cards.g.GlassGolem;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -15,35 +14,35 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TolsimirWolfblood.class, GrizzlyBears.class, SavannahLions.class, Memnite.class})
+@CardUsed({TolsimirWolfblood.class, TrophyHunter.class, CourierHawk.class, GlassGolem.class})
 class TolsimirWolfbloodTest extends BaseCardTest {
 
     @Test
     @DisplayName("Other green and white creatures you control get +1/+1")
     void boostsOtherGreenAndWhiteCreatures() {
         addCreatureReady(player1, new TolsimirWolfblood());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lions = addCreatureReady(player1, new SavannahLions());
+        Permanent hunter = addCreatureReady(player1, new TrophyHunter());
+        Permanent hawk = addCreatureReady(player1, new CourierHawk());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, lions)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, lions)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("The boost excludes Tolsimir, opponents, and creatures of other colors")
     void excludesSelfOpponentsAndOtherColors() {
         Permanent tolsimir = addCreatureReady(player1, new TolsimirWolfblood());
-        Permanent ownMemnite = addCreatureReady(player1, new Memnite());
-        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownGlassGolem = addCreatureReady(player1, new GlassGolem());
+        Permanent opponentHunter = addCreatureReady(player2, new TrophyHunter());
 
         assertThat(gqs.getEffectivePower(gd, tolsimir)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, tolsimir)).isEqualTo(4);
-        assertThat(gqs.getEffectivePower(gd, ownMemnite)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, ownMemnite)).isEqualTo(1);
-        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownGlassGolem)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownGlassGolem)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentHunter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentHunter)).isEqualTo(3);
     }
 
     @Test

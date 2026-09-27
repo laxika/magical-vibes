@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "213")
+@CardRegistration(set = "SOC", collectorNumber = "297")
+@CardRegistration(set = "C21", collectorNumber = "209")
+@CardRegistration(set = "DSC", collectorNumber = "214")
 public class BiomassMutation extends Card {
 
     public BiomassMutation() {

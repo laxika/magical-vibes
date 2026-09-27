@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.VotingResult;
 
 import java.util.UUID;
 import java.util.Map;
@@ -57,6 +58,9 @@ public sealed interface TriggerContext {
             return castZone == Zone.HAND;
         }
     }
+
+    /** Context for a scheme being set in motion. */
+    record SchemeSetInMotion(StackEntry schemeEntry, UUID settingPlayerId) implements TriggerContext {}
 
     record GiftGiven(UUID giverId) implements TriggerContext {}
 
@@ -121,6 +125,9 @@ public sealed interface TriggerContext {
 
     /** Context for opponent-mill triggers. */
     record Mill(UUID milledPlayerId, int milledCount) implements TriggerContext {}
+
+    /** Context for a mill event containing one or more nonland cards. */
+    record NonlandCardsMilled(UUID milledPlayerId, int nonlandCardCount) implements TriggerContext {}
 
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
@@ -561,14 +568,24 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness, boolean wasCreature,
+                                   int dyingCreatureToughness, int dyingCreatureManaValue,
+                                   boolean wasCreature,
                                    List<UUID> dyingPermanentCardIds) implements TriggerContext {
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness) {
             this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
-                    dyingCreaturePower, dyingCreatureToughness, true,
+                    dyingCreaturePower, dyingCreatureToughness, 0, true,
                     dyingCreatureCardId == null ? List.of() : List.of(dyingCreatureCardId));
+        }
+
+        public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                       UUID dyingCreatureCardId, int dyingCreaturePower,
+                                       int dyingCreatureToughness, boolean wasCreature,
+                                       List<UUID> dyingPermanentCardIds) {
+            this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
+                    dyingCreaturePower, dyingCreatureToughness, 0, wasCreature,
+                    dyingPermanentCardIds);
         }
 
         @Override
@@ -790,7 +807,16 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
      */
-    record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
+    record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId, List<Card> cards)
+            implements TriggerContext {
+        public ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) {
+            this(graveyardOwnerId, List.of());
+        }
+
+        public ControllerCardsLeaveGraveyard {
+            cards = List.copyOf(cards);
+        }
+    }
 
     /** Context for a card put from the controller's graveyard into their hand. */
     record ControllerCardReturnedFromGraveyardToHand(UUID graveyardOwnerId, Card returnedCard)
@@ -814,6 +840,10 @@ public sealed interface TriggerContext {
     /** Context for creatures exiled from the battlefield, regardless of controller. */
     record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId,
                                          int exiledPowerAtTrigger)
+            implements TriggerContext {}
+
+    /** Context for artifacts exiled from the battlefield, regardless of controller. */
+    record ArtifactExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
             implements TriggerContext {}
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
@@ -889,6 +919,9 @@ public sealed interface TriggerContext {
     }
 
     record Crime(UUID committingPlayerId) implements TriggerContext {}
+
+    /** Context for abilities that trigger after all players finish voting. */
+    record VotingFinished(VotingResult result) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
     record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,

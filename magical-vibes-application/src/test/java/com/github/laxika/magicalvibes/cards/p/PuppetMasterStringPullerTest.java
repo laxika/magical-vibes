@@ -40,17 +40,18 @@ class PuppetMasterStringPullerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Combat damage from a goaded creature creates a Treasure")
-    void combatDamageFromGoadedCreatureCreatesTreasure() {
+    @DisplayName("Combat damage to Puppet Master's controller does not create a Treasure")
+    void combatDamageToControllerDoesNotCreateTreasure() {
         addCreatureReady(player1, new PuppetMasterStringPuller());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         goadTarget(target);
 
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
         resolveAllTriggers();
 
-        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
@@ -63,8 +64,8 @@ class PuppetMasterStringPullerTest extends BaseCardTest {
 
         Permanent study = harness.addToBattlefieldAndReturn(player2, new HermeticStudy());
         study.setAttachedTo(target.getId());
-        int studyIndex = gd.playerBattlefields.get(player2.getId()).indexOf(study);
-        harness.activateAbility(player2, studyIndex, null, player1.getId());
+        int creatureIndex = gd.playerBattlefields.get(player2.getId()).indexOf(target);
+        harness.activateAbility(player2, creatureIndex, null, player1.getId());
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Treasure")).isZero();

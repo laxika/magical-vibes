@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "67")
+@CardRegistration(set = "MOC", collectorNumber = "239")
 public class SyrElenoraTheDiscerning extends Card {
 
     public SyrElenoraTheDiscerning() {

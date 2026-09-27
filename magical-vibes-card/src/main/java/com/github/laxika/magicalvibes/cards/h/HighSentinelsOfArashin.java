@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "13")
+@CardRegistration(set = "MOC", collectorNumber = "189")
 public class HighSentinelsOfArashin extends Card {
 
     public HighSentinelsOfArashin() {

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +17,6 @@ class ElvesOfDeepShadowTest extends BaseCardTest {
     @DisplayName("Tapping adds {B} and deals 1 damage to its controller")
     void tapForBlackMana() {
         Permanent elves = addCreatureReady(player1, new ElvesOfDeepShadow());
-        GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, null, null);
@@ -27,7 +25,8 @@ class ElvesOfDeepShadowTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        harness.assertLife(player1, lifeBefore - 1);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -40,5 +39,15 @@ class ElvesOfDeepShadowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ElvesOfDeepShadow());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 }

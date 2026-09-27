@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VoyagerStaff;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,69 +14,102 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClingingDarkness.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({ClingingDarkness.class, VoyagerStaff.class, Watchwolf.class})
 class ClingingDarknessTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Clinging Darkness attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
 
         harness.setHand(player1, List.of(new ClingingDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Clinging Darkness")
-                        && bears.getId().equals(p.getAttachedTo()));
+                        && creature.getId().equals(p.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Clinging Darkness can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new Watchwolf());
+
+        harness.setHand(player1, List.of(new ClingingDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Clinging Darkness");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Enchanted creature gets -4/-1")
     void enchantedCreatureGetsDebuff() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
 
-        Permanent aura = new Permanent(new ClingingDarkness());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ClingingDarkness());
+        aura.setAttachedTo(creature.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Clinging Darkness stops affecting the creature when it is removed")
     void effectsStopWhenRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
 
-        Permanent aura = new Permanent(new ClingingDarkness());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ClingingDarkness());
+        aura.setAttachedTo(creature.getId());
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("Clinging Darkness fizzles if its target is removed before resolution")
-    void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+    @DisplayName("Clinging Darkness goes to its owner's graveyard when its creature leaves")
+    void goesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
 
         harness.setHand(player1, List.of(new ClingingDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Clinging Darkness");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+    }
+
+    @Test
+    @DisplayName("Clinging Darkness fizzles if its target is removed before resolution")
+    void fizzlesIfTargetRemoved() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+
+        harness.setHand(player1, List.of(new ClingingDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Clinging Darkness");
@@ -86,12 +119,10 @@ class ClingingDarknessTest extends BaseCardTest {
     @Test
     @DisplayName("Clinging Darkness cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new VoyagerStaff());
         harness.setHand(player1, List.of(new ClingingDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

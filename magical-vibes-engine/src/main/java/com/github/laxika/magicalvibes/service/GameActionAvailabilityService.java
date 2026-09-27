@@ -25,6 +25,8 @@ import java.util.*;
 @Service
 public class GameActionAvailabilityService {
 
+    private static final Set<CardSubtype> SEANCE_BOARD_SUBTYPES = Set.of(CardSubtype.DEMON, CardSubtype.SPIRIT);
+
     private final GameQueryService gameQueryService;
     private final ValidTargetService validTargetService;
     private final CastingCostService castingCostService;
@@ -69,6 +71,13 @@ public class GameActionAvailabilityService {
      */
     public PotentialManaService potentialManaService() {
         return potentialManaService;
+    }
+
+    private boolean isSeanceBoardSpell(GameData gameData, UUID playerId, Card card) {
+        return card.hasType(CardType.INSTANT)
+                || card.hasType(CardType.SORCERY)
+                || gameQueryService.getCardSubtypes(card, gameData, playerId).stream()
+                .anyMatch(SEANCE_BOARD_SUBTYPES::contains);
     }
 
     public List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
@@ -524,6 +533,12 @@ public class GameActionAvailabilityService {
         boolean needsSpellCastTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
         Integer maxXValue = maxAnnounceableX(card, pool);
+        if (!targetsAlreadyDeclared
+                && card.getFlashCastTargetPredicate() != null
+                && !castingPermissionService.sorceryTimingAvailable(gameData, playerId)
+                && !hasValidFlashCastTarget(gameData, card, playerId, maxXValue)) {
+            return false;
+        }
         boolean externalXCanBeZero = maxXValue == null
                 && card.hasXScaledTargets()
                 && card.getEffectiveMinTargets(0) == 0;
@@ -534,7 +549,9 @@ public class GameActionAvailabilityService {
                 .toList();
         boolean allEffectTargetsOptional = !declaredTargetEffects.isEmpty()
                 && declaredTargetEffects.stream()
-                .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        || effect instanceof IndependentlyTargetedGraveyardCardsEffect
+                        && effect.hasOptionalTarget()
                         || effect instanceof ReturnCardFromGraveyardEffect returnEffect
                         && returnEffect.upTo()
                         || effect instanceof DealDividedDamageEffect dividedDamage
@@ -632,6 +649,19 @@ public class GameActionAvailabilityService {
         return cost != null && cost.hasX() ? cost.calculateMaxX(pool) : null;
     }
 
+    private boolean hasValidFlashCastTarget(GameData gameData, Card card, UUID playerId, Integer maxXValue) {
+        ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                gameData, card, playerId, List.of(), maxXValue);
+        if (validTargets == null) {
+            return false;
+        }
+        return validTargets.validPermanentIds().stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(Objects::nonNull)
+                .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, card.getFlashCastTargetPredicate()));
+    }
+
     private boolean canAffordKickerCost(GameData gameData, UUID playerId, Card card,
                                         ManaPool pool, int additionalGenericCost) {
         KickerEffect kicker = card.getEffects(EffectSlot.STATIC).stream()
@@ -684,6 +714,13 @@ public class GameActionAvailabilityService {
                 paymentPool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(false);
                 paymentPool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(true);
             }
+        }
+        if (isSeanceBoardSpell(gameData, playerId, card)
+                && paymentPool.getInstantSorceryOrSubtypeSpellOnlyManaTotal(SEANCE_BOARD_SUBTYPES) > 0) {
+            if (paymentPool == pool) {
+                paymentPool = new ManaPool(pool);
+            }
+            paymentPool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES);
         }
 
         String combinedManaCost = card.getManaCost() + kicker.cost();
@@ -902,6 +939,13 @@ public class GameActionAvailabilityService {
             paymentPool = new ManaPool(pool);
             paymentPool.promoteColoredSpellWithoutXOnlyMana();
         }
+        if (isSeanceBoardSpell(gameData, playerId, card)
+                && paymentPool.getInstantSorceryOrSubtypeSpellOnlyManaTotal(SEANCE_BOARD_SUBTYPES) > 0) {
+            if (paymentPool == pool) {
+                paymentPool = new ManaPool(pool);
+            }
+            paymentPool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES);
+        }
         ManaPool initialPaymentPool = paymentPool;
         // Vizier of the Menagerie: eligible spells can be paid with mana of any type.
         if (!card.isRequiresNoMana()
@@ -1078,6 +1122,13 @@ public class GameActionAvailabilityService {
             if (cost.canPay(paymentPool, additionalCost - maxReduction)) {
                 return true;
             }
+        }
+
+        int counterCostReduction = additionalSpellCostService.maximumRemoveCountersForCostReduction(
+                gameData, playerId, card);
+        if (counterCostReduction > 0
+                && cost.canPay(paymentPool, additionalCost - counterCostReduction)) {
+            return true;
         }
 
         // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)
@@ -1333,7 +1384,7 @@ public class GameActionAvailabilityService {
                     .orElse(false);
             if (card.hasType(CardType.LAND)
                     && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
-                    && (canPlayAnyLandsFromGraveyard
+                    && (castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card)
                     || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
                     || hasMayhemPermission)) {
                 playable.add(i);
@@ -1365,7 +1416,7 @@ public class GameActionAvailabilityService {
             return false;
         }
         boolean hasPermission = playerId.equals(graveyardOwnerId)
-                ? castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId)
+                ? castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card)
                 : false;
         return hasPermission || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
     }

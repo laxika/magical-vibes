@@ -278,6 +278,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.combatDamageSourceSubtypesThisTurn.clear();
+        gameData.combatDamageSourceNamesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
@@ -331,6 +332,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.playersWhoCreatedTokensThisTurn.clear();
+        gameData.treasureTokensCreatedThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.sacrificedPermanentCountThisTurn.clear();
         gameData.permanentsSacrificedThisTurn.clear();
@@ -357,6 +359,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.landsPlayedThisTurn.put(playerId, 0);
             gameData.additionalLandsThisTurn.put(playerId, 0);
             gameData.cardsDrawnThisTurn.put(playerId, 0);
+            gameData.cardsDrawnLastTurn.put(playerId, 0);
             gameData.cardsDiscardedThisTurn.put(playerId, 0);
             gameData.playerDamagePreventionShields.put(playerId, 0);
             gameData.playerCombatDamagePreventionShields.put(playerId, 0);
@@ -384,6 +387,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.clear();
+        gameData.playersWhoControlledModifiedCreatureDiedThisTurn.clear();
 
         gameData.interaction.clearAwaitingInput();
         gameData.turnNumber = 1;

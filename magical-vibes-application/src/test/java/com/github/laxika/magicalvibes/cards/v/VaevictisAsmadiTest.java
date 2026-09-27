@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VaevictisAsmadi.class})
 class VaevictisAsmadiTest extends BaseCardTest {
 
     @Test
@@ -73,6 +75,31 @@ class VaevictisAsmadiTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Vaevictis Asmadi");
+    }
+
+    @Test
+    @DisplayName("Accepting the upkeep payment without enough mana still sacrifices Vaevictis Asmadi")
+    void insufficientUpkeepPaymentSacrificesDragon() {
+        addDragon();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Vaevictis Asmadi");
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        addDragon();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Vaevictis Asmadi");
     }
 
     private Permanent addDragon() {

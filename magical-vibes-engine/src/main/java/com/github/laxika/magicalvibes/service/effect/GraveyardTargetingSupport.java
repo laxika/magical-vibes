@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardP
 import com.github.laxika.magicalvibes.model.effect.ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToOneOfEachCardTypeFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTargetCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
@@ -127,6 +128,10 @@ public class GraveyardTargetingSupport {
                     ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD : GraveyardSearchScope.ALL_GRAVEYARDS,
                     "to exile", exile.maxTargets(), exile.graveyardChoiceMinTargets(), null,
                     exile.singleGraveyard());
+        }
+        if (effect instanceof ExileUpToOneOfEachCardTypeFromGraveyardEffect exile) {
+            return new Target(null, GraveyardSearchScope.OPPONENT_GRAVEYARD,
+                    "to exile", exile.graveyardChoiceMaxTargets(), exile.graveyardChoiceMinTargets());
         }
         if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
             return findTarget(List.of(exileThen.thenEffect()));
@@ -235,7 +240,8 @@ public class GraveyardTargetingSupport {
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> "into its owner's library";
                 case EXILE -> "to exile";
                 case DREDGE -> "with dredge";
-                case MAY_ABILITY_TARGET, COPY_ON_ENTER -> "as chosen";
+                case MAY_ABILITY_TARGET, RANDOM_PLAYER_GRAVEYARD_COPY, COPY_ON_ENTER,
+                        COPY_FROM_LEAVING_GRAVEYARD -> "as chosen";
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,
                     returnEffect.upTo() ? 0 : 1, returnEffect.dynamicMaxManaValue());

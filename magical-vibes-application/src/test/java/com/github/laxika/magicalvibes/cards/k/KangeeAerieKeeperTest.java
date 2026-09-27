@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DreamThrush;
+import com.github.laxika.magicalvibes.cards.n.NomadicElf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KangeeAerieKeeper.class, DreamThrush.class, NomadicElf.class})
 class KangeeAerieKeeperTest extends BaseCardTest {
 
     @Test
@@ -41,6 +43,7 @@ class KangeeAerieKeeperTest extends BaseCardTest {
 
         Permanent kangee = findPermanent(player1, "Kangee, Aerie Keeper");
         assertThat(kangee.getCounterCount(CounterType.FEATHER)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     @Test
@@ -48,13 +51,13 @@ class KangeeAerieKeeperTest extends BaseCardTest {
     void boostsOtherBirdsByFeatherCounterCount() {
         Permanent kangee = addCreatureReady(player1, new KangeeAerieKeeper());
         kangee.setCounterCount(CounterType.FEATHER, 2);
-        Permanent ownBird = addCreatureReady(player1, new BirdsOfParadise());
-        Permanent opponentBird = addCreatureReady(player2, new BirdsOfParadise());
-        Permanent nonBird = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownBird = addCreatureReady(player1, new DreamThrush());
+        Permanent opponentBird = addCreatureReady(player2, new DreamThrush());
+        Permanent nonBird = addCreatureReady(player1, new NomadicElf());
 
-        assertThat(gqs.getEffectivePower(gd, ownBird)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBird)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ownBird)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, opponentBird)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBird)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, opponentBird)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, nonBird)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, nonBird)).isEqualTo(2);

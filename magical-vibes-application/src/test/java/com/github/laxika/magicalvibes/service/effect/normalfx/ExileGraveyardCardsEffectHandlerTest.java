@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -125,7 +127,7 @@ class ExileGraveyardCardsEffectHandlerTest {
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("exiled") && logEntry.plainText().contains("2 cards")));
             // Two cards leaving the graveyard in one event fires a single leave-graveyard trigger
-            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
+            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(eq(gd), eq(player2Id), any());
         }
 
         @Test
@@ -142,7 +144,7 @@ class ExileGraveyardCardsEffectHandlerTest {
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("already empty")));
             // No cards left the graveyard, so no trigger fires
-            verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any());
+            verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any(), any());
         }
     }
 
@@ -169,7 +171,7 @@ class ExileGraveyardCardsEffectHandlerTest {
                     argThat(card -> card.getName().equals("Grizzly Bears")));
             verify(exileService).exileCard(eq(gd), eq(player2Id),
                     argThat(card -> card.getName().equals("Shock")));
-            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
+            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(eq(gd), eq(player2Id), any());
         }
     }
 
@@ -226,6 +228,23 @@ class ExileGraveyardCardsEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("Tracks all opponent graveyards with the source permanent")
+    void tracksAllOpponentsWithSource() {
+        Card card = createCard("Grizzly Bears");
+        gd.playerGraveyards.get(player2Id).add(card);
+        UUID sourcePermanentId = UUID.randomUUID();
+
+        ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect.allOpponentsWithSource();
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Author of Shadows"),
+                player1Id, "Author of Shadows", List.of(effect), 0, sourcePermanentId);
+
+        handler.resolve(gd, entry, effect);
+
+        verify(exileService).exileCard(eq(gd), eq(player2Id), eq(card), eq(sourcePermanentId));
+        assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Records the number of matching targeted cards exiled")
     void recordsMatchingTargetedExiledCardsInEventValue() {
         Card creature = createCard("Creature");
@@ -244,6 +263,30 @@ class ExileGraveyardCardsEffectHandlerTest {
                 .targetedFromAnyGraveyardWithEventValue(2, creatureFilter);
         StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Kaya"),
                 player1Id, "Kaya", List.of(effect), List.of(creature.getId(), noncreature.getId()));
+
+        handler.resolve(gd, entry, effect);
+
+        assertThat(entry.getEventValue()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Records only matching cards when exiling a target player's whole graveyard")
+    void recordsMatchingCardsFromTargetPlayersWholeGraveyard() {
+        Card creature = createCard("Creature");
+        creature.setType(CardType.CREATURE);
+        Card noncreature = createCard("Noncreature");
+        noncreature.setType(CardType.SORCERY);
+        gd.playerGraveyards.get(player2Id).addAll(List.of(creature, noncreature));
+        CardPredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);
+
+        when(predicateEvaluationService.matchesCardPredicate(creature, creatureFilter, null)).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(noncreature, creatureFilter, null)).thenReturn(false);
+
+        ExileGraveyardCardsEffect effect = new ExileGraveyardCardsEffect(
+                0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, null, null,
+                false, false, false, creatureFilter, false);
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Grey Host Reinforcements"),
+                player1Id, "Grey Host Reinforcements", List.of(effect), 0, player2Id, null);
 
         handler.resolve(gd, entry, effect);
 

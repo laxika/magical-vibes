@@ -20,8 +20,7 @@ class KeldonVandalsTest extends BaseCardTest {
     @Test
     @DisplayName("Enters and destroys the targeted artifact")
     void etbDestroysArtifact() {
-        harness.addToBattlefield(player2, new FodderCannon());
-        castAndResolveVandals(harness.getPermanentId(player2, "Fodder Cannon"));
+        castAndResolveVandals(harness.addToBattlefieldAndReturn(player2, new FodderCannon()).getId());
 
         harness.assertOnBattlefield(player1, "Keldon Vandals");
         harness.assertNotOnBattlefield(player2, "Fodder Cannon");

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "NPH", collectorNumber = "25")
+@CardRegistration(set = "MOC", collectorNumber = "210")
 public class SuturePriest extends Card {
 
     public SuturePriest() {

@@ -29,9 +29,11 @@ import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawFourRepla
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -315,6 +317,25 @@ class DrawServiceTest {
     }
 
     @Test
+    @DisplayName("pushes a graveyard opponent second-draw may trigger onto the stack")
+    void graveyardOpponentSecondDrawTriggerPushesMayAbility() {
+        Card detective = createCard("Dogged Detective", CardType.CREATURE);
+        detective.addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
+                new MayEffect(new BoostSelfEffect(1, 1), "Do it?"));
+        gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(detective)));
+        gd.cardsDrawnThisTurn.put(player2Id, 2);
+
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard()).isEqualTo(detective);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .singleElement().isInstanceOf(MayEffect.class);
+    }
+
+    @Test
     void targetedSecondDrawTriggerQueuesPermanentTargetChoice() {
         Card card = createCard("Mantle of Tides", CardType.ARTIFACT);
         AttachSourceEquipmentToTargetCreatureEffect effect = new AttachSourceEquipmentToTargetCreatureEffect();
@@ -351,6 +372,23 @@ class DrawServiceTest {
 
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
                 .isNotNull();
+    }
+
+    @Test
+    void opponentDrawTriggerHonorsOncePerTurnWrapper() {
+        Card card = createCard("Tataru Taru", CardType.CREATURE);
+        card.addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+                new OncePerTurnTriggerEffect(new BoostSelfEffect(1, 1)));
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .containsExactly(new BoostSelfEffect(1, 1));
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn).contains(source.getId());
     }
 
     @Test

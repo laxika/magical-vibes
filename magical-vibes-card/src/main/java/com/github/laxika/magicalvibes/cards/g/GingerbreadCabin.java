@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "245")
+@CardRegistration(set = "C21", collectorNumber = "290")
 public class GingerbreadCabin extends Card {
 
     public GingerbreadCabin() {

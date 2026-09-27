@@ -1,26 +1,25 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.h.HideousLaughter;
+import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VenerableKumo.class, LanternKami.class, KamiOfOldStone.class, HideousLaughter.class})
 class VenerableKumoTest extends BaseCardTest {
 
-    /** Wraths the board so Venerable Kumo dies, firing its soulshift trigger. */
-    private void wrathToKillKumo() {
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+    /** Gives all creatures -2/-2 so Venerable Kumo dies, firing its soulshift trigger. */
+    private void killKumoWithHideousLaughter() {
+        harness.castFromHand(player1, new HideousLaughter(), "{2}{B}{B}");
         harness.passBothPriorities();
     }
 
@@ -29,46 +28,64 @@ class VenerableKumoTest extends BaseCardTest {
     void deathReturnsCheapSpiritToHand() {
         harness.addToBattlefield(player1, new VenerableKumo());
         Card spirit = new LanternKami();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(spirit)));
+        harness.setGraveyard(player1, List.of(spirit));
 
-        wrathToKillKumo();
+        killKumoWithHideousLaughter();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(spirit.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(spirit.getId()));
+        harness.assertInHand(player1, "Lantern Kami");
+        harness.assertNotInGraveyard(player1, "Lantern Kami");
     }
 
     @Test
-    @DisplayName("Spirits with mana value 5 or greater and an opponent's Spirits are not legal targets")
-    void expensiveOrOpponentSpiritNotTargetable() {
+    @DisplayName("Only your Spirit cards with mana value 4 or less are legal targets")
+    void onlyOwnSpiritsAtOrBelowLimitAreTargetable() {
         harness.addToBattlefield(player1, new VenerableKumo());
         Card cheapSpirit = new LanternKami();
+        Card boundarySpirit = new KamiOfOldStone();
         Card expensiveSpirit = new VenerableKumo();
+        Card nonSpirit = new HideousLaughter();
         Card opponentSpirit = new LanternKami();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(cheapSpirit, expensiveSpirit)));
-        harness.setGraveyard(player2, new ArrayList<>(List.of(opponentSpirit)));
+        harness.setGraveyard(player1, List.of(cheapSpirit, boundarySpirit, expensiveSpirit, nonSpirit));
+        harness.setGraveyard(player2, List.of(opponentSpirit));
 
-        wrathToKillKumo();
+        killKumoWithHideousLaughter();
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).contains(cheapSpirit.getId());
-        assertThat(choice.validCardIds()).doesNotContain(expensiveSpirit.getId(), opponentSpirit.getId());
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(cheapSpirit.getId(), boundarySpirit.getId());
+        assertThat(choice.validCardIds()).doesNotContain(expensiveSpirit.getId(), nonSpirit.getId(), opponentSpirit.getId());
+    }
+
+    @Test
+    @DisplayName("Soulshift may be declined")
+    void soulshiftMayBeDeclined() {
+        harness.addToBattlefield(player1, new VenerableKumo());
+        Card spirit = new LanternKami();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        killKumoWithHideousLaughter();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lantern Kami");
+        harness.assertNotInHand(player1, "Lantern Kami");
     }
 
     @Test
     @DisplayName("With no Spirit with mana value 4 or less in your graveyard the trigger presents no choice")
     void noLegalSpiritNoChoice() {
         harness.addToBattlefield(player1, new VenerableKumo());
-        harness.setGraveyard(player1, new ArrayList<>(List.of(new VenerableKumo())));
+        harness.setGraveyard(player1, List.of(new VenerableKumo()));
 
-        wrathToKillKumo();
+        killKumoWithHideousLaughter();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }

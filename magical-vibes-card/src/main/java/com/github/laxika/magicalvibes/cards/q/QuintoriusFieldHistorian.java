@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "220")
+@CardRegistration(set = "SOC", collectorNumber = "326")
 public class QuintoriusFieldHistorian extends Card {
 
     public QuintoriusFieldHistorian() {

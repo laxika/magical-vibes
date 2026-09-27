@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,13 +27,37 @@ class HuntedDragonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castCreature(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> knights = findPermanents(player2, "Knight");
         assertThat(knights).hasSize(3);
         assertThat(findPermanents(player1, "Knight")).isEmpty();
-        assertThat(knights).allMatch(knight -> knight.hasKeyword(Keyword.FIRST_STRIKE));
+        for (Permanent knight : knights) {
+            assertThat(knight.getCard().isToken()).isTrue();
+            assertThat(knight.getCard().getPower()).isEqualTo(2);
+            assertThat(knight.getCard().getToughness()).isEqualTo(2);
+            assertThat(knight.getCard().getColor()).isEqualTo(CardColor.WHITE);
+            assertThat(knight.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(knight.getCard().getSubtypes()).containsExactly(CardSubtype.KNIGHT);
+            assertThat(gqs.hasKeyword(gd, knight, Keyword.FIRST_STRIKE)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("ETB target selection still only allows an opponent when it enters without being cast")
+    void etbChoosesOpponentWhenEnteringWithoutBeingCast() {
+        harness.enterBattlefieldAndReturn(player1, new HuntedDragon());
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(player2.getId());
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Knight")).hasSize(3);
+        assertThat(findPermanents(player1, "Knight")).isEmpty();
     }
 
     @Test

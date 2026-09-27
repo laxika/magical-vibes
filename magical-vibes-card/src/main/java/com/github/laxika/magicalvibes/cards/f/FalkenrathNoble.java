@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "DDQ", collectorNumber = "57")
 @CardRegistration(set = "MM3", collectorNumber = "70")
 @CardRegistration(set = "SIS", collectorNumber = "29")
+@CardRegistration(set = "DSC", collectorNumber = "140")
 public class FalkenrathNoble extends Card {
 
     public FalkenrathNoble() {

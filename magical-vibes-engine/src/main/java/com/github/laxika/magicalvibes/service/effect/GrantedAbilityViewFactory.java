@@ -207,6 +207,10 @@ public class GrantedAbilityViewFactory {
             return "Protection from mana value "
                     + protection.protectionFromManaValueAtLeast().getAsInt() + " or greater";
         }
+        if (protection.protectionFromManaValueAtMost().isPresent()) {
+            return "Protection from mana value " + protection.protectionFromManaValueAtMost().getAsInt()
+                    + " or less";
+        }
         return null;
     }
 

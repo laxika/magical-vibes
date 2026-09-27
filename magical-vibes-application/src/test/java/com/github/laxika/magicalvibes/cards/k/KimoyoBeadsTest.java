@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -66,12 +69,22 @@ class KimoyoBeadsTest extends BaseCardTest {
     @DisplayName("A mode cannot be chosen twice while the same artifact remains on the battlefield")
     void chosenModeIsConsumed() {
         harness.addToBattlefield(player1, new KimoyoBeads());
+        harness.setLibrary(player1, List.of(new KimoyoBeads(), new KimoyoBeads()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         advanceToEndStep();
         harness.handleListChoice(player1, AV_BEAD);
         harness.passBothPriorities();
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
         advanceToEndStep();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, AV_BEAD))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -81,6 +94,6 @@ class KimoyoBeadsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }

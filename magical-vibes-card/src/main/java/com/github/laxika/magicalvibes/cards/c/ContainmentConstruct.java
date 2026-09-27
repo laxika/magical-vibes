@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveya
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "NEO", collectorNumber = "243")
+@CardRegistration(set = "SOC", collectorNumber = "344")
 @CardRegistration(set = "MSC", collectorNumber = "284")
 public class ContainmentConstruct extends Card {
 

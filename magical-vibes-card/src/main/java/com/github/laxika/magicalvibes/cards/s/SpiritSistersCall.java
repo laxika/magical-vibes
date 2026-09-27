@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "237")
+@CardRegistration(set = "DSC", collectorNumber = "232")
 public class SpiritSistersCall extends Card {
 
     public SpiritSistersCall() {

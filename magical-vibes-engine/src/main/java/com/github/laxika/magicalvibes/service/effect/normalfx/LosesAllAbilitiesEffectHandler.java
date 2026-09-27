@@ -75,12 +75,15 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (e.scope() == GrantScope.ALL_CREATURES
+        if (e.scope() == GrantScope.OPPONENT_CREATURES
+                || e.scope() == GrantScope.ALL_CREATURES
                 || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             final int[] count = {0};
             gameData.forEachPermanent((playerId, permanent) -> {
                 if (matchesFilter(gameData, entry, e, permanent)
                         && gameQueryService.isCreature(gameData, permanent)
+                        && (e.scope() != GrantScope.OPPONENT_CREATURES
+                        || !playerId.equals(entry.getControllerId()))
                         && (e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
                         || entry.getSourcePermanentId() == null
                         || !permanent.getId().equals(entry.getSourcePermanentId()))

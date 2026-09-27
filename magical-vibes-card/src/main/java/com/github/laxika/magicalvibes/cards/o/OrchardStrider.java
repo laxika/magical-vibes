@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "169")
+@CardRegistration(set = "LTC", collectorNumber = "253")
 public class OrchardStrider extends Card {
 
     public OrchardStrider() {

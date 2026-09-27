@@ -52,7 +52,7 @@ class SunsetStrikemasterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("creature with flying");
         harness.assertOnBattlefield(player1, "Sunset Strikemaster");
     }
 }

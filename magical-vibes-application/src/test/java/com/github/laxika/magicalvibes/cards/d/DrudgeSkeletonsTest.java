@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.v.Vengeance;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -28,7 +27,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     void castingPutsItOnStack() {
         harness.castFromHand(player1, new DrudgeSkeletons(), "{1}{B}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
@@ -50,7 +48,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -77,7 +74,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(skele.getRegenerationShield()).isEqualTo(1);
     }
@@ -107,7 +103,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -119,7 +114,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -131,7 +125,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 

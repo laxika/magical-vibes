@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.s.SakuraTribeScout;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RazorjawOni.class, RavingOniSlave.class, SakuraTribeScout.class})
 class RazorjawOniTest extends BaseCardTest {
 
     @Test
     @DisplayName("Black creatures can't block")
     void blackCreaturesCannotBlock() {
         addRazorjawOni(player1);
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        addCreatureReady(player2, new ScatheZombies());
+        addCreatureReady(player1, new SakuraTribeScout()).setAttacking(true);
+        addCreatureReady(player2, new RavingOniSlave());
 
         prepareDeclareBlockers();
 
@@ -35,8 +36,8 @@ class RazorjawOniTest extends BaseCardTest {
     @DisplayName("Nonblack creatures can block")
     void nonblackCreaturesCanBlock() {
         addRazorjawOni(player1);
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new SakuraTribeScout()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SakuraTribeScout());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));

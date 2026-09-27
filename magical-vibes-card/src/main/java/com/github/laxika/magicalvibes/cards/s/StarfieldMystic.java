@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "39")
+@CardRegistration(set = "SOC", collectorNumber = "177")
+@CardRegistration(set = "DSC", collectorNumber = "105")
 public class StarfieldMystic extends Card {
 
     public StarfieldMystic() {

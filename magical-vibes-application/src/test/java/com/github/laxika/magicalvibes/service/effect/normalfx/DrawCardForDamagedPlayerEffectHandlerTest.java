@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class DrawCardForDamagedPlayerEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
@@ -24,6 +23,6 @@ class DrawCardForDamagedPlayerEffectHandlerTest extends AbstractPlayerInteractio
 
         resolveEffect(gd, entry, effect);
 
-        verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
+        verify(drawService).resolveDrawCards(gd, player2Id, 2);
     }
 }

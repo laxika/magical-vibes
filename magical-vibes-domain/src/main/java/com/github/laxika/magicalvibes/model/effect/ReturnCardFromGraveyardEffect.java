@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.Set;
@@ -176,6 +178,10 @@ import lombok.Builder;
  *                             whose mana value is less than or equal to the amount of life the
  *                             controller gained this turn (e.g. Moseo, Vein's New Dean); the cap is
  *                             read from {@code GameData.getLifeGainedThisTurn} at target-selection time
+ * @param maxManaValueEqualsLifeLostThisTurn {@code true} to restrict targeting to graveyard cards
+ *                             whose mana value is less than or equal to the amount of life the
+ *                             controller lost this turn; the cap is read from
+ *                             {@code GameData.lifeLostThisTurn} at target-selection time
  * @param enterWithMannequinCounter {@code true} to put a mannequin counter on the returned permanent as
  *                             it enters the battlefield (e.g. Makeshift Mannequin). While a permanent has
  *                             a mannequin counter it gains "When this creature becomes the target of a
@@ -322,6 +328,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean exileSourceFromGraveyard,
         boolean enterAttacking,
         boolean maxManaValueEqualsLifeGainedThisTurn,
+        boolean maxManaValueEqualsLifeLostThisTurn,
         boolean enterWithMannequinCounter,
         CardSubtype grantSourceHasteIfSubtype,
         boolean greatestPower,
@@ -356,7 +363,7 @@ public record ReturnCardFromGraveyardEffect(
         CardEffect grantOnDeathEffect,
         DynamicAmount randomCountAmount,
         boolean requiresPowerAtMostSacrificedPower) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
-        SacrificedPermanentManaValueAwareEffect {
+        SacrificedPermanentManaValueAwareEffect, TriggeringSpellManaValueEffect {
         public ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
         CardPredicate filter,
@@ -432,7 +439,7 @@ public record ReturnCardFromGraveyardEffect(
         EffectDuration battlefieldEffectGrantDuration,
         int targetGroup
 ) {
-            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, List.of(), eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false);
+            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, false, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, List.of(), eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false);
         }
 
     /**
@@ -462,7 +469,10 @@ public record ReturnCardFromGraveyardEffect(
         if (!targetGraveyard) {
             return TargetSpec.NONE;
         }
+        // The card exiled to pay Holistic Wisdom's cost is chosen after the ability is announced.
+        // Its type is therefore a resolution condition, not a target restriction.
         TargetPredicate graveyardTarget = filter == null
+                || filter instanceof CardSharesCardTypeWithImprintedCardPredicate
                 ? TargetPredicates.graveyardCard(source)
                 : TargetPredicates.graveyardCards(filter, source);
         if (targetGroup >= 0) {
@@ -479,6 +489,28 @@ public record ReturnCardFromGraveyardEffect(
     @Override
     public List<Integer> targetGroups() {
         return targetGroup < 0 ? List.of() : List.of(targetGroup);
+    }
+
+    @Override
+    public CardEffect snapshotTriggeringSpellManaValue(int manaValue) {
+        if (!requiresManaValueEqualsX && !requiresManaValueAtMostX) {
+            return this;
+        }
+
+        CardPredicate manaValueFilter = requiresManaValueEqualsX
+                ? new CardAllOfPredicate(List.of(
+                        new CardMinManaValuePredicate(manaValue),
+                        new CardMaxManaValuePredicate(manaValue)))
+                : new CardMaxManaValuePredicate(manaValue);
+        CardPredicate combinedFilter = filter == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
+        return toBuilder()
+                .filter(combinedFilter)
+                .requiresManaValueEqualsX(false)
+                .requiresManaValueAtMostX(false)
+                .manaValueXOffset(0)
+                .build();
     }
 
     /** Returns the effective mana-value bound for an X-based target restriction. */

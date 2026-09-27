@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ArdentMilitia.class)
+@CardUsed({ArdentMilitia.class})
 class ArdentMilitiaTest extends BaseCardTest {
 
     @Test

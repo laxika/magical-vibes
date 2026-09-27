@@ -98,6 +98,8 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             sourcePermanent.getCard().addEffect(copyEffect.retainedEffectSlot(),
                     retainedRegistration.effect(), retainedRegistration.triggerMode());
         }
+        copyEffect.additionalSlotEffectsOverride().forEach((slot, effects) ->
+                effects.forEach(additionalEffect -> sourcePermanent.getCard().addEffect(slot, additionalEffect)));
         sourcePermanent.setCopyUntilEndOfTurn(true);
         // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card
         // swap above stores the copiable values; the floating effect carries the CR 613.7

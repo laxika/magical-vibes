@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.UUID;
 
-/** Applies Lazav, Familiar Stranger's temporary copy of the exiled creature card. */
+/** Applies a temporary copy of a captured artifact or creature card. */
 @Component
 @RequiredArgsConstructor
 public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {

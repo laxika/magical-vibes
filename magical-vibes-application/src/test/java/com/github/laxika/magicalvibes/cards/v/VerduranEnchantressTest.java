@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LivingLands;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, GloriousAnthem.class, GrizzlyBears.class, LivingLands.class, VerduranEnchantress.class})
+@CardUsed({Forest.class, GloriousAnthem.class, GrizzlyBears.class, VerduranEnchantress.class})
 class VerduranEnchantressTest extends BaseCardTest {
 
     // ===== Trigger fires on enchantment cast =====
@@ -57,7 +56,7 @@ class VerduranEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VerduranEnchantress());
         harness.setLibrary(player1, List.of(new Forest()));
 
-        harness.castFromHand(player1, new LivingLands(), "{3}{G}");
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -67,6 +66,24 @@ class VerduranEnchantressTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Each Verduran Enchantress triggers independently")
+    void eachEnchantressTriggersIndependently() {
+        harness.addToBattlefield(player1, new VerduranEnchantress());
+        harness.addToBattlefield(player1, new VerduranEnchantress());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Forest", "Forest");
     }
 
     // ===== Decline =====
@@ -97,7 +114,7 @@ class VerduranEnchantressTest extends BaseCardTest {
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castFromHand(player1, new LivingLands(), "{3}{G}");
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -164,7 +181,7 @@ class VerduranEnchantressTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castFromHand(player2, new LivingLands(), "{3}{G}");
+        harness.castFromHand(player2, new GloriousAnthem(), "{1}{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -176,7 +193,7 @@ class VerduranEnchantressTest extends BaseCardTest {
     @DisplayName("Casting an enchantment puts the optional trigger on the stack before the may choice")
     void enchantmentCastStacksTriggerBeforeMayChoice() {
         harness.addToBattlefield(player1, new VerduranEnchantress());
-        harness.castFromHand(player1, new LivingLands(), "{3}{G}");
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

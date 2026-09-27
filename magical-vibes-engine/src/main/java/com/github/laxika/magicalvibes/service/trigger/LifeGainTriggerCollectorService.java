@@ -65,6 +65,14 @@ public class LifeGainTriggerCollectorService {
     private boolean handleLifeGainMayPay(TriggerMatchContext match,
                                          MayPayManaEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    sourceCard, match.controllerId(), List.of(effect)));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers on life gain and needs a graveyard target",
+                    match.gameData().id, sourceCard.getName());
+            return true;
+        }
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(

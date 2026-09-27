@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.d.DreamThrush;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,15 +11,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FertileGround.class, Forest.class, ArgothianSwine.class})
+@CardUsed({FertileGround.class, Forest.class, GrizzlyBears.class, Island.class, Twiddle.class})
 class FertileGroundTest extends BaseCardTest {
 
     @Test
@@ -62,6 +64,22 @@ class FertileGroundTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Fertile Ground adds the chosen mana alongside the enchanted land's own mana")
+    void addsChosenManaToNonGreenLand() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
+        aura.setAttachedTo(island.getId());
+
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
     @Test
@@ -125,10 +143,27 @@ class FertileGroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fertile Ground does not trigger when the enchanted land is tapped without producing mana")
+    void doesNotTriggerOnNonManaTap() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
+        aura.setAttachedTo(forest.getId());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot cast Fertile Ground targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new FertileGround()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 

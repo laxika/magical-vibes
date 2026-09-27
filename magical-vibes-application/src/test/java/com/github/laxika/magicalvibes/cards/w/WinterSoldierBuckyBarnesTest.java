@@ -14,7 +14,7 @@ class WinterSoldierBuckyBarnesTest extends BaseCardTest {
     @Test
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
-        Permanent winterSoldier = harness.addToBattlefieldAndReturn(player1, new WinterSoldierBuckyBarnes());
+        Permanent winterSoldier = harness.enterBattlefieldAndReturn(player1, new WinterSoldierBuckyBarnes());
 
         assertThat(winterSoldier.isTapped()).isTrue();
     }

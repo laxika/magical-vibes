@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -31,34 +33,54 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardService graveyardService;
     private final GameLogService gameLogService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName) {
         beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
-                null, false, false);
+                null, 0, false, false, true, false, null, null, false);
     }
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName, CounterType enterWithCounter) {
         beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
-                enterWithCounter, enterWithCounter == null ? 0 : 1, false, false);
+                enterWithCounter, enterWithCounter == null ? 0 : 1, false, false,
+                true, false, null, null, false);
     }
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName, CounterType enterWithCounter,
                             boolean grantHaste, boolean returnToHandAtEndStep) {
         beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
-                enterWithCounter, enterWithCounter == null ? 0 : 1, grantHaste, returnToHandAtEndStep);
+                enterWithCounter, enterWithCounter == null ? 0 : 1, grantHaste, returnToHandAtEndStep,
+                true, false, null, null, false);
     }
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName, CounterType enterWithCounter,
                             int enterWithCounterCount, boolean grantHaste, boolean returnToHandAtEndStep) {
+        beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
+                enterWithCounter, enterWithCounterCount, grantHaste, returnToHandAtEndStep,
+                true, false, null, null, false);
+    }
+
+    public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
+                            UUID sourceCardId, String sourceCardName, CounterType enterWithCounter,
+                            int enterWithCounterCount, boolean grantHaste, boolean returnToHandAtEndStep,
+                            boolean includeGraveyard, boolean includeCommandZone,
+                            UUID delayedAuraCardId, UUID delayedAuraOwnerId,
+                            boolean handleCreatureEtbAndLegendRule) {
         List<UUID> validCardIds = new ArrayList<>();
         addMatchingCardIds(validCardIds, gameData.playerHands.get(playerId), predicate,
                 sourceCardId, gameData, playerId);
-        addMatchingCardIds(validCardIds, gameData.playerGraveyards.get(playerId), predicate,
-                sourceCardId, gameData, playerId);
+        if (includeGraveyard) {
+            addMatchingCardIds(validCardIds, gameData.playerGraveyards.get(playerId), predicate,
+                    sourceCardId, gameData, playerId);
+        }
+        if (includeCommandZone) {
+            addMatchingCardIds(validCardIds, gameData.playerCommandZones.get(playerId), predicate,
+                    sourceCardId, gameData, playerId);
+        }
         if (validCardIds.isEmpty()) {
             return;
         }
@@ -66,32 +88,47 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PutCardFromHandOrGraveyardChoice(
                         playerId, validCardIds, label, sourceCardName, enterWithCounter, enterWithCounterCount,
-                        grantHaste, returnToHandAtEndStep));
+                        grantHaste, returnToHandAtEndStep, includeGraveyard, includeCommandZone,
+                        delayedAuraCardId, delayedAuraOwnerId, handleCreatureEtbAndLegendRule));
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName) {
-        applyChoice(gameData, playerId, chosenCardId, sourceCardName, null);
+        applyChoice(gameData, playerId, chosenCardId, sourceCardName, null,
+                0, false, false, true, false, null, null, false);
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
                             CounterType enterWithCounter) {
         applyChoice(gameData, playerId, chosenCardId, sourceCardName,
-                enterWithCounter, enterWithCounter == null ? 0 : 1, false, false);
+                enterWithCounter, enterWithCounter == null ? 0 : 1, false, false,
+                true, false, null, null, false);
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
                             CounterType enterWithCounter, boolean grantHaste,
                             boolean returnToHandAtEndStep) {
         applyChoice(gameData, playerId, chosenCardId, sourceCardName,
-                enterWithCounter, enterWithCounter == null ? 0 : 1, grantHaste, returnToHandAtEndStep);
+                enterWithCounter, enterWithCounter == null ? 0 : 1, grantHaste, returnToHandAtEndStep,
+                true, false, null, null, false);
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
                             CounterType enterWithCounter, int enterWithCounterCount,
                             boolean grantHaste, boolean returnToHandAtEndStep) {
+        applyChoice(gameData, playerId, chosenCardId, sourceCardName,
+                enterWithCounter, enterWithCounterCount, grantHaste, returnToHandAtEndStep,
+                true, false, null, null, false);
+    }
+
+    public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
+                            CounterType enterWithCounter, int enterWithCounterCount,
+                            boolean grantHaste, boolean returnToHandAtEndStep,
+                            boolean includeGraveyard, boolean includeCommandZone,
+                            UUID delayedAuraCardId, UUID delayedAuraOwnerId,
+                            boolean handleCreatureEtbAndLegendRule) {
         Card chosen = removeCard(gameData.playerHands.get(playerId), chosenCardId);
         String zone = "hand";
-        if (chosen == null) {
+        if (chosen == null && includeGraveyard) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             chosen = removeCard(graveyard, chosenCardId);
             zone = "graveyard";
@@ -99,11 +136,17 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
                 graveyardService.notifyCardsLeftGraveyard(gameData, playerId, chosen);
             }
         }
+        if (chosen == null && includeCommandZone) {
+            chosen = removeCard(gameData.playerCommandZones.get(playerId), chosenCardId);
+            zone = "command zone";
+        }
         if (chosen == null) {
-            throw new IllegalStateException("Chosen card is no longer in its hand or graveyard");
+            throw new IllegalStateException("Chosen card is no longer in an eligible zone");
         }
 
-        Permanent permanent = new Permanent(chosen);
+        Permanent permanent = "command zone".equals(zone)
+                ? new Permanent(chosen, Zone.COMMAND)
+                : new Permanent(chosen);
         if (enterWithCounter != null && enterWithCounterCount > 0) {
             permanent.setCounterCount(enterWithCounter, enterWithCounterCount);
         }
@@ -112,9 +155,16 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent,
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
+        if (handleCreatureEtbAndLegendRule) {
+            graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, playerId, permanent, chosen);
+        }
         if (returnToHandAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+        }
+        if (delayedAuraCardId != null && delayedAuraOwnerId != null) {
+            gameData.queueDelayedAction(new DelayedReturnAuraAttachedToPermanent(
+                    delayedAuraCardId, delayedAuraOwnerId, permanent.getId()));
         }
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " puts "
                 + chosen.getName() + " from their " + zone + " onto the battlefield ("

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,6 +24,7 @@ class OkoyeMightyAndAdoredTest extends BaseCardTest {
     @DisplayName("Enters and makes its controller the monarch")
     void entersAndMakesControllerMonarch() {
         harness.enterBattlefieldAndReturn(player1, new OkoyeMightyAndAdored());
+        harness.passBothPriorities();
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }
@@ -53,6 +55,8 @@ class OkoyeMightyAndAdoredTest extends BaseCardTest {
         chooseTargetAtBeginningOfCombat(target);
 
         declareAttackers(player1, List.of(1));
+        assertThat(target.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
@@ -94,6 +98,7 @@ class OkoyeMightyAndAdoredTest extends BaseCardTest {
 
     private Permanent addOkoyeAndTarget() {
         harness.enterBattlefieldAndReturn(player1, new OkoyeMightyAndAdored());
+        harness.passBothPriorities();
         return addCreatureReady(player1, new GrizzlyBears());
     }
 
@@ -101,12 +106,13 @@ class OkoyeMightyAndAdoredTest extends BaseCardTest {
         advanceToBeginningOfCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        assertThat(target.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK)).hasSize(1);
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

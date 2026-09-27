@@ -14,6 +14,8 @@ import java.util.Set;
 @CardRegistration(set = "CMM", collectorNumber = "287")
 @CardRegistration(set = "CMM", collectorNumber = "558")
 @CardRegistration(set = "C15", collectorNumber = "36")
+@CardRegistration(set = "C21", collectorNumber = "188")
+@CardRegistration(set = "DSC", collectorNumber = "178")
 public class EzurisPredation extends Card {
 
     public EzurisPredation() {

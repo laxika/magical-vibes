@@ -179,6 +179,7 @@ combat damage step is processed.
 | `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkCreatureExiledFromBattlefieldTriggers`; global watcher for any creature exiled from the battlefield, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
+| `ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
 | `ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
 | `ON_SELF_BECOMES_MONSTROUS` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
@@ -188,6 +189,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_DISCARDS` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
 | `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
+| `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
@@ -208,6 +210,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_DRAWS` / `ON_CONTROLLER_DRAWS_SECOND_CARD` (targeted effects) | `DrawService.checkControllerDrawTriggers` queues `DrawTriggerPermanentTarget` for a permanent-target effect bound to the card's `target(...)` filter (e.g. Mantle of Tides). `TriggeredAbilityQueueService.processNextDrawTriggerPermanentTarget` uses the shared `TriggerTargetCollector`; the controller chooses the permanent before the ability goes on the stack. | Draw (permanent target) |
 | `GRAVEYARD_ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `GRAVEYARD_ON_CONTROLLER_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
+| `GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
 | `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `ON_OPPONENT_DRAWS` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
@@ -367,6 +370,8 @@ the slot whenever a creature is exiled from the battlefield, checked after the c
 counters before the trigger is queued.
 `ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
 use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
+Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving permanent's concrete
+counters before queuing; targeted effects are routed through the trigger-target interaction flow.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
@@ -396,10 +401,17 @@ counters placed as the trigger event value),
 each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
+`ON_YOU_PUT_COUNTERS_ON_CREATURE` (Rikku, Resourceful Guardian; fires once per placement event for
+one or more counters of any type put on any creature by the controller, carrying the affected creature
+as a non-targeting event subject),
 `ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE` (Captain Marvel, Apex Avenger; fires once per placement
 event when the controller puts one or more counters of any kind on another creature, regardless of
 that creature's controller; non-targeting and captures the counter kind, amount, and creature for
 resolution),
+`ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL` (Bold Plagiarist; fires once per placement
+event when an opponent puts one or more counters on a creature they control; the trigger remains
+controlled by Bold Plagiarist's controller and captures the opponent who placed the counters so the
+same number and kind are placed by that opponent),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
 the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
 is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same

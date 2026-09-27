@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "1843")
 @CardRegistration(set = "CMM", collectorNumber = "732")
 @CardRegistration(set = "CMM", collectorNumber = "763")
+@CardRegistration(set = "SOC", collectorNumber = "214")
 public class GhoulishImpetus extends Card {
 
     public GhoulishImpetus() {

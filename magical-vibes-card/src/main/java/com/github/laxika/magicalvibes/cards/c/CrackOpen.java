@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "154")
+@CardRegistration(set = "MOC", collectorNumber = "294")
 public class CrackOpen extends Card {
 
     public CrackOpen() {

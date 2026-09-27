@@ -50,6 +50,8 @@ public class DiceRollTriggerCollectorService {
             TargetFilter targetFilter = targetGroupIndex >= 0
                     ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
                     : sourceCard.getTargetFilter();
+            boolean optionalTarget = effect.hasOptionalTarget()
+                    || isOptionalSingleTarget(sourceCard, targetGroupIndex);
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard,
                     match.controllerId(),
@@ -57,7 +59,14 @@ public class DiceRollTriggerCollectorService {
                     !targetSpec.admits(TargetPredicate.Kind.PERMANENT),
                     targetFilter,
                     0,
-                    sourcePermanentId));
+                    sourcePermanentId,
+                    null,
+                    optionalTarget,
+                    null,
+                    null,
+                    match.controllerId(),
+                    null,
+                    match.sourcePlanarObject()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers on controller rolling dice and awaits a target",
                     match.gameData().id, sourceCard.getName());
@@ -83,5 +92,13 @@ public class DiceRollTriggerCollectorService {
         log.info("Game {} - {} triggers on controller rolling dice",
                 match.gameData().id, sourceCard.getName());
         return true;
+    }
+
+    private boolean isOptionalSingleTarget(Card sourceCard, int targetGroupIndex) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= sourceCard.getSpellTargets().size()) {
+            return false;
+        }
+        var target = sourceCard.getSpellTargets().get(targetGroupIndex);
+        return target.getMinTargets() == 0 && target.getMaxTargets() == 1;
     }
 }

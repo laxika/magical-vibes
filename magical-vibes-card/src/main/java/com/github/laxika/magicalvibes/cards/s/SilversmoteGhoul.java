@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "122")
+@CardRegistration(set = "C21", collectorNumber = "154")
 public class SilversmoteGhoul extends Card {
 
     public SilversmoteGhoul() {

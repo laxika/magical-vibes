@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "252")
+@CardRegistration(set = "MOC", collectorNumber = "380")
 public class SkyclaveRelic extends Card {
 
     public SkyclaveRelic() {

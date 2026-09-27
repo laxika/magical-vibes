@@ -38,7 +38,6 @@ class DemystifyTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Demystify");
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 

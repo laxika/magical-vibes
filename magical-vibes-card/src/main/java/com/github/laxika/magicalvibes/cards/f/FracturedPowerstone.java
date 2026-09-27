@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "PC2", collectorNumber = "111")
 @CardRegistration(set = "PCA", collectorNumber = "111")
+@CardRegistration(set = "MOC", collectorNumber = "357")
 public class FracturedPowerstone extends Card {
 
     public FracturedPowerstone() {

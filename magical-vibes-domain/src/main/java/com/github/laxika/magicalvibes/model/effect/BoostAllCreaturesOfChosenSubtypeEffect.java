@@ -9,7 +9,8 @@ import java.util.Set;
 
 /**
  * "Choose a creature type. All creatures of that type get +P/+T until end of turn," optionally
- * with keyword grants in the same effect.
+ * with keyword grants in the same effect. The scope can be narrowed to creatures controlled by
+ * the spell's controller.
  *
  * <p>The creature type is chosen during resolution and stored temporarily on
  * {@code GameData.chosenSpellSubtype}; the effect then applies a one-shot modifier to every
@@ -19,29 +20,32 @@ import java.util.Set;
 public record BoostAllCreaturesOfChosenSubtypeEffect(
         DynamicAmount powerBoost,
         DynamicAmount toughnessBoost,
-        Set<Keyword> keywords
+        Set<Keyword> keywords,
+        GrantScope scope
 ) implements CardEffect, KeywordGrantingEffect {
 
     public BoostAllCreaturesOfChosenSubtypeEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
-        this(powerBoost, toughnessBoost, Set.of());
+        this(powerBoost, toughnessBoost, Set.of(), GrantScope.ALL_CREATURES);
     }
 
     public BoostAllCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost) {
-        this(new Fixed(powerBoost), new Fixed(toughnessBoost), Set.of());
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), Set.of(), GrantScope.ALL_CREATURES);
     }
 
     public BoostAllCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost,
                                                   Set<Keyword> keywords) {
-        this(new Fixed(powerBoost), new Fixed(toughnessBoost), keywords);
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), keywords, GrantScope.ALL_CREATURES);
+    }
+
+    public static BoostAllCreaturesOfChosenSubtypeEffect ownCreatures(
+            int powerBoost, int toughnessBoost, Set<Keyword> keywords) {
+        return new BoostAllCreaturesOfChosenSubtypeEffect(
+                new Fixed(powerBoost), new Fixed(toughnessBoost), keywords, GrantScope.OWN_CREATURES);
     }
 
     public BoostAllCreaturesOfChosenSubtypeEffect {
         keywords = keywords == null ? Set.of() : Set.copyOf(keywords);
-    }
-
-    @Override
-    public GrantScope scope() {
-        return GrantScope.ALL_CREATURES;
+        scope = scope == null ? GrantScope.ALL_CREATURES : scope;
     }
 
     @Override

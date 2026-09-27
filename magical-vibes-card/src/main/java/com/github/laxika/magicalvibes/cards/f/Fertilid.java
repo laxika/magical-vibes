@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "72")
 @CardRegistration(set = "DDR", collectorNumber = "9")
 @CardRegistration(set = "CMD", collectorNumber = "154")
+@CardRegistration(set = "MOC", collectorNumber = "296")
 public class Fertilid extends Card {
 
     public Fertilid() {

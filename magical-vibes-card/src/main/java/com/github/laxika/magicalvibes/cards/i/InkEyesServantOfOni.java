@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "PCA", collectorNumber = "33")
 @CardRegistration(set = "V13", collectorNumber = "13")
 @CardRegistration(set = "SLD", collectorNumber = "33")
+@CardRegistration(set = "SLD", collectorNumber = "2374")
 public class InkEyesServantOfOni extends Card {
 
     public InkEyesServantOfOni() {
@@ -26,7 +27,7 @@ public class InkEyesServantOfOni extends Card {
         // up-to-one (decline = choose nothing) with no MayEffect wrapper.
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new PutCardFromOpponentGraveyardOntoBattlefieldEffect(
-                        false, new CardTypePredicate(CardType.CREATURE), false));
+                        false, new CardTypePredicate(CardType.CREATURE), false, null, true));
 
         addActivatedAbility(new ActivatedAbility(false, "{1}{B}",
                 List.of(new RegenerateEffect()),

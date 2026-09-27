@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DrownedCatacomb;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,12 +15,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScorchedGeyser.class, Plains.class, Island.class, DrownedCatacomb.class})
+@CardUsed({ScorchedGeyser.class, Forest.class, Plains.class, DrownedCatacomb.class})
 class ScorchedGeyserTest extends BaseCardTest {
 
     @Test
     void entersTappedWithFewerThanTwoBasicLands() {
-        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Forest());
 
         playScorchedGeyser();
 
@@ -29,8 +29,8 @@ class ScorchedGeyserTest extends BaseCardTest {
 
     @Test
     void entersUntappedWithTwoBasicLands() {
+        harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player1, new Island());
 
         playScorchedGeyser();
 
@@ -49,8 +49,8 @@ class ScorchedGeyserTest extends BaseCardTest {
 
     @Test
     void opponentsBasicLandsDoNotCount() {
+        harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new Plains());
-        harness.addToBattlefield(player2, new Island());
 
         playScorchedGeyser();
 

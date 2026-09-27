@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "37")
 @CardRegistration(set = "OPCA", collectorNumber = "75")
+@CardRegistration(set = "MOC", collectorNumber = "160")
 public class StrongholdFurnace extends Card {
 
     public StrongholdFurnace() {

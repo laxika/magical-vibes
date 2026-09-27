@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "20")
 @CardRegistration(set = "OPCA", collectorNumber = "45")
+@CardRegistration(set = "MOC", collectorNumber = "150")
 public class Krosa extends Card {
 
     public Krosa() {

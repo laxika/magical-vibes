@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 @CardRegistration(set = "9ED", collectorNumber = "270")
 @CardRegistration(set = "LGN", collectorNumber = "138")
 @CardRegistration(set = "SLD", collectorNumber = "907")
+@CardRegistration(set = "TDC", collectorNumber = "268")
 public class SeedbornMuse extends Card {
 
     public SeedbornMuse() {

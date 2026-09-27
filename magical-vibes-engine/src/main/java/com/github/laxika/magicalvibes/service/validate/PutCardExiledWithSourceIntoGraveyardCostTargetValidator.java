@@ -7,13 +7,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGraveyardCost;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PutCardExiledWithSourceIntoGraveyardCostTargetValidator {
+
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public void validate(TargetValidationContext ctx, PutCardExiledWithSourceIntoGraveyardCost effect) {
         if (ctx.targetZone() != Zone.EXILE) {
@@ -29,6 +34,10 @@ public class PutCardExiledWithSourceIntoGraveyardCostTargetValidator {
                 : findSourcePermanent(ctx.gameData(), ctx.sourceCard());
         if (exiled == null || source == null || !source.getId().equals(exiled.sourcePermanentId())) {
             throw new IllegalStateException("Card was not exiled with this permanent");
+        }
+        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                exiled.card(), effect.filter(), source.getCard().getId(), ctx.gameData(), exiled.ownerId())) {
+            throw new IllegalStateException("Card does not match the cost restriction");
         }
     }
 

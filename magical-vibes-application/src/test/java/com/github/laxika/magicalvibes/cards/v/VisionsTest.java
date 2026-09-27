@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.AkronLegionnaire;
+import com.github.laxika.magicalvibes.cards.d.DivineOffering;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.t.TundraWolves;
+import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Visions.class)
+@CardUsed({Visions.class, AkronLegionnaire.class, DivineOffering.class, HolyDay.class,
+        TundraWolves.class, ZephyrFalcon.class, DurkwoodBoars.class})
 class VisionsTest extends BaseCardTest {
 
     @Test
@@ -29,6 +36,33 @@ class VisionsTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(may).isNotNull();
         assertThat(may.playerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The shuffle prompt names exactly the top five cards of the target's library")
+    void namesExactlyTopFiveCards() {
+        List<Card> library = List.of(
+                new AkronLegionnaire(),
+                new DivineOffering(),
+                new HolyDay(),
+                new TundraWolves(),
+                new ZephyrFalcon(),
+                new DurkwoodBoars());
+        harness.setLibrary(player2, library);
+        harness.setHand(player1, List.of(new Visions()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice may =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(may).isNotNull();
+        assertThat(may.description())
+                .contains("Top 5 cards", "Akron Legionnaire", "Divine Offering", "Holy Day",
+                        "Tundra Wolves", "Zephyr Falcon")
+                .doesNotContain("Durkwood Boars");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
     }
 
     @Test

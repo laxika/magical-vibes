@@ -407,6 +407,13 @@ public class EtbTriggerService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
+                if (may.wrapped() instanceof ExileCardsFromGraveyardEffect exile) {
+                    for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        graveyardTargetingService.handleGraveyardExileETBTargeting(
+                                gameData, controllerId, card, List.of(may), triggerSourcePermanentId, exile);
+                    }
+                    continue;
+                }
                 if (may.wrapped() instanceof ExchangeControlOfTargetPermanentsEffect exchange
                         && exchange.requireOpponentPowerNotGreater()) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
@@ -517,6 +524,7 @@ public class EtbTriggerService {
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
         triggerCollectionService.checkPlanarCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkPlanarAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);

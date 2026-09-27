@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PsychicBattleRetargetEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +27,8 @@ public class PsychicBattleSupport {
 
     private final TargetLegalityService targetLegalityService;
     private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     public StackEntry findTargetEntry(GameData gameData, UUID cardId) {
         for (int i = gameData.stack.size() - 1; i >= 0; i--) {
@@ -178,6 +184,16 @@ public class PsychicBattleSupport {
         if (entry.getTargetZone() == Zone.GRAVEYARD) {
             return targetLegalityService.checkGraveyardRetargetCandidate(
                     gameData, entry.getCard(), candidate, entry.getControllerId()).isEmpty();
+        }
+        if (entry.getTargetFilter() != null) {
+            var permanent = gameQueryService.findPermanentById(gameData, candidate);
+            if (permanent == null && entry.getTargetFilter() instanceof PermanentPredicateTargetFilter) {
+                return false;
+            }
+            if (permanent != null && predicateEvaluationService.checkTargetFilter(
+                    entry.getTargetFilter(), permanent, FilterContext.of(gameData)).isPresent()) {
+                return false;
+            }
         }
         return targetLegalityService.checkSpellTargeting(
                 gameData, entry.getCard(), candidate, null, entry.getControllerId()).isEmpty();

@@ -17,8 +17,13 @@ import java.util.List;
 @CardRegistration(set = "TSR", collectorNumber = "363")
 @CardRegistration(set = "FCA", collectorNumber = "45")
 @CardRegistration(set = "RVR", collectorNumber = "138")
+@CardRegistration(set = "FIC", collectorNumber = "302")
+@CardRegistration(set = "40K", collectorNumber = "214")
+@CardRegistration(set = "NCC", collectorNumber = "290")
+@CardRegistration(set = "LTC", collectorNumber = "244")
 @CardRegistration(set = "MSC", collectorNumber = "173")
 @CardRegistration(set = "MSC", collectorNumber = "815")
+@CardRegistration(set = "TDC", collectorNumber = "255")
 public class Farseek extends Card {
 
     public Farseek() {

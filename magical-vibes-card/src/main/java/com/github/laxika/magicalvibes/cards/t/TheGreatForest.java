@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "14")
 @CardRegistration(set = "OPCA", collectorNumber = "32")
+@CardRegistration(set = "MOC", collectorNumber = "144")
 public class TheGreatForest extends Card {
 
     public TheGreatForest() {
