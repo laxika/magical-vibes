@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -556,6 +557,13 @@ public class AbilityActivationService {
         // when mana is being tapped to pay a cost.
         int stackBeforeTriggers = gameData.stack.size();
         boolean manaTypeChoicePending = isAwaitingOwnManaColorChoice(gameData, playerId);
+        if (!manaTypeChoicePending && gameQueryService.hasEffectiveSupertype(
+                gameData, permanent, CardSupertype.LEGENDARY)) {
+            for (ManaColor color : ManaColor.values()) {
+                int produced = Math.max(0, manaPool.get(color) - poolBefore.getOrDefault(color, 0));
+                manaPool.addLegendarySourceManaTag(color, produced);
+            }
+        }
         if (isLandSource) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId(),
                     newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals()));
@@ -2557,6 +2565,65 @@ public class AbilityActivationService {
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
+    /** Activates a library-ninjutsu ability after its controller chose an unblocked attacker. */
+    public void activateLibraryNinjutsu(GameData gameData, Player player, Card card,
+                                        String manaCost, UUID ninjaTargetId) {
+        UUID playerId = player.getId();
+        if (ninjaTargetId == null) {
+            throw new IllegalStateException("Library ninjutsu requires an unblocked attacking creature to return");
+        }
+
+        Permanent attacker = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> permanent.getId().equals(ninjaTargetId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Library ninjutsu requires an unblocked attacker you control"));
+        if (!predicateEvaluationService.matchesPermanentPredicate(
+                gameData, attacker, new PermanentIsUnblockedAttackingPredicate())) {
+            throw new IllegalStateException("Library ninjutsu requires an unblocked attacker you control");
+        }
+
+        UUID attackTargetId = attacker.getAttackTarget();
+        int genericCost = new ManaCost(manaCost).getGenericCost();
+        int ninjutsuReduction = Math.min(
+                castingCostService.getNinjutsuAbilityCostReduction(gameData, playerId), genericCost);
+        payManaCostForSourceCard(gameData, playerId, card, manaCost, 0,
+                false, false, -ninjutsuReduction);
+        permanentRemovalService.removePermanentToLibraryShuffled(gameData, attacker);
+
+        LibraryNinjutsuEffect resolutionEffect = new LibraryNinjutsuEffect(manaCost, attackTargetId);
+        StackEntry stackEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s library ninjutsu ability",
+                List.<CardEffect>of(resolutionEffect),
+                0,
+                null,
+                null,
+                Map.of(),
+                null,
+                List.of(),
+                List.of()
+        );
+        stackEntry.setSourceZone(Zone.LIBRARY);
+        gameData.stack.add(stackEntry);
+
+        ActivatedAbility libraryNinjutsuAbility = new ActivatedAbility(
+                false, manaCost, List.of(resolutionEffect), card.getName() + "'s library ninjutsu")
+                .withNinjutsu();
+        triggerCollectionService.checkControllerActivatesNinjutsuAbilityTriggers(
+                gameData, playerId, libraryNinjutsuAbility);
+        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " activates library ninjutsu on ", card, "."));
+        log.info("Game {} - {} activates library ninjutsu on {}", gameData.id, player.getUsername(), card.getName());
+
+        gameData.priorityPassedBy.clear();
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
     /**
      * Resolves the mana produced by a hand-activated mana ability whose source card has just been
      * exiled to pay its cost (Elvish Spirit Guide). A mana ability never uses the stack (CR 605.1a),
@@ -4409,6 +4476,11 @@ public class AbilityActivationService {
         } else {
             gameData.abilityActivationUsedTreasureMana.put(permanent.getCard().getId(), false);
         }
+
+        castingCostService.getActivatedAbilityTaxByController(
+                        gameData, playerId, permanent, ability, ability.isManaAbility())
+                .forEach((taxingPlayerId, amount) -> triggerCollectionService.checkTaxPaymentTriggers(
+                        gameData, playerId, taxingPlayerId, amount));
 
         Card paidExiledCardSnapshot = null;
         if (putExiledCardIntoGraveyardCost != null) {
@@ -7504,9 +7576,16 @@ public class AbilityActivationService {
         }
         loyaltyCost += castingCostService.getLoyaltyAbilityCostIncrease(
                 gameData, playerId, permanent, ability);
-        // For negative loyalty costs, check sufficient loyalty after all cost modifications.
-        if (loyaltyCost < 0 && permanent.getCounterCount(CounterType.LOYALTY) < Math.abs(loyaltyCost)) {
-            throw new IllegalStateException("Not enough loyalty counters");
+        // For negative costs, check the resource used by this ability after all cost modifications.
+        if (loyaltyCost < 0) {
+            int available = ability.isToughnessAsLoyalty()
+                    ? gameQueryService.getEffectiveToughness(gameData, permanent)
+                    : permanent.getCounterCount(CounterType.LOYALTY);
+            if (available < Math.abs(loyaltyCost)) {
+                throw new IllegalStateException(ability.isToughnessAsLoyalty()
+                        ? "Not enough toughness"
+                        : "Not enough loyalty counters");
+            }
         }
         return loyaltyCost;
     }
@@ -7538,7 +7617,13 @@ public class AbilityActivationService {
 
     private void payLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
         int loyaltyCost = validateLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
-        permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
+        if (ability.isToughnessAsLoyalty()) {
+            permanent.setToughnessAsLoyalty(
+                    gameQueryService.getToughnessAsLoyalty(permanent) + loyaltyCost);
+        } else {
+            permanent.setCounterCount(CounterType.LOYALTY,
+                    permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
+        }
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.add(playerId);
     }

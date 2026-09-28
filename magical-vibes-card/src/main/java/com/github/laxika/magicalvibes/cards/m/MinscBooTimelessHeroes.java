@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "879")
+@CardRegistration(set = "MB2", collectorNumber = "88")
 public class MinscBooTimelessHeroes extends Card {
 
     private static final CreateTokenEffect BOO_TOKEN = new CreateTokenEffect(

@@ -64,7 +64,9 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
                     + coinFlipService.replacementDetails(result) + "."));
 
             if (result.heads()) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                if (result.isActualCoinFlip()) {
+                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                }
             } else {
                 lostPermanents.add(permanent);
             }

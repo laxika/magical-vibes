@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileDragonApproachAndSearchE
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "STX", collectorNumber = "97")
+@CardRegistration(set = "MB2", collectorNumber = "246")
 public class DragonsApproach extends Card {
 
     public DragonsApproach() {

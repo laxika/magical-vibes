@@ -50,6 +50,7 @@ filter directly rather than reusing a factory whose wording does not match.
 
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
+| `PermanentAdjacentToSourcePredicate` | `()` | the permanent immediately to the left or right of the source in its controller's battlefield order; used by Defender of the Queue (MB2 276/512) |
 | `PermanentBlockedBySourceThisTurnPredicate` | `()` | creatures that were blocked by the source permanent this turn (attacker direction only). Reads `GameData.creaturesBlockedThisTurn` and the source's recorded combat-opponent IDs, so it remains usable after combat state is cleared; requires a `FilterContext` source permanent ID or source snapshot. Wall of Nets |
 | `PermanentThatSaddledSourceThisTurnPredicate` | `()` | creatures that saddled the source Mount during the current turn; requires the source permanent context and reads `GameData.creaturesThatSaddledPermanentThisTurn` |
 | `PermanentIsCreaturePredicate` | `()` | creatures |
@@ -64,6 +65,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentCouldProduceManaPredicate` | `(ManaColor)` | permanents whose current mana abilities could produce the requested mana type, including basic-land types and applicable mana replacements; needs game data |
 | `PermanentHasMorphAbilityPredicate` | `()` | face-up permanents whose current card has a morph ability |
 | `PermanentHasNoAbilitiesPredicate` | `()` | permanents with no currently effective abilities, including printed text, keywords, granted abilities, and intrinsic basic-land mana abilities when applicable; used by Muraganda Petroglyphs |
+| `PermanentHasNoNonKeywordAbilitiesPredicate` | `()` | permanents with no currently effective abilities other than keywords; keyword abilities alone do not count (TL;DR) |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsFaceDownPredicate` | `()` | face-down permanents; used to narrow a benign target to a face-down object (Smoke Teller) |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
@@ -129,6 +131,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentHasExactlyTwoColorsPredicate` | `()` | permanents with exactly two effective colors; Invasion of Ravnica's non-two-color target restriction |
 | `PermanentIsMulticoloredPredicate` | `()` | permanents with two or more effective colors (colorless and monocolored don't match); complement of `PermanentIsMonocoloredPredicate`, battlefield counterpart of `CardIsMulticoloredPredicate`; Esper Stormblade ("another multicolored permanent" via `ControlsAnotherPermanent`) |
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
+| `PermanentHostedBySourcePredicate` | `()` | permanents currently hosted by the source Realm; used by Immersturm Battlefield's static boost |
 | `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
 | `PermanentHasSupertypePredicate` | `(CardSupertype)` | permanents with specific supertype (e.g. LEGENDARY). Evaluated through `GameQueryService.hasEffectiveSupertype`, so a global `PermanentsMatchingLoseSupertypeEffect` (Melting) correctly makes it false |
 | `PermanentHasKeywordPredicate` | `(Keyword)` | permanents with specific keyword |
@@ -210,6 +213,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentCrewedBySourceThisTurnPredicate` | `()` | permanents that were tapped to pay the source Vehicle's crew cost this turn | source permanent snapshot |
 | `PermanentEnteredBattlefieldThisOrLastTurnPredicate` | `()` | permanents whose physical card entered during the current or immediately preceding turn; requires the source controller to have had a previous turn | `gameData` + `sourceControllerId` |
 | `PermanentDealtDamageToAnythingThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat, to any player or creature — this turn ("target creature that dealt damage this turn", Avenging Arrow). Checks `GameData.combatDamageToPlayersThisTurn` + `noncombatDamageToPlayersThisTurn` + `creatureCardsDamagedThisTurnBySourcePermanent`, keyed by the candidate permanent. Note the opposite direction from `PermanentDealtDamageThisTurnPredicate` (which means *was* dealt damage) | `gameData` |
+| `PermanentDealtCombatDamageToPlayerThisTurnPredicate` | `()` | permanents that dealt combat damage to a player this turn; combine with `PermanentIsCreaturePredicate` for "each creature you control that dealt combat damage to a player this turn" | `gameData` |
 | `PermanentDealtDamageToSourceControllerThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat — to the source's controller this turn ("target creature that dealt damage to you this turn", Giltspire Avenger). Checks `GameData.combatDamageToPlayersThisTurn` + `GameData.noncombatDamageToPlayersThisTurn` for `sourceControllerId` | `gameData` + `sourceControllerId` |
 | `PermanentDealtCombatDamageToSourceControllerThisTurnPredicate` | `()` | permanents that dealt combat damage to the source's controller this turn; unlike the predicate above, noncombat damage does not match | `gameData` + `sourceControllerId` |
 | `PermanentAttackedSourceControllerThisTurnPredicate` | `()` | creatures declared as attackers against the source's controller this turn ("target creature that attacked you this turn", Jabari's Influence). Checks `GameData.playersAttackedThisTurn` (written in `CombatAttackService.declareAttackers`, cleared at turn cleanup) for `sourceControllerId`; attacking a planeswalker that player controls does not match | `gameData` + `sourceControllerId` |

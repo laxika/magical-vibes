@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromOutsideGameThisTurnEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "166")
+@CardRegistration(set = "MB2", collectorNumber = "64")
 public class Wish extends Card {
 
     public Wish() {

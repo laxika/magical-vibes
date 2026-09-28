@@ -1424,6 +1424,15 @@ public class MayCastHandlerService {
             beginAlternateCastXChoice(gameData, player, cardToCast, costStr, "madness");
             return;
         }
+        if (cardToCast.hasType(CardType.LAND)
+                && !spellCastingService.canPlayLandForMadness(gameData, player.getId(), cardToCast)) {
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " cannot be played for its madness cost."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (!cost.canPay(pool)) {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
@@ -1432,6 +1441,12 @@ public class MayCastHandlerService {
             return;
         }
         cost.pay(pool);
+
+        if (cardToCast.hasType(CardType.LAND)) {
+            spellCastingService.playLandFromMadness(gameData, player, cardToCast.getId());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         gameData.removeFromExile(cardToCast.getId());
         castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "madness", 0);

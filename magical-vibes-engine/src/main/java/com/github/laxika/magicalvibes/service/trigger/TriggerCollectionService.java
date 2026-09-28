@@ -200,6 +200,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -5000,16 +5001,33 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             }
             if (!targetingEffects.isEmpty()) {
-                PermanentPredicate targetPredicate = new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(targetPermanent.getId()))));
+                TargetFilter targetFilter = null;
+                UUID permanentTargetControllerId = creatureControllerId;
+                CardEffect declaredTargetEffect = targetingEffects.stream()
+                        .filter(effect -> source.getCard().getEffectTargetIndex(effect) >= 0)
+                        .findFirst()
+                        .orElse(null);
+                if (declaredTargetEffect != null) {
+                    int targetIndex = source.getCard().getEffectTargetIndex(declaredTargetEffect);
+                    if (targetIndex < source.getCard().getSpellTargets().size()) {
+                        targetFilter = source.getCard().getSpellTargets().get(targetIndex).getFilter();
+                        permanentTargetControllerId = targetFilter instanceof ControlledPermanentPredicateTargetFilter
+                                ? null : triggeringEntry.getControllerId();
+                    }
+                }
+                if (targetFilter == null && declaredTargetEffect == null) {
+                    PermanentPredicate targetPredicate = new PermanentAllOfPredicate(List.of(
+                            new PermanentIsCreaturePredicate(),
+                            new PermanentControlledBySourceControllerPredicate(),
+                            new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(targetPermanent.getId()))));
+                    targetFilter = new PermanentPredicateTargetFilter(
+                            targetPredicate, "Target must be another creature you control");
+                }
                 gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         source.getCard(), creatureControllerId, targetingEffects, false,
-                        new PermanentPredicateTargetFilter(
-                                targetPredicate, "Target must be another creature you control"),
+                        targetFilter,
                         0, source.getId(), new Permanent(source), false,
-                        targetPermanent.getId(), creatureControllerId, creatureControllerId));
+                        targetPermanent.getId(), permanentTargetControllerId, creatureControllerId));
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                         "'s triggered ability triggers."));
             }
@@ -7755,6 +7773,32 @@ public class TriggerCollectionService {
                         && effect instanceof OncePerTurnTriggerEffect) {
                     gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
                 }
+            }
+        }
+    }
+
+    /** Fires triggers when an opponent pays mana imposed by a spell or permanent controlled by a player. */
+    public void checkTaxPaymentTriggers(GameData gameData, UUID payingPlayerId,
+                                        UUID taxingPlayerId, int manaPaid) {
+        if (payingPlayerId == null || taxingPlayerId == null
+                || payingPlayerId.equals(taxingPlayerId) || manaPaid <= 0) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(taxingPlayerId);
+        if (battlefield == null) return;
+
+        var ctx = new TriggerContext.TaxPayment(payingPlayerId, taxingPlayerId, manaPaid);
+        for (Permanent perm : List.copyOf(battlefield)) {
+            List<CardEffect> effects = new ArrayList<>(
+                    perm.getCard().getEffects(EffectSlot.ON_OPPONENT_PAYS_TAX));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, perm, EffectSlot.ON_OPPONENT_PAYS_TAX));
+            for (CardEffect effect : effects) {
+                CardEffect toDispatch = unwrapOncePerTurnTrigger(gameData, perm, effect);
+                if (toDispatch == null) continue;
+                var match = new TriggerMatchContext(gameData, perm, taxingPlayerId, effect);
+                dispatch(match, EffectSlot.ON_OPPONENT_PAYS_TAX, toDispatch, ctx);
             }
         }
     }
@@ -11006,6 +11050,23 @@ public class TriggerCollectionService {
         for (Permanent permanent : List.copyOf(battlefield)) {
             dispatchSlot(gameData, permanent, activePlayerId,
                     EffectSlot.ON_CONTROLLER_CARDS_EXILED_DURING_TURN, ctx);
+        }
+    }
+
+    public void checkOpponentOwnedCardExiledTriggers(GameData gameData) {
+        if (gameData.exiledCards.isEmpty()) return;
+        ExiledCardEntry exiled = gameData.exiledCards.getLast();
+        if (exiled.card() == null || exiled.card().isToken()) return;
+
+        var ctx = new TriggerContext.OpponentOwnedCardExiled(exiled.ownerId(), exiled.card());
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(exiled.ownerId())) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                dispatchSlot(gameData, permanent, controllerId,
+                        EffectSlot.ON_OPPONENT_OWNED_CARD_EXILED, ctx);
+            }
         }
     }
 

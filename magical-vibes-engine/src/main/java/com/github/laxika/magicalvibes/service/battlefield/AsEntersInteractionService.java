@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.WerewhatSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +72,9 @@ public class AsEntersInteractionService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final EtbTriggerService etbTriggerService;
     private final UpgradeSupport upgradeSupport;
+    @Autowired
+    @Lazy
+    private WerewhatSupport werewhatSupport;
     private PermanentRemovalService permanentRemovalService;
 
     @Autowired
@@ -404,6 +409,21 @@ public class AsEntersInteractionService {
             return;
         }
 
+        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
+                .map(ChooseIndependentModesOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (independentModeChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            int nextGroup = justEntered.getChosenModeLabels().size();
+            if (nextGroup < independentModeChoice.modeGroups().size()) {
+                playerInputService.beginChooseIndependentModesOnEnterChoice(gameData, controllerId, card,
+                        justEntered.getId(), independentModeChoice.modeGroups(), nextGroup);
+                return;
+            }
+        }
+
         ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
@@ -452,8 +472,12 @@ public class AsEntersInteractionService {
         if (subtypeChoice != null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(), subtypeChoice);
-            return;
+            if (subtypeChoice.writesToBuddyList()
+                    ? !justEntered.isBuddyListChoiceMade()
+                    : justEntered.getChosenSubtype() == null) {
+                playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(), subtypeChoice);
+                return;
+            }
         }
 
         if (card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -643,6 +667,11 @@ public class AsEntersInteractionService {
             playerInputService.beginPayAnyAmountOfLifeChoice(gameData, controllerId, maxLife,
                     new ChoiceContext.PayAnyAmountOfLifeAsEnters(justEntered.getId(), controllerId, card,
                             targetId, wasCastFromHand, etbMode, kicked));
+            return;
+        }
+
+        if (werewhatSupport != null && werewhatSupport.beginChoice(gameData, controllerId, card, targetId, wasCastFromHand,
+                etbMode, xValue, kicked, targetIds)) {
             return;
         }
 

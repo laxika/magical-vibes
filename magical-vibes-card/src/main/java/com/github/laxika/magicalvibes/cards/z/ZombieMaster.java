@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "3ED", collectorNumber = "138")
 @CardRegistration(set = "SLD", collectorNumber = "1460")
 @CardRegistration(set = "ME4", collectorNumber = "105")
+@CardRegistration(set = "MB2", collectorNumber = "188")
 public class ZombieMaster extends Card {
 
     public ZombieMaster() {

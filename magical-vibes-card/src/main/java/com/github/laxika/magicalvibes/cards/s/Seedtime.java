@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "130")
+@CardRegistration(set = "MB2", collectorNumber = "73")
 public class Seedtime extends Card {
 
     public Seedtime() {

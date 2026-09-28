@@ -51,6 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactOrCreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentMode;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
@@ -159,6 +161,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBecomesLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect;
@@ -335,6 +338,7 @@ public class GameQueryService {
             CardSubtype.GATE,
             CardSubtype.LOCUS,
             CardSubtype.URZAS,
+            CardSubtype.ULAMOGS,
             CardSubtype.MINE,
             CardSubtype.POWER_PLANT,
             CardSubtype.TOWER,
@@ -439,10 +443,10 @@ public class GameQueryService {
                               boolean cardTypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden,
                               int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities,
                               boolean losesAllNonManaAbilities, boolean ptSwitched, String name,
-                              boolean turnFaceUpPrevented) {
+                              boolean turnFaceUpPrevented, boolean tokenized) {
         static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), Set.of(), false, false, 1,
                 List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false,
-                Set.of(), false, 0, 0, false, false, false, null, false);
+                Set.of(), false, 0, 0, false, false, false, null, false, false);
 
         public StaticBonus(int power, int toughness, Set<Keyword> keywords,
                            Set<CardColor> protectionColors, boolean animatedCreature,
@@ -460,7 +464,7 @@ public class GameQueryService {
                     landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                     basePTOverridden, basePowerOverride != null ? basePowerOverride : 0,
                     baseToughnessOverride != null ? baseToughnessOverride : 0,
-                    losesAllAbilities, false, ptSwitched, null, false);
+                    losesAllAbilities, false, ptSwitched, null, false, false);
         }
     }
 
@@ -910,6 +914,10 @@ public class GameQueryService {
                 .getOrDefault(card.getId(), Set.of()).contains(type)) {
             return true;
         }
+        GameData.GraveyardCardAnimation graveyardAnimation = activeGraveyardCardAnimation(gameData, card);
+        if (graveyardAnimation != null && graveyardAnimation.grantedCardTypes().contains(type)) {
+            return true;
+        }
         if (type == CardType.CREATURE && isOutsideBattlefieldCreature(card, gameData)) {
             return true;
         }
@@ -957,6 +965,10 @@ public class GameQueryService {
                 .getOrDefault(card.getId(), Set.of()).contains(subtype)) {
             return true;
         }
+        GameData.GraveyardCardAnimation graveyardAnimation = activeGraveyardCardAnimation(gameData, card);
+        if (graveyardAnimation != null && graveyardAnimation.grantedSubtypes().contains(subtype)) {
+            return true;
+        }
         if (cardHasType(card, CardType.CREATURE, gameData, cardOwnerId) && isCreatureSubtype(subtype)
                 && (card.hasKeyword(Keyword.CHANGELING) || hasSelfAllCreatureTypesEffect(card)
                 || selfAllZoneGrantedSubtypes(card).contains(subtype)
@@ -978,7 +990,8 @@ public class GameQueryService {
     private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
             CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
             CardSubtype.MOUNTAIN, CardSubtype.FOREST, CardSubtype.DESERT,
-            CardSubtype.LAIR, CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.SPHERE);
+            CardSubtype.LAIR, CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.SPHERE,
+            CardSubtype.ULAMOGS);
 
     /**
      * The effective basic land types (Plains/Island/Swamp/Mountain/Forest) of a permanent,
@@ -1065,6 +1078,10 @@ public class GameQueryService {
         Set<CardSubtype> subtypes = new java.util.HashSet<>(card.getSubtypes());
         if (gameData != null) {
             subtypes.addAll(gameData.perpetualCardSubtypes.getOrDefault(card.getId(), Set.of()));
+            GameData.GraveyardCardAnimation graveyardAnimation = activeGraveyardCardAnimation(gameData, card);
+            if (graveyardAnimation != null) {
+                subtypes.addAll(graveyardAnimation.grantedSubtypes());
+            }
         }
         boolean creature = cardHasType(card, CardType.CREATURE, gameData, cardOwnerId);
         if (creature && hasSelfAllCreatureTypesEffect(card)) {
@@ -2237,8 +2254,9 @@ public class GameQueryService {
      * damage source consult it in addition to the global check.
      */
     public boolean damageCantBePreventedFromSource(GameData gameData, Permanent source) {
-        return source != null && source.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(SourceDamageCantBePreventedEffect.class::isInstance);
+        return source != null && (source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(SourceDamageCantBePreventedEffect.class::isInstance)
+                || hasGrantedEffect(gameData, source, SourceDamageCantBePreventedEffect.class));
     }
 
     /** Returns whether damage from the source can't be prevented for the current damage event. */
@@ -2453,6 +2471,11 @@ public class GameQueryService {
         return isCreatureWithBonus(gameData, permanent, bonus);
     }
 
+    /** Returns whether a permanent currently has token status, including continuous effects. */
+    public boolean isToken(GameData gameData, Permanent permanent) {
+        return permanent.getCard().isToken() || computeStaticBonus(gameData, permanent).tokenized();
+    }
+
     private boolean isCreatureWithBonus(GameData gameData, Permanent permanent, StaticBonus bonus) {
         if (hasEffectiveCardType(permanent, bonus, CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
@@ -2482,6 +2505,18 @@ public class GameQueryService {
      */
     public boolean isPlaneswalker(GameData gameData, Permanent permanent) {
         return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.PLANESWALKER);
+    }
+
+    /** Whether an attached Aura makes this permanent use toughness as its loyalty resource. */
+    public boolean isToughnessAsLoyaltyPermanent(GameData gameData, Permanent permanent) {
+        return hasAuraWithEffect(gameData, permanent, EnchantedPermanentToughnessBecomesLoyaltyEffect.class);
+    }
+
+    /** Returns the stored base toughness used as the loyalty resource, with a safe pre-initialization fallback. */
+    public int getToughnessAsLoyalty(Permanent permanent) {
+        return permanent.getToughnessAsLoyalty() != null
+                ? permanent.getToughnessAsLoyalty()
+                : permanent.getBaseToughness();
     }
 
     public boolean isBattle(GameData gameData, Permanent permanent) {
@@ -3074,14 +3109,14 @@ public class GameQueryService {
         if (gameData != null) {
             Set<CardColor> temporary = gameData.spellColorOverridesUntilEndOfTurn.get(card.getId());
             if (temporary != null) {
-                return Set.copyOf(temporary);
+                return addGraveyardAnimationColors(gameData, card, temporary);
             }
             Set<CardColor> indefinite = gameData.spellColorOverrides.get(card.getId());
             if (indefinite != null) {
-                return Set.copyOf(indefinite);
+                return addGraveyardAnimationColors(gameData, card, indefinite);
             }
             if (anyBattlefieldHasStaticEffect(gameData, AllCardsAreColorlessEffect.class)) {
-                return Set.of();
+                return addGraveyardAnimationColors(gameData, card, Set.of());
             }
             UUID affectedPlayerId = gameData.stack.stream()
                     .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(card.getId()))
@@ -3102,7 +3137,7 @@ public class GameQueryService {
                                 .findFirst()
                                 .orElse(null);
                         if (colorEffect != null) {
-                            return Set.of(colorEffect.color());
+                            return addGraveyardAnimationColors(gameData, card, Set.of(colorEffect.color()));
                         }
                     }
                 }
@@ -3110,10 +3145,47 @@ public class GameQueryService {
         }
         List<CardColor> intrinsic = card.getColors();
         if (intrinsic != null && !intrinsic.isEmpty()) {
-            return Set.copyOf(intrinsic);
+            return addGraveyardAnimationColors(gameData, card, Set.copyOf(intrinsic));
         }
         CardColor single = card.getColor();
-        return single != null ? Set.of(single) : Set.of();
+        return addGraveyardAnimationColors(gameData, card, single != null ? Set.of(single) : Set.of());
+    }
+
+    private Set<CardColor> addGraveyardAnimationColors(GameData gameData, Card card, Set<CardColor> colors) {
+        GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
+        if (animation == null || animation.grantedColors().isEmpty()) {
+            return Set.copyOf(colors);
+        }
+        Set<CardColor> result = EnumSet.noneOf(CardColor.class);
+        result.addAll(colors);
+        result.addAll(animation.grantedColors());
+        return Set.copyOf(result);
+    }
+
+    private GameData.GraveyardCardAnimation activeGraveyardCardAnimation(GameData gameData, Card card) {
+        if (gameData == null || card == null) {
+            return null;
+        }
+        GameData.GraveyardCardAnimation animation =
+                gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.get(card.getId());
+        if (animation == null
+                || animation.graveyardEntryVersion() != gameData.graveyardEntryVersion(card.getId())
+                || findCardInGraveyardById(gameData, card.getId()) == null) {
+            return null;
+        }
+        return animation;
+    }
+
+    /** Returns the current power of a non-battlefield card, including temporary graveyard changes. */
+    public Integer getEffectiveCardPower(GameData gameData, Card card) {
+        GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
+        return animation == null ? card.getPower() : animation.power();
+    }
+
+    /** Returns the current toughness of a non-battlefield card, including temporary graveyard changes. */
+    public Integer getEffectiveCardToughness(GameData gameData, Card card) {
+        GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
+        return animation == null ? card.getToughness() : animation.toughness();
     }
 
     private UUID findNonBattlefieldCardOwner(GameData gameData, Card card) {
@@ -4445,6 +4517,10 @@ public class GameQueryService {
                 return Math.max(0, toughness);
             }
 
+            if (hasGlobalCombatDamageAssignmentEffect(gameData, CombatDamageAssignmentMode.MANA_VALUE)) {
+                return creature.isFaceDown() ? 0 : Math.max(0, creature.getCard().getManaValue());
+            }
+
             // Global-scoped: every creature uses toughness (e.g. Doran, the Siege Tower)
             if (hasGlobalToughnessAssignEffect(gameData)) {
                 return Math.max(0, toughness);
@@ -4534,6 +4610,11 @@ public class GameQueryService {
      * (e.g. Doran, the Siege Tower â€” "each creature assigns combat damage equal to its toughness").
      */
     private boolean hasGlobalToughnessAssignEffect(GameData gameData) {
+        return hasGlobalCombatDamageAssignmentEffect(gameData, CombatDamageAssignmentMode.TOUGHNESS);
+    }
+
+    private boolean hasGlobalCombatDamageAssignmentEffect(
+            GameData gameData, CombatDamageAssignmentMode assignmentMode) {
         for (var entry : gameData.playerBattlefields.entrySet()) {
             UUID controllerId = entry.getKey();
             List<Permanent> bf = entry.getValue();
@@ -4543,8 +4624,9 @@ public class GameQueryService {
                     collectActiveStaticEffects(gameData, p, controllerId, effect, activeEffects);
                 }
                 for (CardEffect effect : activeEffects) {
-                    if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
-                            && acdt.scope() == GrantScope.ALL_CREATURES) {
+                    if (effect instanceof CombatDamageAssignmentEffect assignment
+                            && assignment.assignmentMode() == assignmentMode
+                            && assignment.scope() == GrantScope.ALL_CREATURES) {
                         return true;
                     }
                 }
@@ -4553,8 +4635,9 @@ public class GameQueryService {
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
-                            && acdt.scope() == GrantScope.ALL_CREATURES) {
+                    if (effect instanceof CombatDamageAssignmentEffect assignment
+                            && assignment.assignmentMode() == assignmentMode
+                            && assignment.scope() == GrantScope.ALL_CREATURES) {
                         return true;
                     }
                 }
@@ -5305,7 +5388,8 @@ public class GameQueryService {
                 && !accumulator.isCardTypeOverriding()
                 && accumulator.getGrantedSupertypes().isEmpty()
                 && accumulator.getName() == null
-                && !accumulator.isTurnFaceUpPrevented()) {
+                && !accumulator.isTurnFaceUpPrevented()
+                && !accumulator.isTokenized()) {
             return StaticBonus.NONE;
         }
 
@@ -5325,8 +5409,11 @@ public class GameQueryService {
         boolean losesAllAbilities = accumulator.isLosesAllAbilities();
         boolean losesAllNonManaAbilities = accumulator.isLosesAllNonManaAbilities();
         if (state != null) {
+            boolean abilityGainProhibited = state.isAbilityGainProhibited();
             Set<Keyword> mergedKeywords = new HashSet<>(state.getKeywords());
-            mergedKeywords.addAll(accumulator.getKeywords());
+            if (!abilityGainProhibited) {
+                mergedKeywords.addAll(accumulator.getKeywords());
+            }
             mergedKeywords.removeAll(accumulator.getRemovedKeywords());
             keywords = mergedKeywords;
             Set<Keyword> mergedRemoved = new HashSet<>(accumulator.getRemovedKeywords());
@@ -5347,20 +5434,26 @@ public class GameQueryService {
             grantedColors = mergedColors;
             Set<CardColor> mergedProtection = EnumSet.noneOf(CardColor.class);
             mergedProtection.addAll(state.getProtectionColors());
-            mergedProtection.addAll(accumulator.getProtectionColors());
+            if (!abilityGainProhibited) {
+                mergedProtection.addAll(accumulator.getProtectionColors());
+            }
             protectionColors = mergedProtection;
             removedProtectionColors = Set.copyOf(state.getRemovedProtectionColors());
             List<ActivatedAbility> mergedAbilities = new ArrayList<>(state.getGrantedActivatedAbilities());
-            mergedAbilities.addAll(accumulator.getGrantedActivatedAbilities());
+            if (!abilityGainProhibited) {
+                mergedAbilities.addAll(accumulator.getGrantedActivatedAbilities());
+            }
             grantedActivatedAbilities = mergedAbilities;
             Set<CardEffect> seenGrantedEffects = Collections.newSetFromMap(new IdentityHashMap<>());
             List<CardEffect> mergedEffects = new ArrayList<>();
             state.getGrantedStaticEffects().stream()
                     .filter(seenGrantedEffects::add)
                     .forEach(mergedEffects::add);
-            accumulator.getGrantedEffects().stream()
-                    .filter(seenGrantedEffects::add)
-                    .forEach(mergedEffects::add);
+            if (!abilityGainProhibited) {
+                accumulator.getGrantedEffects().stream()
+                        .filter(seenGrantedEffects::add)
+                        .forEach(mergedEffects::add);
+            }
             grantedEffects = mergedEffects;
             Set<Keyword> blockedKeywords = mergedEffects.stream()
                     .filter(CantHaveOrGainKeywordEffect.class::isInstance)
@@ -5403,7 +5496,7 @@ public class GameQueryService {
                 accumulator.getBasePowerOverride() != null ? accumulator.getBasePowerOverride() : 0,
                 accumulator.getBaseToughnessOverride() != null ? accumulator.getBaseToughnessOverride() : 0,
                 losesAllAbilities, losesAllNonManaAbilities, ptSwitched, accumulator.getName(),
-                accumulator.isTurnFaceUpPrevented());
+                accumulator.isTurnFaceUpPrevented(), accumulator.isTokenized());
     }
 
     /** Hone counters grant their power bonus independently of any ability on the Equipment. */
@@ -6499,7 +6592,8 @@ public class GameQueryService {
         boolean entryHasKeyword = entry.getSourcePermanentId() == null
                 && entry.getCard() != null
                 && (entry.getCard().getKeywords().contains(keyword)
-                || entry.getGrantedKeywordsOnEntry().contains(keyword));
+                || entry.getGrantedKeywordsOnEntry().contains(keyword)
+                || entry.getGrantedKeywordsWhileOnStack().contains(keyword));
         if (entryHasKeyword) {
             return true;
         }
@@ -9094,7 +9188,7 @@ public class GameQueryService {
         gameData.forEachPermanent((playerId, p) -> {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof TokenCreationReplacementEffect replacement
-                        && (playerId.equals(effectiveControllerId) || replacement.appliesToAllPlayers())
+                        && replacement.appliesToTokenCreator(playerId, effectiveControllerId)
                         && replacement.appliesTo(tokenSubtypes)
                         && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
                             || !multiply.creatureTokensOnly() || creatureToken)) {

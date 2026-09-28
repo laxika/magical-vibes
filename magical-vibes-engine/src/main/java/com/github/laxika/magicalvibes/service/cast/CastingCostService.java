@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCost
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoyaltyAbilityCostIncreasingEffect;
@@ -91,8 +92,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -590,6 +593,44 @@ public class CastingCostService {
         return delta;
     }
 
+    /** Returns generic mana taxes imposed by opponent-controlled static spell-cost increases. */
+    public Map<UUID, Integer> getOpponentSpellTaxByController(GameData gameData, UUID castingPlayerId,
+                                                               Card card, int xValue, Zone sourceZone,
+                                                               boolean kicked, boolean collectEvidenceCostPaid) {
+        CostModificationContext context = new CostModificationContext(
+                gameData, castingPlayerId, card, false, xValue, false, sourceZone,
+                false, collectEvidenceCostPaid, kicked);
+        Map<UUID, Integer> taxes = new HashMap<>();
+        for (CollectedCostModifier modifier : buildCostModifierSnapshot(gameData, castingPlayerId).modifiers()) {
+            IncreaseSpellCostEffect increase = null;
+            if (modifier.effect() instanceof IncreaseSpellCostEffect directIncrease) {
+                increase = directIncrease;
+            } else if (modifier.effect() instanceof ConditionalEffect conditional
+                    && conditional.wrapped() instanceof IncreaseSpellCostEffect conditionalIncrease
+                    && modifier.source().sourcePermanent() != null
+                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(modifier.source().sourcePermanent(),
+                            modifier.source().controllerId()))) {
+                increase = conditionalIncrease;
+            }
+            if (increase == null) {
+                continue;
+            }
+            UUID taxingPlayerId = modifier.source().controllerId();
+            if (taxingPlayerId == null || taxingPlayerId.equals(castingPlayerId)) {
+                continue;
+            }
+            int amount = modifier.handler().modifyCost(context, modifier.effect(), modifier.source());
+            if (increase.manaCost() != null) {
+                amount += new ManaCost(increase.manaCost()).getManaValue();
+            }
+            if (amount > 0) {
+                taxes.merge(taxingPlayerId, amount, Integer::sum);
+            }
+        }
+        return taxes;
+    }
+
     public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
                                                    ManaCost cost) {
         return applyColoredManaCostReductions(gameData, playerId, card, cost,
@@ -1063,6 +1104,40 @@ public class CastingCostService {
             }
         }
         return tax;
+    }
+
+    /** Returns activated-ability mana taxes grouped by the controller imposing each tax. */
+    public Map<UUID, Integer> getActivatedAbilityTaxByController(
+            GameData gameData, UUID activatingPlayerId, Permanent sourcePermanent,
+            ActivatedAbility ability, boolean manaAbility) {
+        Map<UUID, Integer> taxes = new HashMap<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    ActivatedAbilityCostIncreasingEffect taxEffect = null;
+                    if (effect instanceof ActivatedAbilityCostIncreasingEffect directTax) {
+                        taxEffect = directTax;
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof ActivatedAbilityCostIncreasingEffect wrappedTax
+                            && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(perm, pid))) {
+                        taxEffect = wrappedTax;
+                    }
+                    if (taxEffect != null
+                            && taxEffect.appliesTo(ability, manaAbility, activatingPlayerId, pid)
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            sourcePermanent, taxEffect.affectedPermanents(),
+                            FilterContext.of(gameData)
+                                    .withSourceCardId(perm.getOriginalCard().getId())
+                                    .withSourceControllerId(pid))) {
+                        taxes.merge(pid, taxEffect.additionalGenericCost(), Integer::sum);
+                    }
+                }
+            }
+        }
+        return taxes;
     }
 
     /**

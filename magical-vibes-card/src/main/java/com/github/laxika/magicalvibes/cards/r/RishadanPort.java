@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "324")
 @CardRegistration(set = "A25", collectorNumber = "246")
+@CardRegistration(set = "MB2", collectorNumber = "241")
 public class RishadanPort extends Card {
 
     public RishadanPort() {

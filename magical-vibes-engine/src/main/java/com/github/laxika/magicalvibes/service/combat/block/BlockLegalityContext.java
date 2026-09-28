@@ -147,6 +147,7 @@ public final class BlockLegalityContext {
                          boolean fear,
                          boolean intimidate,
                          boolean skulk,
+                         boolean nimble,
                          boolean ringBearerCantBeBlockedByGreaterPower,
                          boolean shadow,
                          boolean cantBeBlockedByLessPower,

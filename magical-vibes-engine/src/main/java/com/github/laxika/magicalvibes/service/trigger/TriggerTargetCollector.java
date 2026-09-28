@@ -355,7 +355,7 @@ public class TriggerTargetCollector {
                                             sourceCard, xValue == null ? 0 : xValue, controllerId,
                                             sourcePermanentSnapshot,
                                             sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
-                                            null)).isPresent()) {
+                                            null, defendingPlayerId)).isPresent()) {
                         continue;
                     }
 

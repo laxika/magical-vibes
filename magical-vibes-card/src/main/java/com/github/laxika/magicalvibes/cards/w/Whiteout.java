@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "275")
 @CardRegistration(set = "ME2", collectorNumber = "185")
+@CardRegistration(set = "MB2", collectorNumber = "77")
 public class Whiteout extends Card {
 
     public Whiteout() {

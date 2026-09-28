@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
@@ -62,6 +63,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -134,6 +137,8 @@ public class LibraryChoiceHandlerService {
     private TargetLegalityService targetLegalityService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
+    @Autowired @Lazy
+    private AbilityActivationService abilityActivationService;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -224,7 +229,13 @@ public class LibraryChoiceHandlerService {
                 && sourceCards == null
                 && librarySearch.decisionPlayerId() == null
                 && librarySearchSupport.isLibrarySearchCastableCard(searchCards.get(cardIndex))) {
-            handleLibrarySearchCast(gameData, player, activeSearch, searchCards.get(cardIndex));
+            Card selectedCard = searchCards.get(cardIndex);
+            LibraryNinjutsuEffect libraryNinjutsu = librarySearchSupport.libraryNinjutsuEffect(selectedCard);
+            if (libraryNinjutsu != null) {
+                handleLibraryNinjutsu(gameData, player, activeSearch, selectedCard, libraryNinjutsu);
+            } else {
+                handleLibrarySearchCast(gameData, player, activeSearch, selectedCard);
+            }
             return;
         }
 
@@ -630,6 +641,9 @@ public class LibraryChoiceHandlerService {
                 performStateBasedActionsIfResolutionComplete(gameData);
             }
 
+            if (chosenCard != null) {
+                insertSelectedCardFollowUp(gameData, followUp, chosenCard, playerId);
+            }
             finishSearchAndResume(gameData);
             return;
         }
@@ -1477,7 +1491,8 @@ public class LibraryChoiceHandlerService {
                 final int bound = manaValueBoundValue;
                 final boolean exact = manaValueExact;
                 newSearchCards = newSearchCards.stream()
-                        .filter(c -> exact ? c.getManaValue() == bound : c.getManaValue() <= bound)
+                        .filter(c -> c.hasAllCardNames()
+                                || (exact ? c.getManaValue() == bound : c.getManaValue() <= bound))
                         .toList();
             }
             if (totalManaValueBound != null) {
@@ -1486,7 +1501,7 @@ public class LibraryChoiceHandlerService {
                         .sum();
                 int remainingManaValue = totalManaValueBound - selectedManaValue;
                 newSearchCards = newSearchCards.stream()
-                        .filter(c -> c.getManaValue() <= remainingManaValue)
+                        .filter(c -> c.hasAllCardNames() || c.getManaValue() <= remainingManaValue)
                         .toList();
             }
             if (requireDifferentNames && !excludedCardNames.isEmpty()) {
@@ -1790,7 +1805,8 @@ public class LibraryChoiceHandlerService {
             int bound = librarySearch.manaValueBoundValue();
             boolean exact = librarySearch.manaValueExact();
             matches = matches.stream()
-                    .filter(c -> exact ? c.getManaValue() == bound : c.getManaValue() <= bound)
+                    .filter(c -> c.hasAllCardNames()
+                            || (exact ? c.getManaValue() == bound : c.getManaValue() <= bound))
                     .toList();
         }
         if (librarySearch.totalManaValueBound() != null) {
@@ -1799,7 +1815,9 @@ public class LibraryChoiceHandlerService {
             int selectedManaValue = accumulatedCards.stream()
                     .mapToInt(Card::getManaValue).sum();
             int remainingManaValue = librarySearch.totalManaValueBound() - selectedManaValue;
-            matches = matches.stream().filter(c -> c.getManaValue() <= remainingManaValue).toList();
+            matches = matches.stream()
+                    .filter(c -> c.hasAllCardNames() || c.getManaValue() <= remainingManaValue)
+                    .toList();
         }
         if (librarySearch.requireDifferentNames() && !excludedCardNames.isEmpty()) {
             Set<String> excluded = Set.copyOf(excludedCardNames);
@@ -1843,6 +1861,57 @@ public class LibraryChoiceHandlerService {
         LibrarySearchParams librarySearch = activeSearch.params();
         spellCastingService.castCardFromLibraryWhileSearching(gameData, player, librarySearch.playerId(), card);
         gameData.interaction.clearAwaitingInput();
+
+        continueLibrarySearchAfterLibraryAction(gameData, player, activeSearch, card);
+    }
+
+    private void handleLibraryNinjutsu(GameData gameData, Player player,
+                                       PendingInteraction.LibrarySearch activeSearch, Card card,
+                                       LibraryNinjutsuEffect libraryNinjutsu) {
+        UUID playerId = player.getId();
+        List<UUID> attackers = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, new PermanentIsUnblockedAttackingPredicate()))
+                .map(Permanent::getId)
+                .toList();
+        if (attackers.isEmpty()) {
+            throw new IllegalStateException("Library ninjutsu requires an unblocked attacker you control");
+        }
+
+        playerInputService.beginPermanentChoice(
+                gameData,
+                playerId,
+                attackers,
+                new PermanentChoiceContext.LibraryNinjutsu(activeSearch, card, libraryNinjutsu.manaCost()),
+                "Choose an unblocked attacker to shuffle into your library for library ninjutsu.");
+    }
+
+    /** Completes the attacker choice made after a library-ninjutsu card was selected. */
+    public void completeLibraryNinjutsuChoice(GameData gameData, Player player, UUID attackerId,
+                                              PermanentChoiceContext.LibraryNinjutsu choice) {
+        try {
+            abilityActivationService.activateLibraryNinjutsu(
+                    gameData, player, choice.card(), choice.manaCost(), attackerId);
+        } catch (IllegalStateException exception) {
+            List<UUID> attackers = gameData.playerBattlefields.getOrDefault(player.getId(), List.of()).stream()
+                    .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, new PermanentIsUnblockedAttackingPredicate()))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!attackers.isEmpty()) {
+                playerInputService.beginPermanentChoice(
+                        gameData, player.getId(), attackers, choice,
+                        "Choose an unblocked attacker to shuffle into your library for library ninjutsu.");
+            }
+            throw exception;
+        }
+
+        continueLibrarySearchAfterLibraryAction(gameData, player, choice.search(), choice.card());
+    }
+
+    private void continueLibrarySearchAfterLibraryAction(GameData gameData, Player player,
+                                                         PendingInteraction.LibrarySearch activeSearch, Card card) {
+        LibrarySearchParams librarySearch = activeSearch.params();
 
         List<Card> remainingCards = librarySearch.cards().stream()
                 .filter(searchCard -> !searchCard.getId().equals(card.getId()))
@@ -4011,7 +4080,7 @@ public class LibraryChoiceHandlerService {
             List<CardEffect> effects = new ArrayList<>(evaluationCard.getEffects(EffectSlot.SPELL));
             spellCastingService.prepareModalSpellCast(evaluationCard, effects, modeIndex);
             boolean needsTarget = EffectResolution.needsSpellCastTarget(
-                    effects, evaluationCard.isAura(), evaluationCard.isEnchantPlayer());
+                    effects, evaluationCard.isAuraThatRequiresAttachment(), evaluationCard.isEnchantPlayer());
             if (!needsTarget || !computeCastWithoutPayingTargets(gameData, evaluationCard, effects, controllerId).isEmpty()) {
                 legalOptions.add(option);
                 modeIndices.add(modeIndex);
@@ -4052,7 +4121,7 @@ public class LibraryChoiceHandlerService {
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", card, "."));
 
         boolean needsTarget = EffectResolution.needsSpellCastTarget(
-                spellEffects, card.isAura(), card.isEnchantPlayer());
+                spellEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         if (needsTarget) {
             List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, card, spellEffects,
                     ctx.controllerId());

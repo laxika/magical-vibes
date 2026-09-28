@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "174")
+@CardRegistration(set = "MB2", collectorNumber = "248")
 public class MultaniYavimayasAvatar extends Card {
 
     public MultaniYavimayasAvatar() {

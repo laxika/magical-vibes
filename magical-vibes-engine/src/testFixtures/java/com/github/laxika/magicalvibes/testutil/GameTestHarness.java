@@ -652,6 +652,11 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
     }
 
+    public void castFromExileWithFlashforward(Player player, UUID exileCardId, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardFromExile(gameData, player, exileCardId, null, targetId, true);
+    }
+
     public void castAdventure(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playAdventureCard(gameData, player, cardIndex, 0, null,

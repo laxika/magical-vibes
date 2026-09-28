@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -207,7 +208,7 @@ public class ValidTargetService {
                 etbEffects = EffectResolution.resolveEffects(etbEffects, kicked, modeSelection);
             }
             allowedTargets = EffectResolution.computeAllowedTargets(
-                    spellEffects, etbEffects, card.isAura(), card.isEnchantPlayer());
+                    spellEffects, etbEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         } else {
             allowedTargets = EffectResolution.computeAllowedTargets(card);
         }
@@ -216,6 +217,7 @@ public class ValidTargetService {
         List<UUID> validPlayerIds = new ArrayList<>();
         List<UUID> validGraveyardCardIds = new ArrayList<>();
         List<UUID> validExiledCardIds = new ArrayList<>();
+        List<UUID> validHandCardIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null && !card.isAllowSharedTargets()
                 ? Set.copyOf(alreadySelectedIds) : Set.of();
 
@@ -459,6 +461,14 @@ public class ValidTargetService {
                     gameData, card, spellEffects, controllerId, excludeIds, effectiveXValue));
         }
 
+        if (allowedTargets.contains(TargetType.HAND)) {
+            TargetFilter handPositionFilter = isMultiTarget && positionIndex < targetFilters.size()
+                    ? targetFilters.get(positionIndex) : modeFilter;
+            validHandCardIds.addAll(computeValidHandTargetsForSpell(
+                    gameData, card, spellEffects, controllerId, excludeIds, effectiveXValue,
+                    handPositionFilter));
+        }
+
         enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
                 validPermanentIds, validPlayerIds);
 
@@ -490,7 +500,37 @@ public class ValidTargetService {
                     gameData, card, controllerId, effectiveX, isKicked);
         }
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
-                validExiledCardIds, responseMinTargets, responseMaxTargets, prompt);
+                validExiledCardIds, validHandCardIds, responseMinTargets, responseMaxTargets, prompt);
+    }
+
+    private List<UUID> computeValidHandTargetsForSpell(GameData gameData, Card card,
+                                                        List<CardEffect> spellEffects,
+                                                        UUID controllerId, Set<UUID> excludeIds,
+                                                        int xValue, TargetFilter positionFilter) {
+        FilterContext context = targetFilterContext(gameData, card.getId(), controllerId, xValue);
+        List<UUID> validIds = new ArrayList<>();
+        for (Card candidate : gameData.playerHands.getOrDefault(controllerId, List.of())) {
+            if (excludeIds.contains(candidate.getId()) || candidate.getId().equals(card.getId())) {
+                continue;
+            }
+            if (positionFilter instanceof HandCardPredicateTargetFilter handFilter
+                    && !predicateEvaluationService.matchesCardPredicate(
+                    candidate, handFilter.predicate(), card.getId(), gameData, controllerId)) {
+                continue;
+            }
+            boolean valid = spellEffects.stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.HAND_CARD))
+                    .anyMatch(effect -> targetPredicateEvaluationService.matchesHandCard(
+                            effect.targetSpec().targetPredicate(), candidate, controllerId, context)
+                            && targetValidationService.checkEffectTargets(List.of(effect),
+                            new TargetValidationContext(gameData, candidate.getId(),
+                                    com.github.laxika.magicalvibes.model.Zone.HAND, card, xValue,
+                                    controllerId, null)).isEmpty());
+            if (valid) {
+                validIds.add(candidate.getId());
+            }
+        }
+        return validIds;
     }
 
     private List<UUID> computeValidExiledTargetsForSpell(GameData gameData, Card card,
@@ -1546,7 +1586,7 @@ public class ValidTargetService {
         }
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
                 spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
-                card.isAura(), card.isEnchantPlayer());
+                card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         boolean isMultiTarget = card.getMaxTargets() > 1;
         boolean hasValidPermanentTargetSet = card.getMultiTargetConstraint()
                 == MultiTargetConstraint.BLOCKED_BY_FIRST_TARGET

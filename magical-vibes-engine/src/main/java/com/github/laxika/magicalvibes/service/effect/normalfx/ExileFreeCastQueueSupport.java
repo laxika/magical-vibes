@@ -54,6 +54,7 @@ public class ExileFreeCastQueueSupport {
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
     private final AdditionalSpellCostService additionalSpellCostService;
     private final SpellCastingService spellCastingService;
+    private final OutsideGameNormalCostCastSupport outsideGameNormalCostCastSupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -65,7 +66,8 @@ public class ExileFreeCastQueueSupport {
                                             CopySupport copySupport,
                                             @Lazy SpellweaverVoluteSupport spellweaverVoluteSupport,
                                             AdditionalSpellCostService additionalSpellCostService,
-                                            @Lazy SpellCastingService spellCastingService) {
+                                            @Lazy SpellCastingService spellCastingService,
+                                            @Lazy OutsideGameNormalCostCastSupport outsideGameNormalCostCastSupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
@@ -76,6 +78,7 @@ public class ExileFreeCastQueueSupport {
         this.spellweaverVoluteSupport = spellweaverVoluteSupport;
         this.additionalSpellCostService = additionalSpellCostService;
         this.spellCastingService = spellCastingService;
+        this.outsideGameNormalCostCastSupport = outsideGameNormalCostCastSupport;
     }
 
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
@@ -289,6 +292,11 @@ public class ExileFreeCastQueueSupport {
     private void finishModalCast(GameData gameData, Player player,
                                  ChoiceContext.ExileFreeCastModeChoice context,
                                  List<Integer> chosenModeIndices) {
+        if (context.payManaCost()) {
+            outsideGameNormalCostCastSupport.castPreparedModalCard(
+                    gameData, player, context, chosenModeIndices);
+            return;
+        }
         PreparedModalCast prepared = prepareModalCast(
                 gameData, context.cardToCast(), context.controllerId(), context.effect(), chosenModeIndices);
         List<String> labels = chosenModeIndices.stream()
@@ -421,7 +429,8 @@ public class ExileFreeCastQueueSupport {
     }
 
     private boolean needsCastTarget(Card card, List<CardEffect> spellEffects) {
-        return EffectResolution.needsSpellCastTarget(spellEffects, card.isAura(), card.isEnchantPlayer())
+        return EffectResolution.needsSpellCastTarget(spellEffects,
+                card.isAuraThatRequiresAttachment(), card.isEnchantPlayer())
                 || EffectResolution.needsSpellTarget(spellEffects);
     }
 

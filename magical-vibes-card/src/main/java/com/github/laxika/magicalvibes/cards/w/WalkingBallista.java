@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "58")
 @CardRegistration(set = "SLD", collectorNumber = "1265")
 @CardRegistration(set = "2XM", collectorNumber = "306")
+@CardRegistration(set = "MB2", collectorNumber = "238")
 public class WalkingBallista extends Card {
 
     public WalkingBallista() {

@@ -165,6 +165,9 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null) {
+            controllerId = entry.getRemovedPermanentControllers().get(targetId);
+        }
         if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
             controllerId = entry.getTriggeringPermanentControllerId();
         }

@@ -81,6 +81,18 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (request.fromExileCardId() != null) {
+            boolean flashforwardCast = Boolean.TRUE.equals(request.alternateCost());
+            if (flashforwardCast
+                    && request.waterbendPaid() == null
+                    && (request.additionalCostSacrificePermanentIds() == null
+                    || request.additionalCostSacrificePermanentIds().isEmpty())
+                    && (request.exileCounterCostPermanentIds() == null
+                    || request.exileCounterCostPermanentIds().isEmpty())
+                    && (request.convokeCreatureIds() == null || request.convokeCreatureIds().isEmpty())) {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), true);
+                return;
+            }
             if (request.waterbendPaid() != null
                     || request.additionalCostSacrificePermanentIds() != null
                     && !request.additionalCostSacrificePermanentIds().isEmpty()) {

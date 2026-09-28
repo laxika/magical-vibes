@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
@@ -10,4 +11,12 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public interface TurnFaceUpReplacementEffect extends ReplacementEffect {
 
     DynamicAmount counterAmount();
+
+    default CounterType counterType() {
+        return CounterType.PLUS_ONE_PLUS_ONE;
+    }
+
+    default boolean appliesWithoutPayingCost() {
+        return true;
+    }
 }

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "168")
 @CardRegistration(set = "CMD", collectorNumber = "169")
 @CardRegistration(set = "C15", collectorNumber = "200")
+@CardRegistration(set = "MB2", collectorNumber = "72")
 public class SakuraTribeElder extends Card {
 
     public SakuraTribeElder() {

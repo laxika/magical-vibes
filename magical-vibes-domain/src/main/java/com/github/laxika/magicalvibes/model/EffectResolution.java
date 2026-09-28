@@ -230,7 +230,7 @@ public final class EffectResolution {
         if (isAura) {
             if (isEnchantPlayer) {
                 result.add(TargetType.PLAYER);
-            } else if (!enchantsGraveyardCard(spellEffects)) {
+            } else if (!enchantsGraveyardCard(spellEffects) && !enchantsHandCard(spellEffects)) {
                 result.add(TargetType.PERMANENT);
             }
         }
@@ -275,7 +275,8 @@ public final class EffectResolution {
                                        boolean isEnchantPlayer) {
         Set<TargetType> t = computeAllowedTargets(spellEffects, etbEffects, isAura, isEnchantPlayer);
         return t.contains(TargetType.PLAYER) || t.contains(TargetType.PERMANENT)
-                || t.contains(TargetType.GRAVEYARD) || t.contains(TargetType.EXILE);
+                || t.contains(TargetType.GRAVEYARD) || t.contains(TargetType.EXILE)
+                || t.contains(TargetType.HAND);
     }
 
     /**
@@ -289,7 +290,7 @@ public final class EffectResolution {
         if (isAura) {
             if (isEnchantPlayer) {
                 result.add(TargetType.PLAYER);
-            } else if (!enchantsGraveyardCard(spellEffects)) {
+            } else if (!enchantsGraveyardCard(spellEffects) && !enchantsHandCard(spellEffects)) {
                 result.add(TargetType.PERMANENT);
             }
         }
@@ -298,7 +299,8 @@ public final class EffectResolution {
             collectTargetTypes(e, result);
         }
         return result.contains(TargetType.PLAYER) || result.contains(TargetType.PERMANENT)
-                || result.contains(TargetType.GRAVEYARD) || result.contains(TargetType.EXILE);
+                || result.contains(TargetType.GRAVEYARD) || result.contains(TargetType.EXILE)
+                || result.contains(TargetType.HAND);
     }
 
     /**
@@ -433,7 +435,7 @@ public final class EffectResolution {
         return computeAllowedTargets(
                 card.getEffects(EffectSlot.SPELL),
                 card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
-                card.isAura(), card.isEnchantPlayer());
+                card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
     }
 
     /**
@@ -443,14 +445,15 @@ public final class EffectResolution {
         return needsTarget(
                 card.getEffects(EffectSlot.SPELL),
                 card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
-                card.isAura(), card.isEnchantPlayer());
+                card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
     }
 
     /**
      * Returns true if the spell itself requires a target to be cast (MTG rule 601.2c, union semantics).
      */
     public static boolean needsSpellCastTarget(Card card) {
-        return needsSpellCastTarget(card.getEffects(EffectSlot.SPELL), card.isAura(), card.isEnchantPlayer());
+        return needsSpellCastTarget(card.getEffects(EffectSlot.SPELL),
+                card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
     }
 
     /**
@@ -650,6 +653,10 @@ public final class EffectResolution {
         return spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
     }
 
+    private static boolean enchantsHandCard(List<CardEffect> spellEffects) {
+        return spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.HAND_CARD));
+    }
+
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {
         if (e == null) {
             return;
@@ -665,5 +672,6 @@ public final class EffectResolution {
         if (targetsSpellOnStack(e)) out.add(TargetType.SPELL_ON_STACK);
         if (spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) out.add(TargetType.GRAVEYARD);
         if (spec.admits(TargetPredicate.Kind.EXILED_CARD)) out.add(TargetType.EXILE);
+        if (spec.admits(TargetPredicate.Kind.HAND_CARD)) out.add(TargetType.HAND);
     }
 }

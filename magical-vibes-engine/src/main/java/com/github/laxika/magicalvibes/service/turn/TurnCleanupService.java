@@ -238,6 +238,7 @@ public class TurnCleanupService {
                 }
             }
         }
+        gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.clear();
 
         List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
@@ -475,6 +476,7 @@ public class TurnCleanupService {
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.graveyardCastFilterPermissionsThisTurn.clear();
         gameData.outsideGamePlayPermissions.clear();
+        gameData.outsideGameAdditionalModalModePermissions.clear();
         gameData.graveyardPlayFilterPermissionsThisTurn.clear();
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();

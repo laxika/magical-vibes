@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MMQ", collectorNumber = "15")
+@CardRegistration(set = "MB2", collectorNumber = "146")
 public class Crackdown extends Card {
 
     public Crackdown() {

@@ -140,6 +140,14 @@ public record CreateTokenEffect(
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
     }
 
+    /** Copy of this blueprint with a different token name. */
+    public CreateTokenEffect withTokenName(String newTokenName) {
+        return new CreateTokenEffect(primaryType, amount, newTokenName, power, toughness,
+                color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
+    }
+
     /** Copy of this blueprint with the target filter for a targeted token ability. */
     public CreateTokenEffect withTokenTargetFilter(TargetFilter newTokenTargetFilter) {
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors,

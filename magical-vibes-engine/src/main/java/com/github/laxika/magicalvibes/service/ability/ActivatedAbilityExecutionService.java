@@ -656,7 +656,8 @@ public class ActivatedAbilityExecutionService {
             equipSupport.expireAttachedCopyEffects(gameData, equipment);
         }
 
-        int loyaltyCountersAdded = ability.getLoyaltyCost() != null && ability.getLoyaltyCost() > 0
+        int loyaltyCountersAdded = ability.getLoyaltyCost() != null
+                && !ability.isToughnessAsLoyalty() && ability.getLoyaltyCost() > 0
                 ? ability.getLoyaltyCost()
                 : 0;
         permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
@@ -752,6 +753,7 @@ public class ActivatedAbilityExecutionService {
             boolean manaTypeChoicePending = AbilityActivationService.isAwaitingOwnManaColorChoice(
                     gameData, playerId);
             if (!manaTypeChoicePending) {
+                tagLegendarySourceMana(gameData, permanent, pool, manaTypesBefore);
                 int stackBeforeManaResolutionTriggers = gameData.stack.size();
                 triggerCollectionService.checkManaAbilityResolutionTriggers(
                         gameData, permanent, playerId,
@@ -933,7 +935,7 @@ public class ActivatedAbilityExecutionService {
     }
 
     private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
-                                                          Map<ManaColor, Integer> after) {
+                                                           Map<ManaColor, Integer> after) {
         Set<ManaColor> produced = EnumSet.noneOf(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
             if (after.getOrDefault(color, 0) > before.getOrDefault(color, 0)) {
@@ -941,6 +943,17 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return produced;
+    }
+
+    private void tagLegendarySourceMana(GameData gameData, Permanent source, ManaPool pool,
+                                        Map<ManaColor, Integer> before) {
+        if (!gameQueryService.hasEffectiveSupertype(gameData, source, CardSupertype.LEGENDARY)) {
+            return;
+        }
+        for (ManaColor color : ManaColor.values()) {
+            int produced = Math.max(0, pool.get(color) - before.getOrDefault(color, 0));
+            pool.addLegendarySourceManaTag(color, produced);
+        }
     }
 
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,

@@ -15,6 +15,7 @@ public enum CardType {
     PLANESWALKER("Planeswalker"),
     BATTLE("Battle"),
     KINDRED("Kindred"),
+    EMBLEM("Emblem"),
     PLANE("Plane"),
     PHENOMENON("Phenomenon");
 

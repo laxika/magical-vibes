@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.LandDropCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
@@ -184,7 +185,8 @@ public class AdditionalSpellCostService {
             RevealCardFromHandCost.class,
             TieredManaCost.class,
             SpreeAdditionalManaCost.class,
-            WaterbendCost.class);
+            WaterbendCost.class,
+            LandDropCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -254,7 +256,8 @@ public class AdditionalSpellCostService {
             PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost,
             SpreeAdditionalManaCost spreeAdditionalManaCost,
             WaterbendCost waterbendCost,
-            ForageOrPayManaCost forageOrPayManaCost
+            ForageOrPayManaCost forageOrPayManaCost,
+            boolean landDropCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -296,7 +299,7 @@ public class AdditionalSpellCostService {
                     || chooseCreatureOrRevealCreatureCardCost != null
                     || tieredManaCost != null
                     || spreeAdditionalManaCost != null || waterbendCost != null
-                    || forageOrPayManaCost != null;
+                    || forageOrPayManaCost != null || landDropCost;
         }
 
         public boolean sacrificeCreature() {
@@ -438,6 +441,7 @@ public class AdditionalSpellCostService {
      * stripped list is what goes onto the stack; costs are paid at cast time, not resolved.
      */
     public ExtractedCosts extractAndRemove(List<CardEffect> effects) {
+        boolean landDropCost = effects.removeIf(LandDropCost.class::isInstance);
         boolean sacAllCreatures = effects.removeIf(SacrificeAllCreaturesYouControlCost.class::isInstance);
         boolean sacAllPermanents = effects.removeIf(SacrificeAllPermanentsYouControlCost.class::isInstance);
         SacrificeCreatureCost sacCreature = removeFirst(effects, SacrificeCreatureCost.class);
@@ -543,7 +547,7 @@ public class AdditionalSpellCostService {
                 chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
                 delveCost, revealCardCost, chooseCreatureOrRevealCreatureCardCost, chooseCreatureTypeCost, tieredManaCost,
                 payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
-                forageOrPayManaCost);
+                forageOrPayManaCost, landDropCost);
     }
 
     /** Adds additional costs granted by permanents before extracting the spell's cast costs. */
@@ -664,6 +668,9 @@ public class AdditionalSpellCostService {
         boolean lifePaymentAllowed = gameQueryService.canPayLifeForCosts(gameData);
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             switch (effect) {
+                case LandDropCost ignored -> {
+                    if (!canPayLandDropCost(gameData, playerId)) return false;
+                }
                 case SacrificeCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p)
                             && gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
@@ -1040,6 +1047,19 @@ public class AdditionalSpellCostService {
     // Validation — is this concrete selection a legal payment? Mutates nothing.
     // ------------------------------------------------------------------
 
+    private boolean canPayLandDropCost(GameData gameData, UUID playerId) {
+        return playerId != null
+                && playerId.equals(gameData.activePlayerId)
+                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
+                < gameQueryService.getMaxLandsThisTurn(gameData, playerId);
+    }
+
+    public void validateLandDropCost(GameData gameData, Player player, Card card) {
+        if (!canPayLandDropCost(gameData, player.getId())) {
+            throw new IllegalStateException("No land drop available to cast " + card.getName());
+        }
+    }
+
     /**
      * Validates every extracted cost against the caster's selection, in canonical payment order,
      * throwing {@link IllegalStateException} on the first unpayable one. Mutates nothing — call
@@ -1081,6 +1101,9 @@ public class AdditionalSpellCostService {
                             ExtractedCosts costs, CostSelection selection, Integer announcedXValue,
                             boolean waterbendPaid, Integer resolvedCollectEvidenceMinimumManaValue) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
+        if (costs.landDropCost()) {
+            validateLandDropCost(gameData, player, card);
+        }
         if (costs.sacrificeAllCreatures()
                 && battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
                 && !gameQueryService.canSacrificePermanentForCosts(gameData, p))) {

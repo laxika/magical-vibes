@@ -50,11 +50,15 @@ public class FlipCoinForTriggeringSpellAndCounterOnLossEffectHandler implements 
                         + coinFlipService.replacementDetails(result) + "."));
 
         if (result.heads()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, casterId);
+            if (result.isActualCoinFlip()) {
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, casterId);
+            }
             return;
         }
 
-        triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, casterId);
+        if (result.isActualCoinFlip()) {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, casterId);
+        }
         EffectHandler counterHandler = effectHandlerRegistry.getHandler(new CounterSpellEffect());
         if (counterHandler != null) {
             counterHandler.resolve(gameData, entry, new CounterSpellEffect());

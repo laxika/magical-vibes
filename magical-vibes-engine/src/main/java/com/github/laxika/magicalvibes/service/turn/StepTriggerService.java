@@ -273,6 +273,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -330,6 +331,7 @@ public class StepTriggerService {
     private final GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
     private final ETBTokenTargetService etbTokenTargetService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SagaChapterService sagaChapterService;
 
     public StepTriggerService(DrawService drawService,
                               GameQueryService gameQueryService,
@@ -352,7 +354,8 @@ public class StepTriggerService {
                               GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                               GrantedUpkeepEffectSupport grantedUpkeepEffectSupport,
                               @Lazy ETBTokenTargetService etbTokenTargetService,
-                              AmountEvaluationService amountEvaluationService) {
+                              AmountEvaluationService amountEvaluationService,
+                              @Lazy SagaChapterService sagaChapterService) {
         this.drawService = drawService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -375,6 +378,7 @@ public class StepTriggerService {
         this.grantedUpkeepEffectSupport = grantedUpkeepEffectSupport;
         this.etbTokenTargetService = etbTokenTargetService;
         this.amountEvaluationService = amountEvaluationService;
+        this.sagaChapterService = sagaChapterService;
     }
 
     private record GrantedUpkeepSacrifice(AllPermanentsUpkeepSacrificeUnlessPayEffect effect,
@@ -3054,6 +3058,8 @@ public class StepTriggerService {
         if (gameData.planechase != null) planechaseService.step(gameData,
                 EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
 
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.PRECOMBAT_MAIN);
+
         // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
         handleSagaLoreCounters(gameData);
 
@@ -3521,7 +3527,7 @@ public class StepTriggerService {
 
         // Collect Sagas first to avoid ConcurrentModificationException
         List<Permanent> sagas = battlefield.stream()
-                .filter(p -> p.getCard().isSaga())
+                .filter(p -> p.getCard().isSaga() && !p.getCard().isBedtimeStory())
                 .toList();
 
         for (Permanent saga : sagas) {
@@ -4001,6 +4007,7 @@ public class StepTriggerService {
         if (gameData.planechase != null) planechaseService.step(gameData,
                 EffectSlot.END_STEP_TRIGGERED, EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
         expireNextEndStepTemporaryCopies(gameData);
+        handleBedtimeStoryLoreCounters(gameData);
         for (var delayed : gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)) {
             if (delayed.targetGroups().isEmpty()) {
@@ -5012,6 +5019,36 @@ public class StepTriggerService {
         }
 
         UUID activePlayerId = gameData.activePlayerId;
+
+        // COMMAND_ZONE_END_STEP_TRIGGERED: "at the beginning of your end step" from a card
+        // that remains in its owner's command zone (secret missions and similar cards).
+        List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
+        if (commandZone != null) {
+            for (Card card : new ArrayList<>(commandZone)) {
+                if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                    continue;
+                }
+                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_END_STEP_TRIGGERED)) {
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forCard(card, activePlayerId))) {
+                        continue;
+                    }
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            activePlayerId,
+                            card.getName() + "'s end step ability",
+                            new ArrayList<>(List.of(effect))));
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, "'s end step ability triggers."));
+                    log.info("Game {} - {} command-zone end-step trigger pushed onto stack",
+                            gameData.id, card.getName());
+                }
+            }
+        }
+
         List<UUID> triggerOrder = new ArrayList<>();
         triggerOrder.add(activePlayerId);
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -5966,6 +6003,19 @@ public class StepTriggerService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void handleBedtimeStoryLoreCounters(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return;
+
+        battlefield.stream()
+                .filter(permanent -> permanent.getCard().isSaga()
+                        && permanent.getCard().isBedtimeStory())
+                .toList()
+                .forEach(saga -> sagaChapterService.addLoreCounterAndTriggerChapter(
+                        gameData, saga, saga.getCard(), activePlayerId));
     }
 
     private void expireNextEndStepTemporaryCopies(GameData gameData) {

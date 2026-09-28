@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatAttackCountRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -214,6 +216,22 @@ public final class CombatHelper {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     validateMaximumAttackers(limitOrNull(effect), gameData.planechase.controllerId,
                             planar.getId(), attackerIndices, attackTargets);
+                }
+            }
+        }
+    }
+
+    /** Validates attack-count restrictions carried by face-up cards in the attacking player's command zone. */
+    public static void validateCommandZoneAttackCount(GameData gameData, UUID attackingPlayerId,
+                                                      int attackerCount) {
+        for (Card card : gameData.playerCommandZones.getOrDefault(attackingPlayerId, List.of())) {
+            if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                continue;
+            }
+            for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_STATIC)) {
+                if (effect instanceof CombatAttackCountRestrictionEffect restriction
+                        && !restriction.allowsAttackCount(attackerCount)) {
+                    throw new IllegalStateException(restriction.restrictionViolationMessage());
                 }
             }
         }

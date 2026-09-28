@@ -625,6 +625,12 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   playCard(index: number): void {
+    const handCard = this.hand[index];
+    if (this.choice.targeting.selectingTarget && handCard?.id
+        && this.choice.targeting.validHandTargetIds().has(handCard.id)) {
+      this.choice.targeting.selectHandTarget(index);
+      return;
+    }
     if (this.choice.targeting.selectingGraveyardCastDiscard) {
       this.choice.targeting.selectGraveyardCastDiscardHandCard(index);
       return;

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "V12", collectorNumber = "5")
 @CardRegistration(set = "SLD", collectorNumber = "2281")
 @CardRegistration(set = "TSR", collectorNumber = "277")
+@CardRegistration(set = "MB2", collectorNumber = "108")
 public class DryadArbor extends Card {
 
     public DryadArbor() {

@@ -40,6 +40,8 @@ public final class CardDataSupport {
     static {
         KEYWORD_MAP.put("Flying", Keyword.FLYING);
         KEYWORD_MAP.put("Banding", Keyword.BANDING);
+        KEYWORD_MAP.put("Ingest", Keyword.INGEST);
+        KEYWORD_MAP.put("Tantrum", Keyword.TANTRUM);
         KEYWORD_MAP.put("Reach", Keyword.REACH);
         KEYWORD_MAP.put("Defender", Keyword.DEFENDER);
         KEYWORD_MAP.put("Double strike", Keyword.DOUBLE_STRIKE);
@@ -59,6 +61,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Indestructible", Keyword.INDESTRUCTIBLE);
         KEYWORD_MAP.put("Convoke", Keyword.CONVOKE);
         KEYWORD_MAP.put("Devoid", Keyword.DEVOID);
+        KEYWORD_MAP.put("Deworded", Keyword.DEWORDED);
         KEYWORD_MAP.put("Improvise", Keyword.IMPROVISE);
         KEYWORD_MAP.put("Harmonize", Keyword.HARMONIZE);
         KEYWORD_MAP.put("Haste", Keyword.HASTE);
@@ -114,6 +117,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Morph", Keyword.MORPH);
         KEYWORD_MAP.put("Mutate", Keyword.MUTATE);
         KEYWORD_MAP.put("Skulk", Keyword.SKULK);
+        KEYWORD_MAP.put("Nimble", Keyword.NIMBLE);
         KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
         KEYWORD_MAP.put("Partner", Keyword.PARTNER);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
@@ -173,6 +177,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Station", Keyword.STATION);
         KEYWORD_MAP.put("Freerunning", Keyword.FREERUNNING);
         KEYWORD_MAP.put("Double team", Keyword.DOUBLE_TEAM);
+        KEYWORD_MAP.put("Hope", Keyword.HOPE);
+        KEYWORD_MAP.put("Grazing type", Keyword.GRAZING);
         KEYWORD_MAP.put("Intensity", Keyword.INTENSITY);
     }
 

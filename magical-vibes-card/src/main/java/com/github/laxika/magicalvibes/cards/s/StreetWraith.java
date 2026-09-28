@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "A25", collectorNumber = "108")
 @CardRegistration(set = "TSR", collectorNumber = "141")
 @CardRegistration(set = "DMR", collectorNumber = "102")
+@CardRegistration(set = "MB2", collectorNumber = "49")
 public class StreetWraith extends Card {
 
     public StreetWraith() {

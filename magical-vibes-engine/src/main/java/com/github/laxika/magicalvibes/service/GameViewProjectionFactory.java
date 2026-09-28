@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.FlashforwardCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -700,7 +701,10 @@ public class GameViewProjectionFactory {
             boolean hasPermission = fromOutsideGame || castingPermissionService.hasExilePlayPermission(gameData, playerId, card.getId())
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
-            boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+            FlashforwardCast flashforwardCast = !fromOutsideGame
+                    ? card.getCastingOption(FlashforwardCast.class).orElse(null) : null;
+            boolean hasFlashforward = flashforwardCast != null;
+            boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent() || hasFlashforward;
             boolean hasExileAbility = card.getActivatedAbilities().stream()
                     .anyMatch(ActivatedAbility::isExileOnly);
             if (hasExileAbility && !hasPermission && !hasExileCast) {
@@ -761,6 +765,10 @@ public class GameViewProjectionFactory {
                             && gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
                     ManaCost baseCost = foretellPermission
                             ? foretoldCost
+                            : hasFlashforward
+                            ? new ManaCost(flashforwardCast.getCost(ManaCastingCost.class)
+                            .map(ManaCastingCost::manaCost)
+                            .orElseThrow())
                             : card.getParsedManaCost();
                     ManaCost cost = castingCostService.applyColoredManaCostReductions(
                             gameData, playerId, card, baseCost);

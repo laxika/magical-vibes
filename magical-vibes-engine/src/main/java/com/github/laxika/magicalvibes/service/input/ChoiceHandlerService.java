@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfT
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -365,6 +366,10 @@ public class ChoiceHandlerService {
             handleChooseCardNameAtResolutionChosen(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.CreateTokenWithChosenNameChoice ctx) {
+            handleCreateTokenWithChosenNameChosen(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CardTypeOnEnterChoice ctx) {
             handleCardTypeOnEnterChosen(gameData, player, colorName, ctx);
             return;
@@ -500,6 +505,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseTwoColorsOnEnterChoice ctx) {
             handleChooseTwoColorsOnEnterChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.BuddyListChoice ctx) {
+            handleBuddyListChoice(gameData, player, colorName, colorChoice.options(), ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
@@ -1323,6 +1332,7 @@ public class ChoiceHandlerService {
                         new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, 1);
             } else {
                 manaPool.add(manaColor, 1);
+                tagLegendarySourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
                 manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
                 tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
                 if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
@@ -1480,6 +1490,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} artifact-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else {
             manaPool.add(manaColor, amount);
+            tagLegendarySourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
             manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, amount);
             tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
             if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
@@ -1512,7 +1523,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        if (ctx.sourcePermanentId() != null) {
+        if (ctx.sourcePermanentId() != null && chosenColor != ManaColor.COLORLESS) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (source != null) {
                 CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
@@ -1642,6 +1653,18 @@ public class ChoiceHandlerService {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (manaSourceColorSupport.canProduceMultipleColors(gameData, source)) {
             manaPool.addMulticoloredSourceManaTag(color, amount);
+        }
+    }
+
+    private void tagLegendarySourceMana(GameData gameData, UUID sourcePermanentId,
+                                        ManaPool manaPool, ManaColor color, int amount) {
+        if (sourcePermanentId == null) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source != null && gameQueryService.hasEffectiveSupertype(
+                gameData, source, CardSupertype.LEGENDARY)) {
+            manaPool.addLegendarySourceManaTag(color, amount);
         }
     }
 
@@ -3168,6 +3191,16 @@ public class ChoiceHandlerService {
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
+        ChooseIndependentModesOnEnterEffect independentModeChoice = ctx.sourceCard()
+                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
+                .map(ChooseIndependentModesOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (independentModeChoice != null) {
+            handleIndependentAsEntersModeChoice(gameData, player, chosen, ctx, independentModeChoice);
+            return;
+        }
         if (modeChoice != null && modeChoice.eachPlayer()) {
             handleEachPlayerAsEntersModeChoice(gameData, player, chosen, ctx, modeChoice);
             return;
@@ -4143,11 +4176,23 @@ public class ChoiceHandlerService {
             if (controllerId == null) {
                 controllerId = player.getId();
             }
-            perm.setChosenSubtype(subtype);
+            if (ctx.buddyListChoice()) {
+                gameData.addBuddy(controllerId, subtype);
+                perm.setBuddyListChoiceMade(true);
+                gameData.rerunCurrentEffectAfterInteraction = false;
+            } else {
+                perm.setChosenSubtype(subtype);
+            }
             battlefieldEntryService.applyDeferredEnterWithCounters(gameData, controllerId, perm);
 
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
-            log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
+            String choiceDescription = ctx.buddyListChoice()
+                    ? player.getUsername() + " writes " + subtype.getDisplayName() + " on their buddy list."
+                    : player.getUsername() + " chooses " + subtype.getDisplayName() + " for ";
+            gameLogService.append(gameData, ctx.buddyListChoice()
+                    ? GameLog.text(choiceDescription)
+                    : GameLog.textCardText(choiceDescription, perm.getCard(), "."));
+            log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype,
+                    perm.getCard().getName());
 
             // The subtype choice deferred the permanent's ETB triggers (they were skipped while input
             // was pending). Now that the type is chosen, process them — e.g. Brass Herald's "reveal the
@@ -4166,6 +4211,67 @@ public class ChoiceHandlerService {
             return;
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleIndependentAsEntersModeChoice(GameData gameData, Player player,
+            ChooseOneEffect.ChooseOneOption chosen, ChoiceContext.ChooseModeChoice ctx,
+            ChooseIndependentModesOnEnterEffect modeChoice) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source == null) {
+            stateBasedActionService.performStateBasedActions(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<String> chosenLabels = new ArrayList<>(ctx.chosenLabels());
+        chosenLabels.add(chosen.label());
+        source.getChosenModeLabels().add(chosen.label());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses as-enters mode \"{}\" for {}", gameData.id,
+                player.getUsername(), chosen.label(), ctx.sourceCard().getName());
+
+        if (chosenLabels.size() < modeChoice.modeGroups().size()) {
+            playerInputService.beginChooseIndependentModesOnEnterChoice(gameData, player.getId(),
+                    ctx.sourceCard(), source.getId(), modeChoice.modeGroups(), chosenLabels.size());
+            return;
+        }
+        battlefieldEntryService.processCreatureETBEffects(
+                gameData, player.getId(), source.getCard(), null, false);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCreateTokenWithChosenNameChosen(GameData gameData, Player player, String tokenName,
+                                                       ChoiceContext.CreateTokenWithChosenNameChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        List<UUID> createdIds = permanentControlSupport.applyCreateToken(
+                gameData, ctx.controllerId(), ctx.tokenTemplate().withTokenName(tokenName),
+                ctx.amount(), ctx.sourceCard().getSetCode(), ctx.power(), ctx.toughness());
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            pendingEntry.getCreatedPermanentIds().addAll(createdIds);
+        }
+
+        gameLogService.append(gameData,
+                GameLog.playerChoosesForCard(player.getUsername(), tokenName, ctx.sourceCard()));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleBuddyListChoice(GameData gameData, Player player, String subtypeName,
+                                       List<String> options, ChoiceContext.BuddyListChoice ctx) {
+        if (!options.contains(subtypeName)) {
+            throw new IllegalArgumentException("Invalid buddy list creature type choice: " + subtypeName);
+        }
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+        gameData.addBuddy(ctx.playerId(), subtype);
+        gameData.interaction.clearAwaitingInput();
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " writes " + subtype.getDisplayName() + " on their buddy list."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -167,6 +168,8 @@ public class Card {
     private String collectorNumber;
 
     private boolean token;
+    /** When true, this Saga adds its lore counter at the beginning of its controller's end step. */
+    private boolean bedtimeStory;
     /**
      * A token that is also a card, such as a Time Walk token card. Unlike ordinary tokens, these
      * remain in zones other than the battlefield.
@@ -187,6 +190,8 @@ public class Card {
      * Moon). Curses are recognized automatically; non-Curse "Enchant player" auras must set this.
      */
     private boolean enchantPlayer;
+    /** When true, this Aura enchants the shared zone rather than a player or permanent. */
+    private boolean enchantZone;
     private int additionalCostPerExtraTarget;
     /** Additional mana symbols required for each target beyond the first. */
     private String additionalManaCostPerExtraTarget;
@@ -375,6 +380,7 @@ public class Card {
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
         this.token = source.token;
+        this.bedtimeStory = source.bedtimeStory;
         this.tokenCard = source.tokenCard;
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
@@ -382,6 +388,7 @@ public class Card {
         this.requiresBasicLandMana = source.requiresBasicLandMana;
         this.requiresNoMana = source.requiresNoMana;
         this.enchantPlayer = source.enchantPlayer;
+        this.enchantZone = source.enchantZone;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
@@ -445,6 +452,7 @@ public class Card {
     public Card createRuntimeTextBoxCopy(Card textSource) {
         Card copy = new Card(this);
         copy.cardText = textSource.cardText;
+        copy.bedtimeStory = textSource.bedtimeStory;
         copy.keywords = textSource.keywords.isEmpty()
                 ? Set.of()
                 : EnumSet.copyOf(textSource.keywords);
@@ -506,6 +514,7 @@ public class Card {
         this.xValueCap = face.xValueCap;
         this.minimumXValue = face.minimumXValue;
         this.token = face.token;
+        this.bedtimeStory = face.bedtimeStory;
         this.tokenCard = face.tokenCard;
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
@@ -513,6 +522,7 @@ public class Card {
         this.requiresBasicLandMana = face.requiresBasicLandMana;
         this.requiresNoMana = face.requiresNoMana;
         this.enchantPlayer = face.enchantPlayer;
+        this.enchantZone = face.enchantZone;
         this.additionalCostPerExtraTarget = face.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = face.additionalLifeCostPerTarget;
@@ -620,6 +630,7 @@ public class Card {
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }
+    public void setBedtimeStory(boolean bedtimeStory) { assertMutable(); this.bedtimeStory = bedtimeStory; }
     public void setTokenCard(boolean tokenCard) { assertMutable(); this.tokenCard = tokenCard; }
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
@@ -627,6 +638,7 @@ public class Card {
     public void setRequiresBasicLandMana(boolean requiresBasicLandMana) { assertMutable(); this.requiresBasicLandMana = requiresBasicLandMana; }
     public void setRequiresNoMana(boolean requiresNoMana) { assertMutable(); this.requiresNoMana = requiresNoMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
+    public void setEnchantZone(boolean enchantZone) { assertMutable(); this.enchantZone = enchantZone; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
     public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
@@ -675,6 +687,7 @@ public class Card {
         setRequiresCreatureMana(false);
         setRequiresBasicLandMana(false);
         setEnchantPlayer(false);
+        setEnchantZone(false);
         setAdditionalCostPerExtraTarget(0);
         setAdditionalManaCostPerExtraTarget(null);
         setAdditionalLifeCostPerTarget(0);
@@ -1716,6 +1729,10 @@ public class Card {
                         && grant.scope() == GrantScope.SELF));
     }
 
+    public boolean hasAllCardNames() {
+        return getEffects(EffectSlot.STATIC).stream().anyMatch(AllCardNamesEffect.class::isInstance);
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }
@@ -1739,6 +1756,11 @@ public class Card {
 
     public boolean isEnchantPlayer() {
         return isAura() && (subtypes.contains(CardSubtype.CURSE) || enchantPlayer);
+    }
+
+    /** Whether this Aura needs a player/permanent attachment target when cast or entering. */
+    public boolean isAuraThatRequiresAttachment() {
+        return isAura() && !enchantZone;
     }
 
 }

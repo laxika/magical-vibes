@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -35,6 +37,8 @@ public class BasicLandSearchQueueSupport {
 
     private static final CardPredicate BASIC_LAND = new CardAllOfPredicate(List.of(
             new CardTypePredicate(CardType.LAND), new CardSupertypePredicate(CardSupertype.BASIC)));
+    private static final CardPredicate BASIC_LAND_SEARCH = new CardAnyOfPredicate(List.of(
+            BASIC_LAND, new CardHasAllCardNamesPredicate()));
 
     private final LibrarySearchSupport librarySearchSupport;
     private final DestructionSupport destructionSupport;
@@ -103,7 +107,8 @@ public class BasicLandSearchQueueSupport {
         }
 
         List<Card> basicLands = deck.stream()
-                .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                .filter(card -> card.hasAllCardNames()
+                        || (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)))
                 .toList();
         if (basicLands.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
@@ -134,7 +139,7 @@ public class BasicLandSearchQueueSupport {
                         .destination(enterTapped
                         ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                         : LibrarySearchDestination.BATTLEFIELD)
-                        .filterPredicate(BASIC_LAND)
+                        .filterPredicate(BASIC_LAND_SEARCH)
                         .shuffleAfterSelection(!shuffleAfterQueue)
                         .followUp(followUp)
                         .build(), prompt, true);

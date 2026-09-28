@@ -44,12 +44,16 @@ public class FlipCoinDestroyTargetOrRepeatEffectHandler implements NormalEffectH
         gameLogService.append(gameData, GameLog.text(flipLog));
 
         if (wonFlip) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            if (result.isActualCoinFlip()) {
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            }
             destroyTargetPermanentEffectHandler.resolve(
                     gameData, entry, DestroyTargetPermanentEffect.forTargetGroup(1));
             return;
         }
-        triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+        if (result.isActualCoinFlip()) {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+        }
 
         MayPayManaEffect repeat = new MayPayManaEffect(
                 "{3}",

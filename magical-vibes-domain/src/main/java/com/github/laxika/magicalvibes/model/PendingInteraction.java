@@ -39,7 +39,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingWhimsOfTheFates,
         PendingHostileNegotiations,
         PendingEachPlayerLibraryExile, PendingGuildFeud,
-        PendingInteraction.XValueChoice, PendingInteraction.AlternateCastXValueChoice,
+        PendingInteraction.XValueChoice, PendingInteraction.DrawFromLibraryPositionChoice,
+        PendingInteraction.AlternateCastXValueChoice,
         PendingInteraction.TurnFaceUpXValueChoice,
         PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
@@ -75,7 +76,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PutLandsFromHandChoice, PendingInteraction.WorldsWithinWorldsChoice,
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
         PendingInteraction.PutCardFromHandOrGraveyardChoice,
+        PendingInteraction.WerewhatOnEnterChoice,
         PendingInteraction.EachPlayerMayPutCardFromHandChoice,
+        PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryAndOrGraveyardChoice,
@@ -420,6 +423,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.NumberPick(minValue, maxValue);
+        }
+    }
+
+    /** Chooses the one-based position of the card to draw from the controller's library. */
+    record DrawFromLibraryPositionChoice(UUID playerId, int librarySize) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.NumberPick(1, librarySize);
         }
     }
 
@@ -1503,6 +1520,36 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0,
                     anyNumber && !repeatUntilNoOne ? validCardIds.size() : 1);
+        }
+    }
+
+    /**
+     * Kynaios and Tiro-style choice: each player secretly chooses at most one land, then all
+     * chosen lands enter simultaneously and opponents who declined draw.
+     */
+    record EachPlayerMayPutLandFromHandThenOpponentsDrawChoice(
+            UUID playerId,
+            java.util.List<UUID> validCardIds,
+            java.util.List<UUID> remainingPlayerIds,
+            java.util.Map<UUID, UUID> chosenCardIdsByPlayer,
+            UUID sourceControllerId,
+            String cardName) implements PendingInteraction {
+
+        public EachPlayerMayPutLandFromHandThenOpponentsDrawChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            chosenCardIdsByPlayer = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(chosenCardIdsByPlayer));
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }
 
@@ -5172,6 +5219,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public PutCardFromHandOrGraveyardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    record WerewhatOnEnterChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                 UUID enteringPermanentId, UUID controllerId, Card card,
+                                 UUID targetId, boolean wasCastFromHand, int etbMode, int xValue,
+                                 boolean kicked, java.util.List<UUID> targetIds)
+            implements PendingInteraction {
+        public WerewhatOnEnterChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            targetIds = java.util.List.copyOf(targetIds);
         }
 
         @Override

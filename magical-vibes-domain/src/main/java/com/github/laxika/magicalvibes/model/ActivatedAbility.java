@@ -57,6 +57,8 @@ public class ActivatedAbility {
     private final boolean variableLoyaltyCost;
     /** Whether this loyalty-style ability uses player spark counters instead of loyalty counters. */
     private boolean sparkAbility;
+    /** Whether this loyalty-style ability uses the source's toughness as its loyalty resource. */
+    private boolean toughnessAsLoyalty;
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
@@ -346,6 +348,7 @@ public class ActivatedAbility {
         copy.minimumXValue = this.minimumXValue;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.sparkAbility = this.sparkAbility;
+        copy.toughnessAsLoyalty = this.toughnessAsLoyalty;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
         copy.xColorRestrictions = this.xColorRestrictions == null
@@ -408,6 +411,12 @@ public class ActivatedAbility {
     /** Marks this loyalty-style ability as a spark ability. */
     public ActivatedAbility withSpark() {
         this.sparkAbility = true;
+        return this;
+    }
+
+    /** Marks this loyalty-style ability as using toughness instead of loyalty counters. */
+    public ActivatedAbility withToughnessAsLoyalty() {
+        this.toughnessAsLoyalty = true;
         return this;
     }
 
