@@ -186,6 +186,8 @@ public class ManaPool {
      * creature subtype; this bucket pays for every creature spell.
      */
     private final EnumMap<ManaColor, Integer> creatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana that can only be spent to cast creature spells with no abilities. */
+    private final EnumMap<ManaColor, Integer> creatureSpellWithoutAbilitiesOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast noncreature spells. */
     private final EnumMap<ManaColor, Integer> noncreatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with exactly three colors. */
@@ -296,6 +298,7 @@ public class ManaPool {
             cumulativeUpkeepOnlyColored.put(color, 0);
             instantSorceryOrClassLevelOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
+            creatureSpellWithoutAbilitiesOnlyMana.put(color, 0);
             noncreatureSpellOnlyMana.put(color, 0);
             exactlyThreeColorSpellOnlyMana.put(color, 0);
             multicoloredSpellOnlyMana.put(color, 0);
@@ -419,6 +422,7 @@ public class ManaPool {
         }
         partySpellOrAbilityMana.putAll(source.partySpellOrAbilityMana);
         creatureSpellOnlyMana.putAll(source.creatureSpellOnlyMana);
+        creatureSpellWithoutAbilitiesOnlyMana.putAll(source.creatureSpellWithoutAbilitiesOnlyMana);
         noncreatureSpellOnlyMana.putAll(source.noncreatureSpellOnlyMana);
         exactlyThreeColorSpellOnlyMana.putAll(source.exactlyThreeColorSpellOnlyMana);
         multicoloredSpellOnlyMana.putAll(source.multicoloredSpellOnlyMana);
@@ -901,6 +905,7 @@ public class ManaPool {
             foretellSpellOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
+            creatureSpellWithoutAbilitiesOnlyMana.put(color, 0);
             noncreatureSpellOnlyMana.put(color, 0);
             exactlyThreeColorSpellOnlyMana.put(color, 0);
             multicoloredSpellOnlyMana.put(color, 0);
@@ -1083,6 +1088,7 @@ public class ManaPool {
             total += value;
         }
         total += getCreatureSpellOnlyManaTotal();
+        total += getCreatureSpellWithoutAbilitiesOnlyManaTotal();
         total += getNoncreatureSpellOnlyManaTotal();
         total += getExactlyThreeColorSpellOnlyManaTotal();
         total += getMulticoloredSpellOnlyManaTotal();
@@ -3157,6 +3163,59 @@ public class ManaPool {
         creatureSpellOnlyMana.merge(color, amount, Integer::sum);
     }
 
+    /** Adds mana restricted to creature spells with no abilities (Jasmine Boreal of the Seven). */
+    public void addCreatureSpellWithoutAbilitiesOnlyMana(ManaColor color, int amount) {
+        creatureSpellWithoutAbilitiesOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getCreatureSpellWithoutAbilitiesOnlyMana(ManaColor color) {
+        return creatureSpellWithoutAbilitiesOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getCreatureSpellWithoutAbilitiesOnlyManaTotal() {
+        return creatureSpellWithoutAbilitiesOnlyMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public void removeCreatureSpellWithoutAbilitiesOnlyMana(ManaColor color, int amount) {
+        int current = creatureSpellWithoutAbilitiesOnlyMana.getOrDefault(color, 0);
+        creatureSpellWithoutAbilitiesOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
+    /** Temporarily exposes no-abilities creature-spell-only mana to a qualifying creature spell. */
+    public CreatureSpellWithoutAbilitiesManaState promoteCreatureSpellWithoutAbilitiesOnlyMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, pool.getOrDefault(color, 0));
+            int amount = getCreatureSpellWithoutAbilitiesOnlyMana(color);
+            promoted.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                creatureSpellWithoutAbilitiesOnlyMana.put(color, 0);
+            }
+        }
+        return new CreatureSpellWithoutAbilitiesManaState(regularBefore, promoted);
+    }
+
+    /** Restores unspent no-abilities creature-spell-only mana after a spell payment. */
+    public void restorePromotedCreatureSpellWithoutAbilitiesOnlyMana(
+            CreatureSpellWithoutAbilitiesManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promoted = state.promoted().getOrDefault(color, 0);
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promoted - pool.getOrDefault(color, 0));
+            int remaining = Math.max(0, promoted - spent);
+            if (remaining > 0) {
+                pool.merge(color, -remaining, Integer::sum);
+                creatureSpellWithoutAbilitiesOnlyMana.merge(color, remaining, Integer::sum);
+            }
+        }
+    }
+
+    public record CreatureSpellWithoutAbilitiesManaState(Map<ManaColor, Integer> regularBefore,
+                                                         Map<ManaColor, Integer> promoted) {
+    }
+
     public void addCreatureSourceCreatureSpellOnlyMana(ManaColor color, int amount) {
         addCreatureSpellOnlyMana(color, amount);
         creatureSourceCreatureSpellOnlyMana.merge(color, amount, Integer::sum);
@@ -4027,6 +4086,7 @@ public class ManaPool {
         moveColoredManaToColorlessBuckets(subtypeOrPlaneswalkerSpellMana);
         moveColoredManaToColorless(partySpellOrAbilityMana);
         moveColoredManaToColorless(creatureSpellOnlyMana);
+        moveColoredManaToColorless(creatureSpellWithoutAbilitiesOnlyMana);
         moveColoredManaToColorless(noncreatureSpellOnlyMana);
         moveColoredManaToColorless(exactlyThreeColorSpellOnlyMana);
         moveColoredManaToColorless(multicoloredSpellOnlyMana);
@@ -4154,6 +4214,7 @@ public class ManaPool {
         moveManaToBuckets(replacementColor, subtypeOrPlaneswalkerSpellMana);
         moveManaTo(replacementColor, partySpellOrAbilityMana);
         moveManaTo(replacementColor, creatureSpellOnlyMana);
+        moveManaTo(replacementColor, creatureSpellWithoutAbilitiesOnlyMana);
         moveManaTo(replacementColor, noncreatureSpellOnlyMana);
         moveManaTo(replacementColor, exactlyThreeColorSpellOnlyMana);
         moveManaTo(replacementColor, multicoloredSpellOnlyMana);
@@ -4366,6 +4427,7 @@ public class ManaPool {
         drainColorBucket(promotedArtifactSpellOrAbilityOnlyMana, protectedColors);
         drainColorBucket(partySpellOrAbilityMana, protectedColors);
         drainColorBucket(creatureSpellOnlyMana, protectedColors);
+        drainColorBucket(creatureSpellWithoutAbilitiesOnlyMana, protectedColors);
         drainColorBucket(noncreatureSpellOnlyMana, protectedColors);
         drainColorBucket(exactlyThreeColorSpellOnlyMana, protectedColors);
         drainColorBucket(multicoloredSpellOnlyMana, protectedColors);
@@ -4540,6 +4602,7 @@ public class ManaPool {
             }
             amount += partySpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
+            amount += creatureSpellWithoutAbilitiesOnlyMana.getOrDefault(color, 0);
             amount += noncreatureSpellOnlyMana.getOrDefault(color, 0);
             amount += exactlyThreeColorSpellOnlyMana.getOrDefault(color, 0);
             amount += multicoloredSpellOnlyMana.getOrDefault(color, 0);
@@ -4616,6 +4679,7 @@ public class ManaPool {
             }
             amount += partySpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
+            amount += creatureSpellWithoutAbilitiesOnlyMana.getOrDefault(color, 0);
             amount += noncreatureSpellOnlyMana.getOrDefault(color, 0);
             amount += exactlyThreeColorSpellOnlyMana.getOrDefault(color, 0);
             amount += multicoloredSpellOnlyMana.getOrDefault(color, 0);

@@ -165,6 +165,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsIn
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreCreaturesThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerAttackedControllerLastTurn;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActivePlayer;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
@@ -264,6 +265,7 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAtta
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.LandPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ExiledCardTypeThreshold;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
@@ -635,6 +637,10 @@ public class ConditionEvaluationService {
             case EnchantmentPutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn
+                            .contains(ctx.controllerId());
+            case LandPutIntoGraveyardFromBattlefieldThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn
                             .contains(ctx.controllerId());
             case PermanentPutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn;
@@ -1017,6 +1023,8 @@ public class ConditionEvaluationService {
                             && ctx.controllerId() != null
                             && gameQueryService.controlsMoreLandsThan(
                             gameData, ctx.targetId(), ctx.controllerId());
+            case TargetPlayerAttackedControllerLastTurn ignored ->
+                    targetPlayerAttackedControllerLastTurn(gameData, ctx);
             case TargetPlayerTurn ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerIsActivePlayer ignored ->
@@ -2702,8 +2710,21 @@ public class ConditionEvaluationService {
                 .anyMatch(commander -> commander.getId().equals(permanent.getOriginalCard().getId())));
     }
 
+    private boolean targetPlayerAttackedControllerLastTurn(GameData gameData, ConditionContext ctx) {
+        if (ctx.targetId() == null || ctx.controllerId() == null) return false;
+
+        UUID targetPlayerId = ctx.targetId();
+        if (!gameData.playerIds.contains(targetPlayerId)) {
+            targetPlayerId = gameQueryService.findPermanentController(gameData, targetPlayerId);
+        }
+        return targetPlayerId != null
+                && gameData.playersWhoAttackedPlayersLastTurn
+                .getOrDefault(ctx.controllerId(), Set.of())
+                .contains(targetPlayerId);
+    }
+
     private boolean targetPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx,
-                                                          PermanentPredicate filter) {
+                                                           PermanentPredicate filter) {
         UUID targetPlayerId = ctx.targetId();
         if (targetPlayerId == null) return false;
 

@@ -58,6 +58,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers}. Used by Trespasser's Curse. */
     ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
     STATIC,
+    /** Marker for abilities that observe cards as they are put into exile without using the stack. */
+    ON_ANY_CARD_EXILED,
     /** Static cost-modifying effects of cards in the controller's command zone (Eminence). */
     COMMAND_ZONE_STATIC,
     ON_SACRIFICE,

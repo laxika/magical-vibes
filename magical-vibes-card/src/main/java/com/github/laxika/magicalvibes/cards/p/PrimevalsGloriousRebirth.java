@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "201")
+@CardRegistration(set = "DMC", collectorNumber = "165")
 public class PrimevalsGloriousRebirth extends Card {
 
     public PrimevalsGloriousRebirth() {

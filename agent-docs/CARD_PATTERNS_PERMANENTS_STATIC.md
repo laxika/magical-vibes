@@ -240,6 +240,7 @@ All paths relative to `cards/`.
 | Tax matching spells (all players) | `t/ThaliaGuardianOfThraben.java` | STATIC IncreaseSpellCostEffect(CardNotPredicate(CardTypePredicate(CREATURE)), 1, ALL) — symmetric, affects all players |
 | Enters tapped | `r/RootMaze.java` | STATIC EnterPermanentsOfTypesTappedEffect |
 | Controlled lands enter untapped | `s/Spelunking.java` | STATIC ControlledLandsEnterUntappedEffect |
+| State-dependent global entry replacement | `a/ArchelosLagoonMystic.java` | STATIC ConditionalReplacementEffect(SourceIsTapped, EnterPermanentsOfTypesTappedEffect(all permanent types)) + ConditionalReplacementEffect(SourceUntapped, AllPermanentsEnterUntappedEffect(all permanents)) |
 | Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, OWN_CREATURES) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
 | Opponent creatures + nonbasic lands enter tapped | `t/ThaliaHereticCathar.java` | STATIC `EnterPermanentsOfTypesTappedEffect.matching(creature OR (land AND NOT basic), opponentsOnly=true)` |
 | P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentIsLandPredicate, CONTROLLER) |

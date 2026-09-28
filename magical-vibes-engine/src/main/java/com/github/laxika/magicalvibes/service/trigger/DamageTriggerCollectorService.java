@@ -221,6 +221,46 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    private boolean handleAllyCreatureDealsDamageToCreatureConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
+        if (dc.damageSource() == null || dc.damagedCreatureId() == null || dc.damageDealt() <= 0
+                || match.permanent() == null
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                dc.damageSource(), conditional.predicate(), FilterContext.of(match.gameData())
+                        .withSourceCardId(match.permanent().getCard().getId())
+                        .withSourceControllerId(match.controllerId())
+                        .withSourcePermanentId(match.permanent().getId())
+                        .withSourcePermanentSnapshot(match.permanent()))) {
+            return false;
+        }
+
+        return enqueueAllyCreatureDealsDamageToCreatureMay(match, conditional.wrapped(), dc.damageSource());
+    }
+
+    private boolean enqueueAllyCreatureDealsDamageToCreatureMay(TriggerMatchContext match,
+            CardEffect effect, Permanent damageSource) {
+        GameData gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringPermanentId(damageSource.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers after an ally creature dealt damage to a creature",
+                gameData.id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DrawCardEffect.class,
             slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
     private boolean handleAllySourceDealsNoncombatDamageToCreatureDraw(TriggerMatchContext match,

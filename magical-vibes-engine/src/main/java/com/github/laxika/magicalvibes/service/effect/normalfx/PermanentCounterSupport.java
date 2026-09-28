@@ -584,6 +584,7 @@ public class PermanentCounterSupport {
                 switch (counterType) {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
+                    case EGG -> perm.setCounterCount(CounterType.EGG, perm.getCounterCount(CounterType.EGG) + placed);
                     case HOUR -> perm.setCounterCount(CounterType.HOUR, perm.getCounterCount(CounterType.HOUR) + placed);
                     case HONE -> perm.setCounterCount(CounterType.HONE, perm.getCounterCount(CounterType.HONE) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
@@ -779,6 +780,7 @@ public class PermanentCounterSupport {
             case DESPAIR -> { target.setCounterCount(CounterType.DESPAIR, target.getCounterCount(CounterType.DESPAIR) + count); yield "despair"; }
             case DEATH -> { target.setCounterCount(CounterType.DEATH, target.getCounterCount(CounterType.DEATH) + count); yield "death"; }
             case DELAY -> { target.setCounterCount(CounterType.DELAY, target.getCounterCount(CounterType.DELAY) + count); yield "delay"; }
+            case EGG -> { target.setCounterCount(CounterType.EGG, target.getCounterCount(CounterType.EGG) + count); yield "egg"; }
             case DEVOTION -> { target.setCounterCount(CounterType.DEVOTION, target.getCounterCount(CounterType.DEVOTION) + count); yield "devotion"; }
             case DIVINITY -> { target.setCounterCount(CounterType.DIVINITY, target.getCounterCount(CounterType.DIVINITY) + count); yield "divinity"; }
             case HATCHLING -> { target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) + count); yield "hatchling"; }

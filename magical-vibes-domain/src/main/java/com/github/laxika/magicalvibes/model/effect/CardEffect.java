@@ -79,6 +79,9 @@ public interface CardEffect {
      */
     default boolean isPowerToughnessDefining() { return false; }
 
+    /** Whether this effect notes the mana value of cards as they enter exile. */
+    default boolean notesManaValueOfExiledCards() { return false; }
+
     /**
      * Returns {@code true} if this ON_DEATH effect only triggers when the permanent was
      * sacrificed ("When you sacrifice this…"), not when it dies by other means. Filtered out

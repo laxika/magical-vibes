@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "870")
 @CardRegistration(set = "SLD", collectorNumber = "1135")
 @CardRegistration(set = "ECC", collectorNumber = "97")
+@CardRegistration(set = "DMC", collectorNumber = "128")
 public class AbundantGrowth extends Card {
 
     public AbundantGrowth() {

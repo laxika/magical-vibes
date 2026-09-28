@@ -2489,7 +2489,7 @@ public class ChoiceHandlerService {
         if (!selectionComplete) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
                     ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), ctx.consumeModes(),
-                    chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
+                    chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId(), ctx.triggeringPermanentId());
             return;
         }
         if (ctx.consumeModes() || ctx.modesResetEachTurn()) {
@@ -2507,7 +2507,8 @@ public class ChoiceHandlerService {
                         + chosenModes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList()
                         + " for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId());
+                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId(),
+                ctx.triggeringPermanentId());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);

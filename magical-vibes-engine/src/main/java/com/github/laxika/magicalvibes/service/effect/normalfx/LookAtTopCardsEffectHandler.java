@@ -495,7 +495,12 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             LookAtTopCardsEffect e, int lookCount, int chooseCount, int chooseManaValueAtMost) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, false);
-        if (result == null) return;
+        if (result == null) {
+            if (e.recordChosenCount()) {
+                entry.setEventValue(0);
+            }
+            return;
+        }
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
@@ -517,6 +522,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
                 .toList();
         if (matchingCards.isEmpty()) {
+            if (e.recordChosenCount()) {
+                entry.setEventValue(0);
+            }
             if (toGraveyard) {
                 for (Card card : topCards) {
                     graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
@@ -535,6 +543,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (chooseCount <= 0) {
+            if (e.recordChosenCount()) {
+                entry.setEventValue(0);
+            }
             if (randomBottom) {
                 putOnBottomInRandomOrder(gameData, controllerId, playerName, topCards);
             } else {
@@ -554,6 +565,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         : 0;
                 max = Math.min(max, affordable);
                 if (max == 0) {
+                    if (e.recordChosenCount()) {
+                        entry.setEventValue(0);
+                    }
                     for (Card card : topCards) {
                         graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
                     }
@@ -587,7 +601,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     !toGraveyard && !randomBottom, randomBottom, false,
                     e.payLifePerSelectedCard() > 0
                             ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
-                    null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
+                    null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), e.recordChosenCount(),
                     false, e.payLifePerSelectedCard() > 0, null, false, false).withSelectedCardFollowUp(e.selectedCardPredicate(), e.effectIfSelectedCardMatches()));
             return;
         }

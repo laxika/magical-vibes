@@ -2835,7 +2835,8 @@ public class SpellCastTriggerCollectorService {
                         sourceCard, match.controllerId(), queued, playerTargetOnly, trigger.targetFilter(),
                         spellManaSpentX, sourcePermanentId, null, false, null, null,
                         match.controllerId(), carriesTriggeringSpellManaValue ? triggeringSpellManaValue : null,
-                        match.sourcePlanarObject() == null ? null : match.sourcePlanarObject().copy()
+                        match.sourcePlanarObject() == null ? null : match.sourcePlanarObject().copy(),
+                        false, spellCard.getId()
                 ));
             }
             gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,

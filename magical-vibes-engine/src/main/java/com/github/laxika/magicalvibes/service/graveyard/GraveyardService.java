@@ -651,6 +651,10 @@ public class GraveyardService {
         gameData.markGraveyardEntry(card);
         if (sourceZone == Zone.BATTLEFIELD) {
             gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn++;
+            if (card.hasType(CardType.LAND)) {
+                gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn.add(
+                        battlefieldControllerId != null ? battlefieldControllerId : ownerId);
+            }
         }
         if (!card.isToken() && isPermanentCard(card)) {
             gameData.playersWhoDescendedThisTurn.add(ownerId);

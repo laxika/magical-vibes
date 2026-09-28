@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
+import com.github.laxika.magicalvibes.model.TargetedCreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.DamagedCreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.Boon;
@@ -265,14 +266,21 @@ import com.github.laxika.magicalvibes.model.effect.LeavingPermanentIdAwareEffect
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageToPlayerThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayFightTargetCreatureOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCommanderColorCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
@@ -8144,19 +8152,31 @@ public class TriggerCollectionService {
                     continue;
                 }
 
+                int lifePaid = trigger.lifePaymentOnly()
+                        ? lifePaidForActivatedAbility(gameData, abilityEntry, ability, activatedPermanent,
+                        activatingPlayerId)
+                        : 0;
+                if (trigger.lifePaymentOnly() && lifePaid <= 0) {
+                    continue;
+                }
+
                 StackEntry snapshot = new StackEntry(abilityEntry);
                 // CR 707.10 — the copy is controlled by the controller of the effect that created it.
                 UUID copyControllerId = trigger.equippedCreatureOnly() ? ownerId : activatingPlayerId;
                 CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
                         snapshot, ability, copyControllerId);
-                if (trigger.manaCost() != null) {
+                if (trigger.lifePaymentOnly()) {
+                    copyEffect = new MayPayLifeEqualToAmountEffect(
+                            new EventValue(), copyEffect,
+                            "Pay that much life to copy " + abilityEntry.getCard().getName() + "'s ability?");
+                } else if (trigger.manaCost() != null) {
                     copyEffect = new MayPayManaEffect(
                             trigger.manaCost(),
                             copyEffect,
                             "Pay " + trigger.manaCost() + " to copy " + abilityEntry.getCard().getName() + "'s ability?");
                 }
 
-                gameData.enqueueTrigger(new StackEntry(
+                StackEntry copyTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
@@ -8164,12 +8184,39 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(copyEffect)),
                         null,
                         perm.getId()
-                ));
+                );
+                if (trigger.lifePaymentOnly()) {
+                    copyTrigger.setEventValue(lifePaid);
+                }
+                gameData.enqueueTrigger(copyTrigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on non-mana ability activation ({})",
                         gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
             }
         });
+    }
+
+    private int lifePaidForActivatedAbility(GameData gameData, StackEntry abilityEntry,
+                                             ActivatedAbility ability, Permanent activatedPermanent,
+                                             UUID activatingPlayerId) {
+        int currentLife = gameData.getLife(activatingPlayerId);
+        int lifePaid = 0;
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof PayLifeCost cost) {
+                int sourceCounters = cost.perSourceCounter() == null
+                        ? 0 : activatedPermanent.getCounterCount(cost.perSourceCounter());
+                lifePaid += cost.effectiveAmount(currentLife, sourceCounters);
+            } else if (effect instanceof PayManaCost cost) {
+                lifePaid += cost.lifeAmount();
+            } else if (effect instanceof PayLifeForEachCardInHandCost) {
+                lifePaid += gameData.playerHands.getOrDefault(activatingPlayerId, List.of()).size();
+            } else if (effect instanceof PayLifeForEachCommanderColorCost) {
+                lifePaid += ManaProductionSupport.commanderColorIdentity(gameData, activatingPlayerId).size();
+            } else if (effect instanceof PayXLifeCost) {
+                lifePaid += abilityEntry.getXValue();
+            }
+        }
+        return lifePaid;
     }
 
     /**
@@ -10600,7 +10647,7 @@ public class TriggerCollectionService {
         }
 
         collectEmblemCreatureDeathTriggers(gameData, dyingCard, ctx);
-        collectCreatureDeathTriggerWatchers(gameData);
+        collectCreatureDeathTriggerWatchers(gameData, dyingPermanent);
         collectPlanarCreatureDeathTriggers(gameData, dyingCard, dyingPermanent, dyingCreatureControllerId);
     }
 
@@ -10681,7 +10728,7 @@ public class TriggerCollectionService {
         }
     }
 
-    private void collectCreatureDeathTriggerWatchers(GameData gameData) {
+    private void collectCreatureDeathTriggerWatchers(GameData gameData, Permanent dyingPermanent) {
         for (CreatureDeathTriggerWatcher watcher : List.copyOf(gameData.creatureDeathTriggerWatchers)) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -10694,6 +10741,26 @@ public class TriggerCollectionService {
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers because a creature died",
+                    gameData.id, watcher.sourceCard().getName());
+        }
+        for (TargetedCreatureDeathTriggerWatcher watcher
+                : List.copyOf(gameData.targetedCreatureDeathTriggerWatchers)) {
+            if (!watcher.watchedPermanentId().equals(dyingPermanent.getId())
+                    || dyingPermanent.getCounterCount(watcher.counterType()) <= 0) {
+                continue;
+            }
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(watcher.effect())),
+                    (UUID) null,
+                    (UUID) null);
+            entry.setTriggeringPermanentId(dyingPermanent.getId());
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            log.info("Game {} - {} triggers because its watched creature died",
                     gameData.id, watcher.sourceCard().getName());
         }
     }
@@ -11684,6 +11751,13 @@ public class TriggerCollectionService {
             UUID attackedTargetId) {
         triggeredAbilityQueueService.queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId,
                 sourcePermanentId, chosen, triggeringCardId, attackedTargetId);
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosen, UUID triggeringCardId,
+            UUID attackedTargetId, UUID triggeringPermanentId) {
+        triggeredAbilityQueueService.queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId,
+                sourcePermanentId, chosen, triggeringCardId, attackedTargetId, triggeringPermanentId);
     }
 
     public void checkControllerCardsExiledDuringTurnTriggers(GameData gameData) {
@@ -13825,7 +13899,7 @@ public class TriggerCollectionService {
                 for (int i = 0; i < permanentTriggerCount; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                             perm.getCard(), landControllerId, triggeredModalEffect.choice(), perm.getId(),
-                            false, enteringPermanentId));
+                            false, false, null, null, enteringPermanentId));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
                 }
@@ -13897,7 +13971,8 @@ public class TriggerCollectionService {
             if (resolvedEffects.size() == 1 && resolvedEffects.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
                 for (int i = 0; i < permanentTriggerCount; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            perm.getCard(), landControllerId, chooseOneEffect, perm.getId()));
+                            perm.getCard(), landControllerId, chooseOneEffect, perm.getId(),
+                            false, false, null, null, enteringPermanentId));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
                 }

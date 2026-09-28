@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
+import com.github.laxika.magicalvibes.model.effect.AllPermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -273,6 +274,7 @@ public class BattlefieldPlacementService {
             applyUnchosenParityEnterTapped(gameData, permanent);
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
             applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
+            applyAllPermanentsEnterUntapped(gameData, permanent);
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
                     repeatedAdditionalCosts, request.convokeCreatureCount(), request.enterWithCounters(),
                     request.sourceStackEntry());
@@ -611,23 +613,25 @@ public class BattlefieldPlacementService {
     }
 
     /**
-     * Hallowed Moonlight replacement effect (CR 614.1): "Until end of turn, if a creature would
-     * enter and it wasn't cast, exile it instead." Returns {@code true} when the entering permanent
-     * was replaced and must not be placed, in which case it never enters and no enters-the-battlefield
-     * trigger fires.
+     * Applies creature-entry exile replacements, including Hallowed Moonlight's turn-scoped
+     * replacement and a permanent's own uncast-or-unpaid replacement. Returns {@code true} when the
+     * entering permanent was replaced and must not be placed, in which case it never enters and no
+     * enters-the-battlefield trigger fires.
      *
      * <p>An entering token is exiled too, but a token outside the battlefield ceases to exist
      * (CR 111.7), so it is simply dropped rather than added to the exile zone. Mistcaller's narrower
      * "nontoken creature" wording is tracked separately and leaves entering tokens alone.
      */
     private boolean applyExileUncastEnteringCreature(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (permanent.isCast() || !permanent.getCard().hasType(CardType.CREATURE)) {
+        if (!permanent.getCard().hasType(CardType.CREATURE)) {
             return false;
         }
         Card card = permanent.getCard();
-        boolean applies = !gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
+        boolean selfReplacementApplies = UncastEnteringCreatureExileSupport.hasSelfEntryReplacement(permanent);
+        boolean applies = selfReplacementApplies
+                || (!permanent.isCast() && (!gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
                 || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty())
-                || UncastEnteringCreatureExileSupport.hasActiveStaticReplacement(gameData, card);
+                || UncastEnteringCreatureExileSupport.hasActiveStaticReplacement(gameData, card)));
         if (!applies) {
             return false;
         }
@@ -637,7 +641,7 @@ public class BattlefieldPlacementService {
             gameData.addToExile(ownerId, physicalCard);
         }
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of entering the battlefield."));
-        log.info("Game {} - {} exiled instead of entering (it wasn't cast)", gameData.id, card.getName());
+        log.info("Game {} - {} exiled instead of entering due to an entry replacement", gameData.id, card.getName());
         return true;
     }
 
@@ -956,7 +960,15 @@ public class BattlefieldPlacementService {
 
         gameData.forEachPermanent((playerId, source) -> {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (!(effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped)) {
+                EnterPermanentsOfTypesTappedEffect enterTapped;
+                if (effect instanceof EnterPermanentsOfTypesTappedEffect direct) {
+                    enterTapped = direct;
+                } else if (effect instanceof ConditionalReplacementEffect conditional
+                        && conditional.upgradedEffect() instanceof EnterPermanentsOfTypesTappedEffect conditionalEffect
+                        && conditionEvaluationService.isMet(
+                        gameData, conditional.condition(), ConditionContext.forStaticEffect(source, playerId))) {
+                    enterTapped = conditionalEffect;
+                } else {
                     continue;
                 }
                 if (enterTapped.opponentsOnly() || enterTapped.castOnly()) {
@@ -1009,6 +1021,28 @@ public class BattlefieldPlacementService {
                         enteringPermanent.untap();
                         return;
                     }
+                }
+            }
+        });
+    }
+
+    private void applyAllPermanentsEnterUntapped(GameData gameData, Permanent enteringPermanent) {
+        gameData.forEachPermanent((sourcePlayerId, source) -> {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                AllPermanentsEnterUntappedEffect enterUntapped = null;
+                if (effect instanceof AllPermanentsEnterUntappedEffect direct) {
+                    enterUntapped = direct;
+                } else if (effect instanceof ConditionalReplacementEffect conditional
+                        && conditional.upgradedEffect() instanceof AllPermanentsEnterUntappedEffect conditionalEffect
+                        && conditionEvaluationService.isMet(
+                        gameData, conditional.condition(), ConditionContext.forStaticEffect(source, sourcePlayerId))) {
+                    enterUntapped = conditionalEffect;
+                }
+                if (enterUntapped != null
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, enteringPermanent, enterUntapped.filter())) {
+                    enteringPermanent.enterUntapped();
+                    return;
                 }
             }
         });

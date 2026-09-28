@@ -866,6 +866,7 @@ public class TurnProgressionService {
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.clear();
+        gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoCreatedTokensThisTurn.clear();
