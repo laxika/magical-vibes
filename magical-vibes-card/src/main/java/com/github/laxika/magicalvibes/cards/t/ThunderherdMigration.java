@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "RIX", collectorNumber = "149")
 @CardRegistration(set = "GN2", collectorNumber = "52")
+@CardRegistration(set = "LCC", collectorNumber = "259")
 public class ThunderherdMigration extends Card {
 
     public ThunderherdMigration() {

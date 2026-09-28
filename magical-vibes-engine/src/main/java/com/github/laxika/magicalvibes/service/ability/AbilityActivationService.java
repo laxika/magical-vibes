@@ -6063,7 +6063,7 @@ public class AbilityActivationService {
                 Math.max(0, totalManaCost + additionalGenericCost - 1));
         additionalGenericCost -= battlefieldReduction;
         AmountContext activationCostContext = new AmountContext(
-                playerId, permanent, targetId, effectiveXValue, 0);
+                playerId, permanent, targetId, effectiveXValue, 0).withTargetIds(targetIds);
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ActivationCostModifierEffect modifier) {
                 int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
@@ -7072,7 +7072,7 @@ public class AbilityActivationService {
                                                        CraftMaterialCost cost) {
         List<Card> candidates = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null) {
+        if (battlefield != null && !cost.graveyardOnly()) {
             battlefield.stream()
                     .filter(permanent -> permanent != source)
                     .filter(permanent -> matchesCraftMaterial(gameData, permanent, cost))
@@ -7092,13 +7092,18 @@ public class AbilityActivationService {
                                                   CraftMaterialCost cost) {
         List<Card> candidates = collectCraftMaterialCandidates(gameData, playerId, source, cost);
         if (candidates.size() < cost.minimumCount()
-                || !canSatisfyRequiredCraftSubtypes(gameData, candidates, cost)) {
+                || !canSatisfyRequiredCraftSubtypes(gameData, candidates, cost)
+                || (cost.requiresSharedCardType()
+                && !canSatisfySharedCraftCardType(gameData, candidates, playerId))) {
             throw new IllegalStateException(craftMaterialError(cost));
         }
         return candidates;
     }
 
     private boolean matchesCraftMaterial(GameData gameData, Permanent permanent, CraftMaterialCost cost) {
+        if (cost.graveyardOnly()) {
+            return false;
+        }
         if (cost.nonlandOnly() && gameQueryService.isLand(gameData, permanent)) {
             return false;
         }
@@ -7117,6 +7122,12 @@ public class AbilityActivationService {
                 && cost.requiredSubtypes().stream().noneMatch(subtype ->
                 predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, new PermanentHasSubtypePredicate(subtype)))) {
+            return false;
+        }
+        if (cost.requiredCardPredicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                permanent.getCard(), cost.requiredCardPredicate(), null,
+                gameData, gameQueryService.findPermanentController(gameData, permanent.getId()))) {
             return false;
         }
         return !cost.requireActivatedAbility() || hasActivatedAbility(gameData, permanent);
@@ -7138,6 +7149,11 @@ public class AbilityActivationService {
                 && cost.requiredSubtypes().stream().noneMatch(card.getSubtypes()::contains)) {
             return false;
         }
+        if (cost.requiredCardPredicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                card, cost.requiredCardPredicate(), null)) {
+            return false;
+        }
         return !cost.requireActivatedAbility()
                 || !card.getActivatedAbilities().isEmpty()
                 || !card.getEffects(EffectSlot.ON_TAP).isEmpty();
@@ -7149,6 +7165,9 @@ public class AbilityActivationService {
     }
 
     private String craftMaterialPrompt(CraftMaterialCost cost) {
+        if (cost.requiresSharedCardType()) {
+            return "two craft materials that share a card type to exile as craft materials";
+        }
         if (!cost.requiredSubtypes().isEmpty()) {
             return "one of each required creature type to exile as craft materials";
         }
@@ -7156,6 +7175,9 @@ public class AbilityActivationService {
     }
 
     private String craftMaterialError(CraftMaterialCost cost) {
+        if (cost.requiresSharedCardType()) {
+            return "Must have two craft materials that share a card type";
+        }
         if (!cost.requiredSubtypes().isEmpty()) {
             return "Must have one of each required creature type to exile as craft materials";
         }
@@ -7178,6 +7200,9 @@ public class AbilityActivationService {
         }
         if (cost.requiredType() != null) {
             return cost.requiredType().name().toLowerCase() + "s";
+        }
+        if (cost.graveyardOnly()) {
+            return "matching cards from your graveyard";
         }
         return "matching craft materials";
     }
@@ -7261,6 +7286,7 @@ public class AbilityActivationService {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Permanent> battlefieldChoices = new ArrayList<>();
         List<Card> graveyardChoices = new ArrayList<>();
+        List<Card> selectedMaterials = new ArrayList<>();
         List<Set<CardSubtype>> selectedSubtypes = new ArrayList<>();
         for (UUID cardId : cardIds) {
             Permanent battlefieldChoice = battlefield == null ? null : battlefield.stream()
@@ -7272,6 +7298,7 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Selected card is not a legal craft material");
                 }
                 battlefieldChoices.add(battlefieldChoice);
+                selectedMaterials.add(battlefieldChoice.getCard());
                 selectedSubtypes.add(craftSubtypesForPermanent(gameData, battlefieldChoice, cost));
                 continue;
             }
@@ -7283,11 +7310,16 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Selected card is not a legal craft material");
             }
             graveyardChoices.add(graveyardChoice);
+            selectedMaterials.add(graveyardChoice);
             selectedSubtypes.add(craftSubtypesForCard(graveyardChoice, cost));
         }
 
         if (!canAssignCraftSubtypes(selectedSubtypes, cost.requiredSubtypes(), 0,
                 new boolean[selectedSubtypes.size()])) {
+            throw new IllegalStateException(craftMaterialError(cost));
+        }
+        if (cost.requiresSharedCardType()
+                && !canSatisfySharedCraftCardType(gameData, selectedMaterials, playerId)) {
             throw new IllegalStateException(craftMaterialError(cost));
         }
 
@@ -7328,6 +7360,34 @@ public class AbilityActivationService {
                 .toList();
         return canAssignCraftSubtypes(candidateSubtypes, cost.requiredSubtypes(), 0,
                 new boolean[candidateSubtypes.size()]);
+    }
+
+    private boolean canSatisfySharedCraftCardType(GameData gameData, List<Card> candidates,
+                                                   UUID playerId) {
+        for (int first = 0; first < candidates.size(); first++) {
+            Set<CardType> firstTypes = craftCardTypes(gameData, candidates.get(first), playerId);
+            for (int second = first + 1; second < candidates.size(); second++) {
+                Set<CardType> secondTypes = craftCardTypes(gameData, candidates.get(second), playerId);
+                if (firstTypes.stream().anyMatch(secondTypes::contains)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Set<CardType> craftCardTypes(GameData gameData, Card card, UUID playerId) {
+        Permanent permanent = findBattlefieldPermanentByCardId(gameData, card.getId());
+        if (permanent != null) {
+            return gameQueryService.getEffectiveCardTypes(gameData, permanent);
+        }
+        Set<CardType> types = new HashSet<>();
+        for (CardType type : CardType.values()) {
+            if (gameQueryService.cardHasType(card, type, gameData, playerId)) {
+                types.add(type);
+            }
+        }
+        return types;
     }
 
     private Permanent findBattlefieldPermanentByCardId(GameData gameData, UUID cardId) {

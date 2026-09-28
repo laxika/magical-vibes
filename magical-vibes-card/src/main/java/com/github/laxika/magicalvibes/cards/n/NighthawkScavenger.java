@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 
 @CardRegistration(set = "ZNR", collectorNumber = "115")
 @CardRegistration(set = "OTC", collectorNumber = "144")
+@CardRegistration(set = "LCC", collectorNumber = "203")
 public class NighthawkScavenger extends Card {
 
     public NighthawkScavenger() {

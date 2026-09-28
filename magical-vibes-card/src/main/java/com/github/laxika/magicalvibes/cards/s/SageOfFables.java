@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCr
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "47")
+@CardRegistration(set = "LCC", collectorNumber = "169")
 public class SageOfFables extends Card {
 
     public SageOfFables() {

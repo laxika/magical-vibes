@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "MB2", collectorNumber = "137")
 @CardRegistration(set = "LTC", collectorNumber = "268")
 @CardRegistration(set = "OTC", collectorNumber = "231")
+@CardRegistration(set = "LCC", collectorNumber = "271")
 public class HostageTaker extends Card {
 
     public HostageTaker() {

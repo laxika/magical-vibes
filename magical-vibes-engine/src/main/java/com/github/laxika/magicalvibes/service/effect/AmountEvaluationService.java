@@ -112,6 +112,7 @@ import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
+import com.github.laxika.magicalvibes.model.amount.FixedIfAllTargetsControlledByController;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
@@ -242,6 +243,7 @@ import com.github.laxika.magicalvibes.model.amount.TreasuresCreatedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
 import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
 import com.github.laxika.magicalvibes.model.amount.UnspentMana;
@@ -330,6 +332,8 @@ public class AmountEvaluationService {
                     totalToughnessOfControlledCreatures(gameData, ctx) >= a.minTotalToughness() ? a.amount() : 0;
             case FixedIfControlsAllNamed a ->
                     controlsAllNamed(gameData, a, ctx) ? a.amount() : a.otherwise();
+            case FixedIfAllTargetsControlledByController a ->
+                    allTargetsControlledByController(gameData, a, ctx) ? a.amount() : a.otherwise();
             case FixedIfTargetMatches a ->
                     targetMatches(gameData, a, ctx) ? a.amount() : a.otherwise();
             case FixedIfTargetPlayerControlsMoreLands a ->
@@ -838,6 +842,8 @@ public class AmountEvaluationService {
                             : Math.max(0, gameQueryService.getEffectiveToughness(gameData, ctx.sourcePermanent()));
             case TargetToughness ignored ->
                     targetEffectiveToughness(gameData, ctx);
+            case TriggeringPermanentToughness ignored ->
+                    triggeringPermanentToughness(gameData, ctx);
             case TargetPower ignored ->
                     targetEffectivePower(gameData, ctx);
             case TargetPowerPlusToughness ignored ->
@@ -1014,6 +1020,18 @@ public class AmountEvaluationService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         // No legal target at resolution -> 0, matching the fizzle behaviour of the handlers this replaces.
         return target == null ? 0 : Math.max(0, gameQueryService.getEffectiveToughness(gameData, target));
+    }
+
+    private int triggeringPermanentToughness(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() != null) {
+            Permanent triggering = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+            if (triggering != null) {
+                return Math.max(0, gameQueryService.getEffectiveToughness(gameData, triggering));
+            }
+        }
+        return ctx.stackEntry() == null || ctx.stackEntry().getTriggeringPermanentToughnessAtTrigger() == null
+                ? 0
+                : Math.max(0, ctx.stackEntry().getTriggeringPermanentToughnessAtTrigger());
     }
 
     private int attachedPermanentColorCount(GameData gameData, AmountContext ctx) {
@@ -2040,6 +2058,20 @@ public class AmountEvaluationService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         return target != null
                 && predicateEvaluationService.matchesPermanentPredicate(gameData, target, amount.filter());
+    }
+
+    private boolean allTargetsControlledByController(GameData gameData,
+                                                      FixedIfAllTargetsControlledByController amount,
+                                                      AmountContext ctx) {
+        if (ctx.targetIds() == null || ctx.targetIds().size() != 2) return false;
+        for (UUID targetId : ctx.targetIds()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null || !gameQueryService.isCreature(gameData, target)
+                    || !ctx.controllerId().equals(gameQueryService.findPermanentController(gameData, targetId))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean controlsMoreCreaturesThanEachOtherPlayer(GameData gameData, AmountContext ctx) {

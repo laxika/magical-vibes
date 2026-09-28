@@ -3064,11 +3064,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Choose one matching card from a target player's revealed hand to put onto the battlefield. */
+    /** Choose one matching card from a player's hand to put onto the battlefield. */
     record TargetedHandBattlefieldChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                          java.util.List<Integer> validIndices, String prompt,
-                                         boolean grantHaste, boolean sacrificeAtEndStep)
+                                         boolean grantHaste, boolean sacrificeAtEndStep,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         boolean returnToHandAtEndStep, UUID attackTargetId)
             implements PendingInteraction {
+
+        public TargetedHandBattlefieldChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                             java.util.List<Integer> validIndices, String prompt,
+                                             boolean grantHaste, boolean sacrificeAtEndStep) {
+            this(choosingPlayerId, targetPlayerId, validIndices, prompt, grantHaste,
+                    sacrificeAtEndStep, false, false, false, null);
+        }
 
         public TargetedHandBattlefieldChoice {
             validIndices = java.util.List.copyOf(validIndices);

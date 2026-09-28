@@ -15,14 +15,32 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                                boolean allControllers,
                                                boolean instantSorceryCastOrCopyOnly,
                                                boolean allyCreatureBecomesTarget,
-                                               boolean combatDamageToPlayerOnly)
+                                               boolean combatDamageToPlayerOnly,
+                                               boolean controlledCreatureDealtDamageOnly)
         implements CardEffect {
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                              boolean attackOnly, boolean includeSourcePermanent,
                                              boolean allControllers, boolean instantSorceryCastOrCopyOnly) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
-                allControllers, instantSorceryCastOrCopyOnly, false, false);
+                allControllers, instantSorceryCastOrCopyOnly, false, false, false);
+    }
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly,
+                                             boolean allyCreatureBecomesTarget) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
+                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget, false, false);
+    }
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly,
+                                             boolean allyCreatureBecomesTarget, boolean combatDamageToPlayerOnly) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
+                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget,
+                combatDamageToPlayerOnly, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
@@ -58,5 +76,11 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
     public static AdditionalTriggeredAbilityEffect forAllyCreatureCombatDamageToPlayer() {
         return new AdditionalTriggeredAbilityEffect(
                 new PermanentTruePredicate(), null, false, true, false, false, false, true);
+    }
+
+    /** Makes damage-related triggers caused by a controlled creature being dealt damage trigger again. */
+    public static AdditionalTriggeredAbilityEffect forControlledCreatureBeingDealtDamage() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, false, false, false, true);
     }
 }

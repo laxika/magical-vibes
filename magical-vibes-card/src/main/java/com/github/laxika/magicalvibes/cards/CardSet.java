@@ -255,6 +255,7 @@ public enum CardSet {
     SET_SPE("SPE"),
     SET_SPG("SPG"),
     SET_LCI("LCI"),
+    SET_LCC("LCC"),
     SET_BIG("BIG"),
     SET_TLA("TLA"),
     SET_LTC("LTC"),

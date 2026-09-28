@@ -1525,6 +1525,8 @@ public class PermanentRemovalService {
                     }
                     if (target.getId().equals(entry.getTriggeringPermanentId())) {
                         entry.getRemovedPermanentControllers().put(target.getId(), playerId);
+                        entry.setTriggeringPermanentToughnessAtTrigger(
+                                gameQueryService.getEffectiveToughness(gameData, target));
                         if (entry.getEffectsToResolve().stream().anyMatch(effect ->
                                 effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
                                         && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {

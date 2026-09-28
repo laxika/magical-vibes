@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "153")
+@CardRegistration(set = "LCC", collectorNumber = "229")
 public class OtepecHuntmaster extends Card {
 
     public OtepecHuntmaster() {

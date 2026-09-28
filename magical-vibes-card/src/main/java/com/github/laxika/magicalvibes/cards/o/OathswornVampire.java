@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "80")
+@CardRegistration(set = "LCC", collectorNumber = "204")
 public class OathswornVampire extends Card {
 
     public OathswornVampire() {

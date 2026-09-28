@@ -113,6 +113,7 @@ public sealed interface DynamicAmount permits
         FixedIfControlMoreCreaturesThanEachOtherPlayer,
         FixedIfControlledCreaturesTotalToughnessAtLeast,
         FixedIfControlsAllNamed,
+        FixedIfAllTargetsControlledByController,
         FixedIfTargetMatches,
         FixedIfTargetPlayerControlsMoreLands,
         GreatestManaValueAmongControlled,
@@ -234,6 +235,7 @@ public sealed interface DynamicAmount permits
         XValue,
         TriggeringSpellXValue,
         TriggeringSpellTargetCount,
+        TriggeringPermanentToughness,
         CardTypesAmongCardsDiscardedThisResolution,
         LastDiscardedCardTypeCount {
 

@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "214")
 @CardRegistration(set = "GK2", collectorNumber = "107")
+@CardRegistration(set = "LCC", collectorNumber = "298")
 public class ZeganaUtopianSpeaker extends Card {
 
     public ZeganaUtopianSpeaker() {

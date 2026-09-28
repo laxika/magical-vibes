@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "365")
 @CardRegistration(set = "CMM", collectorNumber = "598")
 @CardRegistration(set = "CMM", collectorNumber = "691")
+@CardRegistration(set = "LCC", collectorNumber = "296")
 public class ZacamaPrimalCalamity extends Card {
 
     public ZacamaPrimalCalamity() {

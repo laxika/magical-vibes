@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "BNG", collectorNumber = "150")
 @CardRegistration(set = "DDO", collectorNumber = "52")
 @CardRegistration(set = "PIO", collectorNumber = "228")
+@CardRegistration(set = "LCC", collectorNumber = "273")
 public class KiorasFollower extends Card {
 
     public KiorasFollower() {

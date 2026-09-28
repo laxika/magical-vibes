@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "C13", collectorNumber = "283")
 @CardRegistration(set = "40K", collectorNumber = "273")
 @CardRegistration(set = "LTC", collectorNumber = "302")
+@CardRegistration(set = "LCC", collectorNumber = "326")
 public class CrumblingNecropolis extends Card {
 
     public CrumblingNecropolis() {

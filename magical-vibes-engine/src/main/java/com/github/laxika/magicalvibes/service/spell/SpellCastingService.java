@@ -8801,7 +8801,8 @@ public class SpellCastingService {
                 && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND;
         if (graveyardCastPermanent || grantedPermanentCast || isGrantedGraveyardCast
                 || (isGrantedCyclingGraveyardCast && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND)
-                || (isGrantedGraveyardPlay && card.getType().isPermanentType() && card.getType() != CardType.LAND)) {
+                || (isGrantedGraveyardPlay && card.getType().isPermanentType() && card.getType() != CardType.LAND)
+                || (isRetrace && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND)) {
             // GraveyardCast / granted graveyard cast: permanent spell — enters battlefield on resolution, no exile
             if (isGrantedGraveyardCast && graveyardCastSourceId.isPresent()) {
                 // Track which permanent type slot was used, keyed by the granting permanent's UUID

@@ -1430,6 +1430,20 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card type for {}", gameData.id, playerName, card.getName());
     }
 
+    public void beginCraftedCardTypeOnEnterChoice(GameData gameData, UUID playerId,
+                                                  Permanent permanent, List<CardType> allowedTypes) {
+        ChoiceContext.CraftedCardTypeOnEnterChoice choiceContext =
+                new ChoiceContext.CraftedCardTypeOnEnterChoice(permanent, playerId, allowedTypes);
+        List<String> cardTypes = allowedTypes.stream().map(CardType::name).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, cardTypes,
+                "Choose a card type shared by the two craft materials."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a shared craft card type for {}", gameData.id,
+                playerName, permanent.getCard().getName());
+    }
+
     public void beginSpellColorChoice(GameData gameData, UUID playerId) {
         ChoiceContext.SpellColorChoice choiceContext = new ChoiceContext.SpellColorChoice(playerId);
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");

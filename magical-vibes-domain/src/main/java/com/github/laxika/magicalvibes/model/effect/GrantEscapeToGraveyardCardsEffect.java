@@ -3,15 +3,24 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Static effect that grants matching nonland cards in a graveyard escape with an additional
- * graveyard exile requirement.
+ * Static effect that grants matching cards in a graveyard escape with an additional graveyard
+ * exile requirement.
  */
-public record GrantEscapeToGraveyardCardsEffect(CardPredicate filter)
+public record GrantEscapeToGraveyardCardsEffect(
+        CardPredicate filter,
+        String alternateManaCost,
+        int additionalGraveyardExileCount
+)
         implements CastSpellsFromGraveyardPermission {
 
-    @Override
-    public int additionalGraveyardExileCount() {
-        return 3;
+    public GrantEscapeToGraveyardCardsEffect(CardPredicate filter) {
+        this(filter, null, 3);
+    }
+
+    public GrantEscapeToGraveyardCardsEffect {
+        if (additionalGraveyardExileCount < 0) {
+            throw new IllegalArgumentException("additionalGraveyardExileCount must not be negative");
+        }
     }
 
     @Override

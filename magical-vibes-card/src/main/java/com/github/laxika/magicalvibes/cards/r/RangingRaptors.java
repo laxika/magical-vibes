@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "201")
 @CardRegistration(set = "GN2", collectorNumber = "49")
+@CardRegistration(set = "LCC", collectorNumber = "249")
 public class RangingRaptors extends Card {
 
     public RangingRaptors() {

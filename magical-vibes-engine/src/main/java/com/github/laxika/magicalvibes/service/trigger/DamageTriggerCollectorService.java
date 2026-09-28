@@ -865,6 +865,38 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE)
+    private boolean handleConditionalAnyPermanentDealtDamageToAnyTarget(
+            TriggerMatchContext match, TriggeringPermanentConditionalEffect conditional,
+            TriggerContext ctx) {
+        TriggerContext.AnyPermanentDealtDamage dc = (TriggerContext.AnyPermanentDealtDamage) ctx;
+        if (dc.damageDealt() <= 0 || match.permanent() == null || match.controllerId() == null
+                || !match.controllerId().equals(dc.damagedPermanentControllerId())) return false;
+
+        FilterContext filterContext = FilterContext.of(match.gameData())
+                .withSourceCardId(match.permanent().getCard().getId())
+                .withSourceControllerId(match.controllerId())
+                .withSourcePermanentId(match.permanent().getId())
+                .withSourcePermanentSnapshot(match.permanent());
+        if (conditional.predicate() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(
+                        dc.damagedPermanent(), conditional.predicate(), filterContext)) return false;
+        if (!(conditional.wrapped() instanceof DealDamageToAnyTargetEffect damageEffect)) return false;
+
+        Permanent sourcePermanent = match.permanent();
+        Card sourceCard = sourcePermanent.getCard();
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(damageEffect)), false,
+                targetFilterForTriggeredEffect(sourceCard, conditional), dc.damageDealt(),
+                sourcePermanent.getId(), new Permanent(sourcePermanent)));
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} ON_ANY_PERMANENT_DEALT_DAMAGE conditional deal-damage-to-any-target trigger fires",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
             slot = EffectSlot.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)
     private boolean handleCountersPlaced(TriggerMatchContext match,

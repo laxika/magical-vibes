@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesFractionOfLife
 
 @CardRegistration(set = "XLN", collectorNumber = "104")
 @CardRegistration(set = "OTC", collectorNumber = "132")
+@CardRegistration(set = "LCC", collectorNumber = "192")
 public class DireFleetRavager extends Card {
 
     public DireFleetRavager() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 @CardRegistration(set = "A25", collectorNumber = "222")
 @CardRegistration(set = "HA6", collectorNumber = "9")
 @CardRegistration(set = "TSR", collectorNumber = "390")
+@CardRegistration(set = "LCC", collectorNumber = "105")
 public class ChaliceOfTheVoid extends Card {
 
     public ChaliceOfTheVoid() {

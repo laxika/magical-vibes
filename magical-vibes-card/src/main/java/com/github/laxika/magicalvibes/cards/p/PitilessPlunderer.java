@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "RIX", collectorNumber = "81")
 @CardRegistration(set = "SLD", collectorNumber = "1431")
 @CardRegistration(set = "SPG", collectorNumber = "5")
+@CardRegistration(set = "LCC", collectorNumber = "208")
 @CardRegistration(set = "PIP", collectorNumber = "187")
 @CardRegistration(set = "PIP", collectorNumber = "715")
 @CardRegistration(set = "MB2", collectorNumber = "46")

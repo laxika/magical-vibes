@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "51")
+@CardRegistration(set = "LCC", collectorNumber = "152")
 public class DeeprootWaters extends Card {
 
     public DeeprootWaters() {

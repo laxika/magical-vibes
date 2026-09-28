@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 
+@CardRegistration(set = "LCC", collectorNumber = "234")
 @CardRegistration(set = "PIP", collectorNumber = "195")
 @CardRegistration(set = "PIP", collectorNumber = "468")
 @CardRegistration(set = "PIP", collectorNumber = "723")

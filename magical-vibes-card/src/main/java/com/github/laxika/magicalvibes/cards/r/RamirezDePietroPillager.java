@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
+@CardRegistration(set = "LCC", collectorNumber = "285")
 @CardRegistration(set = "DMC", collectorNumber = "38")
 @CardRegistration(set = "DMC", collectorNumber = "60")
 public class RamirezDePietroPillager extends Card {
@@ -28,6 +29,7 @@ public class RamirezDePietroPillager extends Card {
                         new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT),
                         false,
                         true));
+
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, false, true));
     }

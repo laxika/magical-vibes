@@ -341,6 +341,7 @@ public class MayAbilityHandlerService {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
+            entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
             if (ability.xValue() != null) {
                 entry.setXValue(ability.xValue());
             }
@@ -412,6 +413,7 @@ public class MayAbilityHandlerService {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
+            entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
             if (ability.xValue() != null) {
                 entry.setXValue(ability.xValue());
